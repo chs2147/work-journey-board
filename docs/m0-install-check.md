@@ -1,5 +1,7 @@
 # I-M0 회사 PC 설치 검증 — 진행 절차와 판정 기준
 
+> **결과(2026-10-23): ◆G1 GO** — 상세는 [overview.md 13절](overview.md). 남은 확인: 재부팅 후 재실행(5절).
+
 > 작성: 2026-10-22 · 관련: [project-plan.md](project-plan.md) I-M0·◆G1, [overview.md](overview.md) 7-1절·12-4절
 > 대상 앱: `m0/` **WJB M0 Probe** (검증 전용 최소 앱 — 실제 일지 앱 아님)
 > 소요 시간: 약 15분 + 재부팅 1회

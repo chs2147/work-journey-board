@@ -323,7 +323,7 @@ project-plan.md의 I-M4 항목을 읽고 클립보드 다리부터 구현해줘.
 | 연말·연초 주차 경계 오류 | 보드·엑셀 | D2에서 ISO 주차 규칙 확정, 경계 주 테스트 |
 
 ## 5. 진행 현황 체크리스트
-- [ ] I-M0 회사 PC 설치 검증 → ◆G1 — **준비 완료(2026-10-22)**: `m0/` 검증 앱 + `.github/workflows/m0-windows-build.yml` + Release `m0-v0.0.1` + [m0-install-check.md](m0-install-check.md). 회사 PC 실측 대기
+- [x] I-M0 회사 PC 설치 검증 → **◆G1 GO** (2026-10-23, [overview.md 13절](overview.md)) — 관리자 권한·SmartScreen·백신 문제 없음, WebView2 있음, 사용자 폴더 SQLite 전 항목 통과. 재부팅 재실행만 후속 확인
 - [x] D1 화면 구성·와이어프레임 (2026-10-22, overview.md 10절 · wireframe-weekly-board.svg · wireframe-first-run.svg)
 - [x] D2 데이터 상세 스펙 (2026-10-22, data-spec.md — G1=GO 가정, 대안 매핑 8-3절)
 - [x] D3 산출물 스펙 (2026-10-22, output-spec.md + sample-export_2026-W42~W43.xlsx)
@@ -368,4 +368,4 @@ project-plan.md의 I-M4 항목을 읽고 클립보드 다리부터 구현해줘.
 - 설계 트랙 D1~D5를 한 세션에서 진행(사용자 요청: "첨부 내용을 분석해서 프로젝트 상세설계 진행"). 각 결정은 추천안으로 확정하고 근거를 문서에 남김 — 변경이 필요하면 해당 문서 절을 고치면 된다.
 - 프로젝트명 **Work Journey Board**, 구현 저장소 `work-journey-board`.
 - 결과 문서: overview.md 10절(화면)·11절(문서 목록·변경점)·12절(인계 명세), data-spec.md, output-spec.md(+엑셀 샘플), viz-spec.md, CLAUDE.md, 와이어프레임 SVG 3장.
-- 남은 일: **I-M0 → ◆G1** 판정 후 README 12-4의 1~3 반영 → I-M1 착수(시작 프롬프트는 3절 사용, 스펙 경로는 이 저장소 `docs/`).
+- ~~남은 일: I-M0 → ◆G1~~ → **G1 GO(2026-10-23), overview 12-4의 1~3 반영 완료** → I-M1 착수(시작 프롬프트는 3절 사용, 스펙 경로는 이 저장소 `docs/`).

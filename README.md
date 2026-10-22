@@ -7,7 +7,8 @@
 
 ## 상태
 - 상세설계 D1~D5 완료(2026-10-22) — 설계 저장소 [my-discussions](https://github.com/chs2147/my-discussions)에서 이 저장소로 이관. **이후 정본은 이 저장소.**
-- **I-M0 준비 완료**(2026-10-22): 검증 앱 [`m0/`](m0/) · 윈도우 빌드 워크플로 · [Releases](https://github.com/chs2147/work-journey-board/releases)의 설치 파일 · 절차 [docs/m0-install-check.md](docs/m0-install-check.md) → 회사 PC 실측 후 ◆G1 판정 → I-M1 핵심 기록
+- **I-M0 완료 · ◆G1 GO**(2026-10-23): 회사 PC에서 관리자 권한 없이 설치·실행, WebView2 있음, 사용자 폴더 SQLite 전 항목 통과 → Tauri 구조 확정 ([docs/overview.md 13절](docs/overview.md))
+- 다음: **I-M1 핵심 기록**
 
 ## 문서
 | 문서 | 내용 |

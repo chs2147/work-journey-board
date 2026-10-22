@@ -4,7 +4,7 @@
 
 > 설계 개요 문서 · 최초 작성: 2026-10-22 · **프로젝트명 확정: Work Journey Board** (2026-10-22)
 > 설계 논의 Work Log(이관 전): [my-discussions worklogs/2026-10-22.md](https://github.com/chs2147/my-discussions/blob/main/worklogs/2026-10-22.md)
-> 상태: **상세설계 완료(D1~D5) · 구현 저장소(이 저장소)로 이관 완료** · 다음: I-M0 회사 PC 설치 검증(◆G1)
+> 상태: **상세설계 완료(D1~D5) · ◆G1 GO(Tauri 확정, 2026-10-23)** · 다음: I-M1 핵심 기록
 > 총괄 요약 → **9절**, 구현 로드맵 → **8절**, 화면 구성 → **10절**, 상세 설계 문서 → **11절**, 인계 명세 → **12절**
 > **전체 진행 계획(작업 패키지·관문·세션 시작 프롬프트) → [project-plan.md](project-plan.md)**
 
@@ -302,11 +302,41 @@ docs/overview.md(본 문서: 요구사항·10절 화면) · data-spec.md · outp
 ### 12-4. 미해결 사항 (구현 단계에서 확인)
 | # | 항목 | 확인 시점 |
 |---|---|---|
-| 1 | ◆G1 판정(per-user 설치·SmartScreen/백신·WebView2·설치 파일 전달 경로) | I-M0 |
-| 2 | tauri-plugin-sql이 **사용자 선택 폴더의 절대 경로** DB를 여는지 — 안 되면 얇은 rusqlite 커맨드로 대체 | I-M0 (최소 앱에 포함) |
-| 3 | WebView2 설치 모드(`skip` vs `embedBootstrapper`) — 회사 PC에 WebView2가 있으면 `skip` | I-M0 |
+| 1 | ~~◆G1 판정~~ → ✅ **GO** (13절) | I-M0 완료 |
+| 2 | ~~plugin-sql 절대 경로~~ → ✅ **열림**, tauri-plugin-sql 유지(rusqlite 대체 불필요) | I-M0 완료 |
+| 3 | ~~WebView2 설치 모드~~ → ✅ 회사 PC에 WebView2 있음 → **`skip`** 확정 | I-M0 완료 |
 | 4 | AI API 모드(③)의 CSP·키 보관(윈도우 자격 증명 관리자) 방식 | I-M4, IT 승인 시 |
 | 5 | 회사 AI 웹 채팅에서 지시문 템플릿 실효성(분량·형식 준수) | I-M4 실사용 |
 | 6 | 입력 마찰 지점(단축키·자리표시자·자동 저장 지연) | ◆G2 |
 
 > **설계 확정 조건**: ◆G1 판정이 나오면(I-M0) 12-4의 1~3을 이 문서에 반영한다. G1이 "대안 전환"이면 data-spec 8-3절 구조로 12-1 스택을 갱신한다.
+
+## 13. I-M0 결과 · ◆G1 판정 (2026-10-23)
+
+> 회사 PC에서 `m0-v0.0.1`(WJB M0 Probe) 실측. 절차: [m0-install-check.md](m0-install-check.md). 사용자 이름·회사명은 `<사용자>`·`<회사>`로 가림(공개 저장소).
+
+### 13-1. 실측 결과
+| 항목 | 결과 |
+|---|---|
+| 설치 파일 전달 | ✅ GitHub Release에서 바로 다운로드 |
+| 관리자 권한 | ✅ 권한 요청 없이 설치 (`C:\Users\<사용자>\AppData\Local\WJB M0 Probe\`) |
+| SmartScreen / 사내 백신 | ✅ 경고 없음 / 반응 없음 |
+| WebView2 | ✅ 155.0.4283.62 |
+| OneDrive | ⚠️ `OneDrive`·`OneDriveCommercial` = `C:\Users\<사용자>\OneDrive - <회사>` — **"문서" 폴더가 OneDrive로 리디렉션됨** |
+| 저장 폴더 테스트 (`D:\work_logs`) | ✅ 파일 쓰기·읽기 · backups 생성 · SQLite 절대 경로 열기 · journal_mode `delete` 유지 · 한글 저장 · VACUUM INTO 백업 |
+| 재부팅 후 재실행 | ⏳ 미확인(후속 확인 — 판정에 영향 없음, 아래 13-3) |
+
+### 13-2. ◆G1 판정: **GO (Tauri 확정)**
+- 기술 구조(5-1절)·스택(12-1절)·저장 방식(data-spec)을 **변경 없이 확정**.
+- `tauri.conf.json`: `bundle.windows.webviewInstallMode = { "type": "skip" }`, NSIS `installMode = "currentUser"`.
+- 저장 계층: `tauri-plugin-sql` 그대로 사용(사용자 선택 폴더 절대 경로 동작 확인).
+- 릴리스 전달: GitHub Releases 다운로드로 충분(대체 경로 불필요).
+
+### 13-3. 설계에 반영할 발견 사항
+| # | 발견 | 반영 |
+|---|---|---|
+| 1 | 회사 PC "문서" 폴더가 실제로 OneDrive 리디렉션 상태 | 첫 실행 OneDrive 경고(10-8절)가 **필수 기능**임을 확인. 감지 로직(환경 변수 접두어 + `\OneDrive` 포함)이 실제 경로에서 정상 동작 |
+| 2 | 회사 PC에 **D: 드라이브**가 있고 사용자가 `D:\work_logs`를 저장 위치로 선택 | 첫 실행 추천 폴더는 기본 `C:\Users\<사용자>\WorkJourney` 유지. D: 등 OneDrive 밖 다른 드라이브도 정상 동작 확인 |
+| 3 | M0 앱은 백업 파일명 시각을 UTC로 만들어 로컬보다 9시간 이른 시각이 찍힘(`…_20261022233032.db`, 실제 10/23 08:30) | **백업·내보내기 파일명의 날짜·시각은 로컬 시각 기준**으로 명시(data-spec 7-2) |
+| 4 | 재부팅 후 재실행 미확인 | per-user 설치 + `%LOCALAPPDATA%` 기록이라 위험 낮음. 다음 출근 때 M0 앱을 한 번 더 열어 실행 횟수 2 확인(I-M1 진행과 병행) |
+
