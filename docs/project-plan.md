@@ -323,7 +323,7 @@ project-plan.md의 I-M4 항목을 읽고 클립보드 다리부터 구현해줘.
 | 연말·연초 주차 경계 오류 | 보드·엑셀 | D2에서 ISO 주차 규칙 확정, 경계 주 테스트 |
 
 ## 5. 진행 현황 체크리스트
-- [ ] I-M0 회사 PC 설치 검증 → ◆G1
+- [ ] I-M0 회사 PC 설치 검증 → ◆G1 — **준비 완료(2026-10-22)**: `m0/` 검증 앱 + `.github/workflows/m0-windows-build.yml` + Release `m0-v0.0.1` + [m0-install-check.md](m0-install-check.md). 회사 PC 실측 대기
 - [x] D1 화면 구성·와이어프레임 (2026-10-22, overview.md 10절 · wireframe-weekly-board.svg · wireframe-first-run.svg)
 - [x] D2 데이터 상세 스펙 (2026-10-22, data-spec.md — G1=GO 가정, 대안 매핑 8-3절)
 - [x] D3 산출물 스펙 (2026-10-22, output-spec.md + sample-export_2026-W42~W43.xlsx)

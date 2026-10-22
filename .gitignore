@@ -1,0 +1,11 @@
+node_modules/
+dist/
+target/
+**/src-tauri/gen/
+*.db
+*.db-journal
+backups/
+exports/
+*.xlsx
+!docs/samples/*.xlsx
+!fixtures/**/*.xlsx

@@ -7,7 +7,7 @@
 
 ## 상태
 - 상세설계 D1~D5 완료(2026-10-22) — 설계 저장소 [my-discussions](https://github.com/chs2147/my-discussions)에서 이 저장소로 이관. **이후 정본은 이 저장소.**
-- 다음: **I-M0 회사 PC 설치 검증 → ◆G1 판정** → I-M1 핵심 기록
+- **I-M0 준비 완료**(2026-10-22): 검증 앱 [`m0/`](m0/) · 윈도우 빌드 워크플로 · [Releases](https://github.com/chs2147/work-journey-board/releases)의 설치 파일 · 절차 [docs/m0-install-check.md](docs/m0-install-check.md) → 회사 PC 실측 후 ◆G1 판정 → I-M1 핵심 기록
 
 ## 문서
 | 문서 | 내용 |
@@ -16,6 +16,7 @@
 | [docs/data-spec.md](docs/data-spec.md) | ISO 주차 · 스키마 SQL · 카테고리 활성/무기록 규칙 · 삭제 · 백업 · 저장소 인터페이스 |
 | [docs/output-spec.md](docs/output-spec.md) | 주간 자동 집계 · 엑셀 2시트 양식 · 내보내기 UX · AI 클립보드 지시문 |
 | [docs/viz-spec.md](docs/viz-spec.md) | 경과 타임라인 · 활동 히트맵 · 기간 막대 · 주별 비중 · 업무 색 팔레트 |
+| [docs/m0-install-check.md](docs/m0-install-check.md) | I-M0 회사 PC 설치 검증 절차 · ◆G1 판정 기준 |
 | [docs/project-plan.md](docs/project-plan.md) | 작업 패키지 · 관문(G1/G2) · 마일스톤 I-M0~M5 · 세션 시작 프롬프트 |
 | [docs/wireframes/](docs/wireframes/) | 주간 보드 · 첫 실행/연간 보기 · 인사이트 와이어프레임 |
 | [docs/samples/](docs/samples/) | 엑셀 내보내기 샘플(가상 데이터) |

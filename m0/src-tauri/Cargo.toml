@@ -1,0 +1,20 @@
+[package]
+name = "wjb-m0-probe"
+version = "0.0.1"
+description = "Work Journey Board M0 - 회사 PC 설치 검증용 최소 앱"
+edition = "2021"
+
+[lib]
+name = "wjb_m0_probe_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-sql = { version = "2", features = ["sqlite"] }
+tauri-plugin-dialog = "2"
+tauri-plugin-clipboard-manager = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
