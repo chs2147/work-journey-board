@@ -1,0 +1,722 @@
+<svg viewBox="0 0 1400 690" xmlns="http://www.w3.org/2000/svg" role="img" font-family="system-ui, -apple-system, 'Segoe UI', 'Malgun Gothic', sans-serif">
+<title>Work Journey Board 인사이트 화면 와이어프레임 — 활동 개요와 경과 타임라인</title>
+<desc>왼쪽: 활동 개요 탭(필터 한 줄, 최근 12주 활동 히트맵, 업무 기간 막대, 주별 업무 비중 100% 누적 막대). 오른쪽: 경과 타임라인 탭(업무 목록과 선택 업무의 주차별 기록, 무기록 주 접기, 오래된 달 접기).</desc>
+<style>
+ .t{fill:#2c2c2a} .ts{fill:#5f5e5a} .tm{fill:#8a8983}
+ .page{fill:#faf9f5} .card{fill:#ffffff} .sub{fill:#f1efe8}
+ .bd{stroke:#d3d1c7;fill:none} .bds{stroke:#b4b2a9;fill:none}
+ .btn{fill:#ffffff;stroke:#b4b2a9} .btnp{fill:#185fa5;stroke:#185fa5} .btnpt{fill:#ffffff}
+ .grid{stroke:#e6e4dc}
+ .call{fill:#d85a30} .callt{fill:#ffffff}
+</style>
+<rect x="0" y="0" width="1400" height="690" rx="0" class="page"/>
+<rect x="20" y="20" width="920" height="650" rx="12" class="card"/>
+<rect x="20" y="20" width="920" height="650" rx="12" class="bds"/>
+<text class="t" x="40" y="52" font-size="16" font-weight="700">인사이트</text>
+<rect x="140" y="32" width="240" height="30" rx="6" class="btn"/>
+<rect x="260" y="32" width="120" height="30" rx="6" class="btnp"/>
+<text class="t" x="200" y="52" font-size="12" text-anchor="middle">경과 타임라인</text>
+<text class="btnpt" x="320" y="52" font-size="12" text-anchor="middle">활동 개요</text>
+<rect x="40" y="74" width="880" height="36" rx="6" class="sub"/>
+<text class="ts" x="52" y="97" font-size="12">기간</text>
+<rect x="84" y="80" width="110" height="24" rx="4" class="btn"/>
+<text class="t" x="94" y="97" font-size="12">최근 12주 ▾</text>
+<text class="ts" x="210" y="97" font-size="12">업무</text>
+<rect x="242" y="80" width="110" height="24" rx="4" class="btn"/>
+<text class="t" x="252" y="97" font-size="12">전체 5개 ▾</text>
+<rect x="370" y="85" width="14" height="14" rx="3" class="btnp"/>
+<text class="btnpt" x="377" y="96" font-size="10" text-anchor="middle">✓</text>
+<text class="t" x="390" y="97" font-size="12">종료 업무 포함</text>
+<text class="ts" x="910" y="97" font-size="12" text-anchor="end">2026-W32 ~ W43</text>
+<text class="t" x="40" y="130" font-size="14" font-weight="700">활동 히트맵</text>
+<text class="ts" x="140" y="130" font-size="11">칸 = 그날 본 항목 수</text>
+<rect x="790" y="114" width="130" height="24" rx="4" class="btn"/>
+<rect x="790" y="114" width="65" height="24" rx="4" class="btnp"/>
+<text class="btnpt" x="823" y="130" font-size="11" text-anchor="middle">12주</text>
+<text class="t" x="888" y="130" font-size="11" text-anchor="middle">연간</text>
+<text class="tm" x="192" y="152" font-size="9">W32</text>
+<text class="tm" x="254" y="152" font-size="9">W33</text>
+<text class="tm" x="316" y="152" font-size="9">W34</text>
+<text class="tm" x="378" y="152" font-size="9">W35</text>
+<text class="tm" x="440" y="152" font-size="9">W36</text>
+<text class="tm" x="502" y="152" font-size="9">W37</text>
+<text class="tm" x="564" y="152" font-size="9">W38</text>
+<text class="tm" x="626" y="152" font-size="9">W39</text>
+<text class="tm" x="688" y="152" font-size="9">W40</text>
+<text class="tm" x="750" y="152" font-size="9">W41</text>
+<text class="tm" x="812" y="152" font-size="9">W42</text>
+<text class="tm" x="874" y="152" font-size="9">W43</text>
+<circle cx="48" cy="168" r="4" fill="#2a78d6"/>
+<text class="t" x="58" y="172" font-size="11">차세대 정산 시스템 구축</text>
+<rect x="190.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="200.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="210.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="220.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="230.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="240.0" y="160.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="246.0" y="160.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="252.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="262.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="272.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="282.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="292.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="302.0" y="160.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="308.0" y="160.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="314.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="324.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="334.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="344.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="354.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="364.0" y="160.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="370.0" y="160.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="376.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="386.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="396.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="406.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="416.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="426.0" y="160.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="432.0" y="160.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="438.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="448.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="458.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="468.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="478.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="488.0" y="160.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="494.0" y="160.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="500.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="510.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="520.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="530.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="540.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="550.0" y="160.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="556.0" y="160.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="562.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#cde2fb"/>
+<rect x="572.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#86b6ef"/>
+<rect x="582.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#86b6ef"/>
+<rect x="592.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#cde2fb"/>
+<rect x="602.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#cde2fb"/>
+<rect x="612.0" y="160.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="618.0" y="160.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="624.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#86b6ef"/>
+<rect x="634.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#86b6ef"/>
+<rect x="644.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#3987e5"/>
+<rect x="654.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#86b6ef"/>
+<rect x="664.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="674.0" y="160.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="680.0" y="160.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="686.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="696.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="706.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="716.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="726.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="736.0" y="160.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="742.0" y="160.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="748.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="758.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="768.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="778.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="788.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="798.0" y="160.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="804.0" y="160.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="810.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#86b6ef"/>
+<rect x="820.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="830.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#1c5cab"/>
+<rect x="840.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#86b6ef"/>
+<rect x="850.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#cde2fb"/>
+<rect x="860.0" y="160.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="866.0" y="160.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="872.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#86b6ef"/>
+<rect x="882.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#cde2fb"/>
+<rect x="892.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#cde2fb"/>
+<rect x="902.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#3987e5"/>
+<rect x="912.0" y="160.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="922.0" y="160.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="928.0" y="160.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<circle cx="48" cy="188" r="4" fill="#eb6834"/>
+<text class="t" x="58" y="192" font-size="11">협력사 보안 점검</text>
+<rect x="190.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#86b6ef"/>
+<rect x="200.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#1c5cab"/>
+<rect x="210.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#86b6ef"/>
+<rect x="220.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#86b6ef"/>
+<rect x="230.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#86b6ef"/>
+<rect x="240.0" y="180.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="246.0" y="180.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="252.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#3987e5"/>
+<rect x="262.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#1c5cab"/>
+<rect x="272.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#cde2fb"/>
+<rect x="282.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#cde2fb"/>
+<rect x="292.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#3987e5"/>
+<rect x="302.0" y="180.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="308.0" y="180.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="314.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#cde2fb"/>
+<rect x="324.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#1c5cab"/>
+<rect x="334.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#86b6ef"/>
+<rect x="344.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#86b6ef"/>
+<rect x="354.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#3987e5"/>
+<rect x="364.0" y="180.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="370.0" y="180.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="376.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="386.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#3987e5"/>
+<rect x="396.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#1c5cab"/>
+<rect x="406.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="416.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#cde2fb"/>
+<rect x="426.0" y="180.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="432.0" y="180.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="438.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#1c5cab"/>
+<rect x="448.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#86b6ef"/>
+<rect x="458.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="468.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#cde2fb"/>
+<rect x="478.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#1c5cab"/>
+<rect x="488.0" y="180.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="494.0" y="180.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="500.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="510.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#1c5cab"/>
+<rect x="520.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#1c5cab"/>
+<rect x="530.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#cde2fb"/>
+<rect x="540.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#86b6ef"/>
+<rect x="550.0" y="180.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="556.0" y="180.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="562.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#86b6ef"/>
+<rect x="572.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#3987e5"/>
+<rect x="582.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#86b6ef"/>
+<rect x="592.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#3987e5"/>
+<rect x="602.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#1c5cab"/>
+<rect x="612.0" y="180.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="618.0" y="180.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="624.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#86b6ef"/>
+<rect x="634.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#86b6ef"/>
+<rect x="644.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#3987e5"/>
+<rect x="654.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#1c5cab"/>
+<rect x="664.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#86b6ef"/>
+<rect x="674.0" y="180.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="680.0" y="180.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="686.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#86b6ef"/>
+<rect x="696.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#cde2fb"/>
+<rect x="706.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#cde2fb"/>
+<rect x="716.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="726.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="736.0" y="180.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="742.0" y="180.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="748.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#cde2fb"/>
+<rect x="758.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#86b6ef"/>
+<rect x="768.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#cde2fb"/>
+<rect x="778.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#cde2fb"/>
+<rect x="788.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#3987e5"/>
+<rect x="798.0" y="180.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="804.0" y="180.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="810.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#86b6ef"/>
+<rect x="820.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#1c5cab"/>
+<rect x="830.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#3987e5"/>
+<rect x="840.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#1c5cab"/>
+<rect x="850.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#cde2fb"/>
+<rect x="860.0" y="180.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="866.0" y="180.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="872.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#86b6ef"/>
+<rect x="882.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#86b6ef"/>
+<rect x="892.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#1c5cab"/>
+<rect x="902.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#86b6ef"/>
+<rect x="912.0" y="180.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="922.0" y="180.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="928.0" y="180.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<circle cx="48" cy="208" r="4" fill="#1baf7a"/>
+<text class="t" x="58" y="212" font-size="11">사내 데이터 대시보드</text>
+<rect x="190.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#cde2fb"/>
+<rect x="200.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#86b6ef"/>
+<rect x="210.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="220.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#cde2fb"/>
+<rect x="230.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="240.0" y="200.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="246.0" y="200.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="252.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="262.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="272.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="282.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="292.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="302.0" y="200.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="308.0" y="200.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="314.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#cde2fb"/>
+<rect x="324.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="334.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#cde2fb"/>
+<rect x="344.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="354.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="364.0" y="200.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="370.0" y="200.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="376.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="386.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="396.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="406.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="416.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="426.0" y="200.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="432.0" y="200.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="438.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#cde2fb"/>
+<rect x="448.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#cde2fb"/>
+<rect x="458.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="468.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="478.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#86b6ef"/>
+<rect x="488.0" y="200.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="494.0" y="200.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="500.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="510.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="520.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="530.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="540.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="550.0" y="200.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="556.0" y="200.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="562.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#86b6ef"/>
+<rect x="572.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="582.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#cde2fb"/>
+<rect x="592.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="602.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#86b6ef"/>
+<rect x="612.0" y="200.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="618.0" y="200.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="624.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="634.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="644.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="654.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="664.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="674.0" y="200.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="680.0" y="200.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="686.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="696.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="706.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#cde2fb"/>
+<rect x="716.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#86b6ef"/>
+<rect x="726.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#86b6ef"/>
+<rect x="736.0" y="200.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="742.0" y="200.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="748.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="758.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="768.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="778.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="788.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="798.0" y="200.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="804.0" y="200.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="810.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="820.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="830.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="840.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#86b6ef"/>
+<rect x="850.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#cde2fb"/>
+<rect x="860.0" y="200.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="866.0" y="200.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="872.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="882.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="892.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="902.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="912.0" y="200.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="922.0" y="200.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="928.0" y="200.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<circle cx="48" cy="228" r="4" fill="#eda100"/>
+<text class="t" x="58" y="232" font-size="11">신규 입사자 온보딩</text>
+<rect x="190.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="200.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="210.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="220.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="230.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="240.0" y="220.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="246.0" y="220.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="252.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="262.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="272.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="282.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="292.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="302.0" y="220.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="308.0" y="220.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="314.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="324.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="334.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="344.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="354.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="364.0" y="220.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="370.0" y="220.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="376.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="386.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="396.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="406.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="416.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="426.0" y="220.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="432.0" y="220.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="438.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="448.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="458.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="468.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="478.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="488.0" y="220.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="494.0" y="220.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="500.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="510.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="520.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="530.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="540.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="550.0" y="220.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="556.0" y="220.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="562.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="572.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="582.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="592.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="602.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="612.0" y="220.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="618.0" y="220.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="624.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="634.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="644.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="654.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="664.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="674.0" y="220.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="680.0" y="220.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="686.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="696.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="706.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="716.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="726.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="736.0" y="220.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="742.0" y="220.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="748.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#86b6ef"/>
+<rect x="758.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#cde2fb"/>
+<rect x="768.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#86b6ef"/>
+<rect x="778.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#cde2fb"/>
+<rect x="788.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="798.0" y="220.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="804.0" y="220.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="810.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#cde2fb"/>
+<rect x="820.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="830.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="840.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="850.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#86b6ef"/>
+<rect x="860.0" y="220.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="866.0" y="220.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="872.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#86b6ef"/>
+<rect x="882.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="892.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#cde2fb"/>
+<rect x="902.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#86b6ef"/>
+<rect x="912.0" y="220.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="922.0" y="220.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="928.0" y="220.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<circle cx="48" cy="248" r="4" fill="#e87ba4"/>
+<text class="t" x="58" y="252" font-size="11">레거시 문서 정리</text>
+<rect x="190.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="200.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="210.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="220.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="230.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="240.0" y="240.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="246.0" y="240.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="252.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="262.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="272.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="282.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="292.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="302.0" y="240.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="308.0" y="240.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="314.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="324.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="334.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="344.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="354.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="364.0" y="240.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="370.0" y="240.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="376.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="386.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="396.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="406.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="416.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="426.0" y="240.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="432.0" y="240.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="438.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="448.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="458.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="468.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="478.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="488.0" y="240.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="494.0" y="240.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="500.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="510.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="520.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="530.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="540.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="550.0" y="240.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="556.0" y="240.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="562.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="572.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="582.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="592.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="602.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="612.0" y="240.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="618.0" y="240.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="624.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="634.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="644.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="654.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="664.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="674.0" y="240.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="680.0" y="240.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="686.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="696.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="706.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="716.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="726.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="736.0" y="240.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="742.0" y="240.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="748.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="758.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="768.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="778.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="788.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="798.0" y="240.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="804.0" y="240.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="810.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="820.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="830.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="840.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="850.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="860.0" y="240.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="866.0" y="240.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="872.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="882.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="892.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="902.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="912.0" y="240.0" width="8.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="922.0" y="240.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<rect x="928.0" y="240.0" width="4.0" height="16.0" rx="2" fill="#efeee9"/>
+<path d="M906 156 l-4 -5 h8 z" fill="#d85a30"/>
+<text class="ts" x="190" y="284" font-size="10">적음</text>
+<rect x="220.0" y="274.0" width="12.0" height="12.0" rx="2" fill="#efeee9"/>
+<rect x="236.0" y="274.0" width="12.0" height="12.0" rx="2" fill="#cde2fb"/>
+<rect x="252.0" y="274.0" width="12.0" height="12.0" rx="2" fill="#86b6ef"/>
+<rect x="268.0" y="274.0" width="12.0" height="12.0" rx="2" fill="#3987e5"/>
+<rect x="284.0" y="274.0" width="12.0" height="12.0" rx="2" fill="#1c5cab"/>
+<text class="ts" x="306" y="284" font-size="10">많음  (0 · 1 · 2~3 · 4~5 · 6+)</text>
+<text class="ts" x="910" y="284" font-size="10" text-anchor="end">[표로 보기]</text>
+<text class="t" x="40" y="318" font-size="14" font-weight="700">업무 기간 막대</text>
+<text class="ts" x="150" y="318" font-size="11">올해(2026) 고정</text>
+<line x1="170.0" y1="332" x2="170.0" y2="482" class="grid"/>
+<text class="tm" x="172.0" y="496" font-size="9">1월</text>
+<line x1="216.9" y1="332" x2="216.9" y2="482" class="grid"/>
+<text class="tm" x="218.87671232876713" y="496" font-size="9">3월</text>
+<line x1="265.3" y1="332" x2="265.3" y2="482" class="grid"/>
+<text class="tm" x="267.3424657534247" y="496" font-size="9">5월</text>
+<line x1="313.8" y1="332" x2="313.8" y2="482" class="grid"/>
+<text class="tm" x="315.8082191780822" y="496" font-size="9">7월</text>
+<line x1="363.1" y1="332" x2="363.1" y2="482" class="grid"/>
+<text class="tm" x="365.06849315068496" y="496" font-size="9">9월</text>
+<line x1="411.5" y1="332" x2="411.5" y2="482" class="grid"/>
+<text class="tm" x="413.5342465753425" y="496" font-size="9">11월</text>
+<circle cx="48" cy="346" r="4" fill="#2a78d6"/>
+<text class="t" x="58" y="350" font-size="11">차세대 정산 시스…</text>
+<rect x="373.4" y="340.0" width="30.2" height="12.0" rx="4" fill="#2a78d6" fill-opacity="0.22"/>
+<rect x="373.4" y="340.0" width="4.6" height="12.0" rx="1" fill="#2a78d6"/>
+<rect x="379.0" y="340.0" width="4.6" height="12.0" rx="1" fill="#2a78d6"/>
+<rect x="384.5" y="340.0" width="4.6" height="12.0" rx="1" fill="#2a78d6"/>
+<rect x="395.6" y="340.0" width="4.6" height="12.0" rx="1" fill="#2a78d6"/>
+<path d="M405.6 340 l6 6 l-6 6 z" fill="#2a78d6"/>
+<circle cx="48" cy="376" r="4" fill="#eb6834"/>
+<text class="t" x="58" y="380" font-size="11">협력사 보안 점검</text>
+<rect x="340.0" y="370.0" width="63.6" height="12.0" rx="4" fill="#eb6834" fill-opacity="0.22"/>
+<rect x="345.6" y="370.0" width="4.6" height="12.0" rx="1" fill="#eb6834"/>
+<rect x="351.2" y="370.0" width="4.6" height="12.0" rx="1" fill="#eb6834"/>
+<rect x="356.7" y="370.0" width="4.6" height="12.0" rx="1" fill="#eb6834"/>
+<rect x="362.3" y="370.0" width="4.6" height="12.0" rx="1" fill="#eb6834"/>
+<rect x="367.8" y="370.0" width="4.6" height="12.0" rx="1" fill="#eb6834"/>
+<rect x="373.4" y="370.0" width="4.6" height="12.0" rx="1" fill="#eb6834"/>
+<rect x="379.0" y="370.0" width="4.6" height="12.0" rx="1" fill="#eb6834"/>
+<rect x="390.1" y="370.0" width="4.6" height="12.0" rx="1" fill="#eb6834"/>
+<rect x="395.6" y="370.0" width="4.6" height="12.0" rx="1" fill="#eb6834"/>
+<rect x="401.2" y="370.0" width="4.6" height="12.0" rx="1" fill="#eb6834"/>
+<path d="M405.6 370 l6 6 l-6 6 z" fill="#eb6834"/>
+<circle cx="48" cy="406" r="4" fill="#1baf7a"/>
+<text class="t" x="58" y="410" font-size="11">사내 데이터 대시…</text>
+<rect x="317.8" y="400.0" width="85.8" height="12.0" rx="4" fill="#1baf7a" fill-opacity="0.22"/>
+<rect x="317.8" y="400.0" width="4.6" height="12.0" rx="1" fill="#1baf7a"/>
+<rect x="323.3" y="400.0" width="4.6" height="12.0" rx="1" fill="#1baf7a"/>
+<rect x="334.5" y="400.0" width="4.6" height="12.0" rx="1" fill="#1baf7a"/>
+<rect x="340.0" y="400.0" width="4.6" height="12.0" rx="1" fill="#1baf7a"/>
+<rect x="345.6" y="400.0" width="4.6" height="12.0" rx="1" fill="#1baf7a"/>
+<rect x="351.2" y="400.0" width="4.6" height="12.0" rx="1" fill="#1baf7a"/>
+<rect x="356.7" y="400.0" width="4.6" height="12.0" rx="1" fill="#1baf7a"/>
+<rect x="362.3" y="400.0" width="4.6" height="12.0" rx="1" fill="#1baf7a"/>
+<rect x="367.8" y="400.0" width="4.6" height="12.0" rx="1" fill="#1baf7a"/>
+<rect x="373.4" y="400.0" width="4.6" height="12.0" rx="1" fill="#1baf7a"/>
+<rect x="379.0" y="400.0" width="4.6" height="12.0" rx="1" fill="#1baf7a"/>
+<rect x="384.5" y="400.0" width="4.6" height="12.0" rx="1" fill="#1baf7a"/>
+<rect x="390.1" y="400.0" width="4.6" height="12.0" rx="1" fill="#1baf7a"/>
+<rect x="395.6" y="400.0" width="4.6" height="12.0" rx="1" fill="#1baf7a"/>
+<rect x="401.2" y="400.0" width="4.6" height="12.0" rx="1" fill="#1baf7a"/>
+<path d="M405.6 400 l6 6 l-6 6 z" fill="#1baf7a"/>
+<circle cx="48" cy="436" r="4" fill="#eda100"/>
+<text class="t" x="58" y="440" font-size="11">신규 입사자 온보…</text>
+<rect x="217.7" y="430.0" width="95.3" height="12.0" rx="4" fill="#eda100" fill-opacity="0.22"/>
+<rect x="217.7" y="430.0" width="4.6" height="12.0" rx="1" fill="#eda100"/>
+<rect x="223.2" y="430.0" width="4.6" height="12.0" rx="1" fill="#eda100"/>
+<rect x="228.8" y="430.0" width="4.6" height="12.0" rx="1" fill="#eda100"/>
+<rect x="234.4" y="430.0" width="4.6" height="12.0" rx="1" fill="#eda100"/>
+<rect x="239.9" y="430.0" width="4.6" height="12.0" rx="1" fill="#eda100"/>
+<rect x="251.0" y="430.0" width="4.6" height="12.0" rx="1" fill="#eda100"/>
+<rect x="256.6" y="430.0" width="4.6" height="12.0" rx="1" fill="#eda100"/>
+<rect x="262.2" y="430.0" width="4.6" height="12.0" rx="1" fill="#eda100"/>
+<rect x="267.7" y="430.0" width="4.6" height="12.0" rx="1" fill="#eda100"/>
+<rect x="273.3" y="430.0" width="4.6" height="12.0" rx="1" fill="#eda100"/>
+<rect x="278.8" y="430.0" width="4.6" height="12.0" rx="1" fill="#eda100"/>
+<rect x="284.4" y="430.0" width="4.6" height="12.0" rx="1" fill="#eda100"/>
+<rect x="290.0" y="430.0" width="4.6" height="12.0" rx="1" fill="#eda100"/>
+<rect x="295.5" y="430.0" width="4.6" height="12.0" rx="1" fill="#eda100"/>
+<rect x="301.1" y="430.0" width="4.6" height="12.0" rx="1" fill="#eda100"/>
+<rect x="312.2" y="430.0" width="4.6" height="12.0" rx="1" fill="#eda100"/>
+<rect x="390.1" y="430.0" width="13.5" height="12.0" rx="4" fill="#eda100" fill-opacity="0.22"/>
+<rect x="390.1" y="430.0" width="4.6" height="12.0" rx="1" fill="#eda100"/>
+<rect x="395.6" y="430.0" width="4.6" height="12.0" rx="1" fill="#eda100"/>
+<rect x="401.2" y="430.0" width="4.6" height="12.0" rx="1" fill="#eda100"/>
+<path d="M405.6 430 l6 6 l-6 6 z" fill="#eda100"/>
+<circle cx="48" cy="466" r="4" fill="#e87ba4"/>
+<text class="ts" x="58" y="470" font-size="11">레거시 문서 정리</text>
+<rect x="173.2" y="460.0" width="114.4" height="12.0" rx="4" fill="#e87ba4" fill-opacity="0.22"/>
+<rect x="173.2" y="460.0" width="4.6" height="12.0" rx="1" fill="#e87ba4"/>
+<rect x="184.3" y="460.0" width="4.6" height="12.0" rx="1" fill="#e87ba4"/>
+<rect x="189.9" y="460.0" width="4.6" height="12.0" rx="1" fill="#e87ba4"/>
+<rect x="195.4" y="460.0" width="4.6" height="12.0" rx="1" fill="#e87ba4"/>
+<rect x="201.0" y="460.0" width="4.6" height="12.0" rx="1" fill="#e87ba4"/>
+<rect x="206.5" y="460.0" width="4.6" height="12.0" rx="1" fill="#e87ba4"/>
+<rect x="212.1" y="460.0" width="4.6" height="12.0" rx="1" fill="#e87ba4"/>
+<rect x="217.7" y="460.0" width="4.6" height="12.0" rx="1" fill="#e87ba4"/>
+<rect x="228.8" y="460.0" width="4.6" height="12.0" rx="1" fill="#e87ba4"/>
+<rect x="239.9" y="460.0" width="4.6" height="12.0" rx="1" fill="#e87ba4"/>
+<rect x="245.5" y="460.0" width="4.6" height="12.0" rx="1" fill="#e87ba4"/>
+<rect x="251.0" y="460.0" width="4.6" height="12.0" rx="1" fill="#e87ba4"/>
+<rect x="262.2" y="460.0" width="4.6" height="12.0" rx="1" fill="#e87ba4"/>
+<rect x="267.7" y="460.0" width="4.6" height="12.0" rx="1" fill="#e87ba4"/>
+<rect x="273.3" y="460.0" width="4.6" height="12.0" rx="1" fill="#e87ba4"/>
+<rect x="278.8" y="460.0" width="4.6" height="12.0" rx="1" fill="#e87ba4"/>
+<rect x="284.4" y="460.0" width="4.6" height="12.0" rx="1" fill="#e87ba4"/>
+<line x1="403.6" y1="328" x2="403.6" y2="482" stroke="#d85a30" stroke-dasharray="3 3"/>
+<text class="ts" x="403.5890410958904" y="326" font-size="9" text-anchor="middle">오늘</text>
+<text class="ts" x="40" y="516" font-size="10">옅은 막대 = 활성 구간 · 진한 눈금 = 기록한 주 · ▸ 진행 중</text>
+<text class="t" x="500" y="318" font-size="14" font-weight="700">주별 업무 비중</text>
+<text class="ts" x="600" y="318" font-size="11">기록한 날 수 기준 · 시간 투입 아님</text>
+<rect x="810" y="302" width="110" height="24" rx="4" class="btn"/>
+<rect x="500" y="302" width="0" height="0" rx="6" class="btn"/>
+<rect x="810" y="302" width="55" height="24" rx="4" class="btnp"/>
+<text class="btnpt" x="838" y="318" font-size="11" text-anchor="middle">비율</text>
+<text class="t" x="892" y="318" font-size="11" text-anchor="middle">일수</text>
+<circle cx="504" cy="338" r="4" fill="#2a78d6"/>
+<text class="ts" x="512" y="342" font-size="10">정산</text>
+<circle cx="582" cy="338" r="4" fill="#eb6834"/>
+<text class="ts" x="590" y="342" font-size="10">점검</text>
+<circle cx="660" cy="338" r="4" fill="#1baf7a"/>
+<text class="ts" x="668" y="342" font-size="10">대시보드</text>
+<circle cx="738" cy="338" r="4" fill="#eda100"/>
+<text class="ts" x="746" y="342" font-size="10">온보딩</text>
+<line x1="500" y1="508" x2="920" y2="508" stroke="#b4b2a9"/>
+<rect x="503.0" y="409.0" width="27.3" height="98.0" rx="2" fill="#eb6834"/>
+<rect x="503.0" y="359.0" width="27.3" height="48.0" rx="2" fill="#1baf7a"/>
+<text class="tm" x="516.6666666666666" y="522" font-size="9" text-anchor="middle">W32</text>
+<rect x="536.3" y="419.0" width="27.3" height="88.0" rx="2" fill="#eb6834"/>
+<rect x="536.3" y="359.0" width="27.3" height="58.0" rx="2" fill="#1baf7a"/>
+<text class="tm" x="550.0" y="522" font-size="9" text-anchor="middle">W33</text>
+<rect x="569.7" y="459.0" width="27.3" height="48.0" rx="2" fill="#eb6834"/>
+<rect x="569.7" y="359.0" width="27.3" height="98.0" rx="2" fill="#1baf7a"/>
+<text class="tm" x="583.3333333333333" y="522" font-size="9" text-anchor="middle">W34</text>
+<rect x="603.0" y="419.0" width="27.3" height="88.0" rx="2" fill="#eb6834"/>
+<rect x="603.0" y="359.0" width="27.3" height="58.0" rx="2" fill="#1baf7a"/>
+<text class="tm" x="616.6666666666666" y="522" font-size="9" text-anchor="middle">W35</text>
+<rect x="636.3" y="409.0" width="27.3" height="98.0" rx="2" fill="#eb6834"/>
+<rect x="636.3" y="359.0" width="27.3" height="48.0" rx="2" fill="#1baf7a"/>
+<text class="tm" x="650.0" y="522" font-size="9" text-anchor="middle">W36</text>
+<rect x="669.7" y="419.0" width="27.3" height="88.0" rx="2" fill="#eb6834"/>
+<rect x="669.7" y="359.0" width="27.3" height="58.0" rx="2" fill="#1baf7a"/>
+<text class="tm" x="683.3333333333334" y="522" font-size="9" text-anchor="middle">W37</text>
+<rect x="703.0" y="442.3" width="27.3" height="64.7" rx="2" fill="#2a78d6"/>
+<rect x="703.0" y="375.7" width="27.3" height="64.7" rx="2" fill="#eb6834"/>
+<rect x="703.0" y="359.0" width="27.3" height="14.7" rx="2" fill="#1baf7a"/>
+<text class="tm" x="716.6666666666666" y="522" font-size="9" text-anchor="middle">W38</text>
+<rect x="736.3" y="425.7" width="27.3" height="81.3" rx="2" fill="#2a78d6"/>
+<rect x="736.3" y="375.7" width="27.3" height="48.0" rx="2" fill="#eb6834"/>
+<rect x="736.3" y="359.0" width="27.3" height="14.7" rx="2" fill="#1baf7a"/>
+<text class="tm" x="750.0" y="522" font-size="9" text-anchor="middle">W39</text>
+<rect x="769.7" y="359.0" width="27.3" height="148.0" rx="2" fill="#eb6834"/>
+<text class="tm" x="783.3333333333334" y="522" font-size="9" text-anchor="middle">W40</text>
+<rect x="803.0" y="389.0" width="27.3" height="118.0" rx="2" fill="#eb6834"/>
+<rect x="803.0" y="359.0" width="27.3" height="28.0" rx="2" fill="#eda100"/>
+<text class="tm" x="816.6666666666666" y="522" font-size="9" text-anchor="middle">W41</text>
+<rect x="836.3" y="481.7" width="27.3" height="25.3" rx="2" fill="#2a78d6"/>
+<rect x="836.3" y="427.2" width="27.3" height="52.5" rx="2" fill="#eb6834"/>
+<rect x="836.3" y="399.9" width="27.3" height="25.3" rx="2" fill="#1baf7a"/>
+<rect x="836.3" y="359.0" width="27.3" height="38.9" rx="2" fill="#eda100"/>
+<text class="tm" x="850.0" y="522" font-size="9" text-anchor="middle">W42</text>
+<rect x="869.7" y="434.0" width="27.3" height="73.0" rx="2" fill="#2a78d6"/>
+<rect x="869.7" y="404.0" width="27.3" height="28.0" rx="2" fill="#eb6834"/>
+<rect x="869.7" y="359.0" width="27.3" height="43.0" rx="2" fill="#eda100"/>
+<text class="tm" x="883.3333333333334" y="522" font-size="9" text-anchor="middle">W43</text>
+<text class="ts" x="500" y="542" font-size="10">업무 8개 초과 시 상위 7 + 기타(회색)</text>
+<circle cx="928" cy="92" r="9" class="call"/>
+<text class="callt" x="928" y="96" font-size="10" text-anchor="middle" font-weight="700">1</text>
+<circle cx="128" cy="125" r="9" class="call"/>
+<text class="callt" x="128" y="129" font-size="10" text-anchor="middle" font-weight="700">2</text>
+<circle cx="440" cy="313" r="9" class="call"/>
+<text class="callt" x="440" y="317" font-size="10" text-anchor="middle" font-weight="700">3</text>
+<circle cx="800" cy="313" r="9" class="call"/>
+<text class="callt" x="800" y="317" font-size="10" text-anchor="middle" font-weight="700">4</text>
+<rect x="40" y="558" width="880" height="100" rx="6" class="sub"/>
+<circle cx="60" cy="574" r="9" class="call"/>
+<text class="callt" x="60" y="578" font-size="10" text-anchor="middle" font-weight="700">1</text>
+<text class="t" x="76" y="578" font-size="11">필터 한 줄 — 두 탭 공통(기간·업무·종료 업무 포함). 히트맵 12주/연간, 비중 비율/일수는 차트 자체 전환</text>
+<circle cx="60" cy="596" r="9" class="call"/>
+<text class="callt" x="60" y="600" font-size="10" text-anchor="middle" font-weight="700">2</text>
+<text class="t" x="76" y="600" font-size="11">히트맵 — 12주=일 단위(depth 0 항목 수), 연간=주 단위(기록 일수). 단일 파랑 5단계, 행 머리 클릭 → 타임라인</text>
+<circle cx="60" cy="618" r="9" class="call"/>
+<text class="callt" x="60" y="622" font-size="10" text-anchor="middle" font-weight="700">3</text>
+<text class="t" x="76" y="622" font-size="11">기간 막대 — category_period 구간 + 기록 주 눈금. 재활성은 같은 행 2구간(신규 입사자 온보딩)</text>
+<circle cx="60" cy="640" r="9" class="call"/>
+<text class="callt" x="60" y="644" font-size="10" text-anchor="middle" font-weight="700">4</text>
+<text class="t" x="76" y="644" font-size="11">비중 — 업무 색 고정 순서, 조각 사이 2px 간격, 범례 상시. 조각 클릭 → 그 주 보드</text>
+<rect x="960" y="20" width="420" height="650" rx="12" class="card"/>
+<rect x="960" y="20" width="420" height="650" rx="12" class="bds"/>
+<text class="t" x="980" y="52" font-size="14" font-weight="700">경과 타임라인 탭</text>
+<circle cx="1360" cy="48" r="9" class="call"/>
+<text class="callt" x="1360" y="52" font-size="10" text-anchor="middle" font-weight="700">5</text>
+<rect x="976" y="70" width="120" height="580" rx="6" class="sub"/>
+<rect x="980" y="76" width="112" height="36" rx="4" class="card"/>
+<circle cx="990" cy="90" r="4" fill="#2a78d6"/>
+<text class="t" x="1000" y="94" font-size="11" font-weight="600">차세대 정산…</text>
+<text class="tm" x="1000" y="108" font-size="9">최근 10/22</text>
+<circle cx="990" cy="130" r="4" fill="#eb6834"/>
+<text class="t" x="1000" y="134" font-size="11">협력사 보안…</text>
+<text class="tm" x="1000" y="148" font-size="9">최근 10/22</text>
+<circle cx="990" cy="170" r="4" fill="#1baf7a"/>
+<text class="t" x="1000" y="174" font-size="11">사내 데이터…</text>
+<text class="tm" x="1000" y="188" font-size="9">최근 10/22</text>
+<circle cx="990" cy="210" r="4" fill="#eda100"/>
+<text class="t" x="1000" y="214" font-size="11">신규 입사자…</text>
+<text class="tm" x="1000" y="228" font-size="9">최근 10/22</text>
+<text class="tm" x="986" y="270" font-size="10">─ 종료된 업무 ─</text>
+<circle cx="990" cy="292" r="4" fill="#e87ba4"/>
+<text class="ts" x="1000" y="296" font-size="11">레거시 문서…</text>
+<text class="t" x="1108" y="80" font-size="13" font-weight="700">차세대 정산 시스템 구축</text>
+<text class="ts" x="1108" y="98" font-size="10">2026-09-14 시작 · 진행 중 · 항목 41</text>
+<rect x="1108" y="108" width="256" height="24" rx="4" class="btn"/>
+<text class="tm" x="1118" y="124" font-size="11">🔍 기록 검색</text>
+<rect x="1108" y="141" width="256" height="22" rx="4" class="sub"/>
+<text class="ts" x="1116" y="154" font-size="11">▸ 2026년 9월 (3주 · 항목 14)</text>
+<text class="ts" x="1108" y="177" font-size="11" font-weight="600">─ 2026년 10월</text>
+<text class="tm" x="1108" y="197" font-size="11">W40 ~ W41</text>
+<text class="tm" x="1178" y="197" font-size="10">· · · 2주 기록 없음 · · ·</text>
+<text class="t" x="1108" y="219" font-size="12" font-weight="700">W42</text>
+<text class="ts" x="1144" y="219" font-size="10">10/12~18</text>
+<line x1="1112" y1="227" x2="1112" y2="297" stroke="#2a78d6" stroke-width="2"/>
+<text class="t" x="1120" y="237" font-size="11">(월) 정산 배치 현행 분석 자료 정리</text>
+<text class="t" x="1120" y="254" font-size="11">(화) 요구사항 1차 리뷰</text>
+<text class="ts" x="1134" y="271" font-size="11">· 재계산 범위 이견 2건 확인</text>
+<text class="t" x="1120" y="288" font-size="11">(목) 현업 담당자 면담</text>
+<text class="t" x="1108" y="317" font-size="12" font-weight="700">W43</text>
+<text class="ts" x="1144" y="317" font-size="10">10/19~25</text>
+<text class="ts" x="1358" y="317" font-size="10" text-anchor="end">이번 주</text>
+<line x1="1112" y1="325" x2="1112" y2="429" stroke="#2a78d6" stroke-width="2"/>
+<text class="t" x="1120" y="335" font-size="11">(월) 요구사항 2차 리뷰</text>
+<text class="ts" x="1134" y="352" font-size="11">· 수수료 재계산 조건 3건 확정</text>
+<text class="t" x="1120" y="369" font-size="11">(화) 배치 스케줄러 설계안 작성</text>
+<text class="ts" x="1134" y="386" font-size="11">· 야간 배치 02~04시 협의</text>
+<text class="t" x="1120" y="403" font-size="11">(수) 설계안 팀 리뷰</text>
+<text class="t" x="1120" y="420" font-size="11">(목) 테스트 데이터 이관 착수</text>
+<rect x="1108" y="455" width="256" height="28" rx="6" class="btn"/>
+<text class="t" x="1236.0" y="474" font-size="12" text-anchor="middle">이 업무 경과 복사</text>
+<text class="ts" x="1108" y="505" font-size="10">· 위=과거 → 아래=최근, 열면 맨 아래(이번 주)로</text>
+<text class="ts" x="1108" y="521" font-size="10">· 무기록 주는 한 줄로, 3개월 이전은 월로 접음</text>
+<text class="ts" x="1108" y="537" font-size="10">· 항목 클릭 → 보드 그 주·요일 칸으로 이동</text>
+<text class="ts" x="1108" y="553" font-size="10">· 종료·재개 지점에 구분선 표시</text>
+</svg>

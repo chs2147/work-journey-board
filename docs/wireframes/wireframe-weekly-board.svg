@@ -1,0 +1,244 @@
+<svg viewBox="0 0 1400 846" xmlns="http://www.w3.org/2000/svg" role="img" font-family="system-ui, -apple-system, 'Segoe UI', 'Malgun Gothic', sans-serif">
+<title>Work Journey Board 주간 보드 와이어프레임 — 포커스 열 격자와 주간 요약 패널</title>
+<desc>행은 업무 카테고리, 열은 월~일. 오늘(목) 열이 넓게 펼쳐진 포커스 열이고 토·일은 좁은 열. 격자 아래에 업무 추가 행과 일일 메모 행, 오른쪽에 주간 요약 패널(자동 집계/AI본/수정본 탭과 클립보드 다리 버튼). 번호 설명은 하단.</desc>
+<style>
+  .t{fill:#2c2c2a} .ts{fill:#5f5e5a} .tm{fill:#8a8983}
+  .page{fill:#faf9f5} .card{fill:#ffffff} .sub{fill:#f1efe8}
+  .bd{stroke:#d3d1c7;fill:none} .bds{stroke:#b4b2a9;fill:none}
+  .cellb{fill:#ffffff;stroke:#e2e0d8}
+  .focus{fill:#f4f9fe;stroke:#185fa5}
+  .blue{fill:#e6f1fb;stroke:#185fa5} .bluet{fill:#185fa5}
+  .nudge{fill:#fdf3e1;stroke:#c98500}
+  .call{fill:#d85a30} .callt{fill:#ffffff}
+  .btn{fill:#ffffff;stroke:#b4b2a9}
+  .btnp{fill:#185fa5;stroke:#185fa5} .btnpt{fill:#ffffff}
+  .dim{fill:#f6f5f0;stroke:#e2e0d8}
+</style>
+<rect x="0" y="0" width="1400" height="846" rx="0" class="page"/>
+<rect x="0" y="0" width="1400" height="56" rx="0" class="card"/>
+<line x1="0" y1="56" x2="1400" y2="56" stroke="#d3d1c7"/>
+<text class="t" x="20" y="34" font-size="16" font-weight="700">Work Journey Board</text>
+<rect x="210" y="14" width="30" height="28" rx="6" class="btn"/>
+<text class="t" x="225" y="33" font-size="12" text-anchor="middle">◀</text>
+<text class="t" x="254" y="33" font-size="15" font-weight="600">2026-W43 (10/19~10/25)</text>
+<rect x="440" y="14" width="30" height="28" rx="6" class="btn"/>
+<text class="t" x="455" y="33" font-size="12" text-anchor="middle">▶</text>
+<rect x="480" y="14" width="52" height="28" rx="6" class="btn"/>
+<text class="t" x="506" y="33" font-size="12" text-anchor="middle">오늘</text>
+<rect x="540" y="14" width="70" height="28" rx="6" class="btn"/>
+<text class="t" x="575" y="33" font-size="12" text-anchor="middle">연간 보기</text>
+<circle cx="204" cy="12" r="9" class="call"/>
+<text class="callt" x="204" y="16" font-size="10" text-anchor="middle" font-weight="700">1</text>
+<rect x="820" y="14" width="120" height="28" rx="6" class="btn"/>
+<rect x="820" y="14" width="60" height="28" rx="6" class="btnp"/>
+<text class="btnpt" x="850" y="33" font-size="12" text-anchor="middle">보드</text>
+<text class="t" x="910" y="33" font-size="12" text-anchor="middle">인사이트</text>
+<rect x="1080" y="14" width="90" height="28" rx="6" class="btnp"/>
+<text class="btnpt" x="1125" y="33" font-size="12" text-anchor="middle">주간 요약</text>
+<rect x="1180" y="14" width="80" height="28" rx="6" class="btn"/>
+<text class="t" x="1220" y="33" font-size="12" text-anchor="middle">내보내기</text>
+<rect x="1270" y="14" width="34" height="28" rx="6" class="btn"/>
+<text class="t" x="1287" y="33" font-size="13" text-anchor="middle">⚙</text>
+<text class="ts" x="1318" y="33" font-size="11">저장됨 ✓</text>
+<rect x="20" y="72" width="150" height="40" rx="0" class="sub"/>
+<text class="ts" x="30" y="97" font-size="12">업무</text>
+<rect x="170" y="72" width="125" height="40" rx="0" class="sub"/>
+<text class="ts" x="180" y="97" font-size="12">월 10/19</text>
+<rect x="295" y="72" width="125" height="40" rx="0" class="sub"/>
+<text class="ts" x="305" y="97" font-size="12">화 10/20</text>
+<rect x="420" y="72" width="125" height="40" rx="0" class="sub"/>
+<text class="ts" x="430" y="97" font-size="12">수 10/21</text>
+<rect x="545" y="72" width="250" height="40" rx="0" class="blue"/>
+<text class="bluet" x="555" y="97" font-size="13" font-weight="700">목 10/22 · 오늘</text>
+<rect x="795" y="72" width="125" height="40" rx="0" class="sub"/>
+<text class="ts" x="805" y="97" font-size="12">금 10/23</text>
+<rect x="920" y="72" width="40" height="40" rx="0" class="sub"/>
+<text class="ts" x="940.0" y="90" font-size="11" text-anchor="middle">토</text>
+<text class="tm" x="940.0" y="104" font-size="9" text-anchor="middle">24</text>
+<rect x="960" y="72" width="40" height="40" rx="0" class="sub"/>
+<text class="ts" x="980.0" y="90" font-size="11" text-anchor="middle">일</text>
+<text class="tm" x="980.0" y="104" font-size="9" text-anchor="middle">25</text>
+<circle cx="780" cy="76" r="9" class="call"/>
+<text class="callt" x="780" y="80" font-size="10" text-anchor="middle" font-weight="700">2</text>
+<circle cx="940" cy="66" r="9" class="call"/>
+<text class="callt" x="940" y="70" font-size="10" text-anchor="middle" font-weight="700">8</text>
+<rect x="20" y="112" width="150" height="96" rx="0" class="cellb"/>
+<rect x="20" y="112" width="4" height="96" fill="#2a78d6"/>
+<circle cx="36" cy="132" r="5" fill="#2a78d6"/>
+<text class="t" x="48" y="136" font-size="12" font-weight="600">차세대 정산</text>
+<text class="t" x="48" y="152" font-size="12" font-weight="600">시스템 구축</text>
+<text class="tm" x="156" y="136" font-size="13" text-anchor="middle">⋯</text>
+<rect x="170" y="112" width="125" height="96" rx="0" class="cellb"/>
+<text class="t" x="180" y="132" font-size="11">- 요구사항 2차 리뷰</text>
+<text class="ts" x="192" y="150" font-size="11">· 조건 3건 확정</text>
+<rect x="295" y="112" width="125" height="96" rx="0" class="cellb"/>
+<text class="t" x="305" y="132" font-size="11">- 스케줄러 설계안</text>
+<text class="ts" x="317" y="150" font-size="11">· 02~04시 협의</text>
+<rect x="420" y="112" width="125" height="96" rx="0" class="cellb"/>
+<text class="t" x="430" y="132" font-size="11">- 설계안 팀 리뷰</text>
+<text class="ts" x="442" y="150" font-size="11">· 의견 5건 반영 중</text>
+<rect x="545" y="112" width="250" height="96" rx="0" class="focus"/>
+<text class="t" x="555" y="132" font-size="11">- 테스트 데이터 이관 스크립트 작성 착수</text>
+<text class="ts" x="567" y="150" font-size="11">· 대상 테이블 12개 목록화</text>
+<text class="t" x="555" y="168" font-size="11">- </text>
+<line x1="567" y1="157" x2="567" y2="170" stroke="#185fa5" stroke-width="1.5"/>
+<rect x="795" y="112" width="125" height="96" rx="0" class="cellb"/>
+<rect x="920" y="112" width="40" height="96" rx="0" class="dim"/>
+<rect x="960" y="112" width="40" height="96" rx="0" class="dim"/>
+<rect x="20" y="208" width="150" height="96" rx="0" class="cellb"/>
+<rect x="20" y="208" width="4" height="96" fill="#eb6834"/>
+<circle cx="36" cy="228" r="5" fill="#eb6834"/>
+<text class="t" x="48" y="232" font-size="12" font-weight="600">협력사 보안</text>
+<text class="t" x="48" y="248" font-size="12" font-weight="600">점검</text>
+<text class="tm" x="156" y="232" font-size="13" text-anchor="middle">⋯</text>
+<rect x="170" y="208" width="125" height="96" rx="0" class="cellb"/>
+<text class="t" x="180" y="228" font-size="11">- 일정 회신 취합</text>
+<rect x="295" y="208" width="125" height="96" rx="0" class="cellb"/>
+<rect x="420" y="208" width="125" height="96" rx="0" class="cellb"/>
+<text class="t" x="430" y="228" font-size="11">- A사 현장 점검</text>
+<text class="ts" x="442" y="246" font-size="11">· 미흡 2건 발견</text>
+<rect x="545" y="208" width="250" height="96" rx="0" class="focus"/>
+<text class="t" x="555" y="228" font-size="11">- 점검 결과 보고서 초안 작성</text>
+<rect x="795" y="208" width="125" height="96" rx="0" class="cellb"/>
+<rect x="920" y="208" width="40" height="96" rx="0" class="dim"/>
+<rect x="960" y="208" width="40" height="96" rx="0" class="dim"/>
+<rect x="20" y="304" width="150" height="96" rx="0" class="cellb"/>
+<rect x="20" y="304" width="4" height="96" fill="#1baf7a"/>
+<circle cx="36" cy="324" r="5" fill="#1baf7a"/>
+<text class="t" x="48" y="328" font-size="12" font-weight="600">사내 데이터</text>
+<text class="t" x="48" y="344" font-size="12" font-weight="600">대시보드</text>
+<text class="tm" x="156" y="328" font-size="13" text-anchor="middle">⋯</text>
+<rect x="170" y="304" width="125" height="96" rx="0" class="cellb"/>
+<rect x="295" y="304" width="125" height="96" rx="0" class="cellb"/>
+<text class="t" x="305" y="324" font-size="11">- 지표 정의서 v0.3</text>
+<rect x="420" y="304" width="125" height="96" rx="0" class="cellb"/>
+<rect x="545" y="304" width="250" height="96" rx="0" class="focus"/>
+<text class="tm" x="555" y="326" font-size="11">+ 기록 추가</text>
+<rect x="795" y="304" width="125" height="96" rx="0" class="cellb"/>
+<rect x="920" y="304" width="40" height="96" rx="0" class="dim"/>
+<rect x="960" y="304" width="40" height="96" rx="0" class="dim"/>
+<rect x="20" y="400" width="150" height="96" rx="0" class="cellb"/>
+<rect x="20" y="400" width="4" height="96" fill="#eda100"/>
+<circle cx="36" cy="420" r="5" fill="#eda100"/>
+<text class="t" x="48" y="424" font-size="12" font-weight="600">신규 입사자</text>
+<text class="t" x="48" y="440" font-size="12" font-weight="600">온보딩</text>
+<text class="tm" x="156" y="424" font-size="13" text-anchor="middle">⋯</text>
+<rect x="170" y="400" width="125" height="96" rx="0" class="cellb"/>
+<rect x="295" y="400" width="125" height="96" rx="0" class="cellb"/>
+<rect x="420" y="400" width="125" height="96" rx="0" class="cellb"/>
+<rect x="545" y="400" width="250" height="96" rx="0" class="focus"/>
+<text class="tm" x="555" y="422" font-size="11">+ 기록 추가</text>
+<rect x="795" y="400" width="125" height="96" rx="0" class="cellb"/>
+<rect x="920" y="400" width="40" height="96" rx="0" class="dim"/>
+<rect x="960" y="400" width="40" height="96" rx="0" class="dim"/>
+<rect x="20" y="496" width="150" height="96" rx="0" class="cellb"/>
+<rect x="20" y="496" width="4" height="96" fill="#e87ba4"/>
+<circle cx="36" cy="516" r="5" fill="#e87ba4"/>
+<text class="t" x="48" y="520" font-size="12" font-weight="600">레거시 문서</text>
+<text class="t" x="48" y="536" font-size="12" font-weight="600">정리</text>
+<text class="tm" x="156" y="520" font-size="13" text-anchor="middle">⋯</text>
+<rect x="30" y="546" width="130" height="36" rx="6" class="nudge"/>
+<text class="t" x="38" y="560" font-size="10">3주째 기록 없음</text>
+<text class="ts" x="38" y="576" font-size="10">[종료]  [유지]</text>
+<circle cx="164" cy="546" r="9" class="call"/>
+<text class="callt" x="164" y="550" font-size="10" text-anchor="middle" font-weight="700">5</text>
+<rect x="170" y="496" width="125" height="96" rx="0" class="cellb"/>
+<rect x="295" y="496" width="125" height="96" rx="0" class="cellb"/>
+<rect x="420" y="496" width="125" height="96" rx="0" class="cellb"/>
+<rect x="545" y="496" width="250" height="96" rx="0" class="focus"/>
+<text class="tm" x="555" y="518" font-size="11">+ 기록 추가</text>
+<rect x="795" y="496" width="125" height="96" rx="0" class="cellb"/>
+<rect x="920" y="496" width="40" height="96" rx="0" class="dim"/>
+<rect x="960" y="496" width="40" height="96" rx="0" class="dim"/>
+<circle cx="164" cy="118" r="9" class="call"/>
+<text class="callt" x="164" y="122" font-size="10" text-anchor="middle" font-weight="700">4</text>
+<circle cx="780" cy="182" r="9" class="call"/>
+<text class="callt" x="780" y="186" font-size="10" text-anchor="middle" font-weight="700">3</text>
+<rect x="20" y="592" width="980" height="32" rx="0" class="card"/>
+<rect x="20" y="592" width="980" height="32" fill="none" stroke="#b4b2a9" stroke-dasharray="4 3"/>
+<text class="ts" x="32" y="613" font-size="12">+ 업무 추가</text>
+<circle cx="120" cy="608" r="9" class="call"/>
+<text class="callt" x="120" y="612" font-size="10" text-anchor="middle" font-weight="700">6</text>
+<rect x="20" y="624" width="150" height="52" rx="0" class="sub"/>
+<text class="ts" x="32" y="646" font-size="12" font-weight="600">메모</text>
+<text class="tm" x="32" y="664" font-size="10">(업무 외 내용)</text>
+<rect x="170" y="624" width="125" height="52" rx="0" class="cellb"/>
+<rect x="295" y="624" width="125" height="52" rx="0" class="cellb"/>
+<rect x="420" y="624" width="125" height="52" rx="0" class="cellb"/>
+<rect x="545" y="624" width="250" height="52" rx="0" class="focus"/>
+<rect x="795" y="624" width="125" height="52" rx="0" class="cellb"/>
+<rect x="920" y="624" width="40" height="52" rx="0" class="dim"/>
+<rect x="960" y="624" width="40" height="52" rx="0" class="dim"/>
+<text class="t" x="555" y="646" font-size="11">- 부서 월례 회의 참석</text>
+<circle cx="164" cy="630" r="9" class="call"/>
+<text class="callt" x="164" y="634" font-size="10" text-anchor="middle" font-weight="700">7</text>
+<rect x="20" y="72" width="980" height="604" class="bds" rx="0"/>
+<rect x="1020" y="72" width="360" height="604" rx="8" class="card"/>
+<rect x="1020" y="72" width="360" height="604" rx="8" class="bds"/>
+<text class="t" x="1036" y="100" font-size="14" font-weight="700">주간 요약 · 2026-W43</text>
+<text class="tm" x="1364" y="100" font-size="13" text-anchor="end">✕</text>
+<circle cx="1340" cy="80" r="9" class="call"/>
+<text class="callt" x="1340" y="84" font-size="10" text-anchor="middle" font-weight="700">9</text>
+<rect x="1036" y="116" width="328" height="28" rx="6" class="btn"/>
+<rect x="1036" y="116" width="109.33333333333333" height="28" rx="6" class="btnp"/>
+<text class="btnpt" x="1090.6666666666667" y="135" font-size="12" text-anchor="middle">자동 집계</text>
+<text class="t" x="1200.0" y="135" font-size="12" text-anchor="middle">AI본 ●</text>
+<text class="t" x="1309.3333333333335" y="135" font-size="12" text-anchor="middle">수정본</text>
+<text class="ts" x="1036" y="164" font-size="11">최종본: AI본 (수정본 &gt; AI본 &gt; 자동 집계)</text>
+<rect x="1036" y="176" width="328" height="330" rx="6" class="sub"/>
+<text class="t" x="1046" y="196" font-size="11">[주간 업무 요약] 2026-W43 (10/19~10/25)</text>
+<text class="t" x="1046" y="214" font-size="11"></text>
+<text class="t" x="1046" y="232" font-size="11">■ 차세대 정산 시스템 구축</text>
+<text class="t" x="1046" y="250" font-size="11">- (월) 요구사항 2차 리뷰</text>
+<text class="t" x="1058" y="268" font-size="11">· 조건 3건 확정</text>
+<text class="t" x="1046" y="286" font-size="11">- (화) 스케줄러 설계안</text>
+<text class="t" x="1058" y="304" font-size="11">· 02~04시 협의</text>
+<text class="t" x="1046" y="322" font-size="11">- (수) 설계안 팀 리뷰 …</text>
+<text class="t" x="1046" y="340" font-size="11"></text>
+<text class="t" x="1046" y="358" font-size="11">■ 협력사 보안 점검</text>
+<text class="t" x="1046" y="376" font-size="11">- (월) 일정 회신 취합</text>
+<text class="t" x="1046" y="394" font-size="11">- (수) A사 현장 점검 …</text>
+<text class="t" x="1046" y="412" font-size="11"></text>
+<text class="t" x="1046" y="430" font-size="11">[메모]</text>
+<text class="t" x="1046" y="448" font-size="11">- (목) 부서 월례 회의 참석</text>
+<text class="t" x="1046" y="466" font-size="11"></text>
+<text class="ts" x="1046" y="484" font-size="11">※ 이번 주 기록 없음: 신규 입사자 온보딩, …</text>
+<text class="t" x="1036" y="518" font-size="11">☑ 메모 포함</text>
+<rect x="1036" y="532" width="110" height="28" rx="6" class="btnp"/>
+<text class="btnpt" x="1091.0" y="551" font-size="11" text-anchor="middle">AI 지시문 복사</text>
+<rect x="1154" y="532" width="120" height="28" rx="6" class="btn"/>
+<text class="t" x="1214.0" y="551" font-size="11" text-anchor="middle">AI 결과 붙여넣기</text>
+<rect x="1282" y="532" width="92" height="28" rx="6" class="btn"/>
+<text class="t" x="1328.0" y="551" font-size="11" text-anchor="middle">수정본 만들기</text>
+<rect x="1036" y="570" width="328" height="28" rx="6" class="btn"/>
+<text class="t" x="1200.0" y="589" font-size="12" text-anchor="middle">최종본 복사</text>
+<rect x="20" y="706" width="1360" height="124" rx="8" class="card"/>
+<rect x="20" y="706" width="1360" height="124" rx="8" class="bd"/>
+<circle cx="40" cy="726" r="9" class="call"/>
+<text class="callt" x="40" y="730" font-size="10" text-anchor="middle" font-weight="700">1</text>
+<text class="t" x="56" y="730" font-size="12">주 이동 — ◀ ▶ · [오늘] · [연간 보기](53주 미니맵). 단축키 Alt+←/→, Alt+T</text>
+<circle cx="40" cy="748" r="9" class="call"/>
+<text class="callt" x="40" y="752" font-size="10" text-anchor="middle" font-weight="700">2</text>
+<text class="t" x="56" y="752" font-size="12">포커스 열 — 오늘(또는 클릭한 요일) 열을 넓게, 나머지는 좁게. 격자 조망 + 오늘 집중을 결합</text>
+<circle cx="40" cy="770" r="9" class="call"/>
+<text class="callt" x="40" y="774" font-size="10" text-anchor="middle" font-weight="700">3</text>
+<text class="t" x="56" y="774" font-size="12">개조식 입력 — Enter 새 항목 · Tab/Shift+Tab 세부(2단) · Alt+↑/↓ 순서 · 붙여넣기 시 줄 단위 분해 · 자동 저장</text>
+<circle cx="40" cy="792" r="9" class="call"/>
+<text class="callt" x="40" y="796" font-size="10" text-anchor="middle" font-weight="700">4</text>
+<text class="t" x="56" y="796" font-size="12">업무 행 머리 — 색 점·이름, 끌어서 순서 변경, ⋯ 메뉴(이름 변경·색·종료)</text>
+<circle cx="40" cy="814" r="9" class="call"/>
+<text class="callt" x="40" y="818" font-size="10" text-anchor="middle" font-weight="700">5</text>
+<text class="t" x="56" y="818" font-size="12">3주 무기록 제안 — 행 머리 안 작은 배지 [종료] [유지] (배너 아님, 이번 주 보기에서만)</text>
+<circle cx="720" cy="726" r="9" class="call"/>
+<text class="callt" x="720" y="730" font-size="10" text-anchor="middle" font-weight="700">6</text>
+<text class="t" x="736" y="730" font-size="12">+ 업무 추가 — 격자 맨 아래에서 바로 이름 입력, 색은 팔레트 순서로 자동 배정</text>
+<circle cx="720" cy="748" r="9" class="call"/>
+<text class="callt" x="720" y="752" font-size="10" text-anchor="middle" font-weight="700">7</text>
+<text class="t" x="736" y="752" font-size="12">일일 메모 — 격자 맨 아래 행(요일 열에 맞춤), 업무에 안 맞는 내용</text>
+<circle cx="720" cy="770" r="9" class="call"/>
+<text class="callt" x="720" y="774" font-size="10" text-anchor="middle" font-weight="700">8</text>
+<text class="t" x="736" y="774" font-size="12">토·일 — 기록 없으면 좁은 열(40px), 기록이 있거나 클릭하면 일반 폭으로 확장</text>
+<circle cx="720" cy="792" r="9" class="call"/>
+<text class="callt" x="720" y="796" font-size="10" text-anchor="middle" font-weight="700">9</text>
+<text class="t" x="736" y="796" font-size="12">주간 요약 패널 — 오른쪽 접이식. 자동 집계 / AI본 / 수정본 탭, 클립보드 다리(지시문 복사 → 결과 붙여넣기)</text>
+</svg>

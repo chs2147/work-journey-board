@@ -1,0 +1,214 @@
+<svg viewBox="0 0 1400 600" xmlns="http://www.w3.org/2000/svg" role="img" font-family="system-ui, -apple-system, 'Segoe UI', 'Malgun Gothic', sans-serif">
+<title>Work Journey Board 첫 실행 흐름과 연간 보기 와이어프레임</title>
+<desc>첫 실행 3단계(시작 선택, 저장 폴더 선택과 OneDrive 경고, 첫 업무 만들기)와 상단 바의 연간 보기 미니맵(월별 주 칸, 기록 밀도 색, 이번 주 강조).</desc>
+<style>
+ .t{fill:#2c2c2a} .ts{fill:#5f5e5a} .tm{fill:#8a8983}
+ .page{fill:#faf9f5} .card{fill:#ffffff} .sub{fill:#f1efe8}
+ .bd{stroke:#d3d1c7;fill:none} .bds{stroke:#b4b2a9;fill:none}
+ .btn{fill:#ffffff;stroke:#b4b2a9} .btnp{fill:#185fa5;stroke:#185fa5} .btnpt{fill:#ffffff}
+ .warn{fill:#fdf3e1;stroke:#c98500} .ok{fill:#e1f5ee;stroke:#0f6e56}
+ .chip{fill:#ffffff;stroke:#d3d1c7}
+ .arrow{stroke:#b4b2a9;stroke-width:2;fill:none}
+</style>
+<rect x="0" y="0" width="1400" height="600" rx="0" class="page"/>
+<text class="ts" x="20" y="54" font-size="13" font-weight="600">① 시작</text>
+<rect x="20" y="70" width="320" height="400" rx="12" class="card"/>
+<rect x="20" y="70" width="320" height="400" rx="12" class="bds"/>
+<path d="M346 270.0 L364 270.0 M358 264.0 L364 270.0 L358 276.0" class="arrow"/>
+<text class="ts" x="370" y="54" font-size="13" font-weight="600">② 저장 폴더 선택</text>
+<rect x="370" y="70" width="320" height="400" rx="12" class="card"/>
+<rect x="370" y="70" width="320" height="400" rx="12" class="bds"/>
+<path d="M696 270.0 L714 270.0 M708 264.0 L714 270.0 L708 276.0" class="arrow"/>
+<text class="ts" x="720" y="54" font-size="13" font-weight="600">③ 첫 업무 만들기</text>
+<rect x="720" y="70" width="320" height="400" rx="12" class="card"/>
+<rect x="720" y="70" width="320" height="400" rx="12" class="bds"/>
+<text class="t" x="40" y="110" font-size="18" font-weight="700">Work Journey Board</text>
+<text class="ts" x="40" y="136" font-size="12">매일 업무를 주간 보드에 적으면</text>
+<text class="ts" x="40" y="154" font-size="12">주간 요약·엑셀·흐름 차트가 만들어집니다.</text>
+<rect x="40" y="178" width="280" height="74" rx="8" class="ok"/>
+<text class="t" x="52" y="202" font-size="12">기록은 이 PC의 파일 하나에만 저장되고</text>
+<text class="t" x="52" y="220" font-size="12">외부로 전송되지 않습니다.</text>
+<text class="ts" x="52" y="240" font-size="11">(AI 요약도 직접 복사·붙여넣기 할 때만)</text>
+<rect x="40" y="370" width="280" height="30" rx="6" class="btnp"/>
+<text class="btnpt" x="180.0" y="390" font-size="12" text-anchor="middle">새로 시작하기</text>
+<rect x="40" y="410" width="280" height="30" rx="6" class="btn"/>
+<text class="t" x="180.0" y="430" font-size="12" text-anchor="middle">기존 일지 열기 (PC 교체·복원)</text>
+<text class="t" x="390" y="106" font-size="14" font-weight="700">기록 파일을 둘 폴더를 고르세요</text>
+<text class="ts" x="390" y="128" font-size="11">이 폴더에 work-journey.db와 backups/가 생깁니다.</text>
+<rect x="390" y="144" width="280" height="30" rx="6" class="sub"/>
+<text class="t" x="400" y="164" font-size="11">C:\Users\user\OneDrive - Company\문서\Work…</text>
+<rect x="600" y="182" width="70" height="30" rx="6" class="btn"/>
+<text class="t" x="635.0" y="202" font-size="12" text-anchor="middle">찾아보기</text>
+<rect x="390" y="222" width="280" height="120" rx="8" class="warn"/>
+<text class="t" x="402" y="246" font-size="13" font-weight="700">⚠ OneDrive 동기화 폴더입니다</text>
+<text class="t" x="402" y="268" font-size="11">업무 기록이 회사 클라우드로 자동</text>
+<text class="t" x="402" y="284" font-size="11">업로드될 수 있습니다.</text>
+<text class="ts" x="402" y="306" font-size="11">추천: C:\Users\user\WorkJourney</text>
+<rect x="402" y="316" width="120" height="30" rx="6" class="btnp"/>
+<text class="btnpt" x="462.0" y="336" font-size="12" text-anchor="middle">추천 폴더 사용</text>
+<text class="ts" x="540" y="336" font-size="11">그래도 이 폴더 사용</text>
+<text class="tm" x="390" y="370" font-size="11">감지: 경로에 OneDrive 환경 변수</text>
+<text class="tm" x="390" y="386" font-size="11">(OneDrive, OneDriveCommercial) 접두어 포함</text>
+<rect x="390" y="422" width="130" height="30" rx="6" class="btn"/>
+<text class="t" x="455.0" y="442" font-size="12" text-anchor="middle">← 이전</text>
+<rect x="540" y="422" width="130" height="30" rx="6" class="btnp"/>
+<text class="btnpt" x="605.0" y="442" font-size="12" text-anchor="middle">다음</text>
+<text class="t" x="740" y="106" font-size="14" font-weight="700">지금 하고 있는 업무를 적어 보세요</text>
+<text class="ts" x="740" y="128" font-size="11">보드의 행이 됩니다. 나중에 언제든 추가·변경.</text>
+<rect x="740" y="150" width="280" height="32" rx="6" class="chip"/>
+<circle cx="756" cy="166" r="5" fill="#2a78d6"/>
+<text class="t" x="770" y="171" font-size="12">차세대 정산 시스템 구축</text>
+<text class="tm" x="1006" y="171" font-size="11" text-anchor="middle">✕</text>
+<rect x="740" y="190" width="280" height="32" rx="6" class="chip"/>
+<circle cx="756" cy="206" r="5" fill="#eb6834"/>
+<text class="t" x="770" y="211" font-size="12">협력사 보안 점검</text>
+<text class="tm" x="1006" y="211" font-size="11" text-anchor="middle">✕</text>
+<rect x="740" y="230" width="280" height="32" rx="6" class="chip"/>
+<circle cx="756" cy="246" r="5" fill="#1baf7a"/>
+<text class="t" x="770" y="251" font-size="12">사내 데이터 대시보드</text>
+<text class="tm" x="1006" y="251" font-size="11" text-anchor="middle">✕</text>
+<rect x="740" y="270" width="280" height="32" rx="6" class="chip" stroke-dasharray="4 3"/>
+<text class="tm" x="752" y="291" font-size="12">+ 업무 이름 입력 후 Enter</text>
+<text class="ts" x="740" y="330" font-size="11">색은 팔레트 순서로 자동 배정됩니다.</text>
+<text class="ts" x="740" y="442" font-size="12">나중에 하기</text>
+<rect x="890" y="422" width="130" height="30" rx="6" class="btnp"/>
+<text class="btnpt" x="955.0" y="442" font-size="12" text-anchor="middle">보드 열기 →</text>
+<text class="tm" x="740" y="370" font-size="11">→ 보드 열기 후 이번 주 · 오늘 열로 바로 진입</text>
+<text class="ts" x="1080" y="54" font-size="13" font-weight="600">연간 보기 (상단 바 [연간 보기] 팝오버)</text>
+<rect x="1080" y="70" width="300" height="510" rx="12" class="card"/>
+<rect x="1080" y="70" width="300" height="510" rx="12" class="bds"/>
+<text class="t" x="1100" y="100" font-size="12">◀</text>
+<text class="t" x="1230.0" y="100" font-size="13" text-anchor="middle" font-weight="700">2026 (ISO 53주)</text>
+<text class="t" x="1350" y="100" font-size="12">▶</text>
+<text class="ts" x="1100" y="135" font-size="11">1월</text>
+<rect x="1140" y="118" width="38" height="24" rx="4" fill="#86b6ef" stroke="#e2e0d8"/>
+<text class="t" x="1159" y="134" font-size="9" text-anchor="middle">W01</text>
+<rect x="1184" y="118" width="38" height="24" rx="4" fill="#86b6ef" stroke="#e2e0d8"/>
+<text class="t" x="1203" y="134" font-size="9" text-anchor="middle">W02</text>
+<rect x="1228" y="118" width="38" height="24" rx="4" fill="#3987e5" stroke="#e2e0d8"/>
+<text class="btnpt" x="1247" y="134" font-size="9" text-anchor="middle">W03</text>
+<rect x="1272" y="118" width="38" height="24" rx="4" fill="#1c5cab" stroke="#e2e0d8"/>
+<text class="btnpt" x="1291" y="134" font-size="9" text-anchor="middle">W04</text>
+<rect x="1316" y="118" width="38" height="24" rx="4" fill="#cde2fb" stroke="#e2e0d8"/>
+<text class="t" x="1335" y="134" font-size="9" text-anchor="middle">W05</text>
+<text class="ts" x="1100" y="169" font-size="11">2월</text>
+<rect x="1140" y="152" width="38" height="24" rx="4" fill="#cde2fb" stroke="#e2e0d8"/>
+<text class="t" x="1159" y="168" font-size="9" text-anchor="middle">W06</text>
+<rect x="1184" y="152" width="38" height="24" rx="4" fill="#efeee9" stroke="#e2e0d8"/>
+<text class="t" x="1203" y="168" font-size="9" text-anchor="middle">W07</text>
+<rect x="1228" y="152" width="38" height="24" rx="4" fill="#3987e5" stroke="#e2e0d8"/>
+<text class="btnpt" x="1247" y="168" font-size="9" text-anchor="middle">W08</text>
+<rect x="1272" y="152" width="38" height="24" rx="4" fill="#cde2fb" stroke="#e2e0d8"/>
+<text class="t" x="1291" y="168" font-size="9" text-anchor="middle">W09</text>
+<text class="ts" x="1100" y="203" font-size="11">3월</text>
+<rect x="1140" y="186" width="38" height="24" rx="4" fill="#86b6ef" stroke="#e2e0d8"/>
+<text class="t" x="1159" y="202" font-size="9" text-anchor="middle">W10</text>
+<rect x="1184" y="186" width="38" height="24" rx="4" fill="#3987e5" stroke="#e2e0d8"/>
+<text class="btnpt" x="1203" y="202" font-size="9" text-anchor="middle">W11</text>
+<rect x="1228" y="186" width="38" height="24" rx="4" fill="#cde2fb" stroke="#e2e0d8"/>
+<text class="t" x="1247" y="202" font-size="9" text-anchor="middle">W12</text>
+<rect x="1272" y="186" width="38" height="24" rx="4" fill="#3987e5" stroke="#e2e0d8"/>
+<text class="btnpt" x="1291" y="202" font-size="9" text-anchor="middle">W13</text>
+<text class="ts" x="1100" y="237" font-size="11">4월</text>
+<rect x="1140" y="220" width="38" height="24" rx="4" fill="#86b6ef" stroke="#e2e0d8"/>
+<text class="t" x="1159" y="236" font-size="9" text-anchor="middle">W14</text>
+<rect x="1184" y="220" width="38" height="24" rx="4" fill="#cde2fb" stroke="#e2e0d8"/>
+<text class="t" x="1203" y="236" font-size="9" text-anchor="middle">W15</text>
+<rect x="1228" y="220" width="38" height="24" rx="4" fill="#cde2fb" stroke="#e2e0d8"/>
+<text class="t" x="1247" y="236" font-size="9" text-anchor="middle">W16</text>
+<rect x="1272" y="220" width="38" height="24" rx="4" fill="#3987e5" stroke="#e2e0d8"/>
+<text class="btnpt" x="1291" y="236" font-size="9" text-anchor="middle">W17</text>
+<rect x="1316" y="220" width="38" height="24" rx="4" fill="#3987e5" stroke="#e2e0d8"/>
+<text class="btnpt" x="1335" y="236" font-size="9" text-anchor="middle">W18</text>
+<text class="ts" x="1100" y="271" font-size="11">5월</text>
+<rect x="1140" y="254" width="38" height="24" rx="4" fill="#cde2fb" stroke="#e2e0d8"/>
+<text class="t" x="1159" y="270" font-size="9" text-anchor="middle">W19</text>
+<rect x="1184" y="254" width="38" height="24" rx="4" fill="#86b6ef" stroke="#e2e0d8"/>
+<text class="t" x="1203" y="270" font-size="9" text-anchor="middle">W20</text>
+<rect x="1228" y="254" width="38" height="24" rx="4" fill="#cde2fb" stroke="#e2e0d8"/>
+<text class="t" x="1247" y="270" font-size="9" text-anchor="middle">W21</text>
+<rect x="1272" y="254" width="38" height="24" rx="4" fill="#3987e5" stroke="#e2e0d8"/>
+<text class="btnpt" x="1291" y="270" font-size="9" text-anchor="middle">W22</text>
+<text class="ts" x="1100" y="305" font-size="11">6월</text>
+<rect x="1140" y="288" width="38" height="24" rx="4" fill="#3987e5" stroke="#e2e0d8"/>
+<text class="btnpt" x="1159" y="304" font-size="9" text-anchor="middle">W23</text>
+<rect x="1184" y="288" width="38" height="24" rx="4" fill="#cde2fb" stroke="#e2e0d8"/>
+<text class="t" x="1203" y="304" font-size="9" text-anchor="middle">W24</text>
+<rect x="1228" y="288" width="38" height="24" rx="4" fill="#efeee9" stroke="#e2e0d8"/>
+<text class="t" x="1247" y="304" font-size="9" text-anchor="middle">W25</text>
+<rect x="1272" y="288" width="38" height="24" rx="4" fill="#3987e5" stroke="#e2e0d8"/>
+<text class="btnpt" x="1291" y="304" font-size="9" text-anchor="middle">W26</text>
+<text class="ts" x="1100" y="339" font-size="11">7월</text>
+<rect x="1140" y="322" width="38" height="24" rx="4" fill="#cde2fb" stroke="#e2e0d8"/>
+<text class="t" x="1159" y="338" font-size="9" text-anchor="middle">W27</text>
+<rect x="1184" y="322" width="38" height="24" rx="4" fill="#86b6ef" stroke="#e2e0d8"/>
+<text class="t" x="1203" y="338" font-size="9" text-anchor="middle">W28</text>
+<rect x="1228" y="322" width="38" height="24" rx="4" fill="#1c5cab" stroke="#e2e0d8"/>
+<text class="btnpt" x="1247" y="338" font-size="9" text-anchor="middle">W29</text>
+<rect x="1272" y="322" width="38" height="24" rx="4" fill="#1c5cab" stroke="#e2e0d8"/>
+<text class="btnpt" x="1291" y="338" font-size="9" text-anchor="middle">W30</text>
+<rect x="1316" y="322" width="38" height="24" rx="4" fill="#3987e5" stroke="#e2e0d8"/>
+<text class="btnpt" x="1335" y="338" font-size="9" text-anchor="middle">W31</text>
+<text class="ts" x="1100" y="373" font-size="11">8월</text>
+<rect x="1140" y="356" width="38" height="24" rx="4" fill="#cde2fb" stroke="#e2e0d8"/>
+<text class="t" x="1159" y="372" font-size="9" text-anchor="middle">W32</text>
+<rect x="1184" y="356" width="38" height="24" rx="4" fill="#3987e5" stroke="#e2e0d8"/>
+<text class="btnpt" x="1203" y="372" font-size="9" text-anchor="middle">W33</text>
+<rect x="1228" y="356" width="38" height="24" rx="4" fill="#3987e5" stroke="#e2e0d8"/>
+<text class="btnpt" x="1247" y="372" font-size="9" text-anchor="middle">W34</text>
+<rect x="1272" y="356" width="38" height="24" rx="4" fill="#3987e5" stroke="#e2e0d8"/>
+<text class="btnpt" x="1291" y="372" font-size="9" text-anchor="middle">W35</text>
+<text class="ts" x="1100" y="407" font-size="11">9월</text>
+<rect x="1140" y="390" width="38" height="24" rx="4" fill="#cde2fb" stroke="#e2e0d8"/>
+<text class="t" x="1159" y="406" font-size="9" text-anchor="middle">W36</text>
+<rect x="1184" y="390" width="38" height="24" rx="4" fill="#86b6ef" stroke="#e2e0d8"/>
+<text class="t" x="1203" y="406" font-size="9" text-anchor="middle">W37</text>
+<rect x="1228" y="390" width="38" height="24" rx="4" fill="#cde2fb" stroke="#e2e0d8"/>
+<text class="t" x="1247" y="406" font-size="9" text-anchor="middle">W38</text>
+<rect x="1272" y="390" width="38" height="24" rx="4" fill="#3987e5" stroke="#e2e0d8"/>
+<text class="btnpt" x="1291" y="406" font-size="9" text-anchor="middle">W39</text>
+<text class="ts" x="1100" y="441" font-size="11">10월</text>
+<rect x="1140" y="424" width="38" height="24" rx="4" fill="#efeee9" stroke="#e2e0d8"/>
+<text class="t" x="1159" y="440" font-size="9" text-anchor="middle">W40</text>
+<rect x="1184" y="424" width="38" height="24" rx="4" fill="#86b6ef" stroke="#e2e0d8"/>
+<text class="t" x="1203" y="440" font-size="9" text-anchor="middle">W41</text>
+<rect x="1228" y="424" width="38" height="24" rx="4" fill="#86b6ef" stroke="#e2e0d8"/>
+<text class="t" x="1247" y="440" font-size="9" text-anchor="middle">W42</text>
+<rect x="1272" y="424" width="38" height="24" rx="4" fill="#3987e5" stroke="#d85a30" stroke-width="2"/>
+<text class="btnpt" x="1291" y="440" font-size="9" text-anchor="middle">W43</text>
+<rect x="1316" y="424" width="38" height="24" rx="4" fill="#ffffff" stroke="#e2e0d8"/>
+<text class="t" x="1335" y="440" font-size="9" text-anchor="middle">W44</text>
+<text class="ts" x="1100" y="475" font-size="11">11월</text>
+<rect x="1140" y="458" width="38" height="24" rx="4" fill="#ffffff" stroke="#e2e0d8"/>
+<text class="t" x="1159" y="474" font-size="9" text-anchor="middle">W45</text>
+<rect x="1184" y="458" width="38" height="24" rx="4" fill="#ffffff" stroke="#e2e0d8"/>
+<text class="t" x="1203" y="474" font-size="9" text-anchor="middle">W46</text>
+<rect x="1228" y="458" width="38" height="24" rx="4" fill="#ffffff" stroke="#e2e0d8"/>
+<text class="t" x="1247" y="474" font-size="9" text-anchor="middle">W47</text>
+<rect x="1272" y="458" width="38" height="24" rx="4" fill="#ffffff" stroke="#e2e0d8"/>
+<text class="t" x="1291" y="474" font-size="9" text-anchor="middle">W48</text>
+<text class="ts" x="1100" y="509" font-size="11">12월</text>
+<rect x="1140" y="492" width="38" height="24" rx="4" fill="#ffffff" stroke="#e2e0d8"/>
+<text class="t" x="1159" y="508" font-size="9" text-anchor="middle">W49</text>
+<rect x="1184" y="492" width="38" height="24" rx="4" fill="#ffffff" stroke="#e2e0d8"/>
+<text class="t" x="1203" y="508" font-size="9" text-anchor="middle">W50</text>
+<rect x="1228" y="492" width="38" height="24" rx="4" fill="#ffffff" stroke="#e2e0d8"/>
+<text class="t" x="1247" y="508" font-size="9" text-anchor="middle">W51</text>
+<rect x="1272" y="492" width="38" height="24" rx="4" fill="#ffffff" stroke="#e2e0d8"/>
+<text class="t" x="1291" y="508" font-size="9" text-anchor="middle">W52</text>
+<rect x="1316" y="492" width="38" height="24" rx="4" fill="#ffffff" stroke="#e2e0d8"/>
+<text class="t" x="1335" y="508" font-size="9" text-anchor="middle">W53</text>
+<text class="ts" x="1100" y="546" font-size="10">적음</text>
+<rect x="1130" y="535" width="14" height="14" rx="3" fill="#efeee9"/>
+<rect x="1148" y="535" width="14" height="14" rx="3" fill="#cde2fb"/>
+<rect x="1166" y="535" width="14" height="14" rx="3" fill="#86b6ef"/>
+<rect x="1184" y="535" width="14" height="14" rx="3" fill="#3987e5"/>
+<rect x="1202" y="535" width="14" height="14" rx="3" fill="#1c5cab"/>
+<text class="ts" x="1226" y="546" font-size="10">많음 · 칸 = 기록한 날 수</text>
+<text class="tm" x="1100" y="564" font-size="10">주 칸은 목요일이 속한 달에 배치</text>
+<text class="tm" x="1100" y="578" font-size="10">빨간 테두리 = 이번 주 · 클릭 시 그 주로 이동</text>
+<rect x="20" y="510" width="1040" height="70" rx="8" class="card"/>
+<rect x="20" y="510" width="1040" height="70" rx="8" class="bd"/>
+<text class="t" x="36" y="536" font-size="12">첫 실행만 3단계, 이후 실행은 곧바로 이번 주 보드(오늘 열 포커스)로 진입. 저장 폴더 경로는 %LOCALAPPDATA%\WorkJourneyBoard\config.json에만 기록.</text>
+<text class="t" x="36" y="558" font-size="12">폴더에 이미 work-journey.db가 있으면 ②에서 "기존 일지를 찾았습니다 — 열기"로 분기(③ 생략). ③은 건너뛸 수 있음(빈 보드 + "+ 업무 추가" 안내).</text>
+</svg>
