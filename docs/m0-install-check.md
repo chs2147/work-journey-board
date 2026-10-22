@@ -96,7 +96,7 @@ reg query "HKCU\Software\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-0
 ## 8. ◆G1 판정 기준
 | 결과 | 판정 | 다음 |
 |---|---|---|
-| 관리자 권한 없이 설치 + 실행 + WebView2 있음 + 폴더 테스트 전부 ✅ (SmartScreen은 "추가 정보 → 실행"으로 통과해도 됨) | **GO (Tauri 확정)** | data-spec 그대로(SQLite 파일), WebView2 설치 모드 `skip` 확정 |
+| 관리자 권한 없이 설치 + 실행 + WebView2 있음 + 폴더 테스트 전부 ✅ (SmartScreen은 "추가 정보 → 실행"으로 통과해도 됨) | **GO (Tauri 확정)** | data-spec 그대로(SQLite 파일), WebView2 설치 모드 `skip` 확정 (→ 이후 `embedBootstrapper`로 재결정, overview 13-4) |
 | SmartScreen 차단·백신 격리 등으로 실행 불가, 단 IT 허용 목록 등록 가능 | **조건부 GO** | 9절 문구로 IT 요청, 등록 전에도 개발은 진행 |
 | 설치·실행 불가 + 허용 목록 등록도 불가 | **대안 전환** | Chrome 전용(sql.js + File System Access, data-spec 8-3) 구조로 스택 갱신 |
 | SQLite 열기(절대 경로)만 실패, 나머지 정상 | GO + 저장 계층 변경 | tauri-plugin-sql 대신 얇은 rusqlite 커맨드로 교체(overview 12-4 #2) |

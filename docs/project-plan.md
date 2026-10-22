@@ -223,7 +223,7 @@ docs/ 의 모든 문서와 project-plan.md의 D5 항목,
    - [ ] "문서" 폴더가 OneDrive로 리디렉션되어 있는지 확인
    - [ ] 재부팅 후 재실행 정상
    - [ ] (D5 추가) tauri-plugin-sql로 **사용자가 고른 폴더의 절대 경로** SQLite 파일 생성·읽기 성공 — 실패 시 rusqlite 커맨드로 대체 결정
-   - [ ] (D5 추가) WebView2 존재 시 설치 모드 `skip` 확정(없으면 `embedBootstrapper`)
+   - [x] (D5 추가) WebView2 존재 확인 → 설치 모드는 `embedBootstrapper` + 예비 오프라인 설치판으로 확정(overview 13-4)
 5. 차단 시 IT 허용 목록 등록 가능 여부 문의
 
 **산출물**: 최소 앱 + 윈도우 빌드 워크플로 + 검증 결과 기록(구현 저장소 또는 본 주제 README에 "M0 결과" 절)
@@ -329,7 +329,7 @@ project-plan.md의 I-M4 항목을 읽고 클립보드 다리부터 구현해줘.
 - [x] D3 산출물 스펙 (2026-10-22, output-spec.md + sample-export_2026-W42~W43.xlsx)
 - [x] D4 시각화 스펙 (2026-10-22, viz-spec.md · wireframe-insights.svg)
 - [~] D5 이관 패키지 (2026-10-22, overview.md 12절 · CLAUDE.md, 이 저장소로 이관 완료) → **◆G1 판정 반영 후 설계 확정**
-- [ ] I-M1 핵심 기록 → ◆G2(2주 실사용)
+- [ ] I-M1 핵심 기록 → ◆G2(2주 실사용) — **구현 계획 수립(2026-10-23)**: [i-m1-plan.md](i-m1-plan.md) (세션 S1~S5)
 - [ ] I-M2 산출물
 - [ ] I-M3 시각화
 - [ ] I-M4 AI 요약

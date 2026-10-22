@@ -304,7 +304,7 @@ docs/overview.md(본 문서: 요구사항·10절 화면) · data-spec.md · outp
 |---|---|---|
 | 1 | ~~◆G1 판정~~ → ✅ **GO** (13절) | I-M0 완료 |
 | 2 | ~~plugin-sql 절대 경로~~ → ✅ **열림**, tauri-plugin-sql 유지(rusqlite 대체 불필요) | I-M0 완료 |
-| 3 | ~~WebView2 설치 모드~~ → ✅ 회사 PC에 WebView2 있음 → **`skip`** 확정 | I-M0 완료 |
+| 3 | ~~WebView2 설치 모드~~ → ✅ **`embedBootstrapper`(기본) + 필요 시 오프라인 설치판** (13-4절) | I-M0 완료 |
 | 4 | AI API 모드(③)의 CSP·키 보관(윈도우 자격 증명 관리자) 방식 | I-M4, IT 승인 시 |
 | 5 | 회사 AI 웹 채팅에서 지시문 템플릿 실효성(분량·형식 준수) | I-M4 실사용 |
 | 6 | 입력 마찰 지점(단축키·자리표시자·자동 저장 지연) | ◆G2 |
@@ -328,7 +328,7 @@ docs/overview.md(본 문서: 요구사항·10절 화면) · data-spec.md · outp
 
 ### 13-2. ◆G1 판정: **GO (Tauri 확정)**
 - 기술 구조(5-1절)·스택(12-1절)·저장 방식(data-spec)을 **변경 없이 확정**.
-- `tauri.conf.json`: `bundle.windows.webviewInstallMode = { "type": "skip" }`, NSIS `installMode = "currentUser"`.
+- `tauri.conf.json`: NSIS `installMode = "currentUser"`, WebView2 설치 모드는 13-4절(`embedBootstrapper`).
 - 저장 계층: `tauri-plugin-sql` 그대로 사용(사용자 선택 폴더 절대 경로 동작 확인).
 - 릴리스 전달: GitHub Releases 다운로드로 충분(대체 경로 불필요).
 
@@ -339,4 +339,20 @@ docs/overview.md(본 문서: 요구사항·10절 화면) · data-spec.md · outp
 | 2 | 회사 PC에 **D: 드라이브**가 있고 사용자가 `D:\work_logs`를 저장 위치로 선택 | 첫 실행 추천 폴더는 기본 `C:\Users\<사용자>\WorkJourney` 유지. D: 등 OneDrive 밖 다른 드라이브도 정상 동작 확인 |
 | 3 | M0 앱은 백업 파일명 시각을 UTC로 만들어 로컬보다 9시간 이른 시각이 찍힘(`…_20261022233032.db`, 실제 10/23 08:30) | **백업·내보내기 파일명의 날짜·시각은 로컬 시각 기준**으로 명시(data-spec 7-2) |
 | 4 | 재부팅 후 재실행 미확인 | per-user 설치 + `%LOCALAPPDATA%` 기록이라 위험 낮음. 다음 출근 때 M0 앱을 한 번 더 열어 실행 횟수 2 확인(I-M1 진행과 병행) |
+
+### 13-4. WebView2 대응 방식 (2026-10-23 재결정: `skip` → `embedBootstrapper`)
+- 이번 회사 PC에는 WebView2가 있었지만, PC 교체·다른 부서 PC·LTSC/서버 계열 윈도우 등 **WebView2가 없는 환경도 고려**한다(사용자 제안).
+- `skip`이면 그런 PC에서 앱이 아예 뜨지 않으므로 기각.
+
+| 모드 | 설치 파일 크기 | WebView2 없을 때 | 있을 때 |
+|---|---|---|---|
+| `skip` | +0 | ❌ 실행 불가 | 그대로 |
+| `downloadBootstrapper`(Tauri 기본) | +0 | 부트스트래퍼부터 인터넷으로 받아 설치 | 아무것도 안 함 |
+| **`embedBootstrapper`** ✅ 기본 | **+약 1.8 MB** | 내장 부트스트래퍼가 런타임을 인터넷으로 받아 설치(현재 사용자) | **아무것도 안 함(통신 없음)** |
+| **`offlineInstaller`** ✅ 예비 | +약 130 MB | **인터넷 없이** 설치 | 아무것도 안 함 |
+| `fixedVersion` | +약 180 MB | 고정 버전 내장 | 내장본 사용(보안 패치를 직접 따라가야 함) — 기각 |
+
+- **기본 설치 파일 = `embedBootstrapper`**: 크기 부담이 거의 없고, WebView2가 있는 대부분의 PC에서는 설치 중 통신도 없다.
+- **오프라인 설치판 = `offlineInstaller`**: WebView2가 없고 인터넷 다운로드도 막힌 PC용. 평소에는 만들지 않고 빌드 워크플로 수동 실행 옵션으로 만든다(I-M1 계획 S1).
+- 외부 통신 0 원칙과의 관계: 원칙의 대상은 **앱 실행 중** 통신이다. 설치 프로그램이 WebView2가 없을 때만 Microsoft 배포처에 접속하는 것은 예외로 두고, 사용 안내에 적는다.
 

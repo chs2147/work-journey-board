@@ -21,7 +21,7 @@
 ## 2. 기술 스택
 | 영역 | 선택 |
 |---|---|
-| 껍데기 | **Tauri v2**, NSIS **per-user**(`bundle.windows.nsis.installMode = "currentUser"`) |
+| 껍데기 | **Tauri v2**, NSIS **per-user**(`bundle.windows.nsis.installMode = "currentUser"`), WebView2 `embedBootstrapper`(예비: `offlineInstaller` 수동 빌드) |
 | 화면 | React 18 + Vite + TypeScript(strict) |
 | 상태 | Zustand(화면 상태) — 영속 데이터는 항상 저장소 경유 |
 | 스타일 | CSS Modules + `src/shared/tokens.css` 디자인 토큰(라이트/다크) |
@@ -32,7 +32,7 @@
 | Tauri 플러그인 | sql · dialog(폴더 선택·저장) · fs(저장 폴더 범위만) · clipboard-manager · single-instance · opener(폴더 열기) · window-state |
 | 테스트 | Vitest(+Testing Library), Playwright(브라우저 모드 E2E·스크린샷) |
 | 품질 | ESLint + Prettier, `tsc --noEmit` |
-| CI | GitHub Actions: `ci.yml`(ubuntu: lint·typecheck·test·e2e) / `build-windows.yml`(windows-latest, 태그 `v*`·수동 실행 → NSIS 설치 파일 산출물) |
+| CI | GitHub Actions: `ci.yml`(ubuntu: lint·typecheck·test·e2e) / `build-windows.yml`(windows-latest, main 빌드 → `v<버전>` 사전 릴리스 생성·갱신, 수동 실행 시 오프라인 설치판 선택) |
 
 ## 3. 디렉토리 구조
 ```
@@ -95,7 +95,7 @@ npm run lint && npm run typecheck
 - 버전 정본 = `package.json` `version`, **semver**(`1.0.0`) — Tauri·NSIS가 semver를 요구하므로 공통 규칙의 소수 4자리 관례 대신 semver를 쓴다. `tauri.conf.json`은 `"version": "../package.json"`으로 참조.
 - 판올림은 `main` 병합 시점에 사용자에게 묻는다(현재 버전 + 추천 버전 제시). 확정 시 같은 커밋에서 README **Version History** 기록.
 - Git: **기본 정책(커밋·푸시·머지 전 사용자 확인)**. 문서 전용 예외 모드 아님.
-- 릴리스 = `v*` 태그 → windows-latest 빌드 → 설치 파일 산출물. "운영 반영" = 회사 PC에 설치 파일 설치.
+- 릴리스 = `main` 빌드가 `package.json` 버전으로 `v<버전>` 릴리스·태그를 **워크플로가 직접** 만든다(세션에서 태그 푸시가 막혀 있음). "운영 반영" = 회사 PC에 설치 파일 설치.
 
 ## 7. 마일스톤 (project-plan.md)
 I-M0 설치 검증(◆G1) → I-M1 핵심 기록(◆G2 2주 실사용) → I-M2 집계·엑셀 → I-M3 시각화 → I-M4 AI 클립보드 다리 → I-M5 안정화·v1.0.0

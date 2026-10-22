@@ -8,7 +8,7 @@
 ## 상태
 - 상세설계 D1~D5 완료(2026-10-22) — 설계 저장소 [my-discussions](https://github.com/chs2147/my-discussions)에서 이 저장소로 이관. **이후 정본은 이 저장소.**
 - **I-M0 완료 · ◆G1 GO**(2026-10-23): 회사 PC에서 관리자 권한 없이 설치·실행, WebView2 있음, 사용자 폴더 SQLite 전 항목 통과 → Tauri 구조 확정 ([docs/overview.md 13절](docs/overview.md))
-- 다음: **I-M1 핵심 기록**
+- 다음: **I-M1 핵심 기록** — 계획 [docs/i-m1-plan.md](docs/i-m1-plan.md) (S1 골격 → S2 도메인·데이터 → S3 보드·입력 → S4 플랫폼·첫 실행·백업 → S5 검증·v0.1.0)
 
 ## 문서
 | 문서 | 내용 |
@@ -18,6 +18,7 @@
 | [docs/output-spec.md](docs/output-spec.md) | 주간 자동 집계 · 엑셀 2시트 양식 · 내보내기 UX · AI 클립보드 지시문 |
 | [docs/viz-spec.md](docs/viz-spec.md) | 경과 타임라인 · 활동 히트맵 · 기간 막대 · 주별 비중 · 업무 색 팔레트 |
 | [docs/m0-install-check.md](docs/m0-install-check.md) | I-M0 회사 PC 설치 검증 절차 · ◆G1 판정 기준 |
+| [docs/i-m1-plan.md](docs/i-m1-plan.md) | I-M1 핵심 기록 구현 계획(세션 S1~S5) |
 | [docs/project-plan.md](docs/project-plan.md) | 작업 패키지 · 관문(G1/G2) · 마일스톤 I-M0~M5 · 세션 시작 프롬프트 |
 | [docs/wireframes/](docs/wireframes/) | 주간 보드 · 첫 실행/연간 보기 · 인사이트 와이어프레임 |
 | [docs/samples/](docs/samples/) | 엑셀 내보내기 샘플(가상 데이터) |
