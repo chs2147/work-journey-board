@@ -49,7 +49,7 @@
 
 ### S1. 프로젝트 골격
 **만들 것**
-- 루트에 앱 프로젝트(`m0/`는 그대로 두고 참고용): `package.json`(버전 `0.1.0`), React 18 + Vite + TS strict, ESLint + Prettier, Vitest, Playwright.
+- 루트에 앱 프로젝트(`m0/`는 그대로 두고 참고용): `package.json`(개발 버전 `0.0.x` — `0.1.0`은 M1 완성(S5)용으로 남겨 둠), React 18 + Vite + TS strict, ESLint + Prettier, Vitest, Playwright.
 - `src/` 디렉토리 구조(CLAUDE.md 3절) 빈 모듈 + `shared/tokens.css`(라이트/다크 토큰, 글꼴 맑은 고딕) + `shared/strings.ts` + `shared/palette.ts`(c1~c8, viz-spec 6절 값).
 - `src-tauri/`: Tauri v2, 플러그인 sql·dialog·clipboard-manager·single-instance·opener·window-state 등록, CSP(외부 연결 차단), NSIS `currentUser`, WebView2 `embedBootstrapper`, 식별자 `com.chs2147.workjourneyboard`, 표시 이름 `Work Journey Board`.
 - `.github/workflows/ci.yml`(ubuntu: lint·typecheck·test·e2e, PR·main).
@@ -60,7 +60,7 @@
 
 **완료 체크**
 - [ ] `npm run dev`로 빈 화면 + 상단 바 표시, `npm test`·`npm run e2e`·lint·typecheck 통과
-- [ ] Actions 윈도우 빌드 성공, 릴리스 `v0.1.0`(사전)에 설치 파일 첨부
+- [ ] Actions 윈도우 빌드 성공, 릴리스 `v0.0.1`(사전)에 설치 파일 첨부
 - [ ] 앱 코드에 외부 호스트 접근 없음(CSP 확인, 의존성 목록 점검)
 
 ### S2. 도메인 + 데이터 계층

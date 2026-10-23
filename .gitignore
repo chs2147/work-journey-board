@@ -9,3 +9,5 @@ exports/
 *.xlsx
 !docs/samples/*.xlsx
 !fixtures/**/*.xlsx
+playwright-report/
+test-results/

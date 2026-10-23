@@ -1,0 +1,107 @@
+/* 디자인 토큰 — 화면은 여기 정의된 값만 쓴다(일회성 값 금지, 공통 규칙 6절).
+   업무 색 --cat-cN 의 실제 값은 shared/palette.ts가 주입한 --cat-cN-light/-dark 에서 고른다. */
+:root {
+  color-scheme: light;
+  --font-sans: "Malgun Gothic", "맑은 고딕", "Segoe UI", system-ui, sans-serif;
+  --font-mono: Consolas, "Malgun Gothic", monospace;
+
+  /* 글자 크기 단계 */
+  --fs-xs: 11px;
+  --fs-sm: 12px;
+  --fs-md: 13px;
+  --fs-lg: 15px;
+  --fs-xl: 18px;
+  --fw-regular: 400;
+  --fw-bold: 700;
+
+  /* 간격·모서리 */
+  --sp-1: 4px;
+  --sp-2: 6px;
+  --sp-3: 8px;
+  --sp-4: 12px;
+  --sp-5: 16px;
+  --sp-6: 24px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+
+  /* 색 — 라이트 */
+  --surface-page: #faf9f5;
+  --surface-card: #ffffff;
+  --surface-sub: #f1efe8;
+  --surface-focus: #f4f9fe;
+  --line: #d3d1c7;
+  --line-strong: #b4b2a9;
+  --text-1: #2c2c2a;
+  --text-2: #5f5e5a;
+  --text-3: #8a8983;
+  --accent: #185fa5;
+  --accent-soft: #e6f1fb;
+  --on-accent: #ffffff;
+  --ok: #0f6e56;
+  --warn: #8a5a00;
+  --warn-soft: #fdf3e1;
+  --danger: #b3261e;
+
+  --cat-c1: var(--cat-c1-light);
+  --cat-c2: var(--cat-c2-light);
+  --cat-c3: var(--cat-c3-light);
+  --cat-c4: var(--cat-c4-light);
+  --cat-c5: var(--cat-c5-light);
+  --cat-c6: var(--cat-c6-light);
+  --cat-c7: var(--cat-c7-light);
+  --cat-c8: var(--cat-c8-light);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --surface-page: #1a1a19;
+    --surface-card: #232322;
+    --surface-sub: #2c2c2a;
+    --surface-focus: #1d2a38;
+    --line: #3d3d3a;
+    --line-strong: #55554f;
+    --text-1: #f0efec;
+    --text-2: #c3c2b7;
+    --text-3: #8f8e86;
+    --accent: #6da7ec;
+    --accent-soft: #1d2a38;
+    --on-accent: #0b0b0b;
+    --ok: #4fc29a;
+    --warn: #e0a83a;
+    --warn-soft: #3a2f17;
+    --danger: #f08b84;
+
+    --cat-c1: var(--cat-c1-dark);
+    --cat-c2: var(--cat-c2-dark);
+    --cat-c3: var(--cat-c3-dark);
+    --cat-c4: var(--cat-c4-dark);
+    --cat-c5: var(--cat-c5-dark);
+    --cat-c6: var(--cat-c6-dark);
+    --cat-c7: var(--cat-c7-dark);
+    --cat-c8: var(--cat-c8-dark);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--fs-md);
+  color: var(--text-1);
+  background: var(--surface-page);
+}
+
+button {
+  font: inherit;
+}

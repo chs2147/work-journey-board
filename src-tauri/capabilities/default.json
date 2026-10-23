@@ -1,0 +1,17 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "메인 창 권한: SQLite, 폴더·파일 대화상자, 클립보드 쓰기, 창 상태. 네트워크 관련 권한 없음",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "sql:default",
+    "sql:allow-execute",
+    "dialog:allow-open",
+    "dialog:allow-save",
+    "dialog:allow-message",
+    "dialog:allow-ask",
+    "clipboard-manager:allow-write-text",
+    "window-state:default"
+  ]
+}

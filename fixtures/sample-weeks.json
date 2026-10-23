@@ -1,0 +1,224 @@
+{
+  "_note": "가상 업무 기록(실제 업무 아님). output-spec.md 1절 샘플(2026-W42~W43) 기반.",
+  "categories": [
+    {
+      "id": "cat-settle",
+      "name": "차세대 정산 시스템 구축",
+      "color": "c1",
+      "sortOrder": 1,
+      "startDate": "2026-09-14"
+    },
+    {
+      "id": "cat-sec",
+      "name": "협력사 보안 점검",
+      "color": "c2",
+      "sortOrder": 2,
+      "startDate": "2026-09-14"
+    },
+    {
+      "id": "cat-dash",
+      "name": "사내 데이터 대시보드",
+      "color": "c3",
+      "sortOrder": 3,
+      "startDate": "2026-09-14"
+    },
+    {
+      "id": "cat-onb",
+      "name": "신규 입사자 온보딩",
+      "color": "c4",
+      "sortOrder": 4,
+      "startDate": "2026-09-14"
+    }
+  ],
+  "items": [
+    {
+      "date": "2026-10-12",
+      "categoryId": "cat-settle",
+      "seq": 1,
+      "depth": 0,
+      "text": "정산 배치 현행 분석 자료 정리"
+    },
+    {
+      "date": "2026-10-13",
+      "categoryId": "cat-settle",
+      "seq": 1,
+      "depth": 0,
+      "text": "정산 배치 요구사항 1차 리뷰"
+    },
+    {
+      "date": "2026-10-13",
+      "categoryId": "cat-settle",
+      "seq": 2,
+      "depth": 1,
+      "text": "재계산 대상 범위 이견 2건 확인"
+    },
+    {
+      "date": "2026-10-15",
+      "categoryId": "cat-settle",
+      "seq": 1,
+      "depth": 0,
+      "text": "현업 담당자 면담, 이견 2건 정리"
+    },
+    {
+      "date": "2026-10-14",
+      "categoryId": "cat-sec",
+      "seq": 1,
+      "depth": 0,
+      "text": "하반기 협력사 점검 대상 3곳 선정"
+    },
+    {
+      "date": "2026-10-16",
+      "categoryId": "cat-sec",
+      "seq": 1,
+      "depth": 0,
+      "text": "점검 체크리스트 개정안 작성"
+    },
+    {
+      "date": "2026-10-12",
+      "categoryId": "cat-dash",
+      "seq": 1,
+      "depth": 0,
+      "text": "대시보드 지표 후보 목록 작성"
+    },
+    {
+      "date": "2026-10-16",
+      "categoryId": "cat-dash",
+      "seq": 1,
+      "depth": 0,
+      "text": "지표 정의서 v0.2 작성"
+    },
+    {
+      "date": "2026-10-13",
+      "categoryId": "cat-onb",
+      "seq": 1,
+      "depth": 0,
+      "text": "10월 입사자 2명 계정·장비 신청"
+    },
+    {
+      "date": "2026-10-15",
+      "categoryId": "cat-onb",
+      "seq": 1,
+      "depth": 0,
+      "text": "온보딩 체크리스트 전달"
+    },
+    {
+      "date": "2026-10-19",
+      "categoryId": "cat-settle",
+      "seq": 1,
+      "depth": 0,
+      "text": "정산 배치 요구사항 2차 리뷰"
+    },
+    {
+      "date": "2026-10-19",
+      "categoryId": "cat-settle",
+      "seq": 2,
+      "depth": 1,
+      "text": "수수료 재계산 조건 3건 추가 확정"
+    },
+    {
+      "date": "2026-10-20",
+      "categoryId": "cat-settle",
+      "seq": 1,
+      "depth": 0,
+      "text": "배치 스케줄러 설계안 작성"
+    },
+    {
+      "date": "2026-10-20",
+      "categoryId": "cat-settle",
+      "seq": 2,
+      "depth": 1,
+      "text": "야간 배치 시간대 02~04시로 협의"
+    },
+    {
+      "date": "2026-10-21",
+      "categoryId": "cat-settle",
+      "seq": 1,
+      "depth": 0,
+      "text": "설계안 팀 리뷰, 수정 의견 5건 반영 중"
+    },
+    {
+      "date": "2026-10-22",
+      "categoryId": "cat-settle",
+      "seq": 1,
+      "depth": 0,
+      "text": "테스트 데이터 이관 스크립트 작성 착수"
+    },
+    {
+      "date": "2026-10-23",
+      "categoryId": "cat-settle",
+      "seq": 1,
+      "depth": 0,
+      "text": "개발계 1차 배포 일정 확정(11/2)"
+    },
+    {
+      "date": "2026-10-24",
+      "categoryId": "cat-settle",
+      "seq": 1,
+      "depth": 0,
+      "text": "개발계 DB 점검 작업 입회"
+    },
+    {
+      "date": "2026-10-19",
+      "categoryId": "cat-sec",
+      "seq": 1,
+      "depth": 0,
+      "text": "협력사 3곳 점검 일정 회신 취합"
+    },
+    {
+      "date": "2026-10-21",
+      "categoryId": "cat-sec",
+      "seq": 1,
+      "depth": 0,
+      "text": "A협력사 현장 점검"
+    },
+    {
+      "date": "2026-10-21",
+      "categoryId": "cat-sec",
+      "seq": 2,
+      "depth": 1,
+      "text": "계정 관리 미흡 2건 발견"
+    },
+    {
+      "date": "2026-10-22",
+      "categoryId": "cat-sec",
+      "seq": 1,
+      "depth": 0,
+      "text": "점검 결과 보고서 초안 작성"
+    },
+    {
+      "date": "2026-10-20",
+      "categoryId": "cat-dash",
+      "seq": 1,
+      "depth": 0,
+      "text": "지표 정의서 v0.3 공유"
+    },
+    {
+      "date": "2026-10-23",
+      "categoryId": "cat-dash",
+      "seq": 1,
+      "depth": 0,
+      "text": "영업팀 요구사항 인터뷰"
+    },
+    {
+      "date": "2026-10-23",
+      "categoryId": "cat-dash",
+      "seq": 2,
+      "depth": 1,
+      "text": "주간 매출 추이 차트 추가 요청"
+    }
+  ],
+  "memos": [
+    {
+      "date": "2026-10-14",
+      "text": "분기 보안 교육 이수"
+    },
+    {
+      "date": "2026-10-22",
+      "text": "부서 월례 회의 참석"
+    },
+    {
+      "date": "2026-10-23",
+      "text": "하반기 교육 신청 마감 확인"
+    }
+  ]
+}

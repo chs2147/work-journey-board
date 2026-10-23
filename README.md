@@ -29,5 +29,20 @@
 ## 기술 스택 (확정)
 Tauri v2(NSIS per-user) · React 18 + Vite + TypeScript · SQLite(실앱 tauri-plugin-sql / 개발·테스트 sql.js) · ExcelJS · SVG + d3-scale · date-fns · Vitest + Playwright · GitHub Actions(ubuntu CI + windows-latest 설치 파일 빌드)
 
+## 개발
+```bash
+npm ci
+npm run dev          # 브라우저 모드(sql.js 메모리) — http://localhost:1420
+npm test             # 단위 테스트(Vitest)
+npm run e2e          # E2E(Playwright, 브라우저 모드)
+npm run lint && npm run format:check && npm run typecheck
+npm run tauri dev    # 실앱 모드(윈도우 / 리눅스는 webkit2gtk-4.1 필요)
+```
+- 윈도우 설치 파일: `main`에 반영되면 [Releases](https://github.com/chs2147/work-journey-board/releases)에 `v<버전>` 사전 릴리스로 올라간다. WebView2 오프라인 설치판은 Actions → *Build Windows installer* → Run workflow → `offline`.
+
 ## Version History
-(첫 릴리스 전)
+### v0.0.1 (2026-10-23) — I-M1 S1 프로젝트 골격
+- React 18 + Vite + TypeScript 앱 골격, 디자인 토큰·업무 색 팔레트·UI 문자열 단일 출처
+- SQL 드라이버 인터페이스 + sql.js(브라우저 모드)·tauri-plugin-sql(실앱) 드라이버
+- Tauri v2 껍데기: 단일 인스턴스·창 상태 기억, 외부 통신 차단 CSP, NSIS 현재 사용자 설치, WebView2 embedBootstrapper
+- CI(lint·포맷·타입·단위·E2E)와 윈도우 설치 파일 빌드·사전 릴리스 워크플로(오프라인 설치판 선택 가능)

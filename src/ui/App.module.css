@@ -1,0 +1,25 @@
+.shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.main {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+}
+
+.placeholder {
+  color: var(--text-3);
+}
+
+.status {
+  flex: 0 0 auto;
+  padding: var(--sp-1) var(--sp-5);
+  font-size: var(--fs-xs);
+  color: var(--text-2);
+  border-top: 1px solid var(--line);
+  background: var(--surface-card);
+}

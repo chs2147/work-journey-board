@@ -1,0 +1,35 @@
+.bar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  height: 52px;
+  padding: 0 var(--sp-5);
+  background: var(--surface-card);
+  border-bottom: 1px solid var(--line);
+}
+
+.title {
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+  white-space: nowrap;
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+.iconButton {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 30px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-1);
+  cursor: pointer;
+}
+
+.iconButton:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
