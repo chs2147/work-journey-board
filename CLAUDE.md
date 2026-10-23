@@ -94,7 +94,8 @@ npm run lint && npm run typecheck
 ## 6. 버전·Git
 - 버전 정본 = `package.json` `version`, **semver**(`1.0.0`) — Tauri·NSIS가 semver를 요구하므로 공통 규칙의 소수 4자리 관례 대신 semver를 쓴다. `tauri.conf.json`은 `"version": "../package.json"`으로 참조.
 - 판올림은 `main` 병합 시점에 사용자에게 묻는다(현재 버전 + 추천 버전 제시). 확정 시 같은 커밋에서 README **Version History** 기록.
-- Git: **기본 정책(커밋·푸시·머지 전 사용자 확인)**. 문서 전용 예외 모드 아님.
+- Git: **기본 정책(커밋·푸시·머지 전 사용자 확인)** — 코드·설정·워크플로 변경에 적용.
+- **예외(2026-10-23 사용자 지시)**: `docs/`·`README.md`·`CLAUDE.md` 등 **문서만 바뀌는 변경**은 확인 없이 `main`에 바로 커밋·푸시한다. 코드가 함께 바뀌면 기본 정책을 따른다.
 - 릴리스 = `main` 빌드가 `package.json` 버전으로 `v<버전>` 릴리스·태그를 **워크플로가 직접** 만든다(세션에서 태그 푸시가 막혀 있음). "운영 반영" = 회사 PC에 설치 파일 설치.
 
 ## 7. 마일스톤 (project-plan.md)
