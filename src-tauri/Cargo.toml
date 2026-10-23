@@ -1,6 +1,6 @@
 [package]
 name = "work-journey-board"
-version = "0.0.5"
+version = "0.0.6"
 description = "Work Journey Board — 주간 보드 기반 개인 업무 일지"
 edition = "2021"
 

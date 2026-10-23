@@ -46,6 +46,11 @@ npm run tauri dev    # 실앱 모드(윈도우 / 리눅스는 webkit2gtk-4.1 필
 - 윈도우 설치 파일: `main`에 반영되면 [Releases](https://github.com/chs2147/work-journey-board/releases)에 `v<버전>` 사전 릴리스로 올라간다. WebView2 오프라인 설치판은 Actions → *Build Windows installer* → Run workflow → `offline`.
 
 ## Version History
+### v0.0.6 (2026-10-23) — 시작 스플래시
+- 앱을 켜면 보드가 준비될 때까지 "한 주가 채워지는 보드" 스플래시 표시(월~금 카드에 기록 줄이 차례로 그려지고 오늘 요일 강조)
+- 흰 화면 깜빡임 제거(창 배경색 = 스플래시 배경, OS 다크 테마면 다크 배경)
+- 준비 + 보드 글꼴 로딩이 끝나면 바로 사라짐(최소 0.4초), 3초 넘으면 진행 문구 표시, 애니메이션 효과 끔 설정 존중
+
 ### v0.0.5 (2026-10-23) — 본문 글꼴 Pretendard 14px
 - 본문 글꼴을 Pretendard Variable(SIL OFL 1.1)로 변경 — 공식 woff2를 수정 없이 앱에 포함, 라이선스 전문 동봉(외부 통신 없음)
 - 기본 글자 크기 13px → 14px(작은·큰 글자도 함께 한 단계씩)
