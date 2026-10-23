@@ -4,4 +4,5 @@ import type { Platform } from "./index";
 export const tauriPlatform: Platform = {
   kind: "tauri",
   openJournal: async () => null,
+  now: () => new Date(),
 };

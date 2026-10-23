@@ -1,0 +1,114 @@
+.pop {
+  position: absolute;
+  top: 46px;
+  left: 0;
+  z-index: 30;
+  width: 340px;
+  padding: var(--sp-4);
+  background: var(--surface-card);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.14);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+
+.head button {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 26px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-card);
+  color: var(--text-1);
+  cursor: pointer;
+}
+
+.title {
+  font-weight: var(--fw-bold);
+  white-space: nowrap;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  margin-bottom: var(--sp-1);
+}
+
+.month {
+  flex: 0 0 34px;
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+}
+
+.week {
+  flex: 0 0 48px;
+  height: 22px;
+  padding: 0;
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  color: var(--text-1);
+  cursor: pointer;
+}
+
+.week:hover {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+}
+
+.l0 {
+  background: var(--heat-0);
+}
+.l1 {
+  background: var(--heat-1);
+}
+.l2 {
+  background: var(--heat-2);
+}
+.l3 {
+  background: var(--heat-3);
+  color: var(--heat-on-strong);
+}
+.l4 {
+  background: var(--heat-4);
+  color: var(--heat-on-strong);
+}
+
+.current {
+  border: 2px solid var(--today-mark);
+}
+
+.viewing {
+  font-weight: var(--fw-bold);
+  text-decoration: underline;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1);
+  margin-top: var(--sp-3);
+  font-size: var(--fs-xs);
+  color: var(--text-2);
+}
+
+.swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+.legendNote {
+  flex-basis: 100%;
+  color: var(--text-3);
+}

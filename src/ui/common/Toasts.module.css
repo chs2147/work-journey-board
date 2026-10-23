@@ -1,0 +1,31 @@
+.stack {
+  position: fixed;
+  left: 50%;
+  bottom: 40px;
+  transform: translateX(-50%);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--toast-bg);
+  color: var(--toast-text);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 16px rgb(0 0 0 / 0.2);
+  white-space: nowrap;
+}
+
+.toast button {
+  flex: 0 0 auto;
+  border: 0;
+  background: none;
+  color: var(--toast-action);
+  font-weight: var(--fw-bold);
+  cursor: pointer;
+}

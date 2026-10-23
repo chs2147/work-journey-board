@@ -7,11 +7,12 @@
 .main {
   flex: 1 1 auto;
   min-height: 0;
-  display: grid;
-  place-items: center;
+  display: flex;
+  flex-direction: column;
 }
 
 .placeholder {
+  margin: auto;
   color: var(--text-3);
 }
 

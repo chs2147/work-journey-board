@@ -1,4 +1,6 @@
 .bar {
+  position: relative;
+  z-index: 20;
   display: flex;
   align-items: center;
   gap: var(--sp-3);
@@ -9,27 +11,72 @@
 }
 
 .title {
+  flex: 0 0 auto;
   font-size: var(--fs-lg);
   font-weight: var(--fw-bold);
   white-space: nowrap;
+  margin-right: var(--sp-4);
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.week {
+  flex: 0 0 auto;
+  min-width: 190px;
+  text-align: center;
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.yearWrap {
+  position: relative;
 }
 
 .spacer {
   flex: 1 1 auto;
 }
 
-.iconButton {
+.iconButton,
+.textButton,
+.saveFailed {
   flex: 0 0 auto;
-  width: 32px;
   height: 30px;
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-md);
   background: var(--surface-card);
   color: var(--text-1);
   cursor: pointer;
+  white-space: nowrap;
+}
+
+.iconButton {
+  width: 32px;
+}
+
+.textButton {
+  padding: 0 var(--sp-4);
 }
 
 .iconButton:disabled {
   opacity: 0.5;
   cursor: default;
+}
+
+.saveState {
+  flex: 0 0 auto;
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+  white-space: nowrap;
+}
+
+.saveFailed {
+  padding: 0 var(--sp-4);
+  border-color: var(--danger);
+  color: var(--danger);
 }

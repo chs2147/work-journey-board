@@ -42,6 +42,18 @@
   --warn: #8a5a00;
   --warn-soft: #fdf3e1;
   --danger: #b3261e;
+  --today-mark: #d85a30;
+  --toast-bg: #2c2c2a;
+  --toast-text: #ffffff;
+  --toast-action: #86b6ef;
+
+  /* 순차 색(연간 미니맵·히트맵, viz-spec 2-3) */
+  --heat-0: #efeee9;
+  --heat-1: #cde2fb;
+  --heat-2: #86b6ef;
+  --heat-3: #3987e5;
+  --heat-4: #1c5cab;
+  --heat-on-strong: #ffffff;
 
   --cat-c1: var(--cat-c1-light);
   --cat-c2: var(--cat-c2-light);
@@ -72,6 +84,17 @@
     --warn: #e0a83a;
     --warn-soft: #3a2f17;
     --danger: #f08b84;
+    --today-mark: #ef7a4d;
+    --toast-bg: #f0efec;
+    --toast-text: #1a1a19;
+    --toast-action: #185fa5;
+
+    --heat-0: #262624;
+    --heat-1: #184f95;
+    --heat-2: #256abf;
+    --heat-3: #3987e5;
+    --heat-4: #86b6ef;
+    --heat-on-strong: #0b0b0b;
 
     --cat-c1: var(--cat-c1-dark);
     --cat-c2: var(--cat-c2-dark);

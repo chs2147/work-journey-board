@@ -1,0 +1,186 @@
+// 셀 하나의 개조식 입력기. 항목마다 <textarea> 1개(자동 높이) — contenteditable의 커서·IME 문제를 피한다(i-m1-plan 4절).
+// 키 동작은 overview 10-3절 표가 기준이다. 한글 조합 중(isComposing)에는 Enter·Tab 등을 처리하지 않는다.
+import { useLayoutEffect, useRef, type ClipboardEvent, type KeyboardEvent } from "react";
+import { indentAt, moveItem, outdentAt, parsePastedLines } from "../../domain/items";
+import type { ItemDraft } from "../../domain/types";
+import { STR } from "../../shared/strings";
+import { editCell, leaveCell, newDraft, setFocus, setFocusDay, splitKey, useBoard } from "./boardStore";
+import { isComposingKey } from "./helpers";
+import styles from "./Board.module.css";
+
+export interface CellNav {
+  /** 위·아래 칸으로 이동(없으면 false) */
+  up(): boolean;
+  down(): boolean;
+}
+
+interface Props {
+  cellKey: string;
+  ariaLabel: string;
+  showPlaceholder: boolean;
+  nav: CellNav;
+}
+
+function autoSize(el: HTMLTextAreaElement | null) {
+  if (!el) return;
+  el.style.height = "auto";
+  el.style.height = `${el.scrollHeight}px`;
+}
+
+export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav }: Props) {
+  const items = useBoard((s) => s.cells[cellKey]) ?? [];
+  const focus = useBoard((s) => s.focus);
+  const refs = useRef<(HTMLTextAreaElement | null)[]>([]);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // 스토어가 요청한 위치로 커서를 옮긴다(항목 추가·이동·칸 이동 후).
+  useLayoutEffect(() => {
+    if (focus?.kind !== "item" || focus.key !== cellKey) return;
+    const el = refs.current[focus.index];
+    if (!el) return;
+    el.focus();
+    const pos = focus.caret === "start" ? 0 : focus.caret === "end" ? el.value.length : focus.caret;
+    el.setSelectionRange(pos, pos);
+    setFocus(null);
+  }, [focus, cellKey, items.length]);
+
+  useLayoutEffect(() => {
+    refs.current.length = items.length;
+    refs.current.forEach(autoSize);
+  });
+
+  const update = (next: ItemDraft[], index: number, caret: "start" | "end" | number) =>
+    editCell(cellKey, next, { kind: "item", key: cellKey, index, caret });
+
+  const startEditing = () => {
+    setFocusDay(splitKey(cellKey).date);
+    if (items.length === 0) update([newDraft()], 0, "end");
+  };
+
+  const onKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>, i: number) => {
+    if (isComposingKey(e)) return;
+    const ta = e.currentTarget;
+    const { selectionStart: s, selectionEnd: t, value } = ta;
+    const item = items[i]!;
+    const plain = !e.altKey && !e.ctrlKey && !e.metaKey;
+
+    if (e.key === "Enter" && plain && !e.shiftKey) {
+      e.preventDefault();
+      const next = [...items];
+      next[i] = { ...item, text: value.slice(0, s) };
+      // 본 항목 끝에서 Enter인데 세부 항목이 딸려 있으면 첫 세부 항목으로 넣는다(세부 항목의 소속이 바뀌지 않게).
+      const depth = item.depth === 0 && items[i + 1]?.depth === 1 && t === value.length ? 1 : item.depth;
+      next.splice(i + 1, 0, newDraft(value.slice(t), depth));
+      update(next, i + 1, "start");
+      return;
+    }
+    if (e.key === "Tab" && plain) {
+      e.preventDefault();
+      update(e.shiftKey ? outdentAt(items, i) : indentAt(items, i), i, s);
+      return;
+    }
+    if (e.key === "Backspace" && plain && s === 0 && t === 0) {
+      if (value === "") {
+        if (items.length === 1) return;
+        e.preventDefault();
+        const next = items.filter((_, j) => j !== i);
+        if (next[0]?.depth === 1) next[0] = { ...next[0], depth: 0 };
+        if (i > 0) update(next, i - 1, "end");
+        else update(next, 0, "start");
+        return;
+      }
+      if (item.depth === 1) {
+        e.preventDefault();
+        update(outdentAt(items, i), i, 0);
+      }
+      return;
+    }
+    if ((e.key === "ArrowUp" || e.key === "ArrowDown") && e.altKey && !e.ctrlKey && !e.metaKey) {
+      e.preventDefault();
+      const moved = moveItem(items, i, e.key === "ArrowUp" ? -1 : 1);
+      update(moved.items, moved.index, s);
+      return;
+    }
+    if (e.key === "ArrowUp" && plain && !e.shiftKey && s === t && !value.slice(0, s).includes("\n")) {
+      if (i > 0) {
+        e.preventDefault();
+        setFocus({ kind: "item", key: cellKey, index: i - 1, caret: "end" });
+      } else if (nav.up()) e.preventDefault();
+      return;
+    }
+    if (e.key === "ArrowDown" && plain && !e.shiftKey && s === t && !value.slice(t).includes("\n")) {
+      if (i < items.length - 1) {
+        e.preventDefault();
+        setFocus({ kind: "item", key: cellKey, index: i + 1, caret: "start" });
+      } else if (nav.down()) e.preventDefault();
+      return;
+    }
+    if (e.key === "Escape") {
+      e.preventDefault();
+      ta.blur();
+    }
+  };
+
+  const onPaste = (e: ClipboardEvent<HTMLTextAreaElement>, i: number) => {
+    const parsed = parsePastedLines(e.clipboardData.getData("text/plain"));
+    if (!parsed) return; // 한 줄은 기본 붙여넣기
+    e.preventDefault();
+    const drafts = parsed.map((p) => newDraft(p.text, p.depth));
+    const next = [...items];
+    const current = items[i]!;
+    if (current.text.trim() === "") {
+      next.splice(i, 1, ...drafts);
+      if (i === 0) next[0] = { ...next[0]!, depth: 0 };
+      update(next, i + drafts.length - 1, "end");
+    } else {
+      next.splice(i + 1, 0, ...drafts);
+      update(next, i + drafts.length, "end");
+    }
+  };
+
+  const onChange = (i: number, text: string) => {
+    const next = [...items];
+    next[i] = { ...items[i]!, text };
+    editCell(cellKey, next);
+  };
+
+  return (
+    <div
+      ref={containerRef}
+      className={styles.cellBody}
+      onFocus={() => setFocusDay(splitKey(cellKey).date)}
+      onBlur={(e) => {
+        if (!containerRef.current?.contains(e.relatedTarget as Node | null)) void leaveCell(cellKey);
+      }}
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget && items.length === 0) {
+          e.preventDefault();
+          startEditing();
+        }
+      }}
+    >
+      {items.map((it, i) => (
+        <div key={it.id} className={it.depth === 1 ? styles.itemSub : styles.item}>
+          <textarea
+            ref={(el) => {
+              refs.current[i] = el;
+            }}
+            className={styles.itemInput}
+            rows={1}
+            value={it.text}
+            aria-label={ariaLabel}
+            spellCheck={false}
+            onChange={(e) => onChange(i, e.target.value)}
+            onKeyDown={(e) => onKeyDown(e, i)}
+            onPaste={(e) => onPaste(e, i)}
+          />
+        </div>
+      ))}
+      {items.length === 0 && showPlaceholder && (
+        <button type="button" className={styles.addRecord} onClick={startEditing}>
+          {STR.board.addRecord}
+        </button>
+      )}
+    </div>
+  );
+}
