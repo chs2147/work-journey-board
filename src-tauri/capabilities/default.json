@@ -12,6 +12,7 @@
     "dialog:allow-message",
     "dialog:allow-ask",
     "clipboard-manager:allow-write-text",
-    "window-state:default"
+    "window-state:default",
+    "core:window:allow-destroy"
   ]
 }

@@ -2,6 +2,8 @@ import { weekTitle } from "../../domain/week";
 import { STR } from "../../shared/strings";
 import { goToday, goWeek, retryFailed, setYearOpen, useBoard } from "../board/boardStore";
 import { YearMinimap } from "../board/YearMinimap";
+import { setSettingsOpen } from "./appController";
+import { useAppStore } from "./appStore";
 import styles from "./TopBar.module.css";
 
 export function TopBar() {
@@ -10,11 +12,12 @@ export function TopBar() {
   const yearOpen = useBoard((s) => s.yearOpen);
   const saving = useBoard((s) => s.saving);
   const failed = useBoard((s) => s.failed.length);
+  const journalReady = useAppStore((s) => s.journal.state === "ready");
 
   return (
     <header className={styles.bar}>
       <span className={styles.title}>{STR.appName}</span>
-      {ready && (
+      {ready && journalReady && (
         <nav className={styles.nav}>
           <button
             type="button"
@@ -62,6 +65,7 @@ export function TopBar() {
       )}
       <div className={styles.spacer} />
       {ready &&
+        journalReady &&
         (failed > 0 ? (
           <button
             type="button"
@@ -80,8 +84,9 @@ export function TopBar() {
         type="button"
         className={styles.iconButton}
         aria-label={STR.topBar.settings}
-        title={STR.topBar.settingsPending}
-        disabled
+        title={journalReady ? STR.topBar.settings : STR.topBar.settingsDisabled}
+        disabled={!journalReady}
+        onClick={() => setSettingsOpen(true)}
       >
         ⚙
       </button>

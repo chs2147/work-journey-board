@@ -60,6 +60,9 @@ jobs:
           else { npx tauri build }
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+      - name: Rust tests (backup file-name guard)
+        run: cargo test --release --lib --manifest-path src-tauri/Cargo.toml
+
       - name: Collect installer
         id: collect
         shell: pwsh

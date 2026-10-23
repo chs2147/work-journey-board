@@ -41,10 +41,10 @@ src/
               → 순수 함수만. UI·저장소·플랫폼 import 금지
   data/       driver.ts(SqlDriver) · drivers/tauriSql.ts · drivers/sqlJs.ts · repository.ts · migrations/0001_init.sql …
   export/     excel.ts · filename.ts
-  platform/   index.ts(인터페이스) · tauri.ts · browser.ts   ← 폴더 선택·파일 저장·클립보드·OneDrive 감지
+  platform/   index.ts(인터페이스) · tauri.ts · browser.ts · fakeFs.ts(브라우저 모드 가짜 폴더)   ← 폴더 선택·설정·백업 파일·OneDrive 감지
   ui/         board/ · summary/ · insights/ · settings/ · first-run/ · common/
   shared/     strings.ts(UI 문자열 SSOT) · tokens.css · palette.ts(c1~c8)
-src-tauri/    얇은 껍데기: 플러그인 등록·설정·CSP만. 업무 로직 금지
+src-tauri/    얇은 껍데기: 플러그인 등록·설정·CSP + 최소 명령(db_batch.rs 트랜잭션, files.rs 파일·설정). 업무 로직 금지
 tests/        unit/ · e2e/
 fixtures/     sample-*.json — 가상 업무 기록만
 ```
@@ -64,7 +64,8 @@ fixtures/     sample-*.json — 가상 업무 기록만
 
 ### 4-3. 데이터 파일 안전
 - 영속 데이터 접근은 **`JournalRepository` → `SqlDriver`** 경로만. UI·domain에서 SQL 직접 실행 금지.
-- 사용자 폴더의 파일을 지우는 코드는 **`src/data/backup.ts`의 가드 함수 1곳뿐**이며, data-spec 7-2절의 일일·월간 패턴과 앱이 만든 임시 사본(`*.db.tmp`)만 삭제한다. 이 함수 변경 시 패턴 외 파일 보존 테스트를 반드시 통과.
+- 사용자 폴더의 파일을 지우는 코드는 **`src/data/backup.ts`의 가드 함수 1곳뿐**이며, data-spec 7-2절의 일일·월간 패턴과 앱이 만든 임시 사본(`*.db.tmp`)만 삭제한다. 실앱에서는 Rust `fs_remove_backup`·`fs_rename_backup`(src-tauri/src/files.rs)이 같은 패턴을 **한 번 더** 검사한다 — 두 곳의 규칙을 함께 바꾸고, 패턴 외 파일 보존 테스트(TS 단위·Rust `cargo test`)를 반드시 통과.
+- 사용자 폴더에 쓰는 동작은 `Platform`(src/platform/) 인터페이스로만 한다. 덮어쓰기는 백업 사본 이름 바꾸기와 설정 파일 쓰기뿐이고, 일지 파일·다른 파일은 덮어쓰지 않는다(옮기기는 대상에 일지가 있으면 실패).
 - 여러 문장을 묶는 쓰기는 **`SqlDriver.batch`로만** 한다. `BEGIN`/`COMMIT`을 `execute`로 따로 보내지 않는다(실앱 연결 풀 문제, data-spec 8-1).
 - 스키마 변경 = 새 마이그레이션 파일(전진 전용) + **마이그레이션 직전 자동 백업** + fixture DB 왕복 테스트. 기존 마이그레이션 파일 수정 금지.
 - `PRAGMA journal_mode=DELETE` 유지(WAL 금지 — 데이터 = 파일 1개 원칙).

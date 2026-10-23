@@ -1,24 +1,25 @@
 import { create } from "zustand";
 import type { Platform } from "../../platform";
 import type { SqlDriver } from "../../data/driver";
+import type { JournalRepository } from "../../data/repository";
 
-// 화면 상태 전용 스토어. 영속 데이터는 저장소(JournalRepository) 경유로만 다룬다(CLAUDE.md 2절).
+// 앱 수준 화면 상태(어느 화면을 보여 줄지). 영속 데이터는 저장소(JournalRepository) 경유로만 다룬다(CLAUDE.md 2절).
 export type JournalStatus =
   | { state: "loading" }
-  | { state: "ready"; driver: SqlDriver; sqliteVersion: string }
-  | { state: "not-configured" }
+  | { state: "first-run" }
+  | { state: "missing"; dataDir: string }
+  | { state: "integrity"; dataDir: string; path: string }
+  | { state: "ready"; driver: SqlDriver; repo: JournalRepository; dataDir: string; sqliteVersion: string }
   | { state: "error"; message: string };
 
 interface AppState {
   platform: Platform | null;
   journal: JournalStatus;
-  setPlatform(platform: Platform): void;
-  setJournal(journal: JournalStatus): void;
+  settingsOpen: boolean;
 }
 
-export const useAppStore = create<AppState>((set) => ({
+export const useAppStore = create<AppState>(() => ({
   platform: null,
   journal: { state: "loading" },
-  setPlatform: (platform) => set({ platform }),
-  setJournal: (journal) => set({ journal }),
+  settingsOpen: false,
 }));

@@ -1,6 +1,7 @@
 //! Work Journey Board 데스크톱 껍데기. 플러그인 등록·창 설정만 둔다 — 업무 로직은 웹 앱(src/) 쪽에(CLAUDE.md 4-5).
 
 mod db_batch;
+mod files;
 
 use tauri::Manager;
 
@@ -20,7 +21,19 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![db_batch::db_batch])
+        .invoke_handler(tauri::generate_handler![
+            db_batch::db_batch,
+            files::config_read,
+            files::config_write,
+            files::onedrive_roots,
+            files::fs_stat,
+            files::fs_list,
+            files::fs_ensure_dir,
+            files::fs_remove_backup,
+            files::fs_rename_backup,
+            files::fs_copy_new,
+            files::open_folder
+        ])
         .run(tauri::generate_context!())
         .expect("Work Journey Board 실행 중 오류");
 }

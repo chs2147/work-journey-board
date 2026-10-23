@@ -8,16 +8,27 @@ let sqlJs: Promise<SqlJsStatic> | null = null;
  * @param wasmUrl 브라우저에서 wasm 파일 위치(Vite `?url` import). Node(테스트)에서는 생략.
  */
 export async function openSqlJsMemory(wasmUrl?: string): Promise<SqlDriver> {
-  sqlJs ??= initSqlJs(wasmUrl ? { locateFile: () => wasmUrl } : undefined);
-  const SQL = await sqlJs;
-  return new SqlJsDriver(new SQL.Database());
+  return openSqlJs(wasmUrl);
 }
 
-class SqlJsDriver implements SqlDriver {
-  readonly label = "브라우저 모드(sql.js 메모리)";
+/** sql.js DB를 연다. bytes를 주면 그 내용(다른 DB 파일의 사본)으로 시작한다. */
+export async function openSqlJs(wasmUrl?: string, bytes?: Uint8Array, label?: string): Promise<SqlJsDriver> {
+  sqlJs ??= initSqlJs(wasmUrl ? { locateFile: () => wasmUrl } : undefined);
+  const SQL = await sqlJs;
+  return new SqlJsDriver(new SQL.Database(bytes), label);
+}
 
-  constructor(private readonly db: Database) {
+export class SqlJsDriver implements SqlDriver {
+  constructor(
+    private readonly db: Database,
+    readonly label: string = "브라우저 모드(sql.js 메모리)",
+  ) {
     db.run("PRAGMA foreign_keys = ON");
+  }
+
+  /** DB 전체를 바이트로(브라우저 모드의 가짜 파일 시스템용) */
+  exportBytes(): Uint8Array {
+    return this.db.export();
   }
 
   async execute(sql: string, params: SqlParam[] = []) {
