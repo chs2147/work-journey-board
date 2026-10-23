@@ -9,7 +9,7 @@ import { TopBar } from "./common/TopBar";
 import { FirstRun } from "./first-run/FirstRun";
 import { IntegrityProblem, MissingFolder } from "./first-run/StartScreens";
 import { SettingsPanel } from "./settings/SettingsPanel";
-import { dismissSplash } from "./splash";
+import { finishSplash } from "./splash";
 import styles from "./App.module.css";
 
 let started = false;
@@ -25,9 +25,9 @@ export function App() {
     start().catch((e) => useAppStore.setState({ journal: { state: "error", message: String(e) } }));
   }, []);
 
-  // 시작 화면(보드·첫 실행·오류 등)이 정해지면 스플래시를 걷는다.
+  // 시작 화면(보드·첫 실행·오류 등)이 정해지면 스플래시 창에서 메인 창으로 넘어간다.
   useEffect(() => {
-    if (journal.state !== "loading") void dismissSplash();
+    if (journal.state !== "loading") void finishSplash(useAppStore.getState().platform);
   }, [journal.state]);
 
   return (

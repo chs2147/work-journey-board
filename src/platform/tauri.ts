@@ -1,11 +1,13 @@
 import { invoke } from "@tauri-apps/api/core";
+import { emitTo } from "@tauri-apps/api/event";
 import { homeDir } from "@tauri-apps/api/path";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import Database from "@tauri-apps/plugin-sql";
 import { open } from "@tauri-apps/plugin-dialog";
 import type { BackupFs } from "../data/backup";
 import { openTauriSql } from "../data/drivers/tauriSql";
-import { isOneDriveLike, type AppConfig, type PathInfo, type Platform } from "./index";
+import { isOneDriveLike, type AppConfig, type PathInfo, type Platform, type SplashWindow } from "./index";
+import { SPLASH_STATUS_EVENT } from "./splashEvents";
 
 // 실앱(윈도우). 파일 동작은 src-tauri/src/files.rs의 얇은 명령을 쓴다(삭제·이름 바꾸기는 Rust에서도 패턴 검사).
 const SEP = navigator.userAgent.includes("Windows") ? "\\" : "/";
@@ -16,6 +18,18 @@ const join = (...parts: string[]) =>
     .join(SEP);
 
 let oneDriveRoots: string[] | null = null;
+
+// 시작 스플래시 창(tauri.conf.json의 "splash"). 메인 창은 숨긴 채 시작하고 finish()에서 보인다(src-tauri/src/splash.rs).
+let splashOpen = true;
+const splash: SplashWindow = {
+  status(text) {
+    if (splashOpen) void emitTo("splash", SPLASH_STATUS_EVENT, text).catch(() => undefined);
+  },
+  async finish() {
+    splashOpen = false;
+    await invoke("splash_finish");
+  },
+};
 
 const backupFs: BackupFs = {
   join,
@@ -88,4 +102,6 @@ export const tauriPlatform: Platform = {
       }
     });
   },
+
+  splash,
 };

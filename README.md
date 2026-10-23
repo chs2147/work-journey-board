@@ -18,10 +18,10 @@
 | [docs/output-spec.md](docs/output-spec.md) | 주간 자동 집계 · 엑셀 2시트 양식 · 내보내기 UX · AI 클립보드 지시문 |
 | [docs/viz-spec.md](docs/viz-spec.md) | 경과 타임라인 · 활동 히트맵 · 기간 막대 · 주별 비중 · 업무 색 팔레트 |
 | [docs/m0-install-check.md](docs/m0-install-check.md) | I-M0 회사 PC 설치 검증 절차 · ◆G1 판정 기준 |
-| [docs/splash-spec.md](docs/splash-spec.md) | 시작 스플래시 구현 스펙 · 시안 3종(B 확정) |
+| [docs/splash-spec.md](docs/splash-spec.md) | 시작 스플래시 창(메인보다 작은 창·최소 2.5초) 구현 스펙 · 시안 3종(B 확정) |
 | [docs/i-m1-plan.md](docs/i-m1-plan.md) | I-M1 핵심 기록 구현 계획(세션 S1~S5) |
 | [docs/project-plan.md](docs/project-plan.md) | 작업 패키지 · 관문(G1/G2) · 마일스톤 I-M0~M5 · 세션 시작 프롬프트 |
-| [docs/wireframes/](docs/wireframes/) | 주간 보드 · 첫 실행/연간 보기 · 인사이트 · 스플래시 와이어프레임 |
+| [docs/wireframes/](docs/wireframes/) | 주간 보드 · 첫 실행/연간 보기 · 인사이트 · 스플래시 와이어프레임·화면 |
 | [docs/samples/](docs/samples/) | 엑셀 내보내기 샘플(가상 데이터) |
 | [CLAUDE.md](CLAUDE.md) | 구현 규칙(외부 통신 0 · 실데이터 금지 · 데이터 파일 안전 · 기술 스택) |
 

@@ -42,6 +42,16 @@ export interface Platform {
 
   /** 창을 닫기 직전에 실행(저장·종료 백업). 끝나면 창이 닫힌다. */
   onExit(handler: () => Promise<void>): void;
+
+  /** 시작 스플래시 창(실앱만, docs/splash-spec.md). 브라우저 모드에는 없다. */
+  readonly splash?: SplashWindow;
+}
+
+export interface SplashWindow {
+  /** 스플래시 창의 진행 문구를 바꾼다. 창이 이미 닫혔으면 아무것도 하지 않는다. */
+  status(text: string): void;
+  /** 메인 창을 보이고 스플래시 창을 닫는다. */
+  finish(): Promise<void>;
 }
 
 export async function loadPlatform(): Promise<Platform> {

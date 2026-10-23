@@ -11,6 +11,7 @@ on:
       - "src/**"
       - "src-tauri/**"
       - "index.html"
+      - "splash.html"
       - "public/**"
       - "package.json"
       - "package-lock.json"

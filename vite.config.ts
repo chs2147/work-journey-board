@@ -7,13 +7,14 @@ import pkg from "./package.json";
 export default defineConfig({
   plugins: [
     react(),
-    // index.html 스플래시의 버전 표시
+    // 스플래시 창(splash.html)의 버전 표시
     { name: "app-version-html", transformIndexHtml: (html) => html.replaceAll("%APP_VERSION%", pkg.version) },
   ],
   define: { __APP_VERSION__: JSON.stringify(pkg.version) },
   clearScreen: false,
   server: { port: 1420, strictPort: true },
-  build: { target: "es2022" },
+  // 페이지 2개: 앱(index.html) + 시작 스플래시 창(splash.html, docs/splash-spec.md)
+  build: { target: "es2022", rollupOptions: { input: { main: "index.html", splash: "splash.html" } } },
   test: {
     environment: "jsdom",
     include: ["tests/unit/**/*.test.{ts,tsx}"],

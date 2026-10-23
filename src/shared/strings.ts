@@ -150,8 +150,11 @@ export const STR = {
   },
   splash: {
     tagline: "오늘 한 일을, 한 줄씩",
+    starting: "시작하는 중…",
     opening: "일지를 여는 중…",
-    backingUp: "백업하는 중…",
+    backingUp: "백업 확인 중…",
+    preparing: "보드를 준비하는 중…",
+    ready: "준비 완료",
   },
   exitBackupFailed: "종료 백업에 실패했습니다",
   startBackupFailed: (m: string) => `자동 백업 실패: ${m}`,
