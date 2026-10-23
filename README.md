@@ -45,6 +45,12 @@ npm run tauri dev    # 실앱 모드(윈도우 / 리눅스는 webkit2gtk-4.1 필
 - 윈도우 설치 파일: `main`에 반영되면 [Releases](https://github.com/chs2147/work-journey-board/releases)에 `v<버전>` 사전 릴리스로 올라간다. WebView2 오프라인 설치판은 Actions → *Build Windows installer* → Run workflow → `offline`.
 
 ## Version History
+### v0.0.5 (2026-10-23) — 본문 글꼴 Pretendard 14px
+- 본문 글꼴을 Pretendard Variable(SIL OFL 1.1)로 변경 — 공식 woff2를 수정 없이 앱에 포함, 라이선스 전문 동봉(외부 통신 없음)
+- 기본 글자 크기 13px → 14px(작은·큰 글자도 함께 한 단계씩)
+- 버그 수정: 글꼴 로딩 후·칸 폭이 바뀔 때 입력칸 높이를 다시 재서 글자가 잘리거나 빈 줄이 남지 않게 함
+- 빌드 워크플로: public/ 변경도 윈도우 빌드 대상에 포함
+
 ### v0.0.4 (2026-10-23) — I-M1 S4 첫 실행·저장 위치·설정·자동 백업 (회사 PC에서 기록 가능한 첫 버전)
 - 첫 실행 3단계: 새로 시작/기존 일지 열기, 저장 폴더 선택(OneDrive 폴더 경고, 기존 일지 감지), 첫 업무 입력
 - 시작 시 저장 폴더 없음·데이터 파일 이상 안내 화면
