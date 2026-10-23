@@ -41,6 +41,12 @@ npm run tauri dev    # 실앱 모드(윈도우 / 리눅스는 webkit2gtk-4.1 필
 - 윈도우 설치 파일: `main`에 반영되면 [Releases](https://github.com/chs2147/work-journey-board/releases)에 `v<버전>` 사전 릴리스로 올라간다. WebView2 오프라인 설치판은 Actions → *Build Windows installer* → Run workflow → `offline`.
 
 ## Version History
+### v0.0.2 (2026-10-23) — I-M1 S2 도메인·데이터 계층
+- 주차 계산(ISO, 53주 연도·해 넘김 제목), 업무 주별 표시 상태·종료·재활성, 3주 무기록 종료 제안 규칙
+- 개조식 항목 처리(빈 항목 정리·붙여넣기 분해·들여쓰기·세부 항목 동반 이동)
+- 스키마 v1 마이그레이션과 저장소(주간 보드·셀 저장·메모·업무 관리·설정·연간 밀도)
+- 백업: VACUUM INTO 후 검증, 일일·월간·수동·마이그레이션 직전, 로컬 시각 파일명, 패턴 한정 롤링 삭제
+- 실앱 트랜잭션을 Rust `db_batch`(sqlx Transaction)로 처리 — 실패 시 자동 롤백, 이후 저장 정상
 ### v0.0.1 (2026-10-23) — I-M1 S1 프로젝트 골격
 - React 18 + Vite + TypeScript 앱 골격, 디자인 토큰·업무 색 팔레트·UI 문자열 단일 출처
 - SQL 드라이버 인터페이스 + sql.js(브라우저 모드)·tauri-plugin-sql(실앱) 드라이버
