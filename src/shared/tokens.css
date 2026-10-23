@@ -2,15 +2,15 @@
    업무 색 --cat-cN 의 실제 값은 shared/palette.ts가 주입한 --cat-cN-light/-dark 에서 고른다. */
 :root {
   color-scheme: light;
-  --font-sans: "Malgun Gothic", "맑은 고딕", "Segoe UI", system-ui, sans-serif;
+  --font-sans: "Pretendard Variable", "Malgun Gothic", "맑은 고딕", "Segoe UI", system-ui, sans-serif;
   --font-mono: Consolas, "Malgun Gothic", monospace;
 
   /* 글자 크기 단계 */
-  --fs-xs: 11px;
-  --fs-sm: 12px;
-  --fs-md: 13px;
-  --fs-lg: 15px;
-  --fs-xl: 18px;
+  --fs-xs: 12px;
+  --fs-sm: 13px;
+  --fs-md: 14px;
+  --fs-lg: 16px;
+  --fs-xl: 19px;
   --fw-regular: 400;
   --fw-bold: 700;
 

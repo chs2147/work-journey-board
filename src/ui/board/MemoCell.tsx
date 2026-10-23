@@ -1,8 +1,8 @@
-import { useLayoutEffect, useRef } from "react";
+import { useCallback, useLayoutEffect, useRef } from "react";
 import type { DateStr } from "../../domain/week";
 import { STR } from "../../shared/strings";
 import { editMemo, leaveMemo, setFocus, setFocusDay, useBoard } from "./boardStore";
-import { isComposingKey } from "./helpers";
+import { autoSize, isComposingKey, useRemeasure } from "./helpers";
 import styles from "./Board.module.css";
 
 /** 일일 메모(하루 1개, 여러 줄). 첫 줄에서 ↑ 이면 위 업무 칸으로. */
@@ -20,12 +20,11 @@ export function MemoCell({
   const text = useBoard((s) => s.memos[date] ?? "");
   const focus = useBoard((s) => s.focus);
   const ref = useRef<HTMLTextAreaElement>(null);
+  const measure = useCallback(() => autoSize(ref.current), []);
+  useRemeasure(ref, measure);
 
   useLayoutEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    el.style.height = "auto";
-    el.style.height = `${el.scrollHeight}px`;
+    autoSize(ref.current);
   });
 
   useLayoutEffect(() => {

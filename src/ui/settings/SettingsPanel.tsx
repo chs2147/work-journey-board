@@ -304,6 +304,7 @@ export function SettingsPanel() {
           <p className={styles.note}>
             {STR.appName} · {STR.settings.version(__APP_VERSION__)}
           </p>
+          <p className={styles.note}>{STR.settings.fontCredit}</p>
         </section>
       </div>
     </div>

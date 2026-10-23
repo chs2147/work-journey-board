@@ -1,0 +1,10 @@
+/* 본문 글꼴: Pretendard Variable (SIL OFL 1.1, 공식 배포 파일을 수정 없이 번들 — 라이선스: public/licenses/Pretendard-OFL-1.1.txt).
+   OFL의 예약 글꼴 이름 조항 때문에 글자를 잘라내는 등 파일을 수정하지 않는다. 한글 11,172자 전체·숫자 고정폭(tnum) 지원. */
+@font-face {
+  font-family: "Pretendard Variable";
+  font-style: normal;
+  font-weight: 45 920;
+  font-display: block;
+  src: url("../../node_modules/pretendard/dist/web/variable/woff2/PretendardVariable.woff2")
+    format("woff2-variations");
+}

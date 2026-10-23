@@ -146,6 +146,7 @@ export const STR = {
     nudgeWeeks: (n: number) => `${n}주`,
     about: "정보",
     version: (v: string) => `버전 ${v}`,
+    fontCredit: "글꼴: Pretendard (SIL Open Font License 1.1)",
   },
   exitBackupFailed: "종료 백업에 실패했습니다",
   startBackupFailed: (m: string) => `자동 백업 실패: ${m}`,

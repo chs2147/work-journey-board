@@ -29,6 +29,9 @@
 ## 기술 스택 (확정)
 Tauri v2(NSIS per-user) · React 18 + Vite + TypeScript · SQLite(실앱 tauri-plugin-sql / 개발·테스트 sql.js) · ExcelJS · SVG + d3-scale · date-fns · Vitest + Playwright · GitHub Actions(ubuntu CI + windows-latest 설치 파일 빌드)
 
+## 사용한 글꼴
+- [Pretendard](https://github.com/orioncactus/pretendard) — SIL Open Font License 1.1, 공식 배포 파일을 수정 없이 포함 ([라이선스 전문](public/licenses/Pretendard-OFL-1.1.txt))
+
 ## 개발
 ```bash
 npm ci

@@ -288,3 +288,19 @@ test("업무 행 머리를 끌어서 순서 바꾸기", async ({ page }) => {
   await reloadWeek(page);
   await expect(page.getByTestId("category-header").first()).toContainText(ONB);
 });
+
+test("입력칸 높이가 내용에 맞는다 — 웹 글꼴 로딩 후·포커스 열 변경 후", async ({ page }) => {
+  const mismatched = () =>
+    page.evaluate(async () => {
+      await document.fonts.ready;
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      return [...document.querySelectorAll("textarea")]
+        .filter((t) => t.value && Math.abs(t.offsetHeight - t.scrollHeight) > 1)
+        .map((t) => t.value);
+    });
+  expect(await page.evaluate(() => document.fonts.check('14px "Pretendard Variable"'))).toBe(true);
+  expect(await mismatched()).toEqual([]);
+  await page.keyboard.press("Escape");
+  await page.keyboard.press("Control+ArrowRight"); // 금요일이 넓어지고 목요일이 좁아진다
+  expect(await mismatched()).toEqual([]);
+});

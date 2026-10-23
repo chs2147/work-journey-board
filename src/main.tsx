@@ -1,5 +1,6 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import "./shared/fonts.css";
 import "./shared/tokens.css";
 import { applyPaletteCssVars } from "./shared/palette";
 import { App } from "./ui/App";

@@ -1,11 +1,11 @@
 // 셀 하나의 개조식 입력기. 항목마다 <textarea> 1개(자동 높이) — contenteditable의 커서·IME 문제를 피한다(i-m1-plan 4절).
 // 키 동작은 overview 10-3절 표가 기준이다. 한글 조합 중(isComposing)에는 Enter·Tab 등을 처리하지 않는다.
-import { useLayoutEffect, useRef, type ClipboardEvent, type KeyboardEvent } from "react";
+import { useCallback, useLayoutEffect, useRef, type ClipboardEvent, type KeyboardEvent } from "react";
 import { indentAt, moveItem, outdentAt, parsePastedLines } from "../../domain/items";
 import type { ItemDraft } from "../../domain/types";
 import { STR } from "../../shared/strings";
 import { editCell, leaveCell, newDraft, setFocus, setFocusDay, splitKey, useBoard } from "./boardStore";
-import { isComposingKey } from "./helpers";
+import { autoSize, isComposingKey, useRemeasure } from "./helpers";
 import styles from "./Board.module.css";
 
 export interface CellNav {
@@ -21,17 +21,13 @@ interface Props {
   nav: CellNav;
 }
 
-function autoSize(el: HTMLTextAreaElement | null) {
-  if (!el) return;
-  el.style.height = "auto";
-  el.style.height = `${el.scrollHeight}px`;
-}
-
 export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav }: Props) {
   const items = useBoard((s) => s.cells[cellKey]) ?? [];
   const focus = useBoard((s) => s.focus);
   const refs = useRef<(HTMLTextAreaElement | null)[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
+  const measureAll = useCallback(() => refs.current.forEach(autoSize), []);
+  useRemeasure(containerRef, measureAll);
 
   // 스토어가 요청한 위치로 커서를 옮긴다(항목 추가·이동·칸 이동 후).
   useLayoutEffect(() => {

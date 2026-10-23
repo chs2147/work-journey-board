@@ -52,7 +52,7 @@ fixtures/     sample-*.json — 가상 업무 기록만
 ## 4. 이 프로젝트 고유 규칙
 
 ### 4-1. 외부 통신 0 (제품의 존재 이유)
-- 앱 코드에서 외부 호스트로 가는 `fetch`·XHR·WebSocket·이미지/폰트 CDN 로드를 **넣지 않는다**. 폰트는 시스템 글꼴(맑은 고딕) 또는 번들.
+- 앱 코드에서 외부 호스트로 가는 `fetch`·XHR·WebSocket·이미지/폰트 CDN 로드를 **넣지 않는다**. 본문 글꼴은 **Pretendard Variable**(SIL OFL 1.1) — npm `pretendard`(버전 고정)의 공식 woff2를 **수정 없이** 번들한다(`src/shared/fonts.css`, 라이선스 `public/licenses/`). OFL 예약 글꼴 이름 조항 때문에 글자 잘라내기 등 파일 수정 금지. 기본 글자 크기 14px(`--fs-md`).
 - Tauri CSP: `default-src 'self'; connect-src ipc: http://ipc.localhost; img-src 'self' data:; style-src 'self' 'unsafe-inline'`. 외부 도메인을 CSP에 추가하는 변경은 **사용자 승인 필수**.
 - 자동 업데이트(updater)·텔레메트리·오류 리포팅 SDK·분석 도구 금지.
 - 새 의존성 추가 시 런타임 네트워크 호출 여부를 확인하고 PR/커밋 설명에 적는다.
