@@ -262,6 +262,7 @@ ORDER BY c.sort_order;
 - **일일**: 그날 첫 실행 시 1회 + 앱 종료 시 같은 날짜 파일을 덮어씀. → 그날 마지막 상태가 남는다.
 - **월간**: 그 달의 첫 일일 백업 때 `_monthly` 사본도 만든다(그 달에 이미 있으면 건너뜀).
 - **롤링 삭제**: 일일은 최신 14개, 월간은 최신 12개만 남긴다. **삭제 대상은 정확히 위 두 파일명 패턴에 맞는 파일만** — 수동·마이그레이션 백업, 사용자가 넣은 다른 파일은 절대 지우지 않는다.
+- **쓰기 방식(S2 확정)**: `VACUUM INTO`로 임시 사본(`<최종이름>.tmp`)을 만들고 → 검증(`quick_check`) → 최종 이름으로 바꾼다(같은 날 일일 사본은 이 방식으로 덮어씀). 앱이 지울 수 있는 파일은 **일일·월간 패턴 + 앱이 만든 임시 사본(`work-journey_*.db.tmp`)** 뿐이며, 삭제는 `src/data/backup.ts`의 가드 함수 한 곳에서만 한다.
 - 백업 후 사본에 `PRAGMA quick_check` → 실패하면 사본 삭제 + 경고 표시(기존 백업은 건드리지 않음).
 - 설정 화면: 마지막 백업 시각, [지금 백업], [백업 폴더 열기], [백업에서 복원](M5).
 
@@ -289,9 +290,10 @@ ORDER BY c.sort_order;
 interface SqlDriver {
   execute(sql: string, params?: unknown[]): Promise<{ changes: number }>;
   select<T>(sql: string, params?: unknown[]): Promise<T[]>;
-  transaction<T>(fn: (tx: SqlDriver) => Promise<T>): Promise<T>;
-  backupTo(path: string): Promise<void>;          // VACUUM INTO
+  batch(statements: { sql: string; params?: unknown[] }[]): Promise<number>; // 전부 성공 또는 전부 취소
+  close(): Promise<void>;
 }
+// 백업은 driver.execute("VACUUM INTO ...")로 한다(src/data/backup.ts).
 
 interface JournalRepository {          // SqlDriver 위의 단일 구현
   getWeek(weekId: string): Promise<WeekView>;  // 보일 카테고리 + 7일 항목 + 메모 + 요약
@@ -304,11 +306,13 @@ interface JournalRepository {          // SqlDriver 위의 단일 구현
 }
 ```
 - 셀 저장은 "그 셀의 항목 목록 전체를 받아 트랜잭션으로 교체"(삭제 후 재삽입이 아니라 id 기준 upsert + 빠진 id 삭제). 순서·깊이 변경도 이 한 경로로 처리 → 버그 지점 최소화.
+- **트랜잭션은 `batch`로만(S2 실측으로 확정)**: tauri-plugin-sql은 내부가 연결 풀이라 JS에서 `BEGIN`/`COMMIT`을 따로 보내면 다른 연결로 갈 수 있고, 중간에 실패하면 트랜잭션이 열린 연결이 풀에 남아 **이후 모든 쓰기가 막힌다**. 그래서 실앱의 `batch`는 Rust 명령 `db_batch`(플러그인이 연 같은 풀에서 sqlx `Transaction` — 커밋 전 실패 시 자동 롤백)로 구현한다. sql.js는 단일 연결이라 BEGIN/COMMIT/ROLLBACK으로 같은 의미를 낸다.
+- 자리표시자는 위치 기반 `?`만 쓴다(sql.js·sqlx 공통).
 
 ### 8-2. 드라이버 구현 3종 — 같은 SQL, 같은 스키마
 | 드라이버 | 쓰는 곳 | 비고 |
 |---|---|---|
-| `TauriSqlDriver` | 실앱(윈도우) | tauri-plugin-sql(SQLite). 사용자 선택 폴더 절대 경로로 열기 → **M0에서 확인**, 안 되면 얇은 rusqlite 커맨드로 대체 |
+| `TauriSqlDriver` | 실앱(윈도우) | tauri-plugin-sql(SQLite). 사용자 선택 폴더 절대 경로로 열기(M0 확인). `batch`는 Rust `db_batch` 명령 |
 | `SqlJsDriver` (메모리) | 개발·테스트(클라우드 리눅스·브라우저) | SQLite WASM. **실앱과 동일한 스키마·마이그레이션 SQL이 그대로 돈다** → 저장 로직 테스트가 실제 SQL을 검증 |
 | `SqlJsFileDriver` | **G1 대안 전환 시**(브라우저 전용) | 아래 8-3 |
 

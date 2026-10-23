@@ -19,5 +19,7 @@ tauri-plugin-clipboard-manager = "2"
 tauri-plugin-opener = "2"
 tauri-plugin-single-instance = "2"
 tauri-plugin-window-state = "2"
+# db_batch: 플러그인이 연 같은 연결 풀에서 sqlx 트랜잭션을 쓰기 위함(플러그인과 같은 sqlx 0.8)
+sqlx = { version = "0.8", default-features = false, features = ["sqlite"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"

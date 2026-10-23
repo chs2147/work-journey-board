@@ -1,5 +1,5 @@
 import initSqlJs, { type Database, type SqlJsStatic } from "sql.js";
-import type { SqlDriver, SqlParam } from "../driver";
+import type { SqlDriver, SqlParam, SqlStatement } from "../driver";
 
 let sqlJs: Promise<SqlJsStatic> | null = null;
 
@@ -21,7 +21,7 @@ class SqlJsDriver implements SqlDriver {
   }
 
   async execute(sql: string, params: SqlParam[] = []) {
-    this.db.run(sql, params);
+    this.run(sql, params);
     return { changes: this.db.getRowsModified() };
   }
 
@@ -37,7 +37,29 @@ class SqlJsDriver implements SqlDriver {
     }
   }
 
+  async batch(statements: SqlStatement[]) {
+    let changes = 0;
+    this.db.run("BEGIN");
+    try {
+      for (const s of statements) {
+        this.run(s.sql, s.params ?? []);
+        changes += this.db.getRowsModified();
+      }
+      this.db.run("COMMIT");
+    } catch (e) {
+      this.db.run("ROLLBACK");
+      throw e;
+    }
+    return changes;
+  }
+
   async close() {
     this.db.close();
+  }
+
+  private run(sql: string, params: SqlParam[]) {
+    // 매개변수가 없으면 run()이 여러 문장을 모두 실행한다(있으면 첫 문장만 준비됨).
+    if (params.length) this.db.run(sql, params);
+    else this.db.run(sql);
   }
 }

@@ -76,10 +76,11 @@
 - `repository.ts`: `getWeek`·`saveCell`(id 기준 upsert + 빠진 id 삭제, 트랜잭션)·`saveMemo`·업무 CRUD·`getNudges`·`getYearDensity`(미니맵용 주별 기록 일수).
 - `backup.ts`: `VACUUM INTO` 일일/월간/수동 파일명, 롤링 삭제(**두 패턴만**), 사본 `quick_check`.
 
-**완료 체크**
-- [ ] data-spec 9절 체크리스트 전 항목 테스트 통과(sql.js 위에서 실제 SQL)
-- [ ] 롤링 삭제가 패턴 외 파일(수동·마이그레이션·임의 파일)을 지우지 않는 테스트
-- [ ] 연결 시 `PRAGMA foreign_keys=ON; journal_mode=DELETE; synchronous=FULL` 적용 확인
+**완료 체크** (2026-10-23 완료)
+- [x] data-spec 9절 체크리스트 전 항목 테스트 통과(sql.js 위에서 실제 SQL) — 단위 테스트 82개
+- [x] 롤링 삭제가 패턴 외 파일(수동·마이그레이션·임의 파일)을 지우지 않는 테스트
+- [x] 연결 시 `foreign_keys=ON`(sqlx 기본값·sql.js 설정)·`journal_mode=DELETE` 확인. `synchronous`는 SQLite 기본값 FULL(비-WAL) 그대로
+- [x] **추가 발견·해결**: 실앱 연결 풀에서 실패한 트랜잭션이 이후 쓰기를 모두 막는 문제 → Rust `db_batch`(sqlx Transaction)로 해결, 실제 Tauri 앱에서 실패 배치 롤백 + 후속 쓰기 정상 확인
 
 ### S3. 보드 화면 + 개조식 입력 (M1의 핵심 — 가장 오래 걸림)
 **구성요소**
