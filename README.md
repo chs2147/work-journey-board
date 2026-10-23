@@ -46,6 +46,10 @@ npm run tauri dev    # 실앱 모드(윈도우 / 리눅스는 webkit2gtk-4.1 필
 - 윈도우 설치 파일: `main`에 반영되면 [Releases](https://github.com/chs2147/work-journey-board/releases)에 `v<버전>` 사전 릴리스로 올라간다. WebView2 오프라인 설치판은 Actions → *Build Windows installer* → Run workflow → `offline`.
 
 ## Version History
+### v0.0.8 (2026-10-23) — 스플래시 모션 보강
+- 스플래시 움직임을 2.5초에 걸쳐 배치: 카드 등장 → 기록 줄 그리기 → 오늘 요일 강조 → 진행 막대
+- Windows "애니메이션 효과" 끔 설정에서도 정지 화면 대신 서서히 나타나기로 표시
+
 ### v0.0.7 (2026-10-23) — 스플래시 창(포토샵처럼)
 - 앱을 켜면 메인 창보다 작은 스플래시 창(560×340, 테두리 없음)이 화면 가운데 먼저 뜨고, 최소 2.5초 보인 뒤 다 준비된 메인 창으로 넘어감
 - 스플래시에 단계별 진행 문구(일지 여는 중 → 백업 확인 중 → 보드 준비 중 → 준비 완료)와 진행 막대
