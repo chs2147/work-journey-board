@@ -18,6 +18,11 @@ export default tseslint.config(
     },
   },
   {
+    // 디자인 시점 도구(scripts/brand) — Node에서 실행
+    files: ["scripts/**/*.mjs"],
+    languageOptions: { globals: globals.node },
+  },
+  {
     // 외부 통신 0 원칙(CLAUDE.md 4-1): 앱 코드에서 네트워크 API 사용 금지.
     files: ["src/**/*.{ts,tsx}"],
     rules: {

@@ -62,7 +62,6 @@ export const STR = {
     error: (m: string) => `오류: ${m}`,
   },
   firstRun: {
-    welcomeTitle: "Work Journey Board",
     welcomeLead: "매일 업무를 주간 보드에 적으면 주간 요약·엑셀·흐름 차트가 만들어집니다.",
     privacy: "기록은 이 PC의 파일 하나에만 저장되고 외부로 전송되지 않습니다.",
     privacyNote: "(AI 요약도 직접 복사·붙여넣기 할 때만)",

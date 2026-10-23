@@ -4,6 +4,7 @@ import { goToday, goWeek, retryFailed, setYearOpen, useBoard } from "../board/bo
 import { YearMinimap } from "../board/YearMinimap";
 import { setSettingsOpen } from "./appController";
 import { useAppStore } from "./appStore";
+import { BrandLockup } from "./Brand";
 import styles from "./TopBar.module.css";
 
 export function TopBar() {
@@ -16,7 +17,9 @@ export function TopBar() {
 
   return (
     <header className={styles.bar}>
-      <span className={styles.title}>{STR.appName}</span>
+      <span className={styles.title}>
+        <BrandLockup size="bar" />
+      </span>
       {ready && journalReady && (
         <nav className={styles.nav}>
           <button

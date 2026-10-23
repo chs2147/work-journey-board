@@ -1,0 +1,49 @@
+/* 크기: 워드마크 상자 높이 ≈ 대문자 높이 × 1.9(손글씨 Journey의 위아래 여백 포함, brand-spec 3절) */
+.lockup {
+  display: inline-flex;
+  align-items: center;
+  color: var(--text-1);
+}
+
+.icon,
+.wordmark {
+  display: block;
+  flex: none;
+}
+
+.icon :global(svg),
+.wordmark :global(svg) {
+  display: block;
+  width: auto;
+  height: 100%;
+}
+
+.wordmark :global(.wm-j) {
+  fill: var(--today-mark);
+}
+
+.wordmark :global(.wm-u) {
+  stroke: var(--today-mark);
+}
+
+/* 상단 바: 아이콘 24px, 대문자 약 14px */
+.bar {
+  gap: 10px;
+}
+.bar .icon {
+  height: 24px;
+}
+.bar .wordmark {
+  height: 27px;
+}
+
+/* 첫 실행 환영 화면: 아이콘 48px, 대문자 약 20px */
+.hero {
+  gap: 14px;
+}
+.hero .icon {
+  height: 48px;
+}
+.hero .wordmark {
+  height: 38px;
+}

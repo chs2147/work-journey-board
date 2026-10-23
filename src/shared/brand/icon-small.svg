@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- 앱 아이콘 작은 판(16~32px, 작업 표시줄·창 제목): 같은 모양을 굵고 단순하게 — 노트·책갈피·두 줄 -->
+  <rect width="32" height="32" rx="7" fill="#185fa5"/>
+  <rect x="6" y="4" width="20" height="24" rx="2.5" fill="#ffffff"/>
+  <path d="M19.5 4h4.5v9l-2.25-1.9-2.25 1.9z" fill="#f4874f"/>
+  <circle cx="11" cy="17" r="2" fill="#2a78d6"/>
+  <rect x="14.5" y="15.75" width="7.5" height="2.5" rx="1.25" fill="#a9a79d"/>
+  <circle cx="11" cy="23" r="2" fill="#eb6834"/>
+  <rect x="14.5" y="21.75" width="6" height="2.5" rx="1.25" fill="#a9a79d"/>
+</svg>

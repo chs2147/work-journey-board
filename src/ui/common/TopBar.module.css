@@ -12,9 +12,7 @@
 
 .title {
   flex: 0 0 auto;
-  font-size: var(--fs-lg);
-  font-weight: var(--fw-bold);
-  white-space: nowrap;
+  display: flex;
   margin-right: var(--sp-4);
 }
 

@@ -6,6 +6,7 @@ import { STR } from "../../shared/strings";
 import { addCategory, goToday } from "../board/boardStore";
 import { isComposingKey } from "../board/helpers";
 import { openFolderAsJournal } from "../common/appController";
+import { BrandLockup } from "../common/Brand";
 import { useAppStore } from "../common/appStore";
 import styles from "./FirstRun.module.css";
 
@@ -61,7 +62,7 @@ export function FirstRun() {
       {step === "welcome" && (
         <section className={styles.card} aria-labelledby="fr-title">
           <h1 id="fr-title" className={styles.title}>
-            {STR.firstRun.welcomeTitle}
+            <BrandLockup size="hero" />
           </h1>
           <p className={styles.lead}>{STR.firstRun.welcomeLead}</p>
           <div className={styles.ok}>
