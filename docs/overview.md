@@ -4,7 +4,7 @@
 
 > 설계 개요 문서 · 최초 작성: 2026-10-22 · **프로젝트명 확정: Work Journey Board** (2026-10-22)
 > 설계 논의 Work Log(이관 전): [my-discussions worklogs/2026-10-22.md](https://github.com/chs2147/my-discussions/blob/main/worklogs/2026-10-22.md)
-> 상태: **상세설계 완료(D1~D5) · ◆G1 GO(Tauri 확정, 2026-10-23)** · 다음: I-M1 핵심 기록
+> 상태: **상세설계 완료(D1~D5) · ◆G1 GO(Tauri 확정, 2026-10-23)** · **I-M1 진행 중**(S1~S4 완료, v0.0.8) · 다음: S5 → v0.1.0 → ◆G2
 > 총괄 요약 → **9절**, 구현 로드맵 → **8절**, 화면 구성 → **10절**, 상세 설계 문서 → **11절**, 인계 명세 → **12절**
 > **전체 진행 계획(작업 패키지·관문·세션 시작 프롬프트) → [project-plan.md](project-plan.md)**
 

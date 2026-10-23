@@ -8,7 +8,8 @@
 ## 상태
 - 상세설계 D1~D5 완료(2026-10-22) — 설계 저장소 [my-discussions](https://github.com/chs2147/my-discussions)에서 이 저장소로 이관. **이후 정본은 이 저장소.**
 - **I-M0 완료 · ◆G1 GO**(2026-10-23): 회사 PC에서 관리자 권한 없이 설치·실행, WebView2 있음, 사용자 폴더 SQLite 전 항목 통과 → Tauri 구조 확정 ([docs/overview.md 13절](docs/overview.md))
-- 다음: **I-M1 핵심 기록** — 계획 [docs/i-m1-plan.md](docs/i-m1-plan.md) (S1 골격 → S2 도메인·데이터 → S3 보드·입력 → S4 플랫폼·첫 실행·백업 → S5 검증·v0.1.0)
+- **I-M1 핵심 기록 진행 중** — [docs/i-m1-plan.md](docs/i-m1-plan.md): S1~S4 완료(회사 PC에서 기록 가능), 글꼴·시작 스플래시 추가(v0.0.5~v0.0.8). 다음: 사용 개선사항 반영 → S5 검증 → `v0.1.0` → ◆G2 2주 실사용
+- 일지가 망가졌거나 예전 상태로 되돌려야 할 때: [docs/restore-guide.md](docs/restore-guide.md)
 
 ## 문서
 | 문서 | 내용 |
@@ -19,6 +20,7 @@
 | [docs/viz-spec.md](docs/viz-spec.md) | 경과 타임라인 · 활동 히트맵 · 기간 막대 · 주별 비중 · 업무 색 팔레트 |
 | [docs/m0-install-check.md](docs/m0-install-check.md) | I-M0 회사 PC 설치 검증 절차 · ◆G1 판정 기준 |
 | [docs/splash-spec.md](docs/splash-spec.md) | 시작 스플래시 창(메인보다 작은 창·최소 2.5초) 구현 스펙 · 시안 3종(B 확정) |
+| [docs/restore-guide.md](docs/restore-guide.md) | 백업에서 일지 복원하기(수동 절차 — 앱 안 복원은 M5) |
 | [docs/i-m1-plan.md](docs/i-m1-plan.md) | I-M1 핵심 기록 구현 계획(세션 S1~S5) |
 | [docs/project-plan.md](docs/project-plan.md) | 작업 패키지 · 관문(G1/G2) · 마일스톤 I-M0~M5 · 세션 시작 프롬프트 |
 | [docs/wireframes/](docs/wireframes/) | 주간 보드 · 첫 실행/연간 보기 · 인사이트 · 스플래시 와이어프레임·화면 |

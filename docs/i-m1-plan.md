@@ -3,6 +3,7 @@
 > 작성: 2026-10-23 · 상위: [project-plan.md](project-plan.md) I-M1 · 전제: ◆G1 GO([overview.md](overview.md) 13절)
 > 스펙: overview 10절(화면) · [data-spec.md](data-spec.md) · 와이어프레임 [주간 보드](wireframes/wireframe-weekly-board.svg) · [첫 실행](wireframes/wireframe-first-run.svg)
 > **목표**: 이것만으로 매일 쓸 수 있는 최소 완성품 → 회사 PC 설치 → **◆G2 2주 실사용** 진입.
+> **진행 현황(2026-10-23)**: S1~S4 완료(v0.0.1~v0.0.4) + 추가 반영(v0.0.5 글꼴 Pretendard 14px, v0.0.6~0.0.8 시작 스플래시 창 — 6절). 다음: 사용 개선사항 반영 → **S5** → `v0.1.0` → ◆G2
 
 ---
 
@@ -58,10 +59,10 @@
   - 수동 실행 입력 `webview: embed | offline` → `offline`이면 `--config`로 `offlineInstaller` 설치판을 별도 파일명(`…_setup_offline.exe`)으로 같은 릴리스에 추가.
 - 브라우저 모드 진입점: `npm run dev` = sql.js 메모리 DB + `fixtures/sample-weeks.json` 시드(가상 데이터, output-spec 1절 샘플 기반).
 
-**완료 체크**
-- [ ] `npm run dev`로 빈 화면 + 상단 바 표시, `npm test`·`npm run e2e`·lint·typecheck 통과
-- [ ] Actions 윈도우 빌드 성공, 릴리스 `v0.0.1`(사전)에 설치 파일 첨부
-- [ ] 앱 코드에 외부 호스트 접근 없음(CSP 확인, 의존성 목록 점검)
+**완료 체크** (2026-10-23 완료 — v0.0.1)
+- [x] `npm run dev`로 빈 화면 + 상단 바 표시, `npm test`·`npm run e2e`·lint·typecheck 통과
+- [x] Actions 윈도우 빌드 성공, 릴리스 `v0.0.1`(사전)에 설치 파일 첨부
+- [x] 앱 코드에 외부 호스트 접근 없음(CSP 확인, 의존성 목록 점검 — smoke E2E가 외부 요청 0건을 확인)
 
 ### S2. 도메인 + 데이터 계층
 **domain (순수 함수, 100% 단위 테스트)**
@@ -162,3 +163,17 @@ docs/i-m1-plan.md S4, docs/overview.md 10-8절, docs/data-spec.md 7절을 읽고
 [S5] work-journey-board 저장소에서 I-M1 S5(통합 검증·v0.1.0)를 진행하자.
 docs/i-m1-plan.md S5를 읽고 E2E 시나리오, m1-check.md, g2-log.md를 만들고 릴리스를 준비해줘.
 ```
+
+---
+
+## 6. S4 이후 추가 반영 (계획 외, 사용자 요청)
+| 버전 | 내용 | 문서 |
+|---|---|---|
+| v0.0.5 | 본문 글꼴 Pretendard Variable(OFL) 14px, 글꼴 로딩·칸 폭 변화 시 입력칸 높이 재측정 버그 수정 | CLAUDE.md 4-1 |
+| v0.0.6 | 시작 스플래시(창 안 레이어, 시안 B) | [splash-spec.md](splash-spec.md) |
+| v0.0.7 | 스플래시를 메인 창보다 작은 별도 창으로(최소 2.5초, 단계별 진행 문구, 15초 안전장치) | splash-spec 6절 |
+| v0.0.8 | 스플래시 모션 보강(2.5초 배치), Windows 애니메이션 효과 끔에서도 서서히 나타나기 | splash-spec 6절 |
+| — | 오프라인 설치판(WebView2 없는 PC용) 첫 수동 빌드, 수동 복원 절차 [restore-guide.md](restore-guide.md) | overview 13-4 |
+
+- **S5 회사 PC 확인표에 더할 것**: 스플래시 창(가운데 작게·둥근 모서리, 2.5초 뒤 메인 창, 메인 창 뜨자마자 타이핑, 최대화 상태로 끈 뒤 재실행 시 메인 창이 먼저 보이지 않음 — v0.0.7~0.0.8에서 사용자 확인 완료), 오프라인 설치판 설치.
+- **알려진 개선 후보**(사용 개선사항 목록과 함께 처리): 칸 안 한글이 단어 중간에서 줄바꿈됨(`word-break: keep-all`).
