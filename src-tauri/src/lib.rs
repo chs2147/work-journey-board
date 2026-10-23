@@ -21,6 +21,15 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_opener::init())
+        // 창 배경 = 스플래시 배경(docs/splash-spec.md). 설정 파일 값은 라이트라서, 다크 테마면 여기서 바꿔 밝은 번쩍임을 막는다.
+        .setup(|app| {
+            if let Some(w) = app.get_webview_window("main") {
+                if matches!(w.theme(), Ok(tauri::Theme::Dark)) {
+                    let _ = w.set_background_color(Some(tauri::window::Color(0x1a, 0x1a, 0x19, 0xff)));
+                }
+            }
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             db_batch::db_batch,
             files::config_read,

@@ -148,6 +148,11 @@ export const STR = {
     version: (v: string) => `버전 ${v}`,
     fontCredit: "글꼴: Pretendard (SIL Open Font License 1.1)",
   },
+  splash: {
+    tagline: "오늘 한 일을, 한 줄씩",
+    opening: "일지를 여는 중…",
+    backingUp: "백업하는 중…",
+  },
   exitBackupFailed: "종료 백업에 실패했습니다",
   startBackupFailed: (m: string) => `자동 백업 실패: ${m}`,
   year: {

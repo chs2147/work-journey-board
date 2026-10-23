@@ -1,6 +1,6 @@
-# 스플래시 화면 구현 스펙 (초안, 2026-10-23)
+# 스플래시 화면 구현 스펙 (2026-10-23 확정 · 시안 B 구현)
 
-> 상태: **시안 선택 대기**. 시안이 확정되면 이 문서의 "6. 확정 사항"을 채우고 구현한다.
+> 상태: **시안 B 확정·구현**(2026-10-23). 확정 내용과 구현하며 바뀐 점은 6절.
 > 와이어프레임: [wireframes/wireframe-splash.svg](wireframes/wireframe-splash.svg)
 
 ![스플래시 시안 3종](wireframes/wireframe-splash.svg)
@@ -9,7 +9,7 @@
 - **목적**: 앱 아이콘을 누른 뒤 보드가 뜰 때까지 생기는 빈 화면을 없앤다. 현재는 흰 창이 잠깐 보이고, 이어서 "불러오는 중…" 문구, 웹 글꼴 교체, 입력칸 높이 재측정이 차례로 보인다. 이 구간을 브랜드 화면 하나로 덮는다.
 - **원칙**
   1. **기다리게 만들지 않는다.** 스플래시는 실제 준비 시간을 가리는 용도다. 일부러 길게 보여 주지 않는다. 최소 표시 시간은 깜빡임 방지용 400ms뿐이다(◆G2 "매일 기록 2분 이내").
-  2. **외부 통신 0.** 이미지·글꼴·스크립트를 모두 앱 안에 둔다. 로고는 인라인 SVG로 넣는다.
+  2. **외부 통신 0.** 이미지·글꼴·스크립트를 모두 앱 안에 둔다. 로고·도형은 HTML·CSS로 그린다.
   3. **첫 픽셀을 최대한 빨리.** 스플래시는 JS 번들을 기다리지 않는다. `index.html`의 HTML·CSS만으로 그린다.
   4. **콜드 스타트 1회만.** 저장 위치 전환, 다시 시도, 주 이동 때는 보이지 않는다.
 
@@ -71,22 +71,27 @@
 
 | 파일 | 변경 |
 |---|---|
-| `index.html` | `<div id="splash" aria-hidden="true">` 레이어 + 인라인 `<style>`(CSP `style-src 'unsafe-inline'` 범위 안) + 인라인 SVG 로고. **인라인 `<script>`는 쓰지 않는다**(CSP `script-src`가 `'self'`). 한국어 문구는 넣지 않는다 |
-| `src/ui/splash.ts` (신규) | `fillSplash()`: `STR.splash.*` 문구, `__APP_VERSION__`, (B·C) 오늘 요일·주차를 채운다. main.tsx에서 React 렌더 전에 호출. `dismissSplash()`: 종료 조건 대기 → `.leaving` 클래스(160ms 페이드) → 노드 제거. 두 번 불려도 안전해야 한다 |
-| `src/main.tsx` | `fillSplash()` 호출 |
-| `src/ui/App.tsx` | `journal.state`가 처음으로 `"loading"`을 벗어나면 `dismissSplash()` 호출(1회) |
-| `src/shared/strings.ts` | `splash: { tagline, opening, backingUp, loadingA11y }` |
+| `index.html` | `<div id="splash" role="status">` 레이어(시각 부분은 `aria-hidden`) + 인라인 `<style>`(CSP `style-src 'unsafe-inline'` 범위 안). **인라인 `<script>`와 `style="…"` 속성은 쓰지 않는다**(CSP `script-src`가 `'self'`이고, Tauri가 `<style>`에 nonce를 붙이면 브라우저가 `'unsafe-inline'`을 무시해 style 속성이 막힌다 — 단위 테스트로 금지). 문구(요일·소개·"불러오는 중…")는 첫 장면에 필요하므로 HTML에 두고, strings.ts·week.ts와 같은지 단위 테스트로 대조한다. 버전은 `%APP_VERSION%`을 Vite 플러그인이 바꾼다 |
+| `src/ui/splash.ts` (신규) | `watchSplash()`: 3초 넘으면 진행 문구. `splashStage(text)`: 단계 문구 교체. `markSplashToday(date)`: 오늘 요일 카드 강조. `dismissSplash()`: 종료 조건 대기 → `.leaving`(160ms 페이드) → 노드 제거, 여러 번 불려도 한 번 |
+| `src/main.tsx` | React 렌더 전에 `watchSplash()` |
+| `src/ui/common/appController.ts` | 플랫폼을 얻으면 `markSplashToday(p.now())`(브라우저 모드 `?today=` 반영), 첫 백업 전에 `splashStage("백업하는 중…")` |
+| `src/ui/App.tsx` | `journal.state`가 `"loading"`을 벗어나면 `dismissSplash()` |
+| `src/shared/strings.ts` | `splash: { tagline, opening, backingUp }` (스크린 리더 문구는 기존 `status.loading`) |
+| `vite.config.ts` | index.html의 `%APP_VERSION%` → package.json 버전 |
 | `src-tauri/tauri.conf.json` | main 창 `"backgroundColor": "#faf9f5"`(라이트 배경) |
-| `src-tauri/src/lib.rs` | (선택) `setup`에서 OS 테마가 다크면 `set_background_color(#1a1a19)`. 다크 모드에서 밝은 번쩍임 방지(약 5줄) |
-| `tests/unit/splash.test.ts` | index.html 스플래시 색이 tokens.css 값과 같은지 문자열 대조(두 곳 색의 어긋남 방지). `dismissSplash` 최소 시간·중복 호출 |
-| `tests/e2e/splash.spec.ts` | 시작 시 `#splash` 보임 → 보드 준비 후 사라짐. 사라진 뒤 오늘 칸 포커스. 첫 실행·폴더 없음 화면에서도 사라짐. reduced-motion에서 애니메이션 없음 |
+| `src-tauri/src/lib.rs` | `setup`에서 OS 테마가 다크면 `set_background_color(#1a1a19)`. 다크 모드에서 밝은 번쩍임 방지 |
+| `tests/unit/splash.test.ts` | index.html의 색(라이트·다크)·문구가 tokens.css·palette.ts·strings.ts·week.ts와 같은지, 창 배경색, 최소 시간·페이드·중복 호출, 늦을 때 문구, 오늘 요일 강조(주말 없음) |
+| `tests/e2e/splash.spec.ts` | JS 전 첫 장면(HTML·CSS만) → 준비 후 사라짐·오늘 칸 커서. 3초 넘으면 진행 문구·오늘 카드 강조. 첫 실행 화면에서도 사라짐. reduced-motion이면 애니메이션 없음 |
 | `docs/overview.md` | 10-11절(스플래시), 10-9 화면 목록에 한 줄 |
 
-- **색의 단일 출처**: 스플래시는 JS 번들 전에 그려야 하므로 tokens.css를 쓸 수 없다. 그래서 index.html에 색을 복사하고, 단위 테스트로 tokens.css와 같은 값인지 고정한다.
-- **글꼴**: 스플래시 글자는 시스템 글꼴(맑은 고딕)로 그린다. Pretendard 로딩을 기다리지 않는 대신, 스플래시 안의 이름·버전 크기를 Pretendard와 비슷한 폭으로 맞춘다. 스플래시가 사라질 때 이미 Pretendard가 준비돼 있으므로 보드에서는 글꼴 교체가 보이지 않는다.
-- **E2E 영향**: 기존 25개 테스트는 보드 포커스를 기다리므로 그대로 통과해야 한다. 각 테스트 시작이 최대 400ms 늘어난다.
+- **값의 단일 출처**: 스플래시는 JS 번들 전에 그려야 하므로 tokens.css·strings.ts를 쓸 수 없다. 그래서 index.html에 색·문구를 복사하고, 단위 테스트로 원본과 같은 값인지 고정한다(한쪽만 바꾸면 테스트 실패).
+- **글꼴**: 스플래시 글자는 시스템 글꼴(맑은 고딕)로 그린다. 사라지기 전에 `document.fonts.load('14px "Pretendard Variable"')`로 보드 글꼴을 받아 둔다(최대 1.5초까지만 기다림). 그래서 보드에서 글꼴 교체가 보이지 않는다.
+- **E2E 영향**: 기존 테스트는 보드 포커스를 기다리므로 그대로 통과한다. smoke 테스트의 "Work Journey Board" 글자 찾기만 스플래시와 겹쳐 `#root` 안으로 범위를 좁혔다.
 - **분량**: 반 세션 정도. 실앱에서는 회사 PC로 "아이콘 더블클릭 → 보드 입력 가능" 시간을 측정해 M1 확인표에 적는다.
 
-## 6. 확정 사항
-- 시안: (미정)
-- 반영 버전: (미정 — 개선사항 묶음과 함께 반영할지 결정)
+## 6. 확정 사항 (2026-10-23)
+- 시안: **B 한 주가 채워지는 보드**.
+- 반영: 개선사항 묶음과 별개로 먼저 반영.
+- 구현하며 정한 점
+  - 오늘 요일 강조는 플랫폼을 얻은 직후(`p.now()`)에 붙인다. 그 전 수십 ms 동안은 강조 없이 보이고, 테두리는 200ms 전환으로 자연스럽게 바뀐다.
+  - 진행 문구는 B에서도 3초 이후에만 보인다(평소 시작에서는 보이지 않음).

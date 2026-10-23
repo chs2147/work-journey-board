@@ -13,6 +13,7 @@ import type { SqlDriver } from "../../data/driver";
 import { loadPlatform, type Platform } from "../../platform";
 import { STR } from "../../shared/strings";
 import { flushAll, init as initBoard, toast } from "../board/boardStore";
+import { markSplashToday, splashStage } from "../splash";
 import { useAppStore, type JournalStatus } from "./appStore";
 
 const set = useAppStore.setState;
@@ -29,6 +30,7 @@ const errMsg = (e: unknown) => (e instanceof Error ? e.message : String(e));
 export async function start() {
   const p = await loadPlatform();
   set({ platform: p });
+  markSplashToday(p.now());
   p.onExit(onExit);
   const config = await p.loadConfig();
   if (!config) return set({ journal: { state: "first-run" } });
@@ -57,6 +59,7 @@ async function activate(driver: SqlDriver, dataDir: string) {
   const repo = new JournalRepository(driver, () => p.now());
   const [row] = await driver.select<{ v: string }>("SELECT sqlite_version() AS v");
   const settings = await repo.getSettings().catch(() => DEFAULT_SETTINGS);
+  splashStage(STR.splash.backingUp);
   try {
     await backupIfFirstToday(p, driver, dataDir, p.now(), {
       daily: settings.backup.dailyKeep,

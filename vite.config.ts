@@ -5,7 +5,11 @@ import pkg from "./package.json";
 
 // Tauri 개발 서버 규약: 고정 포트, 실패 시 다른 포트로 넘어가지 않음.
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    // index.html 스플래시의 버전 표시
+    { name: "app-version-html", transformIndexHtml: (html) => html.replaceAll("%APP_VERSION%", pkg.version) },
+  ],
   define: { __APP_VERSION__: JSON.stringify(pkg.version) },
   clearScreen: false,
   server: { port: 1420, strictPort: true },
