@@ -173,7 +173,7 @@ docs/i-m1-plan.md S5를 읽고 E2E 시나리오, m1-check.md, g2-log.md를 만�
 | v0.0.6 | 시작 스플래시(창 안 레이어, 시안 B) | [splash-spec.md](splash-spec.md) |
 | v0.0.7 | 스플래시를 메인 창보다 작은 별도 창으로(최소 2.5초, 단계별 진행 문구, 15초 안전장치) | splash-spec 6절 |
 | v0.0.8 | 스플래시 모션 보강(2.5초 배치), Windows 애니메이션 효과 끔에서도 서서히 나타나기 | splash-spec 6절 |
-| — | 오프라인 설치판(WebView2 없는 PC용) 첫 수동 빌드, 수동 복원 절차 [restore-guide.md](restore-guide.md) | overview 13-4 |
+| — | 오프라인 설치판(WebView2 없는 PC용) 첫 수동 빌드 성공(v0.0.8, 약 6분·213 MB), 수동 복원 절차 [restore-guide.md](restore-guide.md) | overview 13-4 |
 
 - **S5 회사 PC 확인표에 더할 것**: 스플래시 창(가운데 작게·둥근 모서리, 2.5초 뒤 메인 창, 메인 창 뜨자마자 타이핑, 최대화 상태로 끈 뒤 재실행 시 메인 창이 먼저 보이지 않음 — v0.0.7~0.0.8에서 사용자 확인 완료), 오프라인 설치판 설치.
 - **알려진 개선 후보**(사용 개선사항 목록과 함께 처리): 칸 안 한글이 단어 중간에서 줄바꿈됨(`word-break: keep-all`).
