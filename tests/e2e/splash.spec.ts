@@ -18,12 +18,24 @@ test("스플래시 창: 이름·소개·버전·시작 문구, 오늘 요일 강
   expect(size).toEqual({ w: 560, h: 340 });
 });
 
-test("움직임 줄이기 설정이면 애니메이션 없이 보인다", async ({ page }) => {
+test("움직임이 있다 — 줄이 그려지고, 오늘 카드 강조·진행 막대도 움직임", async ({ page }) => {
+  await page.goto("/splash.html?today=2026-10-22");
+  const anim = (sel: string, pseudo?: string) =>
+    page
+      .locator(sel)
+      .first()
+      .evaluate((e, ps) => getComputedStyle(e, ps).animationName, pseudo);
+  expect(await anim(".card i")).toBe("draw");
+  expect(await anim(".day.today .card")).toBe("card-in, today-in");
+  expect(await anim(".bar", "::after")).toBe("fill");
+});
+
+test("Windows 애니메이션 효과 끔(reduced-motion)이면 움직임 대신 서서히 나타나기", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/splash.html");
   const line = page.locator(".card i").first();
   await expect(line).toBeVisible();
-  expect(await line.evaluate((e) => getComputedStyle(e).animationName)).toBe("none");
+  expect(await line.evaluate((e) => getComputedStyle(e).animationName)).toBe("fade");
 });
 
 test("브라우저 모드의 앱 화면에는 스플래시가 없고 바로 보드", async ({ page }) => {

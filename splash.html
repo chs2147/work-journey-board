@@ -78,8 +78,8 @@
         color: var(--sp-text-3);
       }
       .day.today {
-        color: var(--sp-today);
         font-weight: 700;
+        animation: today-label 400ms ease-out 1700ms both;
       }
       .card {
         box-sizing: border-box;
@@ -92,18 +92,38 @@
         background: var(--sp-page);
         border: 1px solid var(--sp-line);
         border-radius: 8px;
+        animation: card-in 360ms ease-out both;
+        animation-delay: calc(var(--d) * 70ms);
       }
+      /* 오늘 카드는 줄이 다 그려진 뒤 강조된다 */
       .day.today .card {
-        border-color: var(--sp-today);
-        box-shadow: 0 0 0 1px var(--sp-today);
+        animation:
+          card-in 360ms ease-out both,
+          today-in 400ms ease-out 1700ms both;
+        animation-delay: calc(var(--d) * 70ms), 1700ms;
+      }
+      .d0 {
+        --d: 0;
+      }
+      .d1 {
+        --d: 1;
+      }
+      .d2 {
+        --d: 2;
+      }
+      .d3 {
+        --d: 3;
+      }
+      .d4 {
+        --d: 4;
       }
       .card i {
         display: flex;
         align-items: center;
         gap: 7px;
         transform-origin: left center;
-        animation: draw 180ms ease-out both;
-        animation-delay: calc(120ms + var(--i) * 45ms);
+        animation: draw 280ms ease-out both;
+        animation-delay: calc(450ms + var(--i) * 80ms);
       }
       .card i::before {
         content: "";
@@ -181,6 +201,43 @@
         --w: 58%;
         --c: var(--sp-c1);
       }
+      /* 움직임 순서(창이 뜬 뒤): 카드 0~0.6초 → 줄 12개 0.45~1.6초 → 오늘 강조 1.7초 → 진행 막대는 2.4초에 걸쳐 */
+      @keyframes card-in {
+        from {
+          opacity: 0;
+          transform: translateY(8px) scale(0.97);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+      @keyframes today-in {
+        from {
+          border-color: var(--sp-line);
+          box-shadow: 0 0 0 0 var(--sp-today);
+        }
+        to {
+          border-color: var(--sp-today);
+          box-shadow: 0 0 0 1px var(--sp-today);
+        }
+      }
+      @keyframes today-label {
+        from {
+          color: var(--sp-text-3);
+        }
+        to {
+          color: var(--sp-today);
+        }
+      }
+      @keyframes fade {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
       @keyframes draw {
         from {
           opacity: 0;
@@ -195,7 +252,7 @@
         align-self: center;
         display: grid;
         gap: 4px;
-        animation: rise 360ms ease-out both;
+        animation: rise 420ms ease-out 200ms both;
       }
       .name {
         margin: 0;
@@ -262,35 +319,38 @@
           transform: scaleX(1);
         }
       }
+      /* Windows "애니메이션 효과" 끔: 크기·위치 움직임 대신 나타나기(투명도)만. 순서·진행 막대는 그대로 */
       @media (prefers-reduced-motion: reduce) {
-        *,
-        *::before,
-        *::after {
-          animation: none !important;
-          transition: none !important;
+        .card,
+        .card i,
+        .titles {
+          animation-name: fade;
+        }
+        .day.today .card {
+          animation-name: fade, today-in;
         }
       }
     </style>
   </head>
   <body>
     <div class="week" aria-hidden="true">
-      <div class="day">
+      <div class="day d0">
         <span>월</span>
         <div class="card"><i class="l0"></i><i class="l1"></i></div>
       </div>
-      <div class="day">
+      <div class="day d1">
         <span>화</span>
         <div class="card"><i class="l2"></i><i class="l3"></i><i class="l4"></i></div>
       </div>
-      <div class="day">
+      <div class="day d2">
         <span>수</span>
         <div class="card"><i class="l5"></i><i class="l6"></i></div>
       </div>
-      <div class="day">
+      <div class="day d3">
         <span>목</span>
         <div class="card"><i class="l7"></i><i class="l8"></i><i class="l9"></i></div>
       </div>
-      <div class="day">
+      <div class="day d4">
         <span>금</span>
         <div class="card"><i class="l10"></i><i class="l11"></i></div>
       </div>
