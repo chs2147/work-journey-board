@@ -86,6 +86,12 @@ export function weekTitle(id: WeekId): string {
   return sy === ey ? `${id} (${sm}/${sd}~${em}/${ed})` : `${id} (${sy}/${sm}/${sd}~${ey}/${em}/${ed})`;
 }
 
+/** 목록용 짧은 날짜: `10/22 (목)` */
+export function shortDateLabel(date: DateStr): string {
+  const [, m, d] = date.split("-");
+  return `${m}/${d} (${DAY_LABELS[dayIndex(date)]})`;
+}
+
 /** 연간 보기(미니맵)용 주 목록. 주는 그 주 목요일이 속한 달에 배치한다. */
 export function weeksOfIsoYear(year: number): { weekId: WeekId; month: number }[] {
   return Array.from({ length: weeksInIsoYear(year) }, (_, i) => {

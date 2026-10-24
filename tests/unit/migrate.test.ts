@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { openSqlJsMemory } from "../../src/data/drivers/sqlJs";
 import {
   LATEST_SCHEMA_VERSION,
+  MIGRATIONS,
   migrate,
   NewerSchemaError,
   quickCheck,
@@ -29,13 +30,11 @@ describe("마이그레이션 (data-spec 7-5)", () => {
   it("기존 데이터가 있는 파일을 올리면 직전 백업 후 적용", async () => {
     const db = await openSqlJsMemory();
     await migrate(db);
-    const v2 = [
-      { version: 1, sql: "" },
-      { version: 2, sql: "CREATE TABLE extra (id TEXT PRIMARY KEY);" },
-    ];
+    const next = LATEST_SCHEMA_VERSION + 1;
+    const more = [...MIGRATIONS, { version: next, sql: "CREATE TABLE extra (id TEXT PRIMARY KEY);" }];
     const before = vi.fn().mockResolvedValue(undefined);
-    expect(await migrate(db, { migrations: v2, beforeMigrate: before })).toBe(2);
-    expect(before).toHaveBeenCalledWith(1, 2);
+    expect(await migrate(db, { migrations: more, beforeMigrate: before })).toBe(next);
+    expect(before).toHaveBeenCalledWith(LATEST_SCHEMA_VERSION, next);
     expect(await db.select("SELECT name FROM sqlite_master WHERE name = 'extra'")).toHaveLength(1);
   });
 
@@ -43,12 +42,39 @@ describe("마이그레이션 (data-spec 7-5)", () => {
     const db = await openSqlJsMemory();
     await migrate(db);
     const bad = [
-      { version: 1, sql: "" },
-      { version: 2, sql: "CREATE TABLE ok2 (id TEXT);\nCREATE TABLE broken (;" },
+      ...MIGRATIONS,
+      { version: LATEST_SCHEMA_VERSION + 1, sql: "CREATE TABLE ok2 (id TEXT);\nCREATE TABLE broken (;" },
     ];
     await expect(migrate(db, { migrations: bad })).rejects.toThrow();
-    expect(await readSchemaVersion(db)).toBe(1);
+    expect(await readSchemaVersion(db)).toBe(LATEST_SCHEMA_VERSION);
     expect(await db.select("SELECT name FROM sqlite_master WHERE name = 'ok2'")).toHaveLength(0);
+  });
+
+  it("0002(중요 표시·매주 반복): v1 파일의 기록을 그대로 두고 표시 칸을 더한다 — 직전 백업 호출", async () => {
+    const db = await openSqlJsMemory();
+    await migrate(db, { migrations: MIGRATIONS.slice(0, 1) });
+    const ts = "2026-10-22T00:00:00.000Z";
+    await db.execute(
+      "INSERT INTO category (id, name, color, sort_order, created_at, updated_at) VALUES ('c', '업무 가', 'c1', 1, ?, ?)",
+      [ts, ts],
+    );
+    await db.execute(
+      "INSERT INTO entry_item (id, date, category_id, seq, depth, text, created_at, updated_at) VALUES ('i', '2026-10-22', 'c', 1, 0, '가상 기록', ?, ?)",
+      [ts, ts],
+    );
+    const before = vi.fn().mockResolvedValue(undefined);
+    expect(await migrate(db, { beforeMigrate: before })).toBe(2);
+    expect(before).toHaveBeenCalledWith(1, 2);
+    const [row] = await db.select<Record<string, unknown>>(
+      "SELECT text, flagged, flag_done_at, recurrence_id FROM entry_item WHERE id = 'i'",
+    );
+    expect(row).toEqual({ text: "가상 기록", flagged: 0, flag_done_at: null, recurrence_id: null });
+    for (const t of ["recurrence", "recurrence_line", "recurrence_week"]) {
+      expect(
+        await db.select("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?", [t]),
+      ).toHaveLength(1);
+    }
+    expect(await quickCheck(db)).toBe(true);
   });
 
   it("앱보다 새 버전 파일은 열지 않는다", async () => {

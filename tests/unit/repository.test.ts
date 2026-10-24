@@ -190,3 +190,69 @@ describe("설정 (data-spec 3-4)", () => {
     expect((await repo.updateSettings({ nudgeWeeks: 1 })).nudgeWeeks).toBe(3);
   });
 });
+
+describe("중요 표시 (important-repeat-spec 2·4-2)", () => {
+  it("칸 저장에 표시가 실리고, 표시 없는 저장 경로로 지워지지 않는다(실행 취소로 되살린 항목 포함)", async () => {
+    const { repo } = await freshRepo();
+    const c = await repo.createCategory("A", "2026-W43");
+    const x = { ...draft("중요한 일"), flagged: true },
+      y = draft("보통 일");
+    await repo.saveCell("2026-10-22", c.id, [x, y]);
+    let items = (await repo.getWeek("2026-W43")).items[cellKey("2026-10-22", c.id)]!;
+    expect(items.map((i) => [i.text, i.flagged])).toEqual([
+      ["중요한 일", true],
+      ["보통 일", false],
+    ]);
+    // 지웠다가(실행 취소처럼) 같은 초안으로 되살리면 표시도 돌아온다
+    await repo.saveCell("2026-10-22", c.id, [y]);
+    await repo.saveCell("2026-10-22", c.id, [x, y]);
+    items = (await repo.getWeek("2026-W43")).items[cellKey("2026-10-22", c.id)]!;
+    expect(items[0]!.flagged).toBe(true);
+  });
+
+  it("목록: 모든 주의 중요 항목, 업무 이름·색·세부 항목의 본 항목 글 포함", async () => {
+    const { repo } = await freshRepo();
+    const c = await repo.createCategory("업무 가", "2026-W40");
+    await repo.saveCell("2026-10-01", c.id, [{ ...draft("지난 일"), flagged: true }]);
+    await repo.saveCell("2026-10-22", c.id, [draft("본 항목"), { ...draft("세부 중요", 1), flagged: true }]);
+    await repo.saveCell("2026-10-23", c.id, [draft("표시 안 함")]);
+    const list = await repo.listImportant();
+    expect(list.map((i) => [i.date, i.text, i.parentText, i.categoryName, i.categoryColor])).toEqual(
+      expect.arrayContaining([
+        ["2026-10-01", "지난 일", null, "업무 가", "c1"],
+        ["2026-10-22", "세부 중요", "본 항목", "업무 가", "c1"],
+      ]),
+    );
+    expect(list).toHaveLength(2);
+  });
+
+  it("처리 완료 → 목록에서 빠지고 최근 완료(7일)에, 되돌리면 다시 목록으로", async () => {
+    const { repo, clock } = await freshRepo();
+    const c = await repo.createCategory("A", "2026-W43");
+    const x = { ...draft("보고서 제출"), flagged: true };
+    await repo.saveCell("2026-10-22", c.id, [x]);
+    await repo.completeFlag(x.id);
+    expect(await repo.listImportant()).toEqual([]);
+    expect((await repo.listRecentDone()).map((i) => i.text)).toEqual(["보고서 제출"]);
+    const item = (await repo.getWeek("2026-W43")).items[cellKey("2026-10-22", c.id)]![0]!;
+    expect([item.flagged, item.flagDoneAt !== null]).toEqual([false, true]);
+
+    await repo.undoComplete(x.id);
+    expect((await repo.listImportant()).map((i) => i.text)).toEqual(["보고서 제출"]);
+    expect(await repo.listRecentDone()).toEqual([]);
+
+    // 7일이 지나면 최근 완료에서도 빠진다(기록은 그대로)
+    await repo.completeFlag(x.id);
+    clock.set(2026, 10, 31); // 처리한 날(10/23)에서 8일 뒤
+    expect(await repo.listRecentDone()).toEqual([]);
+    expect((await repo.getWeek("2026-W43")).items[cellKey("2026-10-22", c.id)]).toHaveLength(1);
+  });
+
+  it("종료된 업무의 중요 항목도 목록에 남고 종료 표시가 붙는다", async () => {
+    const { repo } = await freshRepo();
+    const c = await repo.createCategory("A", "2026-W43");
+    await repo.saveCell("2026-10-20", c.id, [{ ...draft("남은 일"), flagged: true }]);
+    await repo.archiveCategory(c.id);
+    expect((await repo.listImportant()).map((i) => [i.text, i.categoryEnded])).toEqual([["남은 일", true]]);
+  });
+});

@@ -290,26 +290,86 @@
   margin-left: 14px;
 }
 
-/* 개조 부호: 본 항목 = 채운 점, 세부 항목 = 빈 점. 글자 대신 도형으로 그려 글꼴과 관계없이
-   첫 줄 가운데에 맞춘다(입력칸 위 여백 3px + 줄 높이 14px × 1.45의 절반 − 점 반지름) */
-.item::before,
-.itemSub::before {
+/* 개조 부호 = 중요 표시 단추(important-repeat-spec 2-1·2-2). 본 항목 = 채운 점, 세부 항목 = 빈 점.
+   점은 도형으로 그려 첫 줄 가운데에 맞춘다(입력칸 위 여백 3px + 줄 높이 14px × 1.45의 절반 − 점 반지름).
+   마우스를 올리면 ☆, 중요 항목은 ★ */
+.bullet {
+  position: absolute;
+  left: 0;
+  top: 3px;
+  width: 14px;
+  height: calc(var(--fs-md) * 1.45);
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  color: var(--text-3);
+  font-size: 12px;
+  line-height: calc(var(--fs-md) * 1.45);
+  text-align: center;
+}
+
+.bullet:disabled {
+  cursor: text;
+}
+
+.bullet::before {
   content: "";
   position: absolute;
   left: 3px;
-  top: calc(3px + var(--fs-md) * 1.45 / 2 - 2.5px);
+  top: calc(var(--fs-md) * 1.45 / 2 - 2.5px);
   width: 5px;
   height: 5px;
   box-sizing: border-box;
   border-radius: 50%;
-}
-
-.item::before {
   background: var(--text-2);
 }
 
-.itemSub::before {
+.itemSub .bullet::before {
+  background: none;
   border: 1.3px solid var(--text-3);
+}
+
+.item:not(.flagged):hover .bullet:not(:disabled)::before,
+.itemSub:not(.flagged):hover .bullet:not(:disabled)::before,
+.flagged .bullet::before {
+  content: "☆";
+  position: static;
+  width: auto;
+  height: auto;
+  border: 0;
+  border-radius: 0;
+  background: none;
+}
+
+.flagged .bullet {
+  color: var(--star);
+}
+
+.flagged .bullet::before {
+  content: "★";
+}
+
+.itemSub.flagged .bullet {
+  font-size: 10.5px;
+}
+
+/* 중요 항목: 옅은 형광펜 띠 + 왼쪽 선 */
+.flagged {
+  border-radius: var(--radius-sm);
+  background: var(--mark);
+  box-shadow: inset 3px 0 0 var(--mark-line);
+}
+
+.flagged .itemInput:focus {
+  background: transparent;
+}
+
+/* 중요 업무 목록에서 이동해 온 항목 */
+.pulse {
+  border-radius: var(--radius-sm);
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
 
 .itemInput,

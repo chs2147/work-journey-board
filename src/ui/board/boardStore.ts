@@ -3,7 +3,7 @@
 // - 실행 취소 단위 = 저장 1회(체크포인트). 저장 전에는 대기 중인 저장을 먼저 끝낸다.
 import { create } from "zustand";
 import { normalizeCell } from "../../domain/items";
-import type { ItemDraft } from "../../domain/types";
+import type { ImportantItem, ItemDraft } from "../../domain/types";
 import { addWeeks, dayIndex, weekDays, weekIdOf, type DateStr, type WeekId } from "../../domain/week";
 import { uuidv7 } from "../../data/ids";
 import { cellKey, ValidationError, type JournalRepository, type WeekView } from "../../data/repository";
@@ -11,6 +11,8 @@ import type { CategoryColorKey } from "../../shared/palette";
 import { STR } from "../../shared/strings";
 
 export const SAVE_DELAY_MS = 500;
+/** 목록에서 항목으로 이동했을 때 강조 테두리 시간 */
+export const PULSE_MS = 1200;
 export const UNDO_LIMIT = 50;
 export const TOAST_MS = 5000;
 
@@ -49,6 +51,15 @@ export interface BoardState {
   yearOpen: boolean;
   /** "+ 업무 추가" 입력칸이 열려 있는가 */
   addOpen: boolean;
+  /** 중요 업무(모든 주, 처리 전) · 최근 완료(7일) — important-repeat-spec 2절 */
+  important: ImportantItem[];
+  recentDone: ImportantItem[];
+  /** 왼쪽 중요 업무 패널 열림 */
+  panelOpen: boolean;
+  /** 패널을 열 때 목록으로 포커스를 옮길지 */
+  panelFocus: boolean;
+  /** 목록에서 이동해 온 항목(잠깐 강조) */
+  pulseId: string | null;
 }
 
 const MEMO_PREFIX = "memo|";
@@ -64,7 +75,13 @@ let toastSeq = 0;
 
 const sameItems = (a: ItemDraft[], b: ItemDraft[]) =>
   a.length === b.length &&
-  a.every((x, i) => x.id === b[i]!.id && x.depth === b[i]!.depth && x.text === b[i]!.text);
+  a.every(
+    (x, i) =>
+      x.id === b[i]!.id &&
+      x.depth === b[i]!.depth &&
+      x.text === b[i]!.text &&
+      Boolean(x.flagged) === Boolean(b[i]!.flagged),
+  );
 
 export const splitKey = (key: string) => {
   const i = key.indexOf("|");
@@ -91,6 +108,11 @@ export const useBoard = create<BoardState>(() => ({
   focus: null,
   yearOpen: false,
   addOpen: false,
+  important: [],
+  recentDone: [],
+  panelOpen: false,
+  panelFocus: false,
+  pulseId: null,
 }));
 
 const set = useBoard.setState;
@@ -152,6 +174,7 @@ async function applyCell(key: string, items: ItemDraft[]) {
   if (key in get().cells) set((s) => ({ cells: { ...s.cells, [key]: items } }));
   await track(() => requireRepo().saveCell(date, categoryId, items));
   persistedCells.set(key, normalizeCell(items));
+  void refreshImportant();
 }
 
 async function persistCell(key: string) {
@@ -171,6 +194,7 @@ async function persistCell(key: string) {
   }
   persistedCells.set(key, after);
   markFailed(key, false);
+  if (before.some((i) => i.flagged) || after.some((i) => i.flagged)) void refreshImportant();
   const entry: UndoEntry = { undo: () => applyCell(key, before), redo: () => applyCell(key, after) };
   pushUndo(entry);
   const keptIds = new Set(after.map((i) => i.id));
@@ -244,7 +268,14 @@ async function loadWeek(weekId: WeekId, focusDay: DateStr) {
   for (const vc of view.categories) {
     for (const day of view.days) {
       const key = cellKey(day, vc.category.id);
-      const drafts = (view.items[key] ?? []).map((i) => ({ id: i.id, depth: i.depth, text: i.text }));
+      const drafts = (view.items[key] ?? []).map((i): ItemDraft => ({
+        id: i.id,
+        depth: i.depth,
+        text: i.text,
+        flagged: i.flagged,
+        flagDoneAt: i.flagDoneAt,
+        recurrenceId: i.recurrenceId,
+      }));
       cells[key] = drafts;
       persistedCells.set(key, drafts);
     }
@@ -262,6 +293,7 @@ async function loadWeek(weekId: WeekId, focusDay: DateStr) {
     nudges,
     nudgeWeeks: settings.nudgeWeeks,
   });
+  await refreshImportant();
 }
 
 /** 같은 요일을 유지하며 주를 옮긴다. 이번 주로 오면 오늘로. */
@@ -276,7 +308,93 @@ export async function init(r: JournalRepository) {
   redoStack.length = 0;
   const today = r.today();
   await loadWeek(weekIdOf(today), today);
+  // 패널 열림은 기억하되, 켤 때 0건이면 닫힌 채 시작(spec 2-5)
+  const settings = await r.getSettings();
+  set({ panelOpen: settings.ui.importantPanelOpen && get().important.length > 0, panelFocus: false });
   focusStartCell();
+}
+
+// ── 중요 업무(important-repeat-spec 2절) ───────────────
+export async function refreshImportant() {
+  const r = repo;
+  if (!r) return;
+  const [important, recentDone] = await Promise.all([r.listImportant(), r.listRecentDone()]);
+  set({ important, recentDone });
+}
+
+/** 입력 중 항목의 중요 표시 켜기/끄기(☆ 버튼·Alt+I). 빈 항목은 무시. 실행 취소 기록에 들어간다. */
+export async function toggleFlag(key: string, index: number) {
+  const items = get().cells[key];
+  const item = items?.[index];
+  if (!items || !item || !item.text.trim()) return;
+  const next = items.map((it, i) => (i === index ? { ...it, flagged: !it.flagged, flagDoneAt: null } : it));
+  set((s) => ({ cells: { ...s.cells, [key]: next } }));
+  const t = timers.get(key);
+  if (t) clearTimeout(t);
+  await persistCell(key);
+}
+
+/** 화면에 있는 같은 항목의 표시를 저장본과 맞춘다(목록에서 처리·되돌리기 후). */
+function patchLocalItem(id: string, marks: Pick<ItemDraft, "flagged" | "flagDoneAt">) {
+  const cells = { ...get().cells };
+  for (const [key, items] of Object.entries(cells)) {
+    if (!items.some((i) => i.id === id)) continue;
+    cells[key] = items.map((i) => (i.id === id ? { ...i, ...marks } : i));
+    const saved = persistedCells.get(key);
+    if (saved)
+      persistedCells.set(
+        key,
+        saved.map((i) => (i.id === id ? { ...i, ...marks } : i)),
+      );
+  }
+  set({ cells });
+}
+
+/** 목록에서 체크 = 처리 완료(강조 해제). 토스트로 되돌리기. */
+export async function completeImportant(id: string) {
+  const r = requireRepo();
+  await flushAll();
+  try {
+    await track(() => r.completeFlag(id));
+  } catch (e) {
+    reportError(e);
+    return;
+  }
+  patchLocalItem(id, { flagged: false, flagDoneAt: new Date().toISOString() });
+  await refreshImportant();
+  toast(STR.important.completed, { label: STR.toast.undo, run: () => void undoImportant(id) });
+}
+
+export async function undoImportant(id: string) {
+  const r = requireRepo();
+  await flushAll();
+  try {
+    await track(() => r.undoComplete(id));
+  } catch (e) {
+    reportError(e);
+    return;
+  }
+  patchLocalItem(id, { flagged: true, flagDoneAt: null });
+  await refreshImportant();
+}
+
+/** 목록 항목으로 이동: 그 주·그 요일로 가서 그 항목 입력칸에 커서(글 끝) + 잠깐 강조 */
+export async function revealItem(it: ImportantItem) {
+  const wk = weekIdOf(it.date);
+  if (wk !== get().weekId) await loadWeek(wk, it.date);
+  else set({ focusDay: it.date });
+  const key = cellKey(it.date, it.categoryId);
+  const index = (get().cells[key] ?? []).findIndex((i) => i.id === it.id);
+  if (index < 0) return;
+  set({ focus: { kind: "item", key, index, caret: "end" }, pulseId: it.id });
+  setTimeout(() => {
+    if (get().pulseId === it.id) set({ pulseId: null });
+  }, PULSE_MS);
+}
+
+export function setPanelOpen(open: boolean, focusList = false) {
+  set({ panelOpen: open, panelFocus: open && focusList });
+  void repo?.updateSettings({ ui: { importantPanelOpen: open } }).catch(() => undefined);
 }
 
 export async function reload() {

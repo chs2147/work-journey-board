@@ -1,13 +1,17 @@
 import { useEffect } from "react";
 import { STR } from "../shared/strings";
 import { BoardView } from "./board/BoardView";
+import { setPanelOpen, useBoard } from "./board/boardStore";
 import { useShortcuts } from "./board/useShortcuts";
 import { start } from "./common/appController";
 import { useAppStore, type JournalStatus } from "./common/appStore";
 import { Toasts } from "./common/Toasts";
+import { Rail } from "./common/Rail";
 import { TopBar } from "./common/TopBar";
+import { useMediaQuery } from "./common/useMediaQuery";
 import { FirstRun } from "./first-run/FirstRun";
 import { IntegrityProblem, MissingFolder } from "./first-run/StartScreens";
+import { ImportantPanel } from "./important/ImportantPanel";
 import { SettingsPanel } from "./settings/SettingsPanel";
 import { finishSplash } from "./splash";
 import styles from "./App.module.css";
@@ -46,7 +50,7 @@ export function App() {
 function screen(journal: JournalStatus) {
   switch (journal.state) {
     case "ready":
-      return <BoardView />;
+      return <Workspace />;
     case "first-run":
       return <FirstRun />;
     case "missing":
@@ -56,6 +60,27 @@ function screen(journal: JournalStatus) {
     default:
       return <p className={styles.placeholder}>{statusText(journal)}</p>;
   }
+}
+
+/** 일지가 열린 화면: 왼쪽 레일 + (중요 업무 패널) + 보드(important-repeat-spec 1절) */
+function Workspace() {
+  const panelOpen = useBoard((s) => s.panelOpen);
+  // 좁은 창이면 패널을 보드 위에 겹쳐 띄우고, 보드를 누르면 닫는다(spec 1-3)
+  const narrow = useMediaQuery("(max-width: 1179px)");
+  return (
+    <div className={styles.workspace}>
+      <Rail />
+      {panelOpen && <ImportantPanel overlay={narrow} />}
+      <div
+        className={styles.boardArea}
+        onMouseDown={() => {
+          if (narrow && panelOpen) setPanelOpen(false);
+        }}
+      >
+        <BoardView />
+      </div>
+    </div>
+  );
 }
 
 function statusText(journal: JournalStatus): string {

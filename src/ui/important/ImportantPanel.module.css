@@ -1,0 +1,260 @@
+/* 왼쪽 중요 업무 패널 264px(important-repeat-spec 1-3·2-3). 좁은 창에서는 보드 위에 겹쳐 뜬다 */
+.panel {
+  flex: 0 0 auto;
+  width: 264px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--surface-card);
+  border-right: 1px solid var(--line);
+}
+
+.overlay {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 52px;
+  z-index: 15;
+  box-shadow: 6px 0 24px rgba(0, 0, 0, 0.18);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border-bottom: 1px solid var(--line);
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: var(--fs-md);
+}
+
+.star {
+  color: var(--star);
+}
+
+.count {
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--star);
+  color: #ffffff;
+  font-size: var(--fs-xs);
+  line-height: 18px;
+  font-variant-numeric: tabular-nums;
+}
+
+.close {
+  margin-left: auto;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-2);
+  cursor: pointer;
+}
+
+.list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: var(--sp-1) 0 var(--sp-3);
+}
+
+.list:focus {
+  outline: none;
+}
+
+.group {
+  display: flex;
+  justify-content: space-between;
+  margin: 0;
+  padding: var(--sp-3) var(--sp-3) var(--sp-1);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  color: var(--text-3);
+}
+
+.lateGroup {
+  color: var(--danger);
+}
+
+.rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: var(--sp-2);
+  padding: 6px var(--sp-3);
+}
+
+.row:hover,
+.row:focus-within {
+  background: var(--surface-sub);
+}
+
+.check {
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  padding: 0;
+  border: 1.5px solid var(--line-strong);
+  border-radius: 4px;
+  background: var(--surface-card);
+  color: transparent;
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.check:hover,
+.check:focus-visible {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.main {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-1);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.main:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.parent {
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.text {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-weight: 600;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.lateTag {
+  padding: 0 5px;
+  border-radius: 4px;
+  background: var(--warn-soft);
+  color: var(--danger);
+  font-weight: var(--fw-bold);
+}
+
+.todayTag {
+  padding: 0 5px;
+  border: 1px solid var(--today-mark);
+  border-radius: 4px;
+  color: var(--today-mark);
+  font-weight: var(--fw-bold);
+}
+
+/* 빈 상태(spec 2-5) */
+.empty {
+  display: grid;
+  justify-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-6) var(--sp-4);
+  text-align: center;
+  color: var(--text-2);
+}
+
+.empty strong {
+  color: var(--text-1);
+}
+
+.empty p {
+  margin: 0;
+  font-size: var(--fs-sm);
+  line-height: 1.6;
+  word-break: keep-all;
+}
+
+.emptyIcon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--surface-sub);
+  color: var(--text-3);
+  font-size: 20px;
+}
+
+.cleared .emptyIcon {
+  color: var(--ok);
+}
+
+/* 최근 완료(spec 2-4) */
+.done {
+  border-top: 1px solid var(--line);
+}
+
+.done summary {
+  padding: var(--sp-2) var(--sp-3);
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+  cursor: pointer;
+}
+
+.doneRow {
+  display: grid;
+  gap: 1px;
+  padding: 5px var(--sp-3) 5px calc(var(--sp-3) + 26px);
+}
+
+.doneText {
+  color: var(--text-3);
+  text-decoration: line-through;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.restore {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  cursor: pointer;
+}

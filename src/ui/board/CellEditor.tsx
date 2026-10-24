@@ -4,7 +4,16 @@ import { useCallback, useLayoutEffect, useRef, type ClipboardEvent, type Keyboar
 import { indentAt, moveItem, outdentAt, parsePastedLines } from "../../domain/items";
 import type { ItemDraft } from "../../domain/types";
 import { STR } from "../../shared/strings";
-import { editCell, leaveCell, newDraft, setFocus, setFocusDay, splitKey, useBoard } from "./boardStore";
+import {
+  editCell,
+  leaveCell,
+  newDraft,
+  setFocus,
+  setFocusDay,
+  splitKey,
+  toggleFlag,
+  useBoard,
+} from "./boardStore";
 import { autoSize, isComposingKey, useRemeasure } from "./helpers";
 import styles from "./Board.module.css";
 
@@ -24,6 +33,7 @@ interface Props {
 export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav }: Props) {
   const items = useBoard((s) => s.cells[cellKey]) ?? [];
   const focus = useBoard((s) => s.focus);
+  const pulseId = useBoard((s) => s.pulseId);
   const refs = useRef<(HTMLTextAreaElement | null)[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   const measureAll = useCallback(() => refs.current.forEach(autoSize), []);
@@ -59,6 +69,13 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav }: Props) 
     const { selectionStart: s, selectionEnd: t, value } = ta;
     const item = items[i]!;
     const plain = !e.altKey && !e.ctrlKey && !e.metaKey;
+
+    // 중요 표시 켜기/끄기(important-repeat-spec 2-2). 한국어 자판에서도 되도록 e.code로 본다.
+    if (e.code === "KeyI" && e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+      e.preventDefault();
+      void toggleFlag(cellKey, i);
+      return;
+    }
 
     if (e.key === "Enter" && plain && !e.shiftKey) {
       e.preventDefault();
@@ -156,7 +173,27 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav }: Props) 
       }}
     >
       {items.map((it, i) => (
-        <div key={it.id} className={it.depth === 1 ? styles.itemSub : styles.item}>
+        <div
+          key={it.id}
+          className={[
+            it.depth === 1 ? styles.itemSub : styles.item,
+            it.flagged ? styles.flagged : "",
+            pulseId === it.id ? styles.pulse : "",
+          ].join(" ")}
+          data-flagged={it.flagged ? "true" : undefined}
+        >
+          {/* 개조 부호 = 중요 표시 단추. 마우스를 올리면 ☆, 켜지면 ★. 키보드는 Alt+I(Tab 순서에서는 뺀다) */}
+          <button
+            type="button"
+            tabIndex={-1}
+            className={styles.bullet}
+            aria-label={it.flagged ? STR.important.flagOff : STR.important.flagOn}
+            aria-pressed={Boolean(it.flagged)}
+            title={it.flagged ? STR.important.flagOff : STR.important.flagOn}
+            disabled={!it.text.trim()}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => void toggleFlag(cellKey, i)}
+          />
           <textarea
             ref={(el) => {
               refs.current[i] = el;

@@ -335,11 +335,12 @@ test("개조 부호는 점 — 본 항목 채운 점, 세부 항목 빈 점", as
           border: s.borderTopStyle,
         };
       });
-  const main = await marker('[class*="item_"]');
+  // 부호는 각 항목의 중요 표시 단추(첫 자식)가 그린다
+  const main = await marker('[class*="item_"] > button');
   expect(main.content).toBe('""');
   expect(main.radius).toBe("50%");
   expect(main.bg).not.toBe("rgba(0, 0, 0, 0)");
-  const sub = await marker('[class*="itemSub"]');
+  const sub = await marker('[class*="itemSub"] > button');
   expect(sub.radius).toBe("50%");
   expect(sub.border).toBe("solid");
 });

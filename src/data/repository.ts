@@ -11,7 +11,7 @@ import {
 import { normalizeCell } from "../domain/items";
 import { localDate, utcTimestamp } from "../domain/localTime";
 import { NUDGE_LOOKBACK_WEEKS, nudgeCandidates, snoozeUntil } from "../domain/nudge";
-import type { Category, CategoryPeriod, Depth, EntryItem, ItemDraft } from "../domain/types";
+import type { Category, CategoryPeriod, Depth, EntryItem, ImportantItem, ItemDraft } from "../domain/types";
 import {
   addWeeks,
   weekDays,
@@ -23,7 +23,7 @@ import {
   type WeekId,
 } from "../domain/week";
 import { nextColorKey, type CategoryColorKey, CATEGORY_COLOR_KEYS } from "../shared/palette";
-import type { SqlDriver, SqlStatement } from "./driver";
+import type { SqlDriver, SqlParam, SqlStatement } from "./driver";
 import { uuidv7 } from "./ids";
 import { DEFAULT_SETTINGS, mergeSettings, type Settings, type SettingsPatch } from "./settings";
 
@@ -62,7 +62,20 @@ interface ItemRow {
   seq: number;
   depth: number;
   text: string;
+  flagged: number;
+  flag_done_at: string | null;
+  recurrence_id: string | null;
 }
+interface ImportantRow extends ItemRow {
+  category_name: string;
+  category_color: string;
+  category_order: number;
+  parent_text: string | null;
+}
+
+const ITEM_COLUMNS = "id, date, category_id, seq, depth, text, flagged, flag_done_at, recurrence_id";
+/** 최근 완료 보관 기간(spec 2-4) */
+export const RECENT_DONE_DAYS = 7;
 
 const toCategory = (r: CategoryRow): Category => ({
   id: r.id,
@@ -84,6 +97,9 @@ const toItem = (r: ItemRow): EntryItem => ({
   seq: Number(r.seq),
   depth: Number(r.depth) as Depth,
   text: r.text,
+  flagged: Number(r.flagged) === 1,
+  flagDoneAt: r.flag_done_at,
+  recurrenceId: r.recurrence_id,
 });
 
 export class JournalRepository {
@@ -256,7 +272,7 @@ export class JournalRepository {
     const { start, end } = weekRange(weekId);
     const { categories, periods } = await this.listCategories();
     const rows = await this.db.select<ItemRow>(
-      "SELECT id, date, category_id, seq, depth, text FROM entry_item WHERE date BETWEEN ? AND ? ORDER BY date, category_id, seq",
+      `SELECT ${ITEM_COLUMNS} FROM entry_item WHERE date BETWEEN ? AND ? ORDER BY date, category_id, seq`,
       [start, end],
     );
     const memos = await this.db.select<{ date: string; text: string }>(
@@ -288,6 +304,9 @@ export class JournalRepository {
       seq: i + 1,
       depth: d.depth,
       text: d.text.slice(0, 2000),
+      flagged: d.flagged === true,
+      flagDoneAt: d.flagged ? null : (d.flagDoneAt ?? null),
+      recurrenceId: d.recurrenceId ?? null,
     }));
     const ids = items.map((i) => i.id);
     const ts = this.ts();
@@ -299,20 +318,95 @@ export class JournalRepository {
         params: [date, categoryId, ...ids],
       },
       ...items.map((it) => ({
-        sql: `INSERT INTO entry_item (id, date, category_id, seq, depth, text, created_at, updated_at)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        sql: `INSERT INTO entry_item (id, date, category_id, seq, depth, text, flagged, flag_done_at, recurrence_id,
+                                      created_at, updated_at)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
               ON CONFLICT(id) DO UPDATE SET
                 date = excluded.date, category_id = excluded.category_id, seq = excluded.seq,
-                depth = excluded.depth, text = excluded.text,
+                depth = excluded.depth, text = excluded.text, flagged = excluded.flagged,
+                flag_done_at = excluded.flag_done_at, recurrence_id = excluded.recurrence_id,
                 updated_at = CASE WHEN entry_item.text <> excluded.text OR entry_item.depth <> excluded.depth
                                     OR entry_item.seq <> excluded.seq OR entry_item.date <> excluded.date
                                     OR entry_item.category_id <> excluded.category_id
+                                    OR entry_item.flagged <> excluded.flagged
                                   THEN excluded.updated_at ELSE entry_item.updated_at END`,
-        params: [it.id, it.date, it.categoryId, it.seq, it.depth, it.text, ts, ts],
+        params: [
+          it.id,
+          it.date,
+          it.categoryId,
+          it.seq,
+          it.depth,
+          it.text,
+          it.flagged ? 1 : 0,
+          it.flagDoneAt ?? null,
+          it.recurrenceId ?? null,
+          ts,
+          ts,
+        ],
       })),
     ];
     await this.db.batch(stmts);
     return items;
+  }
+
+  // ── 중요 업무(important-repeat-spec 2절) ──────────────
+  private async importantRows(where: string, params: SqlParam[]): Promise<ImportantItem[]> {
+    const rows = await this.db.select<ImportantRow>(
+      `SELECT e.id, e.date, e.category_id, e.seq, e.depth, e.text, e.flagged, e.flag_done_at, e.recurrence_id,
+              c.name AS category_name, c.color AS category_color, c.sort_order AS category_order,
+              CASE WHEN e.depth = 1 THEN (
+                SELECT p.text FROM entry_item p
+                WHERE p.date = e.date AND p.category_id = e.category_id AND p.depth = 0 AND p.seq < e.seq
+                ORDER BY p.seq DESC LIMIT 1) END AS parent_text
+       FROM entry_item e JOIN category c ON c.id = e.category_id
+       WHERE ${where}`,
+      params,
+    );
+    const { periods } = await this.listCategories();
+    const groups = groupPeriods(periods);
+    return rows.map((r) => ({
+      id: r.id,
+      date: r.date,
+      categoryId: r.category_id,
+      categoryName: r.category_name,
+      categoryColor: r.category_color,
+      categoryOrder: Number(r.category_order),
+      categoryEnded: !openPeriod(groups.get(r.category_id) ?? []),
+      seq: Number(r.seq),
+      depth: Number(r.depth) as Depth,
+      text: r.text,
+      parentText: r.parent_text,
+      flagDoneAt: r.flag_done_at,
+    }));
+  }
+
+  /** 아직 처리하지 않은 중요 항목 전부(모든 주). 묶음·정렬은 domain/important.ts */
+  async listImportant(): Promise<ImportantItem[]> {
+    return this.importantRows("e.flagged = 1", []);
+  }
+
+  /** 최근 완료(처리 완료 후 RECENT_DONE_DAYS일 이내, 최근 순) */
+  async listRecentDone(days = RECENT_DONE_DAYS): Promise<ImportantItem[]> {
+    const since = utcTimestamp(new Date(this.clock().getTime() - days * 86_400_000));
+    const rows = await this.importantRows("e.flagged = 0 AND e.flag_done_at >= ?", [since]);
+    return rows.sort((a, b) => (b.flagDoneAt ?? "").localeCompare(a.flagDoneAt ?? ""));
+  }
+
+  /** 중요 업무 목록에서 처리 완료: 강조 해제 + 완료 시각 기록 */
+  async completeFlag(id: string): Promise<void> {
+    const ts = this.ts();
+    await this.db.execute(
+      "UPDATE entry_item SET flagged = 0, flag_done_at = ?, updated_at = ? WHERE id = ? AND flagged = 1",
+      [ts, ts, id],
+    );
+  }
+
+  /** 처리 완료 되돌리기: 다시 중요 */
+  async undoComplete(id: string): Promise<void> {
+    await this.db.execute(
+      "UPDATE entry_item SET flagged = 1, flag_done_at = NULL, updated_at = ? WHERE id = ?",
+      [this.ts(), id],
+    );
   }
 
   /** 일일 메모. 비우면 행을 지운다. */

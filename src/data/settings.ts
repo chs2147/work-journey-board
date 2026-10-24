@@ -9,7 +9,12 @@ export interface Settings {
     promptTemplate: string | null;
     api: { endpoint: string | null; model: string | null };
   };
-  ui: { summaryPanelOpen: boolean; lastExportDir: string | null };
+  ui: {
+    summaryPanelOpen: boolean;
+    lastExportDir: string | null;
+    /** 왼쪽 중요 업무 패널 열림(important-repeat-spec 2-5). 앱을 켤 때 0건이면 이 값과 관계없이 닫힌 채 시작 */
+    importantPanelOpen: boolean;
+  };
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -17,7 +22,7 @@ export const DEFAULT_SETTINGS: Settings = {
   backup: { dailyKeep: 14, monthlyKeep: 12 },
   summary: { includeMemo: true },
   ai: { mode: "clipboard", promptTemplate: null, api: { endpoint: null, model: null } },
-  ui: { summaryPanelOpen: false, lastExportDir: null },
+  ui: { summaryPanelOpen: false, lastExportDir: null, importantPanelOpen: true },
 };
 
 export type SettingsPatch = {

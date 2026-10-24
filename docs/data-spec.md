@@ -165,6 +165,10 @@ CREATE TABLE app_meta (
 
 ---
 
+### 3-x. 스키마 v2 (2026-10-24, `0002_important_repeat.sql`)
+- `entry_item`에 `flagged`(중요 표시) · `flag_done_at`(처리 완료 시각) · `recurrence_id`(매주 반복 연결)를 더하고, 반복 규칙 표 `recurrence` · `recurrence_line` · `recurrence_week`를 만든다. 정의·규칙은 [important-repeat-spec.md](important-repeat-spec.md) 4절이 정본이다.
+- 올릴 때 7-5절 규칙대로 직전 백업(`_pre-migration-v2`) 후 한 트랜잭션으로 적용한다.
+
 ## 4. 카테고리 활성 계산
 
 ### 4-1. 주 W에 보일 카테고리

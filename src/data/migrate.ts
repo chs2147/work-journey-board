@@ -1,6 +1,7 @@
 // 스키마 마이그레이션(data-spec 7-5): 번호 순 전진 전용, 기존 데이터가 있으면 직전 백업 후 단일 트랜잭션으로 적용.
 import type { SqlDriver, SqlStatement } from "./driver";
 import init0001 from "./migrations/0001_init.sql?raw";
+import importantRepeat0002 from "./migrations/0002_important_repeat.sql?raw";
 
 export interface Migration {
   version: number;
@@ -8,7 +9,10 @@ export interface Migration {
 }
 
 /** 앱이 아는 마이그레이션(오름차순). 새 파일은 끝에만 추가한다. */
-export const MIGRATIONS: Migration[] = [{ version: 1, sql: init0001 }];
+export const MIGRATIONS: Migration[] = [
+  { version: 1, sql: init0001 },
+  { version: 2, sql: importantRepeat0002 },
+];
 
 export const LATEST_SCHEMA_VERSION = MIGRATIONS.at(-1)!.version;
 

@@ -1,7 +1,17 @@
 // 전역 단축키(overview 10-2·10-3). 한국어 자판에서도 동작하도록 e.key 대신 e.code로 판별한다.
 import { useEffect } from "react";
 import { addDays, weekDays } from "../../domain/week";
-import { goToday, goWeek, redo, setFocusDay, setYearOpen, undo, useBoard } from "./boardStore";
+import {
+  focusStartCell,
+  goToday,
+  goWeek,
+  redo,
+  setFocusDay,
+  setPanelOpen,
+  setYearOpen,
+  undo,
+  useBoard,
+} from "./boardStore";
 
 const isTyping = (el: Element | null) => el instanceof HTMLTextAreaElement || el instanceof HTMLInputElement;
 
@@ -9,7 +19,7 @@ export function useShortcuts() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.isComposing || e.keyCode === 229) return;
-      const { ready, yearOpen, focusDay, weekId } = useBoard.getState();
+      const { ready, yearOpen, focusDay, weekId, panelOpen } = useBoard.getState();
       if (!ready) return;
       const mod = e.ctrlKey || e.metaKey;
 
@@ -23,6 +33,13 @@ export function useShortcuts() {
         } else if (e.code === "KeyY") {
           e.preventDefault();
           setYearOpen(!yearOpen);
+        } else if (e.code === "Digit1") {
+          // 주간 보드 보기(important-repeat-spec 5절) — 지금은 보기가 보드 하나라 보드로 커서를 돌려보낸다
+          e.preventDefault();
+          focusStartCell();
+        } else if (e.code === "Digit2") {
+          e.preventDefault();
+          setPanelOpen(!panelOpen, !panelOpen);
         }
         return;
       }
