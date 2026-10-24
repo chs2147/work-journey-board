@@ -210,30 +210,56 @@ test("실행 취소·다시 실행 (Ctrl+Z / Ctrl+Y)", async ({ page }) => {
   );
 });
 
-test("한글 IME 조합 중 Enter는 글자 확정에만 쓰이고 항목을 만들지 않는다", async ({ page }) => {
+test("한글 IME 조합 중 Enter는 글자 확정에만 쓰이고 항목을 만들지 않는다", async ({ page, browserName }) => {
   const c = cell(page, DASH, TODAY);
   await c.getByRole("button", { name: "+ 기록 추가" }).click();
-  const cdp = await page.context().newCDPSession(page);
-  await cdp.send("Input.imeSetComposition", { text: "한", selectionStart: 1, selectionEnd: 1 });
-  // 조합 중 Enter(keyCode 229) → 무시돼야 함
-  await cdp.send("Input.dispatchKeyEvent", {
-    type: "keyDown",
-    key: "Enter",
-    code: "Enter",
-    windowsVirtualKeyCode: 229,
-  });
-  await cdp.send("Input.dispatchKeyEvent", {
-    type: "keyUp",
-    key: "Enter",
-    code: "Enter",
-    windowsVirtualKeyCode: 229,
-  });
-  await cdp.send("Input.insertText", { text: "한글" });
+  if (browserName === "chromium") {
+    // Chromium(= WebView2 계열): CDP로 실제 조합 상태를 만든다
+    const cdp = await page.context().newCDPSession(page);
+    await cdp.send("Input.imeSetComposition", { text: "한", selectionStart: 1, selectionEnd: 1 });
+    // 조합 중 Enter(keyCode 229) → 무시돼야 함
+    for (const type of ["keyDown", "keyUp"] as const)
+      await cdp.send("Input.dispatchKeyEvent", {
+        type,
+        key: "Enter",
+        code: "Enter",
+        windowsVirtualKeyCode: 229,
+      });
+    await cdp.send("Input.insertText", { text: "한글" });
+  } else {
+    // CDP가 없는 엔진(WebKit): 조합 중 keydown(isComposing)을 직접 보낸다
+    await page.keyboard.insertText("한글");
+    await composingEnter(page, { isComposing: true });
+  }
   expect(await values(c)).toEqual(["한글"]);
   await page.keyboard.press("Enter"); // 확정 후 Enter는 새 항목
   await page.keyboard.type("다음");
   expect(await values(c)).toEqual(["한글", "다음"]);
 });
+
+test("Safari 계열: 조합을 끝낸 직후의 Enter(keyCode 229)도 항목을 만들지 않는다", async ({ page }) => {
+  const c = cell(page, DASH, TODAY);
+  await c.getByRole("button", { name: "+ 기록 추가" }).click();
+  await page.keyboard.insertText("한글");
+  await composingEnter(page, { isComposing: false, keyCode: 229 });
+  expect(await values(c)).toEqual(["한글"]);
+});
+
+/** 포커스된 입력칸에 IME가 보내는 것과 같은 Enter keydown을 보낸다(엔진 공통 — 합성 이벤트) */
+async function composingEnter(page: Page, opt: { isComposing: boolean; keyCode?: number }) {
+  await page.evaluate(({ isComposing, keyCode }) => {
+    const el = document.activeElement!;
+    const ev = new KeyboardEvent("keydown", {
+      key: "Enter",
+      code: "Enter",
+      isComposing,
+      bubbles: true,
+      cancelable: true,
+    });
+    if (keyCode !== undefined) Object.defineProperty(ev, "keyCode", { get: () => keyCode });
+    el.dispatchEvent(ev);
+  }, opt);
+}
 
 test("2분 시나리오: 빈 일지에서 키보드만으로 업무 3개 × 항목 2개 + 메모", async ({ page }) => {
   await page.goto(`/?today=${TODAY}&empty=1`);

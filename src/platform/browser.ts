@@ -16,7 +16,8 @@ import { isOneDriveLike, type AppConfig, type Platform } from "./index";
 //   ?existing=/경로     그 폴더에 샘플이 든 기존 일지를 미리 만들어 둠(첫 실행 "기존 일지 열기" 시험)
 //   ?config=/경로       설정의 저장 폴더를 그 경로로(없는 폴더면 "저장 폴더를 찾을 수 없음" 화면)
 const params = new URLSearchParams(globalThis.location?.search ?? "");
-const fixedToday = /^\d{4}-\d{2}-\d{2}$/.test(params.get("today") ?? "") ? params.get("today")! : null;
+const isDate = (s: string | null) => /^\d{4}-\d{2}-\d{2}$/.test(s ?? "");
+let fixedToday = isDate(params.get("today")) ? params.get("today")! : null;
 
 export const DEMO_HOME = "/demo";
 export const DEMO_DIR = "/demo/WorkJourney";
@@ -88,10 +89,14 @@ export const browserPlatform: Platform = {
   },
 };
 
-// E2E에서 "창 닫기"를 흉내 내기 위한 훅과 가짜 파일 목록
+// E2E 훅: "창 닫기" 흉내, 가짜 파일 목록, 날짜 넘기기(앱을 켠 채 며칠·몇 주가 지난 상황 — 통합 시나리오)
 Object.assign(globalThis, {
   __wjb: {
     exit: () => exitHandler?.(),
     files: () => fs.listAll(),
+    setToday(date: string) {
+      if (!isDate(date)) throw new Error(`날짜 형식이 아닙니다: ${date}`);
+      fixedToday = date;
+    },
   },
 });

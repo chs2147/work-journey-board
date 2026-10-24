@@ -1,4 +1,4 @@
-# 웹 앱 검사(리눅스): lint · 포맷 · 타입 · 단위 테스트 · E2E(브라우저 모드, Chromium)
+# 웹 앱 검사(리눅스): lint · 포맷 · 타입 · 단위 테스트 · E2E(브라우저 모드, Chromium + WebKit)
 name: CI
 
 on:
@@ -27,8 +27,8 @@ jobs:
       - run: npm run typecheck
       - run: npm test
 
-      - name: Install Playwright Chromium
-        run: npx playwright install --with-deps chromium
+      - name: Install Playwright browsers (Chromium, WebKit)
+        run: npx playwright install --with-deps chromium webkit
       - run: npm run e2e
 
       - uses: actions/upload-artifact@v4
