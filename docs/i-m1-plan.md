@@ -138,7 +138,7 @@
 - [x] 통합 시나리오 E2E `tests/e2e/journey.spec.ts`: 첫 실행 → 업무 3개 → 1주 기록(키보드만) → 다음 주 이월·매주 반복 생성 → 3주 무기록 배지(고친 반복 항목은 기록, 손대지 않은 것은 무기록) → [종료] → 다음 주에서 사라짐 → 설정에서 다시 시작 → 같은 주 재시작은 원래 구간을 다시 열어 제안이 다시 보임 → [유지] → 실행 취소 → 지난 주 기록 재확인. 앱을 켠 채 날짜를 넘기는 브라우저 모드 훅 `__wjb.setToday()`
 - [x] WebKit 프로젝트(`playwright.config.ts`) + CI 설치 단계. 한글 IME 테스트는 엔진별(Chromium = CDP 조합, WebKit = 합성 keydown) + Safari 계열의 "조합 끝난 직후 keyCode 229 Enter" 테스트 추가. 클라우드 세션은 WebKit을 받을 수 없어(네트워크 정책) `npm run e2e:chromium`, 두 엔진은 CI에서 확인
 - [x] 회사 PC 확인표 [m1-check.md](m1-check.md), G2 기록 양식 [g2-log.md](g2-log.md)
-- [ ] `v0.1.0` 확정(사용자 확인) → main 반영 → 릴리스
+- [x] `v0.1.0` 확정(사용자 확인, 2026-10-24) → main 반영 → 릴리스
 - [ ] 회사 PC 확인표 결과 → ◆G2 시작
 
 ---

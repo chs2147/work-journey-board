@@ -50,6 +50,11 @@ npm run tauri dev    # 실앱 모드(윈도우 / 리눅스는 webkit2gtk-4.1 필
 - 윈도우 설치 파일: `main`에 반영되면 [Releases](https://github.com/chs2147/work-journey-board/releases)에 `v<버전>` 사전 릴리스로 올라간다. WebView2 오프라인 설치판은 Actions → *Build Windows installer* → Run workflow → `offline`.
 
 ## Version History
+### v0.1.0 (2026-10-24) — I-M1 핵심 기록 완성(◆G2 실사용 시작판)
+- I-M1 범위 완료: 주간 보드·개조식 입력·업무 관리·이월·무기록 제안·메모·자동 저장·실행 취소·첫 실행·저장 위치·자동 백업 + 중요 표시·매주 반복
+- 통합 시나리오 E2E(첫 실행부터 5주 사용) 추가, E2E를 Chromium·WebKit 두 엔진에서 실행
+- 회사 PC 확인표(`docs/m1-check.md`)·G2 실사용 기록 양식(`docs/g2-log.md`)
+
 ### v0.0.12 (2026-10-24) — 매주 반복
 - 항목의 ↻ 또는 Alt+R로 매주 반복 켜기/끄기 — 다음 주부터 같은 업무·같은 요일에 이번 주가 되면 자동으로 들어옴(지난 주는 채우지 않음)
 - 다음 주 이후 보드에 흐린 "예정" 항목 미리 보기(누르면 그 주에 바로 만듦), 들어온 항목을 지우면 그 주만 빠짐
