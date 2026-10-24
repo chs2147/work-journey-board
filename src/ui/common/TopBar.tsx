@@ -16,83 +16,87 @@ export function TopBar() {
   const journalReady = useAppStore((s) => s.journal.state === "ready");
 
   return (
-    <header className={styles.bar}>
-      <span className={styles.title}>
+    <header className={styles.header}>
+      {/* 1줄: 앱 타이틀만 */}
+      <div className={styles.brandRow}>
         <BrandLockup size="bar" />
-      </span>
-      {ready && journalReady && (
-        <nav className={styles.nav}>
-          <button
-            type="button"
-            className={styles.iconButton}
-            aria-label={STR.topBar.prevWeek}
-            title={STR.topBar.prevWeek}
-            onClick={() => void goWeek(-1)}
-          >
-            ◀
-          </button>
-          <span className={styles.week} data-testid="week-title">
-            {weekTitle(weekId)}
-          </span>
-          <button
-            type="button"
-            className={styles.iconButton}
-            aria-label={STR.topBar.nextWeek}
-            title={STR.topBar.nextWeek}
-            onClick={() => void goWeek(1)}
-          >
-            ▶
-          </button>
-          <button
-            type="button"
-            className={styles.textButton}
-            title={STR.topBar.todayTitle}
-            onClick={() => void goToday()}
-          >
-            {STR.topBar.today}
-          </button>
-          <div className={styles.yearWrap}>
+      </div>
+      {/* 2줄: 연도·주차 이동 · 저장 상태 · 설정 */}
+      <div className={styles.bar}>
+        {ready && journalReady && (
+          <nav className={styles.nav}>
+            <button
+              type="button"
+              className={styles.iconButton}
+              aria-label={STR.topBar.prevWeek}
+              title={STR.topBar.prevWeek}
+              onClick={() => void goWeek(-1)}
+            >
+              ◀
+            </button>
+            <span className={styles.week} data-testid="week-title">
+              {weekTitle(weekId)}
+            </span>
+            <button
+              type="button"
+              className={styles.iconButton}
+              aria-label={STR.topBar.nextWeek}
+              title={STR.topBar.nextWeek}
+              onClick={() => void goWeek(1)}
+            >
+              ▶
+            </button>
             <button
               type="button"
               className={styles.textButton}
-              title={STR.topBar.yearTitle}
-              aria-expanded={yearOpen}
-              data-year-toggle
-              onClick={() => setYearOpen(!yearOpen)}
+              title={STR.topBar.todayTitle}
+              onClick={() => void goToday()}
             >
-              {STR.topBar.year}
+              {STR.topBar.today}
             </button>
-            {yearOpen && <YearMinimap />}
-          </div>
-        </nav>
-      )}
-      <div className={styles.spacer} />
-      {ready &&
-        journalReady &&
-        (failed > 0 ? (
-          <button
-            type="button"
-            className={styles.saveFailed}
-            title={STR.save.failedTitle}
-            onClick={() => void retryFailed()}
-          >
-            {STR.save.failed}
-          </button>
-        ) : (
-          <span className={styles.saveState} data-testid="save-state">
-            {saving > 0 ? STR.save.saving : STR.save.saved}
-          </span>
-        ))}
-      <button
-        type="button"
-        className={styles.iconButton}
-        aria-label={STR.topBar.settings}
-        title={journalReady ? STR.topBar.settings : STR.topBar.settingsDisabled}
-        disabled={!journalReady}
-        onClick={() => setSettingsOpen(true)}
-      >
-        ⚙
-      </button>
+            <div className={styles.yearWrap}>
+              <button
+                type="button"
+                className={styles.textButton}
+                title={STR.topBar.yearTitle}
+                aria-expanded={yearOpen}
+                data-year-toggle
+                onClick={() => setYearOpen(!yearOpen)}
+              >
+                {STR.topBar.year}
+              </button>
+              {yearOpen && <YearMinimap />}
+            </div>
+          </nav>
+        )}
+        <div className={styles.spacer} />
+        {ready &&
+          journalReady &&
+          (failed > 0 ? (
+            <button
+              type="button"
+              className={styles.saveFailed}
+              title={STR.save.failedTitle}
+              onClick={() => void retryFailed()}
+            >
+              {STR.save.failed}
+            </button>
+          ) : (
+            <span className={styles.saveState} data-testid="save-state">
+              {saving > 0 ? STR.save.saving : STR.save.saved}
+            </span>
+          ))}
+        <button
+          type="button"
+          className={styles.iconButton}
+          aria-label={STR.topBar.settings}
+          title={journalReady ? STR.topBar.settings : STR.topBar.settingsDisabled}
+          disabled={!journalReady}
+          onClick={() => setSettingsOpen(true)}
+        >
+          ⚙
+        </button>
+      </div>
     </header>
   );
 }

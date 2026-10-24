@@ -70,6 +70,10 @@ describe("splash.html = 원본 값", () => {
 });
 
 describe("창 설정(tauri.conf.json)", () => {
+  it("메인 창은 화면 안 끌어서 놓기(업무 순서 바꾸기)를 쓰도록 Tauri 파일 끌어놓기를 끈다", () => {
+    expect(win("main").dragDropEnabled).toBe(false);
+  });
+
   it("스플래시 창: 메인보다 작고, 테두리 없이 가운데, 닫기·크기 조절 없음", () => {
     const s = win("splash");
     const m = win("main");

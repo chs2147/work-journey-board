@@ -1,19 +1,27 @@
-.bar {
+/* 상단 2줄(overview 10-1): 타이틀 줄 + 이동·설정 줄 */
+.header {
   position: relative;
   z-index: 20;
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-  height: 52px;
-  padding: 0 var(--sp-5);
+  flex: 0 0 auto;
   background: var(--surface-card);
   border-bottom: 1px solid var(--line);
 }
 
-.title {
-  flex: 0 0 auto;
+.brandRow {
   display: flex;
-  margin-right: var(--sp-4);
+  align-items: center;
+  height: 50px;
+  padding: 0 var(--sp-5);
+  border-bottom: 1px solid var(--line);
+}
+
+.bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  height: 46px;
+  padding: 0 var(--sp-5);
 }
 
 .nav {

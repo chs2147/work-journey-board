@@ -26,15 +26,15 @@
   stroke: var(--today-mark);
 }
 
-/* 상단 바: 아이콘 24px, 대문자 약 14px */
+/* 상단 타이틀 줄: 아이콘 26px, 대문자 약 15px */
 .bar {
   gap: 10px;
 }
 .bar .icon {
-  height: 24px;
+  height: 26px;
 }
 .bar .wordmark {
-  height: 27px;
+  height: 30px;
 }
 
 /* 첫 실행 환영 화면: 아이콘 48px, 대문자 약 20px */

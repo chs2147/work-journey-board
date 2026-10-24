@@ -108,13 +108,16 @@ export function BoardView() {
               total={cats.length}
               nudge={nudges.includes(vc.category.id)}
               nudgeWeeks={nudgeWeeks}
+              draggingId={dragId}
               onDragStart={setDragId}
-              onDrop={(targetId) => {
-                if (!dragId || dragId === targetId) return;
-                const ids = cats.map((c) => c.category.id).filter((id) => id !== dragId);
-                ids.splice(ids.indexOf(targetId), 0, dragId);
+              onDragEnd={() => setDragId(null)}
+              onDrop={(targetId, place) => {
                 setDragId(null);
-                void reorderVisible(ids);
+                if (!dragId || dragId === targetId) return;
+                const before = cats.map((c) => c.category.id);
+                const ids = before.filter((id) => id !== dragId);
+                ids.splice(ids.indexOf(targetId) + (place === "after" ? 1 : 0), 0, dragId);
+                if (ids.join() !== before.join()) void reorderVisible(ids);
               }}
             />
             {view.days.map((day, i) => {

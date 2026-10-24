@@ -131,8 +131,17 @@
   border-radius: 999px;
 }
 
-.dragOver {
+/* 끌어서 순서 바꾸기: 끄는 업무는 흐리게, 놓을 자리는 위·아래 굵은 선 */
+.dragging {
+  opacity: 0.45;
+}
+
+.dropBefore {
   box-shadow: inset 0 3px 0 var(--accent);
+}
+
+.dropAfter {
+  box-shadow: inset 0 -3px 0 var(--accent);
 }
 
 .menuWrap {
@@ -281,22 +290,26 @@
   margin-left: 14px;
 }
 
+/* 개조 부호: 본 항목 = 채운 점, 세부 항목 = 빈 점. 글자 대신 도형으로 그려 글꼴과 관계없이
+   첫 줄 가운데에 맞춘다(입력칸 위 여백 3px + 줄 높이 14px × 1.45의 절반 − 점 반지름) */
 .item::before,
 .itemSub::before {
+  content: "";
   position: absolute;
-  left: 2px;
-  top: 3px;
-  color: var(--text-3);
-  font-size: var(--fs-md);
-  line-height: 1.45;
+  left: 3px;
+  top: calc(3px + var(--fs-md) * 1.45 / 2 - 2.5px);
+  width: 5px;
+  height: 5px;
+  box-sizing: border-box;
+  border-radius: 50%;
 }
 
 .item::before {
-  content: "-";
+  background: var(--text-2);
 }
 
 .itemSub::before {
-  content: "·";
+  border: 1.3px solid var(--text-3);
 }
 
 .itemInput,
@@ -313,6 +326,9 @@
   font: inherit;
   font-size: var(--fs-md);
   line-height: 1.45;
+  /* 한글은 단어 중간에서 끊지 않는다(띄어쓰기 단위 줄바꿈). 칸보다 긴 한 단어만 중간에서 끊음 */
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
 .itemSub .itemInput {

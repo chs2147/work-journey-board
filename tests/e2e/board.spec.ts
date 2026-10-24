@@ -281,12 +281,67 @@ test("2분 시나리오: 빈 일지에서 키보드만으로 업무 3개 × 항�
   ).toBe(12);
 });
 
-test("업무 행 머리를 끌어서 순서 바꾸기", async ({ page }) => {
+test("업무 행 머리를 끌어서 순서 바꾸기 — 머리의 위쪽 절반에 놓으면 그 위로", async ({ page }) => {
   const headers = page.getByTestId("category-header");
-  await headers.filter({ hasText: ONB }).dragTo(headers.filter({ hasText: SETTLE }));
+  await headers
+    .filter({ hasText: ONB })
+    .dragTo(headers.filter({ hasText: SETTLE }), { targetPosition: { x: 30, y: 6 } });
   await expect(headers.first()).toContainText(ONB);
   await reloadWeek(page);
   await expect(page.getByTestId("category-header").first()).toContainText(ONB);
+});
+
+test("바로 아래 업무의 아래쪽 절반에 놓으면 한 칸 내려간다", async ({ page }) => {
+  const headers = page.getByTestId("category-header");
+  const names = async () =>
+    (await headers.allTextContents()).map((t) => [SETTLE, SEC, DASH, ONB].find((n) => t.includes(n)));
+  const before = await names();
+  const second = headers.nth(1);
+  const box = (await second.boundingBox())!;
+  // 위쪽 절반이면 제자리(변화 없음)
+  await headers.first().dragTo(second, { targetPosition: { x: 30, y: 6 } });
+  expect(await names()).toEqual(before);
+  // 아래쪽 절반이면 한 칸 아래로
+  await headers.first().dragTo(second, { targetPosition: { x: 30, y: box.height - 6 } });
+  await expect.poll(names).toEqual([before[1], before[0], ...before.slice(2)]);
+});
+
+test("업무 머리를 기록 칸에 떨어뜨려도 칸에 글자가 들어가지 않는다", async ({ page }) => {
+  const target = inputs(cell(page, SEC, TODAY)).first();
+  const value = await target.inputValue();
+  await page.getByTestId("category-header").filter({ hasText: ONB }).dragTo(target);
+  await expect(target).toHaveValue(value);
+});
+
+test("상단은 2줄 — 1줄 타이틀, 2줄 주 이동·설정", async ({ page }) => {
+  const brand = (await page.getByRole("img", { name: "Work Journey Board" }).boundingBox())!;
+  const week = (await page.getByTestId("week-title").boundingBox())!;
+  const settings = (await page.getByRole("button", { name: "설정" }).boundingBox())!;
+  expect(week.y).toBeGreaterThanOrEqual(brand.y + brand.height);
+  expect(Math.abs(settings.y + settings.height / 2 - (week.y + week.height / 2))).toBeLessThan(4);
+});
+
+test("개조 부호는 점 — 본 항목 채운 점, 세부 항목 빈 점", async ({ page }) => {
+  const marker = (sel: string) =>
+    page
+      .locator(sel)
+      .first()
+      .evaluate((e) => {
+        const s = getComputedStyle(e, "::before");
+        return {
+          content: s.content,
+          radius: s.borderRadius,
+          bg: s.backgroundColor,
+          border: s.borderTopStyle,
+        };
+      });
+  const main = await marker('[class*="item_"]');
+  expect(main.content).toBe('""');
+  expect(main.radius).toBe("50%");
+  expect(main.bg).not.toBe("rgba(0, 0, 0, 0)");
+  const sub = await marker('[class*="itemSub"]');
+  expect(sub.radius).toBe("50%");
+  expect(sub.border).toBe("solid");
 });
 
 test("입력칸 높이가 내용에 맞는다 — 웹 글꼴 로딩 후·포커스 열 변경 후", async ({ page }) => {

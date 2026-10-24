@@ -30,6 +30,7 @@
       {
         "label": "main",
         "visible": false,
+        "dragDropEnabled": false,
         "title": "Work Journey Board",
         "width": 1280,
         "height": 820,

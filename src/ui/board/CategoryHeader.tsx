@@ -22,15 +22,40 @@ interface Props {
   nudge: boolean;
   nudgeWeeks: number;
   onDragStart(id: string): void;
-  onDrop(targetId: string): void;
+  onDragEnd(): void;
+  /** 끌어 온 업무를 이 업무의 위(before)·아래(after)에 놓는다 */
+  onDrop(targetId: string, place: DropPlace): void;
+  /** 지금 끌고 있는 업무(자기 자신 위에는 표시를 내지 않는다) */
+  draggingId: string | null;
 }
 
-export function CategoryHeader({ vc, index, total, nudge, nudgeWeeks, onDragStart, onDrop }: Props) {
+export type DropPlace = "before" | "after";
+
+/** 업무 끌기 전용 자료형 — 글자(text/plain)로 싣지 않아 입력칸에 떨어뜨려도 글자가 들어가지 않는다 */
+const DRAG_TYPE = "application/x-wjb-category";
+
+/** 머리 칸 위쪽 절반이면 위, 아래쪽 절반이면 아래 */
+function placeAt(e: DragEvent<HTMLElement>): DropPlace {
+  const r = e.currentTarget.getBoundingClientRect();
+  return e.clientY < r.top + r.height / 2 ? "before" : "after";
+}
+
+export function CategoryHeader({
+  vc,
+  index,
+  total,
+  nudge,
+  nudgeWeeks,
+  onDragStart,
+  onDragEnd,
+  onDrop,
+  draggingId,
+}: Props) {
   const { category, state } = vc;
   const [editing, setEditing] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [canDelete, setCanDelete] = useState(false);
-  const [dragOver, setDragOver] = useState(false);
+  const [dropAt, setDropAt] = useState<DropPlace | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const ended = state !== "active";
 
@@ -58,24 +83,41 @@ export function CategoryHeader({ vc, index, total, nudge, nudgeWeeks, onDragStar
 
   return (
     <div
-      className={`${styles.rowHeader} ${ended ? styles.ended : ""} ${dragOver ? styles.dragOver : ""}`}
+      className={[
+        styles.rowHeader,
+        ended ? styles.ended : "",
+        draggingId === category.id ? styles.dragging : "",
+        dropAt === "before" ? styles.dropBefore : "",
+        dropAt === "after" ? styles.dropAfter : "",
+      ].join(" ")}
       style={{ borderLeftColor: `var(--cat-${category.color})` }}
       draggable={!editing}
       title={STR.categoryMenu.dragHint}
       data-testid="category-header"
-      onDragStart={(e: DragEvent) => {
+      onDragStart={(e: DragEvent<HTMLDivElement>) => {
         e.dataTransfer.effectAllowed = "move";
+        e.dataTransfer.setData(DRAG_TYPE, category.id);
         onDragStart(category.id);
       }}
-      onDragOver={(e) => {
-        e.preventDefault();
-        setDragOver(true);
+      onDragEnd={() => {
+        setDropAt(null);
+        onDragEnd();
       }}
-      onDragLeave={() => setDragOver(false)}
-      onDrop={(e) => {
+      onDragOver={(e) => {
+        if (!draggingId || !e.dataTransfer.types.includes(DRAG_TYPE)) return;
         e.preventDefault();
-        setDragOver(false);
-        onDrop(category.id);
+        e.dataTransfer.dropEffect = "move";
+        setDropAt(draggingId === category.id ? null : placeAt(e));
+      }}
+      onDragLeave={(e) => {
+        // 머리 칸 안의 글자·버튼 사이를 지날 때는 표시를 지우지 않는다
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDropAt(null);
+      }}
+      onDrop={(e) => {
+        if (!draggingId) return;
+        e.preventDefault();
+        setDropAt(null);
+        onDrop(category.id, placeAt(e));
       }}
     >
       <div className={styles.rowHeaderTop}>
