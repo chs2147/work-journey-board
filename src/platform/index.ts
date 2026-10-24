@@ -34,6 +34,8 @@ export interface Platform {
   /** 새 파일로만 복사(대상이 있으면 실패) */
   copyNew(from: string, to: string): Promise<void>;
   openFolder(path: string): Promise<void>;
+  /** 클립보드에 글 쓰기 — 사용자가 [복사]를 누를 때만 부른다(output-spec 5-2) */
+  writeClipboard(text: string): Promise<void>;
   join(...parts: string[]): string;
 
   openDatabase(path: string): Promise<SqlDriver>;

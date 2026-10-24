@@ -13,6 +13,7 @@ import type { SqlDriver } from "../../data/driver";
 import { loadPlatform, type Platform } from "../../platform";
 import { STR } from "../../shared/strings";
 import { flushAll, init as initBoard, toast } from "../board/boardStore";
+import { flushDraft, initSummary } from "../summary/summaryStore";
 import { useAppStore, type JournalStatus } from "./appStore";
 
 const set = useAppStore.setState;
@@ -36,9 +37,15 @@ export async function start() {
   await openAt(config.dataDir);
 }
 
+/** 대기 중인 저장(보드 칸·메모 + 주간 요약 수정본)을 끝낸다 */
+async function flushPending() {
+  await flushAll();
+  await flushDraft();
+}
+
 /** 앱 종료 직전: 대기 중인 저장을 끝내고 그날 일일 백업을 덮어쓴다. 실패해도 창은 닫힌다. */
 async function onExit() {
-  await flushAll().catch(() => undefined);
+  await flushPending().catch(() => undefined);
   const j = get().journal;
   if (j.state !== "ready") return;
   try {
@@ -69,6 +76,7 @@ async function activate(driver: SqlDriver, dataDir: string) {
   }
   p.splash?.status(STR.splash.preparing);
   await initBoard(repo);
+  await initSummary(repo);
   set({ journal: { state: "ready", driver, repo, dataDir, sqliteVersion: row?.v ?? "?" } });
 }
 
@@ -109,14 +117,14 @@ export function setSettingsOpen(open: boolean) {
 
 async function closeCurrent() {
   const j = get().journal;
-  await flushAll();
+  await flushPending();
   if (j.state === "ready") await j.driver.close().catch(() => undefined);
 }
 
 /** 설정 > 저장 위치: 다른 폴더의 기존 일지로 전환(지금 일지는 그대로). 새 일지를 먼저 열어 보고 성공해야 바꾼다. */
 export async function switchTo(dataDir: string): Promise<string | null> {
   const p = platform();
-  await flushAll();
+  await flushPending();
   let next: SqlDriver;
   try {
     next = await openJournalAt(p, dataDir, () => p.now());
@@ -134,7 +142,7 @@ export async function moveTo(dataDir: string, copyBackups: boolean): Promise<str
   const j = get().journal;
   if (j.state !== "ready") return "일지가 열려 있지 않습니다";
   const p = platform();
-  await flushAll();
+  await flushPending();
   let next: SqlDriver;
   try {
     await copyJournalTo(p, j.driver, j.dataDir, dataDir, copyBackups, p.now());

@@ -363,3 +363,36 @@ describe("매주 반복 (important-repeat-spec 3·4)", () => {
     expect(await repo.getNudges()).toEqual([]);
   });
 });
+
+describe("주간 요약 수정본(output-spec 2-3)", () => {
+  it("저장·덮어쓰기·지우기·되살리기 — AI본 열은 건드리지 않는다", async () => {
+    const { db, repo, clock } = await freshRepo();
+    expect(await repo.getWeeklySummary("2026-W43")).toMatchObject({ editedText: null, aiText: null });
+    await db.execute(
+      "INSERT INTO weekly_summary (week_id, ai_text, ai_basis_hash) VALUES ('2026-W43', 'AI', 'h0')",
+    );
+    await repo.saveEdited("2026-W43", "수정본 1", "h1");
+    clock.set(2026, 10, 23, 11);
+    await repo.saveEdited("2026-W43", "수정본 2", "h2");
+    const s = await repo.getWeeklySummary("2026-W43");
+    expect(s).toMatchObject({
+      editedText: "수정본 2",
+      editedBasisHash: "h2",
+      aiText: "AI",
+      aiBasisHash: "h0",
+    });
+    expect(s.editedAt).toBe(new Date(2026, 9, 23, 11).toISOString()); // 마지막 저장 시각(UTC)
+
+    const prev = await repo.deleteEdited("2026-W43");
+    expect(await repo.getWeeklySummary("2026-W43")).toMatchObject({ editedText: null, aiText: "AI" });
+    await repo.restoreEdited(prev);
+    expect(await repo.getWeeklySummary("2026-W43")).toEqual(s);
+  });
+
+  it("다른 주와 섞이지 않고, 지나치게 긴 글은 잘라 저장", async () => {
+    const { repo } = await freshRepo();
+    await repo.saveEdited("2026-W42", "x".repeat(30000), "h");
+    expect((await repo.getWeeklySummary("2026-W42")).editedText).toHaveLength(20000);
+    expect((await repo.getWeeklySummary("2026-W43")).editedText).toBeNull();
+  });
+});

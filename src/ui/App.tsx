@@ -8,11 +8,13 @@ import { useAppStore, type JournalStatus } from "./common/appStore";
 import { Toasts } from "./common/Toasts";
 import { Rail } from "./common/Rail";
 import { TopBar } from "./common/TopBar";
-import { useMediaQuery } from "./common/useMediaQuery";
+import { useMediaQuery, useWindowWidth } from "./common/useMediaQuery";
 import { FirstRun } from "./first-run/FirstRun";
 import { IntegrityProblem, MissingFolder } from "./first-run/StartScreens";
 import { ImportantPanel } from "./important/ImportantPanel";
 import { SettingsPanel } from "./settings/SettingsPanel";
+import { setSummaryOpen, useSummary } from "./summary/summaryStore";
+import { SummaryPanel } from "./summary/SummaryPanel";
 import { finishSplash } from "./splash";
 import styles from "./App.module.css";
 
@@ -62,11 +64,22 @@ function screen(journal: JournalStatus) {
   }
 }
 
-/** 일지가 열린 화면: 왼쪽 레일 + (중요 업무 패널) + 보드(important-repeat-spec 1절) */
+/** 레일·패널 폭(important-repeat-spec 1-3, overview 10-7) */
+const RAIL_W = 52;
+const IMPORTANT_W = 264;
+const SUMMARY_W = 360;
+/** 주간 요약 패널을 열어도 보드에 남겨 둘 최소 폭 — 모자라면 패널을 겹쳐 띄운다(i-m2-plan 6절 #2) */
+const BOARD_MIN_W = 900;
+
+/** 일지가 열린 화면: 왼쪽 레일 + (중요 업무 패널) + 보드 + (주간 요약 패널) */
 function Workspace() {
   const panelOpen = useBoard((s) => s.panelOpen);
+  const summaryOpen = useSummary((s) => s.open);
   // 좁은 창이면 패널을 보드 위에 겹쳐 띄우고, 보드를 누르면 닫는다(spec 1-3)
   const narrow = useMediaQuery("(max-width: 1179px)");
+  const width = useWindowWidth();
+  const leftW = panelOpen && !narrow ? IMPORTANT_W : 0;
+  const summaryOverlay = width - RAIL_W - leftW - SUMMARY_W < BOARD_MIN_W;
   return (
     <div className={styles.workspace}>
       <Rail />
@@ -75,10 +88,12 @@ function Workspace() {
         className={styles.boardArea}
         onMouseDown={() => {
           if (narrow && panelOpen) setPanelOpen(false);
+          if (summaryOverlay && summaryOpen) setSummaryOpen(false);
         }}
       >
         <BoardView />
       </div>
+      {summaryOpen && <SummaryPanel overlay={summaryOverlay} />}
     </div>
   );
 }

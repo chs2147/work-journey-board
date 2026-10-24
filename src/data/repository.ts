@@ -8,6 +8,7 @@ import {
   visibleCategories,
   type VisibleCategory,
 } from "../domain/categories";
+import type { SummaryInput } from "../domain/aggregate";
 import { normalizeCell } from "../domain/items";
 import { localDate, utcTimestamp } from "../domain/localTime";
 import { NUDGE_LOOKBACK_WEEKS, nudgeCandidates, snoozeUntil } from "../domain/nudge";
@@ -46,6 +47,39 @@ export interface WeekView {
 }
 
 export const cellKey = (date: DateStr, categoryId: string) => `${date}|${categoryId}`;
+
+/** 저장된 주간 요약(AI본·수정본). 자동 집계본은 저장하지 않는다(data-spec 3-3) */
+export interface WeeklySummary {
+  weekId: WeekId;
+  aiText: string | null;
+  aiBasisHash: string | null;
+  aiSavedAt: string | null;
+  editedText: string | null;
+  editedBasisHash: string | null;
+  editedAt: string | null;
+}
+
+interface WeeklySummaryRow {
+  ai_text: string | null;
+  ai_basis_hash: string | null;
+  ai_saved_at: string | null;
+  edited_text: string | null;
+  edited_basis_hash: string | null;
+  edited_at: string | null;
+}
+
+/** 수정본 최대 길이(입력 실수로 거대한 글이 들어가는 것 방지) */
+export const SUMMARY_MAX = 20000;
+
+/** 보드 한 주 → 자동 집계 입력(그 주에 보이는 업무, 보드 순서) */
+export function summaryInputOf(view: WeekView): SummaryInput {
+  return {
+    weekId: view.weekId,
+    categories: view.categories.map((v) => ({ id: v.category.id, name: v.category.name })),
+    items: Object.values(view.items).flat(),
+    memos: view.memos,
+  };
+}
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -323,6 +357,60 @@ export class JournalRepository {
       items,
       memos: Object.fromEntries(memos.map((m) => [m.date, m.text])),
     };
+  }
+
+  // ── 주간 요약(output-spec 2절) ───────────────────────
+  /** 자동 집계 입력 — 보드와 같은 표시 규칙(그 주에 보이는 업무, 보드 순서) */
+  async getSummaryInput(weekId: WeekId): Promise<SummaryInput> {
+    const view = await this.getWeek(weekId);
+    return summaryInputOf(view);
+  }
+
+  async getWeeklySummary(weekId: WeekId): Promise<WeeklySummary> {
+    const [r] = await this.db.select<WeeklySummaryRow>(
+      "SELECT ai_text, ai_basis_hash, ai_saved_at, edited_text, edited_basis_hash, edited_at FROM weekly_summary WHERE week_id = ?",
+      [weekId],
+    );
+    return {
+      weekId,
+      aiText: r?.ai_text ?? null,
+      aiBasisHash: r?.ai_basis_hash ?? null,
+      aiSavedAt: r?.ai_saved_at ?? null,
+      editedText: r?.edited_text ?? null,
+      editedBasisHash: r?.edited_basis_hash ?? null,
+      editedAt: r?.edited_at ?? null,
+    };
+  }
+
+  /** 수정본 저장(AI본 열은 건드리지 않는 upsert). basisHash = 근거 자동 집계본의 해시 */
+  async saveEdited(weekId: WeekId, text: string, basisHash: string): Promise<void> {
+    await this.db.execute(
+      `INSERT INTO weekly_summary (week_id, edited_text, edited_basis_hash, edited_at) VALUES (?, ?, ?, ?)
+       ON CONFLICT(week_id) DO UPDATE SET edited_text = excluded.edited_text,
+         edited_basis_hash = excluded.edited_basis_hash, edited_at = excluded.edited_at`,
+      [weekId, text.slice(0, SUMMARY_MAX), basisHash, this.ts()],
+    );
+  }
+
+  /** 수정본 지우기. 되돌리기용으로 지우기 전 값을 돌려준다 */
+  async deleteEdited(weekId: WeekId): Promise<WeeklySummary> {
+    const prev = await this.getWeeklySummary(weekId);
+    await this.db.execute(
+      "UPDATE weekly_summary SET edited_text = NULL, edited_basis_hash = NULL, edited_at = NULL WHERE week_id = ?",
+      [weekId],
+    );
+    return prev;
+  }
+
+  /** 지운 수정본 되살리기(시각까지 그대로) */
+  async restoreEdited(prev: WeeklySummary): Promise<void> {
+    if (prev.editedText === null) return;
+    await this.db.execute(
+      `INSERT INTO weekly_summary (week_id, edited_text, edited_basis_hash, edited_at) VALUES (?, ?, ?, ?)
+       ON CONFLICT(week_id) DO UPDATE SET edited_text = excluded.edited_text,
+         edited_basis_hash = excluded.edited_basis_hash, edited_at = excluded.edited_at`,
+      [prev.weekId, prev.editedText, prev.editedBasisHash, prev.editedAt],
+    );
   }
 
   /**

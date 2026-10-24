@@ -86,3 +86,10 @@
   border-color: var(--danger);
   color: var(--danger);
 }
+
+/* 켜고 끄는 버튼(주간 요약 패널)이 켜져 있을 때 */
+.textButton[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}

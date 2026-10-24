@@ -2,6 +2,7 @@ import { weekTitle } from "../../domain/week";
 import { STR } from "../../shared/strings";
 import { goToday, goWeek, retryFailed, setYearOpen, useBoard } from "../board/boardStore";
 import { YearMinimap } from "../board/YearMinimap";
+import { toggleSummary, useSummary } from "../summary/summaryStore";
 import { setSettingsOpen } from "./appController";
 import { useAppStore } from "./appStore";
 import { BrandLockup } from "./Brand";
@@ -14,6 +15,7 @@ export function TopBar() {
   const saving = useBoard((s) => s.saving);
   const failed = useBoard((s) => s.failed.length);
   const journalReady = useAppStore((s) => s.journal.state === "ready");
+  const summaryOpen = useSummary((s) => s.open);
 
   return (
     <header className={styles.header}>
@@ -70,6 +72,18 @@ export function TopBar() {
           </nav>
         )}
         <div className={styles.spacer} />
+        {ready && journalReady && (
+          <button
+            type="button"
+            className={styles.textButton}
+            title={STR.summary.buttonTitle}
+            aria-pressed={summaryOpen}
+            data-testid="summary-toggle"
+            onClick={() => toggleSummary()}
+          >
+            {STR.summary.button}
+          </button>
+        )}
         {ready &&
           journalReady &&
           (failed > 0 ? (

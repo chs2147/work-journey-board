@@ -26,6 +26,7 @@ const ONEDRIVE_ROOTS = ["/demo/OneDrive - Company"];
 const fs = createFakeFs((bytes, label) => openSqlJs(wasmUrl, bytes, label));
 let config: AppConfig | null = null;
 let exitHandler: (() => Promise<void>) | null = null;
+let lastClipboard: string | null = null;
 
 async function makeJournal(dir: string, withSample: boolean) {
   await fs.ensureDir(dir);
@@ -78,6 +79,10 @@ export const browserPlatform: Platform = {
   ensureDir: (p) => fs.ensureDir(p),
   copyNew: (a, b) => fs.copyNew(a, b),
   openFolder: async () => undefined,
+  async writeClipboard(text) {
+    lastClipboard = text; // E2E 확인용(엔진마다 클립보드 권한이 달라 직접 읽지 않는다)
+    await navigator.clipboard?.writeText(text).catch(() => undefined);
+  },
   join: fs.join,
 
   openDatabase: (p) => fs.openDatabase(p),
@@ -89,11 +94,12 @@ export const browserPlatform: Platform = {
   },
 };
 
-// E2E 훅: "창 닫기" 흉내, 가짜 파일 목록, 날짜 넘기기(앱을 켠 채 며칠·몇 주가 지난 상황 — 통합 시나리오)
+// E2E 훅: "창 닫기" 흉내, 가짜 파일 목록, 마지막 클립보드 글, 날짜 넘기기(앱을 켠 채 며칠·몇 주가 지난 상황 — 통합 시나리오)
 Object.assign(globalThis, {
   __wjb: {
     exit: () => exitHandler?.(),
     files: () => fs.listAll(),
+    clipboard: () => lastClipboard,
     setToday(date: string) {
       if (!isDate(date)) throw new Error(`날짜 형식이 아닙니다: ${date}`);
       fixedToday = date;

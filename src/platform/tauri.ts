@@ -3,6 +3,7 @@ import { emitTo } from "@tauri-apps/api/event";
 import { homeDir } from "@tauri-apps/api/path";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import Database from "@tauri-apps/plugin-sql";
+import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { open } from "@tauri-apps/plugin-dialog";
 import type { BackupFs } from "../data/backup";
 import { openTauriSql } from "../data/drivers/tauriSql";
@@ -73,6 +74,7 @@ export const tauriPlatform: Platform = {
   ensureDir: (dir) => invoke("fs_ensure_dir", { dir }),
   copyNew: (from, to) => invoke("fs_copy_new", { from, to }),
   openFolder: (path) => invoke("open_folder", { path }),
+  writeClipboard: (text) => writeText(text),
   join,
 
   openDatabase: (path) => openTauriSql(path),

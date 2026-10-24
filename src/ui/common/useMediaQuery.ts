@@ -11,3 +11,14 @@ export function useMediaQuery(query: string): boolean {
     () => window.matchMedia?.(query).matches ?? false,
   );
 }
+
+/** 창 안쪽 폭(px, 크기 변화를 따라감) */
+export function useWindowWidth(): number {
+  return useSyncExternalStore(
+    (onChange) => {
+      window.addEventListener("resize", onChange);
+      return () => window.removeEventListener("resize", onChange);
+    },
+    () => window.innerWidth,
+  );
+}

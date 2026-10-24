@@ -160,7 +160,8 @@ function markFailed(key: string, failed: boolean) {
   set({ failed: failed ? [...cur, key] : cur });
 }
 
-async function track<T>(work: () => Promise<T>): Promise<T> {
+/** 저장 중 표시(상단 "저장 중…")를 켠 채 일을 한다 — 주간 요약 수정본 저장도 같은 표시를 쓴다 */
+export async function track<T>(work: () => Promise<T>): Promise<T> {
   set((s) => ({ saving: s.saving + 1 }));
   try {
     return await work();
@@ -179,7 +180,7 @@ export function dismissToast(id: number) {
   set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) }));
 }
 
-function reportError(e: unknown) {
+export function reportError(e: unknown) {
   toast(
     e instanceof ValidationError ? e.message : STR.toast.error(e instanceof Error ? e.message : String(e)),
   );

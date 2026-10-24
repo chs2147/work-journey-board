@@ -12,6 +12,7 @@ import {
   undo,
   useBoard,
 } from "./boardStore";
+import { toggleSummary } from "../summary/summaryStore";
 
 const isTyping = (el: Element | null) => el instanceof HTMLTextAreaElement || el instanceof HTMLInputElement;
 
@@ -40,6 +41,10 @@ export function useShortcuts() {
         } else if (e.code === "Digit2") {
           e.preventDefault();
           setPanelOpen(!panelOpen, !panelOpen);
+        } else if (e.code === "KeyS") {
+          // 주간 요약 패널(i-m2-plan M2-S1) — 열면 패널로 포커스
+          e.preventDefault();
+          toggleSummary(true);
         }
         return;
       }
