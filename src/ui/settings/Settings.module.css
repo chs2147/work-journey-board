@@ -150,3 +150,65 @@
   flex: 1 1 auto;
   min-width: 0;
 }
+
+/* 반복 항목(important-repeat-spec 3-5) */
+.repeatList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.repeatList li {
+  display: grid;
+  grid-template-columns: 28px minmax(90px, 140px) minmax(0, 1fr);
+  align-items: center;
+  gap: var(--sp-1) var(--sp-3);
+}
+
+.repeatList li + li {
+  padding-top: var(--sp-2);
+  border-top: 1px solid var(--line);
+}
+
+/* 둘째 줄: 상태 · [중요로 시작] · [중지] [삭제]를 한 줄에(좁으면 줄바꿈) */
+.repeatMeta {
+  grid-column: 2 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1) var(--sp-3);
+}
+
+.repeatMeta > .note {
+  margin-right: auto;
+}
+
+.repeatDay {
+  font-weight: var(--fw-bold);
+  text-align: center;
+}
+
+.repeatCat {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+  word-break: keep-all;
+}
+
+.repeatText {
+  min-width: 0;
+  padding: 3px var(--sp-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-card);
+  color: var(--text-1);
+  font: inherit;
+}
+
+.stopped {
+  opacity: 0.6;
+}

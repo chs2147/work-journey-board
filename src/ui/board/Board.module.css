@@ -365,6 +365,90 @@
   background: transparent;
 }
 
+/* 매주 반복(important-repeat-spec 3-4): 반복 중이면 글 끝에 ↻(자리를 늘 비워 둠), 아니면 마우스를 올릴 때만 ↻ */
+.repeating .itemInput {
+  padding-right: 18px;
+}
+
+.repeatOn,
+.repeatHover {
+  position: absolute;
+  top: 3px;
+  right: 1px;
+  width: 17px;
+  height: calc(var(--fs-md) * 1.45);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--accent);
+  font-size: 12px;
+  line-height: calc(var(--fs-md) * 1.45);
+  cursor: pointer;
+}
+
+.repeatHover {
+  opacity: 0;
+  color: var(--text-3);
+  background: var(--surface-card);
+  box-shadow: 0 0 0 1px var(--line);
+}
+
+.item:hover .repeatHover {
+  opacity: 1;
+}
+
+.repeatHover:hover {
+  color: var(--accent);
+}
+
+/* 미래 주의 반복 "예정"(저장 전) — 누르면 지금 만든다 */
+.preview {
+  position: relative;
+  display: grid;
+  gap: 1px;
+  margin: 2px 0;
+  padding: 3px 6px 4px 14px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-3);
+  font: inherit;
+  font-size: var(--fs-md);
+  text-align: left;
+  cursor: pointer;
+}
+
+.preview::before {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: calc(3px + var(--fs-md) * 1.45 / 2 - 2.5px);
+  width: 5px;
+  height: 5px;
+  box-sizing: border-box;
+  border: 1.3px dashed var(--text-3);
+  border-radius: 50%;
+}
+
+.preview:hover {
+  border-color: var(--accent);
+  color: var(--text-2);
+}
+
+.previewText {
+  font-style: italic;
+  line-height: 1.45;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.previewNote {
+  font-size: var(--fs-xs);
+  line-height: 1.4;
+  word-break: keep-all;
+}
+
 /* 중요 업무 목록에서 이동해 온 항목 */
 .pulse {
   border-radius: var(--radius-sm);

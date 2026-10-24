@@ -3,10 +3,25 @@
 // - 실행 취소 단위 = 저장 1회(체크포인트). 저장 전에는 대기 중인 저장을 먼저 끝낸다.
 import { create } from "zustand";
 import { normalizeCell } from "../../domain/items";
+import { groupRange, type Recurrence } from "../../domain/recurrence";
 import type { ImportantItem, ItemDraft } from "../../domain/types";
-import { addWeeks, dayIndex, weekDays, weekIdOf, type DateStr, type WeekId } from "../../domain/week";
+import {
+  addWeeks,
+  DAY_LABELS,
+  dayIndex,
+  weekDays,
+  weekIdOf,
+  type DateStr,
+  type WeekId,
+} from "../../domain/week";
 import { uuidv7 } from "../../data/ids";
-import { cellKey, ValidationError, type JournalRepository, type WeekView } from "../../data/repository";
+import {
+  cellKey,
+  ValidationError,
+  type JournalRepository,
+  type RepeatPreview,
+  type WeekView,
+} from "../../data/repository";
 import type { CategoryColorKey } from "../../shared/palette";
 import { STR } from "../../shared/strings";
 
@@ -60,6 +75,10 @@ export interface BoardState {
   panelFocus: boolean;
   /** 목록에서 이동해 온 항목(잠깐 강조) */
   pulseId: string | null;
+  /** 반복 중인 규칙 id(끝 주 없음) — 항목의 ↻ 표시(spec 3-4) */
+  repeating: string[];
+  /** 미래 주의 반복 "예정"(키: cellKey) — spec 3-2 */
+  previews: Record<string, RepeatPreview[]>;
 }
 
 const MEMO_PREFIX = "memo|";
@@ -113,6 +132,8 @@ export const useBoard = create<BoardState>(() => ({
   panelOpen: false,
   panelFocus: false,
   pulseId: null,
+  repeating: [],
+  previews: {},
 }));
 
 const set = useBoard.setState;
@@ -260,7 +281,23 @@ async function loadWeek(weekId: WeekId, focusDay: DateStr) {
   const r = requireRepo();
   await flushAll();
   const today = r.today();
+  const current = weekIdOf(today);
+  // 매주 반복: 이번 주는 처음 열 때 들어온다. 지난 주는 채우지 않고, 미래 주는 "예정"만(spec 3-2)
+  let created = 0;
+  if (weekId === current) {
+    try {
+      created = await r.materializeWeek(weekId);
+    } catch (e) {
+      reportError(e); // 다음에 그 주를 열 때 다시 시도
+    }
+  }
   const view = await r.getWeek(weekId);
+  const rules: Recurrence[] = await r.listRecurrences();
+  const previews: Record<string, RepeatPreview[]> = {};
+  if (weekId > current) {
+    for (const p of await r.previewWeek(weekId))
+      (previews[cellKey(p.date, p.rule.categoryId)] ??= []).push(p);
+  }
   const settings = await r.getSettings();
   const nudges = weekId === weekIdOf(today) ? await r.getNudges(weekId) : [];
   const cells: Record<string, ItemDraft[]> = {};
@@ -292,8 +329,11 @@ async function loadWeek(weekId: WeekId, focusDay: DateStr) {
     memos: { ...view.memos },
     nudges,
     nudgeWeeks: settings.nudgeWeeks,
+    repeating: rules.filter((x) => x.endWeek === null).map((x) => x.id),
+    previews,
   });
   await refreshImportant();
+  if (created > 0) toast(STR.repeat.created(created));
 }
 
 /** 같은 요일을 유지하며 주를 옮긴다. 이번 주로 오면 오늘로. */
@@ -390,6 +430,69 @@ export async function revealItem(it: ImportantItem) {
   setTimeout(() => {
     if (get().pulseId === it.id) set({ pulseId: null });
   }, PULSE_MS);
+}
+
+// ── 매주 반복(important-repeat-spec 3절) ───────────────
+/** 같은 주를 다시 불러오고 커서를 그 칸·그 위치로 돌려놓는다 */
+async function reloadAt(key: string, index: number) {
+  const { weekId, focusDay } = get();
+  await loadWeek(weekId, focusDay);
+  const n = get().cells[key]?.length ?? 0;
+  if (n > 0) set({ focus: { kind: "item", key, index: Math.min(index, n - 1), caret: "end" } });
+}
+
+/** 입력 중 항목(묶음)의 매주 반복 켜기/끄기(↻·Alt+R). 토스트로 되돌리기. */
+export async function toggleRepeat(key: string, index: number) {
+  const r = requireRepo();
+  await flushAll();
+  const items = get().cells[key] ?? [];
+  if (!items[index]) return;
+  const { start, end } = groupRange(items, index);
+  const parent = items[start]!;
+  if (!parent.text.trim()) return;
+  const { date } = splitKey(key);
+  const running =
+    parent.recurrenceId && get().repeating.includes(parent.recurrenceId) ? parent.recurrenceId : null;
+  try {
+    if (running) {
+      const undoInfo = await track(() => r.disableRepeat(running, weekIdOf(date)));
+      await reloadAt(key, index);
+      toast(STR.repeat.off, {
+        label: STR.toast.undo,
+        run: () => void track(() => r.restoreRepeat(undoInfo)).then(() => reloadAt(key, index)),
+      });
+    } else {
+      const ids = items
+        .slice(start, end + 1)
+        .filter((i) => i.text.trim())
+        .map((i) => i.id);
+      const rule = await track(() => r.enableRepeat(ids, Boolean(parent.flagged)));
+      await reloadAt(key, index);
+      toast(STR.repeat.on(DAY_LABELS[rule.weekday - 1]!), {
+        label: STR.toast.undo,
+        run: () =>
+          void track(() => r.disableRepeat(rule.id, weekIdOf(date))).then(() => reloadAt(key, index)),
+      });
+    }
+  } catch (e) {
+    reportError(e);
+  }
+}
+
+/** 미래 주 "예정"을 눌렀을 때: 그 반복을 이 주에 지금 만들고 그 항목에 커서(spec 3-2) */
+export async function materializePreview(key: string, ruleId: string) {
+  const r = requireRepo();
+  const { weekId, focusDay } = get();
+  try {
+    await track(() => r.materializeWeek(weekId, ruleId));
+  } catch (e) {
+    reportError(e);
+    return;
+  }
+  await loadWeek(weekId, splitKey(key).date || focusDay);
+  const items = get().cells[key] ?? [];
+  const index = items.findIndex((i) => i.recurrenceId === ruleId);
+  if (index >= 0) set({ focus: { kind: "item", key, index, caret: "end" } });
 }
 
 export function setPanelOpen(open: boolean, focusList = false) {

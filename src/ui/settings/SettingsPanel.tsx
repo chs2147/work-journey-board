@@ -1,7 +1,9 @@
 // 설정(overview 10-9·10-10): 저장 위치 · 백업 · 종료된 업무 · 무기록 종료 제안 · 정보.
 import { useCallback, useEffect, useRef, useState } from "react";
 import { openPeriod } from "../../domain/categories";
+import type { Recurrence } from "../../domain/recurrence";
 import type { Category } from "../../domain/types";
+import { DAY_LABELS, weekIdOf } from "../../domain/week";
 import { BACKUP_DIR } from "../../data/backup";
 import { classifyFolder, journalPath, lastBackupOf, manualBackup, type BackupInfo } from "../../data/session";
 import type { Settings } from "../../data/settings";
@@ -35,6 +37,8 @@ export function SettingsPanel() {
   const [size, setSize] = useState<number | null>(null);
   const [last, setLast] = useState<BackupInfo | null>(null);
   const [archived, setArchived] = useState<{ category: Category; endDate: string }[]>([]);
+  const [rules, setRules] = useState<Recurrence[]>([]);
+  const [cats, setCats] = useState<Map<string, Category>>(new Map());
   const [pending, setPending] = useState<Pending | null>(null);
   const [copyBackups, setCopyBackups] = useState(true);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -45,6 +49,8 @@ export function SettingsPanel() {
     setSize((await platform.stat(journalPath(platform, ready.dataDir))).size);
     setLast(await lastBackupOf(platform, ready.dataDir));
     const { categories, periods } = await ready.repo.listCategories();
+    setCats(new Map(categories.map((c) => [c.id, c])));
+    setRules(await ready.repo.listRecurrences());
     setArchived(
       categories
         .map((category) => {
@@ -276,6 +282,91 @@ export function SettingsPanel() {
                   </button>
                 </li>
               ))}
+            </ul>
+          )}
+        </section>
+
+        <section className={styles.section} aria-labelledby="s-repeat">
+          <h3 id="s-repeat">{STR.settings.repeat}</h3>
+          {rules.length === 0 ? (
+            <p className={styles.note}>{STR.settings.noRepeat}</p>
+          ) : (
+            <ul className={styles.repeatList} data-testid="repeat-list">
+              {rules.map((rule) => {
+                const cat = cats.get(rule.categoryId);
+                const stopped = rule.endWeek !== null;
+                const run = async (fn: () => Promise<void>) => {
+                  try {
+                    await fn();
+                  } catch (e) {
+                    toast(STR.toast.error(e instanceof Error ? e.message : String(e)));
+                  }
+                  await refresh();
+                };
+                return (
+                  <li key={rule.id} className={stopped ? styles.stopped : ""}>
+                    <span className={styles.repeatDay}>{DAY_LABELS[rule.weekday - 1]}</span>
+                    <span className={styles.repeatCat}>
+                      <span
+                        className={styles.dot}
+                        style={{ background: `var(--cat-${cat?.color ?? "c1"})` }}
+                      />
+                      {cat?.name}
+                    </span>
+                    <input
+                      className={styles.repeatText}
+                      defaultValue={rule.lines[0]?.text}
+                      aria-label={STR.settings.repeatTextLabel}
+                      maxLength={2000}
+                      onBlur={(e) => {
+                        const text = e.currentTarget.value;
+                        if (text.trim() && text !== rule.lines[0]?.text)
+                          void run(() => ready.repo.updateRecurrence(rule.id, { text }));
+                      }}
+                    />
+                    <div className={styles.repeatMeta}>
+                      <span className={styles.note}>
+                        {rule.lines.length > 1 && `${STR.repeat.subCount(rule.lines.length - 1)} · `}
+                        {stopped
+                          ? STR.settings.repeatStopped(rule.endWeek!)
+                          : STR.settings.repeatSince(rule.startWeek)}
+                      </span>
+                      <label className={styles.check}>
+                        <input
+                          type="checkbox"
+                          checked={rule.flagOnCreate}
+                          onChange={(e) => {
+                            const on = e.target.checked;
+                            void run(() => ready.repo.updateRecurrence(rule.id, { flagOnCreate: on }));
+                          }}
+                        />
+                        {STR.settings.repeatFlag}
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          void run(() =>
+                            ready.repo.updateRecurrence(rule.id, {
+                              endWeek: stopped ? null : weekIdOf(ready.repo.today()),
+                            }),
+                          )
+                        }
+                      >
+                        {stopped ? STR.settings.repeatResume : STR.settings.repeatStop}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (window.confirm(STR.settings.repeatDeleteConfirm(rule.lines[0]?.text ?? "")))
+                            void run(() => ready.repo.deleteRecurrence(rule.id));
+                        }}
+                      >
+                        {STR.settings.repeatDelete}
+                      </button>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </section>

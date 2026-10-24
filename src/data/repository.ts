@@ -11,6 +11,13 @@ import {
 import { normalizeCell } from "../domain/items";
 import { localDate, utcTimestamp } from "../domain/localTime";
 import { NUDGE_LOOKBACK_WEEKS, nudgeCandidates, snoozeUntil } from "../domain/nudge";
+import {
+  ruleDate,
+  rulesToCreate,
+  ruleTiming,
+  type Recurrence,
+  type RecurrenceLine,
+} from "../domain/recurrence";
 import type { Category, CategoryPeriod, Depth, EntryItem, ImportantItem, ItemDraft } from "../domain/types";
 import {
   addWeeks,
@@ -71,6 +78,33 @@ interface ImportantRow extends ItemRow {
   category_color: string;
   category_order: number;
   parent_text: string | null;
+}
+
+interface RecurrenceRow {
+  id: string;
+  category_id: string;
+  weekday: number;
+  start_week: string;
+  end_week: string | null;
+  flag_on_create: number;
+  created_at: string;
+}
+
+/** 반복 끄기의 되돌리기 정보(spec 3-1) */
+export type RepeatUndo =
+  | { kind: "ended"; ruleId: string; prevEnd: WeekId | null }
+  | {
+      kind: "deleted";
+      rule: Recurrence;
+      createdAt: string;
+      madeWeeks: { week_id: string; created_at: string }[];
+      itemIds: string[];
+    };
+
+/** 미래 주의 반복 "예정"(저장하지 않음, spec 3-2) */
+export interface RepeatPreview {
+  rule: Recurrence;
+  date: DateStr;
 }
 
 const ITEM_COLUMNS = "id, date, category_id, seq, depth, text, flagged, flag_done_at, recurrence_id";
@@ -409,6 +443,265 @@ export class JournalRepository {
     );
   }
 
+  // ── 매주 반복(important-repeat-spec 3절) ───────────────
+  async listRecurrences(): Promise<Recurrence[]> {
+    const rules = await this.db.select<RecurrenceRow>(
+      "SELECT id, category_id, weekday, start_week, end_week, flag_on_create, created_at FROM recurrence ORDER BY weekday, created_at",
+    );
+    const lines = await this.db.select<{ recurrence_id: string; depth: number; text: string }>(
+      "SELECT recurrence_id, depth, text FROM recurrence_line ORDER BY recurrence_id, seq",
+    );
+    return rules.map((r) => ({
+      id: r.id,
+      categoryId: r.category_id,
+      weekday: Number(r.weekday),
+      startWeek: r.start_week,
+      endWeek: r.end_week,
+      flagOnCreate: Number(r.flag_on_create) === 1,
+      lines: lines
+        .filter((l) => l.recurrence_id === r.id)
+        .map((l) => ({ depth: Number(l.depth) as Depth, text: l.text })),
+    }));
+  }
+
+  private ruleInsert(rule: Recurrence, createdAt: string, updatedAt: string): SqlStatement[] {
+    return [
+      {
+        sql: "INSERT INTO recurrence (id, category_id, weekday, start_week, end_week, flag_on_create, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        params: [
+          rule.id,
+          rule.categoryId,
+          rule.weekday,
+          rule.startWeek,
+          rule.endWeek,
+          rule.flagOnCreate ? 1 : 0,
+          createdAt,
+          updatedAt,
+        ],
+      },
+      ...rule.lines.map((l, i) => ({
+        sql: "INSERT INTO recurrence_line (recurrence_id, seq, depth, text) VALUES (?, ?, ?, ?)",
+        params: [rule.id, i + 1, l.depth, l.text],
+      })),
+    ];
+  }
+
+  /** 규칙 지우기: 항목 연결을 풀고 줄·만든 주·규칙을 지운다(외래 키 연쇄 삭제에 기대지 않고 직접) */
+  private ruleDelete(id: string): SqlStatement[] {
+    return [
+      { sql: "UPDATE entry_item SET recurrence_id = NULL WHERE recurrence_id = ?", params: [id] },
+      { sql: "DELETE FROM recurrence_line WHERE recurrence_id = ?", params: [id] },
+      { sql: "DELETE FROM recurrence_week WHERE recurrence_id = ?", params: [id] },
+      { sql: "DELETE FROM recurrence WHERE id = ?", params: [id] },
+    ];
+  }
+
+  /**
+   * 항목 묶음(본 항목 + 세부 항목, 저장된 id 순서대로)에서 반복을 켠다.
+   * 요일 = 그 날짜의 요일, 시작 = 다음 주. 원래 항목도 반복에 연결하고 그 주는 "이미 만든 주"로 둔다.
+   */
+  async enableRepeat(itemIds: string[], flagOnCreate: boolean): Promise<Recurrence> {
+    if (itemIds.length === 0) throw new ValidationError("반복할 항목이 없습니다");
+    const rows = await this.db.select<ItemRow>(
+      `SELECT ${ITEM_COLUMNS} FROM entry_item WHERE id IN (${itemIds.map(() => "?").join(", ")}) ORDER BY seq`,
+      itemIds,
+    );
+    const first = rows[0];
+    if (!first) throw new ValidationError("저장되지 않은 항목은 반복할 수 없습니다");
+    const { weekday, startWeek, originWeek } = ruleTiming(first.date);
+    const lines: RecurrenceLine[] = rows.map((r, i) => ({
+      depth: (i === 0 ? 0 : Number(r.depth)) as Depth,
+      text: r.text,
+    }));
+    const rule: Recurrence = {
+      id: uuidv7(),
+      categoryId: first.category_id,
+      weekday,
+      startWeek,
+      endWeek: null,
+      flagOnCreate,
+      lines,
+    };
+    const ts = this.ts();
+    await this.db.batch([
+      ...this.ruleInsert(rule, ts, ts),
+      {
+        sql: `UPDATE entry_item SET recurrence_id = ? WHERE id IN (${rows.map(() => "?").join(", ")})`,
+        params: [rule.id, ...rows.map((r) => r.id)],
+      },
+      {
+        sql: "INSERT INTO recurrence_week (recurrence_id, week_id, created_at) VALUES (?, ?, ?)",
+        params: [rule.id, originWeek, ts],
+      },
+    ]);
+    return rule;
+  }
+
+  /**
+   * 반복 끄기: 항목이 있는 주(atWeek)까지만 하고 멈춘다. 한 번도 새로 만든 적 없으면 규칙째 지운다.
+   * 이미 들어온 기록은 지우지 않는다. 되돌리기 정보를 돌려준다.
+   */
+  async disableRepeat(ruleId: string, atWeek: WeekId): Promise<RepeatUndo> {
+    const rule = (await this.listRecurrences()).find((r) => r.id === ruleId);
+    if (!rule) throw new ValidationError("반복 항목을 찾을 수 없습니다");
+    const made = await this.db.select<{ week_id: string; created_at: string }>(
+      "SELECT week_id, created_at FROM recurrence_week WHERE recurrence_id = ?",
+      [ruleId],
+    );
+    const ts = this.ts();
+    if (!made.some((m) => m.week_id >= rule.startWeek)) {
+      const [meta] = await this.db.select<{ created_at: string }>(
+        "SELECT created_at FROM recurrence WHERE id = ?",
+        [ruleId],
+      );
+      const linked = await this.db.select<{ id: string }>(
+        "SELECT id FROM entry_item WHERE recurrence_id = ?",
+        [ruleId],
+      );
+      await this.db.batch([...this.ruleDelete(ruleId)]);
+      return {
+        kind: "deleted",
+        rule,
+        createdAt: meta?.created_at ?? ts,
+        madeWeeks: made,
+        itemIds: linked.map((r) => r.id),
+      };
+    }
+    await this.db.execute("UPDATE recurrence SET end_week = ?, updated_at = ? WHERE id = ?", [
+      atWeek,
+      ts,
+      ruleId,
+    ]);
+    return { kind: "ended", ruleId, prevEnd: rule.endWeek };
+  }
+
+  /** 반복 끄기 되돌리기 */
+  async restoreRepeat(undo: RepeatUndo): Promise<void> {
+    const ts = this.ts();
+    if (undo.kind === "ended") {
+      await this.db.execute("UPDATE recurrence SET end_week = ?, updated_at = ? WHERE id = ?", [
+        undo.prevEnd,
+        ts,
+        undo.ruleId,
+      ]);
+      return;
+    }
+    await this.db.batch([
+      ...this.ruleInsert(undo.rule, undo.createdAt, ts),
+      ...undo.madeWeeks.map((m) => ({
+        sql: "INSERT INTO recurrence_week (recurrence_id, week_id, created_at) VALUES (?, ?, ?)",
+        params: [undo.rule.id, m.week_id, m.created_at],
+      })),
+      ...(undo.itemIds.length
+        ? [
+            {
+              sql: `UPDATE entry_item SET recurrence_id = ? WHERE id IN (${undo.itemIds.map(() => "?").join(", ")})`,
+              params: [undo.rule.id, ...undo.itemIds],
+            },
+          ]
+        : []),
+    ]);
+  }
+
+  /** 설정 > 반복 항목: 문구(본 항목)·중요로 시작·중지(끝 주)/다시 시작(null) */
+  async updateRecurrence(
+    id: string,
+    patch: { text?: string; flagOnCreate?: boolean; endWeek?: WeekId | null },
+  ): Promise<void> {
+    const ts = this.ts();
+    const stmts: SqlStatement[] = [];
+    if (patch.text !== undefined) {
+      const text = patch.text.trim().slice(0, 2000);
+      if (!text) throw new ValidationError("반복 문구를 비울 수 없습니다");
+      stmts.push({
+        sql: "UPDATE recurrence_line SET text = ? WHERE recurrence_id = ? AND seq = 1",
+        params: [text, id],
+      });
+    }
+    if (patch.flagOnCreate !== undefined) {
+      stmts.push({
+        sql: "UPDATE recurrence SET flag_on_create = ? WHERE id = ?",
+        params: [patch.flagOnCreate ? 1 : 0, id],
+      });
+    }
+    if (patch.endWeek !== undefined) {
+      stmts.push({ sql: "UPDATE recurrence SET end_week = ? WHERE id = ?", params: [patch.endWeek, id] });
+    }
+    if (!stmts.length) return;
+    stmts.push({ sql: "UPDATE recurrence SET updated_at = ? WHERE id = ?", params: [ts, id] });
+    await this.db.batch(stmts);
+  }
+
+  /** 규칙만 지운다. 이미 들어온 기록은 남고 ↻ 연결만 풀린다(spec 3-5) */
+  async deleteRecurrence(id: string): Promise<void> {
+    await this.db.batch(this.ruleDelete(id));
+  }
+
+  private async pendingRules(weekId: WeekId): Promise<Recurrence[]> {
+    const rules = await this.listRecurrences();
+    if (!rules.length) return [];
+    const made = await this.db.select<{ recurrence_id: string }>(
+      "SELECT recurrence_id FROM recurrence_week WHERE week_id = ?",
+      [weekId],
+    );
+    const { periods } = await this.listCategories();
+    return rulesToCreate(rules, weekId, new Set(made.map((m) => m.recurrence_id)), groupPeriods(periods));
+  }
+
+  /**
+   * 반복 항목을 그 주에 넣는다(한 트랜잭션). 칸 맨 아래에 붙이고 그 주를 "이미 만든 주"로 기록한다.
+   * 이번 주는 보드를 열 때 자동으로, 미래 주는 "예정"을 눌렀을 때 그 규칙만(onlyRuleId). 만든 묶음 수를 돌려준다.
+   */
+  async materializeWeek(weekId: WeekId, onlyRuleId?: string): Promise<number> {
+    const targets = (await this.pendingRules(weekId)).filter((r) => !onlyRuleId || r.id === onlyRuleId);
+    if (!targets.length) return 0;
+    const ts = this.ts();
+    const stmts: SqlStatement[] = [];
+    const nextSeq = new Map<string, number>();
+    for (const rule of targets) {
+      const date = ruleDate(rule, weekId);
+      const key = cellKey(date, rule.categoryId);
+      if (!nextSeq.has(key)) {
+        const [row] = await this.db.select<{ m: number | null }>(
+          "SELECT MAX(seq) AS m FROM entry_item WHERE date = ? AND category_id = ?",
+          [date, rule.categoryId],
+        );
+        nextSeq.set(key, Number(row?.m ?? 0) + 1);
+      }
+      rule.lines.forEach((line, i) => {
+        const seq = nextSeq.get(key)!;
+        nextSeq.set(key, seq + 1);
+        stmts.push({
+          sql: `INSERT INTO entry_item (id, date, category_id, seq, depth, text, flagged, recurrence_id, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          params: [
+            uuidv7(),
+            date,
+            rule.categoryId,
+            seq,
+            line.depth,
+            line.text,
+            i === 0 && rule.flagOnCreate ? 1 : 0,
+            rule.id,
+            ts,
+            ts,
+          ],
+        });
+      });
+      stmts.push({
+        sql: "INSERT INTO recurrence_week (recurrence_id, week_id, created_at) VALUES (?, ?, ?)",
+        params: [rule.id, weekId, ts],
+      });
+    }
+    await this.db.batch(stmts);
+    return targets.length;
+  }
+
+  /** 미래 주의 반복 "예정"(저장하지 않음) */
+  async previewWeek(weekId: WeekId): Promise<RepeatPreview[]> {
+    return (await this.pendingRules(weekId)).map((rule) => ({ rule, date: ruleDate(rule, weekId) }));
+  }
+
   /** 일일 메모. 비우면 행을 지운다. */
   async saveMemo(date: DateStr, text: string): Promise<void> {
     if (!DATE_RE.test(date)) throw new ValidationError(`날짜 형식 오류: ${date}`);
@@ -429,10 +722,21 @@ export class JournalRepository {
     if (settings.nudgeWeeks <= 0) return [];
     const from = weekStart(addWeeks(currentWeek, -NUDGE_LOOKBACK_WEEKS));
     const to = weekRange(currentWeek).end;
-    const itemRows = await this.db.select<{ category_id: string; date: string }>(
-      "SELECT DISTINCT category_id, date FROM entry_item WHERE date BETWEEN ? AND ?",
+    // 반복으로 자동 생성되고 한 번도 고치지 않은 항목은 기록으로 세지 않는다(spec 6절)
+    const raw = await this.db.select<{
+      category_id: string;
+      date: string;
+      recurrence_id: string | null;
+      untouched: number;
+    }>(
+      "SELECT DISTINCT category_id, date, recurrence_id, created_at = updated_at AS untouched FROM entry_item WHERE date BETWEEN ? AND ?",
       [from, to],
     );
+    const startWeeks = new Map((await this.listRecurrences()).map((r) => [r.id, r.startWeek]));
+    const itemRows = raw.filter((r) => {
+      const start = r.recurrence_id ? startWeeks.get(r.recurrence_id) : undefined;
+      return !(start && Number(r.untouched) === 1 && weekIdOf(r.date) >= start);
+    });
     const memoRows = await this.db.select<{ date: string }>(
       "SELECT date FROM day_memo WHERE date BETWEEN ? AND ?",
       [from, to],

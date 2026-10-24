@@ -256,3 +256,110 @@ describe("중요 표시 (important-repeat-spec 2·4-2)", () => {
     expect((await repo.listImportant()).map((i) => [i.text, i.categoryEnded])).toEqual([["남은 일", true]]);
   });
 });
+
+describe("매주 반복 (important-repeat-spec 3·4)", () => {
+  const cellOf = async (
+    repo: Awaited<ReturnType<typeof freshRepo>>["repo"],
+    week: string,
+    date: string,
+    cat: string,
+  ) => (await repo.getWeek(week)).items[cellKey(date, cat)] ?? [];
+
+  it("켜기 → 다음 주에 같은 요일 칸 맨 아래로 묶음째 들어온다, 두 번 불러도 한 번만", async () => {
+    const { repo } = await freshRepo(); // 오늘 2026-10-23(금), W43
+    const c = await repo.createCategory("팀 운영", "2026-W43");
+    const main = draft("주간업무 정리 보고서 작성"),
+      sub = draft("팀원 취합", 1);
+    await repo.saveCell("2026-10-22", c.id, [main, sub]);
+    const rule = await repo.enableRepeat([main.id, sub.id], false);
+    expect([rule.weekday, rule.startWeek, rule.lines.length]).toEqual([4, "2026-W44", 2]);
+    // 원래 주는 "이미 만든 주" — 다시 안 생김
+    expect(await repo.materializeWeek("2026-W43")).toBe(0);
+
+    await repo.saveCell("2026-10-29", c.id, [draft("다른 기록")]);
+    expect(await repo.materializeWeek("2026-W44")).toBe(1);
+    expect(await repo.materializeWeek("2026-W44")).toBe(0);
+    const items = await cellOf(repo, "2026-W44", "2026-10-29", c.id);
+    expect(items.map((i) => [i.seq, i.depth, i.text, i.recurrenceId === rule.id])).toEqual([
+      [1, 0, "다른 기록", false],
+      [2, 0, "주간업무 정리 보고서 작성", true],
+      [3, 1, "팀원 취합", true],
+    ]);
+  });
+
+  it("들어온 항목을 지우면 그 주만 빠진다(다시 안 생김), 미래 주는 예정으로만 보인다", async () => {
+    const { repo } = await freshRepo();
+    const c = await repo.createCategory("팀 운영", "2026-W43");
+    const x = draft("주간 보고");
+    await repo.saveCell("2026-10-22", c.id, [x]);
+    await repo.enableRepeat([x.id], false);
+    expect((await repo.previewWeek("2026-W45")).map((p) => p.date)).toEqual(["2026-11-05"]);
+    await repo.materializeWeek("2026-W44");
+    await repo.saveCell("2026-10-29", c.id, []); // 휴가 주: 지움
+    expect(await repo.materializeWeek("2026-W44")).toBe(0);
+    expect(await cellOf(repo, "2026-W44", "2026-10-29", c.id)).toEqual([]);
+    expect(await repo.previewWeek("2026-W44")).toEqual([]);
+  });
+
+  it("끄기: 한 번이라도 들어왔으면 그 주까지만(이후 안 생김), 켠 주에 바로 끄면 규칙째 지움 — 둘 다 되돌리기", async () => {
+    const { repo } = await freshRepo();
+    const c = await repo.createCategory("팀 운영", "2026-W43");
+    const x = draft("주간 보고");
+    await repo.saveCell("2026-10-22", c.id, [x]);
+
+    const r1 = await repo.enableRepeat([x.id], false);
+    const u1 = await repo.disableRepeat(r1.id, "2026-W43");
+    expect(u1.kind).toBe("deleted");
+    expect(await repo.listRecurrences()).toEqual([]);
+    expect((await cellOf(repo, "2026-W43", "2026-10-22", c.id))[0]!.recurrenceId).toBeNull();
+    await repo.restoreRepeat(u1);
+    expect((await repo.listRecurrences()).map((r) => r.id)).toEqual([r1.id]);
+    expect((await cellOf(repo, "2026-W43", "2026-10-22", c.id))[0]!.recurrenceId).toBe(r1.id);
+
+    await repo.materializeWeek("2026-W44");
+    const u2 = await repo.disableRepeat(r1.id, "2026-W44");
+    expect(u2).toEqual({ kind: "ended", ruleId: r1.id, prevEnd: null });
+    expect(await repo.materializeWeek("2026-W45")).toBe(0);
+    expect(await cellOf(repo, "2026-W44", "2026-10-29", c.id)).toHaveLength(1); // 들어온 기록은 그대로
+    await repo.restoreRepeat(u2);
+    expect(await repo.materializeWeek("2026-W45")).toBe(1);
+  });
+
+  it("중요로 시작 · 문구 수정은 다음 생성부터 · 종료된 업무엔 안 생김 · 삭제하면 연결만 풀림", async () => {
+    const { repo, clock } = await freshRepo();
+    const c = await repo.createCategory("팀 운영", "2026-W43");
+    const x = { ...draft("주간 보고"), flagged: true };
+    await repo.saveCell("2026-10-22", c.id, [x]);
+    const rule = await repo.enableRepeat([x.id], true);
+    await repo.updateRecurrence(rule.id, { text: "주간 보고서 제출" });
+    await repo.materializeWeek("2026-W44");
+    const made = (await cellOf(repo, "2026-W44", "2026-10-29", c.id))[0]!;
+    expect([made.text, made.flagged]).toEqual(["주간 보고서 제출", true]);
+
+    clock.set(2026, 10, 30); // W44 금요일에 업무 종료
+    await repo.archiveCategory(c.id);
+    expect(await repo.materializeWeek("2026-W45")).toBe(0);
+
+    await repo.deleteRecurrence(rule.id);
+    expect(await repo.listRecurrences()).toEqual([]);
+    expect((await cellOf(repo, "2026-W44", "2026-10-29", c.id))[0]!.recurrenceId).toBeNull();
+  });
+
+  it("무기록 제안: 자동으로 들어오기만 하고 안 고친 항목은 기록으로 세지 않는다(spec 6절)", async () => {
+    const { repo, clock } = await freshRepo(); // 이번 주 W43
+    const a = await repo.createCategory("꾸준", "2026-W36");
+    const b = await repo.createCategory("반복만", "2026-W36");
+    for (const day of ["2026-10-01", "2026-10-08", "2026-10-15"])
+      await repo.saveCell(day, a.id, [draft("기록")]);
+    const src = draft("주간 보고");
+    await repo.saveCell("2026-09-24", b.id, [src]); // W39
+    await repo.enableRepeat([src.id], false);
+    for (const w of ["2026-W40", "2026-W41", "2026-W42"]) await repo.materializeWeek(w);
+    expect(await repo.getNudges()).toEqual([b.id]);
+    // 한 번이라도 고치면 실제 기록(고친 시각 ≠ 만든 시각)
+    clock.set(2026, 10, 23, 10);
+    const w42 = (await repo.getWeek("2026-W42")).items[cellKey("2026-10-15", b.id)]!;
+    await repo.saveCell("2026-10-15", b.id, [{ ...w42[0]!, text: "주간 보고(수정)" }]);
+    expect(await repo.getNudges()).toEqual([]);
+  });
+});

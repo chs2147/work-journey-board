@@ -4,14 +4,17 @@ import { useCallback, useLayoutEffect, useRef, type ClipboardEvent, type Keyboar
 import { indentAt, moveItem, outdentAt, parsePastedLines } from "../../domain/items";
 import type { ItemDraft } from "../../domain/types";
 import { STR } from "../../shared/strings";
+import { DAY_LABELS, dayIndex } from "../../domain/week";
 import {
   editCell,
   leaveCell,
+  materializePreview,
   newDraft,
   setFocus,
   setFocusDay,
   splitKey,
   toggleFlag,
+  toggleRepeat,
   useBoard,
 } from "./boardStore";
 import { autoSize, isComposingKey, useRemeasure } from "./helpers";
@@ -34,6 +37,8 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav }: Props) 
   const items = useBoard((s) => s.cells[cellKey]) ?? [];
   const focus = useBoard((s) => s.focus);
   const pulseId = useBoard((s) => s.pulseId);
+  const repeating = useBoard((s) => s.repeating);
+  const previews = useBoard((s) => s.previews[cellKey]);
   const refs = useRef<(HTMLTextAreaElement | null)[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   const measureAll = useCallback(() => refs.current.forEach(autoSize), []);
@@ -74,6 +79,12 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav }: Props) 
     if (e.code === "KeyI" && e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
       e.preventDefault();
       void toggleFlag(cellKey, i);
+      return;
+    }
+    // 매주 반복 켜기/끄기(spec 3-1) — 세부 항목에서 눌러도 본 항목 묶음에 적용
+    if (e.code === "KeyR" && e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+      e.preventDefault();
+      void toggleRepeat(cellKey, i);
       return;
     }
 
@@ -172,44 +183,84 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav }: Props) 
         }
       }}
     >
-      {items.map((it, i) => (
-        <div
-          key={it.id}
-          className={[
-            it.depth === 1 ? styles.itemSub : styles.item,
-            it.flagged ? styles.flagged : "",
-            pulseId === it.id ? styles.pulse : "",
-          ].join(" ")}
-          data-flagged={it.flagged ? "true" : undefined}
+      {items.map((it, i) => {
+        const isRepeating = it.depth === 0 && !!it.recurrenceId && repeating.includes(it.recurrenceId);
+        return (
+          <div
+            key={it.id}
+            className={[
+              it.depth === 1 ? styles.itemSub : styles.item,
+              it.flagged ? styles.flagged : "",
+              isRepeating ? styles.repeating : "",
+              pulseId === it.id ? styles.pulse : "",
+            ].join(" ")}
+            data-flagged={it.flagged ? "true" : undefined}
+            data-repeating={isRepeating ? "true" : undefined}
+          >
+            {/* 개조 부호 = 중요 표시 단추. 마우스를 올리면 ☆, 켜지면 ★. 키보드는 Alt+I(Tab 순서에서는 뺀다) */}
+            <button
+              type="button"
+              tabIndex={-1}
+              className={styles.bullet}
+              aria-label={it.flagged ? STR.important.flagOff : STR.important.flagOn}
+              aria-pressed={Boolean(it.flagged)}
+              title={it.flagged ? STR.important.flagOff : STR.important.flagOn}
+              disabled={!it.text.trim()}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => void toggleFlag(cellKey, i)}
+            />
+            <textarea
+              ref={(el) => {
+                refs.current[i] = el;
+              }}
+              className={styles.itemInput}
+              rows={1}
+              value={it.text}
+              aria-label={ariaLabel}
+              spellCheck={false}
+              onChange={(e) => onChange(i, e.target.value)}
+              onKeyDown={(e) => onKeyDown(e, i)}
+              onPaste={(e) => onPaste(e, i)}
+            />
+            {/* 매주 반복: 반복 중이면 ↻를 늘 보이고(누르면 끔), 아니면 마우스를 올릴 때만 ↻(누르면 켬) */}
+            {it.depth === 0 && it.text.trim() && (
+              <button
+                type="button"
+                tabIndex={-1}
+                className={isRepeating ? styles.repeatOn : styles.repeatHover}
+                aria-label={isRepeating ? STR.repeat.toggleOff : STR.repeat.toggleOn}
+                aria-pressed={isRepeating}
+                title={
+                  isRepeating
+                    ? `${STR.repeat.badge(DAY_LABELS[dayIndex(splitKey(cellKey).date)]!)} · ${STR.repeat.toggleOff}`
+                    : STR.repeat.toggleOn
+                }
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => void toggleRepeat(cellKey, i)}
+              >
+                ↻
+              </button>
+            )}
+          </div>
+        );
+      })}
+      {previews?.map((p) => (
+        <button
+          key={p.rule.id}
+          type="button"
+          className={styles.preview}
+          aria-label={STR.repeat.previewAria(p.rule.lines[0]?.text ?? "")}
+          data-testid="repeat-preview"
+          onClick={() => void materializePreview(cellKey, p.rule.id)}
         >
-          {/* 개조 부호 = 중요 표시 단추. 마우스를 올리면 ☆, 켜지면 ★. 키보드는 Alt+I(Tab 순서에서는 뺀다) */}
-          <button
-            type="button"
-            tabIndex={-1}
-            className={styles.bullet}
-            aria-label={it.flagged ? STR.important.flagOff : STR.important.flagOn}
-            aria-pressed={Boolean(it.flagged)}
-            title={it.flagged ? STR.important.flagOff : STR.important.flagOn}
-            disabled={!it.text.trim()}
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => void toggleFlag(cellKey, i)}
-          />
-          <textarea
-            ref={(el) => {
-              refs.current[i] = el;
-            }}
-            className={styles.itemInput}
-            rows={1}
-            value={it.text}
-            aria-label={ariaLabel}
-            spellCheck={false}
-            onChange={(e) => onChange(i, e.target.value)}
-            onKeyDown={(e) => onKeyDown(e, i)}
-            onPaste={(e) => onPaste(e, i)}
-          />
-        </div>
+          <span className={styles.previewText}>{p.rule.lines[0]?.text}</span>
+          {p.rule.lines.length > 1 && (
+            <span className={styles.previewNote}>{STR.repeat.subCount(p.rule.lines.length - 1)}</span>
+          )}
+          <span className={styles.previewNote}>{STR.repeat.preview}</span>
+        </button>
       ))}
-      {items.length === 0 && showPlaceholder && (
+      {items.length === 0 && !previews?.length && showPlaceholder && (
         <button type="button" className={styles.addRecord} onClick={startEditing}>
           {STR.board.addRecord}
         </button>
