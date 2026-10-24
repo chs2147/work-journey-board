@@ -19,6 +19,7 @@
   | `wireframes/` | 주간 보드·첫 실행/연간 보기·인사이트·스플래시 와이어프레임(svg)·스플래시 창 화면(png) |
   | `samples/*.xlsx` | 엑셀 내보내기 양식 샘플(가상 데이터) |
   | `project-plan.md` | 마일스톤 I-M0~M5·관문 G1/G2 |
+  | `m1-check.md` · `g2-log.md` | 회사 PC 확인표(v0.1.0) · ◆G2 실사용 마찰 기록 양식 |
 - **스펙과 다르게 구현해야 하면** 먼저 사용자에게 묻고, 확정되면 같은 작업 안에서 `docs/` 스펙도 함께 갱신한다(스펙이 정본).
 
 ## 2. 기술 스택
@@ -33,7 +34,7 @@
 | 엑셀 | ExcelJS |
 | 차트 | 직접 SVG + d3-scale/d3-array |
 | Tauri 플러그인 | sql · dialog(폴더 선택·저장) · fs(저장 폴더 범위만) · clipboard-manager · single-instance · opener(폴더 열기) · window-state |
-| 테스트 | Vitest(+Testing Library), Playwright(브라우저 모드 E2E·스크린샷) |
+| 테스트 | Vitest(+Testing Library), Playwright(브라우저 모드 E2E·스크린샷 — Chromium 기준 + WebKit 보험) |
 | 품질 | ESLint + Prettier, `tsc --noEmit` |
 | CI | GitHub Actions: `ci.yml`(ubuntu: lint·typecheck·test·e2e) / `build-windows.yml`(windows-latest, main 빌드 → `v<버전>` 사전 릴리스 생성·갱신, 수동 실행 시 오프라인 설치판 선택) |
 
@@ -92,7 +93,8 @@ fixtures/     sample-*.json — 가상 업무 기록만
 npm run dev          # 브라우저 모드(sql.js, 가상 샘플 시드) — 클라우드 세션 기본
 npm run tauri dev    # 실앱 모드(윈도우 로컬 전용)
 npm test             # Vitest
-npm run e2e          # Playwright(브라우저 모드)
+npm run e2e          # Playwright(브라우저 모드) — Chromium + WebKit
+npm run e2e:chromium # WebKit을 받을 수 없는 클라우드 세션용(두 엔진은 CI에서)
 npm run lint && npm run typecheck
 ```
 
