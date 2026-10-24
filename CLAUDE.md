@@ -14,6 +14,7 @@
   | `output-spec.md` | 자동 집계 포맷·엑셀 2시트·내보내기·AI 지시문 |
   | `viz-spec.md` | 4개 시각화·업무 색 팔레트 |
   | `splash-spec.md` | 시작 스플래시 창(창 2개 흐름·최소 표시 시간·안전장치·시안) |
+  | `important-repeat-spec.md` | 중요 표시(B안)·중요 업무 패널·매주 반복(R1)·왼쪽 메뉴 레일(M1) 상세 설계 |
   | `brand-spec.md` | 앱 아이콘(노트·책갈피, 작은 판)·워드마크(그로테스크 + 손글씨 Journey, SVG 도형) — 생성 도구 `scripts/brand/` |
   | `wireframes/` | 주간 보드·첫 실행/연간 보기·인사이트·스플래시 와이어프레임(svg)·스플래시 창 화면(png) |
   | `samples/*.xlsx` | 엑셀 내보내기 양식 샘플(가상 데이터) |

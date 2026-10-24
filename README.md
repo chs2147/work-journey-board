@@ -20,6 +20,7 @@
 | [docs/viz-spec.md](docs/viz-spec.md) | 경과 타임라인 · 활동 히트맵 · 기간 막대 · 주별 비중 · 업무 색 팔레트 |
 | [docs/m0-install-check.md](docs/m0-install-check.md) | I-M0 회사 PC 설치 검증 절차 · ◆G1 판정 기준 |
 | [docs/splash-spec.md](docs/splash-spec.md) | 시작 스플래시 창(메인보다 작은 창·최소 2.5초) 구현 스펙 · 시안 3종(B 확정) |
+| [docs/important-repeat-spec.md](docs/important-repeat-spec.md) | 중요 표시·중요 업무 목록·매주 반복·왼쪽 메뉴 상세 설계(구현 전) |
 | [docs/brand-spec.md](docs/brand-spec.md) | 앱 아이콘·워드마크(타이틀) 규칙 · 만드는 방법 |
 | [docs/restore-guide.md](docs/restore-guide.md) | 백업에서 일지 복원하기(수동 절차 — 앱 안 복원은 M5) |
 | [docs/i-m1-plan.md](docs/i-m1-plan.md) | I-M1 핵심 기록 구현 계획(세션 S1~S5) |
