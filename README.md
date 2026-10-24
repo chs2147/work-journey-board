@@ -49,6 +49,12 @@ npm run tauri dev    # 실앱 모드(윈도우 / 리눅스는 webkit2gtk-4.1 필
 - 윈도우 설치 파일: `main`에 반영되면 [Releases](https://github.com/chs2147/work-journey-board/releases)에 `v<버전>` 사전 릴리스로 올라간다. WebView2 오프라인 설치판은 Actions → *Build Windows installer* → Run workflow → `offline`.
 
 ## Version History
+### v0.0.10 (2026-10-24) — 사용 개선 1차
+- 상단을 2줄로: 1줄 타이틀, 2줄 주 이동·오늘·연간 보기·저장 상태·설정
+- 업무 행 머리 끌어서 순서 바꾸기가 Windows 앱에서 동작하도록 수정, 위·아래 놓을 자리 표시, 바로 아래로 한 칸 이동 가능
+- 개조 부호를 점으로(본 항목 •, 세부 항목 ◦)
+- 칸 안 한글이 단어 중간에서 줄바꿈되지 않게
+
 ### v0.0.9 (2026-10-23) — 앱 아이콘·타이틀 개선
 - 새 앱 아이콘: 책갈피가 꽂힌 노트에 개조식 세 줄(작업 표시줄·창 제목용 작은 판을 따로 그림)
 - 새 타이틀: Work·Board는 그로테스크 글꼴, Journey는 손글씨 + 밑줄(오늘 강조색) — 글꼴 파일 없이 그림으로 넣음
