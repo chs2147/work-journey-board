@@ -49,6 +49,7 @@ pub fn run() {
             files::fs_remove_backup,
             files::fs_rename_backup,
             files::fs_copy_new,
+            files::export_write,
             files::open_folder
         ])
         .run(tauri::generate_context!())

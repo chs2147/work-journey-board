@@ -4,7 +4,7 @@ import { homeDir } from "@tauri-apps/api/path";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import Database from "@tauri-apps/plugin-sql";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
-import { open } from "@tauri-apps/plugin-dialog";
+import { open, save } from "@tauri-apps/plugin-dialog";
 import type { BackupFs } from "../data/backup";
 import { openTauriSql } from "../data/drivers/tauriSql";
 import { isOneDriveLike, type AppConfig, type PathInfo, type Platform, type SplashWindow } from "./index";
@@ -75,6 +75,13 @@ export const tauriPlatform: Platform = {
   copyNew: (from, to) => invoke("fs_copy_new", { from, to }),
   openFolder: (path) => invoke("open_folder", { path }),
   writeClipboard: (text) => writeText(text),
+  async pickSaveFile(title, defaultPath) {
+    const picked = await save({ title, defaultPath, filters: [{ name: "Excel", extensions: ["xlsx"] }] });
+    return picked ?? null;
+  },
+  writeExport: (path, bytes) => invoke("export_write", { path, bytes: Array.from(bytes) }),
+  // opener의 open_path는 폴더·파일 모두 기본 프로그램으로 연다
+  openFile: (path) => invoke("open_folder", { path }),
   join,
 
   openDatabase: (path) => openTauriSql(path),

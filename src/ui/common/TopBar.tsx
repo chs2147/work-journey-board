@@ -2,6 +2,7 @@ import { weekTitle } from "../../domain/week";
 import { STR } from "../../shared/strings";
 import { goToday, goWeek, retryFailed, setYearOpen, useBoard } from "../board/boardStore";
 import { YearMinimap } from "../board/YearMinimap";
+import { toggleExport } from "../export/exportStore";
 import { toggleSummary, useSummary } from "../summary/summaryStore";
 import { setSettingsOpen } from "./appController";
 import { useAppStore } from "./appStore";
@@ -82,6 +83,17 @@ export function TopBar() {
             onClick={() => toggleSummary()}
           >
             {STR.summary.button}
+          </button>
+        )}
+        {ready && journalReady && (
+          <button
+            type="button"
+            className={styles.textButton}
+            title={STR.export.buttonTitle}
+            data-testid="export-open"
+            onClick={() => toggleExport()}
+          >
+            {STR.export.button}
           </button>
         )}
         {ready &&

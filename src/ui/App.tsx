@@ -12,6 +12,8 @@ import { useMediaQuery, useWindowWidth } from "./common/useMediaQuery";
 import { FirstRun } from "./first-run/FirstRun";
 import { IntegrityProblem, MissingFolder } from "./first-run/StartScreens";
 import { ImportantPanel } from "./important/ImportantPanel";
+import { ExportDialog } from "./export/ExportDialog";
+import { useExport } from "./export/exportStore";
 import { SettingsPanel } from "./settings/SettingsPanel";
 import { setSummaryOpen, useSummary } from "./summary/summaryStore";
 import { SummaryPanel } from "./summary/SummaryPanel";
@@ -23,6 +25,7 @@ let started = false;
 export function App() {
   const journal = useAppStore((s) => s.journal);
   const settingsOpen = useAppStore((s) => s.settingsOpen);
+  const exportOpen = useExport((s) => s.open);
   useShortcuts();
 
   useEffect(() => {
@@ -44,6 +47,7 @@ export function App() {
         {statusText(journal)}
       </footer>
       {settingsOpen && journal.state === "ready" && <SettingsPanel />}
+      {exportOpen && journal.state === "ready" && <ExportDialog />}
       <Toasts />
     </div>
   );

@@ -164,6 +164,55 @@ pub fn fs_copy_new(from: String, to: String) -> Result<(), String> {
     dst.sync_all().map_err(err)
 }
 
+/// 설정 파일에 적힌 저장 폴더(없거나 읽지 못하면 None)
+fn configured_data_dir(app: &AppHandle) -> Option<String> {
+    let raw = fs::read_to_string(config_path(app).ok()?).ok()?;
+    let v: serde_json::Value = serde_json::from_str(&raw).ok()?;
+    v.get("dataDir")?.as_str().filter(|s| !s.is_empty()).map(str::to_string)
+}
+
+/// 경로 비교용: 구분자를 `\\`로 맞추고 끝 구분자를 떼고 소문자로(윈도우는 대소문자를 가리지 않음)
+fn norm(p: &str) -> String {
+    p.replace('/', "\\").trim_end_matches('\\').to_lowercase()
+}
+
+/// 내보내기 파일 쓰기 허용 규칙(CLAUDE.md 4-3 내보내기 예외): 확장자 `.xlsx`만,
+/// 저장 폴더의 일지 파일·`backups` 폴더 안은 거부. 웹 앱의 저장 대화상자와 별개로 한 번 더 검사한다.
+/// 윈도우 경로를 어느 플랫폼에서든 같게 다루려고 문자열로 본다(`\\`·`/` 모두 구분자).
+fn export_path_allowed(path: &str, data_dir: Option<&str>) -> Result<(), String> {
+    let p = norm(path);
+    let (parent, name) = p.rsplit_once('\\').unwrap_or(("", p.as_str()));
+    let stem_len = name.len().saturating_sub(".xlsx".len());
+    if !name.ends_with(".xlsx") || stem_len == 0 {
+        return Err(format!("엑셀 파일(.xlsx)로만 저장할 수 있습니다: {name}"));
+    }
+    if let Some(dir) = data_dir {
+        if parent == format!("{}\\backups", norm(dir)) {
+            return Err("백업 폴더에는 내보낼 수 없습니다".into());
+        }
+    }
+    Ok(())
+}
+
+/// 엑셀 내보내기 파일 쓰기. 사용자가 저장 대화상자에서 고른 경로이며, 같은 이름이면 대화상자에서
+/// 덮어쓰기를 확인한 것이다. 임시 파일에 다 쓴 뒤 바꿔치기(쓰는 도중 꺼져도 반쪽 파일이 남지 않게).
+#[tauri::command]
+pub fn export_write(app: AppHandle, path: String, bytes: Vec<u8>) -> Result<(), String> {
+    export_path_allowed(&path, configured_data_dir(&app).as_deref())?;
+    let target = PathBuf::from(&path);
+    let tmp = target.with_extension("xlsx.tmp");
+    let write = || -> std::io::Result<()> {
+        let mut f = fs::File::create(&tmp)?;
+        f.write_all(&bytes)?;
+        f.sync_all()?;
+        fs::rename(&tmp, &target)
+    };
+    write().map_err(|e| {
+        let _ = fs::remove_file(&tmp);
+        format!("파일을 저장하지 못했습니다(엑셀에서 열려 있으면 닫고 다시 시도하세요): {e}")
+    })
+}
+
 #[tauri::command]
 pub fn open_folder(app: AppHandle, path: String) -> Result<(), String> {
     app.opener().open_path(path, None::<&str>).map_err(err)
@@ -172,6 +221,31 @@ pub fn open_folder(app: AppHandle, path: String) -> Result<(), String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn export_only_xlsx_and_not_into_backups() {
+        let dir = "C:\\Users\\u\\WorkJourney";
+        for ok in [
+            "C:\\Users\\u\\WorkJourney\\exports\\업무일지_2026-W43.xlsx",
+            "D:\\보고\\업무일지_2026-W40~W43.XLSX",
+            "C:\\Users\\u\\WorkJourney\\업무일지.xlsx",
+        ] {
+            assert!(export_path_allowed(ok, Some(dir)).is_ok(), "{ok}");
+        }
+        for no in [
+            "C:\\Users\\u\\WorkJourney\\work-journey.db",
+            "C:\\Users\\u\\WorkJourney\\backups\\업무일지.xlsx",
+            "c:\\users\\U\\workjourney\\BACKUPS\\a.xlsx",
+            "C:\\x\\a.xlsx.exe",
+            "C:\\x\\.xlsx",
+            "C:\\x\\noext",
+        ] {
+            assert!(export_path_allowed(no, Some(dir)).is_err(), "{no}");
+        }
+        // 설정을 못 읽어도 확장자 검사는 한다
+        assert!(export_path_allowed("C:\\x\\a.db", None).is_err());
+        assert!(export_path_allowed("/home/u/WorkJourney/backups/a.xlsx", Some("/home/u/WorkJourney")).is_err());
+    }
 
     #[test]
     fn deletable_names_match_backup_ts() {

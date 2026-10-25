@@ -12,6 +12,7 @@ import {
   undo,
   useBoard,
 } from "./boardStore";
+import { toggleExport, useExport } from "../export/exportStore";
 import { toggleSummary } from "../summary/summaryStore";
 
 const isTyping = (el: Element | null) => el instanceof HTMLTextAreaElement || el instanceof HTMLInputElement;
@@ -24,6 +25,14 @@ export function useShortcuts() {
       if (!ready) return;
       const mod = e.ctrlKey || e.metaKey;
 
+      // 내보내기 대화상자가 열려 있으면 Alt+E(닫기) 말고는 보드 단축키를 받지 않는다
+      if (useExport.getState().open) {
+        if (e.altKey && !mod && !e.shiftKey && e.code === "KeyE") {
+          e.preventDefault();
+          toggleExport();
+        }
+        return;
+      }
       if (e.altKey && !mod && !e.shiftKey) {
         if (e.code === "ArrowLeft" || e.code === "ArrowRight") {
           e.preventDefault();
@@ -41,6 +50,10 @@ export function useShortcuts() {
         } else if (e.code === "Digit2") {
           e.preventDefault();
           setPanelOpen(!panelOpen, !panelOpen);
+        } else if (e.code === "KeyE") {
+          // 엑셀 내보내기(i-m2-plan M2-S2)
+          e.preventDefault();
+          toggleExport();
         } else if (e.code === "KeyS") {
           // 주간 요약 패널(i-m2-plan M2-S1) — 열면 패널로 포커스
           e.preventDefault();

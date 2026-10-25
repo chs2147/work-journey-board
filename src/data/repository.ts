@@ -9,6 +9,7 @@ import {
   type VisibleCategory,
 } from "../domain/categories";
 import type { SummaryInput } from "../domain/aggregate";
+import type { ExportWeek } from "../export/excel";
 import { normalizeCell } from "../domain/items";
 import { localDate, utcTimestamp } from "../domain/localTime";
 import { NUDGE_LOOKBACK_WEEKS, nudgeCandidates, snoozeUntil } from "../domain/nudge";
@@ -70,6 +71,14 @@ interface WeeklySummaryRow {
 
 /** 수정본 최대 길이(입력 실수로 거대한 글이 들어가는 것 방지) */
 export const SUMMARY_MAX = 20000;
+
+/** 주 목록 from~to(포함, 오래된 주부터). 거꾸로 주면 바로잡는다. 한 번에 최대 10년치 */
+export function weekList(from: WeekId, to: WeekId): WeekId[] {
+  const [a, b] = from <= to ? [from, to] : [to, from];
+  const out: WeekId[] = [];
+  for (let w = a; w <= b && out.length < 530; w = addWeeks(w, 1)) out.push(w);
+  return out;
+}
 
 /** 보드 한 주 → 자동 집계 입력(그 주에 보이는 업무, 보드 순서) */
 export function summaryInputOf(view: WeekView): SummaryInput {
@@ -411,6 +420,45 @@ export class JournalRepository {
          edited_basis_hash = excluded.edited_basis_hash, edited_at = excluded.edited_at`,
       [prev.weekId, prev.editedText, prev.editedBasisHash, prev.editedAt],
     );
+  }
+
+  // ── 엑셀 내보내기(output-spec 3·4절) ─────────────────
+  /** 기록(항목·메모)이 있는 가장 이른 주. 없으면 null — "전체" 범위의 시작 */
+  async firstRecordWeek(): Promise<WeekId | null> {
+    const [r] = await this.db.select<{ d: string | null }>(
+      "SELECT MIN(d) AS d FROM (SELECT MIN(date) AS d FROM entry_item WHERE trim(text) <> '' UNION ALL SELECT MIN(date) AS d FROM day_memo WHERE trim(text) <> '')",
+    );
+    return r?.d ? weekIdOf(r.d) : null;
+  }
+
+  /** 내보내기 대화상자의 미리 계산: 주 수 · 기록이 있는 업무 수 · 항목 수(메모 제외) */
+  async exportStats(from: WeekId, to: WeekId): Promise<{ weeks: number; categories: number; items: number }> {
+    const start = weekStart(from);
+    const end = weekRange(to).end;
+    const [r] = await this.db.select<{ items: number; categories: number }>(
+      "SELECT COUNT(*) AS items, COUNT(DISTINCT category_id) AS categories FROM entry_item WHERE date BETWEEN ? AND ? AND trim(text) <> ''",
+      [start, end],
+    );
+    return {
+      weeks: weekList(from, to).length,
+      categories: Number(r?.categories ?? 0),
+      items: Number(r?.items ?? 0),
+    };
+  }
+
+  /** 내보낼 주별 자료(오래된 주부터): 자동 집계 입력 · 업무 색 · 저장된 본 */
+  async exportWeeks(from: WeekId, to: WeekId): Promise<ExportWeek[]> {
+    const out: ExportWeek[] = [];
+    for (const weekId of weekList(from, to)) {
+      const view = await this.getWeek(weekId);
+      const saved = await this.getWeeklySummary(weekId);
+      out.push({
+        input: summaryInputOf(view),
+        colors: Object.fromEntries(view.categories.map((v) => [v.category.id, v.category.color])),
+        summary: { editedText: saved.editedText, aiText: saved.aiText },
+      });
+    }
+    return out;
   }
 
   /**

@@ -1,0 +1,136 @@
+/* 엑셀 내보내기 대화상자(output-spec 4-1) — 가운데 작은 창 */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-4);
+  background: rgb(0 0 0 / 0.28);
+}
+
+.dialog {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  width: min(460px, 100%);
+  max-height: 100%;
+  overflow: auto;
+  padding: var(--sp-5);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 0.22);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--fs-lg);
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.group legend {
+  margin-bottom: var(--sp-1);
+  padding: 0;
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: 30px;
+}
+
+.radio,
+.check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.kind {
+  min-width: 72px;
+}
+
+.range {
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.selects {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  color: var(--text-2);
+}
+
+.selects select {
+  height: 28px;
+  padding: 0 var(--sp-1);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-card);
+  color: var(--text-1);
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
+.note,
+.stats {
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+}
+
+.stats {
+  min-height: 1.4em;
+  color: var(--text-1);
+  font-variant-numeric: tabular-nums;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+}
+
+.button,
+.primary {
+  height: 32px;
+  padding: 0 var(--sp-4);
+  border-radius: var(--radius-md);
+  font: inherit;
+  cursor: pointer;
+}
+
+.button {
+  border: 1px solid var(--line-strong);
+  background: var(--surface-card);
+  color: var(--text-1);
+}
+
+.primary {
+  border: 0;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: var(--fw-bold);
+}
+
+.primary:disabled,
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

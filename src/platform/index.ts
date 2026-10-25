@@ -1,6 +1,7 @@
 import { isTauri } from "@tauri-apps/api/core";
 import type { BackupFs, VerifyCopy } from "../data/backup";
 import type { SqlDriver } from "../data/driver";
+import { STR } from "../shared/strings";
 
 // 플랫폼 차이는 이 인터페이스 뒤로만(CLAUDE.md 4-5). 실앱 = Tauri(윈도우), 브라우저 모드 = 개발·테스트용 가짜 폴더.
 
@@ -34,6 +35,12 @@ export interface Platform {
   /** 새 파일로만 복사(대상이 있으면 실패) */
   copyNew(from: string, to: string): Promise<void>;
   openFolder(path: string): Promise<void>;
+  /** 내보내기 저장: 저장 대화상자(같은 이름이면 대화상자가 덮어쓰기를 묻는다)에서 고른 경로. 취소하면 null */
+  pickSaveFile(title: string, defaultPath: string): Promise<string | null>;
+  /** 엑셀 내보내기 파일 쓰기 — `.xlsx`만, 일지 파일·backups 폴더는 거부(CLAUDE.md 4-3 내보내기 예외) */
+  writeExport(path: string, bytes: Uint8Array): Promise<void>;
+  /** 파일을 그 파일의 기본 프로그램으로 열기(내보낸 엑셀 [파일 열기]) */
+  openFile(path: string): Promise<void>;
   /** 클립보드에 글 쓰기 — 사용자가 [복사]를 누를 때만 부른다(output-spec 5-2) */
   writeClipboard(text: string): Promise<void>;
   join(...parts: string[]): string;
@@ -59,6 +66,27 @@ export interface SplashWindow {
 export async function loadPlatform(): Promise<Platform> {
   if (isTauri()) return (await import("./tauri")).tauriPlatform;
   return (await import("./browser")).browserPlatform;
+}
+
+/** 경로의 폴더 부분(윈도우 `\\`·`/` 모두) */
+export function dirOf(path: string): string {
+  const i = Math.max(path.lastIndexOf("\\"), path.lastIndexOf("/"));
+  return i > 0 ? path.slice(0, i) : path;
+}
+
+/** 경로의 파일 이름 부분 */
+export function baseName(path: string): string {
+  const i = Math.max(path.lastIndexOf("\\"), path.lastIndexOf("/"));
+  return path.slice(i + 1);
+}
+
+/** 내보내기 경로 검사(Rust `export_write`와 같은 규칙 — 웹 앱에서도 먼저 막는다) */
+export function exportPathProblem(path: string, dataDir: string): string | null {
+  const norm = (p: string) => p.replace(/\//g, "\\").replace(/\\+$/, "").toLowerCase();
+  const name = baseName(path).toLowerCase();
+  if (!name.endsWith(".xlsx") || name.length <= ".xlsx".length) return STR.export.onlyXlsx;
+  if (norm(dirOf(path)) === `${norm(dataDir)}\\backups`) return STR.export.notBackups;
+  return null;
 }
 
 /** OneDrive 판정 공통 규칙 */

@@ -6,7 +6,7 @@ import { openSqlJs } from "../data/drivers/sqlJs";
 import { migrate } from "../data/migrate";
 import { seedSample } from "../data/seed";
 import { createFakeFs } from "./fakeFs";
-import { isOneDriveLike, type AppConfig, type Platform } from "./index";
+import { baseName, dirOf, isOneDriveLike, type AppConfig, type Platform } from "./index";
 
 // 브라우저 모드(개발·E2E): 메모리 위의 가짜 폴더 + sql.js. 새로고침하면 처음 상태로 돌아간다.
 // 주소 옵션
@@ -27,6 +27,7 @@ const fs = createFakeFs((bytes, label) => openSqlJs(wasmUrl, bytes, label));
 let config: AppConfig | null = null;
 let exitHandler: (() => Promise<void>) | null = null;
 let lastClipboard: string | null = null;
+let lastExport: { path: string; size: number } | null = null;
 
 async function makeJournal(dir: string, withSample: boolean) {
   await fs.ensureDir(dir);
@@ -79,6 +80,28 @@ export const browserPlatform: Platform = {
   ensureDir: (p) => fs.ensureDir(p),
   copyNew: (a, b) => fs.copyNew(a, b),
   openFolder: async () => undefined,
+  async pickSaveFile(title, defaultPath) {
+    // 실제 저장 대화상자 대신 경로 입력(E2E는 page.on("dialog")로 응답)
+    const p = window.prompt(title, defaultPath);
+    return p?.trim() ? p.trim() : null;
+  },
+  async writeExport(path, bytes) {
+    // 브라우저 모드: 내려받기로 대신한다(외부 통신 없음). 파일 이름은 고른 경로의 이름
+    const name = baseName(path);
+    const url = URL.createObjectURL(
+      new Blob([bytes as BlobPart], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      }),
+    );
+    const a = Object.assign(document.createElement("a"), { href: url, download: name });
+    document.body.append(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10_000);
+    await fs.ensureDir(dirOf(path)); // 실제 저장 대화상자에서 고른 폴더는 늘 있다
+    lastExport = { path, size: bytes.byteLength };
+  },
+  openFile: async () => undefined,
   async writeClipboard(text) {
     lastClipboard = text; // E2E 확인용(엔진마다 클립보드 권한이 달라 직접 읽지 않는다)
     await navigator.clipboard?.writeText(text).catch(() => undefined);
@@ -100,6 +123,7 @@ Object.assign(globalThis, {
     exit: () => exitHandler?.(),
     files: () => fs.listAll(),
     clipboard: () => lastClipboard,
+    lastExport: () => lastExport,
     setToday(date: string) {
       if (!isDate(date)) throw new Error(`날짜 형식이 아닙니다: ${date}`);
       fixedToday = date;

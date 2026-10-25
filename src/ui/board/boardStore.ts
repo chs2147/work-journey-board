@@ -35,10 +35,15 @@ export type FocusTarget =
   | { kind: "item"; key: string; index: number; caret: "start" | "end" | number }
   | { kind: "memo"; date: DateStr };
 
+export interface ToastAction {
+  label: string;
+  run: () => void;
+}
+
 export interface Toast {
   id: number;
   message: string;
-  action?: { label: string; run: () => void };
+  actions: ToastAction[];
 }
 
 interface UndoEntry {
@@ -170,9 +175,11 @@ export async function track<T>(work: () => Promise<T>): Promise<T> {
   }
 }
 
-export function toast(message: string, action?: Toast["action"]) {
+/** 토스트(5초). 단추는 0~여러 개(예: 내보내기 완료 [폴더 열기] [파일 열기]) */
+export function toast(message: string, action?: ToastAction | ToastAction[]) {
   const id = ++toastSeq;
-  set((s) => ({ toasts: [...s.toasts, { id, message, action }] }));
+  const actions = action === undefined ? [] : Array.isArray(action) ? action : [action];
+  set((s) => ({ toasts: [...s.toasts, { id, message, actions }] }));
   setTimeout(() => dismissToast(id), TOAST_MS);
 }
 

@@ -8,6 +8,8 @@ export interface SummaryItem {
   categoryId: string;
   depth: Depth;
   text: string;
+  /** 중요 표시(처리 전) — 자동 집계·주간보고에는 쓰지 않고 엑셀 원장 `중요` 열에만(i-m2-plan 6절 #4) */
+  flagged?: boolean;
 }
 
 export interface SummaryInput {
