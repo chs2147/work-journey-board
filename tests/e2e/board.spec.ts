@@ -386,3 +386,24 @@ test("입력칸 높이가 내용에 맞는다 — 웹 글꼴 로딩 후·포커�
   await page.keyboard.press("Control+ArrowRight"); // 금요일이 넓어지고 목요일이 좁아진다
   expect(await mismatched()).toEqual([]);
 });
+
+test("업무 메뉴는 아래 행 머리·업무 추가·메모 행보다 위에 뜬다(가려지지 않음)", async ({ page }) => {
+  for (const name of [SEC, DASH]) {
+    const header = page.getByTestId("category-header").filter({ hasText: name });
+    await header.getByRole("button", { name: `${name} 메뉴` }).click();
+    const items = page.getByRole("menu").getByRole("menuitem");
+    await expect(items.last()).toBeVisible();
+    // 메뉴 항목마다 그 자리(왼쪽 끝)의 맨 위 요소가 메뉴 자신이어야 한다
+    for (const item of await items.all()) {
+      const onTop = await item.evaluate((el) => {
+        const r = el.getBoundingClientRect();
+        // 아래 행 머리와 겹치는 곳은 메뉴의 왼쪽 끝 — 그 근처를 본다
+        const hit = document.elementFromPoint(r.left + 6, r.top + r.height / 2);
+        return hit !== null && el.contains(hit);
+      });
+      expect(onTop, `${name} 메뉴 "${await item.textContent()}"`).toBe(true);
+    }
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("menu")).toHaveCount(0);
+  }
+});

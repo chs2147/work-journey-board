@@ -82,6 +82,12 @@
   cursor: grab;
 }
 
+/* 행 머리는 sticky라 저마다 쌓임 층을 만든다 → 메뉴가 열린 행 머리만 이웃 행·열 머리보다 위로 올려야
+   메뉴가 아래 행 머리·"+ 업무 추가"·메모 행에 가려지지 않는다 */
+.menuOpen {
+  z-index: 6;
+}
+
 .rowHeaderTop {
   display: flex;
   align-items: flex-start;

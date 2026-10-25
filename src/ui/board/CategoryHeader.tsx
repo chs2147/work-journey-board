@@ -89,6 +89,7 @@ export function CategoryHeader({
         draggingId === category.id ? styles.dragging : "",
         dropAt === "before" ? styles.dropBefore : "",
         dropAt === "after" ? styles.dropAfter : "",
+        menuOpen ? styles.menuOpen : "",
       ].join(" ")}
       style={{ borderLeftColor: `var(--cat-${category.color})` }}
       draggable={!editing}
