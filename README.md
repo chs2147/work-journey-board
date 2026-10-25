@@ -50,6 +50,11 @@ npm run tauri dev    # 실앱 모드(윈도우 / 리눅스는 webkit2gtk-4.1 필
 - 윈도우 설치 파일: `main`에 반영되면 [Releases](https://github.com/chs2147/work-journey-board/releases)에 `v<버전>` 사전 릴리스로 올라간다. WebView2 오프라인 설치판은 Actions → *Build Windows installer* → Run workflow → `offline`.
 
 ## Version History
+### v0.1.3 (2026-10-25) — 엑셀 내보내기(I-M2 M2-S2)
+- 상단 [내보내기] 또는 Alt+E → 범위(이번 주 / 최근 4주 / 기간 지정 / 전체)·시트를 골라 엑셀 파일로 저장
+- 주간보고 시트(주차 블록·업무 색·메모·주간 요약 행) + 원장 시트(필터·첫 행 고정·`중요` ★ 열), A4 가로 인쇄 설정
+- 윈도우 저장 대화상자로 위치 선택(기본 `저장 폴더\exports`, 마지막 폴더 기억), OneDrive 폴더 경고, 저장 후 [폴더 열기]·[파일 열기]
+
 ### v0.1.2 (2026-10-25) — 업무 메뉴 가림 수정
 - 업무 행 머리의 `⋯` 메뉴가 아래 업무 행·"+ 업무 추가"·메모 행에 가려지던 문제 수정
 
