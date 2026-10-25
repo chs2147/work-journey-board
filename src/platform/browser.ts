@@ -1,5 +1,6 @@
 import wasmUrl from "sql.js/dist/sql-wasm.wasm?url";
 import sample from "../../fixtures/sample-weeks.json";
+import sampleLong from "../../fixtures/sample-long.json";
 import { DATA_FILE } from "../data/backup";
 import { prepareConnection } from "../data/driver";
 import { openSqlJs } from "../data/drivers/sqlJs";
@@ -12,6 +13,7 @@ import { baseName, dirOf, isOneDriveLike, type AppConfig, type Platform } from "
 // 주소 옵션
 //   ?today=YYYY-MM-DD   오늘 날짜 고정
 //   ?empty=1            기본 일지를 샘플 없이 빈 상태로
+//   ?sample=long        6주 + 연도 경계 가상 샘플(I-M2 통합 검증, fixtures/sample-long.json)
 //   ?fresh=1            설정 없음 → 첫 실행 화면
 //   ?existing=/경로     그 폴더에 샘플이 든 기존 일지를 미리 만들어 둠(첫 실행 "기존 일지 열기" 시험)
 //   ?config=/경로       설정의 저장 폴더를 그 경로로(없는 폴더면 "저장 폴더를 찾을 수 없음" 화면)
@@ -34,7 +36,7 @@ async function makeJournal(dir: string, withSample: boolean) {
   const d = await fs.openDatabase(fs.join(dir, DATA_FILE));
   await prepareConnection(d);
   await migrate(d);
-  if (withSample) await seedSample(d, sample);
+  if (withSample) await seedSample(d, params.get("sample") === "long" ? sampleLong : sample);
   await d.close();
 }
 

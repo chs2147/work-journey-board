@@ -282,10 +282,10 @@
 |---|---|---|
 | 첫 실행(3단계) | 최초 1회 | wireframe-first-run.svg |
 | 주간 보드 | 기본 | wireframe-weekly-board.svg |
-| 주간 요약 패널 | 보드 위 [주간 요약] | wireframe-weekly-board.svg ⑨ |
+| 주간 요약 패널 | 보드 위 [주간 요약] · `Alt+S` (구현 I-M2) | wireframe-weekly-board.svg ⑨ |
 | 연간 보기 팝오버 | [연간 보기] | wireframe-first-run.svg 오른쪽 |
 | 인사이트(경과 타임라인 / 활동 개요) | [인사이트] | [wireframe-insights.svg](wireframes/wireframe-insights.svg) |
-| 내보내기 대화상자 | [내보내기] | output-spec.md 4-1 |
+| 내보내기 대화상자 | [내보내기] · `Alt+E` (구현 I-M2) | output-spec.md 4-1 |
 | AI 지시문 미리보기·결과 붙여넣기 | 요약 패널 | output-spec.md 5-2 |
 | 설정(저장 위치 10-10·백업·업무 관리·무기록 기준·AI 모드·지시문) | [⚙] | — (표준 폼) |
 | 스플래시 창(10-11) | 앱을 켤 때 메인 창보다 먼저(최소 2.5초) | [splash-window.png](wireframes/splash-window.png) |

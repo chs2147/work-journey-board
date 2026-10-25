@@ -1,8 +1,12 @@
 import { describe, expect, it } from "vitest";
 import sample from "../../fixtures/sample-weeks.json";
+import sampleLong from "../../fixtures/sample-long.json";
 import { CATEGORY_COLOR_KEYS } from "../../src/shared/palette";
 
-describe("가상 샘플 fixture", () => {
+describe.each([
+  ["sample-weeks", sample],
+  ["sample-long", sampleLong],
+] as const)("가상 샘플 fixture %s", (_name, sample) => {
   it("항목은 셀마다 seq 1부터 연속, 첫 항목은 depth 0", () => {
     const cells = new Map<string, { seq: number; depth: number }[]>();
     for (const it of sample.items) {

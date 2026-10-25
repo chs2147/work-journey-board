@@ -3,9 +3,18 @@ import type { SqlDriver, SqlStatement } from "./driver";
 import { uuidv7 } from "./ids";
 
 export interface SampleData {
-  categories: { id: string; name: string; color: string; sortOrder: number; startDate: string }[];
-  items: { date: string; categoryId: string; seq: number; depth: number; text: string }[];
+  categories: {
+    id: string;
+    name: string;
+    color: string;
+    sortOrder: number;
+    startDate: string;
+    endDate?: string;
+  }[];
+  items: { date: string; categoryId: string; seq: number; depth: number; text: string; flagged?: boolean }[];
   memos: { date: string; text: string }[];
+  /** 저장된 주간 요약(수정본·AI본) — I-M2 통합 검증용 */
+  summaries?: { weekId: string; editedText?: string; aiText?: string }[];
 }
 
 export async function seedSample(driver: SqlDriver, data: SampleData, now: Date = new Date()): Promise<void> {
@@ -18,21 +27,33 @@ export async function seedSample(driver: SqlDriver, data: SampleData, now: Date 
         params: [c.id, c.name, c.color, c.sortOrder, ts, ts],
       },
       {
-        sql: "INSERT INTO category_period (id, category_id, start_date, end_date) VALUES (?, ?, ?, NULL)",
-        params: [uuidv7(), c.id, c.startDate],
+        sql: "INSERT INTO category_period (id, category_id, start_date, end_date) VALUES (?, ?, ?, ?)",
+        params: [uuidv7(), c.id, c.startDate, c.endDate ?? null],
       },
     );
   }
   for (const it of data.items) {
     stmts.push({
-      sql: "INSERT INTO entry_item (id, date, category_id, seq, depth, text, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-      params: [uuidv7(), it.date, it.categoryId, it.seq, it.depth, it.text, ts, ts],
+      sql: "INSERT INTO entry_item (id, date, category_id, seq, depth, text, flagged, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      params: [uuidv7(), it.date, it.categoryId, it.seq, it.depth, it.text, it.flagged ? 1 : 0, ts, ts],
     });
   }
   for (const m of data.memos) {
     stmts.push({
       sql: "INSERT INTO day_memo (date, text, updated_at) VALUES (?, ?, ?)",
       params: [m.date, m.text, ts],
+    });
+  }
+  for (const s of data.summaries ?? []) {
+    stmts.push({
+      sql: "INSERT INTO weekly_summary (week_id, ai_text, ai_saved_at, edited_text, edited_at) VALUES (?, ?, ?, ?, ?)",
+      params: [
+        s.weekId,
+        s.aiText ?? null,
+        s.aiText ? ts : null,
+        s.editedText ?? null,
+        s.editedText ? ts : null,
+      ],
     });
   }
   await driver.batch(stmts);
