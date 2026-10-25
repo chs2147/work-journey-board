@@ -50,6 +50,9 @@ npm run tauri dev    # 실앱 모드(윈도우 / 리눅스는 webkit2gtk-4.1 필
 - 윈도우 설치 파일: `main`에 반영되면 [Releases](https://github.com/chs2147/work-journey-board/releases)에 `v<버전>` 사전 릴리스로 올라간다. WebView2 오프라인 설치판은 Actions → *Build Windows installer* → Run workflow → `offline`.
 
 ## Version History
+### v0.1.2 (2026-10-25) — 업무 메뉴 가림 수정
+- 업무 행 머리의 `⋯` 메뉴가 아래 업무 행·"+ 업무 추가"·메모 행에 가려지던 문제 수정
+
 ### v0.1.1 (2026-10-24) — 주간 요약 패널(I-M2 M2-S1)
 - 상단 [주간 요약] 또는 Alt+S → 보드 오른쪽 패널: 보고 있는 주의 자동 집계(입력 즉시 반영, 메모 포함 켜기/끄기)
 - 수정본 만들기·자동 저장·다시 만들기·삭제(되돌리기), 작성 후 기록이 바뀌면 안내·비교·확인함
