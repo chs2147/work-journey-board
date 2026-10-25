@@ -10,6 +10,8 @@ import { sha256Hex } from "../../shared/hash";
 import { STR } from "../../shared/strings";
 import { reportError, splitKey, toast, track, useBoard, SAVE_DELAY_MS } from "../board/boardStore";
 import { useAppStore } from "../common/appStore";
+import { noteToText } from "../../domain/note";
+import { useNote } from "../note/noteStore";
 
 export type SummaryTab = "auto" | "edited";
 
@@ -45,9 +47,10 @@ let repo: JournalRepository | null = null;
 let draftTimer: ReturnType<typeof setTimeout> | null = null;
 let unsubscribe: (() => void) | null = null;
 
-/** 보드 화면 상태 → 자동 집계 입력. 그 주에 보이는 업무(보드 순서)와 화면의 칸·메모 */
+/** 보드 화면 상태 → 자동 집계 입력. 그 주에 보이는 업무(보드 순서)와 화면의 칸 + 메모 도크의 글 */
 export function boardSummaryInput(): SummaryInput | null {
-  const { view, cells, memos, weekId } = useBoard.getState();
+  const { view, cells, weekId } = useBoard.getState();
+  const note = useNote.getState();
   if (!view || view.weekId !== weekId) return null;
   return {
     weekId,
@@ -56,7 +59,7 @@ export function boardSummaryInput(): SummaryInput | null {
       const { date, categoryId } = splitKey(key);
       return list.map((d) => ({ date, categoryId, depth: d.depth, text: d.text }));
     }),
-    memos,
+    memo: noteToText(note.weekId === weekId ? note.doc : view.note),
   };
 }
 

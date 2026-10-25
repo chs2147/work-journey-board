@@ -4,6 +4,7 @@ import { basisText, finalVersion } from "../../domain/aggregate";
 import { sha256Hex } from "../../shared/hash";
 import { STR } from "../../shared/strings";
 import { focusStartCell, useBoard } from "../board/boardStore";
+import { useNote } from "../note/noteStore";
 import {
   acknowledgeChange,
   autoText,
@@ -29,8 +30,8 @@ export function SummaryPanel({ overlay }: { overlay: boolean }) {
   // 보드 화면 상태가 바뀔 때마다 다시 계산(입력 중인 글도 반영)
   const view = useBoard((s) => s.view);
   const cells = useBoard((s) => s.cells);
-  const memos = useBoard((s) => s.memos);
-  const input = useMemo(() => boardSummaryInput(), [view, cells, memos]); // eslint-disable-line react-hooks/exhaustive-deps
+  const noteDoc = useNote((s) => s.doc);
+  const input = useMemo(() => boardSummaryInput(), [view, cells, noteDoc]); // eslint-disable-line react-hooks/exhaustive-deps
   const auto = input ? autoText(input, includeMemo) : "";
   const changed = useBasisChanged(
     input ? basisText(input) : null,

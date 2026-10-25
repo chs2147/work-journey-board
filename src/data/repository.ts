@@ -9,6 +9,7 @@ import {
   type VisibleCategory,
 } from "../domain/categories";
 import type { SummaryInput } from "../domain/aggregate";
+import { docFromDayMemos, isNoteEmpty, noteToText, parseNoteDoc, type NoteDoc } from "../domain/note";
 import type { ExportWeek } from "../export/excel";
 import { normalizeCell } from "../domain/items";
 import { localDate, utcTimestamp } from "../domain/localTime";
@@ -44,7 +45,8 @@ export interface WeekView {
   categories: VisibleCategory[];
   /** 키: cellKey(date, categoryId) */
   items: Record<string, EntryItem[]>;
-  memos: Record<DateStr, string>;
+  /** 주간 메모(weekly-note-spec) — 아직 저장한 적 없는 주는 예전 요일 메모를 상자 1개로 보여 준다 */
+  note: NoteDoc;
 }
 
 export const cellKey = (date: DateStr, categoryId: string) => `${date}|${categoryId}`;
@@ -69,6 +71,9 @@ interface WeeklySummaryRow {
   edited_at: string | null;
 }
 
+/** 메모 문서 최대 크기(문자) — 이미지는 문서 밖(note_asset)에 둔다 */
+export const NOTE_MAX = 1_000_000;
+
 /** 수정본 최대 길이(입력 실수로 거대한 글이 들어가는 것 방지) */
 export const SUMMARY_MAX = 20000;
 
@@ -86,7 +91,7 @@ export function summaryInputOf(view: WeekView): SummaryInput {
     weekId: view.weekId,
     categories: view.categories.map((v) => ({ id: v.category.id, name: v.category.name })),
     items: Object.values(view.items).flat(),
-    memos: view.memos,
+    memo: noteToText(view.note),
   };
 }
 
@@ -352,10 +357,6 @@ export class JournalRepository {
       `SELECT ${ITEM_COLUMNS} FROM entry_item WHERE date BETWEEN ? AND ? ORDER BY date, category_id, seq`,
       [start, end],
     );
-    const memos = await this.db.select<{ date: string; text: string }>(
-      "SELECT date, text FROM day_memo WHERE date BETWEEN ? AND ?",
-      [start, end],
-    );
     const items: Record<string, EntryItem[]> = {};
     for (const r of rows.map(toItem)) (items[cellKey(r.date, r.categoryId)] ??= []).push(r);
     const withItems = new Set(rows.map((r) => r.category_id));
@@ -364,8 +365,59 @@ export class JournalRepository {
       days: weekDays(weekId),
       categories: visibleCategories(categories, periods, start, end, withItems),
       items,
-      memos: Object.fromEntries(memos.map((m) => [m.date, m.text])),
+      note: (await this.getWeekNote(weekId)).doc,
     };
+  }
+
+  // ── 주간 메모(weekly-note-spec 5절) ─────────────────
+  /**
+   * 그 주의 메모 문서. 저장한 적 없는 주는 예전 요일 메모(day_memo)를 상자 1개로 만들어 보여 준다(legacy).
+   * 예전 표는 읽기만 하고 지우지 않는다. 처음 저장하면 week_note로 옮겨지고 그 뒤로는 week_note만 본다.
+   */
+  async getWeekNote(weekId: WeekId): Promise<{ doc: NoteDoc; legacy: boolean }> {
+    const [row] = await this.db.select<{ doc: string }>("SELECT doc FROM week_note WHERE week_id = ?", [
+      weekId,
+    ]);
+    if (row) return { doc: parseNoteDoc(row.doc), legacy: false };
+    const { start, end } = weekRange(weekId);
+    const memos = await this.db.select<{ date: string; text: string }>(
+      "SELECT date, text FROM day_memo WHERE date BETWEEN ? AND ?",
+      [start, end],
+    );
+    const doc = docFromDayMemos(weekId, Object.fromEntries(memos.map((m) => [m.date, m.text])), () =>
+      uuidv7(this.clock().getTime()),
+    );
+    return { doc, legacy: doc.boxes.length > 0 };
+  }
+
+  /** 메모 문서 저장(통째로). 비어도 행을 남긴다 — 예전 요일 메모가 다시 보이지 않게 */
+  async saveWeekNote(weekId: WeekId, doc: NoteDoc): Promise<void> {
+    const json = JSON.stringify(parseNoteDoc(JSON.stringify(doc)));
+    if (json.length > NOTE_MAX) throw new ValidationError("메모가 너무 큽니다");
+    await this.db.execute(
+      "INSERT INTO week_note (week_id, doc, updated_at) VALUES (?, ?, ?) ON CONFLICT(week_id) DO UPDATE SET doc = excluded.doc, updated_at = excluded.updated_at",
+      [weekId, json, this.ts()],
+    );
+  }
+
+  /** 범위 안에서 메모에 글이 있는 주(예전 요일 메모만 있는 주 포함) */
+  private async noteWeeks(from: DateStr, to: DateStr): Promise<Set<WeekId>> {
+    const [wa, wb] = [weekIdOf(from), weekIdOf(to)];
+    const notes = await this.db.select<{ week_id: string; doc: string }>(
+      "SELECT week_id, doc FROM week_note WHERE week_id BETWEEN ? AND ?",
+      [wa, wb],
+    );
+    const saved = new Set(notes.map((n) => n.week_id));
+    const out = new Set(notes.filter((n) => !isNoteEmpty(parseNoteDoc(n.doc))).map((n) => n.week_id));
+    const legacy = await this.db.select<{ date: string }>(
+      "SELECT date FROM day_memo WHERE date BETWEEN ? AND ? AND trim(text) <> ''",
+      [from, to],
+    );
+    for (const r of legacy) {
+      const w = weekIdOf(r.date);
+      if (!saved.has(w)) out.add(w);
+    }
+    return out;
   }
 
   // ── 주간 요약(output-spec 2절) ───────────────────────
@@ -426,9 +478,13 @@ export class JournalRepository {
   /** 기록(항목·메모)이 있는 가장 이른 주. 없으면 null — "전체" 범위의 시작 */
   async firstRecordWeek(): Promise<WeekId | null> {
     const [r] = await this.db.select<{ d: string | null }>(
-      "SELECT MIN(d) AS d FROM (SELECT MIN(date) AS d FROM entry_item WHERE trim(text) <> '' UNION ALL SELECT MIN(date) AS d FROM day_memo WHERE trim(text) <> '')",
+      "SELECT MIN(date) AS d FROM entry_item WHERE trim(text) <> ''",
     );
-    return r?.d ? weekIdOf(r.d) : null;
+    const firstItem = r?.d ? weekIdOf(r.d) : null;
+    const notes = [...(await this.noteWeeks("0001-01-01", "9999-12-31"))].sort();
+    const firstNote = notes[0] ?? null;
+    if (!firstItem) return firstNote;
+    return firstNote && firstNote < firstItem ? firstNote : firstItem;
   }
 
   /** 내보내기 대화상자의 미리 계산: 주 수 · 기록이 있는 업무 수 · 항목 수(메모 제외) */
@@ -838,20 +894,6 @@ export class JournalRepository {
     return (await this.pendingRules(weekId)).map((rule) => ({ rule, date: ruleDate(rule, weekId) }));
   }
 
-  /** 일일 메모. 비우면 행을 지운다. */
-  async saveMemo(date: DateStr, text: string): Promise<void> {
-    if (!DATE_RE.test(date)) throw new ValidationError(`날짜 형식 오류: ${date}`);
-    const t = text.trim() ? text.slice(0, 4000) : "";
-    if (!t) {
-      await this.db.execute("DELETE FROM day_memo WHERE date = ?", [date]);
-      return;
-    }
-    await this.db.execute(
-      "INSERT INTO day_memo (date, text, updated_at) VALUES (?, ?, ?) ON CONFLICT(date) DO UPDATE SET text = excluded.text, updated_at = excluded.updated_at",
-      [date, t, this.ts()],
-    );
-  }
-
   // ── 무기록 종료 제안 ────────────────────────────────
   async getNudges(currentWeek: WeekId = this.currentWeek()): Promise<string[]> {
     const settings = await this.getSettings();
@@ -873,11 +915,11 @@ export class JournalRepository {
       const start = r.recurrence_id ? startWeeks.get(r.recurrence_id) : undefined;
       return !(start && Number(r.untouched) === 1 && weekIdOf(r.date) >= start);
     });
-    const memoRows = await this.db.select<{ date: string }>(
-      "SELECT date FROM day_memo WHERE date BETWEEN ? AND ?",
-      [from, to],
-    );
-    const weeksWithAnyRecord = new Set<WeekId>([...itemRows, ...memoRows].map((r) => weekIdOf(r.date)));
+    // "뭐라도 기록한 주" = 업무 항목 또는 주간 메모에 글이 있는 주(data-spec 5-1, weekly-note-spec 6절)
+    const weeksWithAnyRecord = new Set<WeekId>([
+      ...itemRows.map((r) => weekIdOf(r.date)),
+      ...(await this.noteWeeks(from, to)),
+    ]);
     const weeksWithItemsByCategory = new Map<string, Set<WeekId>>();
     for (const r of itemRows) {
       const set = weeksWithItemsByCategory.get(r.category_id) ?? new Set<WeekId>();
@@ -912,14 +954,16 @@ export class JournalRepository {
     const from = weekStart(first);
     const to = weekRange(addWeeks(first, weeksInIsoYear(isoYear) - 1)).end;
     const rows = await this.db.select<{ date: string }>(
-      "SELECT date FROM entry_item WHERE date BETWEEN ? AND ? UNION SELECT date FROM day_memo WHERE date BETWEEN ? AND ?",
-      [from, to, from, to],
+      "SELECT DISTINCT date FROM entry_item WHERE date BETWEEN ? AND ?",
+      [from, to],
     );
     const out = new Map<WeekId, number>();
     for (const r of rows) {
       const w = weekIdOf(r.date);
       out.set(w, (out.get(w) ?? 0) + 1);
     }
+    // 메모에는 날짜가 없다: 업무 기록 없이 메모만 있는 주는 가장 연한 1단계(weekly-note-spec 11절 #8)
+    for (const w of await this.noteWeeks(from, to)) if (!out.has(w)) out.set(w, 1);
     return out;
   }
 }

@@ -14,15 +14,27 @@ export interface Settings {
     lastExportDir: string | null;
     /** 왼쪽 중요 업무 패널 열림(important-repeat-spec 2-5). 앱을 켤 때 0건이면 이 값과 관계없이 닫힌 채 시작 */
     importantPanelOpen: boolean;
+    /** 보드 아래 메모 도크 높이(px)·접힘(weekly-note-spec 3절) */
+    noteDockHeight: number;
+    noteDockCollapsed: boolean;
   };
 }
+
+/** 메모 도크 최소 높이(px) */
+export const NOTE_DOCK_MIN = 120;
 
 export const DEFAULT_SETTINGS: Settings = {
   nudgeWeeks: 3,
   backup: { dailyKeep: 14, monthlyKeep: 12 },
   summary: { includeMemo: true },
   ai: { mode: "clipboard", promptTemplate: null, api: { endpoint: null, model: null } },
-  ui: { summaryPanelOpen: false, lastExportDir: null, importantPanelOpen: true },
+  ui: {
+    summaryPanelOpen: false,
+    lastExportDir: null,
+    importantPanelOpen: true,
+    noteDockHeight: 280,
+    noteDockCollapsed: false,
+  },
 };
 
 export type SettingsPatch = {
@@ -56,5 +68,6 @@ export function mergeSettings(base: Settings, patch: unknown): Settings {
   if (!(s.backup.dailyKeep >= 1)) s.backup.dailyKeep = DEFAULT_SETTINGS.backup.dailyKeep;
   if (!(s.backup.monthlyKeep >= 0)) s.backup.monthlyKeep = DEFAULT_SETTINGS.backup.monthlyKeep;
   if (s.ai.mode === "api") s.ai.mode = "clipboard"; // v1에서는 API 모드 선택 불가(자리만)
+  if (!(s.ui.noteDockHeight >= NOTE_DOCK_MIN)) s.ui.noteDockHeight = DEFAULT_SETTINGS.ui.noteDockHeight;
   return s;
 }

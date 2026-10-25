@@ -2,6 +2,7 @@
 import type { SqlDriver, SqlStatement } from "./driver";
 import init0001 from "./migrations/0001_init.sql?raw";
 import importantRepeat0002 from "./migrations/0002_important_repeat.sql?raw";
+import weekNote0003 from "./migrations/0003_week_note.sql?raw";
 
 export interface Migration {
   version: number;
@@ -12,6 +13,7 @@ export interface Migration {
 export const MIGRATIONS: Migration[] = [
   { version: 1, sql: init0001 },
   { version: 2, sql: importantRepeat0002 },
+  { version: 3, sql: weekNote0003 },
 ];
 
 export const LATEST_SCHEMA_VERSION = MIGRATIONS.at(-1)!.version;

@@ -63,13 +63,33 @@ describe("마이그레이션 (data-spec 7-5)", () => {
       [ts, ts],
     );
     const before = vi.fn().mockResolvedValue(undefined);
-    expect(await migrate(db, { beforeMigrate: before })).toBe(2);
+    expect(await migrate(db, { beforeMigrate: before, migrations: MIGRATIONS.slice(0, 2) })).toBe(2);
     expect(before).toHaveBeenCalledWith(1, 2);
     const [row] = await db.select<Record<string, unknown>>(
       "SELECT text, flagged, flag_done_at, recurrence_id FROM entry_item WHERE id = 'i'",
     );
     expect(row).toEqual({ text: "가상 기록", flagged: 0, flag_done_at: null, recurrence_id: null });
     for (const t of ["recurrence", "recurrence_line", "recurrence_week"]) {
+      expect(
+        await db.select("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?", [t]),
+      ).toHaveLength(1);
+    }
+    expect(await quickCheck(db)).toBe(true);
+  });
+
+  it("v2 → v3(주간 메모): 직전 백업 호출, 요일 메모는 그대로 남고 새 표가 생긴다", async () => {
+    const db = await openSqlJsMemory();
+    await migrate(db, { migrations: MIGRATIONS.slice(0, 2) });
+    await db.execute(
+      "INSERT INTO day_memo (date, text, updated_at) VALUES ('2026-10-22', '가상 메모', '2026-10-22T00:00:00.000Z')",
+    );
+    const before = vi.fn().mockResolvedValue(undefined);
+    expect(await migrate(db, { beforeMigrate: before })).toBe(3);
+    expect(before).toHaveBeenCalledWith(2, 3);
+    expect(await db.select("SELECT date, text FROM day_memo")).toEqual([
+      { date: "2026-10-22", text: "가상 메모" },
+    ]);
+    for (const t of ["week_note", "note_asset"]) {
       expect(
         await db.select("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?", [t]),
       ).toHaveLength(1);

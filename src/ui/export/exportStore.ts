@@ -9,6 +9,7 @@ import { STR } from "../../shared/strings";
 import { flushAll, reportError, toast, useBoard } from "../board/boardStore";
 import { useAppStore } from "../common/appStore";
 import { flushDraft } from "../summary/summaryStore";
+import { flushNote } from "../note/noteStore";
 
 export type RangeKind = "thisWeek" | "last4" | "custom" | "all";
 
@@ -69,6 +70,7 @@ export async function runExport(c: ExportChoice): Promise<string | null> {
     // 입력 중인 칸·수정본까지 저장한 뒤에 읽는다
     await flushAll();
     await flushDraft();
+    await flushNote();
     const current = repo.currentWeek();
     const [from, to] = resolveRange(c, current, await repo.firstRecordWeek());
 

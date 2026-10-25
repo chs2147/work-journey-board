@@ -80,20 +80,20 @@ test("개조식 키: Enter·Shift+Enter·Tab·Shift+Tab·Backspace·Alt+↑↓·
   expect(await outline(cell(page, DASH, TODAY))).toEqual(["가 항목", "·나 세부", "다 세부\n둘째 줄"]);
 });
 
-test("칸 경계 ↑↓: 위·아래 업무 칸, 마지막 업무 아래는 메모", async ({ page }) => {
+test("칸 경계 ↑↓: 위·아래 업무 칸, 마지막 업무 아래는 주간 메모(Alt+M으로 보드 복귀)", async ({ page }) => {
   // 시작 커서: 정산·목 마지막 항목
   await page.keyboard.press("ArrowDown");
   await expect(page.locator(":focus")).toHaveValue("점검 결과 보고서 초안 작성"); // 보안·목
   await page.keyboard.press("ArrowDown"); // 대시보드·목(빈 칸 → 빈 항목 생성)
   await page.keyboard.type("대시보드 기록");
-  await page.keyboard.press("ArrowDown"); // 온보딩·목
-  await page.keyboard.press("ArrowDown"); // 메모·목
-  await expect(page.locator(":focus")).toHaveAttribute("aria-label", `목 ${TODAY} 메모`);
-  await page.keyboard.press("ArrowUp"); // 온보딩·목
-  await page.keyboard.press("ArrowUp"); // 대시보드·목
+  await page.keyboard.press("ArrowUp"); // 보안·목
+  await page.keyboard.press("ArrowDown"); // 대시보드·목
   await expect(page.locator(":focus")).toHaveValue("대시보드 기록");
-  await page.keyboard.press("ArrowUp");
-  await page.keyboard.press("ArrowUp");
+  await page.keyboard.press("ArrowDown"); // 온보딩·목
+  await page.keyboard.press("ArrowDown"); // 주간 메모(예전 요일 메모가 든 상자, 글 끝)
+  await expect(page.locator(":focus")).toHaveClass(/note-prose/);
+  await expect(page.locator(":focus")).toContainText("(목) 부서 월례 회의 참석");
+  await page.keyboard.press("Alt+KeyM"); // 보드로
   await expect(page.locator(":focus")).toHaveValue("테스트 데이터 이관 스크립트 작성 착수");
   // 지나온 빈 칸(온보딩)은 비어 있어야 한다
   await page.keyboard.press("Escape");
@@ -261,7 +261,7 @@ async function composingEnter(page: Page, opt: { isComposing: boolean; keyCode?:
   }, opt);
 }
 
-test("2분 시나리오: 빈 일지에서 키보드만으로 업무 3개 × 항목 2개 + 메모", async ({ page }) => {
+test("2분 시나리오: 빈 일지에서 키보드만으로 업무 3개 × 항목 2개 + 주간 메모", async ({ page }) => {
   await page.goto(`/?today=${TODAY}&empty=1`);
   let keys = 0;
   const press = async (k: string) => {
@@ -285,7 +285,7 @@ test("2분 시나리오: 빈 일지에서 키보드만으로 업무 3개 × 항�
     await type(`${n} 첫째 진행`);
     await press("Enter");
     await type(`${n} 둘째 진행`);
-    await press("ArrowDown");
+    await press("ArrowDown"); // 마지막 업무 아래 ↓ → 주간 메모(상자가 없으면 새 상자)
   }
   await type("메모 한 줄");
   await press("Escape");
@@ -297,7 +297,7 @@ test("2분 시나리오: 빈 일지에서 키보드만으로 업무 3개 × 항�
   for (const n of ["가", "나", "다"]) {
     expect(await values(cell(page, `업무 ${n}`, TODAY))).toEqual([`${n} 첫째 진행`, `${n} 둘째 진행`]);
   }
-  await expect(page.getByRole("textbox", { name: `목 ${TODAY} 메모` })).toHaveValue("메모 한 줄");
+  await expect(page.locator(".note-prose")).toHaveText("메모 한 줄");
   // 글자 외 조작 키 = Enter×3 + Esc + Alt+T + (Enter + ↓)×3 + Esc = 12회
   expect(
     keys -
@@ -308,6 +308,8 @@ test("2분 시나리오: 빈 일지에서 키보드만으로 업무 3개 × 항�
 });
 
 test("업무 행 머리를 끌어서 순서 바꾸기 — 머리의 위쪽 절반에 놓으면 그 위로", async ({ page }) => {
+  // 기본 창(720px)에서는 메모 도크 때문에 4번째 업무와 1번째가 한 화면에 안 들어온다 → 도크를 접고 끈다
+  await page.getByRole("button", { name: "메모 접기" }).click();
   const headers = page.getByTestId("category-header");
   await headers
     .filter({ hasText: ONB })
@@ -387,7 +389,7 @@ test("입력칸 높이가 내용에 맞는다 — 웹 글꼴 로딩 후·포커�
   expect(await mismatched()).toEqual([]);
 });
 
-test("업무 메뉴는 아래 행 머리·업무 추가·메모 행보다 위에 뜬다(가려지지 않음)", async ({ page }) => {
+test("업무 메뉴는 아래 행 머리·업무 추가 행보다 위에 뜬다(가려지지 않음)", async ({ page }) => {
   for (const name of [SEC, DASH]) {
     const header = page.getByTestId("category-header").filter({ hasText: name });
     await header.getByRole("button", { name: `${name} 메뉴` }).click();

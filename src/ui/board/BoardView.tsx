@@ -1,13 +1,13 @@
-// 주간 보드: 포커스 열 격자(overview 10-1). 행 = 업무, 열 = 월~일, 아래 = 업무 추가 → 메모.
+// 주간 보드: 포커스 열 격자(overview 10-1). 행 = 업무, 열 = 월~일, 아래 = 업무 추가. 메모는 보드 아래 메모 도크(weekly-note-spec).
 import { useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { cellKey } from "../../data/repository";
 import { DAY_LABELS, type DateStr } from "../../domain/week";
 import { STR } from "../../shared/strings";
-import { enterCell, reorderVisible, setFocus, setFocusDay, useBoard } from "./boardStore";
+import { focusNote } from "../note/noteStore";
+import { enterCell, reorderVisible, setFocusDay, useBoard } from "./boardStore";
 import { CategoryHeader } from "./CategoryHeader";
 import { CellEditor, type CellNav } from "./CellEditor";
 import { AddCategoryRow } from "./AddCategoryRow";
-import { MemoCell } from "./MemoCell";
 import styles from "./Board.module.css";
 
 const LABEL_WIDTH = "184px";
@@ -18,7 +18,6 @@ export function BoardView() {
   const focusDay = useBoard((s) => s.focusDay);
   const today = useBoard((s) => s.today);
   const cells = useBoard((s) => s.cells);
-  const memos = useBoard((s) => s.memos);
   const nudges = useBoard((s) => s.nudges);
   const nudgeWeeks = useBoard((s) => s.nudgeWeeks);
   const [dragId, setDragId] = useState<string | null>(null);
@@ -33,7 +32,6 @@ export function BoardView() {
   const cats = view.categories;
 
   const hasRecords = (day: DateStr) =>
-    Boolean(memos[day]?.trim()) ||
     cats.some((c) => (cells[cellKey(day, c.category.id)] ?? []).some((i) => i.text.trim()));
 
   const widths = view.days.map((day, i) => {
@@ -53,19 +51,13 @@ export function BoardView() {
       if (row < cats.length - 1) {
         enterCell(cellKey(day, cats[row + 1]!.category.id), "above");
       } else {
+        // 마지막 업무 칸 아래 = 주간 메모(weekly-note-spec 4-6)
         setFocusDay(day);
-        setFocus({ kind: "memo", date: day });
+        focusNote();
       }
       return true;
     },
   });
-
-  const memoUp = (day: DateStr) => {
-    const last = cats.at(-1);
-    if (!last) return false;
-    enterCell(cellKey(day, last.category.id), "below");
-    return true;
-  };
 
   return (
     <div className={styles.scroll} ref={scrollRef}>
@@ -150,36 +142,6 @@ export function BoardView() {
         ))}
 
         <AddCategoryRow />
-
-        <div className={`${styles.rowHeader} ${styles.memoHeader}`}>
-          <span className={styles.name}>{STR.board.memo}</span>
-          <span className={styles.memoHint}>{STR.board.memoHint}</span>
-        </div>
-        {view.days.map((day, i) => {
-          const narrow = widths[i] === NARROW;
-          return (
-            <div
-              key={day}
-              className={`${styles.cell} ${styles.memoCell} ${day === focusDay ? styles.cellFocus : ""} ${narrow ? styles.cellNarrow : ""}`}
-              onMouseDown={(e) => {
-                if (narrow && e.target === e.currentTarget) {
-                  e.preventDefault();
-                  setFocusDay(day);
-                  setFocus({ kind: "memo", date: day });
-                }
-              }}
-            >
-              {!narrow && (
-                <MemoCell
-                  date={day}
-                  label={`${DAY_LABELS[i]} ${day}`}
-                  showPlaceholder={day === focusDay}
-                  onUp={() => memoUp(day)}
-                />
-              )}
-            </div>
-          );
-        })}
       </div>
     </div>
   );

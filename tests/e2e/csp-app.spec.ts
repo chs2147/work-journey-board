@@ -1,0 +1,108 @@
+// 프로덕션 빌드를 실앱 CSP(+ Tauri처럼 nonce) 아래에서 띄워, 화면 전체·메모 편집기·엑셀 내보내기가 CSP를 어기지 않는지.
+// (vite.config.ts preview 헤더 = src-tauri/tauri.conf.json의 CSP + 가짜 nonce → 'unsafe-inline'이 무시되는 실앱과 같은 조건)
+import { expect, test, type Page } from "@playwright/test";
+
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    (window as unknown as { __csp: string[] }).__csp = [];
+    document.addEventListener("securitypolicyviolation", (e) =>
+      (window as unknown as { __csp: string[] }).__csp.push(
+        `${e.violatedDirective} ${e.blockedURI} ${e.sample}`,
+      ),
+    );
+  });
+});
+
+/**
+ * 키를 누르고, 편집기(ProseMirror)가 바뀐 선택(있음/없음)을 읽을 때까지 기다린다.
+ * 편집기는 selectionchange 이벤트로 선택을 읽는데, 부하가 걸린 헤드리스 브라우저에서는 이 이벤트가 다음 키보다 늦게 올 수 있다
+ * (예: → 로 선택을 접은 직후 Enter가 먼저 처리되면 선택된 글이 지워진다). TipTap은 편집기 DOM에 `editor`를 달아 둔다.
+ */
+async function pressAndSync(page: Page, key: string, selected: boolean) {
+  await page.keyboard.press(key);
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const ed = (
+          document.activeElement as { editor?: { state: { selection: { empty: boolean } } } } | null
+        )?.editor;
+        return ed ? !ed.state.selection.empty : null;
+      }),
+    )
+    .toBe(selected);
+}
+
+const violations = (page: import("@playwright/test").Page) =>
+  page.evaluate(() => (window as unknown as { __csp: string[] }).__csp);
+
+test("보드·주간 메모 편집기(서식 전부)·엑셀 내보내기 — CSP 위반 0, 메모 글에 style 속성 없음", async ({
+  page,
+}) => {
+  const external: string[] = [];
+  page.on("request", (r) => {
+    if (
+      !r.url().startsWith("http://localhost:4173/") &&
+      !r.url().startsWith("data:") &&
+      !r.url().startsWith("blob:")
+    )
+      external.push(r.url());
+  });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/?today=2026-10-22");
+  await expect(page.getByTestId("week-title")).toContainText("2026-W43");
+
+  // 메모: 새 상자 → 제목·크기·색·형광펜·굵게·체크 목록
+  const canvas = page.getByTestId("note-canvas");
+  const c = (await canvas.boundingBox())!;
+  await page.mouse.click(c.x + 600, c.y + 80);
+  await page.keyboard.type("가상 회의 정리");
+  await page.keyboard.press("Control+Alt+Digit1");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("크게 쓴 글");
+  await pressAndSync(page, "Shift+Home", true);
+  const prose = page.locator(".note-prose").last();
+  const toolbar = page.getByTestId("note-toolbar");
+  // 서식마다 적용을 기다린다(선택 영역 반영 전에 다음 서식을 누르면 앞 서식이 덮일 수 있다)
+  await toolbar.getByLabel("글자 크기").selectOption("xl");
+  await expect(prose.locator(".note-fs-xl")).toHaveCount(1);
+  await toolbar.getByLabel("글자색").selectOption("blue");
+  await expect(prose.locator(".note-c-blue")).toHaveCount(1);
+  await toolbar.getByRole("button", { name: "형광펜" }).click();
+  await expect(prose.locator("mark.note-hl")).toHaveCount(1);
+  await toolbar.getByRole("button", { name: "굵게 (Ctrl+B)" }).click();
+  await expect(prose.locator("strong")).toHaveCount(1);
+  await pressAndSync(page, "ArrowRight", false); // 선택 접기(글 끝으로)
+  await page.keyboard.press("Enter");
+  await page.keyboard.press("Control+Shift+Digit9");
+  await page.keyboard.type("할 일");
+
+  await expect(prose.locator("h1")).toHaveText("가상 회의 정리");
+  await expect(
+    prose.locator(".note-fs-xl.note-c-blue, .note-c-blue .note-fs-xl, .note-fs-xl .note-c-blue"),
+  ).toHaveCount(1);
+  await expect(prose.locator("mark.note-hl")).toHaveCount(1);
+  await expect(prose.locator('ul[data-type="taskList"] li')).toHaveCount(1);
+  // 우리 서식(크기·색·형광펜)은 클래스로만 — style 속성을 쓰지 않는다(실앱 CSP에서 막히는 방식).
+  // (편집기가 CSSOM으로 넣는 스타일은 CSP 대상이 아니어서 아래 위반 0으로 확인한다)
+  expect(
+    await page
+      .locator(
+        ".note-prose span[data-size][style], .note-prose span[data-color][style], .note-prose mark[style]",
+      )
+      .count(),
+  ).toBe(0);
+  await expect(prose.locator('ul[data-type="taskList"] input[type="checkbox"]')).toHaveAccessibleName(
+    "할 일 체크: 할 일",
+  );
+
+  // 엑셀 내보내기(ExcelJS 지연 로딩 포함)
+  await page.keyboard.press("Escape");
+  await page.keyboard.press("Alt+KeyE");
+  page.once("dialog", (d) => void d.accept(d.defaultValue()));
+  const download = page.waitForEvent("download");
+  await page.getByTestId("export-dialog").getByRole("button", { name: "저장 위치 선택…" }).click();
+  await download;
+
+  expect(await violations(page)).toEqual([]);
+  expect(external).toEqual([]);
+});

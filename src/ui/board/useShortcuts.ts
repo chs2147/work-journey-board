@@ -14,6 +14,7 @@ import {
 } from "./boardStore";
 import { toggleExport, useExport } from "../export/exportStore";
 import { toggleSummary } from "../summary/summaryStore";
+import { focusNote, leaveNote } from "../note/noteStore";
 
 const isTyping = (el: Element | null) => el instanceof HTMLTextAreaElement || el instanceof HTMLInputElement;
 
@@ -54,6 +55,12 @@ export function useShortcuts() {
           // 엑셀 내보내기(i-m2-plan M2-S2)
           e.preventDefault();
           toggleExport();
+        } else if (e.code === "KeyM") {
+          // 메모로 가기 / 메모에서 보드로(weekly-note-spec 4-6)
+          e.preventDefault();
+          const inNote = (document.activeElement as Element | null)?.closest("[data-note-root]");
+          if (inNote) leaveNote();
+          else focusNote();
         } else if (e.code === "KeyS") {
           // 주간 요약 패널(i-m2-plan M2-S1) — 열면 패널로 포커스
           e.preventDefault();
@@ -61,6 +68,8 @@ export function useShortcuts() {
         }
         return;
       }
+      // 메모 안의 실행 취소는 메모(편집기·상자 기록)가 맡는다 — 보드 실행 취소로 가지 않게
+      if (mod && (e.target as Element | null)?.closest?.("[data-note-root]")) return;
       if (mod && !e.altKey) {
         if (e.code === "KeyZ") {
           e.preventDefault();

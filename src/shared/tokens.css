@@ -50,6 +50,17 @@
   --toast-bg: #2c2c2a;
   --toast-text: #ffffff;
   --toast-action: #86b6ef;
+  /* 주간 메모(weekly-note-spec 4절): 판 바탕·점 격자, 상자 배경, 글자색 — 카드 바탕에서 4.5:1 이상 */
+  --note-canvas: #fbfaf7;
+  --note-dot: #dcd9cf;
+  --note-bg-yellow: #fff6c9;
+  --note-bg-blue: #e6eefb;
+  --note-bg-green: #e3f1ea;
+  --note-bg-pink: #fbe4ec;
+  --note-orange: #a8471a;
+  --note-blue: #1f5fa8;
+  --note-green: #0f6e46;
+  --note-red: #b3261e;
 
   /* 순차 색(연간 미니맵·히트맵, viz-spec 2-3) */
   --heat-0: #efeee9;
@@ -95,6 +106,16 @@
     --toast-bg: #f0efec;
     --toast-text: #1a1a19;
     --toast-action: #185fa5;
+    --note-canvas: #1e1e1d;
+    --note-dot: #3a3a37;
+    --note-bg-yellow: #3a3420;
+    --note-bg-blue: #1f2c3d;
+    --note-bg-green: #1f3329;
+    --note-bg-pink: #3a2430;
+    --note-orange: #f0a070;
+    --note-blue: #8cbcf2;
+    --note-green: #6fd3a6;
+    --note-red: #f08b84;
 
     --heat-0: #262624;
     --heat-1: #184f95;

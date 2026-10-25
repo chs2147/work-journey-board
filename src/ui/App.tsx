@@ -17,6 +17,8 @@ import { useExport } from "./export/exportStore";
 import { SettingsPanel } from "./settings/SettingsPanel";
 import { setSummaryOpen, useSummary } from "./summary/summaryStore";
 import { SummaryPanel } from "./summary/SummaryPanel";
+import { NoteDock } from "./note/NoteDock";
+import { useNote } from "./note/noteStore";
 import { finishSplash } from "./splash";
 import styles from "./App.module.css";
 
@@ -79,6 +81,7 @@ const BOARD_MIN_W = 900;
 function Workspace() {
   const panelOpen = useBoard((s) => s.panelOpen);
   const summaryOpen = useSummary((s) => s.open);
+  const noteExpanded = useNote((s) => s.expanded);
   // 좁은 창이면 패널을 보드 위에 겹쳐 띄우고, 보드를 누르면 닫는다(spec 1-3)
   const narrow = useMediaQuery("(max-width: 1179px)");
   const width = useWindowWidth();
@@ -95,7 +98,11 @@ function Workspace() {
           if (summaryOverlay && summaryOpen) setSummaryOpen(false);
         }}
       >
-        <BoardView />
+        {/* [크게 보기]면 메모가 보드 영역을 덮는다(보드는 그대로 두고 숨김 — 입력 상태 유지) */}
+        <div className={noteExpanded ? styles.hidden : styles.boardFill}>
+          <BoardView />
+        </div>
+        <NoteDock />
       </div>
       {summaryOpen && <SummaryPanel overlay={summaryOverlay} />}
     </div>

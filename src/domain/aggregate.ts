@@ -18,7 +18,8 @@ export interface SummaryInput {
   categories: { id: string; name: string }[];
   /** 칸 안 순서(seq)대로. 칸끼리의 순서는 상관없다 */
   items: SummaryItem[];
-  memos: Record<DateStr, string>;
+  /** 주간 메모의 글(domain/note.ts noteToText — 이미지 빼고 글만, weekly-note-spec 6절). 없으면 "" */
+  memo: string;
 }
 
 export interface SummaryOptions {
@@ -74,12 +75,8 @@ export function buildWeeklySummary(input: SummaryInput, opt: SummaryOptions): st
     }
   }
 
-  if (opt.includeMemo) {
-    const memoLines = weekDays(input.weekId)
-      .filter((d) => !isBlank(input.memos[d] ?? ""))
-      .flatMap((d) => lines(MAIN + dayTag(d), MAIN_CONT, input.memos[d]!.trim()));
-    if (memoLines.length) out.push("", "[메모]", ...memoLines);
-  }
+  // 메모: 주간 메모의 글을 그대로(예전 요일 메모는 `- (요일) 내용` 줄로 옮겨져 있어 결과가 예전과 같다)
+  if (opt.includeMemo && !isBlank(input.memo)) out.push("", "[메모]", ...input.memo.trim().split("\n"));
 
   if (empty.length) out.push("", `※ 이번 주 기록 없음: ${empty.map((c) => c.name).join(", ")}`);
   return out.join("\n");

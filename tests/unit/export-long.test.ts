@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 import sampleLong from "../../fixtures/sample-long.json";
 import { seedSample } from "../../src/data/seed";
 import { buildWeeklySummary } from "../../src/domain/aggregate";
+import { weekIdOf } from "../../src/domain/week";
 import { buildWorkbook } from "../../src/export/excel";
 import { exportFileName } from "../../src/export/filename";
 import { freshRepo } from "./helpers";
@@ -57,8 +58,8 @@ describe("6주 가상 샘플 — 엑셀 통합", () => {
   it("주간보고: 6개 블록, 블록별 토·일 머리, 종료 업무는 끝난 주까지만, 요약 행 우선순위", async () => {
     const { wb } = await exportBack("2026-W38", "2026-W43");
     const ws = wb.getWorksheet("주간보고")!;
-    // 범위 안 토요일(W39·W43)·일요일(W41 메모) 기록 → 시트 열은 업무 + 월~일 = 8열
-    expect(ws.columns.map((c) => c.width)).toEqual([22, 34, 34, 34, 34, 34, 26, 26]);
+    // 범위 안 토요일(W39·W43) 항목 → 시트 열은 업무 + 월~토 = 7열(W41 일요일은 예전 요일 메모뿐 — 주간 메모는 요일이 없어 열을 만들지 않음)
+    expect(ws.columns.map((c) => c.width)).toEqual([22, 34, 34, 34, 34, 34, 26]);
     const b = blocks(ws);
     expect(b.map((x) => x.title.slice(0, 8))).toEqual([
       "2026-W38",
@@ -69,9 +70,9 @@ describe("6주 가상 샘플 — 엑셀 통합", () => {
       "2026-W43",
     ]);
     // 토·일 머리는 그 주에 기록이 있을 때만
-    expect(b.map((x) => x.header.length)).toEqual([6, 7, 6, 7, 6, 7]);
+    expect(b.map((x) => x.header.length)).toEqual([6, 7, 6, 6, 6, 7]);
     expect(b[1]!.header.at(-1)).toBe("토 09/26");
-    expect(b[3]!.header.at(-1)).toBe("일 10/11");
+    expect(b[3]!.header.at(-1)).toBe("금 10/09");
     // 분기 결산 지원: W40(10/2 종료)까지만, 항목 없는 주의 업무는 블록에 없음
     expect(b.map((x) => x.categories.includes("분기 결산 지원"))).toEqual([
       true,
@@ -87,7 +88,7 @@ describe("6주 가상 샘플 — 엑셀 통합", () => {
     expect(b.map((x) => x.summary.split("\n")[0])).toEqual(["—", "—", "—", "[수정본]", "[AI본]", "—"]);
   });
 
-  it("원장: 항목 + 메모가 빠짐없이(종료 업무의 과거 항목 포함), 중요 ★, 여러 줄 항목은 줄바꿈 유지", async () => {
+  it("원장: 항목 + 주간 메모(주 1행)가 빠짐없이(종료 업무의 과거 항목 포함), 중요 ★, 여러 줄 항목은 줄바꿈 유지", async () => {
     const { wb, weeks } = await exportBack("2026-W38", "2026-W43");
     const ws = wb.getWorksheet("원장")!;
     const rows: (string | number | null)[][] = [];
@@ -98,8 +99,13 @@ describe("6주 가상 샘플 — 엑셀 통합", () => {
         );
     });
     const inRange = sampleLong.items.filter((i) => i.date >= "2026-09-14" && i.date <= "2026-10-25");
-    const memosInRange = sampleLong.memos.filter((m) => m.date >= "2026-09-14" && m.date <= "2026-10-25");
-    expect(rows).toHaveLength(inRange.length + memosInRange.length);
+    const memoWeeks = new Set(
+      sampleLong.memos
+        .filter((m) => m.date >= "2026-09-14" && m.date <= "2026-10-25")
+        .map((m) => weekIdOf(m.date)),
+    );
+    expect(rows).toHaveLength(inRange.length + memoWeeks.size);
+    expect(rows.filter((r) => r[3] === "(주간 메모)").map((r) => r[1])).toEqual([...memoWeeks].sort());
     expect(rows.filter((r) => r[3] === "분기 결산 지원")).toHaveLength(3);
     expect(rows.filter((r) => r[7] === "★").map((r) => r[6])).toEqual([
       "교육 자료 초안 작성",

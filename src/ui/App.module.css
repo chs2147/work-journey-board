@@ -38,3 +38,14 @@
   border-top: 1px solid var(--line);
   background: var(--surface-card);
 }
+
+.boardFill {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.hidden {
+  display: none;
+}

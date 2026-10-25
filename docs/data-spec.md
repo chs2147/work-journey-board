@@ -154,7 +154,8 @@ CREATE TABLE app_meta (
     "promptTemplate": null,        // null = 기본 템플릿(output-spec.md 4절)
     "api": { "endpoint": null, "model": null }   // API 키는 DB에 저장하지 않음(윈도우 자격 증명 관리자, M4에서 확정)
   },
-  "ui": { "summaryPanelOpen": false, "lastExportDir": null }
+  "ui": { "summaryPanelOpen": false, "lastExportDir": null,
+          "noteDockHeight": 280, "noteDockCollapsed": false }   // 메모 도크 높이(최소 120)·접힘(weekly-note-spec 3절)
 }
 ```
 - **저장 폴더 경로는 DB에 둘 수 없다**(DB를 찾기 위한 정보이므로). → `%LOCALAPPDATA%\WorkJourneyBoard\config.json`에 `{ "dataDir": "...", "window": {...} }`만 저장. Roaming이 아닌 Local을 쓰는 이유: 회사 PC 로밍 프로필로 경로가 다른 PC에 퍼지지 않게.
@@ -168,6 +169,11 @@ CREATE TABLE app_meta (
 ### 3-x. 스키마 v2 (2026-10-24, `0002_important_repeat.sql`)
 - `entry_item`에 `flagged`(중요 표시) · `flag_done_at`(처리 완료 시각) · `recurrence_id`(매주 반복 연결)를 더하고, 반복 규칙 표 `recurrence` · `recurrence_line` · `recurrence_week`를 만든다. 정의·규칙은 [important-repeat-spec.md](important-repeat-spec.md) 4절이 정본이다.
 - 올릴 때 7-5절 규칙대로 직전 백업(`_pre-migration-v2`) 후 한 트랜잭션으로 적용한다.
+
+### 3-y. 스키마 v3 (2026-10-25, `0003_week_note.sql`)
+- 주간 메모 표 `week_note(week_id PK, doc JSON, updated_at)`와 메모 이미지 표 `note_asset`(N2부터 사용)을 만든다. 정의·문서 JSON·용량은 [weekly-note-spec.md](weekly-note-spec.md) 5절이 정본이다.
+- `day_memo`(요일 메모)는 **지우지 않고 읽기만** 한다: 그 주에 `week_note` 행이 없으면 요일 메모를 상자 1개의 글머리 목록으로 바꿔 보여 주고, 처음 저장할 때 `week_note`로 옮겨진다(비워도 행을 남겨 요일 메모가 다시 나오지 않게). 앱에는 `day_memo`에 쓰는 경로가 없다.
+- 직전 백업은 `_pre-migration-v3`.
 
 ## 4. 카테고리 활성 계산
 
@@ -210,7 +216,7 @@ ORDER BY c.sort_order;
 
 ### 5-1. 정의
 - **무기록 주**: 그 주(월~일)에 해당 업무의 `entry_item`이 0개.
-- **판정 대상 주**: 이번 주를 뺀 지난 주들 중 **"뭐라도 기록한 주"** 만 센다. 모든 업무 항목 0개 + 메모 0개인 주(휴가·출장 등)는 셈에서 빠진다. → 2주 휴가 다녀와서 모든 업무에 종료 제안이 뜨는 일을 막는다.
+- **판정 대상 주**: 이번 주를 뺀 지난 주들 중 **"뭐라도 기록한 주"** 만 센다. 모든 업무 항목 0개 + 주간 메모에 글 없음(옮기기 전 요일 메모 포함)인 주(휴가·출장 등)는 셈에서 빠진다. → 2주 휴가 다녀와서 모든 업무에 종료 제안이 뜨는 일을 막는다.
 - 거슬러 보는 범위는 최대 12주.
 
 ### 5-2. 판정식 (N = `settings.nudgeWeeks`, 기본 3)
@@ -239,10 +245,10 @@ ORDER BY c.sort_order;
 |---|---|
 | 카테고리 | **아카이브만**. 단, **기록이 한 건도 없는 업무는 실삭제 허용**("실수로 만든 업무 삭제") — 확인 대화상자 후 `category` + `category_period` 삭제 |
 | 항목 | **실삭제**. 되돌리기: ① 세션 내 실행 취소 스택(Ctrl+Z / Ctrl+Y, 최근 50 조작, 앱 종료 시 소멸) ② 삭제 직후 5초 토스트 "항목 삭제됨 [되돌리기]" ③ 그 이상은 백업에서 복원 |
-| 일일 메모 | 텍스트를 비우면 행 삭제(빈 행 저장 안 함). 실행 취소 스택에 포함 |
+| 주간 메모 | 상자 삭제는 토스트 [되돌리기] + 메모 실행 취소(`Ctrl+Z`, 보드 실행 취소와 별도 — weekly-note-spec 4-5). 메모를 다 비워도 `week_note` 행은 남긴다(빈 문서) |
 | 주간 요약 AI본·수정본 | 개별 "삭제" 버튼, 확인 후 해당 컬럼 NULL |
 
-- 실행 취소 스택 대상 조작: 항목 추가·수정·삭제·순서·깊이 변경, 메모 수정, 업무 이름·색·순서 변경. **종료·재활성화는 대상 아님**(별도 버튼으로 언제든 되돌릴 수 있으므로).
+- 실행 취소 스택 대상 조작: 항목 추가·수정·삭제·순서·깊이 변경, 업무 이름·색·순서 변경(주간 메모는 따로 — 위 표). **종료·재활성화는 대상 아님**(별도 버튼으로 언제든 되돌릴 수 있으므로).
 
 ---
 
@@ -300,9 +306,10 @@ interface SqlDriver {
 // 백업은 driver.execute("VACUUM INTO ...")로 한다(src/data/backup.ts).
 
 interface JournalRepository {          // SqlDriver 위의 단일 구현
-  getWeek(weekId: string): Promise<WeekView>;  // 보일 카테고리 + 7일 항목 + 메모 + 요약
+  getWeek(weekId: string): Promise<WeekView>;  // 보일 카테고리 + 7일 항목 + 주간 메모 + 요약
   saveCell(date: string, categoryId: string, items: ItemDraft[]): Promise<void>; // 셀 단위 통째 저장(트랜잭션)
-  saveMemo(date: string, text: string): Promise<void>;
+  getWeekNote(weekId: string): Promise<{ doc: NoteDoc; legacy: boolean }>; // legacy = 요일 메모를 옮겨 보여 주는 중
+  saveWeekNote(weekId: string, doc: NoteDoc): Promise<void>;              // 문서 통째(허용 노드만 남겨 저장)
   createCategory(...); updateCategory(...); archiveCategory(id); reactivateCategory(id); deleteEmptyCategory(id);
   getNudges(currentWeekId: string): Promise<string[]>;          // 5절
   getRange(fromWeek: string, toWeek: string): Promise<RangeData>; // 엑셀·시각화 공용

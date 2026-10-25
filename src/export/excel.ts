@@ -55,13 +55,10 @@ export function cellText(items: SummaryItem[]): string {
 
 const hasText = (s: string | undefined) => (s ?? "").trim() !== "";
 
-/** 그 주 그 요일에 업무 항목이나 메모가 있는가 */
+/** 그 주 그 요일에 업무 항목이 있는가(주간 메모는 요일이 없어 토·일 열을 만들지 않는다) */
 function dayHasRecord(input: SummaryInput, date: DateStr): boolean {
   const visible = new Set(input.categories.map((c) => c.id));
-  return (
-    hasText(input.memos[date]) ||
-    input.items.some((it) => it.date === date && visible.has(it.categoryId) && hasText(it.text))
-  );
+  return input.items.some((it) => it.date === date && visible.has(it.categoryId) && hasText(it.text));
 }
 
 /** 주간보고 시트의 요일 열: 월~금 + (범위 안 어느 주라도 기록이 있으면) 토·일 */
@@ -151,22 +148,18 @@ function writeWeeklySheet(ws: Worksheet, weeks: ExportWeek[]) {
       r++;
     }
 
-    // 메모 행(메모가 있는 주만)
-    if (blockDays.some((d) => hasText(w.input.memos[dates[d]!]))) {
+    // 메모 행(메모가 있는 주만): A=`메모`, B~마지막 열 병합 한 칸에 주간 메모의 글(weekly-note-spec 6절)
+    if (hasText(w.input.memo)) {
       ws.getCell(r, 1).value = "메모";
-      const texts: { text: string; width: number }[] = [];
-      for (const d of blockDays) {
-        const col = colOfDay.get(d)!;
-        const memo = (w.input.memos[dates[d]!] ?? "").trim();
-        if (memo) ws.getCell(r, col).value = `- ${memo.split("\n").join("\n  ")}`;
-        texts.push({ text: memo ? `- ${memo}` : "", width: widthOf(col) });
-      }
+      ws.mergeCells(r, 2, r, last);
+      const memo = w.input.memo.trim();
+      ws.getCell(r, 2).value = memo;
       for (const cell of blockRow(r)) {
         setFont(cell, { color: { argb: MEMO_COLOR } });
         cell.alignment = { wrapText: true, vertical: "top", horizontal: "left" };
         border(cell);
       }
-      ws.getRow(r).height = rowHeight(texts);
+      ws.getRow(r).height = rowHeight([{ text: memo, width: sumWidth(2, last) }]);
       r++;
     }
 
@@ -201,7 +194,7 @@ export interface LedgerRow {
   flagged: boolean;
 }
 
-/** 원장 행: 날짜 → 업무 보드 순서 → seq, 메모는 그날 마지막. 보이는 업무의 모든 항목(종료된 업무의 과거 항목 포함) */
+/** 원장 행: 날짜 → 업무 보드 순서 → seq, 주간 메모는 그 주 맨 끝 1행. 보이는 업무의 모든 항목(종료된 업무의 과거 항목 포함) */
 export function ledgerRows(weeks: ExportWeek[]): LedgerRow[] {
   const out: LedgerRow[] = [];
   for (const w of weeks) {
@@ -228,19 +221,20 @@ export function ledgerRows(weeks: ExportWeek[]): LedgerRow[] {
           });
         }
       }
-      const memo = (w.input.memos[date] ?? "").trim();
-      if (memo) {
-        out.push({
-          date,
-          weekId: w.input.weekId,
-          day,
-          category: "(메모)",
-          no: null,
-          sub: null,
-          text: memo,
-          flagged: false,
-        });
-      }
+    }
+    // 주간 메모: 주마다 1행, 그 주 행들 맨 끝. 날짜 = 그 주 월요일, 요일은 빈칸(weekly-note-spec 6절)
+    const memo = w.input.memo.trim();
+    if (memo) {
+      out.push({
+        date: weekDays(w.input.weekId)[0]!,
+        weekId: w.input.weekId,
+        day: "",
+        category: "(주간 메모)",
+        no: null,
+        sub: null,
+        text: memo,
+        flagged: false,
+      });
     }
   }
   return out;

@@ -31,9 +31,7 @@ export const PULSE_MS = 1200;
 export const UNDO_LIMIT = 50;
 export const TOAST_MS = 5000;
 
-export type FocusTarget =
-  | { kind: "item"; key: string; index: number; caret: "start" | "end" | number }
-  | { kind: "memo"; date: DateStr };
+export type FocusTarget = { kind: "item"; key: string; index: number; caret: "start" | "end" | number };
 
 export interface ToastAction {
   label: string;
@@ -59,7 +57,6 @@ export interface BoardState {
   view: WeekView | null;
   /** 화면에 보이는 셀의 편집 상태(키: cellKey) */
   cells: Record<string, ItemDraft[]>;
-  memos: Record<DateStr, string>;
   nudges: string[];
   nudgeWeeks: number;
   saving: number;
@@ -86,13 +83,10 @@ export interface BoardState {
   previews: Record<string, RepeatPreview[]>;
 }
 
-const MEMO_PREFIX = "memo|";
-
 // 화면 밖 상태(렌더링과 무관)
 let repo: JournalRepository | null = null;
 const timers = new Map<string, ReturnType<typeof setTimeout>>();
 const persistedCells = new Map<string, ItemDraft[]>();
-const persistedMemos = new Map<DateStr, string>();
 const undoStack: UndoEntry[] = [];
 const redoStack: UndoEntry[] = [];
 let toastSeq = 0;
@@ -121,7 +115,6 @@ export const useBoard = create<BoardState>(() => ({
   focusDay: "",
   view: null,
   cells: {},
-  memos: {},
   nudges: [],
   nudgeWeeks: 3,
   saving: 0,
@@ -231,37 +224,6 @@ async function persistCell(key: string) {
   if (lost > 0) toast(STR.toast.itemsDeleted(lost), { label: STR.toast.undo, run: () => void undo() });
 }
 
-// ── 메모 저장 ──────────────────────────────────────────
-async function applyMemo(date: DateStr, text: string) {
-  const k = MEMO_PREFIX + date;
-  const t = timers.get(k);
-  if (t) clearTimeout(t);
-  timers.delete(k);
-  if (date in get().memos || get().view?.days.includes(date))
-    set((s) => ({ memos: { ...s.memos, [date]: text } }));
-  await track(() => requireRepo().saveMemo(date, text));
-  persistedMemos.set(date, text.trim() ? text : "");
-}
-
-async function persistMemo(date: DateStr) {
-  const k = MEMO_PREFIX + date;
-  timers.delete(k);
-  const text = get().memos[date] ?? "";
-  const before = persistedMemos.get(date) ?? "";
-  const after = text.trim() ? text : "";
-  if (before === after) return;
-  try {
-    await track(() => requireRepo().saveMemo(date, after));
-  } catch (e) {
-    markFailed(k, true);
-    reportError(e);
-    return;
-  }
-  persistedMemos.set(date, after);
-  markFailed(k, false);
-  pushUndo({ undo: () => applyMemo(date, before), redo: () => applyMemo(date, after) });
-}
-
 function schedule(key: string, run: () => Promise<void>) {
   const t = timers.get(key);
   if (t) clearTimeout(t);
@@ -278,10 +240,7 @@ export async function flushAll() {
     clearTimeout(timers.get(k)!);
     timers.delete(k);
   }
-  for (const k of keys) {
-    if (k.startsWith(MEMO_PREFIX)) await persistMemo(k.slice(MEMO_PREFIX.length));
-    else await persistCell(k);
-  }
+  for (const k of keys) await persistCell(k);
 }
 
 // ── 주 불러오기·이동 ───────────────────────────────────
@@ -325,8 +284,6 @@ async function loadWeek(weekId: WeekId, focusDay: DateStr) {
       persistedCells.set(key, drafts);
     }
   }
-  persistedMemos.clear();
-  for (const day of view.days) persistedMemos.set(day, view.memos[day] ?? "");
   set({
     ready: true,
     today,
@@ -334,7 +291,6 @@ async function loadWeek(weekId: WeekId, focusDay: DateStr) {
     focusDay,
     view,
     cells,
-    memos: { ...view.memos },
     nudges,
     nudgeWeeks: settings.nudgeWeeks,
     repeating: rules.filter((x) => x.endWeek === null).map((x) => x.id),
@@ -593,25 +549,9 @@ export async function leaveCell(key: string) {
   }
 }
 
-export function editMemo(date: DateStr, text: string) {
-  set((s) => ({ memos: { ...s.memos, [date]: text } }));
-  schedule(MEMO_PREFIX + date, () => persistMemo(date));
-}
-
-export async function leaveMemo(date: DateStr) {
-  const k = MEMO_PREFIX + date;
-  if (timers.has(k)) {
-    clearTimeout(timers.get(k)!);
-    await persistMemo(date);
-  }
-}
-
 export async function retryFailed() {
   const failed = get().failed;
-  for (const k of failed) {
-    if (k.startsWith(MEMO_PREFIX)) await persistMemo(k.slice(MEMO_PREFIX.length));
-    else await persistCell(k);
-  }
+  for (const k of failed) await persistCell(k);
 }
 
 // ── 실행 취소 ──────────────────────────────────────────

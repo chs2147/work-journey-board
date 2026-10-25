@@ -31,7 +31,7 @@ const opt = (over: Partial<Parameters<typeof buildWorkbook>[2]> = {}) => ({
   to: "2026-W43",
   weekly: true,
   ledger: true,
-  appVersion: "0.1.2",
+  appVersion: "0.2.1",
   exportedAt: new Date(2026, 9, 24, 9, 30),
   ...over,
 });
@@ -121,15 +121,23 @@ describe("셀 글·요약 행·토일 열", () => {
     expect(summaryCellText({ editedText: null, aiText: null })).toBe("—");
   });
 
-  it("토·일 열은 범위 안 어느 주라도 기록(항목 또는 메모)이 있을 때만", async () => {
+  it("토·일 열은 범위 안 어느 주라도 그 요일에 항목이 있을 때만(주간 메모는 요일이 없어 세지 않음)", async () => {
     const weeks = await sampleWeeks();
     expect(sheetDays(weeks)).toEqual([0, 1, 2, 3, 4, 5]); // W43 토요일 기록, 일요일은 없음
     expect(sheetDays(weeks.slice(0, 1))).toEqual([0, 1, 2, 3, 4]);
-    const memoOnSunday: ExportWeek = {
-      ...weeks[0]!,
-      input: { ...weeks[0]!.input, memos: { "2026-10-18": "일요일 메모" } },
+    const w42 = weeks[0]!;
+    expect(sheetDays([{ ...w42, input: { ...w42.input, memo: "일요일에 쓴 메모" } }])).toEqual([
+      0, 1, 2, 3, 4,
+    ]);
+    const sundayItem = {
+      date: "2026-10-18",
+      categoryId: w42.input.categories[0]!.id,
+      depth: 0 as const,
+      text: "일",
     };
-    expect(sheetDays([memoOnSunday])).toEqual([0, 1, 2, 3, 4, 6]);
+    expect(sheetDays([{ ...w42, input: { ...w42.input, items: [...w42.input.items, sundayItem] } }])).toEqual(
+      [0, 1, 2, 3, 4, 6],
+    );
   });
 });
 
@@ -152,7 +160,7 @@ describe("양식 샘플과 비교(docs/samples/sample-export_2026-W42~W43.xlsx)"
     const ref = new ExcelJS.Workbook();
     await ref.xlsx.readFile(decodePath(SAMPLE_PATH));
     const [ours, theirs] = [wb.getWorksheet("원장")!, ref.getWorksheet("원장")!];
-    expect(values(ours).map((r) => r.slice(0, 7))).toEqual(values(theirs));
+    expect(values(ours).map((r) => r.slice(0, 7))).toEqual(values(theirs).map((r) => r.slice(0, 7)));
     expect(ours.getRow(1).getCell(8).value).toBe("중요");
     const flaggedRow = values(ours).find((r) => r[6] === "A협력사 현장 점검")!;
     expect(flaggedRow[7]).toBe("★");
@@ -160,7 +168,7 @@ describe("양식 샘플과 비교(docs/samples/sample-export_2026-W42~W43.xlsx)"
     expect(ours.columns.map((c) => c.width)).toEqual([12, 10, 6, 24, 6, 6, 80, 6]);
     expect(ours.getCell("A2").numFmt).toBe("yyyy-mm-dd");
     expect(ours.views[0]).toMatchObject({ state: "frozen", ySplit: 1, topLeftCell: "A2" });
-    expect(ours.autoFilter).toEqual("A1:H29");
+    expect(ours.autoFilter).toEqual("A1:H28");
   });
 });
 
@@ -168,7 +176,7 @@ describe("파일 속성·서식", () => {
   it("문서 속성 · 시트 순서 · 활성 시트 · 인쇄 설정 · 글꼴", async () => {
     const wb = await readBack(await buildWorkbook(ExcelJS, await sampleWeeks(), opt()));
     expect(wb.title).toBe("업무일지 2026-W42~W43");
-    expect(wb.creator).toBe("Work Journey Board 0.1.2");
+    expect(wb.creator).toBe("Work Journey Board 0.2.1");
     expect(wb.worksheets.map((w) => w.name)).toEqual(["주간보고", "원장"]);
     expect(wb.views[0]?.activeTab).toBe(0);
     const ws = wb.getWorksheet("주간보고")!;
@@ -194,16 +202,32 @@ describe("파일 속성·서식", () => {
     await expect(buildWorkbook(ExcelJS, weeks, opt({ weekly: false, ledger: false }))).rejects.toThrow();
   });
 
-  it("항목 0개 업무는 주간보고 블록에서 빠지고, 원장은 메모를 그날 마지막에", async () => {
+  it("항목 0개 업무는 주간보고 블록에서 빠지고, 원장은 주간 메모를 그 주 맨 끝 1행(날짜 = 월요일)", async () => {
     const weeks = await sampleWeeks();
     const rows = ledgerRows(weeks);
-    const thu = rows.filter((r) => r.date === "2026-10-22");
-    expect(thu.at(-1)).toMatchObject({ category: "(메모)", no: null, sub: null });
+    const w42 = rows.filter((r) => r.weekId === "2026-W42");
+    expect(w42.at(-1)).toMatchObject({
+      date: "2026-10-12",
+      day: "",
+      category: "(주간 메모)",
+      no: null,
+      sub: null,
+      text: "- (수) 분기 보안 교육 이수",
+    });
+    expect(rows.filter((r) => r.category === "(주간 메모)")).toHaveLength(2);
+    const noMemo = weeks.map((w) => ({ ...w, input: { ...w.input, memo: " " } }));
+    expect(ledgerRows(noMemo).filter((r) => r.category === "(주간 메모)")).toHaveLength(0);
     const wb = await readBack(await buildWorkbook(ExcelJS, weeks, opt({ ledger: false })));
-    const names = values(wb.getWorksheet("주간보고")!)
+    const ws = wb.getWorksheet("주간보고")!;
+    const names = values(ws)
       .slice(10, 15)
       .map((r) => r[0]);
     expect(names).not.toContain("신규 입사자 온보딩"); // W43에는 기록 없음
+    // 메모 행 = B~마지막 열 병합 한 칸, 줄 수만큼 높이
+    expect(ws.getCell("A15").value).toBe("메모");
+    expect(merges(ws)).toContain("B15:G15");
+    expect(ws.getCell("B15").value).toBe("- (목) 부서 월례 회의 참석\n- (금) 하반기 교육 신청 마감 확인");
+    expect(ws.getRow(15).height).toBe(30);
   });
 });
 

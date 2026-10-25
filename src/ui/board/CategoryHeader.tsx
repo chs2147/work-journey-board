@@ -1,5 +1,5 @@
 // 업무 행 머리: 색 점·이름(더블클릭 편집)·⋯ 메뉴·끌어서 순서 바꾸기·무기록 제안 배지·종료됨 표시(overview 10-4).
-import { useEffect, useRef, useState, type DragEvent } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type DragEvent } from "react";
 import type { VisibleCategory } from "../../domain/categories";
 import { CATEGORY_COLOR_KEYS, CATEGORY_COLORS } from "../../shared/palette";
 import { STR } from "../../shared/strings";
@@ -57,6 +57,7 @@ export function CategoryHeader({
   const [canDelete, setCanDelete] = useState(false);
   const [dropAt, setDropAt] = useState<DropPlace | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const menuListRef = useRef<HTMLDivElement>(null);
   const ended = state !== "active";
 
   useEffect(() => {
@@ -67,14 +68,36 @@ export function CategoryHeader({
       if (!menuRef.current?.contains(e.target as Node)) setMenuOpen(false);
     };
     const esc = (e: KeyboardEvent) => e.key === "Escape" && setMenuOpen(false);
+    // 메뉴는 화면 기준(fixed)으로 떠 있으므로 보드가 스크롤되거나 창 크기가 바뀌면 닫는다
+    const dismiss = (e: Event) => {
+      if (!menuRef.current?.contains(e.target as Node)) setMenuOpen(false);
+    };
     document.addEventListener("mousedown", close);
     document.addEventListener("keydown", esc);
+    window.addEventListener("scroll", dismiss, true);
+    window.addEventListener("resize", dismiss);
     return () => {
       alive = false;
       document.removeEventListener("mousedown", close);
       document.removeEventListener("keydown", esc);
+      window.removeEventListener("scroll", dismiss, true);
+      window.removeEventListener("resize", dismiss);
     };
   }, [menuOpen, category.id]);
+
+  // 메뉴 자리: 보드 스크롤 영역에 잘리지 않게 화면 기준으로 띄우고, 아래 자리가 모자라면 버튼 위로 연다
+  // (보드 아래 메모 도크가 있어 보드가 짧아질 수 있다 — weekly-note-spec 3절)
+  useLayoutEffect(() => {
+    const menu = menuListRef.current;
+    const button = menuRef.current;
+    if (!menuOpen || !menu || !button) return;
+    const r = button.getBoundingClientRect();
+    const h = menu.offsetHeight;
+    const below = r.bottom + 2;
+    const top = below + h <= window.innerHeight - 8 ? below : Math.max(8, r.top - 2 - h);
+    menu.style.top = `${top}px`;
+    menu.style.left = `${Math.min(r.left, window.innerWidth - menu.offsetWidth - 8)}px`;
+  }, [menuOpen]);
 
   const run = (fn: () => unknown) => {
     setMenuOpen(false);
@@ -159,7 +182,7 @@ export function CategoryHeader({
             ⋯
           </button>
           {menuOpen && (
-            <div className={styles.menu} role="menu">
+            <div className={styles.menu} role="menu" ref={menuListRef}>
               <button role="menuitem" type="button" onClick={() => run(() => setEditing(true))}>
                 {STR.categoryMenu.rename}
               </button>

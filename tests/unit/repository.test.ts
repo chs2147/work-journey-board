@@ -1,7 +1,9 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
 import { cellKey, ValidationError } from "../../src/data/repository";
+import type { SqlDriver } from "../../src/data/driver";
 import { uuidv7 } from "../../src/data/ids";
+import { emptyDoc, noteToText, type TextBox } from "../../src/domain/note";
 import type { ItemDraft } from "../../src/domain/types";
 import { freshRepo } from "./helpers";
 
@@ -133,14 +135,79 @@ describe("셀 저장 (data-spec 2·8-1)", () => {
   });
 });
 
-describe("일일 메모", () => {
-  it("저장·덮어쓰기·비우면 삭제", async () => {
+const textBox = (id: string, text: string, y = 0): TextBox => ({
+  id,
+  kind: "text",
+  x: 0,
+  y,
+  w: 320,
+  z: 1,
+  bg: null,
+  content: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text }] }] },
+});
+
+/** 예전 버전(v0.2.0)이 남긴 요일 메모 행 — 지금 코드에는 쓰는 경로가 없다 */
+const legacyMemo = (db: SqlDriver, date: string, text: string) =>
+  db.execute("INSERT INTO day_memo (date, text, updated_at) VALUES (?, ?, '2026-10-01T00:00:00Z')", [
+    date,
+    text,
+  ]);
+
+describe("주간 메모 (weekly-note-spec 5절)", () => {
+  it("저장·덮어쓰기, 보드·요약 입력에 실린다", async () => {
     const { repo } = await freshRepo();
-    await repo.saveMemo("2026-10-22", "부서 회의");
-    await repo.saveMemo("2026-10-22", "부서 월례 회의");
-    expect((await repo.getWeek("2026-W43")).memos).toEqual({ "2026-10-22": "부서 월례 회의" });
-    await repo.saveMemo("2026-10-22", "   ");
-    expect((await repo.getWeek("2026-W43")).memos).toEqual({});
+    expect(await repo.getWeekNote("2026-W43")).toEqual({ doc: emptyDoc(), legacy: false });
+    await repo.saveWeekNote("2026-W43", { v: 1, boxes: [textBox("b1", "부서 회의")] });
+    await repo.saveWeekNote("2026-W43", { v: 1, boxes: [textBox("b1", "부서 월례 회의")] });
+    const { doc, legacy } = await repo.getWeekNote("2026-W43");
+    expect(legacy).toBe(false);
+    expect(noteToText(doc)).toBe("부서 월례 회의");
+    expect(noteToText((await repo.getWeek("2026-W43")).note)).toBe("부서 월례 회의");
+    expect((await repo.getSummaryInput("2026-W43")).memo).toBe("부서 월례 회의");
+    expect(noteToText((await repo.getWeek("2026-W42")).note)).toBe("");
+  });
+
+  it("허용 밖 노드·마크는 저장할 때 걸러진다(안의 글은 문단으로 살림)", async () => {
+    const { repo } = await freshRepo();
+    const box = textBox("b1", "x");
+    box.content = {
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          content: [{ type: "text", text: "보임", marks: [{ type: "bold" }, { type: "link" }] }],
+        },
+        { type: "codeBlock", content: [{ type: "text", text: "코드 글" }] },
+      ],
+    };
+    await repo.saveWeekNote("2026-W43", { v: 1, boxes: [box] });
+    const saved = (await repo.getWeekNote("2026-W43")).doc.boxes[0]!.content;
+    expect(JSON.stringify(saved)).not.toMatch(/codeBlock|link/);
+    expect(saved.content?.map((b) => b.type)).toEqual(["paragraph", "paragraph"]);
+    expect(saved.content?.[1]?.content?.[0]).toEqual({ type: "text", text: "코드 글" });
+    expect(JSON.stringify(saved)).toContain('"bold"');
+  });
+
+  it("예전 요일 메모: 저장 전에는 상자 1개 글머리 목록으로 보이고, 저장하면(비워도) 다시 나오지 않는다", async () => {
+    const { db, repo } = await freshRepo();
+    await legacyMemo(db, "2026-10-22", "부서 회의\n둘째 줄");
+    await legacyMemo(db, "2026-10-19", "주간 계획");
+    const first = await repo.getWeekNote("2026-W43");
+    expect(first.legacy).toBe(true);
+    expect(first.doc.boxes).toHaveLength(1);
+    expect(noteToText(first.doc)).toBe("- (월) 주간 계획\n- (목) 부서 회의\n  둘째 줄");
+    expect((await repo.getSummaryInput("2026-W43")).memo).toBe(noteToText(first.doc));
+    await repo.saveWeekNote("2026-W43", emptyDoc());
+    expect(await repo.getWeekNote("2026-W43")).toEqual({ doc: emptyDoc(), legacy: false });
+    // 예전 표는 지우지 않는다(되돌릴 길을 남김)
+    expect(await db.select("SELECT date FROM day_memo ORDER BY date")).toHaveLength(2);
+  });
+
+  it("너무 큰 메모는 거부", async () => {
+    const { repo } = await freshRepo();
+    await expect(
+      repo.saveWeekNote("2026-W43", { v: 1, boxes: [textBox("b1", "가".repeat(1_100_000))] }),
+    ).rejects.toBeInstanceOf(ValidationError);
   });
 });
 
@@ -168,16 +235,18 @@ describe("무기록 제안·연간 밀도", () => {
     expect(await repo.getNudges()).toEqual([]);
   });
 
-  it("주별 기록한 날 수(항목 또는 메모, 같은 날 중복 없음)", async () => {
-    const { repo } = await freshRepo();
-    const a = await repo.createCategory("A", "2026-W43");
+  it("주별 기록한 날 수는 항목만 센다 — 메모만 있는 주는 1(예전 요일 메모 포함, 빈 메모는 제외)", async () => {
+    const { db, repo } = await freshRepo();
+    const a = await repo.createCategory("A", "2026-W40");
     await repo.saveCell("2026-10-19", a.id, [draft("월")]);
     await repo.saveCell("2026-10-20", a.id, [draft("화")]);
-    await repo.saveMemo("2026-10-20", "화 메모");
-    await repo.saveMemo("2026-10-21", "수 메모");
+    await repo.saveWeekNote("2026-W43", { v: 1, boxes: [textBox("b1", "메모")] });
+    await repo.saveWeekNote("2026-W42", { v: 1, boxes: [textBox("b1", "메모만")] });
+    await repo.saveWeekNote("2026-W41", emptyDoc());
+    await legacyMemo(db, "2026-10-01", "예전 메모"); // W40
     const m = await repo.getYearDensity(2026);
-    expect(m.get("2026-W43")).toBe(3);
-    expect(m.size).toBe(1);
+    expect(Object.fromEntries(m)).toEqual({ "2026-W43": 2, "2026-W42": 1, "2026-W40": 1 });
+    expect(await repo.firstRecordWeek()).toBe("2026-W40");
   });
 });
 

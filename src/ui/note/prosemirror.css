@@ -1,0 +1,185 @@
+/* ProseMirror 기본 스타일 — TipTap(@tiptap/core 3.32.0, MIT)이 <style> 태그로 주입하던 것을 그대로 옮겨 둔다.
+   실앱 CSP(nonce가 붙은 style-src)에서는 스크립트가 만든 <style>이 막혀서 injectCSS를 끄고 이 파일로 싣는다(weekly-note-spec 7절). */
+.ProseMirror {
+  position: relative;
+}
+
+.ProseMirror {
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  white-space: break-spaces;
+  -webkit-font-variant-ligatures: none;
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0; /* the above doesn't seem to work in Edge */
+}
+
+.ProseMirror [contenteditable="false"] {
+  white-space: normal;
+}
+
+.ProseMirror [contenteditable="false"] [contenteditable="true"] {
+  white-space: pre-wrap;
+}
+
+.ProseMirror pre {
+  white-space: pre-wrap;
+}
+
+img.ProseMirror-separator {
+  display: inline !important;
+  border: none !important;
+  margin: 0 !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.ProseMirror-gapcursor {
+  display: none;
+  pointer-events: none;
+  position: absolute;
+  margin: 0;
+}
+
+.ProseMirror-gapcursor:after {
+  content: "";
+  display: block;
+  position: absolute;
+  top: -2px;
+  width: 20px;
+  border-top: 1px solid black;
+  animation: ProseMirror-cursor-blink 1.1s steps(2, start) infinite;
+}
+
+@keyframes ProseMirror-cursor-blink {
+  to {
+    visibility: hidden;
+  }
+}
+
+.ProseMirror-hideselection *::selection {
+  background: transparent;
+}
+
+.ProseMirror-hideselection *::-moz-selection {
+  background: transparent;
+}
+
+.ProseMirror-hideselection * {
+  caret-color: transparent;
+}
+
+.ProseMirror-focused .ProseMirror-gapcursor {
+  display: block;
+}
+
+/* ── 메모 글 서식(weekly-note-spec 4-3) — 모두 클래스. style 속성은 쓰지 않는다 ── */
+.note-prose {
+  outline: none;
+  min-height: 1.6em;
+  font-size: var(--fs-md);
+  line-height: 1.65;
+  color: var(--text-1);
+  word-break: keep-all;
+}
+
+.note-prose > * + * {
+  margin-top: 4px;
+}
+
+.note-prose p,
+.note-prose h1,
+.note-prose h2,
+.note-prose ul,
+.note-prose ol {
+  margin: 0;
+}
+
+.note-prose h1 {
+  font-size: 20px;
+  font-weight: var(--fw-bold);
+}
+
+.note-prose h2 {
+  font-size: 17px;
+  font-weight: var(--fw-bold);
+}
+
+.note-prose ul,
+.note-prose ol {
+  padding-left: 1.4em;
+}
+
+.note-prose ul[data-type="taskList"] {
+  padding-left: 0;
+  list-style: none;
+}
+
+.note-prose ul[data-type="taskList"] li {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.note-prose ul[data-type="taskList"] li > label {
+  flex: 0 0 auto;
+  margin-top: 3px;
+}
+
+.note-prose ul[data-type="taskList"] li > div {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.note-prose ul[data-type="taskList"] li[data-checked="true"] > div {
+  color: var(--text-3);
+  text-decoration: line-through;
+}
+
+.note-prose hr {
+  margin: 8px 0;
+  border: 0;
+  border-top: 1px solid var(--line-strong);
+}
+
+.note-prose hr.ProseMirror-selectednode {
+  border-top-color: var(--accent);
+}
+
+.note-fs-s {
+  font-size: 12px;
+}
+
+.note-fs-l {
+  font-size: 17px;
+}
+
+.note-fs-xl {
+  font-size: 21px;
+}
+
+.note-c-gray {
+  color: var(--text-2);
+}
+
+.note-c-orange {
+  color: var(--note-orange);
+}
+
+.note-c-blue {
+  color: var(--note-blue);
+}
+
+.note-c-green {
+  color: var(--note-green);
+}
+
+.note-c-red {
+  color: var(--note-red);
+}
+
+.note-hl {
+  padding: 0 1px;
+  border-radius: 2px;
+  background: var(--mark);
+  color: inherit;
+}

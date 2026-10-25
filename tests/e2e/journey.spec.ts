@@ -41,7 +41,7 @@ test("첫 실행부터 5주 사용: 이월 · 매주 반복 · 무기록 배지 
   await expect(page.getByTestId("week-title")).toContainText("2026-W41");
   await expect(page.locator(":focus")).toHaveAttribute("aria-label", `${PLAN} · 월 2026-10-05 기록`);
 
-  // ── W41: 키보드만으로 업무 3칸 + 메모, "팀 운영" 항목은 매주 반복
+  // ── W41: 키보드만으로 업무 3칸 + 주간 메모(마지막 업무 아래 ↓), "팀 운영" 항목은 매주 반복
   await page.keyboard.type("기획안 초안 작성");
   await page.keyboard.press("ArrowDown");
   await page.keyboard.type("주간 회의 정리");
@@ -115,7 +115,7 @@ test("첫 실행부터 5주 사용: 이월 · 매주 반복 · 무기록 배지 
   expect(await values(page, PLAN, "2026-10-05")).toEqual(["기획안 초안 작성"]);
   expect(await values(page, TEAM, "2026-10-05")).toEqual(["주간 회의 정리"]);
   expect(await values(page, ENV, "2026-10-05")).toEqual(["개발 서버 구성"]);
-  await expect(page.getByRole("textbox", { name: "월 2026-10-05 메모" })).toHaveValue("분기 목표 정리");
+  await expect(page.locator(".note-prose")).toHaveText("분기 목표 정리");
   await page.keyboard.press("Alt+ArrowRight");
   expect(await values(page, TEAM, "2026-10-12")).toEqual(["주간 회의 정리 — 결정 사항 3건"]);
   await page.keyboard.press("Alt+ArrowRight");

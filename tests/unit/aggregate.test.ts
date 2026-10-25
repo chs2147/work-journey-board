@@ -23,7 +23,7 @@ const input = (over: Partial<SummaryInput> = {}): SummaryInput => ({
     { id: "b", name: "나 업무" },
   ],
   items: [],
-  memos: {},
+  memo: "",
   ...over,
 });
 
@@ -94,16 +94,18 @@ describe("주간 자동 집계 — 규칙(output-spec 2-1)", () => {
         { date: "2026-10-22", categoryId: "a", depth: 0, text: "한 일" },
         { date: "2026-10-22", categoryId: "b", depth: 0, text: "   " },
       ],
-      memos: { "2026-10-23": "회의 참석", "2026-10-24": "  " },
+      memo: "  \n- 회의 참석\n  · 가상 안건\n  ",
     });
-    expect(buildWeeklySummary(base, { includeMemo: true }).split("\n").slice(-5)).toEqual([
+    expect(buildWeeklySummary(base, { includeMemo: true }).split("\n").slice(-6)).toEqual([
       "",
       "[메모]",
-      "- (금) 회의 참석",
+      "- 회의 참석",
+      "  · 가상 안건",
       "",
       "※ 이번 주 기록 없음: 나 업무",
     ]);
     expect(buildWeeklySummary(base, { includeMemo: false })).not.toContain("[메모]");
+    expect(buildWeeklySummary({ ...base, memo: " \n " }, { includeMemo: true })).not.toContain("[메모]");
   });
 
   it("기록이 하나도 없는 주", () => {
@@ -139,13 +141,13 @@ describe("최종본·근거 해시(output-spec 2-3)", () => {
   it("근거는 메모 포함 설정과 무관(메모까지 넣은 본), 기록이 바뀌면 해시가 바뀐다", async () => {
     const a = input({
       items: [{ date: "2026-10-22", categoryId: "a", depth: 0, text: "한 일" }],
-      memos: { "2026-10-22": "메모" },
+      memo: "메모",
     });
     expect(basisText(a)).toBe(buildWeeklySummary(a, { includeMemo: true }));
     const h1 = await sha256Hex(basisText(a));
     expect(h1).toMatch(/^[0-9a-f]{64}$/);
     expect(await sha256Hex(basisText(a))).toBe(h1);
-    const b = { ...a, memos: { "2026-10-22": "메모 고침" } };
+    const b = { ...a, memo: "메모 고침" };
     expect(await sha256Hex(basisText(b))).not.toBe(h1);
   });
 });
