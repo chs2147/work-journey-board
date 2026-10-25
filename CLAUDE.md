@@ -73,7 +73,7 @@ fixtures/     sample-*.json — 가상 업무 기록만
 - 사용자 폴더의 파일을 지우는 코드는 **`src/data/backup.ts`의 가드 함수 1곳뿐**이며, data-spec 7-2절의 일일·월간 패턴과 앱이 만든 임시 사본(`*.db.tmp`)만 삭제한다. 실앱에서는 Rust `fs_remove_backup`·`fs_rename_backup`(src-tauri/src/files.rs)이 같은 패턴을 **한 번 더** 검사한다 — 두 곳의 규칙을 함께 바꾸고, 패턴 외 파일 보존 테스트(TS 단위·Rust `cargo test`)를 반드시 통과.
 - 사용자 폴더에 쓰는 동작은 `Platform`(src/platform/) 인터페이스로만 한다. 덮어쓰기는 백업 사본 이름 바꾸기와 설정 파일 쓰기뿐이고, 일지 파일·다른 파일은 덮어쓰지 않는다(옮기기는 대상에 일지가 있으면 실패).
 - **내보내기 파일 예외(2026-10-24 사용자 확정, i-m2-plan 6절 #5)**: 엑셀(`.xlsx`)은 **사용자가 저장 대화상자에서 고른 경로**에만 쓰고, 같은 이름이 있으면 윈도우 대화상자의 덮어쓰기 확인을 따른다. 확장자 `.xlsx` 외, 저장 폴더의 일지 파일, `backups\` 안은 거부 — Rust 쓰기 명령에서도 한 번 더 검사한다.
-  - **주간 메모 이미지 저장(2026-10-25 사용자 확정, weekly-note-spec 11절 #3)**: 메모 이미지 상자의 [이미지로 저장…]도 같은 규칙으로 `.png`·`.webp`를 허용한다(저장 대화상자에서 고른 경로만, 일지 파일·`backups\` 거부, Rust 재검사). 메모 이미지 자체는 일지 파일 안(`note_asset`)에 저장하고 사용자 폴더에 따로 두지 않는다.
+  - **주간 메모 이미지 저장(2026-10-25 사용자 확정, weekly-note-spec 11절 #3)**: 메모 이미지 상자의 [이미지로 저장…]도 같은 규칙으로 `.png`·`.webp`를 허용한다(저장 대화상자에서 고른 경로만, 일지 파일·`backups\` 거부, Rust 재검사). 메모 이미지 자체는 일지 파일 안(`note_asset`)에 저장하고 사용자 폴더에 따로 두지 않는다. 구현: `Platform.writeExport`(src/platform) + Rust `export_write`의 `EXPORT_EXTS`(v0.2.2).
 - 여러 문장을 묶는 쓰기는 **`SqlDriver.batch`로만** 한다. `BEGIN`/`COMMIT`을 `execute`로 따로 보내지 않는다(실앱 연결 풀 문제, data-spec 8-1).
 - 스키마 변경 = 새 마이그레이션 파일(전진 전용) + **마이그레이션 직전 자동 백업** + fixture DB 왕복 테스트. 기존 마이그레이션 파일 수정 금지.
 - `PRAGMA journal_mode=DELETE` 유지(WAL 금지 — 데이터 = 파일 1개 원칙).

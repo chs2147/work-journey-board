@@ -2,15 +2,19 @@
 // 주간 메모 문서(weekly-note-spec 4·5·6절): 검증·글 추출·예전 요일 메모 변환·배치.
 import { describe, expect, it } from "vitest";
 import {
+  clampImageWidth,
   clampWidth,
   docFromDayMemos,
+  fitWithin,
   isNoteEmpty,
+  noteAssetIds,
   noteToText,
   parseNoteDoc,
   positionBelow,
   readingOrder,
   sanitizeContent,
   snap,
+  type ImageBox,
   type NoteDoc,
   type PMNode,
   type TextBox,
@@ -177,5 +181,61 @@ describe("문서 검증", () => {
       { ...box("b", 400, 60, [p(t("나"))]), h: 40 },
     );
     expect(positionBelow(d)).toEqual({ x: 40, y: 144 });
+  });
+});
+
+describe("이미지 상자(스펙 4-4·6절)", () => {
+  const img = (id: string, y: number, caption: string, asset = `as-${id}`): ImageBox => ({
+    id,
+    kind: "image",
+    x: 24,
+    y,
+    w: 330,
+    z: 1,
+    asset,
+    caption,
+  });
+
+  it("글 추출: 설명이 있으면 `- (이미지) 설명`, 없으면 빠짐 — 읽는 순서에 끼어 든다", () => {
+    const doc: NoteDoc = {
+      v: 1,
+      boxes: [
+        img("i1", 200, "  응답 시간 전후 비교 "),
+        box("a", 24, 24, [p(t("가상 회의"))]),
+        img("i2", 400, ""),
+      ],
+    };
+    expect(noteToText(doc)).toBe("가상 회의\n\n- (이미지) 응답 시간 전후 비교");
+  });
+
+  it("이미지만 있어도 비어 있지 않은 메모, 이미지 id는 중복 없이", () => {
+    expect(isNoteEmpty({ v: 1, boxes: [img("i1", 0, "")] })).toBe(false);
+    expect(
+      noteAssetIds({ v: 1, boxes: [img("i1", 0, "", "x"), img("i2", 0, "", "x"), img("i3", 0, "", "y")] }),
+    ).toEqual(["x", "y"]);
+  });
+
+  it("저장된 JSON: 폭 80~1600(1px 단위), 설명은 한 줄·200자, asset 없으면 버림", () => {
+    const d = parseNoteDoc(
+      JSON.stringify({
+        v: 1,
+        boxes: [
+          { id: "a", kind: "image", x: 3, y: 9, w: 9999, z: 1, asset: "as1", caption: "첫 줄\n둘째 줄" },
+          { id: "b", kind: "image", x: 0, y: 0, w: 10, z: 1, asset: "as2", caption: "가".repeat(300) },
+          { id: "c", kind: "image", x: 0, y: 0, w: 100, z: 1 },
+        ],
+      }),
+    );
+    expect(d.boxes).toHaveLength(2);
+    expect(d.boxes[0]).toMatchObject({ x: 0, y: 8, w: 1600, asset: "as1", caption: "첫 줄 둘째 줄" });
+    expect(d.boxes[1]).toMatchObject({ w: 80 });
+    expect((d.boxes[1] as ImageBox).caption).toHaveLength(200);
+    expect(clampImageWidth(333.4)).toBe(333);
+  });
+
+  it("긴 변 1600px을 넘으면 비율대로 줄인다", () => {
+    expect(fitWithin(3200, 1800)).toEqual({ width: 1600, height: 900 });
+    expect(fitWithin(900, 2400)).toEqual({ width: 600, height: 1600 });
+    expect(fitWithin(1600, 1000)).toEqual({ width: 1600, height: 1000 });
   });
 });

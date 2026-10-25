@@ -7,7 +7,7 @@ import { DAY_LABELS, weekIdOf } from "../../domain/week";
 import { BACKUP_DIR } from "../../data/backup";
 import { classifyFolder, journalPath, lastBackupOf, manualBackup, type BackupInfo } from "../../data/session";
 import type { Settings } from "../../data/settings";
-import { STR } from "../../shared/strings";
+import { formatBytes, STR } from "../../shared/strings";
 import { reload, toast } from "../board/boardStore";
 import { moveTo, setSettingsOpen, switchTo } from "../common/appController";
 import { useAppStore } from "../common/appStore";
@@ -36,6 +36,7 @@ export function SettingsPanel() {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [size, setSize] = useState<number | null>(null);
   const [last, setLast] = useState<BackupInfo | null>(null);
+  const [imageUse, setImageUse] = useState<{ count: number; bytes: number } | null>(null);
   const [archived, setArchived] = useState<{ category: Category; endDate: string }[]>([]);
   const [rules, setRules] = useState<Recurrence[]>([]);
   const [cats, setCats] = useState<Map<string, Category>>(new Map());
@@ -48,6 +49,7 @@ export function SettingsPanel() {
     setSettings(await ready.repo.getSettings());
     setSize((await platform.stat(journalPath(platform, ready.dataDir))).size);
     setLast(await lastBackupOf(platform, ready.dataDir));
+    setImageUse(await ready.repo.noteAssetStats());
     const { categories, periods } = await ready.repo.listCategories();
     setCats(new Map(categories.map((c) => [c.id, c])));
     setRules(await ready.repo.listRecurrences());
@@ -233,6 +235,20 @@ export function SettingsPanel() {
           {settings && (
             <p className={styles.note}>
               {STR.settings.backupPolicy(settings.backup.dailyKeep, settings.backup.monthlyKeep)}
+            </p>
+          )}
+          {/* 용량(weekly-note-spec 5-3): 메모 이미지는 일지 파일 안에 있어 백업 사본마다 함께 들어간다 */}
+          {size !== null && imageUse && (
+            <p data-testid="storage-usage">
+              {STR.settings.usage(formatBytes(size), imageUse.count, formatBytes(imageUse.bytes))}
+            </p>
+          )}
+          {size !== null && settings && (
+            <p className={styles.note}>
+              {STR.settings.usageBackups(
+                settings.backup.dailyKeep + settings.backup.monthlyKeep,
+                formatBytes(size * (settings.backup.dailyKeep + settings.backup.monthlyKeep)),
+              )}
             </p>
           )}
           <div className={styles.row}>

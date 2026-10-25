@@ -27,7 +27,22 @@ export interface TextBox {
   content: PMNode;
 }
 
-export type NoteBox = TextBox;
+/** 이미지 상자(스펙 4-4) — 그림 자체는 일지 파일 안 `note_asset`에, 문서는 그 id만 가리킨다 */
+export interface ImageBox {
+  id: string;
+  kind: "image";
+  x: number;
+  y: number;
+  /** 보이는 폭(높이는 그림 비율대로) */
+  w: number;
+  z: number;
+  h?: number;
+  asset: string;
+  /** 한 줄 설명(선택) — 자동 집계·엑셀에 `- (이미지) 설명`으로 들어간다 */
+  caption: string;
+}
+
+export type NoteBox = TextBox | ImageBox;
 
 export interface NoteDoc {
   v: 1;
@@ -44,6 +59,34 @@ export const BOX_GAP = 16;
 
 export const snap = (n: number) => Math.max(0, Math.round(n / GRID) * GRID);
 export const clampWidth = (w: number) => Math.min(BOX_MAX_W, Math.max(BOX_MIN_W, snap(w)));
+
+// ── 이미지(스펙 4-4) ─────────────────────────────────
+export const IMAGE_MIN_W = 80;
+export const IMAGE_MAX_W = 1600;
+/** 처음 넣을 때 보이는 폭의 최대 */
+export const IMAGE_FIRST_W = 480;
+/** 저장할 때 긴 변 최대(넘으면 줄인다) */
+export const IMAGE_MAX_SIDE = 1600;
+/** 받는 원본 파일 최대 크기 */
+export const IMAGE_MAX_SOURCE_BYTES = 10 * 1024 * 1024;
+export const CAPTION_MAX = 200;
+export const IMAGE_MIMES = ["image/webp", "image/png", "image/jpeg", "image/gif"] as const;
+export type ImageMime = (typeof IMAGE_MIMES)[number];
+
+/** 이미지 폭은 비율을 지키므로 눈금에 맞추지 않는다(1px 단위) */
+export const clampImageWidth = (w: number) => Math.round(Math.min(IMAGE_MAX_W, Math.max(IMAGE_MIN_W, w)));
+
+/** 긴 변이 max를 넘으면 비율대로 줄인 크기 */
+export function fitWithin(
+  width: number,
+  height: number,
+  max = IMAGE_MAX_SIDE,
+): { width: number; height: number } {
+  const long = Math.max(width, height);
+  if (long <= max) return { width, height };
+  const k = max / long;
+  return { width: Math.max(1, Math.round(width * k)), height: Math.max(1, Math.round(height * k)) };
+}
 
 export const emptyDoc = (): NoteDoc => ({ v: 1, boxes: [] });
 export const emptyContent = (): PMNode => ({ type: "doc", content: [{ type: "paragraph" }] });
@@ -137,7 +180,23 @@ export function parseNoteDoc(json: string | null | undefined): NoteDoc {
   if (!isObj(raw) || !Array.isArray(raw.boxes)) return emptyDoc();
   const boxes: NoteBox[] = [];
   for (const b of raw.boxes) {
-    if (!isObj(b) || typeof b.id !== "string" || b.kind !== "text") continue;
+    if (!isObj(b) || typeof b.id !== "string") continue;
+    if (b.kind === "image") {
+      if (typeof b.asset !== "string" || !b.asset) continue;
+      boxes.push({
+        id: b.id,
+        kind: "image",
+        x: snap(num(b.x, 0)),
+        y: snap(num(b.y, 0)),
+        w: clampImageWidth(num(b.w, IMAGE_FIRST_W)),
+        z: num(b.z, 0),
+        ...(typeof b.h === "number" ? { h: b.h } : {}),
+        asset: b.asset,
+        caption: typeof b.caption === "string" ? b.caption.replace(/\s+/g, " ").slice(0, CAPTION_MAX) : "",
+      });
+      continue;
+    }
+    if (b.kind !== "text") continue;
     const content = sanitizeContent(b.content);
     if (!content) continue;
     boxes.push({
@@ -214,15 +273,28 @@ export function readingOrder(boxes: NoteBox[]): NoteBox[] {
   return [...boxes].sort((a, b) => (Math.abs(a.y - b.y) <= 16 ? a.x - b.x : a.y - b.y));
 }
 
+/** 상자 하나의 글(이미지는 설명이 있을 때만 `- (이미지) 설명`) */
+export function boxText(b: NoteBox): string {
+  if (b.kind === "image") return b.caption.trim() ? `- (이미지) ${b.caption.trim()}` : "";
+  return blockLines(b.content.content, "").join("\n");
+}
+
 /** 메모의 글만(상자 사이 빈 줄). 글이 없으면 "" */
 export function noteToText(doc: NoteDoc): string {
   return readingOrder(doc.boxes)
-    .map((b) => blockLines(b.content.content, "").join("\n"))
+    .map(boxText)
     .filter((t) => t.trim() !== "")
     .join("\n\n");
 }
 
-export const isNoteEmpty = (doc: NoteDoc) => noteToText(doc) === "";
+/** 글도 이미지도 없는 메모 */
+export const isNoteEmpty = (doc: NoteDoc) =>
+  !doc.boxes.some((b) => b.kind === "image") && noteToText(doc) === "";
+
+/** 문서가 가리키는 이미지 id(복제한 상자는 같은 그림을 함께 쓴다) */
+export const noteAssetIds = (doc: NoteDoc): string[] => [
+  ...new Set(doc.boxes.flatMap((b) => (b.kind === "image" ? [b.asset] : []))),
+];
 
 // ── 예전 요일 메모 → 주간 메모(스펙 5-1, 11절 #5) ─────
 /** 요일 메모를 상자 1개의 글머리 목록으로: `(목) 내용`. 메모가 없으면 빈 문서 */

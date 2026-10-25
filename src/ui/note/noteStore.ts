@@ -4,14 +4,20 @@
 import { create } from "zustand";
 import {
   BOX_DEFAULT_W,
+  BOX_GAP,
+  clampImageWidth,
   clampWidth,
   emptyContent,
   emptyDoc,
+  IMAGE_FIRST_W,
   isNoteEmpty,
+  noteAssetIds,
   positionBelow,
   readingOrder,
   snap,
   topZ,
+  CAPTION_MAX,
+  type ImageMime,
   type NoteBg,
   type NoteBox,
   type NoteDoc,
@@ -22,6 +28,9 @@ import { uuidv7 } from "../../data/ids";
 import type { JournalRepository } from "../../data/repository";
 import { NOTE_DOCK_MIN } from "../../data/settings";
 import { STR } from "../../shared/strings";
+import { useAppStore } from "../common/appStore";
+import { baseName, dirOf, exportPathProblem } from "../../platform";
+import { exportImageBytes, ImageInputError, prepareImage } from "./imageProcess";
 import {
   focusStartCell,
   reportError,
@@ -49,6 +58,18 @@ export interface NoteState {
   expanded: boolean;
   canUndo: boolean;
   canRedo: boolean;
+  /** 이 주의 메모 이미지(id → 그림). 문서는 id만 가리킨다 */
+  assets: Record<string, NoteImage>;
+  /** 그림을 넣는 중(줄이기·저장) */
+  busy: boolean;
+}
+
+export interface NoteImage {
+  mime: ImageMime;
+  data: string;
+  width: number;
+  height: number;
+  bytes: number;
 }
 
 export const useNote = create<NoteState>(() => ({
@@ -63,6 +84,8 @@ export const useNote = create<NoteState>(() => ({
   expanded: false,
   canUndo: false,
   canRedo: false,
+  assets: {},
+  busy: false,
 }));
 
 const set = useNote.setState;
@@ -92,14 +115,15 @@ export async function initNote(r: JournalRepository) {
 
 async function loadWeek(weekId: WeekId) {
   if (!repo || !weekId) return;
-  await flushNote();
+  await finishNote();
   try {
-    const { doc, legacy } = await repo.getWeekNote(weekId);
+    const [{ doc, legacy }, rows] = await Promise.all([repo.getWeekNote(weekId), repo.getNoteAssets(weekId)]);
     if (useBoard.getState().weekId !== weekId) return;
     undoStack.length = 0;
     redoStack.length = 0;
     lastEditedId = null;
-    set({ weekId, doc, legacy, editingId: null, selectedId: null, focusRequest: null });
+    const assets = Object.fromEntries(rows.map(({ id, ...a }) => [id, a]));
+    set({ weekId, doc, legacy, assets, editingId: null, selectedId: null, focusRequest: null });
     syncUndo();
   } catch (e) {
     reportError(e);
@@ -126,6 +150,18 @@ export async function flushNote(force = false) {
   } catch (e) {
     reportError(e);
   }
+}
+
+/**
+ * 이 주를 떠날 때(주 이동·앱 종료): 저장을 끝내고, 문서가 더는 가리키지 않는 이미지를 지운다.
+ * 이 주의 메모 실행 취소 기록도 함께 사라지는 때라, 지운 상자를 되살릴 길이 없을 때만 정리한다(스펙 5-2).
+ */
+export async function finishNote() {
+  await flushNote();
+  const r = repo;
+  const { weekId, doc, legacy } = get();
+  if (!r || !weekId || legacy) return;
+  await r.pruneNoteAssets(weekId, noteAssetIds(doc)).catch(reportError);
 }
 
 /** 문서를 바꾼다. undoable이면 바꾸기 전 문서를 메모 기록에 쌓는다 */
@@ -179,9 +215,75 @@ export function requestFocus(id: string) {
 export function updateContent(id: string, content: PMNode) {
   lastEditedId = id;
   commit(
-    mapBox(id, (b) => ({ ...b, content })),
+    mapBox(id, (b) => (b.kind === "text" ? { ...b, content } : b)),
     false,
   );
+}
+
+/** 이미지 설명(한 줄, 200자). 글처럼 메모 기록에는 넣지 않는다 */
+export function setCaption(id: string, caption: string) {
+  commit(
+    mapBox(id, (b) =>
+      b.kind === "image" ? { ...b, caption: caption.replace(/\s+/g, " ").slice(0, CAPTION_MAX) } : b,
+    ),
+    false,
+  );
+}
+
+// ── 이미지(스펙 4-4) ──────────────────────────────────
+/**
+ * 붙여넣기 자리: 편집 중인 빈 텍스트 상자가 있으면 그 자리(빈 곳 클릭 → Ctrl+V), 편집·선택 중인 상자가 있으면 그 아래,
+ * 없으면 가장 아래 상자 아래.
+ */
+export function pastePlace(): { x: number; y: number } {
+  const { editingId, selectedId, doc } = get();
+  const cur = boxOf(editingId ?? selectedId ?? "");
+  if (cur && cur.kind === "text" && editingId === cur.id && isNoteEmpty({ v: 1, boxes: [cur] }))
+    return { x: cur.x, y: cur.y };
+  if (cur) return { x: cur.x, y: snap(cur.y + (cur.h ?? 48) + BOX_GAP) };
+  return positionBelow(doc);
+}
+
+/** 그림 파일들을 이미지 상자로(겹치지 않게 24px씩 비켜). 실패한 파일은 토스트로 알린다 */
+export async function addImages(files: Blob[], at: { x: number; y: number }) {
+  const r = repo;
+  const images = files.filter((f) => f.type.startsWith("image/"));
+  if (!r || !images.length) return;
+  const weekId = get().weekId;
+  // 편집 중이던 빈 텍스트 상자는 그 자리를 이미지에 내주고 사라진다
+  const editing = get().editingId;
+  if (editing) endEditing(editing);
+  set({ busy: true });
+  let n = 0;
+  try {
+    for (const f of images) {
+      try {
+        const img = await prepareImage(f);
+        const asset = await r.addNoteAsset(weekId, img);
+        if (get().weekId !== weekId) return;
+        const doc = get().doc;
+        const box: NoteBox = {
+          id: uuidv7(),
+          kind: "image",
+          x: snap(at.x + n * 24),
+          y: snap(at.y + n * 24),
+          w: clampImageWidth(Math.min(IMAGE_FIRST_W, img.width)),
+          z: topZ(doc) + 1,
+          asset,
+          caption: "",
+        };
+        set({ assets: { ...get().assets, [asset]: img } });
+        commit({ ...doc, boxes: [...doc.boxes, box] }, true);
+        set({ selectedId: box.id, editingId: null });
+        n++;
+      } catch (e) {
+        if (e instanceof ImageInputError) toast(e.message);
+        else reportError(e);
+      }
+    }
+  } finally {
+    set({ busy: false });
+  }
 }
 
 export function setEditing(id: string | null) {
@@ -229,8 +331,47 @@ export function endGesture(before: NoteDoc) {
 export function moveBoxLive(id: string, x: number, y: number) {
   set({ doc: mapBox(id, (b) => ({ ...b, x: snap(x), y: snap(y) })) });
 }
+/**
+ * [이미지로 저장…]: 내보내기와 같은 저장 대화상자·규칙(.png·.webp만, 일지 파일·backups 거부 — CLAUDE.md 4-3).
+ * 저장한 형식(WebP)과 다른 확장자를 고르면 그 형식으로 바꿔 쓴다.
+ */
+export async function saveImage(id: string) {
+  const box = boxOf(id);
+  const j = useAppStore.getState().journal;
+  const platform = useAppStore.getState().platform;
+  if (!box || box.kind !== "image" || j.state !== "ready" || !platform) return;
+  const img = get().assets[box.asset];
+  if (!img) return toast(STR.note.imageMissing);
+  try {
+    const settings = await j.repo.getSettings();
+    let dir = settings.ui.lastExportDir;
+    if (!dir || !(await platform.stat(dir)).isDir) {
+      dir = platform.join(j.dataDir, "exports");
+      await platform.ensureDir(dir);
+    }
+    const images = readingOrder(get().doc.boxes).filter((b) => b.kind === "image");
+    const ext = img.mime === "image/webp" ? "webp" : "png";
+    const name = STR.note.imageFileName(get().weekId, images.findIndex((b) => b.id === id) + 1, ext);
+    const path = await platform.pickSaveFile(STR.note.saveImageTitle, platform.join(dir, name), "image");
+    if (!path) return;
+    const problem = exportPathProblem(path, j.dataDir, "image");
+    if (problem) return toast(problem);
+    const bytes = await exportImageBytes(
+      img.mime,
+      img.data,
+      path.toLowerCase().endsWith(".webp") ? "webp" : "png",
+    );
+    await platform.writeExport(path, bytes);
+    await j.repo.updateSettings({ ui: { lastExportDir: dirOf(path) } });
+    toast(STR.note.imageSaved(baseName(path)));
+  } catch (e) {
+    if (e instanceof ImageInputError) toast(e.message);
+    else reportError(e);
+  }
+}
+
 export function resizeBoxLive(id: string, w: number) {
-  set({ doc: mapBox(id, (b) => ({ ...b, w: clampWidth(w) })) });
+  set({ doc: mapBox(id, (b) => ({ ...b, w: b.kind === "image" ? clampImageWidth(w) : clampWidth(w) })) });
 }
 
 /** 방향키 이동(8px, Shift 32px) */
@@ -285,7 +426,7 @@ export function sendToBack(id: string) {
 
 export function setBoxBg(id: string, bg: NoteBg | null) {
   commit(
-    mapBox(id, (b) => ({ ...b, bg })),
+    mapBox(id, (b) => (b.kind === "text" ? { ...b, bg } : b)),
     true,
   );
 }
@@ -313,9 +454,8 @@ export function redoNote() {
 /** 메모로 가기(Alt+M·마지막 업무 칸 ↓): 마지막으로 고친 상자 끝, 없으면 읽는 순서 마지막 상자, 그것도 없으면 새 상자 */
 export function focusNote() {
   if (get().collapsed) setCollapsed(false);
-  const doc = get().doc;
-  const target =
-    (lastEditedId && doc.boxes.find((b) => b.id === lastEditedId)) || readingOrder(doc.boxes).at(-1);
+  const texts = get().doc.boxes.filter((b) => b.kind === "text");
+  const target = (lastEditedId && texts.find((b) => b.id === lastEditedId)) || readingOrder(texts).at(-1);
   if (target) requestFocus(target.id);
   else addBoxBelow();
 }

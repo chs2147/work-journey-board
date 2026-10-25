@@ -1,4 +1,4 @@
-// 프로덕션 빌드를 실앱 CSP(+ Tauri처럼 nonce) 아래에서 띄워, 화면 전체·메모 편집기·엑셀 내보내기가 CSP를 어기지 않는지.
+// 프로덕션 빌드를 실앱 CSP(+ Tauri처럼 nonce) 아래에서 띄워, 화면 전체·메모 편집기·메모 이미지·엑셀 내보내기가 CSP를 어기지 않는지.
 // (vite.config.ts preview 헤더 = src-tauri/tauri.conf.json의 CSP + 가짜 nonce → 'unsafe-inline'이 무시되는 실앱과 같은 조건)
 import { expect, test, type Page } from "@playwright/test";
 
@@ -94,6 +94,23 @@ test("보드·주간 메모 편집기(서식 전부)·엑셀 내보내기 — CS
   await expect(prose.locator('ul[data-type="taskList"] input[type="checkbox"]')).toHaveAccessibleName(
     "할 일 체크: 할 일",
   );
+
+  // 메모 이미지(N2): 파일에서 넣기 → canvas로 줄여 WebP → data: 주소로 표시(blob: 주소는 실앱 CSP에서 막힘)
+  await page.keyboard.press("Escape");
+  const b64 = await page.evaluate(() => {
+    const cv = document.createElement("canvas");
+    [cv.width, cv.height] = [2000, 1000];
+    const ctx = cv.getContext("2d")!;
+    ctx.fillStyle = "#2a78d6";
+    ctx.fillRect(100, 100, 800, 600);
+    return cv.toDataURL("image/png").split(",")[1]!;
+  });
+  await page
+    .getByTestId("note-image-input")
+    .setInputFiles({ name: "virtual.png", mimeType: "image/png", buffer: Buffer.from(b64, "base64") });
+  const img = page.getByTestId("note-image").locator("img");
+  await expect(img).toHaveAttribute("src", /^data:image\/(webp|png);base64,/);
+  await expect.poll(() => img.evaluate((el) => (el as HTMLImageElement).naturalWidth)).toBe(1600);
 
   // 엑셀 내보내기(ExcelJS 지연 로딩 포함)
   await page.keyboard.press("Escape");

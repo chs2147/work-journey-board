@@ -173,6 +173,7 @@ CREATE TABLE app_meta (
 ### 3-y. 스키마 v3 (2026-10-25, `0003_week_note.sql`)
 - 주간 메모 표 `week_note(week_id PK, doc JSON, updated_at)`와 메모 이미지 표 `note_asset`(N2부터 사용)을 만든다. 정의·문서 JSON·용량은 [weekly-note-spec.md](weekly-note-spec.md) 5절이 정본이다.
 - `day_memo`(요일 메모)는 **지우지 않고 읽기만** 한다: 그 주에 `week_note` 행이 없으면 요일 메모를 상자 1개의 글머리 목록으로 바꿔 보여 주고, 처음 저장할 때 `week_note`로 옮겨진다(비워도 행을 남겨 요일 메모가 다시 나오지 않게). 앱에는 `day_memo`에 쓰는 경로가 없다.
+- `note_asset`(v0.2.2 N2부터 사용): 그림 = base64 TEXT, `bytes` = 저장한 그림 크기. 넣는 순간 행을 쓰고, 문서가 더는 가리키지 않는 행은 그 주를 떠날 때(주 이동·앱 종료) 지운다 — DB 안의 행 정리이며 사용자 폴더 파일 삭제가 아니다(4-3 삭제 가드와 무관).
 - 직전 백업은 `_pre-migration-v3`.
 
 ## 4. 카테고리 활성 계산
@@ -310,6 +311,7 @@ interface JournalRepository {          // SqlDriver 위의 단일 구현
   saveCell(date: string, categoryId: string, items: ItemDraft[]): Promise<void>; // 셀 단위 통째 저장(트랜잭션)
   getWeekNote(weekId: string): Promise<{ doc: NoteDoc; legacy: boolean }>; // legacy = 요일 메모를 옮겨 보여 주는 중
   saveWeekNote(weekId: string, doc: NoteDoc): Promise<void>;              // 문서 통째(허용 노드만 남겨 저장)
+  addNoteAsset(weekId, image): Promise<string>; getNoteAssets(weekId); pruneNoteAssets(weekId, keepIds); noteAssetStats();
   createCategory(...); updateCategory(...); archiveCategory(id); reactivateCategory(id); deleteEmptyCategory(id);
   getNudges(currentWeekId: string): Promise<string[]>;          // 5절
   getRange(fromWeek: string, toWeek: string): Promise<RangeData>; // 엑셀·시각화 공용

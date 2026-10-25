@@ -1,32 +1,35 @@
 // 메모 판(weekly-note-spec 4절, 시안 A): 점 격자 위 자유 배치 텍스트 상자. 빈 곳 클릭 = 새 상자, 위 막대 끌기 = 이동,
 // 오른쪽 손잡이 = 폭, Esc = 선택(방향키·Delete), 편집 중에는 서식 막대. 편집기(TipTap)는 이 조각과 함께 처음 열 때만 불러온다.
 import { EditorContent, useEditor, useEditorState, type Editor } from "@tiptap/react";
-import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
-import { FONT_SIZES, NOTE_BG, TEXT_COLORS, noteToText, type NoteBox, type PMNode } from "../../domain/note";
+import { useEffect, useRef, useState, type DragEvent, type KeyboardEvent, type PointerEvent } from "react";
+import {
+  boxText,
+  FONT_SIZES,
+  NOTE_BG,
+  TEXT_COLORS,
+  type ImageBox,
+  type PMNode,
+  type TextBox,
+} from "../../domain/note";
 import { STR } from "../../shared/strings";
 import { reportError, toast } from "../board/boardStore";
 import { useAppStore } from "../common/appStore";
+import { onSelectedBoxKey, startBoxDrag, useBoxFrame } from "./boxShared";
 import { noteExtensions } from "./editorExtensions";
+import { ImageBoxView, ImagePreview } from "./ImageBoxView";
 import {
   addBox,
   addBoxBelow,
-  beginGesture,
+  addImages,
+  pastePlace,
   bringToFront,
   deleteBox,
   duplicateBox,
   endEditing,
-  endGesture,
-  leaveNote,
-  measureBox,
-  moveBoxLive,
-  nudgeBox,
-  redoNote,
-  resizeBoxLive,
   selectBox,
   sendToBack,
   setBoxBg,
   setEditing,
-  undoNote,
   updateContent,
   useNote,
 } from "./noteStore";
@@ -40,6 +43,8 @@ export default function NoteCanvas() {
   const doc = useNote((s) => s.doc);
   const editingId = useNote((s) => s.editingId);
   const selectedId = useNote((s) => s.selectedId);
+  const canvasRef = useRef<HTMLDivElement>(null);
+  const [previewId, setPreviewId] = useState<string | null>(null);
   // 상자마다 편집기 — 서식 막대가 편집 중인 상자의 편집기를 쓴다
   const [editors, setEditors] = useState<Record<string, Editor>>({});
   const onEditor = (id: string, ed: Editor | null) =>
@@ -52,8 +57,24 @@ export default function NoteCanvas() {
 
   const bottom = doc.boxes.reduce((m, b) => Math.max(m, b.y + (b.h ?? 48)), 0);
   const right = doc.boxes.reduce((m, b) => Math.max(m, b.x + b.w), 0);
-  const editingBox = doc.boxes.find((b) => b.id === editingId);
+  const editingBox = doc.boxes.find((b): b is TextBox => b.id === editingId && b.kind === "text");
   const editingEditor = editingId ? editors[editingId] : undefined;
+  const previewBox = doc.boxes.find((b): b is ImageBox => b.id === previewId && b.kind === "image");
+
+  // 캡처 붙여넣기(Ctrl+V): 메모 도크 안 어디서든. 글이 함께 있으면 편집기가 글로 붙인다(스펙 4-3·4-4)
+  useEffect(() => {
+    const onPaste = (e: ClipboardEvent) => {
+      const target = e.target as Element | null;
+      if (!target?.closest?.("[data-note-root]") || !e.clipboardData) return;
+      const files = [...e.clipboardData.files].filter((f) => f.type.startsWith("image/"));
+      if (!files.length || e.clipboardData.getData("text/plain").trim()) return;
+      e.preventDefault();
+      e.stopPropagation();
+      void addImages(files, pastePlace());
+    };
+    document.addEventListener("paste", onPaste, true);
+    return () => document.removeEventListener("paste", onPaste, true);
+  }, []);
 
   const onCanvasPointerDown = (e: PointerEvent<HTMLDivElement>) => {
     if (e.target !== e.currentTarget || e.button !== 0) return;
@@ -63,9 +84,20 @@ export default function NoteCanvas() {
     addBox(e.clientX - rect.left, e.clientY - rect.top);
   };
 
+  const hasFiles = (e: DragEvent) => [...e.dataTransfer.types].includes("Files");
+  /** 탐색기에서 끌어 놓은 그림 → 놓은 자리에 이미지 상자(편집기 안에 놓아도 상자로) */
+  const onDropCapture = (e: DragEvent<HTMLDivElement>) => {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const rect = canvasRef.current!.getBoundingClientRect();
+    void addImages([...e.dataTransfer.files], { x: e.clientX - rect.left, y: e.clientY - rect.top });
+  };
+
   return (
     <div className={styles.canvasScroll}>
       <div
+        ref={canvasRef}
         className={styles.canvas}
         style={{ height: Math.max(bottom + BOTTOM_ROOM, 0), minWidth: right + 40 }}
         role="application"
@@ -74,6 +106,12 @@ export default function NoteCanvas() {
         onPointerDown={onCanvasPointerDown}
         // 빈 곳 클릭의 기본 동작(포커스 옮기기)이 방금 커서를 넣은 새 상자를 빼앗지 않게
         onMouseDown={(e) => e.target === e.currentTarget && e.preventDefault()}
+        onDragOverCapture={(e) => {
+          if (!hasFiles(e)) return;
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "copy";
+        }}
+        onDropCapture={onDropCapture}
       >
         {doc.boxes.length === 0 && (
           <div className={styles.empty} data-testid="note-empty">
@@ -81,17 +119,27 @@ export default function NoteCanvas() {
             <div>{STR.note.emptyHint}</div>
           </div>
         )}
-        {doc.boxes.map((b) => (
-          <TextBoxView
-            key={b.id}
-            box={b}
-            editing={b.id === editingId}
-            selected={b.id === selectedId}
-            onEditor={onEditor}
-          />
-        ))}
+        {doc.boxes.map((b) =>
+          b.kind === "image" ? (
+            <ImageBoxView
+              key={b.id}
+              box={b}
+              selected={b.id === selectedId}
+              onPreview={() => setPreviewId(b.id)}
+            />
+          ) : (
+            <TextBoxView
+              key={b.id}
+              box={b}
+              editing={b.id === editingId}
+              selected={b.id === selectedId}
+              onEditor={onEditor}
+            />
+          ),
+        )}
         {editingBox && editingEditor && <FormatToolbar editor={editingEditor} box={editingBox} />}
       </div>
+      {previewBox && <ImagePreview box={previewBox} onClose={() => setPreviewId(null)} />}
     </div>
   );
 }
@@ -103,7 +151,7 @@ function TextBoxView({
   selected,
   onEditor,
 }: {
-  box: NoteBox;
+  box: TextBox;
   editing: boolean;
   selected: boolean;
   onEditor(id: string, ed: Editor | null): void;
@@ -151,19 +199,7 @@ function TextBoxView({
     useNote.setState({ focusRequest: null });
   }, [editor, focusRequest, box.id]);
 
-  // 선택 상태가 되면 상자에 포커스(방향키·Delete를 받게)
-  useEffect(() => {
-    if (selected) wrapRef.current?.focus();
-  }, [selected]);
-
-  // 높이 재기(새 상자 자리·판 높이)
-  useLayoutEffect(() => {
-    const el = wrapRef.current;
-    if (!el || typeof ResizeObserver === "undefined") return;
-    const ro = new ResizeObserver(() => measureBox(box.id, el.offsetHeight));
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [box.id]);
+  useBoxFrame(wrapRef, box.id, selected);
 
   const onKeyDownCapture = (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.nativeEvent.isComposing) return;
@@ -181,64 +217,13 @@ function TextBoxView({
   };
 
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (editing || e.target !== e.currentTarget || e.nativeEvent.isComposing) return;
-    const step = e.shiftKey ? 32 : 8;
-    const mod = e.ctrlKey || e.metaKey;
-    if (mod && !e.altKey && e.code === "KeyZ") {
-      e.preventDefault();
-      if (e.shiftKey) redoNote();
-      else undoNote();
-    } else if (mod && !e.altKey && e.code === "KeyY") {
-      e.preventDefault();
-      redoNote();
-    } else if (e.key.startsWith("Arrow")) {
-      e.preventDefault();
-      const [dx, dy] = {
-        ArrowLeft: [-step, 0],
-        ArrowRight: [step, 0],
-        ArrowUp: [0, -step],
-        ArrowDown: [0, step],
-      }[e.key] ?? [0, 0];
-      nudgeBox(box.id, dx!, dy!);
-    } else if (e.key === "Delete" || e.key === "Backspace") {
-      e.preventDefault();
-      deleteBox(box.id);
-    } else if (e.key === "Enter") {
-      e.preventDefault();
-      if (editor) focusEnd(editor);
-    } else if (e.key === "Escape") {
-      e.preventDefault();
-      leaveNote();
-    }
-  };
-
-  /** 끌기·폭 조절: 포인터를 잡고 움직이는 동안 바로 반영, 놓으면 메모 기록 한 번 */
-  const startDrag = (e: PointerEvent<HTMLElement>, kind: "move" | "resize") => {
-    if (e.button !== 0) return;
-    e.preventDefault();
-    e.stopPropagation();
-    const el = e.currentTarget;
-    el.setPointerCapture(e.pointerId);
-    const before = beginGesture();
-    const [sx, sy, x0, y0, w0] = [e.clientX, e.clientY, box.x, box.y, box.w];
-    const move = (ev: globalThis.PointerEvent) => {
-      if (kind === "move") moveBoxLive(box.id, x0 + ev.clientX - sx, y0 + ev.clientY - sy);
-      else resizeBoxLive(box.id, w0 + ev.clientX - sx);
-    };
-    const up = () => {
-      el.removeEventListener("pointermove", move);
-      el.removeEventListener("pointerup", up);
-      el.removeEventListener("pointercancel", up);
-      endGesture(before);
-    };
-    el.addEventListener("pointermove", move);
-    el.addEventListener("pointerup", up);
-    el.addEventListener("pointercancel", up);
+    if (editing) return;
+    onSelectedBoxKey(e, box.id, () => editor && focusEnd(editor));
   };
 
   const copyText = async () => {
     setMenuOpen(false);
-    const text = noteToText({ v: 1, boxes: [box] });
+    const text = boxText(box);
     try {
       await useAppStore.getState().platform?.writeClipboard(text);
       toast(STR.note.copied);
@@ -284,7 +269,7 @@ function TextBoxView({
         aria-label={STR.note.grip}
         title={STR.note.grip}
         tabIndex={-1}
-        onPointerDown={(e) => startDrag(e, "move")}
+        onPointerDown={(e) => startBoxDrag(e, box, "move")}
       />
       <button
         type="button"
@@ -343,7 +328,7 @@ function TextBoxView({
         aria-label={STR.note.resize}
         title={STR.note.resize}
         tabIndex={-1}
-        onPointerDown={(e) => startDrag(e, "resize")}
+        onPointerDown={(e) => startBoxDrag(e, box, "resize")}
       />
     </div>
   );
@@ -356,7 +341,7 @@ function focusEnd(editor: Editor) {
 }
 
 // ── 서식 막대 ─────────────────────────────────────────
-function FormatToolbar({ editor, box }: { editor: Editor; box: NoteBox }) {
+function FormatToolbar({ editor, box }: { editor: Editor; box: TextBox }) {
   const st = useEditorState({
     editor,
     selector: ({ editor: ed }) => ({

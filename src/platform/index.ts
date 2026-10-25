@@ -10,6 +10,13 @@ export interface AppConfig {
   dataDir: string;
 }
 
+/** 내보내기 종류 — 저장 대화상자의 파일 형식 거르개와 허용 확장자 */
+export type ExportKind = "xlsx" | "image";
+export const EXPORT_EXTS: Record<ExportKind, readonly string[]> = {
+  xlsx: [".xlsx"],
+  image: [".png", ".webp"],
+};
+
 export interface PathInfo {
   exists: boolean;
   isDir: boolean;
@@ -36,8 +43,11 @@ export interface Platform {
   copyNew(from: string, to: string): Promise<void>;
   openFolder(path: string): Promise<void>;
   /** 내보내기 저장: 저장 대화상자(같은 이름이면 대화상자가 덮어쓰기를 묻는다)에서 고른 경로. 취소하면 null */
-  pickSaveFile(title: string, defaultPath: string): Promise<string | null>;
-  /** 엑셀 내보내기 파일 쓰기 — `.xlsx`만, 일지 파일·backups 폴더는 거부(CLAUDE.md 4-3 내보내기 예외) */
+  pickSaveFile(title: string, defaultPath: string, kind?: ExportKind): Promise<string | null>;
+  /**
+   * 내보내기 파일 쓰기 — 엑셀 `.xlsx`와 메모 이미지 `.png`·`.webp`만, 일지 파일·backups 폴더는 거부
+   * (CLAUDE.md 4-3 내보내기 예외). Rust `export_write`가 한 번 더 검사한다.
+   */
   writeExport(path: string, bytes: Uint8Array): Promise<void>;
   /** 파일을 그 파일의 기본 프로그램으로 열기(내보낸 엑셀 [파일 열기]) */
   openFile(path: string): Promise<void>;
@@ -81,10 +91,11 @@ export function baseName(path: string): string {
 }
 
 /** 내보내기 경로 검사(Rust `export_write`와 같은 규칙 — 웹 앱에서도 먼저 막는다) */
-export function exportPathProblem(path: string, dataDir: string): string | null {
+export function exportPathProblem(path: string, dataDir: string, kind: ExportKind = "xlsx"): string | null {
   const norm = (p: string) => p.replace(/\//g, "\\").replace(/\\+$/, "").toLowerCase();
   const name = baseName(path).toLowerCase();
-  if (!name.endsWith(".xlsx") || name.length <= ".xlsx".length) return STR.export.onlyXlsx;
+  if (!EXPORT_EXTS[kind].some((ext) => name.endsWith(ext) && name.length > ext.length))
+    return kind === "image" ? STR.note.onlyImage : STR.export.onlyXlsx;
   if (norm(dirOf(path)) === `${norm(dataDir)}\\backups`) return STR.export.notBackups;
   return null;
 }

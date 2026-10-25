@@ -75,8 +75,12 @@ export const tauriPlatform: Platform = {
   copyNew: (from, to) => invoke("fs_copy_new", { from, to }),
   openFolder: (path) => invoke("open_folder", { path }),
   writeClipboard: (text) => writeText(text),
-  async pickSaveFile(title, defaultPath) {
-    const picked = await save({ title, defaultPath, filters: [{ name: "Excel", extensions: ["xlsx"] }] });
+  async pickSaveFile(title, defaultPath, kind = "xlsx") {
+    const filters =
+      kind === "image"
+        ? [{ name: "이미지", extensions: ["png", "webp"] }]
+        : [{ name: "Excel", extensions: ["xlsx"] }];
+    const picked = await save({ title, defaultPath, filters });
     return picked ?? null;
   },
   writeExport: (path, bytes) => invoke("export_write", { path, bytes: Array.from(bytes) }),

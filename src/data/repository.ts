@@ -9,7 +9,15 @@ import {
   type VisibleCategory,
 } from "../domain/categories";
 import type { SummaryInput } from "../domain/aggregate";
-import { docFromDayMemos, isNoteEmpty, noteToText, parseNoteDoc, type NoteDoc } from "../domain/note";
+import {
+  docFromDayMemos,
+  IMAGE_MIMES,
+  isNoteEmpty,
+  noteToText,
+  parseNoteDoc,
+  type ImageMime,
+  type NoteDoc,
+} from "../domain/note";
 import type { ExportWeek } from "../export/excel";
 import { normalizeCell } from "../domain/items";
 import { localDate, utcTimestamp } from "../domain/localTime";
@@ -73,6 +81,18 @@ interface WeeklySummaryRow {
 
 /** 메모 문서 최대 크기(문자) — 이미지는 문서 밖(note_asset)에 둔다 */
 export const NOTE_MAX = 1_000_000;
+/** 메모 이미지 1장 최대(줄인 뒤 저장 크기). 긴 변 1600px WebP는 보통 100~250KB */
+export const NOTE_ASSET_MAX_BYTES = 5 * 1024 * 1024;
+
+/** 메모 이미지(weekly-note-spec 5-1). data = base64, bytes = 저장한 그림 크기 */
+export interface NoteAsset {
+  id: string;
+  mime: ImageMime;
+  data: string;
+  width: number;
+  height: number;
+  bytes: number;
+}
 
 /** 수정본 최대 길이(입력 실수로 거대한 글이 들어가는 것 방지) */
 export const SUMMARY_MAX = 20000;
@@ -398,6 +418,52 @@ export class JournalRepository {
       "INSERT INTO week_note (week_id, doc, updated_at) VALUES (?, ?, ?) ON CONFLICT(week_id) DO UPDATE SET doc = excluded.doc, updated_at = excluded.updated_at",
       [weekId, json, this.ts()],
     );
+  }
+
+  /** 메모 이미지 넣기 — 문서보다 먼저 쓰고, 문서(자동 저장)가 이 id를 가리킨다 */
+  async addNoteAsset(weekId: WeekId, a: Omit<NoteAsset, "id">): Promise<string> {
+    if (!(IMAGE_MIMES as readonly string[]).includes(a.mime))
+      throw new ValidationError("지원하지 않는 그림 형식입니다");
+    if (!/^[A-Za-z0-9+/]+={0,2}$/.test(a.data)) throw new ValidationError("그림 데이터가 올바르지 않습니다");
+    const bytes =
+      Math.floor((a.data.length * 3) / 4) - (a.data.endsWith("==") ? 2 : a.data.endsWith("=") ? 1 : 0);
+    if (bytes > NOTE_ASSET_MAX_BYTES) throw new ValidationError("그림이 너무 큽니다");
+    const [w, h] = [Math.round(a.width), Math.round(a.height)];
+    if (!(w > 0 && h > 0)) throw new ValidationError("그림 크기가 올바르지 않습니다");
+    const id = uuidv7(this.clock().getTime());
+    await this.db.execute(
+      "INSERT INTO note_asset (id, week_id, mime, data, width, height, bytes, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+      [id, weekId, a.mime, a.data, w, h, bytes, this.ts()],
+    );
+    return id;
+  }
+
+  async getNoteAssets(weekId: WeekId): Promise<NoteAsset[]> {
+    return this.db.select<NoteAsset>(
+      "SELECT id, mime, data, width, height, bytes FROM note_asset WHERE week_id = ?",
+      [weekId],
+    );
+  }
+
+  /**
+   * 문서가 더는 가리키지 않는 그 주의 이미지 지우기(DB 안의 행 — 사용자 폴더 파일이 아님, 스펙 5-2).
+   * 실행 취소로 되살릴 수 있는 동안은 부르지 않는다(주를 옮기거나 앱을 닫을 때만).
+   */
+  async pruneNoteAssets(weekId: WeekId, keep: string[]): Promise<number> {
+    const marks = keep.map(() => "?").join(", ");
+    const { changes } = await this.db.execute(
+      `DELETE FROM note_asset WHERE week_id = ?${keep.length ? ` AND id NOT IN (${marks})` : ""}`,
+      [weekId, ...keep],
+    );
+    return changes;
+  }
+
+  /** 설정 > 백업의 용량 표시 */
+  async noteAssetStats(): Promise<{ count: number; bytes: number }> {
+    const [r] = await this.db.select<{ count: number; bytes: number | null }>(
+      "SELECT COUNT(*) AS count, SUM(bytes) AS bytes FROM note_asset",
+    );
+    return { count: r?.count ?? 0, bytes: r?.bytes ?? 0 };
   }
 
   /** 범위 안에서 메모에 글이 있는 주(예전 요일 메모만 있는 주 포함) */

@@ -92,7 +92,11 @@ export const browserPlatform: Platform = {
     const name = baseName(path);
     const url = URL.createObjectURL(
       new Blob([bytes as BlobPart], {
-        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        type: name.toLowerCase().endsWith(".png")
+          ? "image/png"
+          : name.toLowerCase().endsWith(".webp")
+            ? "image/webp"
+            : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       }),
     );
     const a = Object.assign(document.createElement("a"), { href: url, download: name });

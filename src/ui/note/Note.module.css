@@ -395,3 +395,120 @@
   margin: 0 3px;
   background: rgb(127 127 127 / 0.5);
 }
+
+/* ── 이미지 상자(스펙 4-4) ── */
+.imageBox {
+  padding: 4px;
+}
+
+.image {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: calc(var(--radius-md) - 2px);
+  cursor: grab;
+  user-select: none;
+}
+
+.imageMissing {
+  padding: var(--sp-4);
+  color: var(--text-3);
+  font-size: var(--fs-sm);
+  text-align: center;
+}
+
+.caption {
+  display: none;
+  box-sizing: border-box;
+  width: 100%;
+  margin-top: 4px;
+  padding: 2px 4px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-2);
+  font: inherit;
+  font-size: var(--fs-sm);
+}
+
+/* 설명이 있으면 늘, 없으면 마우스를 올리거나 선택·입력 중일 때만 자리 표시 */
+.captionFilled,
+.imageBox:hover .caption,
+.imageBox.selected .caption,
+.caption:focus {
+  display: block;
+}
+
+.caption:focus {
+  border-color: var(--accent);
+  outline: none;
+  background: var(--surface-card);
+  color: var(--text-1);
+}
+
+.resizeCorner {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  z-index: 2;
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  border: 2px solid var(--accent);
+  border-radius: 3px;
+  background: var(--surface-card);
+  cursor: nwse-resize;
+  opacity: 0;
+  touch-action: none;
+}
+
+.imageBox:hover .resizeCorner,
+.imageBox.selected .resizeCorner {
+  opacity: 1;
+}
+
+/* 크게 보기 */
+.preview {
+  position: fixed;
+  inset: 0;
+  z-index: 200000;
+  display: flex;
+  flex-direction: column;
+  background: rgb(0 0 0 / 0.72);
+}
+
+.previewBar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-4);
+  color: #fff;
+  font-size: var(--fs-sm);
+}
+
+.previewBody {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: var(--sp-4);
+}
+
+.previewBody > img {
+  flex: 0 0 auto;
+  max-width: none;
+  background: #fff;
+}
+
+.busy {
+  color: var(--text-2);
+  font-size: var(--fs-xs);
+}
+
+.fileInput {
+  display: none;
+}

@@ -176,15 +176,19 @@ fn norm(p: &str) -> String {
     p.replace('/', "\\").trim_end_matches('\\').to_lowercase()
 }
 
-/// 내보내기 파일 쓰기 허용 규칙(CLAUDE.md 4-3 내보내기 예외): 확장자 `.xlsx`만,
+/// 내보내기 파일 쓰기 허용 규칙(CLAUDE.md 4-3 내보내기 예외): 확장자 `.xlsx`·`.png`·`.webp`만,
 /// 저장 폴더의 일지 파일·`backups` 폴더 안은 거부. 웹 앱의 저장 대화상자와 별개로 한 번 더 검사한다.
 /// 윈도우 경로를 어느 플랫폼에서든 같게 다루려고 문자열로 본다(`\\`·`/` 모두 구분자).
+/// 내보낼 수 있는 확장자: 엑셀 + 메모 이미지(CLAUDE.md 4-3 내보내기 예외, weekly-note-spec 11절 #3)
+const EXPORT_EXTS: [&str; 3] = [".xlsx", ".png", ".webp"];
+
 fn export_path_allowed(path: &str, data_dir: Option<&str>) -> Result<(), String> {
     let p = norm(path);
     let (parent, name) = p.rsplit_once('\\').unwrap_or(("", p.as_str()));
-    let stem_len = name.len().saturating_sub(".xlsx".len());
-    if !name.ends_with(".xlsx") || stem_len == 0 {
-        return Err(format!("엑셀 파일(.xlsx)로만 저장할 수 있습니다: {name}"));
+    if !EXPORT_EXTS.iter().any(|ext| name.ends_with(ext) && name.len() > ext.len()) {
+        return Err(format!(
+            "엑셀(.xlsx) 또는 이미지(.png·.webp) 파일로만 저장할 수 있습니다: {name}"
+        ));
     }
     if let Some(dir) = data_dir {
         if parent == format!("{}\\backups", norm(dir)) {
@@ -194,13 +198,14 @@ fn export_path_allowed(path: &str, data_dir: Option<&str>) -> Result<(), String>
     Ok(())
 }
 
-/// 엑셀 내보내기 파일 쓰기. 사용자가 저장 대화상자에서 고른 경로이며, 같은 이름이면 대화상자에서
+/// 내보내기 파일 쓰기(엑셀·메모 이미지). 사용자가 저장 대화상자에서 고른 경로이며, 같은 이름이면 대화상자에서
 /// 덮어쓰기를 확인한 것이다. 임시 파일에 다 쓴 뒤 바꿔치기(쓰는 도중 꺼져도 반쪽 파일이 남지 않게).
 #[tauri::command]
 pub fn export_write(app: AppHandle, path: String, bytes: Vec<u8>) -> Result<(), String> {
     export_path_allowed(&path, configured_data_dir(&app).as_deref())?;
     let target = PathBuf::from(&path);
-    let tmp = target.with_extension("xlsx.tmp");
+    let ext = target.extension().and_then(|e| e.to_str()).unwrap_or("out").to_owned();
+    let tmp = target.with_extension(format!("{ext}.tmp"));
     let write = || -> std::io::Result<()> {
         let mut f = fs::File::create(&tmp)?;
         f.write_all(&bytes)?;
@@ -209,7 +214,7 @@ pub fn export_write(app: AppHandle, path: String, bytes: Vec<u8>) -> Result<(), 
     };
     write().map_err(|e| {
         let _ = fs::remove_file(&tmp);
-        format!("파일을 저장하지 못했습니다(엑셀에서 열려 있으면 닫고 다시 시도하세요): {e}")
+        format!("파일을 저장하지 못했습니다(다른 프로그램에서 열려 있으면 닫고 다시 시도하세요): {e}")
     })
 }
 
@@ -244,6 +249,18 @@ mod tests {
         }
         // 설정을 못 읽어도 확장자 검사는 한다
         assert!(export_path_allowed("C:\\x\\a.db", None).is_err());
+        // 메모 이미지 저장(.png·.webp)도 같은 규칙
+        assert!(export_path_allowed("D:\\캡처\\메모이미지_2026-W43_1.webp", Some(dir)).is_ok());
+        assert!(export_path_allowed("D:\\캡처\\a.PNG", Some(dir)).is_ok());
+        for no in [
+            "C:\\Users\\u\\WorkJourney\\backups\\a.png",
+            "D:\\x\\a.jpg",
+            "D:\\x\\a.svg",
+            "D:\\x\\.webp",
+            "D:\\x\\a.png.exe",
+        ] {
+            assert!(export_path_allowed(no, Some(dir)).is_err(), "{no}");
+        }
         assert!(export_path_allowed("/home/u/WorkJourney/backups/a.xlsx", Some("/home/u/WorkJourney")).is_err());
     }
 

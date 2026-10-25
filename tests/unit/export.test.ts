@@ -15,6 +15,8 @@ import {
 } from "../../src/export/excel";
 import { exportFileName, exportTitle, rangeLabel } from "../../src/export/filename";
 import { displayWidth, rowHeight, wrappedLines } from "../../src/export/textWidth";
+import { exportPathProblem } from "../../src/platform";
+import { STR } from "../../src/shared/strings";
 import { freshRepo } from "./helpers";
 
 const SAMPLE_PATH = new URL("../../docs/samples/sample-export_2026-W42~W43.xlsx", import.meta.url).pathname;
@@ -240,5 +242,19 @@ describe("저장소 내보내기 자료", () => {
     expect(await repo.exportStats("2026-W40", "2026-W43")).toEqual({ weeks: 4, categories: 4, items: 25 });
     const weeks = await repo.exportWeeks("2026-W43", "2026-W42");
     expect(weeks.map((w) => w.input.weekId)).toEqual(["2026-W42", "2026-W43"]);
+  });
+});
+
+describe("내보내기 경로 규칙(웹 앱 쪽 — Rust export_write와 같은 규칙, CLAUDE.md 4-3)", () => {
+  const dir = "C:\\Users\\u\\WorkJourney";
+  it("엑셀은 .xlsx만, 메모 이미지는 .png·.webp만, backups 폴더는 둘 다 거부", () => {
+    expect(exportPathProblem("D:\\보고\\a.XLSX", dir)).toBeNull();
+    expect(exportPathProblem("D:\\보고\\a.png", dir)).toBe(STR.export.onlyXlsx);
+    expect(exportPathProblem("D:\\캡처\\a.webp", dir, "image")).toBeNull();
+    expect(exportPathProblem("D:\\캡처\\a.PNG", dir, "image")).toBeNull();
+    for (const no of ["D:\\x\\a.jpg", "D:\\x\\.png", "D:\\x\\a.xlsx", "D:\\x\\a.png.exe"])
+      expect(exportPathProblem(no, dir, "image")).toBe(STR.note.onlyImage);
+    expect(exportPathProblem(`${dir}\\backups\\a.png`, dir, "image")).toBe(STR.export.notBackups);
+    expect(exportPathProblem(`${dir}/backups/a.xlsx`, dir)).toBe(STR.export.notBackups);
   });
 });

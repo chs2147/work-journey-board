@@ -1,13 +1,25 @@
 // 보드 아래 메모 도크(weekly-note-spec 3절): 경계선 끌어 높이 조절, [▾] 접기, [크게 보기]. 판(편집기 포함)은 늦게 불러온다.
-import { lazy, Suspense, type PointerEvent } from "react";
+import { lazy, Suspense, useRef, type PointerEvent } from "react";
 import { STR } from "../../shared/strings";
-import { addBoxBelow, setCollapsed, setDockHeight, setExpanded, useNote } from "./noteStore";
+import { ACCEPT_TYPES } from "./imageProcess";
+import {
+  addBoxBelow,
+  addImages,
+  pastePlace,
+  setCollapsed,
+  setDockHeight,
+  setExpanded,
+  useNote,
+} from "./noteStore";
 import styles from "./Note.module.css";
 
 const NoteCanvas = lazy(() => import("./NoteCanvas"));
 
 export function NoteDock() {
   const boxes = useNote((s) => s.doc.boxes.length);
+  const images = useNote((s) => s.doc.boxes.filter((b) => b.kind === "image").length);
+  const busy = useNote((s) => s.busy);
+  const fileRef = useRef<HTMLInputElement>(null);
   const legacy = useNote((s) => s.legacy);
   const height = useNote((s) => s.dockHeight);
   const collapsed = useNote((s) => s.collapsed);
@@ -58,8 +70,13 @@ export function NoteDock() {
       <div className={styles.head}>
         <h2 className={styles.title}>{STR.note.title}</h2>
         <span className={styles.counts} data-testid="note-counts">
-          {STR.note.counts(boxes)}
+          {STR.note.counts(boxes, images)}
         </span>
+        {busy && (
+          <span className={styles.busy} role="status">
+            {STR.note.imageBusy}
+          </span>
+        )}
         {legacy && <span className={styles.legacy}>{STR.note.legacy}</span>}
         <span className={styles.spacer} />
         {!collapsed && (
@@ -72,6 +89,31 @@ export function NoteDock() {
             {STR.note.addBox}
           </button>
         )}
+        {!collapsed && (
+          <button
+            type="button"
+            className={styles.headButton}
+            title={STR.note.addImageTitle}
+            onClick={() => fileRef.current?.click()}
+          >
+            {STR.note.addImage}
+          </button>
+        )}
+        <input
+          ref={fileRef}
+          type="file"
+          className={styles.fileInput}
+          accept={ACCEPT_TYPES.join(",")}
+          multiple
+          tabIndex={-1}
+          aria-label={STR.note.addImage}
+          data-testid="note-image-input"
+          onChange={(e) => {
+            const files = [...(e.currentTarget.files ?? [])];
+            e.currentTarget.value = "";
+            if (files.length) void addImages(files, pastePlace());
+          }}
+        />
         {!collapsed && (
           <button
             type="button"

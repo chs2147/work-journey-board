@@ -14,7 +14,7 @@ import { loadPlatform, type Platform } from "../../platform";
 import { STR } from "../../shared/strings";
 import { flushAll, init as initBoard, toast } from "../board/boardStore";
 import { flushDraft, initSummary } from "../summary/summaryStore";
-import { flushNote, initNote } from "../note/noteStore";
+import { finishNote, flushNote, initNote } from "../note/noteStore";
 import { useAppStore, type JournalStatus } from "./appStore";
 
 const set = useAppStore.setState;
@@ -48,6 +48,7 @@ async function flushPending() {
 /** 앱 종료 직전: 대기 중인 저장을 끝내고 그날 일일 백업을 덮어쓴다. 실패해도 창은 닫힌다. */
 async function onExit() {
   await flushPending().catch(() => undefined);
+  await finishNote().catch(() => undefined);
   const j = get().journal;
   if (j.state !== "ready") return;
   try {

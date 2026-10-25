@@ -181,7 +181,7 @@ describe("주간 메모 (weekly-note-spec 5절)", () => {
       ],
     };
     await repo.saveWeekNote("2026-W43", { v: 1, boxes: [box] });
-    const saved = (await repo.getWeekNote("2026-W43")).doc.boxes[0]!.content;
+    const saved = ((await repo.getWeekNote("2026-W43")).doc.boxes[0] as TextBox).content;
     expect(JSON.stringify(saved)).not.toMatch(/codeBlock|link/);
     expect(saved.content?.map((b) => b.type)).toEqual(["paragraph", "paragraph"]);
     expect(saved.content?.[1]?.content?.[0]).toEqual({ type: "text", text: "코드 글" });
@@ -201,6 +201,39 @@ describe("주간 메모 (weekly-note-spec 5절)", () => {
     expect(await repo.getWeekNote("2026-W43")).toEqual({ doc: emptyDoc(), legacy: false });
     // 예전 표는 지우지 않는다(되돌릴 길을 남김)
     expect(await db.select("SELECT date FROM day_memo ORDER BY date")).toHaveLength(2);
+  });
+
+  it("메모 이미지: 넣기·읽기·용량, 문서가 안 가리키는 그 주 이미지만 정리, 잘못된 데이터 거부", async () => {
+    const { repo } = await freshRepo();
+    const png = { mime: "image/png" as const, data: "iVBORw0KGgo=", width: 40, height: 20, bytes: 0 };
+    const a = await repo.addNoteAsset("2026-W43", png);
+    const b = await repo.addNoteAsset("2026-W43", { ...png, mime: "image/webp" });
+    const other = await repo.addNoteAsset("2026-W42", png);
+    expect((await repo.getNoteAssets("2026-W43")).map((x) => x.id).sort()).toEqual([a, b].sort());
+    expect(await repo.getNoteAssets("2026-W43")).toContainEqual({ id: a, ...png, bytes: 8 });
+    expect(await repo.noteAssetStats()).toEqual({ count: 3, bytes: 24 });
+    expect(await repo.pruneNoteAssets("2026-W43", [b])).toBe(1);
+    expect((await repo.getNoteAssets("2026-W43")).map((x) => x.id)).toEqual([b]);
+    expect((await repo.getNoteAssets("2026-W42")).map((x) => x.id)).toEqual([other]); // 다른 주는 그대로
+    expect(await repo.pruneNoteAssets("2026-W42", [])).toBe(1);
+    await expect(
+      repo.addNoteAsset("2026-W43", { ...png, mime: "image/svg+xml" as "image/png" }),
+    ).rejects.toBeInstanceOf(ValidationError);
+    await expect(repo.addNoteAsset("2026-W43", { ...png, data: "<script>" })).rejects.toBeInstanceOf(
+      ValidationError,
+    );
+    await expect(repo.addNoteAsset("2026-W43", { ...png, width: 0 })).rejects.toBeInstanceOf(ValidationError);
+  });
+
+  it("이미지만 있는 주도 메모가 있는 주(무기록 판정·연간 미니맵·첫 기록 주)", async () => {
+    const { repo } = await freshRepo();
+    const doc = {
+      v: 1 as const,
+      boxes: [{ id: "i", kind: "image" as const, x: 0, y: 0, w: 200, z: 1, asset: "x", caption: "" }],
+    };
+    await repo.saveWeekNote("2026-W41", doc);
+    expect(Object.fromEntries(await repo.getYearDensity(2026))).toEqual({ "2026-W41": 1 });
+    expect(await repo.firstRecordWeek()).toBe("2026-W41");
   });
 
   it("너무 큰 메모는 거부", async () => {

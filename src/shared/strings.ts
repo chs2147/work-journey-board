@@ -1,4 +1,17 @@
 // UI 문자열의 단일 출처. 화면 컴포넌트에 한국어 문구를 직접 쓰지 않는다(공통 규칙 4절).
+/** 용량 표시(1024 단위): 900 B · 12.3 KB · 4.5 MB · 1.2 GB */
+export function formatBytes(n: number): string {
+  if (n < 1024) return `${n} B`;
+  const units = ["KB", "MB", "GB"];
+  let v = n / 1024;
+  let i = 0;
+  while (v >= 1024 && i < units.length - 1) {
+    v /= 1024;
+    i++;
+  }
+  return `${v.toFixed(1)} ${units[i]}`;
+}
+
 export const STR = {
   appName: "Work Journey Board",
   topBar: {
@@ -86,7 +99,8 @@ export const STR = {
   },
   note: {
     title: "이번 주 메모",
-    counts: (boxes: number) => (boxes ? `상자 ${boxes}개` : "비어 있음"),
+    counts: (boxes: number, images = 0) =>
+      boxes ? `상자 ${boxes - images}개${images ? ` · 이미지 ${images}개` : ""}` : "비어 있음",
     legacy: "예전 요일 메모를 옮겨 보여 주는 중 — 고치면 이 주 메모로 저장됩니다",
     addBox: "+ 텍스트 상자",
     addBoxTitle: "새 텍스트 상자 (메모 안에서 Ctrl+Enter)",
@@ -96,7 +110,7 @@ export const STR = {
     open: "메모 펼치기",
     resizeDock: "메모 높이 조절(끌기)",
     emptyTitle: "이번 주에 확인한 것을 자유롭게 붙여 두세요",
-    emptyHint: "빈 곳을 클릭해 쓰기 · Alt+M으로 보드와 오가기",
+    emptyHint: "빈 곳을 클릭해 쓰기 · 캡처는 Ctrl+V · 이미지 파일은 끌어다 놓기 · Alt+M으로 보드와 오가기",
     canvasAria: "이번 주 메모 — 빈 곳을 클릭하면 새 상자",
     boxAria: "메모 상자",
     grip: "상자 위치 이동(끌기)",
@@ -129,6 +143,28 @@ export const STR = {
     rule: "구분선",
     taskCheck: (text: string) => `할 일 체크: ${text || "빈 항목"}`,
     undo: "메모 실행 취소 (Ctrl+Z)",
+    addImage: "이미지 넣기",
+    addImageTitle: "이미지 파일 넣기 (캡처는 메모에서 Ctrl+V, 파일은 끌어다 놓아도 됩니다)",
+    imageBusy: "이미지를 넣는 중…",
+    imageAria: "메모 이미지",
+    imageAlt: (caption: string) => (caption ? `이미지: ${caption}` : "메모 이미지"),
+    caption: "이미지 설명",
+    captionPlaceholder: "설명(선택) — 요약·엑셀에 글로 들어갑니다",
+    editCaption: "설명 달기",
+    imageResize: "크기 조절(끌기, 비율 유지)",
+    preview: "크게 보기",
+    previewTitle: "이미지 크게 보기 (Esc 닫기)",
+    close: "닫기",
+    saveImage: "이미지로 저장…",
+    saveImageTitle: "이미지로 저장",
+    imageFileName: (weekId: string, n: number, ext: string) => `메모이미지_${weekId}_${n}.${ext}`,
+    imageSaved: (name: string) => `이미지를 저장했습니다: ${name}`,
+    onlyImage: "이미지 파일(.png 또는 .webp)로만 저장할 수 있습니다",
+    imageType: "넣을 수 없는 형식입니다 — PNG·JPG·GIF·WEBP·BMP 그림만 넣을 수 있습니다",
+    imageTooBig: "10MB가 넘는 그림은 넣을 수 없습니다",
+    imageBroken: "그림을 읽지 못했습니다(파일이 손상되었을 수 있습니다)",
+    imageSaveType: "이 형식으로 바꿔 저장할 수 없습니다 — .png로 저장해 보세요",
+    imageMissing: "그림을 찾을 수 없습니다",
   },
   summary: {
     button: "주간 요약",
@@ -270,6 +306,10 @@ export const STR = {
     backupNow: "지금 백업",
     openBackups: "백업 폴더 열기",
     backupDone: "백업했습니다",
+    usage: (file: string, images: number, imageSize: string) =>
+      `일지 파일 ${file}${images ? ` · 그 안의 메모 이미지 ${images}개(${imageSize})` : ""}`,
+    usageBackups: (copies: number, total: string) =>
+      `백업은 일지 파일 사본이라 최대 ${copies}개 × 지금 크기 ≈ ${total}까지 늘 수 있습니다. 이미지를 많이 넣으면 그만큼 커집니다.`,
     backupPolicy: (daily: number, monthly: number) =>
       `자동: 하루 첫 실행·종료 시 · 최근 ${daily}일 + 월 1개 × ${monthly} 보관(수동 백업은 지우지 않음)`,
     categories: "종료된 업무",
