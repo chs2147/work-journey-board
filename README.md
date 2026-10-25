@@ -50,6 +50,11 @@ npm run tauri dev    # 실앱 모드(윈도우 / 리눅스는 webkit2gtk-4.1 필
 - 윈도우 설치 파일: `main`에 반영되면 [Releases](https://github.com/chs2147/work-journey-board/releases)에 `v<버전>` 사전 릴리스로 올라간다. WebView2 오프라인 설치판은 Actions → *Build Windows installer* → Run workflow → `offline`.
 
 ## Version History
+### v0.2.0 (2026-10-25) — I-M2 산출물 완성(주간 요약·엑셀)
+- I-M2 범위 완료: 주간 요약 패널(자동 집계·수정본·최종본 복사, v0.1.1) + 엑셀 내보내기(주간보고·원장, v0.1.3)
+- 6주 + 연도 경계 가상 샘플로 기록 → 요약 → 내보내기 통합 검증(단위·E2E, Chromium·WebKit)
+- 회사 PC 확인표에 주간 요약·엑셀 내보내기 확인 항목(7-2절) 추가
+
 ### v0.1.3 (2026-10-25) — 엑셀 내보내기(I-M2 M2-S2)
 - 상단 [내보내기] 또는 Alt+E → 범위(이번 주 / 최근 4주 / 기간 지정 / 전체)·시트를 골라 엑셀 파일로 저장
 - 주간보고 시트(주차 블록·업무 색·메모·주간 요약 행) + 원장 시트(필터·첫 행 고정·`중요` ★ 열), A4 가로 인쇄 설정
