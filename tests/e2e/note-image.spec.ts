@@ -287,3 +287,17 @@ test("설정 > 백업에 일지 파일·메모 이미지 용량, 지운 이미�
   await expect(page.getByTestId("week-title")).toContainText("2026-W43");
   await expect.poll(usage).not.toContain("메모 이미지");
 });
+
+test("보드 칸에서 캡처를 붙이면 안내 → [메모에 붙이기]로 메모 이미지 상자(메모가 접혀 있으면 펼침)", async ({
+  page,
+}) => {
+  await page.getByRole("button", { name: "메모 접기" }).click();
+  await page.keyboard.press("Alt+KeyT"); // 보드 오늘 칸
+  await expect(page.locator(":focus")).toHaveValue("테스트 데이터 이관 스크립트 작성 착수");
+  await pasteImage(page, ":focus", await makePng(page, 320, 200));
+  await expect(page.locator(":focus")).toHaveValue("테스트 데이터 이관 스크립트 작성 착수"); // 칸 글은 그대로
+  await page.getByRole("button", { name: "메모에 붙이기" }).click();
+  await expect(page.getByTestId("note-dock")).toHaveAttribute("data-dock-mode", "auto");
+  await expect(images(page)).toHaveCount(1);
+  await expect(page.getByTestId("note-box")).toHaveCount(1); // 예전 요일 메모 상자 아래에 붙음
+});

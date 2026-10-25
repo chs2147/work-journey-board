@@ -82,6 +82,8 @@ function Workspace() {
   const panelOpen = useBoard((s) => s.panelOpen);
   const summaryOpen = useSummary((s) => s.open);
   const noteExpanded = useNote((s) => s.expanded);
+  // 메모 도크가 자동 높이면 보드는 필요한 만큼만(남는 공간은 메모) — 접혀 있으면 보드가 다 쓴다
+  const noteAutoHeight = useNote((s) => s.dockAuto && !s.collapsed);
   // 좁은 창이면 패널을 보드 위에 겹쳐 띄우고, 보드를 누르면 닫는다(spec 1-3)
   const narrow = useMediaQuery("(max-width: 1179px)");
   const width = useWindowWidth();
@@ -99,7 +101,13 @@ function Workspace() {
         }}
       >
         {/* [크게 보기]면 메모가 보드 영역을 덮는다(보드는 그대로 두고 숨김 — 입력 상태 유지) */}
-        <div className={noteExpanded ? styles.hidden : styles.boardFill}>
+        <div
+          className={
+            noteExpanded
+              ? styles.hidden
+              : `${styles.boardFill} ${noteAutoHeight ? styles.boardFillNatural : ""}`
+          }
+        >
           <BoardView />
         </div>
         <NoteDock />

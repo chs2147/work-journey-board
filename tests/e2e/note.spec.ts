@@ -235,3 +235,42 @@ test("크게 보기는 보드를 숨기고, 경계선으로 높이 조절 · 접
   await page.getByRole("button", { name: "메모 펼치기" }).click();
   await expect.poll(async () => Math.round((await dock.boundingBox())!.height - h0)).toBe(100);
 });
+
+test("보드 우선 자동 높이: 작은 화면에서도 업무 행이 다 보이고 메모는 남는 공간(최소 160), 끌면 고정·머리 두 번 누르면 자동", async ({
+  page,
+}) => {
+  const dock = page.getByTestId("note-dock");
+  const headers = page.getByTestId("category-header");
+  const box = async () => (await dock.boundingBox())!;
+  // 1366×768(회사 노트북 흔한 해상도): 업무 4행이 모두 보이고 메모 도크는 그 아래 남는 공간
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await expect(dock).toHaveAttribute("data-dock-mode", "auto");
+  const lastHead = (await headers.last().boundingBox())!;
+  expect(lastHead.y + lastHead.height).toBeLessThanOrEqual((await box()).y);
+  expect((await box()).height).toBeGreaterThanOrEqual(160);
+  // 큰 화면: 보드 아래 빈 띠 없이 메모가 남는 공간을 다 쓴다
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const addRow = (await page
+    .getByRole("textbox", { name: "+ 업무 추가" })
+    .or(page.getByText("+ 업무 추가"))
+    .first()
+    .boundingBox())!;
+  expect((await box()).y - (addRow.y + addRow.height)).toBeLessThan(24);
+  // 아주 작은 화면: 보드가 줄어들며 스크롤되고 메모는 최소 160
+  await page.setViewportSize({ width: 1280, height: 560 });
+  await expect.poll(async () => Math.round((await box()).height)).toBe(160);
+  // 경계선을 끌면 그 높이로 고정
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const h0 = (await box()).height;
+  const split = (await page.getByRole("button", { name: /메모 높이 조절/ }).boundingBox())!;
+  await page.mouse.move(split.x + split.width / 2, split.y + 4);
+  await page.mouse.down();
+  await page.mouse.move(split.x + split.width / 2, split.y + 4 + 80, { steps: 4 });
+  await page.mouse.up();
+  await expect(dock).toHaveAttribute("data-dock-mode", "fixed");
+  await expect.poll(async () => Math.round(h0 - (await box()).height)).toBe(80);
+  // 머리 빈 곳 두 번 누르기 → 자동으로
+  await page.getByTestId("note-counts").dblclick();
+  await expect(dock).toHaveAttribute("data-dock-mode", "auto");
+  await expect.poll(async () => Math.round((await box()).height)).toBe(Math.round(h0));
+});

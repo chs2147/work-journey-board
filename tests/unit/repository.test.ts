@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { cellKey, ValidationError } from "../../src/data/repository";
 import type { SqlDriver } from "../../src/data/driver";
 import { uuidv7 } from "../../src/data/ids";
+import { DEFAULT_SETTINGS, mergeSettings } from "../../src/data/settings";
 import { emptyDoc, noteToText, type TextBox } from "../../src/domain/note";
 import type { ItemDraft } from "../../src/domain/types";
 import { freshRepo } from "./helpers";
@@ -290,6 +291,24 @@ describe("설정 (data-spec 3-4)", () => {
     const s = await repo.updateSettings({ nudgeWeeks: 5, backup: { dailyKeep: 7 } });
     expect([s.nudgeWeeks, s.backup.dailyKeep, s.backup.monthlyKeep]).toEqual([5, 7, 12]);
     expect((await repo.updateSettings({ nudgeWeeks: 1 })).nudgeWeeks).toBe(3);
+  });
+
+  it("메모 도크: 기본은 자동 높이, 끌어서 정하면 고정. v0.2.2 이전 저장값은 기본 높이(280)면 자동, 아니면 고정", async () => {
+    const { repo } = await freshRepo();
+    expect((await repo.getSettings()).ui).toMatchObject({ noteDockAuto: true, noteDockHeight: 280 });
+    expect(
+      (await repo.updateSettings({ ui: { noteDockHeight: 340, noteDockAuto: false } })).ui,
+    ).toMatchObject({
+      noteDockAuto: false,
+      noteDockHeight: 340,
+    });
+    expect((await repo.updateSettings({ ui: { noteDockAuto: true } })).ui.noteDockAuto).toBe(true);
+    const old = (ui: object) => mergeSettings(DEFAULT_SETTINGS, { ui });
+    expect(old({ noteDockHeight: 280, noteDockCollapsed: false }).ui.noteDockAuto).toBe(true);
+    expect(old({ noteDockHeight: 360, noteDockCollapsed: false }).ui).toMatchObject({
+      noteDockAuto: false,
+      noteDockHeight: 360,
+    });
   });
 });
 

@@ -14,9 +14,11 @@ import {
   setFocusDay,
   splitKey,
   toggleFlag,
+  toast,
   toggleRepeat,
   useBoard,
 } from "./boardStore";
+import { pasteImagesFromBoard } from "../note/noteStore";
 import { autoSize, isComposingKey, useRemeasure } from "./helpers";
 import styles from "./Board.module.css";
 
@@ -146,6 +148,16 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav }: Props) 
   };
 
   const onPaste = (e: ClipboardEvent<HTMLTextAreaElement>, i: number) => {
+    // 글 없이 그림만(캡처) — 보드 칸은 글만 받으므로 메모에 붙일 길을 안내(weekly-note-spec 14절 F3)
+    const images = [...e.clipboardData.files].filter((f) => f.type.startsWith("image/"));
+    if (images.length && !e.clipboardData.getData("text/plain").trim()) {
+      e.preventDefault();
+      toast(STR.note.pasteToNote, {
+        label: STR.note.pasteToNoteAction,
+        run: () => pasteImagesFromBoard(images),
+      });
+      return;
+    }
     const parsed = parsePastedLines(e.clipboardData.getData("text/plain"));
     if (!parsed) return; // 한 줄은 기본 붙여넣기
     e.preventDefault();

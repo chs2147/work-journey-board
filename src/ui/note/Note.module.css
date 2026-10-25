@@ -12,6 +12,12 @@
   flex: 1 1 auto;
 }
 
+/* 보드 우선 자동 높이(14절 F1): 보드가 쓰고 남는 공간을 메모가 갖는다 */
+.dockAuto {
+  flex: 1 1 0;
+  min-height: 160px;
+}
+
 .splitter {
   flex: 0 0 auto;
   height: 8px;

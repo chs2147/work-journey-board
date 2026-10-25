@@ -7,6 +7,7 @@ import {
   addImages,
   pastePlace,
   setCollapsed,
+  setDockAuto,
   setDockHeight,
   setExpanded,
   useNote,
@@ -22,6 +23,8 @@ export function NoteDock() {
   const fileRef = useRef<HTMLInputElement>(null);
   const legacy = useNote((s) => s.legacy);
   const height = useNote((s) => s.dockHeight);
+  const auto = useNote((s) => s.dockAuto);
+  const dockRef = useRef<HTMLElement>(null);
   const collapsed = useNote((s) => s.collapsed);
   const expanded = useNote((s) => s.expanded);
 
@@ -31,14 +34,19 @@ export function NoteDock() {
     e.preventDefault();
     const el = e.currentTarget;
     el.setPointerCapture(e.pointerId);
-    const [sy, h0] = [e.clientY, height];
-    const move = (ev: globalThis.PointerEvent) =>
-      useNote.setState({ dockHeight: Math.max(120, h0 + sy - ev.clientY) });
+    // 자동 높이였으면 지금 보이는 높이에서 시작, 끌면 그 높이로 고정
+    const [sy, h0] = [e.clientY, auto ? (dockRef.current?.offsetHeight ?? height) : height];
+    let moved = false;
+    const move = (ev: globalThis.PointerEvent) => {
+      if (!moved && Math.abs(ev.clientY - sy) < 2) return;
+      moved = true;
+      useNote.setState({ dockHeight: Math.max(120, h0 + sy - ev.clientY), dockAuto: false });
+    };
     const up = () => {
       el.removeEventListener("pointermove", move);
       el.removeEventListener("pointerup", up);
       el.removeEventListener("pointercancel", up);
-      setDockHeight(useNote.getState().dockHeight);
+      if (moved) setDockHeight(useNote.getState().dockHeight);
     };
     el.addEventListener("pointermove", move);
     el.addEventListener("pointerup", up);
@@ -47,8 +55,14 @@ export function NoteDock() {
 
   return (
     <section
-      className={`${styles.dock} ${expanded ? styles.dockExpanded : ""}`}
-      style={collapsed || expanded ? undefined : { height }}
+      ref={dockRef}
+      className={[
+        styles.dock,
+        expanded ? styles.dockExpanded : "",
+        auto && !collapsed && !expanded ? styles.dockAuto : "",
+      ].join(" ")}
+      style={collapsed || expanded || auto ? undefined : { height }}
+      data-dock-mode={collapsed ? "collapsed" : expanded ? "expanded" : auto ? "auto" : "fixed"}
       aria-label={STR.note.title}
       data-note-root
       data-testid="note-dock"
@@ -65,9 +79,18 @@ export function NoteDock() {
           title={STR.note.resizeDock}
           tabIndex={-1}
           onPointerDown={startResize}
+          onDoubleClick={setDockAuto}
         />
       )}
-      <div className={styles.head}>
+      {/* 머리 빈 곳을 두 번 누르면 보드 우선 자동 높이로 */}
+      <div
+        className={styles.head}
+        title={collapsed || expanded ? undefined : STR.note.autoHeightHint}
+        onDoubleClick={(e) => {
+          if ((e.target as Element).closest("button, input") || collapsed || expanded) return;
+          setDockAuto();
+        }}
+      >
         <h2 className={styles.title}>{STR.note.title}</h2>
         <span className={styles.counts} data-testid="note-counts">
           {STR.note.counts(boxes, images)}

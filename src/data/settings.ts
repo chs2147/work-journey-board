@@ -14,14 +14,22 @@ export interface Settings {
     lastExportDir: string | null;
     /** 왼쪽 중요 업무 패널 열림(important-repeat-spec 2-5). 앱을 켤 때 0건이면 이 값과 관계없이 닫힌 채 시작 */
     importantPanelOpen: boolean;
-    /** 보드 아래 메모 도크 높이(px)·접힘(weekly-note-spec 3절) */
+    /**
+     * 보드 아래 메모 도크(weekly-note-spec 3절·14절 F1): auto = 보드 우선 자동 높이(보드는 필요한 만큼, 메모는 남는 공간).
+     * 경계선을 끌면 auto를 끄고 그 높이(px)로 고정, 도크 머리를 두 번 누르면 다시 auto.
+     */
+    noteDockAuto: boolean;
     noteDockHeight: number;
     noteDockCollapsed: boolean;
   };
 }
 
-/** 메모 도크 최소 높이(px) */
+/** 메모 도크 최소 높이(px) — 끌어서 정할 때 */
 export const NOTE_DOCK_MIN = 120;
+/** 자동 높이일 때 메모 도크 최소 높이(px) — 보드가 화면을 다 써도 메모가 이만큼은 보인다 */
+export const NOTE_DOCK_AUTO_MIN = 160;
+/** v0.2.1~0.2.2의 기본 높이 — 이 값이 저장돼 있으면 끌어서 정한 적이 없는 것으로 본다 */
+const OLD_DEFAULT_DOCK_HEIGHT = 280;
 
 export const DEFAULT_SETTINGS: Settings = {
   nudgeWeeks: 3,
@@ -32,6 +40,7 @@ export const DEFAULT_SETTINGS: Settings = {
     summaryPanelOpen: false,
     lastExportDir: null,
     importantPanelOpen: true,
+    noteDockAuto: true,
     noteDockHeight: 280,
     noteDockCollapsed: false,
   },
@@ -64,6 +73,15 @@ export function validNudgeWeeks(n: number): boolean {
 /** 기본값 위에 저장값(또는 변경분)을 합치고, 범위를 벗어난 값은 기본값으로 되돌린다. */
 export function mergeSettings(base: Settings, patch: unknown): Settings {
   const s = deepMerge(base, patch);
+  // v0.2.2 이전 저장값(auto 없음): 기본 높이와 다르면 사용자가 끌어서 정한 높이 → 고정으로 둔다
+  if (
+    isObject(patch) &&
+    isObject(patch.ui) &&
+    !("noteDockAuto" in patch.ui) &&
+    typeof patch.ui.noteDockHeight === "number" &&
+    patch.ui.noteDockHeight !== OLD_DEFAULT_DOCK_HEIGHT
+  )
+    s.ui.noteDockAuto = false;
   if (!validNudgeWeeks(s.nudgeWeeks)) s.nudgeWeeks = DEFAULT_SETTINGS.nudgeWeeks;
   if (!(s.backup.dailyKeep >= 1)) s.backup.dailyKeep = DEFAULT_SETTINGS.backup.dailyKeep;
   if (!(s.backup.monthlyKeep >= 0)) s.backup.monthlyKeep = DEFAULT_SETTINGS.backup.monthlyKeep;

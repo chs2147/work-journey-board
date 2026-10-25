@@ -155,7 +155,8 @@ CREATE TABLE app_meta (
     "api": { "endpoint": null, "model": null }   // API 키는 DB에 저장하지 않음(윈도우 자격 증명 관리자, M4에서 확정)
   },
   "ui": { "summaryPanelOpen": false, "lastExportDir": null,
-          "noteDockHeight": 280, "noteDockCollapsed": false }   // 메모 도크 높이(최소 120)·접힘(weekly-note-spec 3절)
+          "noteDockAuto": true, "noteDockHeight": 280, "noteDockCollapsed": false }
+          // 메모 도크: 자동 높이(기본) / 끌어서 정한 높이(최소 120)·접힘(weekly-note-spec 3절·14절)
 }
 ```
 - **저장 폴더 경로는 DB에 둘 수 없다**(DB를 찾기 위한 정보이므로). → `%LOCALAPPDATA%\WorkJourneyBoard\config.json`에 `{ "dataDir": "...", "window": {...} }`만 저장. Roaming이 아닌 Local을 쓰는 이유: 회사 PC 로밍 프로필로 경로가 다른 PC에 퍼지지 않게.

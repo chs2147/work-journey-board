@@ -53,6 +53,8 @@ export interface NoteState {
   /** 편집기에 커서를 넣어 달라는 요청(상자 id + 회차) */
   focusRequest: { id: string; n: number } | null;
   dockHeight: number;
+  /** 보드 우선 자동 높이(14절 F1) — false면 dockHeight로 고정 */
+  dockAuto: boolean;
   collapsed: boolean;
   /** [크게 보기] — 메모가 보드 영역 전체를 덮는다 */
   expanded: boolean;
@@ -80,6 +82,7 @@ export const useNote = create<NoteState>(() => ({
   selectedId: null,
   focusRequest: null,
   dockHeight: 280,
+  dockAuto: true,
   collapsed: false,
   expanded: false,
   canUndo: false,
@@ -105,7 +108,12 @@ const syncUndo = () => set({ canUndo: undoStack.length > 0, canRedo: redoStack.l
 export async function initNote(r: JournalRepository) {
   repo = r;
   const s = await r.getSettings();
-  set({ dockHeight: s.ui.noteDockHeight, collapsed: s.ui.noteDockCollapsed, expanded: false });
+  set({
+    dockHeight: s.ui.noteDockHeight,
+    dockAuto: s.ui.noteDockAuto,
+    collapsed: s.ui.noteDockCollapsed,
+    expanded: false,
+  });
   await loadWeek(useBoard.getState().weekId);
   unsubscribe?.();
   unsubscribe = useBoard.subscribe((st, prev) => {
@@ -468,10 +476,23 @@ export function leaveNote() {
   focusStartCell();
 }
 
+/** 경계선으로 정한 높이 — 자동 높이를 끄고 고정 */
 export function setDockHeight(h: number) {
   const height = Math.max(NOTE_DOCK_MIN, Math.round(h));
-  set({ dockHeight: height });
-  void repo?.updateSettings({ ui: { noteDockHeight: height } }).catch(() => undefined);
+  set({ dockHeight: height, dockAuto: false });
+  void repo?.updateSettings({ ui: { noteDockHeight: height, noteDockAuto: false } }).catch(() => undefined);
+}
+
+/** 보드 우선 자동 높이로 되돌리기(도크 머리·경계선 두 번 누르기) */
+export function setDockAuto() {
+  set({ dockAuto: true });
+  void repo?.updateSettings({ ui: { noteDockAuto: true } }).catch(() => undefined);
+}
+
+/** 보드 칸에서 붙인 그림을 메모로(14절 F3 — 안내 토스트의 [메모에 붙이기]) */
+export function pasteImagesFromBoard(files: Blob[]) {
+  if (get().collapsed) setCollapsed(false);
+  void addImages(files, positionBelow(get().doc));
 }
 
 export function setCollapsed(collapsed: boolean) {

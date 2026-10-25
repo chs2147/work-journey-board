@@ -46,6 +46,11 @@
   flex-direction: column;
 }
 
+/* 보드 우선 자동 높이(weekly-note-spec 14절 F1): 보드는 내용만큼, 모자라면 줄어들며 스크롤 */
+.boardFillNatural {
+  flex: 0 1 auto;
+}
+
 .hidden {
   display: none;
 }
