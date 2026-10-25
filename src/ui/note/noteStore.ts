@@ -121,9 +121,9 @@ export async function initNote(r: JournalRepository) {
   });
 }
 
-async function loadWeek(weekId: WeekId) {
+async function loadWeek(weekId: WeekId, finish = true) {
   if (!repo || !weekId) return;
-  await finishNote();
+  if (finish) await finishNote();
   try {
     const [{ doc, legacy }, rows] = await Promise.all([repo.getWeekNote(weekId), repo.getNoteAssets(weekId)]);
     if (useBoard.getState().weekId !== weekId) return;
@@ -158,6 +158,11 @@ export async function flushNote(force = false) {
   } catch (e) {
     reportError(e);
   }
+}
+
+/** 저장소에서 이 주 메모를 다시 읽기(가져오기·되돌리기가 메모를 바꾼 뒤). 대기 중인 저장은 부르는 쪽이 먼저 끝낸다 */
+export async function reloadNote() {
+  await loadWeek(useBoard.getState().weekId, false);
 }
 
 /**

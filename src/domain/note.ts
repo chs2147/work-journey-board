@@ -330,6 +330,45 @@ export function docFromDayMemos(
   };
 }
 
+// ── 가져오기 메모(i-m3-plan 3-6) ──────────────────────
+/** 가져온 메모 줄 → 텍스트 상자 1개: 그날의 일은 `(목) 내용` 글머리 목록, 주 전체 글(원장 `(주간 메모)`)은 문단 */
+export function importMemoBox(
+  id: string,
+  lines: { date: DateStr; text: string; day: boolean }[],
+  at: { x: number; y: number },
+  z: number,
+): TextBox {
+  const inline = (text: string): PMNode[] =>
+    text
+      .split("\n")
+      .flatMap((l, i) => [...(i ? [{ type: "hardBreak" }] : []), ...(l ? [{ type: "text", text: l }] : [])]);
+  const paragraphs: PMNode[] = lines
+    .filter((l) => !l.day)
+    .flatMap((l) =>
+      l.text
+        .split("\n")
+        .map((t) => ({ type: "paragraph", ...(t ? { content: [{ type: "text", text: t }] } : {}) })),
+    );
+  const items: PMNode[] = lines
+    .filter((l) => l.day)
+    .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
+    .map((l) => ({
+      type: "listItem",
+      content: [{ type: "paragraph", content: inline(`(${DAY_LABELS[dayIndex(l.date)]}) ${l.text}`) }],
+    }));
+  const content = [...paragraphs, ...(items.length ? [{ type: "bulletList", content: items }] : [])];
+  return {
+    id,
+    kind: "text",
+    x: snap(at.x),
+    y: snap(at.y),
+    w: 480,
+    z,
+    bg: null,
+    content: { type: "doc", content: content.length ? content : [{ type: "paragraph" }] },
+  };
+}
+
 // ── 상자 배치 ────────────────────────────────────────
 /** 가장 아래 상자 아래(왼쪽 정렬) — Ctrl+Enter·[+ 텍스트 상자] */
 export function positionBelow(doc: NoteDoc): { x: number; y: number } {

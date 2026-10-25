@@ -84,7 +84,7 @@ describe("마이그레이션 (data-spec 7-5)", () => {
       "INSERT INTO day_memo (date, text, updated_at) VALUES ('2026-10-22', '가상 메모', '2026-10-22T00:00:00.000Z')",
     );
     const before = vi.fn().mockResolvedValue(undefined);
-    expect(await migrate(db, { beforeMigrate: before })).toBe(3);
+    expect(await migrate(db, { beforeMigrate: before, migrations: MIGRATIONS.slice(0, 3) })).toBe(3);
     expect(before).toHaveBeenCalledWith(2, 3);
     expect(await db.select("SELECT date, text FROM day_memo")).toEqual([
       { date: "2026-10-22", text: "가상 메모" },
@@ -94,6 +94,29 @@ describe("마이그레이션 (data-spec 7-5)", () => {
         await db.select("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?", [t]),
       ).toHaveLength(1);
     }
+    expect(await quickCheck(db)).toBe(true);
+  });
+
+  it("v3 → v4(기존 일지 가져오기): 직전 백업 호출, 기록은 그대로 두고 가져오기 표·칸이 생긴다", async () => {
+    const db = await openSqlJsMemory();
+    await migrate(db, { migrations: MIGRATIONS.slice(0, 3) });
+    await db.batch([
+      {
+        sql: "INSERT INTO category (id, name, color, sort_order, created_at, updated_at) VALUES ('c', '가상 업무', 'c1', 1, 't', 't')",
+      },
+      {
+        sql: "INSERT INTO entry_item (id, date, category_id, seq, depth, text, created_at, updated_at) VALUES ('i', '2026-10-22', 'c', 1, 0, '가상 기록', 't', 't')",
+      },
+    ]);
+    const before = vi.fn().mockResolvedValue(undefined);
+    expect(await migrate(db, { beforeMigrate: before })).toBe(4);
+    expect(before).toHaveBeenCalledWith(3, 4);
+    expect(await db.select("SELECT id, text, import_id FROM entry_item")).toEqual([
+      { id: "i", text: "가상 기록", import_id: null },
+    ]);
+    expect(
+      await db.select("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'import_batch'"),
+    ).toHaveLength(1);
     expect(await quickCheck(db)).toBe(true);
   });
 

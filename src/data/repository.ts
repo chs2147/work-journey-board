@@ -9,12 +9,18 @@ import {
   type VisibleCategory,
 } from "../domain/categories";
 import type { SummaryInput } from "../domain/aggregate";
+import type { ExistingItem, ImportContext, ImportPlan } from "../domain/importer";
 import {
   docFromDayMemos,
+  emptyDoc,
   IMAGE_MIMES,
+  importMemoBox,
   isNoteEmpty,
+  noteAssetIds,
   noteToText,
   parseNoteDoc,
+  positionBelow,
+  topZ,
   type ImageMime,
   type NoteDoc,
 } from "../domain/note";
@@ -83,6 +89,47 @@ interface WeeklySummaryRow {
 export const NOTE_MAX = 1_000_000;
 /** 메모 이미지 1장 최대(줄인 뒤 저장 크기). 긴 변 1600px WebP는 보통 100~250KB */
 export const NOTE_ASSET_MAX_BYTES = 5 * 1024 * 1024;
+
+/** 가져오기 기록 한 줄(설정 > 가져오기 기록) */
+export interface ImportBatchInfo {
+  id: string;
+  fileName: string;
+  weeks: number;
+  items: number;
+  createdAt: string;
+  undoneAt: string | null;
+}
+
+export interface ImportResult {
+  id: string;
+  items: number;
+  weeks: number;
+  newCategories: number;
+}
+
+interface ItemSnapshot {
+  id: string;
+  date: string;
+  category_id: string;
+  seq: number;
+  depth: number;
+  text: string;
+  flagged: number;
+  flag_done_at: string | null;
+  recurrence_id: string | null;
+  created_at: string;
+  updated_at: string;
+  import_id: string | null;
+}
+
+/** 되돌리기 자료(import_batch.undo_json) */
+interface ImportUndo {
+  deletedItems: ItemSnapshot[];
+  notes: { weekId: WeekId; doc: string | null }[];
+  createdCategories: string[];
+  periodStarts: { periodId: string; start: DateStr }[];
+  reopened: { periodId: string; end: DateStr | null; created?: boolean }[];
+}
 
 /** 메모 이미지(weekly-note-spec 5-1). data = base64, bytes = 저장한 그림 크기 */
 export interface NoteAsset {
@@ -449,7 +496,8 @@ export class JournalRepository {
    * 문서가 더는 가리키지 않는 그 주의 이미지 지우기(DB 안의 행 — 사용자 폴더 파일이 아님, 스펙 5-2).
    * 실행 취소로 되살릴 수 있는 동안은 부르지 않는다(주를 옮기거나 앱을 닫을 때만).
    */
-  async pruneNoteAssets(weekId: WeekId, keep: string[]): Promise<number> {
+  async pruneNoteAssets(weekId: WeekId, keepIds: string[]): Promise<number> {
+    const keep = [...new Set([...keepIds, ...(await this.undoAssetIds(weekId))])];
     const marks = keep.map(() => "?").join(", ");
     const { changes } = await this.db.execute(
       `DELETE FROM note_asset WHERE week_id = ?${keep.length ? ` AND id NOT IN (${marks})` : ""}`,
@@ -1031,5 +1079,283 @@ export class JournalRepository {
     // 메모에는 날짜가 없다: 업무 기록 없이 메모만 있는 주는 가장 연한 1단계(weekly-note-spec 11절 #8)
     for (const w of await this.noteWeeks(from, to)) if (!out.has(w)) out.set(w, 1);
     return out;
+  }
+
+  // ── 기존 일지 가져오기(i-m3-plan 3절) ─────────────────
+  /** 가져오기 양식의 `업무` 시트에 미리 채울 업무: 이번 주 진행 중인 업무(보드 순서) */
+  async importTemplateCategories(): Promise<string[]> {
+    const view = await this.getWeek(this.currentWeek());
+    return view.categories.filter((v) => v.state === "active").map((v) => v.category.name);
+  }
+
+  /** 계획 세우기에 필요한 이 앱 상태: 업무·구간 전부, 파일에 나온 주들의 항목·주간 메모 */
+  async importContext(weekIds: WeekId[]): Promise<ImportContext> {
+    const { categories, periods } = await this.listCategories();
+    const items: ExistingItem[] = [];
+    const notes: ImportContext["notes"] = {};
+    for (const w of weekIds) {
+      const { start, end } = weekRange(w);
+      const rows = await this.db.select<{
+        id: string;
+        date: string;
+        category_id: string;
+        seq: number;
+        depth: number;
+        text: string;
+      }>(
+        "SELECT id, date, category_id, seq, depth, text FROM entry_item WHERE date BETWEEN ? AND ? ORDER BY date, seq",
+        [start, end],
+      );
+      for (const r of rows)
+        items.push({
+          id: r.id,
+          date: r.date,
+          categoryId: r.category_id,
+          seq: r.seq,
+          depth: r.depth as 0 | 1,
+          text: r.text,
+        });
+      const { doc } = await this.getWeekNote(w);
+      notes[w] = { boxes: doc.boxes.length, empty: isNoteEmpty(doc) };
+    }
+    return {
+      today: this.today(),
+      categories: categories.map((c) => ({ id: c.id, name: c.name, sortOrder: c.sortOrder })),
+      periods,
+      items,
+      notes,
+    };
+  }
+
+  /**
+   * 계획대로 쓰기 — 한 batch(전부 성공 또는 전부 취소, CLAUDE.md 4-3). 가져오기 직전 자동 백업은 부르는 쪽(세션)이 먼저 한다.
+   * 가져온 행에는 가져오기 id를 달고, 되돌리기에 필요한 것(덮어쓰기로 지운 행·메모 문서·만든 업무·앞당긴 구간)을 함께 남긴다.
+   */
+  async applyImport(plan: ImportPlan, fileName: string): Promise<ImportResult> {
+    const id = uuidv7(this.clock().getTime());
+    const ts = this.ts();
+    const stmts: SqlStatement[] = [];
+    const undo: ImportUndo = {
+      deletedItems: [],
+      notes: [],
+      createdCategories: [],
+      periodStarts: [],
+      reopened: [],
+    };
+
+    // 새 업무(이번 주까지 이어지는 열린 구간)
+    const [stat] = await this.db.select<{ n: number }>("SELECT COUNT(*) AS n FROM category");
+    const newIds = new Map<string, string>();
+    plan.newCategories.forEach((c, i) => {
+      const cid = uuidv7(this.clock().getTime());
+      newIds.set(c.key, cid);
+      undo.createdCategories.push(cid);
+      stmts.push(
+        {
+          sql: "INSERT INTO category (id, name, color, sort_order, nudge_snoozed_until, created_at, updated_at) VALUES (?, ?, ?, ?, NULL, ?, ?)",
+          params: [cid, c.name, nextColorKey(Number(stat?.n ?? 0) + i), c.sortOrder, ts, ts],
+        },
+        {
+          sql: "INSERT INTO category_period (id, category_id, start_date, end_date) VALUES (?, ?, ?, NULL)",
+          params: [uuidv7(), cid, c.startDate],
+        },
+      );
+    });
+    for (const m of plan.periodMoves) {
+      undo.periodStarts.push({ periodId: m.periodId, start: m.from });
+      stmts.push({
+        sql: "UPDATE category_period SET start_date = ? WHERE id = ?",
+        params: [m.to, m.periodId],
+      });
+    }
+    for (const cid of plan.reopen) {
+      const periods = await this.periodsOf(cid);
+      if (openPeriod(periods)) continue;
+      const rp = reactivatePlan(periods, weekStart(this.currentWeek()));
+      if (rp.kind === "reopen") {
+        const prev = periods.find((p) => p.id === rp.periodId)!;
+        undo.reopened.push({ periodId: rp.periodId, end: prev.endDate });
+        stmts.push({ sql: "UPDATE category_period SET end_date = NULL WHERE id = ?", params: [rp.periodId] });
+      } else {
+        const pid = uuidv7();
+        undo.reopened.push({ periodId: pid, end: null, created: true });
+        stmts.push({
+          sql: "INSERT INTO category_period (id, category_id, start_date, end_date) VALUES (?, ?, ?, NULL)",
+          params: [pid, cid, rp.startDate],
+        });
+      }
+    }
+
+    // 덮어쓰기: 그 주의 기존 항목을 지우기 전에 통째로 남긴다
+    for (let i = 0; i < plan.deleteItemIds.length; i += 500) {
+      const ids = plan.deleteItemIds.slice(i, i + 500);
+      undo.deletedItems.push(
+        ...(await this.db.select<ItemSnapshot>(
+          `SELECT id, date, category_id, seq, depth, text, flagged, flag_done_at, recurrence_id, created_at, updated_at, import_id
+           FROM entry_item WHERE id IN (${ids.map(() => "?").join(", ")})`,
+          ids,
+        )),
+      );
+      stmts.push({
+        sql: `DELETE FROM entry_item WHERE id IN (${ids.map(() => "?").join(", ")})`,
+        params: ids,
+      });
+    }
+
+    for (const it of plan.inserts) {
+      const cid = "id" in it.cat ? it.cat.id : newIds.get(it.cat.newKey)!;
+      stmts.push({
+        sql: `INSERT INTO entry_item (id, date, category_id, seq, depth, text, created_at, updated_at, import_id)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        params: [uuidv7(this.clock().getTime()), it.date, cid, it.seq, it.depth, it.text, ts, ts, id],
+      });
+    }
+
+    // 주간 메모: 추가 = 상자 하나 더함, 바꿈 = 그 상자(없으면 빈 메모)로
+    for (const m of plan.memos) {
+      const [row] = await this.db.select<{ doc: string }>("SELECT doc FROM week_note WHERE week_id = ?", [
+        m.weekId,
+      ]);
+      undo.notes.push({ weekId: m.weekId, doc: row?.doc ?? null });
+      const current = m.mode === "add" ? (await this.getWeekNote(m.weekId)).doc : emptyDoc();
+      const boxes = m.lines.length
+        ? [...current.boxes, importMemoBox(uuidv7(), m.lines, positionBelow(current), topZ(current) + 1)]
+        : current.boxes;
+      const json = JSON.stringify(parseNoteDoc(JSON.stringify({ v: 1, boxes })));
+      stmts.push({
+        sql: "INSERT INTO week_note (week_id, doc, updated_at) VALUES (?, ?, ?) ON CONFLICT(week_id) DO UPDATE SET doc = excluded.doc, updated_at = excluded.updated_at",
+        params: [m.weekId, json, ts],
+      });
+    }
+
+    // 가져오기 기록은 맨 앞에(항목의 import_id가 가리킴)
+    stmts.unshift({
+      sql: "INSERT INTO import_batch (id, file_name, week_count, item_count, undo_json, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+      params: [id, fileName.slice(0, 200), plan.totals.weeks, plan.totals.items, JSON.stringify(undo), ts],
+    });
+    await this.db.batch(stmts);
+    return {
+      id,
+      items: plan.totals.items,
+      weeks: plan.totals.weeks,
+      newCategories: plan.newCategories.length,
+    };
+  }
+
+  async listImports(): Promise<ImportBatchInfo[]> {
+    const rows = await this.db.select<{
+      id: string;
+      file_name: string;
+      week_count: number;
+      item_count: number;
+      created_at: string;
+      undone_at: string | null;
+    }>(
+      "SELECT id, file_name, week_count, item_count, created_at, undone_at FROM import_batch ORDER BY created_at DESC, rowid DESC",
+    );
+    return rows.map((r) => ({
+      id: r.id,
+      fileName: r.file_name,
+      weeks: r.week_count,
+      items: r.item_count,
+      createdAt: r.created_at,
+      undoneAt: r.undone_at,
+    }));
+  }
+
+  /** 가져온 뒤 사용자가 고친 항목 수(되돌리기 확인 문구) */
+  async countEditedImported(importId: string): Promise<number> {
+    const [r] = await this.db.select<{ n: number }>(
+      "SELECT COUNT(*) AS n FROM entry_item WHERE import_id = ? AND updated_at <> created_at",
+      [importId],
+    );
+    return Number(r?.n ?? 0);
+  }
+
+  /**
+   * 가져오기 되돌리기(3-9절 3): 가져온 행 삭제(keepEdited면 고친 행은 남김) + 덮어쓰기로 지운 행·메모 되살림
+   * + 앞당긴 구간·다시 시작한 구간 원래대로 + 그 가져오기로 만든 업무는 남은 기록이 없으면 삭제. 한 batch.
+   */
+  async undoImport(importId: string, keepEdited: boolean): Promise<{ removed: number; restored: number }> {
+    const [batch] = await this.db.select<{ undo_json: string; undone_at: string | null }>(
+      "SELECT undo_json, undone_at FROM import_batch WHERE id = ?",
+      [importId],
+    );
+    if (!batch || batch.undone_at) return { removed: 0, restored: 0 };
+    const undo = JSON.parse(batch.undo_json) as ImportUndo;
+    const [cnt] = await this.db.select<{ n: number }>(
+      `SELECT COUNT(*) AS n FROM entry_item WHERE import_id = ?${keepEdited ? " AND updated_at = created_at" : ""}`,
+      [importId],
+    );
+    const stmts: SqlStatement[] = [
+      {
+        sql: `DELETE FROM entry_item WHERE import_id = ?${keepEdited ? " AND updated_at = created_at" : ""}`,
+        params: [importId],
+      },
+      // 남긴(고친) 행은 손으로 쓴 기록처럼 — 되돌린 가져오기를 가리키지 않게
+      { sql: "UPDATE entry_item SET import_id = NULL WHERE import_id = ?", params: [importId] },
+    ];
+    for (const it of undo.deletedItems)
+      stmts.push({
+        sql: `INSERT OR IGNORE INTO entry_item (id, date, category_id, seq, depth, text, flagged, flag_done_at, recurrence_id,
+                                                created_at, updated_at, import_id)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        params: [
+          it.id,
+          it.date,
+          it.category_id,
+          it.seq,
+          it.depth,
+          it.text,
+          it.flagged,
+          it.flag_done_at,
+          it.recurrence_id,
+          it.created_at,
+          it.updated_at,
+          it.import_id,
+        ],
+      });
+    for (const n of undo.notes)
+      stmts.push(
+        n.doc === null
+          ? { sql: "DELETE FROM week_note WHERE week_id = ?", params: [n.weekId] }
+          : {
+              sql: "INSERT INTO week_note (week_id, doc, updated_at) VALUES (?, ?, ?) ON CONFLICT(week_id) DO UPDATE SET doc = excluded.doc, updated_at = excluded.updated_at",
+              params: [n.weekId, n.doc, this.ts()],
+            },
+      );
+    for (const p of undo.periodStarts)
+      stmts.push({
+        sql: "UPDATE category_period SET start_date = ? WHERE id = ?",
+        params: [p.start, p.periodId],
+      });
+    for (const p of undo.reopened)
+      stmts.push(
+        p.created
+          ? { sql: "DELETE FROM category_period WHERE id = ?", params: [p.periodId] }
+          : { sql: "UPDATE category_period SET end_date = ? WHERE id = ?", params: [p.end, p.periodId] },
+      );
+    // 만든 업무: 위 삭제 뒤에도 기록이 남지 않으면 함께 지운다(구간은 ON DELETE CASCADE)
+    for (const cid of undo.createdCategories)
+      stmts.push({
+        sql: "DELETE FROM category WHERE id = ? AND NOT EXISTS (SELECT 1 FROM entry_item WHERE category_id = ?)",
+        params: [cid, cid],
+      });
+    stmts.push({ sql: "UPDATE import_batch SET undone_at = ? WHERE id = ?", params: [this.ts(), importId] });
+    await this.db.batch(stmts);
+    return { removed: Number(cnt?.n ?? 0), restored: undo.deletedItems.length };
+  }
+
+  /** 되돌리기로 되살릴 수 있는 메모 문서가 가리키는 그 주 이미지(정리하지 않게) */
+  private async undoAssetIds(weekId: WeekId): Promise<string[]> {
+    const rows = await this.db.select<{ undo_json: string }>(
+      "SELECT undo_json FROM import_batch WHERE undone_at IS NULL AND undo_json LIKE ?",
+      [`%${weekId}%`],
+    );
+    return rows.flatMap((r) =>
+      (JSON.parse(r.undo_json) as ImportUndo).notes
+        .filter((n) => n.weekId === weekId && n.doc)
+        .flatMap((n) => noteAssetIds(parseNoteDoc(n.doc))),
+    );
   }
 }

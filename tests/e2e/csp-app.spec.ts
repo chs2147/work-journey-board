@@ -1,4 +1,4 @@
-// 프로덕션 빌드를 실앱 CSP(+ Tauri처럼 nonce) 아래에서 띄워, 화면 전체·메모 편집기·메모 이미지·엑셀 내보내기가 CSP를 어기지 않는지.
+// 프로덕션 빌드를 실앱 CSP(+ Tauri처럼 nonce) 아래에서 띄워, 화면 전체·메모 편집기·메모 이미지·기존 일지 가져오기·엑셀 내보내기가 CSP를 어기지 않는지.
 // (vite.config.ts preview 헤더 = src-tauri/tauri.conf.json의 CSP + 가짜 nonce → 'unsafe-inline'이 무시되는 실앱과 같은 조건)
 import { expect, test, type Page } from "@playwright/test";
 
@@ -111,6 +111,24 @@ test("보드·주간 메모 편집기(서식 전부)·엑셀 내보내기 — CS
   const img = page.getByTestId("note-image").locator("img");
   await expect(img).toHaveAttribute("src", /^data:image\/(webp|png);base64,/);
   await expect.poll(() => img.evaluate((el) => (el as HTMLImageElement).naturalWidth)).toBe(1600);
+
+  // 기존 일지 가져오기(M3-S0): 양식 엑셀 만들기(ExcelJS) + 표 붙여넣기 → 미리보기 → 가져오기
+  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: "설정" }).click();
+  await page.getByRole("button", { name: "기존 일지 가져오기…" }).click();
+  const wizard = page.getByTestId("import-wizard");
+  page.once("dialog", (d) => void d.accept(d.defaultValue()));
+  const templateDl = page.waitForEvent("download");
+  await wizard.getByRole("button", { name: "양식 엑셀 받기" }).click();
+  await templateDl;
+  await wizard.getByRole("button", { name: "다음" }).click();
+  await wizard
+    .getByRole("textbox", { name: "표 붙여넣기" })
+    .fill("주 시작일\t날짜\t요일\t업무\t세부\t내용\n2026-09-07\t\t화\t가상 업무\t\t가상 기록");
+  await wizard.getByRole("button", { name: "붙여 넣은 표 읽기" }).click();
+  await wizard.getByRole("button", { name: "가져오기" }).click();
+  await expect(page.getByTestId("import-result")).toContainText("기록 1개(1주)");
+  await wizard.getByRole("button", { name: "닫기" }).click();
 
   // 엑셀 내보내기(ExcelJS 지연 로딩 포함)
   await page.keyboard.press("Escape");

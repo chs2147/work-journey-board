@@ -6,6 +6,7 @@ import {
   backupNames,
   runAutoBackup,
   runManualBackup,
+  runPreImportBackup,
   runPreMigrationBackup,
   type BackupFs,
   type VerifyCopy,
@@ -95,6 +96,10 @@ export function manualBackup(fs: SessionFs, driver: SqlDriver, dataDir: string, 
   return runManualBackup(driver, fs.backupFs, dataDir, now, fs.verifyCopy);
 }
 
+export function preImportBackup(fs: SessionFs, driver: SqlDriver, dataDir: string, now: Date) {
+  return runPreImportBackup(driver, fs.backupFs, dataDir, now, fs.verifyCopy);
+}
+
 export interface BackupInfo {
   name: string;
   /** `2026-10-23` 또는 `2026-10-23 08:31` */
@@ -107,7 +112,7 @@ export function latestBackup(names: string[]): BackupInfo | null {
   const parsed = names
     .map((name) => {
       const m =
-        /^work-journey_(\d{4}-\d{2})(?:-(\d{2}))?(?:_(\d{2})(\d{2}))?(?:_(monthly|manual|pre-migration-v\d+|before-restore))?\.db$/.exec(
+        /^work-journey_(\d{4}-\d{2})(?:-(\d{2}))?(?:_(\d{2})(\d{2}))?(?:_(monthly|manual|pre-migration-v\d+|before-restore|pre-import))?\.db$/.exec(
           name,
         );
       if (!m) return null;

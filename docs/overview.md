@@ -294,7 +294,8 @@
 | 인사이트(경과 타임라인 / 활동 개요) | [인사이트] | [wireframe-insights.svg](wireframes/wireframe-insights.svg) |
 | 내보내기 대화상자 | [내보내기] · `Alt+E` (구현 I-M2) | output-spec.md 4-1 |
 | AI 지시문 미리보기·결과 붙여넣기 | 요약 패널 | output-spec.md 5-2 |
-| 설정(저장 위치 10-10·백업·업무 관리·무기록 기준·AI 모드·지시문) | [⚙] | — (표준 폼) |
+| 설정(저장 위치 10-10·**기존 일지 가져오기·가져오기 기록**·백업·업무 관리·무기록 기준·AI 모드·지시문) | [⚙] | — (표준 폼) |
+| 기존 일지 가져오기 마법사(① 준비: 절차·양식 엑셀·AI 지시문 ② 파일·표 붙여넣기·열 맞추기 ③ 미리보기·주별 병합/덮어쓰기/건너뛰기 ④ 결과) | 설정 > [기존 일지 가져오기…] (v0.2.4) | [i-m3-plan.md](i-m3-plan.md) 3절 |
 | 스플래시 창(10-11) | 앱을 켤 때 메인 창보다 먼저(최소 2.5초) | [splash-window.png](wireframes/splash-window.png) |
 | 왼쪽 메뉴 레일 + 중요 업무 패널(10-12) | 보드 왼쪽 레일 ★ / `Alt+2` | [important-panel.png](wireframes/important-panel.png) |
 | 주간 메모 도크(10-5) | 보드 아래 · `Alt+M` | weekly-note-spec.md 3·4절 |

@@ -196,6 +196,146 @@ export const STR = {
     copied: (name: string) => `최종본(${name})을 복사했습니다`,
     versionName: { edited: "수정본", ai: "AI본", auto: "자동 집계" },
   },
+  importer: {
+    open: "기존 일지 가져오기…",
+    openHint: "OneNote 등에 적어 온 업무 일지를 양식 엑셀로 옮겨 한 번에 가져옵니다",
+    title: "기존 일지 가져오기",
+    steps: ["준비", "파일", "미리보기", "결과"] as const,
+    // ① 준비 — 절차(i-m3-plan 3-2)
+    procedure: [
+      "아래 [양식 엑셀 받기]로 가져오기 양식을 저장합니다(이번 주 진행 중 업무가 미리 채워져 있습니다).",
+      "[AI 지시문 복사]를 누릅니다.",
+      "OneNote에서 가져올 주간 페이지를 한 주씩 캡처합니다(Win+Shift+S, 표 전체가 보이게).",
+      "사내 AI 도구에서 새 대화를 열고 양식 엑셀과 캡처 1~4주 분량을 첨부한 뒤 지시문을 붙여 넣습니다. 캡처에 날짜가 없으면 지시문 맨 위 빈칸에 그 주 월요일 날짜를 적습니다.",
+      "AI가 작성한 엑셀 파일을 받습니다. 파일을 줄 수 없는 도구면 AI가 출력한 표를 복사합니다.",
+      "[다음]에서 작성된 엑셀을 고르거나 [표 붙여넣기]에 붙여 넣습니다.",
+      "미리보기에서 주별 처리(기록이 있는 주: 병합·덮어쓰기·건너뛰기)를 확인하고 [가져오기]를 누릅니다.",
+      "다음 몇 주 분량으로 반복합니다. 이미 가져온 주를 다시 가져와도 병합이면 같은 기록은 늘지 않습니다.",
+    ],
+    templateButton: "양식 엑셀 받기",
+    templateTitle: "가져오기 양식 저장",
+    templateFileName: (date: string) => `WorkJourney_가져오기양식_${date}.xlsx`,
+    templateSaved: (name: string) => `양식을 저장했습니다: ${name}`,
+    promptButton: "AI 지시문 복사",
+    promptCopied: "AI 지시문을 복사했습니다 — 사내 AI 도구에 붙여 넣으세요",
+    /** 사내 AI 지시문(i-m3-plan 3-4절이 정본 — 바꾸면 그 절도 함께) */
+    prompt: `[이 캡처의 주 시작일(월요일)]: ____-__-__   ← 캡처에 날짜가 보이면 비워 두어도 됩니다. 여러 주를 함께 넣으면 "캡처1: 2025-03-03, 캡처2: 2025-03-10"처럼 적습니다.
+
+당신은 업무 일지 정리 도우미입니다. 첨부한 캡처 이미지는 OneNote에 한 주 = 한 페이지로 적은 업무 일지이고,
+첨부한 엑셀 파일은 이 일지를 옮겨 적을 양식입니다. 캡처의 표에서 요일(또는 날짜)에 속한 업무 기록만 읽어
+엑셀의 '기록' 시트에 한 행에 항목 하나씩 적고, 작성한 엑셀 파일을 돌려주세요.
+
+[규칙]
+1. 시트 이름·머리줄·열 순서를 바꾸지 않습니다. '기록' 시트 열: 주 시작일 | 날짜 | 요일 | 업무 | 세부 | 내용
+2. 요일이나 날짜에 속하지 않는 칸(주간 요약, 다음 주 계획, 이슈 정리 등)은 옮기지 않습니다.
+3. 주 시작일: 위에 적은 그 주의 월요일(YYYY-MM-DD). 날짜: 캡처에 그날의 날짜가 보이면 YYYY-MM-DD, 없으면 비웁니다.
+   요일: 월·화·수·목·금·토·일 중 한 글자.
+4. 업무: '업무' 시트 목록에 있는 업무면 그 이름을 글자 하나 바꾸지 않고 그대로 씁니다.
+   목록에 없는 업무면 '업무' 시트 맨 아래에 새 행을 추가하고(구분 = 신규) 그 이름을 씁니다.
+   비슷한 이름을 새로 만들지 말고, 같은 일이면 기존 업무에 맞춥니다.
+5. 어느 업무에도 속하지 않는 그날의 일(회의 참석, 교육, 개인 일정 등)은 업무 = 메모.
+6. 한 칸에 여러 업무가 섞여 있으면 업무별로 나눠 각각의 행으로 적습니다.
+7. 내용: 캡처의 한 줄(글머리 하나) = 한 행. 들여쓴 하위 줄은 세부 = 세부로, 바로 위 항목 다음 행에 적습니다.
+   캡처에 적힌 순서를 지키고, 요약·수정·추측하지 말고 글자 그대로 옮깁니다. 읽을 수 없는 글자는 [?]로 적습니다.
+8. 엑셀 파일을 만들 수 없으면 '기록' 시트 내용을 머리줄 포함 탭으로 구분한 표로만 출력하고,
+   새로 추가한 업무가 있으면 표 아래에 "신규 업무: 이름1, 이름2"로 적습니다.`,
+    // ② 파일
+    pickFile: "작성된 엑셀 고르기…",
+    pickFileHint: "가져오기 양식(.xlsx) · 이 앱이 내보낸 엑셀 · CSV",
+    pasteLabel: "표 붙여넣기",
+    pastePlaceholder: "사내 AI가 출력한 표(머리줄 포함)를 그대로 붙여 넣으세요",
+    pasteRead: "붙여 넣은 표 읽기",
+    pasteName: "(붙여넣기)",
+    reading: "파일을 읽는 중…",
+    notTable: "가져올 표를 찾지 못했습니다 — 날짜(또는 주 시작일·요일)·업무·내용 열이 있는 표인지 확인하세요",
+    readFailed: "파일을 읽지 못했습니다(엑셀에서 연 채로 저장 중이거나 손상되었을 수 있습니다)",
+    sheet: "시트",
+    mapTitle: "열 맞추기 — 각 항목이 들어 있는 열을 고르세요",
+    roles: {
+      weekStart: "주 시작일",
+      date: "날짜",
+      day: "요일",
+      category: "업무",
+      depth: "세부",
+      text: "내용",
+    },
+    none: "(없음)",
+    kinds: { template: "가져오기 양식", ledger: "이 앱의 엑셀 원장", generic: "일반 표" },
+    // ③ 미리보기
+    summary: (from: string, to: string, weeks: number, items: number) =>
+      `${from} ~ ${to} · ${weeks}주 · 항목 ${items}개`,
+    colWeek: "주차",
+    colFile: "가져올 항목",
+    colExisting: "지금 기록",
+    colAction: "처리",
+    memoMark: "+메모",
+    actions: { import: "가져오기", merge: "병합", overwrite: "덮어쓰기", skip: "건너뛰기" },
+    actionHint: {
+      merge: "기존 기록은 두고 더함(같은 기록은 건너뜀)",
+      overwrite: "그 주 기존 기록·메모를 지우고 파일 내용으로",
+      skip: "이 주는 가져오지 않음",
+    },
+    allExisting: "기록이 있는 주 모두",
+    removeNote: (n: number) => `기존 ${n}개 지움`,
+    dupNote: (n: number) => `같은 기록 ${n}개 건너뜀`,
+    categories: (matched: number, created: number) => `업무: 기존 ${matched}개 · 새로 만듦 ${created}개`,
+    newCatsTitle: "새로 만들 업무(가져온 첫 주부터 이번 주까지 진행 중)",
+    endedTitle: "종료된 업무에 연결",
+    reopen: "다시 시작",
+    skippedTitle: (n: number) => `건너뜀 ${n}`,
+    warningsTitle: (n: number) => `확인 필요 ${n}`,
+    reasons: {
+      "no-date": "날짜 없음(요약 칸 등)",
+      "no-category": "업무 없음",
+      "long-category": "업무 이름이 40자를 넘음",
+      "no-text": "내용 없음",
+      "long-text": "내용이 2000자를 넘음",
+      future: "오늘 이후 날짜",
+      "week-start-fixed": "주 시작일이 월요일이 아님 — 그 주 월요일로 고침",
+      "day-mismatch": "날짜와 요일이 맞지 않음 — 날짜를 따름",
+      "outside-week": "날짜가 주 시작일의 주 밖",
+    },
+    line: (n: number) => `${n}행`,
+    includeFuture: "오늘 이후 날짜도 가져오기",
+    nothing: "가져올 항목이 없습니다",
+    run: "가져오기",
+    running: "가져오는 중…",
+    confirmOverwrite: (weeks: number, items: number) =>
+      `${weeks}개 주의 기존 기록 ${items}개(와 그 주 메모)를 지우고 파일 내용으로 바꿉니다. 가져오기 직전에 자동 백업하고, [되돌리기]로 되살릴 수 있습니다. 계속할까요?`,
+    // ④ 결과
+    done: (items: number, weeks: number) => `기록 ${items}개(${weeks}주)를 가져왔습니다`,
+    doneNewCats: (n: number) => `새 업무 ${n}개 — 이번 주까지 진행 중으로 보드에 보입니다`,
+    doneNudge:
+      "최근 기록이 없는 업무에는 보드에서 3주 무기록 종료 제안이 뜹니다 — [종료]/[유지]로 정리하세요",
+    goFirstWeek: "가져온 첫 주로",
+    again: "더 가져오기",
+    close: "닫기",
+    back: "이전",
+    next: "다음",
+    // 설정 > 가져오기 기록
+    history: "가져오기 기록",
+    historyEmpty: "아직 가져온 적이 없습니다",
+    historyRow: (when: string, name: string, weeks: number, items: number) =>
+      `${when} · ${name} · ${weeks}주 · 항목 ${items}개`,
+    undone: "되돌림",
+    undo: "되돌리기",
+    undoConfirm: (items: number) =>
+      `이 가져오기로 넣은 기록 ${items}개를 빼고, 덮어쓰기로 지운 기존 기록·메모를 되살립니다. 계속할까요?`,
+    undoKeepEdited: (n: number) =>
+      `가져온 뒤 고친 항목이 ${n}개 있습니다. [확인] = 고친 항목은 남김 / [취소] = 고친 항목도 함께 뺌`,
+    undoDone: (removed: number, restored: number) =>
+      `되돌렸습니다 — 가져온 기록 ${removed}개를 빼고${restored ? ` 기존 기록 ${restored}개를 되살렸습니다` : "습니다"}`,
+    backupFailed: (m: string) => `가져오기 직전 백업에 실패해 가져오지 않았습니다: ${m}`,
+    // 양식 엑셀(시트 안 글)
+    sheetGuide: "안내",
+    sheetCategories: "업무",
+    sheetRecords: "기록",
+    templateVersion: "WJB-IMPORT-1",
+    categoryHeaders: ["업무", "구분", "설명"] as const,
+    kindExisting: "기존",
+    kindReserved: "예약",
+    memoDesc: "업무에 속하지 않는 그날의 일 → 그 주 주간 메모로",
+  },
   export: {
     button: "내보내기",
     buttonTitle: "엑셀로 내보내기 (Alt+E)",

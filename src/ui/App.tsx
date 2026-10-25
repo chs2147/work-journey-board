@@ -13,6 +13,8 @@ import { FirstRun } from "./first-run/FirstRun";
 import { IntegrityProblem, MissingFolder } from "./first-run/StartScreens";
 import { ImportantPanel } from "./important/ImportantPanel";
 import { ExportDialog } from "./export/ExportDialog";
+import { ImportWizard } from "./import/ImportWizard";
+import { useImport } from "./import/importStore";
 import { useExport } from "./export/exportStore";
 import { SettingsPanel } from "./settings/SettingsPanel";
 import { setSummaryOpen, useSummary } from "./summary/summaryStore";
@@ -28,6 +30,7 @@ export function App() {
   const journal = useAppStore((s) => s.journal);
   const settingsOpen = useAppStore((s) => s.settingsOpen);
   const exportOpen = useExport((s) => s.open);
+  const importOpen = useImport((s) => s.open);
   useShortcuts();
 
   useEffect(() => {
@@ -50,6 +53,7 @@ export function App() {
       </footer>
       {settingsOpen && journal.state === "ready" && <SettingsPanel />}
       {exportOpen && journal.state === "ready" && <ExportDialog />}
+      {importOpen && journal.state === "ready" && <ImportWizard />}
       <Toasts />
     </div>
   );

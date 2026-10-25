@@ -10,6 +10,8 @@ import type { Settings } from "../../data/settings";
 import { formatBytes, STR } from "../../shared/strings";
 import { reload, toast } from "../board/boardStore";
 import { moveTo, setSettingsOpen, switchTo } from "../common/appController";
+import { openImport, undoImportBatch } from "../import/importStore";
+import type { ImportBatchInfo } from "../../data/repository";
 import { useAppStore } from "../common/appStore";
 import styles from "./Settings.module.css";
 
@@ -24,6 +26,13 @@ type Pending =
 
 const NUDGE_OPTIONS = [0, 2, 3, 4, 5, 6, 7, 8];
 
+/** 저장된 UTC 시각 → 이 PC 시각 `2026-10-25 14:03` */
+function localWhen(iso: string): string {
+  const d = new Date(iso);
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
 function close() {
   setSettingsOpen(false);
   void reload();
@@ -37,6 +46,7 @@ export function SettingsPanel() {
   const [size, setSize] = useState<number | null>(null);
   const [last, setLast] = useState<BackupInfo | null>(null);
   const [imageUse, setImageUse] = useState<{ count: number; bytes: number } | null>(null);
+  const [imports, setImports] = useState<ImportBatchInfo[]>([]);
   const [archived, setArchived] = useState<{ category: Category; endDate: string }[]>([]);
   const [rules, setRules] = useState<Recurrence[]>([]);
   const [cats, setCats] = useState<Map<string, Category>>(new Map());
@@ -50,6 +60,7 @@ export function SettingsPanel() {
     setSize((await platform.stat(journalPath(platform, ready.dataDir))).size);
     setLast(await lastBackupOf(platform, ready.dataDir));
     setImageUse(await ready.repo.noteAssetStats());
+    setImports(await ready.repo.listImports());
     const { categories, periods } = await ready.repo.listCategories();
     setCats(new Map(categories.map((c) => [c.id, c])));
     setRules(await ready.repo.listRecurrences());
@@ -226,6 +237,49 @@ export function SettingsPanel() {
               )}
               {pending.kind === "failed" && <p className={styles.error}>{pending.message}</p>}
             </div>
+          )}
+        </section>
+
+        {/* 기존 일지 가져오기(i-m3-plan 3절) — 마법사는 설정을 닫고 연다 */}
+        <section className={styles.section} aria-labelledby="s-import">
+          <h3 id="s-import">{STR.importer.title}</h3>
+          <p className={styles.note}>{STR.importer.openHint}</p>
+          <div className={styles.row}>
+            <button
+              type="button"
+              onClick={() => {
+                setSettingsOpen(false);
+                openImport();
+              }}
+            >
+              {STR.importer.open}
+            </button>
+          </div>
+          <h4 className={styles.subhead}>{STR.importer.history}</h4>
+          {imports.length === 0 ? (
+            <p className={styles.note}>{STR.importer.historyEmpty}</p>
+          ) : (
+            <ul className={styles.list} data-testid="import-history">
+              {imports.map((b) => (
+                <li key={b.id}>
+                  <span className={b.undoneAt ? styles.muted : undefined}>
+                    {STR.importer.historyRow(localWhen(b.createdAt), b.fileName, b.weeks, b.items)}
+                  </span>
+                  {b.undoneAt ? (
+                    <span className={styles.note}> · {STR.importer.undone}</span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (await undoImportBatch(b.id, b.items)) await refresh();
+                      }}
+                    >
+                      {STR.importer.undo}
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
           )}
         </section>
 

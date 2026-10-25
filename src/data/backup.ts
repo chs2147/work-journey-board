@@ -18,6 +18,7 @@ export const backupNames = {
   preMigration: (now: Date, toVersion: number) =>
     `work-journey_${localStamp(now)}_pre-migration-v${toVersion}.db`,
   beforeRestore: (now: Date) => `work-journey_${localStamp(now)}_before-restore.db`,
+  preImport: (now: Date) => `work-journey_${localStamp(now)}_pre-import.db`,
 };
 
 export const isDailyBackup = (name: string) => DAILY_RE.test(name);
@@ -127,6 +128,17 @@ export function runManualBackup(
   verify?: VerifyCopy,
 ) {
   return writeBackup(driver, fs, fs.join(dataDir, BACKUP_DIR), backupNames.manual(now), verify);
+}
+
+/** 기존 일지 가져오기 직전 백업(자동 삭제 대상 아님, i-m3-plan 3-9) */
+export function runPreImportBackup(
+  driver: SqlDriver,
+  fs: BackupFs,
+  dataDir: string,
+  now: Date,
+  verify?: VerifyCopy,
+) {
+  return writeBackup(driver, fs, fs.join(dataDir, BACKUP_DIR), backupNames.preImport(now), verify);
 }
 
 /** 마이그레이션 직전 백업(자동 삭제 대상 아님) */

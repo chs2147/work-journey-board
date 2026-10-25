@@ -18,7 +18,7 @@
   | `weekly-note-spec.md` | 주간 메모(요일 메모 → 주 1개 자유 메모: 자유 배치 상자·리치 서식·이미지) 상세 설계 — 2026-10-25 확정(시안 A·메모 도크), 구현 N1~N3 |
   | `brand-spec.md` | 앱 아이콘(노트·책갈피, 작은 판)·워드마크(그로테스크 + 손글씨 Journey, SVG 도형) — 생성 도구 `scripts/brand/` |
   | `wireframes/` | 주간 보드·첫 실행/연간 보기·인사이트·스플래시 와이어프레임(svg)·스플래시 창 화면(png) |
-  | `samples/*.xlsx` | 엑셀 내보내기 양식 샘플(가상 데이터) |
+  | `samples/*.xlsx` | 엑셀 내보내기 양식 샘플 · 기존 일지 가져오기 양식 샘플(가상 데이터) |
   | `project-plan.md` | 마일스톤 I-M0~M5·관문 G1/G2 |
   | `i-m1-plan.md` · `i-m2-plan.md` · `i-m3-plan.md` | 마일스톤별 세션 계획(I-M1 완료, I-M2 주간 요약·엑셀, I-M3 기존 일지 가져오기 + 시각화) |
   | `m1-check.md` · `g2-log.md` | 회사 PC 확인표(I-M1 v0.1.0 · I-M2 v0.2.0 7-2절) · ◆G2 실사용 마찰 기록 양식 |
@@ -46,7 +46,8 @@ src/
   domain/     week.ts · categories.ts(활성 계산) · nudge.ts(무기록 판정) · aggregate.ts(자동 집계) · insights.ts
               → 순수 함수만. UI·저장소·플랫폼 import 금지
   data/       driver.ts(SqlDriver) · drivers/tauriSql.ts · drivers/sqlJs.ts · repository.ts · migrations/0001_init.sql …
-  export/     excel.ts · filename.ts
+  export/     excel.ts · filename.ts · importTemplate.ts(가져오기 양식)
+  import/     readTable.ts(가져올 엑셀·CSV·붙여넣은 글 읽기 — 읽기만)
   platform/   index.ts(인터페이스) · tauri.ts · browser.ts · fakeFs.ts(브라우저 모드 가짜 폴더)   ← 폴더 선택·설정·백업 파일·OneDrive 감지
   ui/         board/ · summary/ · insights/ · settings/ · first-run/ · common/
   shared/     strings.ts(UI 문자열 SSOT) · tokens.css · palette.ts(c1~c8)
@@ -74,6 +75,7 @@ fixtures/     sample-*.json — 가상 업무 기록만
 - 사용자 폴더에 쓰는 동작은 `Platform`(src/platform/) 인터페이스로만 한다. 덮어쓰기는 백업 사본 이름 바꾸기와 설정 파일 쓰기뿐이고, 일지 파일·다른 파일은 덮어쓰지 않는다(옮기기는 대상에 일지가 있으면 실패).
 - **내보내기 파일 예외(2026-10-24 사용자 확정, i-m2-plan 6절 #5)**: 엑셀(`.xlsx`)은 **사용자가 저장 대화상자에서 고른 경로**에만 쓰고, 같은 이름이 있으면 윈도우 대화상자의 덮어쓰기 확인을 따른다. 확장자 `.xlsx` 외, 저장 폴더의 일지 파일, `backups\` 안은 거부 — Rust 쓰기 명령에서도 한 번 더 검사한다.
   - **주간 메모 이미지 저장(2026-10-25 사용자 확정, weekly-note-spec 11절 #3)**: 메모 이미지 상자의 [이미지로 저장…]도 같은 규칙으로 `.png`·`.webp`를 허용한다(저장 대화상자에서 고른 경로만, 일지 파일·`backups\` 거부, Rust 재검사). 메모 이미지 자체는 일지 파일 안(`note_asset`)에 저장하고 사용자 폴더에 따로 두지 않는다. 구현: `Platform.writeExport`(src/platform) + Rust `export_write`의 `EXPORT_EXTS`(v0.2.2).
+- **기존 일지 가져오기(v0.2.4, i-m3-plan 3-9)**: 가져올 파일·붙여넣은 글은 **읽기만**(웹 표준 파일 선택, 새 Rust 명령 없음). 쓰기 직전 `_pre-import` 자동 백업 → `JournalRepository.applyImport` 한 batch. 덮어쓰기는 일지 안의 행을 바꾸는 것(사용자 폴더 파일 삭제 아님)이며 되돌리기 자료(`import_batch.undo_json`)를 함께 남긴다.
 - 여러 문장을 묶는 쓰기는 **`SqlDriver.batch`로만** 한다. `BEGIN`/`COMMIT`을 `execute`로 따로 보내지 않는다(실앱 연결 풀 문제, data-spec 8-1).
 - 스키마 변경 = 새 마이그레이션 파일(전진 전용) + **마이그레이션 직전 자동 백업** + fixture DB 왕복 테스트. 기존 마이그레이션 파일 수정 금지.
 - `PRAGMA journal_mode=DELETE` 유지(WAL 금지 — 데이터 = 파일 1개 원칙).

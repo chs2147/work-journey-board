@@ -212,3 +212,15 @@
 .stopped {
   opacity: 0.6;
 }
+
+.subhead {
+  margin: var(--sp-3) 0 var(--sp-1);
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+}
+
+.muted {
+  color: var(--text-3);
+  text-decoration: line-through;
+}
