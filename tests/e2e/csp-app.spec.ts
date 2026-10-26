@@ -59,6 +59,17 @@ test("보드·주간 메모 편집기(서식 전부)·엑셀 내보내기 — CS
   await page.getByTestId("cell-사내 데이터 대시보드-2026-10-22").getByTestId("pull-previous").click();
   await expect(page.getByTestId("cell-사내 데이터 대시보드-2026-10-22").locator("textarea")).toHaveCount(1);
 
+  // 업무 태그 팝오버(자리는 CSSOM) → 새 태그 · 태그 필터 → 안내 띠 → 해제(improve-1026-spec 4~6절)
+  await page.getByRole("button", { name: "차세대 정산 시스템 구축 메뉴" }).click();
+  await page.getByRole("menuitem", { name: "태그…" }).click();
+  await page.keyboard.type("가상태그");
+  await page.keyboard.press("Enter");
+  await page.keyboard.press("Escape");
+  await page.getByTestId("tag-filter").click();
+  await page.getByRole("menuitemcheckbox", { name: /#가상태그/ }).click();
+  await expect(page.getByTestId("tag-filter-banner")).toBeVisible();
+  await page.getByRole("menuitem", { name: "필터 해제" }).click();
+
   // 메모: 새 상자 → 제목·크기·색·형광펜·굵게·체크 목록
   const canvas = page.getByTestId("note-canvas");
   const c = (await canvas.boundingBox())!;

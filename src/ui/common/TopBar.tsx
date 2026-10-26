@@ -7,6 +7,7 @@ import { toggleSummary, useSummary } from "../summary/summaryStore";
 import { setSettingsOpen } from "./appController";
 import { useAppStore } from "./appStore";
 import { BrandLockup } from "./Brand";
+import { TagFilterMenu } from "./TagFilterMenu";
 import styles from "./TopBar.module.css";
 
 export function TopBar() {
@@ -73,6 +74,7 @@ export function TopBar() {
           </nav>
         )}
         <div className={styles.spacer} />
+        {ready && journalReady && <TagFilterMenu />}
         {ready && journalReady && (
           <button
             type="button"

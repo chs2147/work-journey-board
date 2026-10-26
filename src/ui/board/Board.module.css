@@ -718,3 +718,178 @@
   color: var(--text-3);
   text-align: center;
 }
+
+/* ── 업무 태그(improve-1026-spec 4-1): 회색 칩, 3개 넘으면 +N. 태그가 없으면 마우스를 올릴 때만 [+ 태그] ── */
+.tagChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+  min-width: 0;
+  padding-left: 17px;
+}
+
+.tagChip,
+.tagAdd {
+  max-width: 100%;
+  padding: 0 var(--sp-2);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-sub);
+  color: var(--text-2);
+  font-size: var(--fs-xs);
+  line-height: 18px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.tagChip:hover {
+  border-color: var(--line-strong);
+  color: var(--text-1);
+}
+
+.tagAdd {
+  border-style: dashed;
+  background: none;
+  color: var(--text-3);
+  opacity: 0;
+}
+
+.rowHeader:hover .tagAdd {
+  opacity: 1;
+}
+
+/* [+ 태그]는 자리를 늘 잡아 두고(마우스를 올려도 행 높이 그대로) 숨겨 둔다 — 띄우면 무기록 제안 단추를 가린다 */
+.tagAdd {
+  visibility: hidden;
+}
+
+.rowHeader:hover .tagAdd {
+  visibility: visible;
+}
+
+.tagPop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 45;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  width: 248px;
+  padding: var(--sp-2);
+  background: var(--surface-card);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  box-shadow: 0 6px 18px rgb(0 0 0 / 0.14);
+  color: var(--text-1);
+  font-size: var(--fs-md);
+  cursor: default;
+}
+
+.tagSearch {
+  height: 30px;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-card);
+  color: var(--text-1);
+  font: inherit;
+}
+
+.tagSearch:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+.tagList {
+  display: flex;
+  flex-direction: column;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.tagOption,
+.tagCreate {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-1);
+  text-align: left;
+  cursor: pointer;
+}
+
+.tagOption:hover,
+.tagOption:focus-visible,
+.tagCreate:hover,
+.tagCreate:focus-visible {
+  background: var(--surface-sub);
+  outline: none;
+}
+
+.tagOptionName {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tagCreate {
+  color: var(--accent);
+}
+
+.check {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid var(--text-3);
+  border-radius: 3px;
+}
+
+.checkOn {
+  border-color: var(--accent);
+  background: var(--accent);
+  box-shadow: inset 0 0 0 2px var(--surface-card);
+}
+
+.tagHint,
+.tagKeys {
+  margin: 0;
+  padding: var(--sp-1) var(--sp-3);
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+}
+
+.tagKeys {
+  border-top: 1px solid var(--line);
+  padding-top: var(--sp-2);
+}
+
+/* 태그로 거른 보기 안내 띠(spec 6-1) */
+.filterBanner {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-5);
+  border-bottom: 1px solid var(--line);
+  background: var(--accent-soft);
+  color: var(--text-1);
+  font-size: var(--fs-sm);
+}
+
+.filterBanner button {
+  padding: 1px var(--sp-3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-card);
+  color: var(--text-1);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}

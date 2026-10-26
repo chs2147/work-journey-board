@@ -14,6 +14,7 @@ import { openImport, undoImportBatch } from "../import/importStore";
 import type { ImportBatchInfo } from "../../data/repository";
 import { useAppStore } from "../common/appStore";
 import styles from "./Settings.module.css";
+import { TagSettings } from "./TagSettings";
 
 type Pending =
   | { kind: "same" }
@@ -355,6 +356,8 @@ export function SettingsPanel() {
             </ul>
           )}
         </section>
+
+        <TagSettings />
 
         <section className={styles.section} aria-labelledby="s-repeat">
           <h3 id="s-repeat">{STR.settings.repeat}</h3>

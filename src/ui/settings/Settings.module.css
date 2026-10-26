@@ -224,3 +224,20 @@
   color: var(--text-3);
   text-decoration: line-through;
 }
+
+/* 설정 > 태그 */
+.tagList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tagList li {
+  display: grid;
+  grid-template-columns: 12px minmax(0, 1fr) auto auto auto auto;
+  align-items: center;
+  gap: var(--sp-2);
+}

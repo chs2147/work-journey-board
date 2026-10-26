@@ -4,6 +4,8 @@
 import { create } from "zustand";
 import type { DayMarkKind } from "../../domain/dayMark";
 import { appendCopies, normalizeCell } from "../../domain/items";
+import { matchesTagFilter, NO_TAG, type Tag } from "../../domain/tags";
+import type { VisibleCategory } from "../../domain/categories";
 import { groupRange, type Recurrence } from "../../domain/recurrence";
 import type { ImportantItem, ItemDraft } from "../../domain/types";
 import {
@@ -86,6 +88,11 @@ export interface BoardState {
   dayMarks: Record<DateStr, DayMarkKind>;
   /** 포커스 열 기준 업무별 직전 기록일(빈 칸의 가져오기 단추, spec 3-2) — 키: 업무 id */
   prevDates: Record<string, DateStr>;
+  /** 모든 태그(순서대로)와 업무별 태그 id(improve-1026-spec 4절) */
+  tags: Tag[];
+  categoryTags: Record<string, string[]>;
+  /** 보드 태그 필터(spec 6절) — 빈 배열 = 전체 */
+  tagFilter: string[];
 }
 
 // 화면 밖 상태(렌더링과 무관)
@@ -139,6 +146,9 @@ export const useBoard = create<BoardState>(() => ({
   previews: {},
   dayMarks: {},
   prevDates: {},
+  tags: [],
+  categoryTags: {},
+  tagFilter: [],
 }));
 
 const set = useBoard.setState;
@@ -275,6 +285,7 @@ async function loadWeek(weekId: WeekId, focusDay: DateStr) {
   }
   const settings = await r.getSettings();
   const nudges = weekId === weekIdOf(today) ? await r.getNudges(weekId) : [];
+  const [tags, categoryTags] = await Promise.all([r.listTags(), r.getCategoryTags()]);
   const cells: Record<string, ItemDraft[]> = {};
   persistedCells.clear();
   for (const vc of view.categories) {
@@ -304,6 +315,9 @@ async function loadWeek(weekId: WeekId, focusDay: DateStr) {
     repeating: rules.filter((x) => x.endWeek === null).map((x) => x.id),
     previews,
     dayMarks: view.dayMarks,
+    tags,
+    categoryTags,
+    tagFilter: liveFilter(get().tagFilter, tags),
   });
   await Promise.all([refreshImportant(), refreshPrevDates()]);
   if (created > 0) toast(STR.repeat.created(created));
@@ -320,6 +334,7 @@ export async function init(r: JournalRepository) {
   undoStack.length = 0;
   redoStack.length = 0;
   const today = r.today();
+  set({ tagFilter: (await r.getSettings()).ui.tagFilter });
   await loadWeek(weekIdOf(today), today);
   // 패널 열림은 기억하되, 켤 때 0건이면 닫힌 채 시작(spec 2-5)
   const settings = await r.getSettings();
@@ -503,8 +518,9 @@ export function setFocusDay(day: DateStr) {
 
 /** 포커스 열의 첫 업무 칸(기록이 있으면 마지막 항목 끝)으로 커서. 업무가 없으면 업무 추가 입력칸. */
 export function focusStartCell() {
-  const { view, focusDay, cells } = get();
-  const first = view?.categories.find((c) => c.state === "active") ?? view?.categories[0];
+  const { focusDay, cells } = get();
+  const cats = shownCategories(get());
+  const first = cats.find((c) => c.state === "active") ?? cats[0];
   if (!first) return set({ addOpen: true });
   const key = cellKey(focusDay, first.category.id);
   const items = cells[key] ?? [];
@@ -595,7 +611,10 @@ export async function redo() {
 // ── 업무(카테고리) ────────────────────────────────────
 export async function addCategory(name: string): Promise<boolean> {
   try {
-    await track(() => requireRepo().createCategory(name, get().weekId));
+    const r = requireRepo();
+    const c = await track(() => r.createCategory(name, get().weekId));
+    // 태그로 거른 보기에서 만든 업무는 고른 태그를 달아 둔다 — 만들자마자 숨지 않게(improve-1026-spec 6-1)
+    for (const id of get().tagFilter.filter((x) => x !== NO_TAG)) await r.setCategoryTag(c.id, id, true);
     await reload();
     return true;
   } catch (e) {
@@ -643,12 +662,15 @@ export async function setCategoryColor(id: string, color: CategoryColorKey) {
   await reload();
 }
 
-/** 보드에 보이는 순서 기준으로 순서를 바꾼다. 보이지 않는 업무는 뒤에 그대로 둔다. */
+/**
+ * 보드에 보이는 순서 기준으로 순서를 바꾼다. 보이지 않는 업무(그 주에 없거나 태그 필터로 숨은 업무)는
+ * 제자리에 두고, 보이는 업무가 있던 자리들만 새 순서로 채운다.
+ */
 export async function reorderVisible(idsInOrder: string[]) {
-  const all = (await requireRepo().listCategories()).categories.map((c) => c.id);
-  const before = all;
-  const rest = all.filter((id) => !idsInOrder.includes(id));
-  const after = [...idsInOrder, ...rest];
+  const before = (await requireRepo().listCategories()).categories.map((c) => c.id);
+  const moving = new Set(idsInOrder);
+  let k = 0;
+  const after = before.map((id) => (moving.has(id) ? idsInOrder[k++]! : id));
   if (before.join() === after.join()) return;
   await track(() => requireRepo().reorderCategories(after));
   pushUndo({
@@ -665,7 +687,7 @@ export async function reorderVisible(idsInOrder: string[]) {
 }
 
 export async function moveCategory(id: string, dir: -1 | 1) {
-  const ids = (get().view?.categories ?? []).map((c) => c.category.id);
+  const ids = shownCategories(get()).map((c) => c.category.id);
   const i = ids.indexOf(id);
   const j = i + dir;
   if (i < 0 || j < 0 || j >= ids.length) return;
@@ -744,9 +766,11 @@ async function refreshPrevDates() {
   }
 }
 
-/** 전체 가져오기 대상: 그 주에 보이는 진행 중 업무(보드 순서) */
+/** 전체 가져오기 대상: 보드에 보이는(태그 필터 적용) 진행 중 업무(보드 순서) */
 const activeCategoryIds = () =>
-  (get().view?.categories ?? []).filter((c) => c.state === "active").map((c) => c.category.id);
+  shownCategories(get())
+    .filter((c) => c.state === "active")
+    .map((c) => c.category.id);
 
 /** 요일 머리 메뉴에 보일 직전 기록일(없으면 null) */
 export async function previousDayFor(date: DateStr): Promise<DateStr | null> {
@@ -818,6 +842,98 @@ export async function pullPreviousDay(date: DateStr) {
     },
   });
   toast(STR.pull.doneAll(label, total, changes.length), { label: STR.toast.undo, run: () => void undo() });
+}
+
+// ── 업무 태그·태그 필터(improve-1026-spec 4~6절) ─────────
+/** 필터에서 없어진 태그를 뺀다 */
+function liveFilter(filter: string[], tags: Tag[]): string[] {
+  const ids = new Set(tags.map((t) => t.id));
+  return filter.filter((x) => x === NO_TAG || ids.has(x));
+}
+
+/** 보드에 보일 업무(그 주에 보이는 업무 중 태그 필터에 맞는 것, 보드 순서) */
+export function shownCategories(
+  s: Pick<BoardState, "view" | "categoryTags" | "tagFilter">,
+): VisibleCategory[] {
+  return (s.view?.categories ?? []).filter((c) =>
+    matchesTagFilter(s.categoryTags[c.category.id] ?? [], s.tagFilter),
+  );
+}
+
+/** 태그 목록·업무별 태그를 다시 읽는다(설정에서 태그를 바꾼 뒤) */
+export async function refreshTags() {
+  const r = repo;
+  if (!r) return;
+  const [tags, categoryTags] = await Promise.all([r.listTags(), r.getCategoryTags()]);
+  const tagFilter = liveFilter(get().tagFilter, tags);
+  if (tagFilter.length !== get().tagFilter.length) saveFilter(tagFilter);
+  set({ tags, categoryTags, tagFilter });
+}
+
+function saveFilter(tagFilter: string[]) {
+  void repo?.updateSettings({ ui: { tagFilter } }).catch(() => undefined);
+}
+
+export function setTagFilter(tagFilter: string[]) {
+  set({ tagFilter });
+  saveFilter(tagFilter);
+}
+
+/** 업무에 태그 붙이기/떼기 — 바로 저장, 보드 실행 취소에 들어간다 */
+export async function toggleCategoryTag(categoryId: string, tagId: string) {
+  const on = !(get().categoryTags[categoryId] ?? []).includes(tagId);
+  const apply = async (v: boolean) => {
+    await track(() => requireRepo().setCategoryTag(categoryId, tagId, v));
+    await refreshTags();
+  };
+  try {
+    await apply(on);
+  } catch (e) {
+    reportError(e);
+    return;
+  }
+  pushUndo({ undo: () => apply(!on), redo: () => apply(on) });
+}
+
+/** 새 태그를 만들어 그 업무에 붙인다(같은 이름이 있으면 그 태그를 붙임). 성공하면 태그 id */
+export async function createTagFor(categoryId: string, name: string): Promise<string | null> {
+  const r = requireRepo();
+  try {
+    const tag = await track(() => r.createTag(name));
+    await refreshTags();
+    await toggleCategoryTag(categoryId, tag.id);
+    return tag.id;
+  } catch (e) {
+    reportError(e);
+    return null;
+  }
+}
+
+/** 설정 > 태그: 이름 바꾸기·순서·지우기(지우면 모든 업무에서 떨어짐 — 부르는 쪽이 먼저 확인) */
+export async function renameTag(id: string, name: string): Promise<boolean> {
+  try {
+    await track(() => requireRepo().renameTag(id, name));
+    await refreshTags();
+    return true;
+  } catch (e) {
+    reportError(e);
+    return false;
+  }
+}
+
+export async function moveTag(id: string, dir: -1 | 1) {
+  const ids = get().tags.map((t) => t.id);
+  const i = ids.indexOf(id);
+  const j = i + dir;
+  if (i < 0 || j < 0 || j >= ids.length) return;
+  [ids[i], ids[j]] = [ids[j]!, ids[i]!];
+  await track(() => requireRepo().reorderTags(ids));
+  await refreshTags();
+}
+
+export async function deleteTag(id: string) {
+  await track(() => requireRepo().deleteTag(id));
+  await refreshTags();
 }
 
 // ── 연간 보기 ──────────────────────────────────────────

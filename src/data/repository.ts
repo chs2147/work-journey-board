@@ -10,6 +10,7 @@ import {
 } from "../domain/categories";
 import type { SummaryInput } from "../domain/aggregate";
 import { isDayMarkKind, isLeaveWeek, type DayMarkKind } from "../domain/dayMark";
+import { normalizeTagName, tagNameProblem, type Tag } from "../domain/tags";
 import type { ExistingItem, ImportContext, ImportPlan } from "../domain/importer";
 import {
   docFromDayMemos,
@@ -476,6 +477,73 @@ export class JournalRepository {
     await this.db.execute(
       "INSERT INTO day_mark (date, kind, updated_at) VALUES (?, ?, ?) ON CONFLICT(date) DO UPDATE SET kind = excluded.kind, updated_at = excluded.updated_at",
       [date, kind, this.ts()],
+    );
+  }
+
+  // ── 업무 태그(improve-1026-spec 4절) ─────────────────
+  async listTags(): Promise<Tag[]> {
+    const rows = await this.db.select<{ id: string; name: string; sort_order: number }>(
+      "SELECT id, name, sort_order FROM tag ORDER BY sort_order, name",
+    );
+    return rows.map((r) => ({ id: r.id, name: r.name, sortOrder: Number(r.sort_order) }));
+  }
+
+  /** 업무별 태그 id(태그 순서대로). 태그가 없는 업무는 키가 없다 */
+  async getCategoryTags(): Promise<Record<string, string[]>> {
+    const rows = await this.db.select<{ category_id: string; tag_id: string }>(
+      `SELECT ct.category_id, ct.tag_id FROM category_tag ct JOIN tag t ON t.id = ct.tag_id
+       ORDER BY t.sort_order, t.name`,
+    );
+    const out: Record<string, string[]> = {};
+    for (const r of rows) (out[r.category_id] ??= []).push(r.tag_id);
+    return out;
+  }
+
+  private async checkTagName(raw: string, exceptId: string | null): Promise<string> {
+    const name = normalizeTagName(raw);
+    const others = (await this.listTags()).filter((t) => t.id !== exceptId).map((t) => t.name);
+    const problem = tagNameProblem(name, others);
+    if (problem) throw new ValidationError(problem);
+    return name;
+  }
+
+  /** 새 태그(맨 끝 순서). 이름은 1~20자, 대소문자 무시 중복 금지 */
+  async createTag(raw: string): Promise<Tag> {
+    const name = await this.checkTagName(raw, null);
+    const [m] = await this.db.select<{ m: number | null }>("SELECT MAX(sort_order) AS m FROM tag");
+    const tag: Tag = { id: uuidv7(this.clock().getTime()), name, sortOrder: Number(m?.m ?? 0) + 1 };
+    await this.db.execute("INSERT INTO tag (id, name, sort_order, created_at) VALUES (?, ?, ?, ?)", [
+      tag.id,
+      tag.name,
+      tag.sortOrder,
+      this.ts(),
+    ]);
+    return tag;
+  }
+
+  async renameTag(id: string, raw: string): Promise<void> {
+    const name = await this.checkTagName(raw, id);
+    await this.db.execute("UPDATE tag SET name = ? WHERE id = ?", [name, id]);
+  }
+
+  /** 태그 지우기 — 모든 업무에서 떨어진다(category_tag는 외래 키로 함께 지워짐) */
+  async deleteTag(id: string): Promise<void> {
+    await this.db.execute("DELETE FROM tag WHERE id = ?", [id]);
+  }
+
+  async reorderTags(idsInOrder: string[]): Promise<void> {
+    await this.db.batch(
+      idsInOrder.map((id, i) => ({ sql: "UPDATE tag SET sort_order = ? WHERE id = ?", params: [i + 1, id] })),
+    );
+  }
+
+  /** 업무에 태그 붙이기/떼기(이미 그 상태면 아무 일 없음) */
+  async setCategoryTag(categoryId: string, tagId: string, on: boolean): Promise<void> {
+    await this.db.execute(
+      on
+        ? "INSERT OR IGNORE INTO category_tag (category_id, tag_id) VALUES (?, ?)"
+        : "DELETE FROM category_tag WHERE category_id = ? AND tag_id = ?",
+      [categoryId, tagId],
     );
   }
 

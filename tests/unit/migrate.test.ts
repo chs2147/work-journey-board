@@ -132,13 +132,36 @@ describe("마이그레이션 (data-spec 7-5)", () => {
       },
     ]);
     const before = vi.fn().mockResolvedValue(undefined);
-    expect(await migrate(db, { beforeMigrate: before })).toBe(5);
+    expect(await migrate(db, { beforeMigrate: before, migrations: MIGRATIONS.slice(0, 5) })).toBe(5);
     expect(before).toHaveBeenCalledWith(4, 5);
     expect(await db.select("SELECT id, text FROM entry_item")).toEqual([{ id: "i", text: "가상 기록" }]);
     await db.execute("INSERT INTO day_mark (date, kind, updated_at) VALUES ('2026-10-27', 'leave', 't')");
     await expect(
       db.execute("INSERT INTO day_mark (date, kind, updated_at) VALUES ('2026-10-28', 'sick', 't')"),
     ).rejects.toThrow();
+    expect(await quickCheck(db)).toBe(true);
+  });
+
+  it("v5 → v6(업무 태그): 직전 백업 호출, 이름은 대소문자 무시 중복 금지, 업무를 지우면 연결도 지워진다", async () => {
+    const db = await openSqlJsMemory();
+    await migrate(db, { migrations: MIGRATIONS.slice(0, 5) });
+    await db.execute(
+      "INSERT INTO category (id, name, color, sort_order, created_at, updated_at) VALUES ('c', '가상 업무', 'c1', 1, 't', 't')",
+    );
+    const before = vi.fn().mockResolvedValue(undefined);
+    expect(await migrate(db, { beforeMigrate: before })).toBe(6);
+    expect(before).toHaveBeenCalledWith(5, 6);
+    await db.execute("INSERT INTO tag (id, name, sort_order, created_at) VALUES ('t', 'Dev', 1, 't')");
+    await expect(
+      db.execute("INSERT INTO tag (id, name, sort_order, created_at) VALUES ('t2', 'dev', 2, 't')"),
+    ).rejects.toThrow();
+    await expect(
+      db.execute("INSERT INTO tag (id, name, sort_order, created_at) VALUES ('t3', '   ', 3, 't')"),
+    ).rejects.toThrow();
+    await db.execute("INSERT INTO category_tag (category_id, tag_id) VALUES ('c', 't')");
+    await db.execute("PRAGMA foreign_keys = ON");
+    await db.execute("DELETE FROM category WHERE id = 'c'");
+    expect(await db.select("SELECT * FROM category_tag")).toEqual([]);
     expect(await quickCheck(db)).toBe(true);
   });
 

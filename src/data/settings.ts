@@ -21,6 +21,8 @@ export interface Settings {
     noteDockAuto: boolean;
     noteDockHeight: number;
     noteDockCollapsed: boolean;
+    /** 보드 태그 필터(improve-1026-spec 6절) — 태그 id들(OR), "__none__" = 태그 없음. 빈 배열 = 전체. 다시 켜도 유지 */
+    tagFilter: string[];
   };
 }
 
@@ -43,6 +45,7 @@ export const DEFAULT_SETTINGS: Settings = {
     noteDockAuto: true,
     noteDockHeight: 280,
     noteDockCollapsed: false,
+    tagFilter: [],
   },
 };
 
@@ -86,6 +89,8 @@ export function mergeSettings(base: Settings, patch: unknown): Settings {
   if (!(s.backup.dailyKeep >= 1)) s.backup.dailyKeep = DEFAULT_SETTINGS.backup.dailyKeep;
   if (!(s.backup.monthlyKeep >= 0)) s.backup.monthlyKeep = DEFAULT_SETTINGS.backup.monthlyKeep;
   if (s.ai.mode === "api") s.ai.mode = "clipboard"; // v1에서는 API 모드 선택 불가(자리만)
+  if (!Array.isArray(s.ui.tagFilter) || !s.ui.tagFilter.every((x) => typeof x === "string"))
+    s.ui.tagFilter = [];
   if (!(s.ui.noteDockHeight >= NOTE_DOCK_MIN)) s.ui.noteDockHeight = DEFAULT_SETTINGS.ui.noteDockHeight;
   return s;
 }

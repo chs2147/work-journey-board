@@ -155,7 +155,8 @@ CREATE TABLE app_meta (
     "api": { "endpoint": null, "model": null }   // API 키는 DB에 저장하지 않음(윈도우 자격 증명 관리자, M4에서 확정)
   },
   "ui": { "summaryPanelOpen": false, "lastExportDir": null,
-          "noteDockAuto": true, "noteDockHeight": 280, "noteDockCollapsed": false }
+          "noteDockAuto": true, "noteDockHeight": 280, "noteDockCollapsed": false,
+          "tagFilter": [] }
           // 메모 도크: 자동 높이(기본) / 끌어서 정한 높이(최소 120)·접힘(weekly-note-spec 3절·14절)
 }
 ```
@@ -187,6 +188,12 @@ CREATE TABLE app_meta (
 - 연차·반차 표시(improve-1026-spec 1-2): `day_mark(date PK, kind IN ('leave','half_am','half_pm'), updated_at)`. 근무(기본)는 행이 없고, 근무로 돌리면 행을 지운다. 미래 날짜도 표시 가능.
 - 쓰는 곳: 보드 요일 머리·열 음영, 자동 집계 끝 `※ 연차:` 줄(output-spec 2-1 규칙 8), 엑셀 주간보고 머리 `(연차)`(3-1), 무기록 판정 예외(5-1), 직전 기록 가져오기에서 종일 연차인 날 건너뛰기(improve-1026-spec 3-1). 엑셀 원장·가져오기 양식에는 넣지 않는다.
 - 직전 백업은 `_pre-migration-v5`.
+
+### 3-v. 스키마 v6 (2026-10-26, `0006_tags.sql`)
+- 업무 태그(improve-1026-spec 4-2): `tag(id, name 1~20자, sort_order, created_at)` + `ux_tag_name`(lower(name) 유일 — 대소문자 무시 중복 금지), `category_tag(category_id → category ON DELETE CASCADE, tag_id → tag ON DELETE CASCADE, PK 둘)`.
+- 이름은 앞의 `#`·앞뒤 공백을 떼고 안쪽 공백을 하나로 정리해 저장(`domain/tags.ts normalizeTagName`). 태그를 지우면 모든 업무에서 떨어지고, 업무를 지우면 그 업무의 연결만 지워진다. 종료된 업무도 태그를 유지.
+- 태그 필터는 설정 `ui.tagFilter`(태그 id 배열, `"__none__"` = 태그 없음, 3-4). 엑셀·가져오기 양식에는 태그를 넣지 않는다.
+- 직전 백업은 `_pre-migration-v6`.
 
 ## 4. 카테고리 활성 계산
 

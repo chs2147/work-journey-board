@@ -4,7 +4,15 @@ import { cellKey } from "../../data/repository";
 import { DAY_LABELS, type DateStr } from "../../domain/week";
 import { STR } from "../../shared/strings";
 import { focusNote } from "../note/noteStore";
-import { enterCell, reorderVisible, setFocusDay, useBoard } from "./boardStore";
+import { filterLabel } from "../../domain/tags";
+import {
+  enterCell,
+  reorderVisible,
+  setFocusDay,
+  setTagFilter,
+  shownCategories,
+  useBoard,
+} from "./boardStore";
 import { CategoryHeader } from "./CategoryHeader";
 import { DayHeader } from "./DayHeader";
 import { CellEditor, type CellNav } from "./CellEditor";
@@ -22,6 +30,9 @@ export function BoardView() {
   const nudges = useBoard((s) => s.nudges);
   const nudgeWeeks = useBoard((s) => s.nudgeWeeks);
   const dayMarks = useBoard((s) => s.dayMarks);
+  const categoryTags = useBoard((s) => s.categoryTags);
+  const tagFilter = useBoard((s) => s.tagFilter);
+  const tags = useBoard((s) => s.tags);
   const [dragId, setDragId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -31,7 +42,9 @@ export function BoardView() {
   }, [view?.weekId]);
 
   if (!view) return null;
-  const cats = view.categories;
+  // 태그로 거른 보기(improve-1026-spec 6절) — 키보드 이동·순서 바꾸기도 보이는 업무만 지난다
+  const cats = shownCategories({ view, categoryTags, tagFilter });
+  const hidden = view.categories.length - cats.length;
 
   const hasRecords = (day: DateStr) =>
     cats.some((c) => (cells[cellKey(day, c.category.id)] ?? []).some((i) => i.text.trim()));
@@ -62,74 +75,87 @@ export function BoardView() {
   });
 
   return (
-    <div className={styles.scroll} ref={scrollRef}>
-      <div className={styles.grid} style={gridStyle} data-testid="board-grid">
-        <div className={`${styles.colHeader} ${styles.corner}`}>{STR.board.categoryHeader}</div>
-        {view.days.map((day, i) => (
-          <DayHeader key={day} day={day} index={i} narrow={widths[i] === NARROW} />
-        ))}
+    <>
+      {tagFilter.length > 0 && (
+        <div className={styles.filterBanner} role="status" data-testid="tag-filter-banner">
+          <span>
+            {STR.tags.banner(filterLabel(tagFilter, tags, STR.tags.noTag), hidden)}
+            {cats.length === 0 && view.categories.length > 0 && ` — ${STR.tags.allHidden}`}
+          </span>
+          <button type="button" onClick={() => setTagFilter([])}>
+            {STR.tags.clear}
+          </button>
+        </div>
+      )}
+      <div className={styles.scroll} ref={scrollRef}>
+        <div className={styles.grid} style={gridStyle} data-testid="board-grid">
+          <div className={`${styles.colHeader} ${styles.corner}`}>{STR.board.categoryHeader}</div>
+          {view.days.map((day, i) => (
+            <DayHeader key={day} day={day} index={i} narrow={widths[i] === NARROW} />
+          ))}
 
-        {cats.length === 0 && <div className={styles.empty}>{STR.board.emptyBoard}</div>}
+          {view.categories.length === 0 && <div className={styles.empty}>{STR.board.emptyBoard}</div>}
 
-        {cats.map((vc, row) => (
-          <Row key={vc.category.id}>
-            <CategoryHeader
-              vc={vc}
-              index={row}
-              total={cats.length}
-              nudge={nudges.includes(vc.category.id)}
-              nudgeWeeks={nudgeWeeks}
-              draggingId={dragId}
-              onDragStart={setDragId}
-              onDragEnd={() => setDragId(null)}
-              onDrop={(targetId, place) => {
-                setDragId(null);
-                if (!dragId || dragId === targetId) return;
-                const before = cats.map((c) => c.category.id);
-                const ids = before.filter((id) => id !== dragId);
-                ids.splice(ids.indexOf(targetId) + (place === "after" ? 1 : 0), 0, dragId);
-                if (ids.join() !== before.join()) void reorderVisible(ids);
-              }}
-            />
-            {view.days.map((day, i) => {
-              const key = cellKey(day, vc.category.id);
-              const narrow = widths[i] === NARROW;
-              return (
-                <div
-                  key={day}
-                  className={[
-                    styles.cell,
-                    day === focusDay ? styles.cellFocus : "",
-                    day === today ? styles.cellToday : "",
-                    dayMarks[day] === "leave" ? styles.cellLeave : "",
-                    narrow ? styles.cellNarrow : "",
-                    vc.state !== "active" ? styles.cellEnded : "",
-                  ].join(" ")}
-                  data-testid={`cell-${vc.category.name}-${day}`}
-                  onMouseDown={(e) => {
-                    if (narrow && e.target === e.currentTarget) {
-                      e.preventDefault();
-                      enterCell(key, "below");
-                    }
-                  }}
-                >
-                  {!narrow && (
-                    <CellEditor
-                      cellKey={key}
-                      ariaLabel={STR.board.itemAria(vc.category.name, `${DAY_LABELS[i]} ${day}`)}
-                      showPlaceholder={day === focusDay}
-                      nav={navFor(row, day)}
-                    />
-                  )}
-                </div>
-              );
-            })}
-          </Row>
-        ))}
+          {cats.map((vc, row) => (
+            <Row key={vc.category.id}>
+              <CategoryHeader
+                vc={vc}
+                index={row}
+                total={cats.length}
+                nudge={nudges.includes(vc.category.id)}
+                nudgeWeeks={nudgeWeeks}
+                draggingId={dragId}
+                onDragStart={setDragId}
+                onDragEnd={() => setDragId(null)}
+                onDrop={(targetId, place) => {
+                  setDragId(null);
+                  if (!dragId || dragId === targetId) return;
+                  const before = cats.map((c) => c.category.id);
+                  const ids = before.filter((id) => id !== dragId);
+                  ids.splice(ids.indexOf(targetId) + (place === "after" ? 1 : 0), 0, dragId);
+                  if (ids.join() !== before.join()) void reorderVisible(ids);
+                }}
+              />
+              {view.days.map((day, i) => {
+                const key = cellKey(day, vc.category.id);
+                const narrow = widths[i] === NARROW;
+                return (
+                  <div
+                    key={day}
+                    className={[
+                      styles.cell,
+                      day === focusDay ? styles.cellFocus : "",
+                      day === today ? styles.cellToday : "",
+                      dayMarks[day] === "leave" ? styles.cellLeave : "",
+                      narrow ? styles.cellNarrow : "",
+                      vc.state !== "active" ? styles.cellEnded : "",
+                    ].join(" ")}
+                    data-testid={`cell-${vc.category.name}-${day}`}
+                    onMouseDown={(e) => {
+                      if (narrow && e.target === e.currentTarget) {
+                        e.preventDefault();
+                        enterCell(key, "below");
+                      }
+                    }}
+                  >
+                    {!narrow && (
+                      <CellEditor
+                        cellKey={key}
+                        ariaLabel={STR.board.itemAria(vc.category.name, `${DAY_LABELS[i]} ${day}`)}
+                        showPlaceholder={day === focusDay}
+                        nav={navFor(row, day)}
+                      />
+                    )}
+                  </div>
+                );
+              })}
+            </Row>
+          ))}
 
-        <AddCategoryRow />
+          <AddCategoryRow />
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 

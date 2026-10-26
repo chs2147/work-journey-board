@@ -1,6 +1,7 @@
 // 업무 행 머리: 색 점·이름(더블클릭 편집)·⋯ 메뉴·끌어서 순서 바꾸기·무기록 제안 배지·종료됨 표시(overview 10-4).
-import { useEffect, useLayoutEffect, useRef, useState, type DragEvent } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type DragEvent } from "react";
 import type { VisibleCategory } from "../../domain/categories";
+import { chipsToShow } from "../../domain/tags";
 import { CATEGORY_COLOR_KEYS, CATEGORY_COLORS } from "../../shared/palette";
 import { STR } from "../../shared/strings";
 import {
@@ -11,7 +12,9 @@ import {
   moveCategory,
   renameCategory,
   setCategoryColor,
+  useBoard,
 } from "./boardStore";
+import { TagPopover } from "./TagPopover";
 import { isComposingKey } from "./helpers";
 import styles from "./Board.module.css";
 
@@ -56,6 +59,15 @@ export function CategoryHeader({
   const [menuOpen, setMenuOpen] = useState(false);
   const [canDelete, setCanDelete] = useState(false);
   const [dropAt, setDropAt] = useState<DropPlace | null>(null);
+  /** 태그 팝오버를 붙인 업무 머리(null = 닫힘) */
+  const [tagAnchor, setTagAnchor] = useState<HTMLElement | null>(null);
+  const openTags = () => setTagAnchor(headerRef.current);
+  const closeTags = useCallback(() => setTagAnchor(null), []);
+  const headerRef = useRef<HTMLDivElement>(null);
+  const allTags = useBoard((s) => s.tags);
+  const tagIds = useBoard((s) => s.categoryTags[category.id]);
+  const myTags = allTags.filter((t) => tagIds?.includes(t.id));
+  const chips = chipsToShow(myTags);
   const menuRef = useRef<HTMLDivElement>(null);
   const menuListRef = useRef<HTMLDivElement>(null);
   const ended = state !== "active";
@@ -106,6 +118,7 @@ export function CategoryHeader({
 
   return (
     <div
+      ref={headerRef}
       className={[
         styles.rowHeader,
         ended ? styles.ended : "",
@@ -186,6 +199,9 @@ export function CategoryHeader({
               <button role="menuitem" type="button" onClick={() => run(() => setEditing(true))}>
                 {STR.categoryMenu.rename}
               </button>
+              <button role="menuitem" type="button" onClick={() => run(openTags)}>
+                {STR.tags.menuItem}
+              </button>
               <div className={styles.swatches} role="group" aria-label={STR.categoryMenu.color}>
                 {CATEGORY_COLOR_KEYS.map((k) => (
                   <button
@@ -238,6 +254,53 @@ export function CategoryHeader({
           )}
         </div>
       </div>
+      {/* 태그 칩(회색, 3개 넘으면 +N) — 누르면 태그 팝오버. 태그가 없으면 마우스를 올릴 때만 [+ 태그] */}
+      <div className={styles.tagChips} data-testid="tag-chips">
+        {chips.shown.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            tabIndex={-1}
+            className={styles.tagChip}
+            title={STR.tags.addTitle(category.name)}
+            onClick={openTags}
+          >
+            #{t.name}
+          </button>
+        ))}
+        {chips.more > 0 && (
+          <button
+            type="button"
+            tabIndex={-1}
+            className={styles.tagChip}
+            title={myTags
+              .slice(chips.shown.length)
+              .map((t) => `#${t.name}`)
+              .join(" ")}
+            onClick={openTags}
+          >
+            {STR.tags.more(chips.more)}
+          </button>
+        )}
+        <button
+          type="button"
+          tabIndex={-1}
+          className={styles.tagAdd}
+          aria-label={STR.tags.addTitle(category.name)}
+          title={STR.tags.addTitle(category.name)}
+          onClick={openTags}
+        >
+          {STR.tags.add}
+        </button>
+      </div>
+      {tagAnchor && (
+        <TagPopover
+          categoryId={category.id}
+          categoryName={category.name}
+          anchor={tagAnchor}
+          onClose={closeTags}
+        />
+      )}
       {ended && <span className={styles.endedTag}>{STR.board.ended}</span>}
       {nudge && (
         <div className={styles.nudge} data-testid="nudge">

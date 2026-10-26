@@ -30,8 +30,10 @@ export function SummaryPanel({ overlay }: { overlay: boolean }) {
   // 보드 화면 상태가 바뀔 때마다 다시 계산(입력 중인 글도 반영)
   const view = useBoard((s) => s.view);
   const cells = useBoard((s) => s.cells);
+  const dayMarks = useBoard((s) => s.dayMarks);
+  const filtered = useBoard((s) => s.tagFilter.length > 0);
   const noteDoc = useNote((s) => s.doc);
-  const input = useMemo(() => boardSummaryInput(), [view, cells, noteDoc]); // eslint-disable-line react-hooks/exhaustive-deps
+  const input = useMemo(() => boardSummaryInput(), [view, cells, noteDoc, dayMarks]); // eslint-disable-line react-hooks/exhaustive-deps
   const auto = input ? autoText(input, includeMemo) : "";
   const changed = useBasisChanged(
     input ? basisText(input) : null,
@@ -131,6 +133,11 @@ export function SummaryPanel({ overlay }: { overlay: boolean }) {
         </span>
       </div>
 
+      {filtered && (
+        <p className={styles.filterNote} data-testid="summary-filter-note">
+          {STR.tags.summaryNote}
+        </p>
+      )}
       <div className={styles.body} role="tabpanel">
         {tab === "auto" ? (
           <>

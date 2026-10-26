@@ -93,3 +93,102 @@
   background: var(--accent-soft);
   color: var(--accent);
 }
+
+/* [태그: 전체 ▾] 필터(improve-1026-spec 6-1) — 고르면 파랗게 */
+.filterWrap {
+  position: relative;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.filterWrap > .textButton {
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.filterActive {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.filterMenu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  min-width: 220px;
+  max-height: 360px;
+  overflow-y: auto;
+  padding: var(--sp-1);
+  background: var(--surface-card);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  box-shadow: 0 6px 18px rgb(0 0 0 / 0.14);
+}
+
+.filterOption {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-1);
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.filterOption:hover:not(:disabled),
+.filterOption:focus-visible {
+  background: var(--surface-sub);
+  outline: none;
+}
+
+.filterOption:disabled {
+  color: var(--text-3);
+  cursor: default;
+}
+
+.filterName {
+  flex: 1 1 auto;
+}
+
+.filterCount {
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+}
+
+.filterSep {
+  height: 1px;
+  margin: var(--sp-1) 0;
+  background: var(--line);
+}
+
+.filterHint {
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  max-width: 260px;
+  color: var(--text-3);
+  font-size: var(--fs-sm);
+  white-space: normal;
+}
+
+.check {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid var(--text-3);
+  border-radius: 3px;
+}
+
+.checkOn {
+  border-color: var(--accent);
+  background: var(--accent);
+  box-shadow: inset 0 0 0 2px var(--surface-card);
+}

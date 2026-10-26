@@ -240,3 +240,13 @@
 .primary:hover {
   filter: brightness(1.06);
 }
+
+/* 보드가 태그로 거른 보기일 때(improve-1026-spec 6-2) — 요약은 전체 업무 */
+.filterNote {
+  margin: 0;
+  padding: var(--sp-2) var(--sp-5);
+  border-bottom: 1px solid var(--line);
+  background: var(--accent-soft);
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+}
