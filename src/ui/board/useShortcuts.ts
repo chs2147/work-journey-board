@@ -5,6 +5,7 @@ import {
   focusStartCell,
   goToday,
   goWeek,
+  pullPreviousDay,
   redo,
   setFocusDay,
   setPanelOpen,
@@ -32,6 +33,13 @@ export function useShortcuts() {
           e.preventDefault();
           toggleExport();
         }
+        return;
+      }
+      // 직전 기록일 업무 전체 가져오기(improve-1026-spec 3-2) — 포커스 열에
+      if (e.altKey && !mod && e.shiftKey && e.code === "KeyP") {
+        if ((e.target as Element | null)?.closest?.("[data-note-root]")) return;
+        e.preventDefault();
+        void pullPreviousDay(focusDay);
         return;
       }
       if (e.altKey && !mod && !e.shiftKey) {

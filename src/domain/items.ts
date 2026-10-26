@@ -82,3 +82,43 @@ export function moveItem(
   const next = [...items.slice(0, s), ...items.slice(e, ne), ...items.slice(s, e), ...items.slice(ne)];
   return { items: next, index: s + (ne - e) };
 }
+
+/**
+ * 직전 기록 가져오기(improve-1026-spec 3-2): source(본·세부 항목, 순서대로)를 target 끝에 덧붙인다.
+ * - 같은 글의 본 항목이 이미 있으면 그 묶음에 세부 항목만 보탠다(같은 세부 항목은 건너뜀).
+ * - 중요 표시·반복 연결은 싣지 않는다(새 기록으로 시작). 빈 항목은 버린다.
+ * 돌려주는 added = 새로 생긴 항목 수.
+ */
+export function appendCopies(
+  target: ItemDraft[],
+  source: readonly { depth: Depth; text: string }[],
+  newId: () => string,
+): { items: ItemDraft[]; added: number } {
+  const items = normalizeCell(target).map((i) => ({ ...i }));
+  const same = (a: string, b: string) => a.trim() === b.trim();
+  let added = 0;
+  /** 지금 세부 항목을 붙일 묶음의 끝 다음 자리(-1 = 세부 항목을 붙일 본 항목 없음) */
+  let insertAt = -1;
+  for (const s of source) {
+    if (!s.text.trim()) continue;
+    if (s.depth === 0 || insertAt < 0) {
+      const at = items.findIndex((i) => i.depth === 0 && same(i.text, s.text));
+      if (at >= 0) {
+        insertAt = blockRange(items, at)[1];
+        continue;
+      }
+      items.push({ id: newId(), depth: 0, text: s.text });
+      added++;
+      insertAt = items.length;
+      continue;
+    }
+    // 세부 항목: 붙일 묶음 안에 같은 글이 있으면 건너뜀
+    let start = insertAt - 1;
+    while (start > 0 && items[start]!.depth === 1) start--;
+    if (items.slice(start + 1, insertAt).some((i) => same(i.text, s.text))) continue;
+    items.splice(insertAt, 0, { id: newId(), depth: 1, text: s.text });
+    insertAt++;
+    added++;
+  }
+  return { items, added };
+}

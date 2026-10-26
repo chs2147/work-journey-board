@@ -211,7 +211,8 @@ export function parseNoteDoc(json: string | null | undefined): NoteDoc {
       content,
     });
   }
-  return { v: 1, boxes };
+  // 글이 없는 텍스트 상자는 남기지 않는다(improve-1026-spec 2-2) — 어떤 길로 편집을 떠나도 빈 상자가 쌓이지 않게
+  return { v: 1, boxes: boxes.filter((b) => b.kind !== "text" || boxText(b) !== "") };
 }
 
 // ── 글 추출(자동 집계·엑셀, 스펙 6절) ─────────────────

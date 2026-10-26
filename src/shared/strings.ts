@@ -47,6 +47,31 @@ export const STR = {
     emptyBoard: '아직 업무가 없습니다. 아래 "+ 업무 추가"로 첫 업무를 만들어 보세요.',
     itemAria: (category: string, day: string) => `${category} · ${day} 기록`,
   },
+  /** 요일 머리 ⋯ 메뉴 — 연차·반차(improve-1026-spec 1절) */
+  dayMenu: {
+    open: (day: string) => `${day} 메뉴`,
+    status: "이 날 근무 상태",
+    kinds: { work: "근무", leave: "연차(종일)", half_am: "오전 반차", half_pm: "오후 반차" },
+    badge: { leave: "연차", half_am: "오전 반차", half_pm: "오후 반차" },
+    pullAll: (label: string) => `${label} 업무 전체 가져오기`,
+    pullAllKey: "Alt+Shift+P",
+    pullAllNone: "가져올 이전 기록 없음(4주 안)",
+    pullAllLoading: "이전 기록 찾는 중…",
+    widen: "이 열을 넓게 보기",
+    widenKey: "Ctrl+←/→",
+    marked: (day: string, kind: string) => `${day}: ${kind}(으)로 표시했습니다`,
+    unmarked: (day: string) => `${day}: 근무로 되돌렸습니다`,
+  },
+  /** 직전 기록 가져오기(improve-1026-spec 3절) */
+  pull: {
+    button: (label: string) => `${label} 내역 가져오기`,
+    key: "Alt+P",
+    done: (label: string, n: number) => `${label} 항목 ${n}개를 가져왔습니다`,
+    doneAll: (label: string, n: number, cats: number) =>
+      `${label} 업무 ${cats}개 · 항목 ${n}개를 가져왔습니다`,
+    none: "가져올 이전 기록이 없습니다(4주 안)",
+    already: (label: string) => `${label} 내역은 이미 모두 들어 있습니다`,
+  },
   categoryMenu: {
     open: (name: string) => `${name} 메뉴`,
     rename: "이름 바꾸기",
@@ -116,6 +141,7 @@ export const STR = {
     emptyHint: "빈 곳을 클릭해 쓰기 · 캡처는 Ctrl+V · 이미지 파일은 끌어다 놓기 · Alt+M으로 보드와 오가기",
     canvasAria: "이번 주 메모 — 빈 곳을 클릭하면 새 상자",
     boxAria: "메모 상자",
+    ghostHint: "여기에 입력 — 글자를 치면 상자가 생깁니다",
     grip: "상자 위치 이동(끌기)",
     resize: "폭 조절(끌기)",
     menu: "상자 메뉴",

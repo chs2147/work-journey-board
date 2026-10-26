@@ -257,4 +257,27 @@ describe("내보내기 경로 규칙(웹 앱 쪽 — Rust export_write와 같은
     expect(exportPathProblem(`${dir}\\backups\\a.png`, dir, "image")).toBe(STR.export.notBackups);
     expect(exportPathProblem(`${dir}/backups/a.xlsx`, dir)).toBe(STR.export.notBackups);
   });
+
+  it("연차·반차 날은 주간보고 요일 머리 끝에 `(연차)`, 원장에는 넣지 않는다(improve-1026-spec 1-3)", async () => {
+    const weeks = (await sampleWeeks()).map((w) =>
+      w.input.weekId === "2026-W43"
+        ? {
+            ...w,
+            input: {
+              ...w.input,
+              dayMarks: [
+                { date: "2026-10-21", kind: "leave" as const },
+                { date: "2026-10-23", kind: "half_am" as const },
+              ],
+            },
+          }
+        : w,
+    );
+    const wb = await readBack(await buildWorkbook(ExcelJS, weeks, opt()));
+    const heads = values(wb.getWorksheet("주간보고")!).flat().map(String);
+    expect(heads).toContain("수 10/21 (연차)");
+    expect(heads).toContain("금 10/23 (오전 반차)");
+    expect(heads).toContain("목 10/22");
+    expect(values(wb.getWorksheet("원장")!).flat().map(String).join("|")).not.toContain("연차");
+  });
 });

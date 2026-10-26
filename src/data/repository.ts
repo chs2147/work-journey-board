@@ -9,6 +9,7 @@ import {
   type VisibleCategory,
 } from "../domain/categories";
 import type { SummaryInput } from "../domain/aggregate";
+import { isDayMarkKind, isLeaveWeek, type DayMarkKind } from "../domain/dayMark";
 import type { ExistingItem, ImportContext, ImportPlan } from "../domain/importer";
 import {
   docFromDayMemos,
@@ -37,6 +38,7 @@ import {
 } from "../domain/recurrence";
 import type { Category, CategoryPeriod, Depth, EntryItem, ImportantItem, ItemDraft } from "../domain/types";
 import {
+  addDays,
   addWeeks,
   weekDays,
   weekIdOf,
@@ -61,7 +63,21 @@ export interface WeekView {
   items: Record<string, EntryItem[]>;
   /** 주간 메모(weekly-note-spec) — 아직 저장한 적 없는 주는 예전 요일 메모를 상자 1개로 보여 준다 */
   note: NoteDoc;
+  /** 연차·반차 표시(improve-1026-spec 1절) — 근무인 날은 없다 */
+  dayMarks: Record<DateStr, DayMarkKind>;
 }
+
+/** 직전 기록 가져오기의 원본(improve-1026-spec 3절) */
+export interface PreviousRecord {
+  date: DateStr;
+  /** 키: 업무 id, 칸 안 순서대로 */
+  cells: Record<string, { depth: Depth; text: string }[]>;
+}
+
+/** 직전 기록을 찾는 범위(일) — 4주 */
+export const PREVIOUS_LOOKBACK_DAYS = 28;
+/** 종일 연차인 날은 직전 기록일로 치지 않는다 */
+const NOT_LEAVE = "date NOT IN (SELECT date FROM day_mark WHERE kind = 'leave')";
 
 export const cellKey = (date: DateStr, categoryId: string) => `${date}|${categoryId}`;
 
@@ -159,6 +175,7 @@ export function summaryInputOf(view: WeekView): SummaryInput {
     categories: view.categories.map((v) => ({ id: v.category.id, name: v.category.name })),
     items: Object.values(view.items).flat(),
     memo: noteToText(view.note),
+    dayMarks: Object.entries(view.dayMarks).map(([date, kind]) => ({ date, kind })),
   };
 }
 
@@ -433,7 +450,70 @@ export class JournalRepository {
       categories: visibleCategories(categories, periods, start, end, withItems),
       items,
       note: (await this.getWeekNote(weekId)).doc,
+      dayMarks: await this.getDayMarks(start, end),
     };
+  }
+
+  // ── 연차·반차 표시(improve-1026-spec 1절) ────────────
+  async getDayMarks(from: DateStr, to: DateStr): Promise<Record<DateStr, DayMarkKind>> {
+    const rows = await this.db.select<{ date: string; kind: string }>(
+      "SELECT date, kind FROM day_mark WHERE date BETWEEN ? AND ? ORDER BY date",
+      [from, to],
+    );
+    const out: Record<DateStr, DayMarkKind> = {};
+    for (const r of rows) if (isDayMarkKind(r.kind)) out[r.date] = r.kind;
+    return out;
+  }
+
+  /** 표시 바꾸기. null = 근무(행 삭제) */
+  async setDayMark(date: DateStr, kind: DayMarkKind | null): Promise<void> {
+    if (!DATE_RE.test(date)) throw new ValidationError(`날짜 형식 오류: ${date}`);
+    if (kind === null) {
+      await this.db.execute("DELETE FROM day_mark WHERE date = ?", [date]);
+      return;
+    }
+    if (!isDayMarkKind(kind)) throw new ValidationError(`알 수 없는 표시: ${String(kind)}`);
+    await this.db.execute(
+      "INSERT INTO day_mark (date, kind, updated_at) VALUES (?, ?, ?) ON CONFLICT(date) DO UPDATE SET kind = excluded.kind, updated_at = excluded.updated_at",
+      [date, kind, this.ts()],
+    );
+  }
+
+  // ── 직전 기록 가져오기(improve-1026-spec 3절) ─────────
+  /**
+   * before보다 앞선 가장 가까운 기록일(4주 안, 종일 연차 제외)과 그날의 내역.
+   * categoryIds를 주면 그 업무들만 본다 — 업무 하나(Alt+P)든 보이는 업무 전체(Alt+Shift+P)든 같은 규칙.
+   */
+  async previousRecord(before: DateStr, categoryIds: string[]): Promise<PreviousRecord | null> {
+    if (!DATE_RE.test(before) || categoryIds.length === 0) return null;
+    const from = addDays(before, -PREVIOUS_LOOKBACK_DAYS);
+    const inCats = categoryIds.map(() => "?").join(", ");
+    const [row] = await this.db.select<{ d: string | null }>(
+      `SELECT MAX(date) AS d FROM entry_item
+       WHERE date >= ? AND date < ? AND category_id IN (${inCats}) AND trim(text) <> '' AND ${NOT_LEAVE}`,
+      [from, before, ...categoryIds],
+    );
+    if (!row?.d) return null;
+    const rows = await this.db.select<{ category_id: string; depth: number; text: string }>(
+      `SELECT category_id, depth, text FROM entry_item
+       WHERE date = ? AND category_id IN (${inCats}) AND trim(text) <> '' ORDER BY category_id, seq`,
+      [row.d, ...categoryIds],
+    );
+    const cells: PreviousRecord["cells"] = {};
+    for (const r of rows)
+      (cells[r.category_id] ??= []).push({ depth: Number(r.depth) as Depth, text: r.text });
+    return { date: row.d, cells };
+  }
+
+  /** 업무별 직전 기록일(빈 칸의 [10/28(수) 내역 가져오기] 단추용) — 키: 업무 id */
+  async previousRecordDates(before: DateStr): Promise<Record<string, DateStr>> {
+    if (!DATE_RE.test(before)) return {};
+    const rows = await this.db.select<{ category_id: string; d: string }>(
+      `SELECT category_id, MAX(date) AS d FROM entry_item
+       WHERE date >= ? AND date < ? AND trim(text) <> '' AND ${NOT_LEAVE} GROUP BY category_id`,
+      [addDays(before, -PREVIOUS_LOOKBACK_DAYS), before],
+    );
+    return Object.fromEntries(rows.map((r) => [r.category_id, r.d]));
   }
 
   // ── 주간 메모(weekly-note-spec 5절) ─────────────────
@@ -1041,12 +1121,21 @@ export class JournalRepository {
       weeksWithItemsByCategory.set(r.category_id, set);
     }
     const { categories, periods } = await this.listCategories();
+    const leaveDates = new Set(
+      Object.entries(await this.getDayMarks(from, to))
+        .filter(([, k]) => k === "leave")
+        .map(([d]) => d),
+    );
+    const leaveWeeks = new Set(
+      [...new Set([...leaveDates].map(weekIdOf))].filter((w) => isLeaveWeek(w, leaveDates)),
+    );
     return nudgeCandidates({
       currentWeek,
       nudgeWeeks: settings.nudgeWeeks,
       categories,
       periodsByCategory: groupPeriods(periods),
       weeksWithAnyRecord,
+      leaveWeeks,
       weeksWithItemsByCategory,
     });
   }

@@ -172,6 +172,36 @@ describe("문서 검증", () => {
     expect(d.boxes[0]).toMatchObject({ id: "a", x: 16, y: 24, w: 960, bg: null });
   });
 
+  it("글이 없는 텍스트 상자는 읽을 때·저장할 때 버린다(improve-1026-spec 2-2)", () => {
+    const d = parseNoteDoc(
+      JSON.stringify({
+        v: 1,
+        boxes: [
+          {
+            id: "a",
+            kind: "text",
+            x: 0,
+            y: 0,
+            w: 320,
+            z: 1,
+            content: { type: "doc", content: [p(t("가"))] },
+          },
+          { id: "e", kind: "text", x: 0, y: 80, w: 320, z: 2, content: { type: "doc", content: [p()] } },
+          {
+            id: "s",
+            kind: "text",
+            x: 0,
+            y: 160,
+            w: 320,
+            z: 3,
+            content: { type: "doc", content: [p(t("   "))] },
+          },
+        ],
+      }),
+    );
+    expect(d.boxes.map((b) => b.id)).toEqual(["a"]);
+  });
+
   it("눈금·폭 제한·아래에 붙이기", () => {
     expect([snap(3), snap(4), snap(-20)]).toEqual([0, 8, 0]);
     expect([clampWidth(10), clampWidth(333), clampWidth(2000)]).toEqual([160, 336, 960]);

@@ -2,7 +2,8 @@
 // - 셀 편집은 화면 상태(cells)를 즉시 바꾸고, 0.5초 뒤 또는 칸을 벗어날 때 저장한다(overview 10-3).
 // - 실행 취소 단위 = 저장 1회(체크포인트). 저장 전에는 대기 중인 저장을 먼저 끝낸다.
 import { create } from "zustand";
-import { normalizeCell } from "../../domain/items";
+import type { DayMarkKind } from "../../domain/dayMark";
+import { appendCopies, normalizeCell } from "../../domain/items";
 import { groupRange, type Recurrence } from "../../domain/recurrence";
 import type { ImportantItem, ItemDraft } from "../../domain/types";
 import {
@@ -81,6 +82,10 @@ export interface BoardState {
   repeating: string[];
   /** 미래 주의 반복 "예정"(키: cellKey) — spec 3-2 */
   previews: Record<string, RepeatPreview[]>;
+  /** 이 주의 연차·반차 표시(improve-1026-spec 1절) */
+  dayMarks: Record<DateStr, DayMarkKind>;
+  /** 포커스 열 기준 업무별 직전 기록일(빈 칸의 가져오기 단추, spec 3-2) — 키: 업무 id */
+  prevDates: Record<string, DateStr>;
 }
 
 // 화면 밖 상태(렌더링과 무관)
@@ -132,6 +137,8 @@ export const useBoard = create<BoardState>(() => ({
   pulseId: null,
   repeating: [],
   previews: {},
+  dayMarks: {},
+  prevDates: {},
 }));
 
 const set = useBoard.setState;
@@ -216,6 +223,7 @@ async function persistCell(key: string) {
   }
   persistedCells.set(key, after);
   markFailed(key, false);
+  if (date < get().focusDay) void refreshPrevDates();
   if (before.some((i) => i.flagged) || after.some((i) => i.flagged)) void refreshImportant();
   const entry: UndoEntry = { undo: () => applyCell(key, before), redo: () => applyCell(key, after) };
   pushUndo(entry);
@@ -295,8 +303,9 @@ async function loadWeek(weekId: WeekId, focusDay: DateStr) {
     nudgeWeeks: settings.nudgeWeeks,
     repeating: rules.filter((x) => x.endWeek === null).map((x) => x.id),
     previews,
+    dayMarks: view.dayMarks,
   });
-  await refreshImportant();
+  await Promise.all([refreshImportant(), refreshPrevDates()]);
   if (created > 0) toast(STR.repeat.created(created));
 }
 
@@ -487,7 +496,9 @@ export async function goToday() {
 }
 
 export function setFocusDay(day: DateStr) {
+  if (get().focusDay === day) return;
   set({ focusDay: day });
+  void refreshPrevDates();
 }
 
 /** 포커스 열의 첫 업무 칸(기록이 있으면 마지막 항목 끝)으로 커서. 업무가 없으면 업무 추가 입력칸. */
@@ -691,6 +702,122 @@ export async function deleteCategory(id: string): Promise<boolean> {
 export async function keepCategory(id: string) {
   await track(() => requireRepo().snoozeNudge(id, get().weekId));
   await reload();
+}
+
+// ── 연차·반차 표시(improve-1026-spec 1절) ───────────────
+/** 표시 바꾸기(null = 근무). 보드 실행 취소에 들어간다 */
+export async function setDayMark(date: DateStr, kind: DayMarkKind | null) {
+  const before = get().dayMarks[date] ?? null;
+  if (before === kind) return;
+  const apply = async (k: DayMarkKind | null) => {
+    await track(() => requireRepo().setDayMark(date, k));
+    const { [date]: _old, ...rest } = get().dayMarks; // eslint-disable-line @typescript-eslint/no-unused-vars
+    set({ dayMarks: k ? { ...rest, [date]: k } : rest });
+    // 직전 기록일은 종일 연차를 건너뛰므로 다시 찾는다
+    void refreshPrevDates();
+  };
+  try {
+    await apply(kind);
+  } catch (e) {
+    reportError(e);
+    return;
+  }
+  pushUndo({ undo: () => apply(before), redo: () => apply(kind) });
+}
+
+// ── 직전 기록 가져오기(improve-1026-spec 3절) ───────────
+/** `10/28(수)` */
+export function pullLabel(date: DateStr) {
+  const [, m, d] = date.split("-");
+  return `${Number(m)}/${Number(d)}(${DAY_LABELS[dayIndex(date)]})`;
+}
+
+async function refreshPrevDates() {
+  const r = repo;
+  const day = get().focusDay;
+  if (!r || !day) return;
+  try {
+    const prevDates = await r.previousRecordDates(day);
+    if (get().focusDay === day) set({ prevDates });
+  } catch {
+    // 단추 표시용 — 실패해도 가져오기(Alt+P)는 그때 다시 찾는다
+  }
+}
+
+/** 전체 가져오기 대상: 그 주에 보이는 진행 중 업무(보드 순서) */
+const activeCategoryIds = () =>
+  (get().view?.categories ?? []).filter((c) => c.state === "active").map((c) => c.category.id);
+
+/** 요일 머리 메뉴에 보일 직전 기록일(없으면 null) */
+export async function previousDayFor(date: DateStr): Promise<DateStr | null> {
+  const prev = await requireRepo().previousRecord(date, activeCategoryIds());
+  return prev?.date ?? null;
+}
+
+/** 칸 하나(Alt+P·빈 칸 단추): 그 업무의 직전 기록일 내역을 칸 끝에 덧붙이고 마지막 항목에 커서 */
+export async function pullPrevious(key: string) {
+  await flushAll();
+  const { date, categoryId } = splitKey(key);
+  let prev;
+  try {
+    prev = await requireRepo().previousRecord(date, [categoryId]);
+  } catch (e) {
+    reportError(e);
+    return;
+  }
+  const source = prev?.cells[categoryId];
+  if (!prev || !source?.length) return toast(STR.pull.none);
+  const { items, added } = appendCopies(get().cells[key] ?? [], source, uuidv7);
+  const label = pullLabel(prev.date);
+  if (added === 0) return toast(STR.pull.already(label));
+  set((s) => ({
+    cells: { ...s.cells, [key]: items },
+    focus: { kind: "item", key, index: items.length - 1, caret: "end" },
+  }));
+  await persistCell(key);
+  toast(STR.pull.done(label, added), { label: STR.toast.undo, run: () => void undo() });
+}
+
+/** 요일 전체(Alt+Shift+P·요일 머리 메뉴): 직전 기록일의 모든 업무 내역을 이 날 각 업무 칸 끝에. 되돌리기 한 번 */
+export async function pullPreviousDay(date: DateStr) {
+  await flushAll();
+  let prev;
+  try {
+    prev = await requireRepo().previousRecord(date, activeCategoryIds());
+  } catch (e) {
+    reportError(e);
+    return;
+  }
+  if (!prev) return toast(STR.pull.none);
+  const label = pullLabel(prev.date);
+  const changes: { key: string; before: ItemDraft[]; after: ItemDraft[] }[] = [];
+  let total = 0;
+  try {
+    for (const id of activeCategoryIds()) {
+      const source = prev.cells[id];
+      if (!source?.length) continue;
+      const key = cellKey(date, id);
+      const before = persistedCells.get(key) ?? [];
+      const { items, added } = appendCopies(get().cells[key] ?? [], source, uuidv7);
+      if (added === 0) continue;
+      await applyCell(key, items);
+      changes.push({ key, before, after: normalizeCell(items) });
+      total += added;
+    }
+  } catch (e) {
+    reportError(e);
+  }
+  if (changes.length === 0) return toast(STR.pull.already(label));
+  setFocusDay(date);
+  pushUndo({
+    undo: async () => {
+      for (const c of changes) await applyCell(c.key, c.before);
+    },
+    redo: async () => {
+      for (const c of changes) await applyCell(c.key, c.after);
+    },
+  });
+  toast(STR.pull.doneAll(label, total, changes.length), { label: STR.toast.undo, run: () => void undo() });
 }
 
 // ── 연간 보기 ──────────────────────────────────────────

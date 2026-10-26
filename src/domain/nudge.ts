@@ -13,6 +13,8 @@ export interface NudgeInput {
   periodsByCategory: Map<string, CategoryPeriod[]>;
   /** 아무 기록(업무 항목 또는 메모)이라도 있는 주 — 휴가 주를 셈에서 빼기 위함 */
   weeksWithAnyRecord: ReadonlySet<WeekId>;
+  /** 근무일(월~금)이 모두 연차인 주 — 기록이 있어도 셈에서 뺀다(improve-1026-spec 1-3) */
+  leaveWeeks?: ReadonlySet<WeekId>;
   /** 업무별로 항목이 있는 주(이번 주 포함) */
   weeksWithItemsByCategory: Map<string, ReadonlySet<WeekId>>;
 }
@@ -26,7 +28,7 @@ export function nudgeCandidates(input: NudgeInput): string[] {
   const counted: WeekId[] = [];
   for (let i = 1; i <= NUDGE_LOOKBACK_WEEKS && counted.length < n; i++) {
     const w = addWeeks(input.currentWeek, -i);
-    if (input.weeksWithAnyRecord.has(w)) counted.push(w);
+    if (input.weeksWithAnyRecord.has(w) && !input.leaveWeeks?.has(w)) counted.push(w);
   }
   if (counted.length < n) return [];
   const firstMonday: DateStr = weekStart(counted[counted.length - 1]!);

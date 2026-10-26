@@ -2,6 +2,7 @@
 // ExcelJS는 내보내기를 처음 열 때만 불러온다(앱 시작 속도에 영향 없게) — 호출하는 쪽이 모듈을 넘긴다.
 import { splitCategories, finalVersion, type SummaryInput, type SummaryItem } from "../domain/aggregate";
 import { localDate } from "../domain/localTime";
+import { DAY_MARK_LABEL } from "../domain/dayMark";
 import { DAY_LABELS, dayIndex, weekDays, weekTitle, type DateStr, type WeekId } from "../domain/week";
 import { CATEGORY_COLORS, type CategoryColorKey } from "../shared/palette";
 import { exportTitle } from "./filename";
@@ -113,8 +114,13 @@ function writeWeeklySheet(ws: Worksheet, weeks: ExportWeek[]) {
 
     // 머리행
     ws.getCell(r, 1).value = "업무";
-    for (const d of blockDays)
-      ws.getCell(r, colOfDay.get(d)!).value = `${DAY_LABELS[d]} ${dates[d]!.slice(5).replace("-", "/")}`;
+    // 연차·반차 날은 머리 끝에 `(연차)`(improve-1026-spec 1-3). 원장 시트에는 넣지 않는다
+    const markOf = new Map((w.input.dayMarks ?? []).map((m) => [m.date, DAY_MARK_LABEL[m.kind]]));
+    for (const d of blockDays) {
+      const mark = markOf.get(dates[d]!);
+      ws.getCell(r, colOfDay.get(d)!).value =
+        `${DAY_LABELS[d]} ${dates[d]!.slice(5).replace("-", "/")}${mark ? ` (${mark})` : ""}`;
+    }
     for (const cell of blockRow(r)) {
       setFont(cell, { bold: true });
       cell.fill = fill(FILL_HEAD);

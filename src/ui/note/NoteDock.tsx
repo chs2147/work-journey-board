@@ -17,7 +17,8 @@ import styles from "./Note.module.css";
 const NoteCanvas = lazy(() => import("./NoteCanvas"));
 
 export function NoteDock() {
-  const boxes = useNote((s) => s.doc.boxes.length);
+  // 대기 상자(글자를 치기 전 커서 자리)는 세지 않는다
+  const boxes = useNote((s) => s.doc.boxes.filter((b) => b.id !== s.pendingId).length);
   const images = useNote((s) => s.doc.boxes.filter((b) => b.kind === "image").length);
   const busy = useNote((s) => s.busy);
   const fileRef = useRef<HTMLInputElement>(null);

@@ -6,6 +6,7 @@ import { STR } from "../../shared/strings";
 import { focusNote } from "../note/noteStore";
 import { enterCell, reorderVisible, setFocusDay, useBoard } from "./boardStore";
 import { CategoryHeader } from "./CategoryHeader";
+import { DayHeader } from "./DayHeader";
 import { CellEditor, type CellNav } from "./CellEditor";
 import { AddCategoryRow } from "./AddCategoryRow";
 import styles from "./Board.module.css";
@@ -20,6 +21,7 @@ export function BoardView() {
   const cells = useBoard((s) => s.cells);
   const nudges = useBoard((s) => s.nudges);
   const nudgeWeeks = useBoard((s) => s.nudgeWeeks);
+  const dayMarks = useBoard((s) => s.dayMarks);
   const [dragId, setDragId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -63,32 +65,9 @@ export function BoardView() {
     <div className={styles.scroll} ref={scrollRef}>
       <div className={styles.grid} style={gridStyle} data-testid="board-grid">
         <div className={`${styles.colHeader} ${styles.corner}`}>{STR.board.categoryHeader}</div>
-        {view.days.map((day, i) => {
-          const narrow = widths[i] === NARROW;
-          const isFocus = day === focusDay;
-          const [, m, d] = day.split("-");
-          return (
-            <button
-              type="button"
-              key={day}
-              className={`${styles.colHeader} ${isFocus ? styles.colFocus : ""} ${day === today ? styles.colToday : ""} ${narrow ? styles.colNarrow : ""}`}
-              data-testid={`day-${day}`}
-              onClick={() => setFocusDay(day)}
-            >
-              {narrow ? (
-                <>
-                  <span>{DAY_LABELS[i]}</span>
-                  <span className={styles.colNarrowDate}>{Number(d)}</span>
-                </>
-              ) : (
-                <span>
-                  {DAY_LABELS[i]} {Number(m)}/{Number(d)}
-                  {day === today ? ` · ${STR.board.todaySuffix}` : ""}
-                </span>
-              )}
-            </button>
-          );
-        })}
+        {view.days.map((day, i) => (
+          <DayHeader key={day} day={day} index={i} narrow={widths[i] === NARROW} />
+        ))}
 
         {cats.length === 0 && <div className={styles.empty}>{STR.board.emptyBoard}</div>}
 
@@ -118,7 +97,14 @@ export function BoardView() {
               return (
                 <div
                   key={day}
-                  className={`${styles.cell} ${day === focusDay ? styles.cellFocus : ""} ${narrow ? styles.cellNarrow : ""} ${vc.state !== "active" ? styles.cellEnded : ""}`}
+                  className={[
+                    styles.cell,
+                    day === focusDay ? styles.cellFocus : "",
+                    day === today ? styles.cellToday : "",
+                    dayMarks[day] === "leave" ? styles.cellLeave : "",
+                    narrow ? styles.cellNarrow : "",
+                    vc.state !== "active" ? styles.cellEnded : "",
+                  ].join(" ")}
                   data-testid={`cell-${vc.category.name}-${day}`}
                   onMouseDown={(e) => {
                     if (narrow && e.target === e.currentTarget) {

@@ -36,7 +36,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test("열면 이번 주·오늘 열·첫 업무 칸 끝에 커서", async ({ page }) => {
-  await expect(page.getByTestId(`day-${TODAY}`)).toContainText("목 10/22 · 오늘");
+  await expect(page.getByTestId(`day-${TODAY}`)).toContainText("목 10/22오늘");
   await expect(page.locator(":focus")).toHaveValue("테스트 데이터 이관 스크립트 작성 착수");
   const caret = await page.locator(":focus").evaluate((e) => (e as HTMLTextAreaElement).selectionStart);
   expect(caret).toBe("테스트 데이터 이관 스크립트 작성 착수".length);

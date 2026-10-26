@@ -164,6 +164,31 @@
     0 4px 14px rgb(0 0 0 / 0.12);
 }
 
+/* 대기 상자(improve-1026-spec 2-2): 옅은 점선 자리 + 커서 + 안내 — 손잡이·메뉴·크기 단추는 감춘다 */
+.box.ghost {
+  border: 1.5px dashed var(--line-strong);
+  background: transparent;
+  box-shadow: none;
+}
+
+.ghost .grip,
+.ghost .menuButton,
+.ghost .resize {
+  visibility: hidden;
+}
+
+.ghostHint {
+  position: absolute;
+  left: 13px;
+  top: 9px;
+  right: 26px;
+  color: var(--text-3);
+  pointer-events: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .bg_yellow {
   background: var(--note-bg-yellow);
 }

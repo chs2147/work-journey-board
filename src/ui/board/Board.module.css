@@ -41,15 +41,159 @@
   cursor: default;
 }
 
+/* 요일 머리(improve-1026-spec 7절): 오늘 = 늘 채운 파랑 + [오늘] 배지, 포커스 열 = 위쪽 굵은 선 + 굵은 글자,
+   연차 = 옅은 주황(1-1). 머리 자체는 상자이고, 누르는 곳은 날짜 단추와 ⋯ 단추 */
+.dayHeader {
+  padding: 0;
+  cursor: default;
+}
+
+.dayLabel {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+  height: 100%;
+  padding: 0 var(--sp-1) 0 var(--sp-3);
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.dayName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .colFocus {
-  background: var(--accent-soft);
-  color: var(--accent);
   font-weight: var(--fw-bold);
-  box-shadow: inset 0 -2px 0 var(--accent);
+  color: var(--text-1);
+  box-shadow: inset 0 3px 0 var(--text-1);
+}
+
+.colLeave {
+  background: var(--leave-soft);
 }
 
 .colToday {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.colToday.colFocus {
+  box-shadow: inset 0 3px 0 var(--text-1);
+}
+
+.todayBadge,
+.markBadge {
+  flex: 0 0 auto;
+  padding: 0 var(--sp-2);
+  border-radius: 999px;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  line-height: 18px;
+}
+
+.todayBadge {
+  background: var(--on-accent);
   color: var(--accent);
+}
+
+/* 반차 = 테두리 배지, 연차 = 카드 바탕 배지(머리가 옅은 주황) */
+.markBadge {
+  border: 1px solid var(--leave);
+  color: var(--leave);
+  line-height: 16px;
+}
+
+.markLeave {
+  border-color: transparent;
+  background: var(--surface-card);
+}
+
+.colToday .markBadge {
+  border-color: var(--on-accent);
+  background: transparent;
+  color: var(--on-accent);
+}
+
+.dayMenuButton {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 24px;
+  margin-right: var(--sp-1);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: inherit;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.dayHeader:hover .dayMenuButton,
+.colFocus .dayMenuButton,
+.dayMenuButton:focus-visible,
+.dayMenuButton[aria-expanded="true"] {
+  opacity: 1;
+}
+
+.dayMenuButton:hover,
+.dayMenuButton[aria-expanded="true"] {
+  background: rgb(0 0 0 / 0.08);
+}
+
+.colToday .dayMenuButton:hover,
+.colToday .dayMenuButton[aria-expanded="true"] {
+  background: rgb(255 255 255 / 0.2);
+}
+
+.menuLabel {
+  padding: var(--sp-1) var(--sp-3);
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-regular);
+}
+
+.menu > .menuRadio {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-weight: var(--fw-regular);
+}
+
+.radio {
+  flex: 0 0 auto;
+  width: 13px;
+  height: 13px;
+  border: 1.5px solid var(--text-3);
+  border-radius: 50%;
+}
+
+.radioOn {
+  border-color: var(--accent);
+  background: radial-gradient(circle, var(--accent) 0 3px, transparent 3.5px);
+}
+
+.menuSep {
+  height: 1px;
+  margin: var(--sp-1) 0;
+  background: var(--line);
+}
+
+.menu > button {
+  font-weight: var(--fw-regular);
+}
+
+.menuKey {
+  margin-left: var(--sp-4);
+  color: var(--text-3);
+  font-size: var(--fs-xs);
 }
 
 .colNarrow {
@@ -60,9 +204,21 @@
   font-size: var(--fs-sm);
 }
 
+.colNarrow .dayLabel {
+  flex-direction: column;
+  justify-content: center;
+  gap: 0;
+  padding: 0;
+  text-align: center;
+}
+
 .colNarrowDate {
   font-size: var(--fs-xs);
   color: var(--text-3);
+}
+
+.colToday .colNarrowDate {
+  color: inherit;
 }
 
 /* ── 업무 행 머리 ── */
@@ -266,8 +422,13 @@
   background: var(--surface-card);
 }
 
-.cellFocus {
+.cellFocus,
+.cellToday {
   background: var(--surface-focus);
+}
+
+.cellLeave {
+  background: var(--leave-soft);
 }
 
 .cellNarrow {
@@ -500,6 +661,25 @@
   font: inherit;
   font-size: var(--fs-sm);
   cursor: pointer;
+}
+
+/* 빈 칸의 [10/28(수) 내역 가져오기 Alt+P] — 점선 단추(improve-1026-spec 3-2) */
+.pullButton {
+  align-self: flex-start;
+  margin-top: var(--sp-1);
+  padding: 2px var(--sp-2);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.pullButton:hover {
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 /* ── 업무 추가·메모 행 ── */

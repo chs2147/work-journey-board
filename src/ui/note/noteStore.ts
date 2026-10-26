@@ -50,6 +50,11 @@ export interface NoteState {
   editingId: string | null;
   /** 선택된 상자(Esc로 편집을 끝낸 상태 — 방향키 이동·Delete) */
   selectedId: string | null;
+  /**
+   * 빈 곳 클릭으로 연 "대기" 상자(improve-1026-spec 2절) — 커서 자리만 보이고 첫 글자를 칠 때 상자가 된다.
+   * 문서에는 들어 있지만 메모 기록·저장에는 없다(빈 텍스트 상자는 저장하지 않는다)
+   */
+  pendingId: string | null;
   /** 편집기에 커서를 넣어 달라는 요청(상자 id + 회차) */
   focusRequest: { id: string; n: number } | null;
   dockHeight: number;
@@ -80,6 +85,7 @@ export const useNote = create<NoteState>(() => ({
   legacy: false,
   editingId: null,
   selectedId: null,
+  pendingId: null,
   focusRequest: null,
   dockHeight: 280,
   dockAuto: true,
@@ -131,7 +137,16 @@ async function loadWeek(weekId: WeekId, finish = true) {
     redoStack.length = 0;
     lastEditedId = null;
     const assets = Object.fromEntries(rows.map(({ id, ...a }) => [id, a]));
-    set({ weekId, doc, legacy, assets, editingId: null, selectedId: null, focusRequest: null });
+    set({
+      weekId,
+      doc,
+      legacy,
+      assets,
+      editingId: null,
+      selectedId: null,
+      pendingId: null,
+      focusRequest: null,
+    });
     syncUndo();
   } catch (e) {
     reportError(e);
@@ -177,10 +192,16 @@ export async function finishNote() {
   await r.pruneNoteAssets(weekId, noteAssetIds(doc)).catch(reportError);
 }
 
+/** 메모 기록에 넣을 문서 — 대기 상자는 기록에 남기지 않는다 */
+function withoutPending(doc: NoteDoc): NoteDoc {
+  const id = get().pendingId;
+  return id ? { ...doc, boxes: doc.boxes.filter((b) => b.id !== id) } : doc;
+}
+
 /** 문서를 바꾼다. undoable이면 바꾸기 전 문서를 메모 기록에 쌓는다 */
 function commit(next: NoteDoc, undoable: boolean) {
   if (undoable) {
-    undoStack.push(get().doc);
+    undoStack.push(withoutPending(get().doc));
     if (undoStack.length > UNDO_LIMIT) undoStack.shift();
     redoStack.length = 0;
     syncUndo();
@@ -196,8 +217,13 @@ const mapBox = (id: string, f: (b: NoteBox) => NoteBox): NoteDoc => {
 const boxOf = (id: string) => get().doc.boxes.find((b) => b.id === id);
 
 // ── 상자 ──────────────────────────────────────────────
-/** 그 자리(8px 맞춤)에 새 텍스트 상자를 만들고 바로 편집 */
+/**
+ * 그 자리(8px 맞춤)에 커서를 둔다 — "대기" 상자(improve-1026-spec 2절). 첫 글자를 치면 그때 상자가 생겨
+ * 메모 기록에 들어가고, 아무것도 치지 않고 떠나면 흔적 없이 사라진다.
+ */
 export function addBox(x: number, y: number): string {
+  const old = get().pendingId;
+  if (old) dropPending(old);
   const doc = get().doc;
   const box: NoteBox = {
     id: uuidv7(),
@@ -209,14 +235,26 @@ export function addBox(x: number, y: number): string {
     bg: null,
     content: emptyContent(),
   };
-  commit({ ...doc, boxes: [...doc.boxes, box] }, true);
+  // 저장도 기록도 하지 않는다 — 첫 글자(updateContent)에서 상자가 된다
+  set({ doc: { ...doc, boxes: [...doc.boxes, box] }, pendingId: box.id });
   requestFocus(box.id);
   return box.id;
 }
 
+/** 대기 상자를 흔적 없이 치운다 */
+function dropPending(id: string) {
+  const doc = get().doc;
+  set({
+    doc: { ...doc, boxes: doc.boxes.filter((b) => b.id !== id) },
+    pendingId: null,
+    editingId: get().editingId === id ? null : get().editingId,
+    selectedId: get().selectedId === id ? null : get().selectedId,
+  });
+}
+
 /** 가장 아래 상자 아래에 새 상자(Ctrl+Enter·[+ 텍스트 상자]) */
 export function addBoxBelow(): string {
-  const { x, y } = positionBelow(get().doc);
+  const { x, y } = positionBelow(withoutPending(get().doc));
   return addBox(x, y);
 }
 
@@ -227,10 +265,18 @@ export function requestFocus(id: string) {
 /** 편집기 글이 바뀜(상자 안 실행 취소는 편집기가 맡아 메모 기록에 넣지 않는다) */
 export function updateContent(id: string, content: PMNode) {
   lastEditedId = id;
-  commit(
-    mapBox(id, (b) => (b.kind === "text" ? { ...b, content } : b)),
-    false,
-  );
+  const next = mapBox(id, (b) => (b.kind === "text" ? { ...b, content } : b));
+  if (id === get().pendingId) {
+    const box = next.boxes.find((b) => b.id === id)!;
+    if (isNoteEmpty({ v: 1, boxes: [box] })) return set({ doc: next });
+    // 첫 글자 — 이제 상자다. 메모 기록에는 "상자가 없던 문서"를 남겨 되돌리면 상자째 사라진다
+    undoStack.push(withoutPending(get().doc));
+    if (undoStack.length > UNDO_LIMIT) undoStack.shift();
+    redoStack.length = 0;
+    set({ pendingId: null });
+    syncUndo();
+  }
+  commit(next, false);
 }
 
 /** 이미지 설명(한 줄, 200자). 글처럼 메모 기록에는 넣지 않는다 */
@@ -305,6 +351,7 @@ export function setEditing(id: string | null) {
 
 /** 편집 끝 — 빈 상자는 저절로 없앤다(빈 상자가 쌓이지 않게, 스펙 4-2) */
 export function endEditing(id: string, select = false) {
+  if (id === get().pendingId) return dropPending(id);
   const box = boxOf(id);
   if (box && isNoteEmpty({ v: 1, boxes: [box] })) {
     const doc = get().doc;
@@ -334,7 +381,7 @@ export function beginGesture(): NoteDoc {
 }
 export function endGesture(before: NoteDoc) {
   if (before === get().doc) return;
-  undoStack.push(before);
+  undoStack.push(withoutPending(before));
   if (undoStack.length > UNDO_LIMIT) undoStack.shift();
   redoStack.length = 0;
   syncUndo();
@@ -446,6 +493,8 @@ export function setBoxBg(id: string, bg: NoteBg | null) {
 
 // ── 메모 기록(실행 취소) ──────────────────────────────
 export function undoNote() {
+  const pending = get().pendingId;
+  if (pending) dropPending(pending);
   const prev = undoStack.pop();
   if (!prev) return;
   redoStack.push(get().doc);
@@ -455,6 +504,8 @@ export function undoNote() {
 }
 
 export function redoNote() {
+  const pending = get().pendingId;
+  if (pending) dropPending(pending);
   const next = redoStack.pop();
   if (!next) return;
   undoStack.push(get().doc);

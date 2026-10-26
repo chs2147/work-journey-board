@@ -43,6 +43,7 @@ export default function NoteCanvas() {
   const doc = useNote((s) => s.doc);
   const editingId = useNote((s) => s.editingId);
   const selectedId = useNote((s) => s.selectedId);
+  const pendingId = useNote((s) => s.pendingId);
   const canvasRef = useRef<HTMLDivElement>(null);
   const [previewId, setPreviewId] = useState<string | null>(null);
   // 상자마다 편집기 — 서식 막대가 편집 중인 상자의 편집기를 쓴다
@@ -133,11 +134,14 @@ export default function NoteCanvas() {
               box={b}
               editing={b.id === editingId}
               selected={b.id === selectedId}
+              pending={b.id === pendingId}
               onEditor={onEditor}
             />
           ),
         )}
-        {editingBox && editingEditor && <FormatToolbar editor={editingEditor} box={editingBox} />}
+        {editingBox && editingEditor && editingBox.id !== pendingId && (
+          <FormatToolbar editor={editingEditor} box={editingBox} />
+        )}
       </div>
       {previewBox && <ImagePreview box={previewBox} onClose={() => setPreviewId(null)} />}
     </div>
@@ -149,11 +153,14 @@ function TextBoxView({
   box,
   editing,
   selected,
+  pending,
   onEditor,
 }: {
   box: TextBox;
   editing: boolean;
   selected: boolean;
+  /** 아직 글이 없는 대기 상자 — 커서 자리만 보인다(improve-1026-spec 2절) */
+  pending: boolean;
   onEditor(id: string, ed: Editor | null): void;
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -240,12 +247,13 @@ function TextBoxView({
         box.bg ? styles[`bg_${box.bg}`] : "",
         editing ? styles.editing : "",
         selected ? styles.selected : "",
+        pending ? styles.ghost : "",
       ].join(" ")}
       style={{ left: box.x, top: box.y, width: box.w, zIndex: box.z + 1 }}
       tabIndex={-1}
       role="group"
       aria-label={STR.note.boxAria}
-      data-testid="note-box"
+      data-testid={pending ? "note-ghost" : "note-box"}
       data-box-id={box.id}
       onPointerDown={(e) => {
         // 상자 안 클릭은 판의 새 상자 만들기로 가지 않게
@@ -322,6 +330,12 @@ function TextBoxView({
         </div>
       )}
       <EditorContent editor={editor} className={styles.editor} />
+      {/* 대기 상자의 안내 — 글자를 치면 사라진다(조합 중에도 같은 편집기를 그대로 쓰게 구조는 바꾸지 않는다) */}
+      {pending && (
+        <span className={styles.ghostHint} aria-hidden="true">
+          {STR.note.ghostHint}
+        </span>
+      )}
       <button
         type="button"
         className={styles.resize}

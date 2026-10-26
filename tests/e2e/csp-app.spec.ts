@@ -51,6 +51,14 @@ test("보드·주간 메모 편집기(서식 전부)·엑셀 내보내기 — CS
   await page.goto("/?today=2026-10-22");
   await expect(page.getByTestId("week-title")).toContainText("2026-W43");
 
+  // 요일 머리 ⋯ 메뉴(자리는 CSSOM으로) → 연차 표시, 빈 칸의 직전 기록 가져오기(improve-1026-spec 1·3절)
+  await page.getByTestId("day-2026-10-21").hover();
+  await page.getByTestId("day-menu-2026-10-21").click();
+  await page.getByRole("menuitemradio", { name: "연차(종일)" }).click();
+  await expect(page.getByTestId("day-2026-10-21").getByTestId("day-mark")).toHaveText("연차");
+  await page.getByTestId("cell-사내 데이터 대시보드-2026-10-22").getByTestId("pull-previous").click();
+  await expect(page.getByTestId("cell-사내 데이터 대시보드-2026-10-22").locator("textarea")).toHaveCount(1);
+
   // 메모: 새 상자 → 제목·크기·색·형광펜·굵게·체크 목록
   const canvas = page.getByTestId("note-canvas");
   const c = (await canvas.boundingBox())!;

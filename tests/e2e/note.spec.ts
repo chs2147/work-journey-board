@@ -15,13 +15,14 @@ async function goWeek(page: Page, key: "Alt+ArrowRight" | "Alt+ArrowLeft", week:
   await expect(page.getByTestId("week-title")).toContainText(week);
 }
 
-/** 빈 주(W44)로 가서 메모 판 빈 곳 (x, y)를 클릭해 새 상자를 만든다 */
+/** 빈 주(W44)로 가서 메모 판 빈 곳 (x, y)를 클릭해 커서 자리(대기 상자)를 연다 — 글자를 치면 상자가 된다 */
 async function newBoxInW44(page: Page, x = 100, y = 60) {
   await goWeek(page, "Alt+ArrowRight", "2026-W44");
   await expect(page.getByTestId("note-empty")).toBeVisible();
   const c = (await page.getByTestId("note-canvas").boundingBox())!;
   await page.mouse.click(c.x + x, c.y + y);
-  await expect(boxes(page)).toHaveCount(1);
+  await expect(page.getByTestId("note-ghost")).toHaveCount(1);
+  await expect(boxes(page)).toHaveCount(0);
   await expect(page.locator(":focus")).toHaveClass(/note-prose/);
 }
 

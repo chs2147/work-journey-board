@@ -4,6 +4,7 @@ import init0001 from "./migrations/0001_init.sql?raw";
 import importantRepeat0002 from "./migrations/0002_important_repeat.sql?raw";
 import weekNote0003 from "./migrations/0003_week_note.sql?raw";
 import import0004 from "./migrations/0004_import.sql?raw";
+import dayMark0005 from "./migrations/0005_day_mark.sql?raw";
 
 export interface Migration {
   version: number;
@@ -16,6 +17,7 @@ export const MIGRATIONS: Migration[] = [
   { version: 2, sql: importantRepeat0002 },
   { version: 3, sql: weekNote0003 },
   { version: 4, sql: import0004 },
+  { version: 5, sql: dayMark0005 },
 ];
 
 export const LATEST_SCHEMA_VERSION = MIGRATIONS.at(-1)!.version;

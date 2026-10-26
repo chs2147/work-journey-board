@@ -10,6 +10,8 @@ import {
   leaveCell,
   materializePreview,
   newDraft,
+  pullLabel,
+  pullPrevious,
   setFocus,
   setFocusDay,
   splitKey,
@@ -41,6 +43,7 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav }: Props) 
   const pulseId = useBoard((s) => s.pulseId);
   const repeating = useBoard((s) => s.repeating);
   const previews = useBoard((s) => s.previews[cellKey]);
+  const prevDate = useBoard((s) => s.prevDates[splitKey(cellKey).categoryId]);
   const refs = useRef<(HTMLTextAreaElement | null)[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   const measureAll = useCallback(() => refs.current.forEach(autoSize), []);
@@ -81,6 +84,12 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav }: Props) 
     if (e.code === "KeyI" && e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
       e.preventDefault();
       void toggleFlag(cellKey, i);
+      return;
+    }
+    // 직전 기록 가져오기(improve-1026-spec 3-2) — 그 업무의 직전 기록일 내역을 이 칸 끝에
+    if (e.code === "KeyP" && e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+      e.preventDefault();
+      void pullPrevious(cellKey);
       return;
     }
     // 매주 반복 켜기/끄기(spec 3-1) — 세부 항목에서 눌러도 본 항목 묶음에 적용
@@ -275,6 +284,18 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav }: Props) 
       {items.length === 0 && !previews?.length && showPlaceholder && (
         <button type="button" className={styles.addRecord} onClick={startEditing}>
           {STR.board.addRecord}
+        </button>
+      )}
+      {items.length === 0 && showPlaceholder && prevDate && (
+        <button
+          type="button"
+          className={styles.pullButton}
+          data-testid="pull-previous"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => void pullPrevious(cellKey)}
+        >
+          {STR.pull.button(pullLabel(prevDate))}
+          <span className={styles.menuKey}>{STR.pull.key}</span>
         </button>
       )}
     </div>

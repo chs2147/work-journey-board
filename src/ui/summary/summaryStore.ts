@@ -49,7 +49,7 @@ let unsubscribe: (() => void) | null = null;
 
 /** 보드 화면 상태 → 자동 집계 입력. 그 주에 보이는 업무(보드 순서)와 화면의 칸 + 메모 도크의 글 */
 export function boardSummaryInput(): SummaryInput | null {
-  const { view, cells, weekId } = useBoard.getState();
+  const { view, cells, weekId, dayMarks } = useBoard.getState();
   const note = useNote.getState();
   if (!view || view.weekId !== weekId) return null;
   return {
@@ -60,6 +60,7 @@ export function boardSummaryInput(): SummaryInput | null {
       return list.map((d) => ({ date, categoryId, depth: d.depth, text: d.text }));
     }),
     memo: noteToText(note.weekId === weekId ? note.doc : view.note),
+    dayMarks: Object.entries(dayMarks).map(([date, kind]) => ({ date, kind })),
   };
 }
 

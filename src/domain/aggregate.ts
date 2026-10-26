@@ -1,5 +1,6 @@
 // 주간 자동 집계(output-spec 2절). 항상 계산하고 저장하지 않는다. 형식은 2-2 샘플과 문자 단위 골든 테스트로 고정.
 // 엑셀 주간보고 시트·AI 지시문도 같은 함수(업무 고르기·본 고르기)를 재사용한다(CLAUDE.md 4-4).
+import { dayMarkLine, type DayMark } from "./dayMark";
 import type { Depth } from "./types";
 import { DAY_LABELS, dayIndex, weekDays, weekTitle, type DateStr, type WeekId } from "./week";
 
@@ -20,6 +21,8 @@ export interface SummaryInput {
   items: SummaryItem[];
   /** 주간 메모의 글(domain/note.ts noteToText — 이미지 빼고 글만, weekly-note-spec 6절). 없으면 "" */
   memo: string;
+  /** 그 주의 연차·반차 표시(improve-1026-spec 1-3). 없으면 연차 줄을 쓰지 않는다 */
+  dayMarks?: DayMark[];
 }
 
 export interface SummaryOptions {
@@ -78,7 +81,11 @@ export function buildWeeklySummary(input: SummaryInput, opt: SummaryOptions): st
   // 메모: 주간 메모의 글을 그대로(예전 요일 메모는 `- (요일) 내용` 줄로 옮겨져 있어 결과가 예전과 같다)
   if (opt.includeMemo && !isBlank(input.memo)) out.push("", "[메모]", ...input.memo.trim().split("\n"));
 
-  if (empty.length) out.push("", `※ 이번 주 기록 없음: ${empty.map((c) => c.name).join(", ")}`);
+  // 꼬리 ※ 줄: 연차·반차(있을 때) 다음 기록 없음 — 표시가 없는 주는 예전과 글자 하나 다르지 않다
+  const notes = [dayMarkLine(input.dayMarks ?? [])];
+  if (empty.length) notes.push(`※ 이번 주 기록 없음: ${empty.map((c) => c.name).join(", ")}`);
+  const tail = notes.filter((n): n is string => n !== null);
+  if (tail.length) out.push("", ...tail);
   return out.join("\n");
 }
 
