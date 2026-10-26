@@ -578,4 +578,20 @@ describe("인사이트 조회(m3-s1-spec 11-1)", () => {
     await repo.saveWeekNote("2026-W50", doc);
     expect(Object.keys(await repo.getWeekNotesBetween("2026-W40", "2026-W45"))).toEqual(["2026-W43"]);
   });
+
+  it("활동(m3-s2-spec 10-1): 업무·날짜별 본/세부 수, 첫 본 항목 글, 범위 경계, 빈 글 제외", async () => {
+    const { repo } = await freshRepo();
+    const a = await repo.createCategory("A", "2026-W40");
+    const b = await repo.createCategory("B", "2026-W40");
+    await repo.saveCell("2026-10-05", a.id, [draft("첫째"), draft("세부", 1), draft("둘째")]);
+    await repo.saveCell("2026-10-06", a.id, [draft("세부만", 1)]); // 첫 항목은 본 항목으로 맞춰진다
+    await repo.saveCell("2026-10-11", b.id, [draft("끝날")]);
+    await repo.saveCell("2026-10-12", b.id, [draft("범위 밖")]);
+    const rows = await repo.getActivity("2026-10-05", "2026-10-11");
+    expect(rows).toEqual([
+      { categoryId: a.id, date: "2026-10-05", mains: 2, subs: 1, firstText: "첫째" },
+      { categoryId: a.id, date: "2026-10-06", mains: 1, subs: 0, firstText: "세부만" },
+      { categoryId: b.id, date: "2026-10-11", mains: 1, subs: 0, firstText: "끝날" },
+    ]);
+  });
 });

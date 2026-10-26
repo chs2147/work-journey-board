@@ -35,6 +35,8 @@ export interface Settings {
     insightCategory: string | null;
     /** 인사이트 업무 경과 지도 펼침(4-0) */
     insightMapOpen: boolean;
+    /** 인사이트에서 마지막으로 본 탭(m3-s2-spec 1절) */
+    insightTab: "timeline" | "overview";
   };
 }
 
@@ -71,6 +73,7 @@ export const DEFAULT_SETTINGS: Settings = {
     todaySplit: 0.42,
     insightCategory: null,
     insightMapOpen: true,
+    insightTab: "timeline",
   },
 };
 
@@ -123,6 +126,7 @@ export function mergeSettings(base: Settings, patch: unknown): Settings {
     s.ui.tagFilter = [];
   if (s.ui.insightCategory !== null && typeof s.ui.insightCategory !== "string") s.ui.insightCategory = null;
   if (typeof s.ui.insightMapOpen !== "boolean") s.ui.insightMapOpen = true;
+  if (s.ui.insightTab !== "timeline" && s.ui.insightTab !== "overview") s.ui.insightTab = "timeline";
   if (!(s.ui.noteDockHeight >= NOTE_DOCK_MIN)) s.ui.noteDockHeight = DEFAULT_SETTINGS.ui.noteDockHeight;
   return s;
 }

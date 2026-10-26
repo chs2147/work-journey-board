@@ -884,3 +884,368 @@
     padding: 0 var(--sp-4) var(--sp-5);
   }
 }
+
+/* ── S2 탭 줄·업무 고르기(m3-s2-spec 1·2절) ── */
+.tabs {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: var(--radius-md);
+  background: var(--surface-sub);
+}
+
+.tab {
+  height: 28px;
+  padding: 0 var(--sp-4);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-2);
+  font: inherit;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
+.tab[aria-selected="true"] {
+  background: var(--surface-card);
+  color: var(--text-1);
+  font-weight: var(--fw-bold);
+  box-shadow: 0 0 0 1px var(--line);
+}
+
+.tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.pickWrap {
+  position: relative;
+}
+
+.pickActive {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.pickMenu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  min-width: 260px;
+  max-width: 360px;
+  max-height: 420px;
+  overflow-y: auto;
+  padding: var(--sp-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  box-shadow: 0 6px 18px rgb(0 0 0 / 0.14);
+}
+
+.pickTools {
+  display: flex;
+  gap: var(--sp-4);
+  padding: var(--sp-1) var(--sp-3) var(--sp-2);
+  border-bottom: 1px solid var(--line);
+  margin-bottom: var(--sp-1);
+}
+
+.pickOption {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-1);
+  font: inherit;
+  font-size: var(--fs-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.pickOption:hover:not(:disabled),
+.pickOption:focus-visible {
+  background: var(--surface-sub);
+  outline: none;
+}
+
+.pickOption:disabled {
+  color: var(--text-3);
+  cursor: default;
+}
+
+.pickCheck {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid var(--text-3);
+  border-radius: 3px;
+}
+
+.pickCheckOn {
+  border-color: var(--accent);
+  background: var(--accent);
+  box-shadow: inset 0 0 0 2px var(--surface-card);
+}
+
+.pickName {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pickHint {
+  margin: 0;
+  padding: 0 var(--sp-3) var(--sp-1);
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+}
+
+/* ── S2 활동 개요·히트맵(4~9절) ── */
+.overview {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--sp-5) var(--sp-6) var(--sp-6);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4) var(--sp-5);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+}
+
+.pager {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.pagerLabel {
+  min-width: 128px;
+  color: var(--text-1);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.iconBtn {
+  width: 28px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-card);
+  color: var(--text-2);
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.iconBtn:hover:not(:disabled) {
+  background: var(--surface-sub);
+}
+
+.iconBtn:disabled {
+  color: var(--text-3);
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* 1100px 미만이거나 칸이 다 안 들어가면 카드 안 가로 스크롤, 업무 이름 열은 고정 */
+.heatScroll {
+  overflow-x: auto;
+  padding-bottom: var(--sp-1);
+}
+
+.heatInner {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: max-content;
+}
+
+.heatGrid {
+  gap: 0;
+}
+
+.hrow {
+  display: grid;
+  align-items: center;
+}
+
+.htotal {
+  padding-bottom: 3px;
+  margin-bottom: 3px;
+  border-bottom: 1px solid var(--line);
+}
+
+.hname {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  height: 100%;
+  padding-right: var(--sp-2);
+  background: var(--surface-card);
+  font-size: var(--fs-xs);
+}
+
+.hnameTotal {
+  font-weight: var(--fw-bold);
+  padding-left: var(--sp-2);
+}
+
+.hnameBtn {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 100%;
+  min-width: 0;
+  padding: 0 var(--sp-2);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-1);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.hnameBtn:hover {
+  background: var(--surface-sub);
+  text-decoration: underline;
+}
+
+.hnameBtn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.hnameText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hmonth,
+.hweek {
+  overflow: hidden;
+  padding-left: 3px;
+  border-left: 1px solid var(--line);
+  color: var(--text-2);
+  font-size: 11px;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+.hweek {
+  color: var(--text-3);
+  font-size: 10px;
+}
+
+.hmark {
+  height: 14px;
+  overflow: visible;
+  color: var(--text-1);
+  font-size: 9px;
+  line-height: 14px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.hmarkLeave {
+  color: var(--leave);
+  font-weight: var(--fw-bold);
+}
+
+/* 보이는 칸 = 테두리 안쪽(12·6·18 × 18px), 투명 테두리 1px = 칸 사이 간격이자 눌리는 영역 */
+.hcell {
+  box-sizing: border-box;
+  height: 20px;
+  min-width: 0;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background-clip: padding-box;
+  cursor: pointer;
+}
+
+.hcell[aria-disabled="true"] {
+  cursor: default;
+}
+
+.hcell:focus-visible {
+  outline: 2px solid var(--text-1);
+  outline-offset: 1px;
+  position: relative;
+  z-index: 2;
+}
+
+.htotalCell {
+  height: 22px;
+}
+
+.hfuture {
+  background: var(--surface-card);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.hcount {
+  padding-left: var(--sp-2);
+  color: var(--text-2);
+  font-size: 11px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.mapTable caption {
+  padding: var(--sp-2) var(--sp-3);
+  text-align: left;
+}
+
+.tip {
+  position: fixed;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: 340px;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--radius-md);
+  background: var(--tip-bg);
+  color: var(--tip-fg);
+  font-size: var(--fs-xs);
+  line-height: 1.5;
+  pointer-events: none;
+  box-shadow: 0 4px 14px rgb(0 0 0 / 0.2);
+}
+
+.tipTitle {
+  font-weight: var(--fw-bold);
+}
+
+.tipSub {
+  opacity: 0.8;
+  overflow-wrap: anywhere;
+}
+
+.tipGo {
+  color: var(--tip-go);
+}

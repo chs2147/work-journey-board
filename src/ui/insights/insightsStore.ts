@@ -1,11 +1,15 @@
 // 인사이트 화면 상태(m3-s1-spec 1-2): 보드는 숨겨 둔 채 그대로 두고, 고른 업무·기간·펼친 달·검색은 앱 실행 중 유지한다.
-// 영속 데이터는 저장소의 읽기 전용 조회만 쓴다(11-1). 고른 업무만 설정에 기억(다음 실행의 "마지막에 보던 업무").
+// 영속 데이터는 저장소의 읽기 전용 조회만 쓴다(11-1). 고른 업무·탭만 설정에 기억(다음 실행의 "마지막에 보던 업무").
+// S2(m3-s2-spec): 탭 줄, 업무 고르기(두 탭 공통, 앱 실행 중만), 활동 히트맵의 단위·기준·자료.
 import { create } from "zustand";
 import {
   defaultMapUnit,
+  heatRange,
   journeySpan,
   periodRange,
   spanDates,
+  type ActivityRow,
+  type HeatUnit,
   type MapUnit,
   type PeriodFilter,
   type WeekSpan,
@@ -15,7 +19,7 @@ import type { NoteDoc } from "../../domain/note";
 import type { Category, CategoryPeriod, EntryItem } from "../../domain/types";
 import { weekIdOf, type DateStr, type WeekId } from "../../domain/week";
 import type { JournalRepository } from "../../data/repository";
-import { flushAll, reportError, revealItem, splitKey, useBoard } from "../board/boardStore";
+import { flushAll, reportError, revealCell, revealItem, splitKey, useBoard } from "../board/boardStore";
 import { flushNote } from "../note/noteStore";
 
 export interface CategoryStat {
@@ -37,8 +41,26 @@ export interface InsightsData {
   days: { date: DateStr; items: number }[];
 }
 
+export type InsightTab = "timeline" | "overview";
+
+/** 활동 히트맵 자료(지금 범위) */
+export interface HeatData {
+  unit: HeatUnit;
+  from: DateStr;
+  to: DateStr;
+  activity: ActivityRow[];
+  dayMarks: Record<DateStr, DayMarkKind>;
+}
+
 export interface InsightsState {
   open: boolean;
+  tab: InsightTab;
+  /** 업무 고르기(2절): null = 전체(새 업무도 자동으로 들어감), 배열 = 고른 업무만 */
+  picked: string[] | null;
+  heatUnit: HeatUnit;
+  /** 단위별 기준(null = 이번 주 / 올해) — 앱 실행 중 유지(3절) */
+  heatAnchor: Record<HeatUnit, string | null>;
+  heat: HeatData | null;
   categoryId: string | null;
   period: PeriodFilter;
   includeEnded: boolean;
@@ -69,6 +91,11 @@ const EMPTY: InsightsData = {
 
 export const useInsights = create<InsightsState>(() => ({
   open: false,
+  tab: "timeline",
+  picked: null,
+  heatUnit: "day",
+  heatAnchor: { day: null, week: null },
+  heat: null,
   categoryId: null,
   period: { kind: "12w" },
   includeEnded: false,
@@ -88,11 +115,19 @@ const get = useInsights.getState;
 let repo: JournalRepository | null = null;
 let jumpSeq = 0;
 let loadSeq = 0;
+let heatSeq = 0;
 
 export async function initInsights(r: JournalRepository) {
   repo = r;
   const s = await r.getSettings();
-  set({ categoryId: s.ui.insightCategory, mapOpen: s.ui.insightMapOpen, open: false, data: null });
+  set({
+    categoryId: s.ui.insightCategory,
+    mapOpen: s.ui.insightMapOpen,
+    tab: s.ui.insightTab,
+    open: false,
+    data: null,
+    heat: null,
+  });
 }
 
 /** 진행 중 = 열린 구간이 있음 */
@@ -101,17 +136,95 @@ export const isOngoing = (periods: CategoryPeriod[], id: string) =>
 
 /**
  * 인사이트 열기(레일·Alt+3·업무 머리 메뉴). categoryId를 주면 그 업무, 아니면 마지막에 보던 업무(없으면 보드 첫 업무).
- * 대기 중인 칸·메모 저장을 먼저 끝내 방금 친 글까지 보이게 한다(1-2)
+ * 탭은 마지막에 본 탭 — 업무 머리 메뉴는 늘 타임라인(tab). 대기 중인 칸·메모 저장을 먼저 끝내 방금 친 글까지 보이게 한다(1-2)
  */
-export async function openInsights(categoryId?: string) {
+export async function openInsights(categoryId?: string, tab?: InsightTab) {
   await flushAll();
   await flushNote(true);
   const board = useBoard.getState();
   const fallback = board.view?.categories[0]?.category.id ?? null;
   const id = categoryId ?? get().categoryId ?? fallback;
   set({ open: true, categoryId: id });
+  if (tab) setTab(tab);
   if (categoryId) rememberCategory(categoryId);
   await loadInsights();
+  if (get().tab === "overview") await loadHeat();
+}
+
+export function setTab(tab: InsightTab) {
+  if (get().tab === tab) return;
+  set({ tab });
+  void repo?.updateSettings({ ui: { insightTab: tab } }).catch(() => undefined);
+  if (tab === "overview" && get().open && get().data) void loadHeat();
+}
+
+// ── 업무 고르기(2절) ──────────────────────────────────
+/** 고른 업무인가(null = 전체) */
+export const isPicked = (picked: string[] | null, id: string) => picked === null || picked.includes(id);
+
+/** 하나 켜기/끄기. all = 지금 고를 수 있는 업무 전부(태그 필터·종료 포함 반영) — 다 고르면 다시 "전체" */
+export function togglePicked(id: string, all: string[]) {
+  const cur = get().picked ?? all;
+  const next = cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id];
+  set({ picked: all.every((x) => next.includes(x)) ? null : next });
+}
+
+export function pickAll() {
+  set({ picked: null });
+}
+
+export function pickNone() {
+  set({ picked: [] });
+}
+
+// ── 활동 히트맵(3절) ──────────────────────────────────
+export function setHeatUnit(heatUnit: HeatUnit) {
+  if (get().heatUnit === heatUnit) return;
+  set({ heatUnit });
+  void loadHeat();
+}
+
+export function moveHeat(anchor: string) {
+  const unit = get().heatUnit;
+  set({ heatAnchor: { ...get().heatAnchor, [unit]: anchor } });
+  void loadHeat();
+}
+
+/** 첫 기록일(앱 전체) — ◀ 한계 */
+export const firstRecordOf = (d: InsightsData | null) =>
+  Object.values(d?.stats ?? {})
+    .map((s) => s.first)
+    .sort()[0] ?? null;
+
+/** 지금 단위·기준의 활동·연차를 읽는다 */
+export async function loadHeat() {
+  const r = repo;
+  if (!r) return;
+  const seq = ++heatSeq;
+  const { heatUnit: unit, heatAnchor } = get();
+  const range = heatRange(unit, heatAnchor[unit], r.today(), firstRecordOf(get().data));
+  try {
+    const [activity, dayMarks] = await Promise.all([
+      r.getActivity(range.from, range.to),
+      r.getDayMarks(range.from, range.to),
+    ]);
+    if (seq !== heatSeq) return;
+    set({ heat: { unit, from: range.from, to: range.to, activity, dayMarks } });
+  } catch (e) {
+    reportError(e);
+  }
+}
+
+/** 히트맵 칸 → 보드(7절): 일 = 그 날, 주 = 그 업무의 그 주 첫 기록일(없으면 월요일). 인사이트는 닫힌다 */
+export async function revealHeatCell(date: DateStr, categoryId: string | null) {
+  closeInsights();
+  await revealCell(date, categoryId);
+}
+
+/** 히트맵 행 이름 → 타임라인 탭 그 업무 */
+export function openTimelineOf(categoryId: string) {
+  setTab("timeline");
+  selectCategory(categoryId);
 }
 
 export function closeInsights() {

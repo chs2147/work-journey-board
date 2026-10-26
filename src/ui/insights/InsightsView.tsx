@@ -1,5 +1,5 @@
 // 인사이트 화면(m3-s1-spec 1~3·7·8·9절): 필터 줄 + 업무 목록 + (머리 · 업무 경과 지도 · 경과 타임라인).
-// 보드는 그대로 숨겨 둔다(1-2). S1은 타임라인 탭만 — 탭 줄은 S2 활동 개요와 함께(13절 #1).
+// 보드는 그대로 숨겨 둔다(1-2). S2(m3-s2-spec): 탭 줄 [경과 타임라인 | 활동 개요], 업무 고르기(두 탭 공통).
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import {
   buildTimeline,
@@ -27,11 +27,14 @@ import {
 } from "../board/boardStore";
 import { useAppStore } from "../common/appStore";
 import { useMediaQuery } from "../common/useMediaQuery";
+import { CategoryPicker } from "./CategoryPicker";
 import { JourneyMap } from "./JourneyMap";
+import { OverviewTab } from "./OverviewTab";
 import { Timeline } from "./Timeline";
 import {
   closeInsights,
   isOngoing,
+  isPicked,
   loadInsights,
   mapUnitOf,
   selectCategory,
@@ -39,7 +42,9 @@ import {
   setMapOpen,
   setPeriod,
   setQuery,
+  setTab,
   useInsights,
+  type InsightTab,
 } from "./insightsStore";
 import styles from "./Insights.module.css";
 
@@ -47,6 +52,7 @@ import styles from "./Insights.module.css";
 const foldBase = (today: DateStr, last: DateStr | undefined) => (last && last < today ? last : today);
 const md = (d: DateStr) => `${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}`;
 const PERIODS: PeriodKind[] = ["4w", "12w", "year", "all", "custom"];
+const TABS: InsightTab[] = ["timeline", "overview"];
 
 const CopyIcon = () => (
   <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
@@ -95,15 +101,23 @@ export function InsightsView() {
   const ended = cats
     .filter((c) => !isOngoing(periods, c.id))
     .sort((a, b) => (lastEnd(a.id) < lastEnd(b.id) ? 1 : -1));
-  const listOn = ongoing.filter(shown);
-  const listOff = st.includeEnded ? ended.filter(shown) : [];
+  // 태그 필터 → 업무 고르기(m3-s2-spec 2절)
+  const tagOn = ongoing.filter(shown);
+  const tagOff = ended.filter(shown);
+  const picked = (c: Category) => isPicked(st.picked, c.id);
+  const listOn = tagOn.filter(picked);
+  const listOff = st.includeEnded ? tagOff.filter(picked) : [];
+  const overviewRows = [
+    ...listOn.map((category) => ({ category, ended: false })),
+    ...listOff.map((category) => ({ category, ended: true })),
+  ];
   const cat = cats.find((c) => c.id === st.categoryId) ?? null;
   const own: CategoryPeriod[] = useMemo(
     () => periods.filter((p) => p.categoryId === st.categoryId),
     [periods, st.categoryId],
   );
   const catOngoing = cat ? isOngoing(periods, cat.id) : false;
-  const hiddenByFilter = !!cat && (!shown(cat) || (!catOngoing && !st.includeEnded));
+  const hiddenByFilter = !!cat && (!shown(cat) || !picked(cat) || (!catOngoing && !st.includeEnded));
 
   const rows = useMemo(
     () =>
@@ -180,7 +194,7 @@ export function InsightsView() {
   // Ctrl+F = 찾기, Ctrl+Shift+C = 경과 복사(인사이트가 보일 때만)
   useEffect(() => {
     const onKey = (e: globalThis.KeyboardEvent) => {
-      if (!useInsights.getState().open || e.isComposing) return;
+      if (!useInsights.getState().open || useInsights.getState().tab !== "timeline" || e.isComposing) return;
       const mod = e.ctrlKey || e.metaKey;
       if (mod && !e.altKey && !e.shiftKey && e.code === "KeyF") {
         e.preventDefault();
@@ -260,283 +274,347 @@ export function InsightsView() {
     );
   };
 
+  const onTabKey = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+    e.preventDefault();
+    const next = TABS[(TABS.indexOf(st.tab) + 1) % TABS.length]!;
+    setTab(next);
+    requestAnimationFrame(() => document.querySelector<HTMLElement>(`[data-insight-tab="${next}"]`)?.focus());
+  };
+
+  const picker = (
+    <CategoryPicker ongoing={tagOn} ended={tagOff} includeEnded={st.includeEnded} picked={st.picked} />
+  );
+  const includeEndedBox = (
+    <label className={styles.check}>
+      <input
+        type="checkbox"
+        checked={st.includeEnded}
+        data-testid="insight-include-ended"
+        onChange={(e) => setIncludeEnded(e.target.checked)}
+      />
+      {STR.insights.includeEnded}
+    </label>
+  );
+
   const myTags = cat ? chipsToShow(tags.filter((t) => categoryTags[cat.id]?.includes(t.id))) : null;
 
   return (
     <div className={styles.view} data-testid="insights">
       <div className={styles.filters}>
-        <span className={styles.screenName}>{STR.insights.timeline}</span>
+        <div className={styles.tabs} role="tablist" aria-label={STR.insights.tabs} onKeyDown={onTabKey}>
+          {TABS.map((t) => (
+            <button
+              key={t}
+              type="button"
+              role="tab"
+              id={`insight-tab-${t}`}
+              aria-selected={st.tab === t}
+              aria-controls="insight-panel"
+              tabIndex={st.tab === t ? 0 : -1}
+              className={styles.tab}
+              data-insight-tab={t}
+              data-testid={`insight-tab-${t}`}
+              onClick={() => setTab(t)}
+            >
+              {t === "timeline" ? STR.insights.timeline : STR.insights.overview}
+            </button>
+          ))}
+        </div>
         <span className={styles.vsep} />
-        {narrow && (
-          <label className={styles.check}>
-            {STR.insights.categorySelect}
-            <select
-              value={st.categoryId ?? ""}
-              aria-label={STR.insights.categorySelect}
-              onChange={(e) => selectCategory(e.target.value)}
-            >
-              {[...listOn, ...listOff, ...(cat && hiddenByFilter ? [cat] : [])].map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-        <label className={styles.check}>
-          {STR.insights.period}
-          <select
-            value={st.period.kind}
-            data-testid="insight-period"
-            onChange={(e) => {
-              const kind = e.target.value as PeriodKind;
-              if (kind === "custom") {
-                const cur = data?.span ?? periodRange({ kind: "12w" }, today);
-                setPeriod({ kind, from: cur.fromWeek, to: cur.toWeek });
-              } else setPeriod({ kind });
-            }}
-          >
-            {PERIODS.map((k) => (
-              <option key={k} value={k}>
-                {STR.insights.periods[k]}
-              </option>
-            ))}
-          </select>
-        </label>
-        {st.period.kind === "custom" && (
+        {picker}
+        {st.tab === "overview" ? (
           <>
-            <select
-              aria-label={STR.insights.customFrom}
-              value={st.period.from}
-              onChange={(e) => setPeriod({ ...st.period, from: e.target.value })}
-            >
-              {weekOptions.map((w) => (
-                <option key={w} value={w}>
-                  {w}
-                </option>
-              ))}
-            </select>
-            ~
-            <select
-              aria-label={STR.insights.customTo}
-              value={st.period.to}
-              onChange={(e) => setPeriod({ ...st.period, to: e.target.value })}
-            >
-              {weekOptions.map((w) => (
-                <option key={w} value={w}>
-                  {w}
-                </option>
-              ))}
-            </select>
+            {includeEndedBox}
+            <span className={styles.grow} />
+            <span className={styles.muted}>{STR.insights.perChart}</span>
           </>
-        )}
-        <label className={styles.check}>
-          <input
-            type="checkbox"
-            checked={st.includeEnded}
-            data-testid="insight-include-ended"
-            onChange={(e) => setIncludeEnded(e.target.checked)}
-          />
-          {STR.insights.includeEnded}
-        </label>
-        <span className={styles.grow} />
-        {data?.span && (
-          <span className={styles.muted} data-testid="insight-range">
-            {STR.insights.rangeNow(data.span.fromWeek, data.span.toWeek.slice(5), thisWeek)}
-          </span>
+        ) : (
+          <>
+            {narrow && (
+              <label className={styles.check}>
+                {STR.insights.categorySelect}
+                <select
+                  value={st.categoryId ?? ""}
+                  aria-label={STR.insights.categorySelect}
+                  onChange={(e) => selectCategory(e.target.value)}
+                >
+                  {[...listOn, ...listOff, ...(cat && hiddenByFilter ? [cat] : [])].map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            <label className={styles.check}>
+              {STR.insights.period}
+              <select
+                value={st.period.kind}
+                data-testid="insight-period"
+                onChange={(e) => {
+                  const kind = e.target.value as PeriodKind;
+                  if (kind === "custom") {
+                    const cur = data?.span ?? periodRange({ kind: "12w" }, today);
+                    setPeriod({ kind, from: cur.fromWeek, to: cur.toWeek });
+                  } else setPeriod({ kind });
+                }}
+              >
+                {PERIODS.map((k) => (
+                  <option key={k} value={k}>
+                    {STR.insights.periods[k]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {st.period.kind === "custom" && (
+              <>
+                <select
+                  aria-label={STR.insights.customFrom}
+                  value={st.period.from}
+                  onChange={(e) => setPeriod({ ...st.period, from: e.target.value })}
+                >
+                  {weekOptions.map((w) => (
+                    <option key={w} value={w}>
+                      {w}
+                    </option>
+                  ))}
+                </select>
+                ~
+                <select
+                  aria-label={STR.insights.customTo}
+                  value={st.period.to}
+                  onChange={(e) => setPeriod({ ...st.period, to: e.target.value })}
+                >
+                  {weekOptions.map((w) => (
+                    <option key={w} value={w}>
+                      {w}
+                    </option>
+                  ))}
+                </select>
+              </>
+            )}
+            {includeEndedBox}
+            <span className={styles.grow} />
+            {data?.span && (
+              <span className={styles.muted} data-testid="insight-range">
+                {STR.insights.rangeNow(data.span.fromWeek, data.span.toWeek.slice(5), thisWeek)}
+              </span>
+            )}
+          </>
         )}
       </div>
       {fewWeeks && <div className={styles.notice}>{STR.insights.fewWeeks}</div>}
 
-      <div className={styles.body}>
-        {!narrow && (
-          <nav
-            className={styles.list}
-            aria-label={STR.insights.listHead}
-            onKeyDown={onListKey}
-            data-testid="insight-list"
-          >
-            <div className={styles.listHead}>
-              <span>{STR.insights.listHead}</span>
-              <span>{STR.insights.listCount(ongoing.length, ended.length)}</span>
-            </div>
-            {hiddenByFilter && (
-              <div className={styles.filterNote}>
-                {STR.insights.hiddenByFilter}
-                {tagFilter.length > 0 && (
-                  <>
-                    {" · "}
-                    <button type="button" className={styles.linkBtn} onClick={() => setTagFilter([])}>
-                      {STR.insights.clearFilter}
-                    </button>
-                  </>
-                )}
+      {st.tab === "overview" ? (
+        <div
+          className={styles.body}
+          role="tabpanel"
+          id="insight-panel"
+          aria-labelledby="insight-tab-overview"
+        >
+          <OverviewTab rows={overviewRows} periods={periods} />
+        </div>
+      ) : (
+        <div
+          className={styles.body}
+          role="tabpanel"
+          id="insight-panel"
+          aria-labelledby="insight-tab-timeline"
+        >
+          {!narrow && (
+            <nav
+              className={styles.list}
+              aria-label={STR.insights.listHead}
+              onKeyDown={onListKey}
+              data-testid="insight-list"
+            >
+              <div className={styles.listHead}>
+                <span>{STR.insights.listHead}</span>
+                <span>{STR.insights.listCount(ongoing.length, ended.length)}</span>
               </div>
-            )}
-            {listOn.map((c) => catButton(c, false))}
-            {listOff.length > 0 && <div className={styles.group}>{STR.insights.endedGroup}</div>}
-            {listOff.map((c) => catButton(c, true))}
-          </nav>
-        )}
-
-        <div className={styles.main}>
-          {!cat ? (
-            <div className={styles.empty} data-testid="insight-empty">
-              <strong>{STR.insights.emptyPick}</strong>
-              <span>{STR.insights.emptyPickHint}</span>
-            </div>
-          ) : (
-            <>
-              <div className={styles.head}>
-                <div className={styles.headText}>
-                  <h2 className={styles.title} data-testid="insight-title">
-                    <span className={styles.dot} style={{ background: `var(--cat-${cat.color})` }} />
-                    {cat.name}
-                    {myTags?.shown.map((t) => (
-                      <span key={t.id} className={styles.tag}>
-                        #{t.name}
-                      </span>
-                    ))}
-                    {myTags && myTags.more > 0 && <span className={styles.tag}>+{myTags.more}</span>}
-                  </h2>
-                  <span className={styles.muted} data-testid="insight-meta">
-                    {[
-                      start ? STR.insights.started(start) : null,
-                      catOngoing ? STR.insights.ongoing : endDate ? STR.insights.endedOn(md(endDate)) : null,
-                      own.length > 1 ? STR.insights.resumedTimes(own.length - 1) : null,
-                      weeksSince ? STR.insights.weeksSince(weeksSince) : null,
-                      STR.insights.recordedWeeks(counts.recordedWeeks, counts.activeWeeks),
-                      STR.insights.recordedDays(data?.days.length ?? 0),
-                      STR.insights.itemCount(counts.items),
-                    ]
-                      .filter(Boolean)
-                      .join(" · ")}
-                  </span>
+              {hiddenByFilter && (
+                <div className={styles.filterNote}>
+                  {STR.insights.hiddenByFilter}
+                  {tagFilter.length > 0 && (
+                    <>
+                      {" · "}
+                      <button type="button" className={styles.linkBtn} onClick={() => setTagFilter([])}>
+                        {STR.insights.clearFilter}
+                      </button>
+                    </>
+                  )}
                 </div>
-                <div className={styles.headTools}>
-                  {!catOngoing && own.length > 0 && (
+              )}
+              {listOn.map((c) => catButton(c, false))}
+              {listOff.length > 0 && <div className={styles.group}>{STR.insights.endedGroup}</div>}
+              {listOff.map((c) => catButton(c, true))}
+            </nav>
+          )}
+
+          <div className={styles.main}>
+            {!cat ? (
+              <div className={styles.empty} data-testid="insight-empty">
+                <strong>{STR.insights.emptyPick}</strong>
+                <span>{STR.insights.emptyPickHint}</span>
+              </div>
+            ) : (
+              <>
+                <div className={styles.head}>
+                  <div className={styles.headText}>
+                    <h2 className={styles.title} data-testid="insight-title">
+                      <span className={styles.dot} style={{ background: `var(--cat-${cat.color})` }} />
+                      {cat.name}
+                      {myTags?.shown.map((t) => (
+                        <span key={t.id} className={styles.tag}>
+                          #{t.name}
+                        </span>
+                      ))}
+                      {myTags && myTags.more > 0 && <span className={styles.tag}>+{myTags.more}</span>}
+                    </h2>
+                    <span className={styles.muted} data-testid="insight-meta">
+                      {[
+                        start ? STR.insights.started(start) : null,
+                        catOngoing
+                          ? STR.insights.ongoing
+                          : endDate
+                            ? STR.insights.endedOn(md(endDate))
+                            : null,
+                        own.length > 1 ? STR.insights.resumedTimes(own.length - 1) : null,
+                        weeksSince ? STR.insights.weeksSince(weeksSince) : null,
+                        STR.insights.recordedWeeks(counts.recordedWeeks, counts.activeWeeks),
+                        STR.insights.recordedDays(data?.days.length ?? 0),
+                        STR.insights.itemCount(counts.items),
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </span>
+                  </div>
+                  <div className={styles.headTools}>
+                    {!catOngoing && own.length > 0 && (
+                      <button
+                        type="button"
+                        className={styles.btn}
+                        onClick={async () => {
+                          await reactivateCategory(cat.id, cat.name);
+                          await loadInsights();
+                        }}
+                      >
+                        {STR.insights.reactivate}
+                      </button>
+                    )}
+                    <label className={styles.searchBox}>
+                      <SearchIcon />
+                      <input
+                        ref={searchRef}
+                        type="search"
+                        value={st.query}
+                        placeholder={STR.insights.search}
+                        aria-label={STR.insights.searchAria}
+                        data-testid="insight-search"
+                        onChange={(e) => {
+                          setQuery(e.target.value);
+                          setMatchIdx(0);
+                        }}
+                        onKeyDown={onSearchKey}
+                      />
+                    </label>
+                    {st.query.trim() && (
+                      <span
+                        className={styles.muted}
+                        data-testid="insight-search-count"
+                        title={STR.insights.searchHelp}
+                      >
+                        {STR.insights.searchCount(
+                          currentMatch ? search.ids.indexOf(currentMatch) + 1 : 0,
+                          search.ids.length,
+                        )}
+                      </span>
+                    )}
+                    {!st.mapOpen && cells.length > 0 && (
+                      <button type="button" className={styles.btn} onClick={() => setMapOpen(true)}>
+                        {STR.insights.mapShow}
+                      </button>
+                    )}
                     <button
                       type="button"
                       className={styles.btn}
-                      onClick={async () => {
-                        await reactivateCategory(cat.id, cat.name);
-                        await loadInsights();
-                      }}
+                      title={STR.insights.copyTitle}
+                      data-testid="insight-copy"
+                      disabled={!rows.length}
+                      onClick={() => void copy()}
                     >
-                      {STR.insights.reactivate}
-                    </button>
-                  )}
-                  <label className={styles.searchBox}>
-                    <SearchIcon />
-                    <input
-                      ref={searchRef}
-                      type="search"
-                      value={st.query}
-                      placeholder={STR.insights.search}
-                      aria-label={STR.insights.searchAria}
-                      data-testid="insight-search"
-                      onChange={(e) => {
-                        setQuery(e.target.value);
-                        setMatchIdx(0);
-                      }}
-                      onKeyDown={onSearchKey}
-                    />
-                  </label>
-                  {st.query.trim() && (
-                    <span
-                      className={styles.muted}
-                      data-testid="insight-search-count"
-                      title={STR.insights.searchHelp}
-                    >
-                      {STR.insights.searchCount(
-                        currentMatch ? search.ids.indexOf(currentMatch) + 1 : 0,
-                        search.ids.length,
-                      )}
-                    </span>
-                  )}
-                  {!st.mapOpen && cells.length > 0 && (
-                    <button type="button" className={styles.btn} onClick={() => setMapOpen(true)}>
-                      {STR.insights.mapShow}
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    className={styles.btn}
-                    title={STR.insights.copyTitle}
-                    data-testid="insight-copy"
-                    disabled={!rows.length}
-                    onClick={() => void copy()}
-                  >
-                    <CopyIcon />
-                    {STR.insights.copy}
-                  </button>
-                </div>
-              </div>
-
-              {st.mapOpen && cells.length > 0 && unit && (
-                <div style={{ padding: "0 24px" }}>
-                  <JourneyMap
-                    cells={cells}
-                    unit={unit}
-                    range={data?.span ?? null}
-                    rangeLabel={periodName}
-                    visibleWeeks={st.visibleWeeks}
-                    ongoing={catOngoing}
-                  />
-                  <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                    <button type="button" className={styles.linkBtn} onClick={() => setMapOpen(false)}>
-                      {STR.insights.mapHide}
+                      <CopyIcon />
+                      {STR.insights.copy}
                     </button>
                   </div>
                 </div>
-              )}
 
-              {!data?.days.length ? (
-                <div className={styles.empty} data-testid="insight-empty-record">
-                  <strong>{STR.insights.emptyRecord}</strong>
-                  <span>{STR.insights.emptyRecordHint}</span>
-                  <button
-                    type="button"
-                    className={styles.btn}
-                    onClick={() => {
-                      closeInsights();
-                      focusStartCell();
-                    }}
-                  >
-                    {STR.insights.goBoard}
-                  </button>
-                </div>
-              ) : (
-                <Timeline
-                  rows={rows}
-                  today={foldBase(today, data.days.at(-1)?.date)}
-                  categoryId={cat.id}
-                  query={st.query}
-                  search={search}
-                  currentMatch={st.query.trim() ? currentMatch : null}
-                  resetKey={`${cat.id}|${data.span?.fromWeek}|${data.span?.toWeek}`}
-                  top={
-                    earlierWeeks > 0 && st.period.kind !== "all" ? (
-                      <div className={styles.notes} data-testid="insight-earlier">
-                        <span>{STR.insights.earlier(periodName, earlierWeeks, data.days[0]!.date)}</span>
-                        <span>
-                          <button
-                            type="button"
-                            className={styles.linkBtn}
-                            onClick={() => setPeriod({ kind: "all" })}
-                          >
-                            {STR.insights.showAll}
-                          </button>
-                        </span>
-                      </div>
-                    ) : null
-                  }
-                />
-              )}
-            </>
-          )}
+                {st.mapOpen && cells.length > 0 && unit && (
+                  <div style={{ padding: "0 24px" }}>
+                    <JourneyMap
+                      cells={cells}
+                      unit={unit}
+                      range={data?.span ?? null}
+                      rangeLabel={periodName}
+                      visibleWeeks={st.visibleWeeks}
+                      ongoing={catOngoing}
+                    />
+                    <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                      <button type="button" className={styles.linkBtn} onClick={() => setMapOpen(false)}>
+                        {STR.insights.mapHide}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {!data?.days.length ? (
+                  <div className={styles.empty} data-testid="insight-empty-record">
+                    <strong>{STR.insights.emptyRecord}</strong>
+                    <span>{STR.insights.emptyRecordHint}</span>
+                    <button
+                      type="button"
+                      className={styles.btn}
+                      onClick={() => {
+                        closeInsights();
+                        focusStartCell();
+                      }}
+                    >
+                      {STR.insights.goBoard}
+                    </button>
+                  </div>
+                ) : (
+                  <Timeline
+                    rows={rows}
+                    today={foldBase(today, data.days.at(-1)?.date)}
+                    categoryId={cat.id}
+                    query={st.query}
+                    search={search}
+                    currentMatch={st.query.trim() ? currentMatch : null}
+                    resetKey={`${cat.id}|${data.span?.fromWeek}|${data.span?.toWeek}`}
+                    top={
+                      earlierWeeks > 0 && st.period.kind !== "all" ? (
+                        <div className={styles.notes} data-testid="insight-earlier">
+                          <span>{STR.insights.earlier(periodName, earlierWeeks, data.days[0]!.date)}</span>
+                          <span>
+                            <button
+                              type="button"
+                              className={styles.linkBtn}
+                              onClick={() => setPeriod({ kind: "all" })}
+                            >
+                              {STR.insights.showAll}
+                            </button>
+                          </span>
+                        </div>
+                      ) : null
+                    }
+                  />
+                )}
+              </>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

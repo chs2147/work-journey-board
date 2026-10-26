@@ -201,7 +201,7 @@ export function CategoryHeader({
                 role="menuitem"
                 type="button"
                 className={styles.menuStrong}
-                onClick={() => run(() => void openInsights(category.id))}
+                onClick={() => run(() => void openInsights(category.id, "timeline"))}
               >
                 {STR.insights.open}
                 <span className={styles.menuKey}>{STR.insights.openKey}</span>

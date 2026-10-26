@@ -14,6 +14,7 @@ import {
   weekIdOf,
   weekRange,
   weekStart,
+  weeksOfIsoYear,
   type DateStr,
   type WeekId,
 } from "./week";
@@ -525,4 +526,302 @@ export function monthSpans(cells: MapCell[]): { month: string; count: number }[]
     else out.push({ month: c.month, count: 1 });
   }
   return out;
+}
+
+// ── 활동 히트맵(m3-s2-spec 3~5절) ─────────────────────
+export type HeatUnit = "day" | "week";
+
+/** 그날 그 업무의 기록(저장소 getActivity) */
+export interface ActivityRow {
+  categoryId: string;
+  date: DateStr;
+  /** 본 항목(depth 0) 수 */
+  mains: number;
+  /** 세부 항목(depth 1) 수 */
+  subs: number;
+  /** 첫 본 항목 글 */
+  firstText: string | null;
+}
+
+/** 일 칸: 그날 본 항목 수 → 0 · 1 · 2~3 · 4~5 · 6+ (viz-spec 2-2) */
+export function itemLevel(n: number): 0 | 1 | 2 | 3 | 4 {
+  return n <= 0 ? 0 : n === 1 ? 1 : n <= 3 ? 2 : n <= 5 ? 3 : 4;
+}
+
+export interface HeatRange {
+  unit: HeatUnit;
+  /** 일: 끝 주(WeekId), 주: ISO 연도(`2026`) */
+  anchor: string;
+  from: DateStr;
+  to: DateStr;
+  /** 머리 글: `2026-W32 ~ W43` / `2026년 (53주)` */
+  label: string;
+  /** ◀ ▶ 다음 기준(갈 수 없으면 null) */
+  prev: string | null;
+  next: string | null;
+}
+
+/** 기본 기준: 일 = 이번 주, 주 = 올해(ISO 연도) */
+export const defaultHeatAnchor = (unit: HeatUnit, today: DateStr) =>
+  unit === "day" ? weekIdOf(today) : String(parseWeekId(weekIdOf(today)).year);
+
+/**
+ * 범위(3절): 일 = 끝 주부터 11주 전 월요일까지 84일(◀ ▶ 12주씩, ▶는 이번 주에서 멈춤),
+ * 주 = ISO 연도 W01~W52/53(◀ ▶ 한 해씩, ▶는 올해에서 멈춤). ◀는 첫 기록 주보다 1년 넘게 앞으로 가지 않는다
+ */
+export function heatRange(
+  unit: HeatUnit,
+  anchor: string | null,
+  today: DateStr,
+  firstRecord: DateStr | null = null,
+): HeatRange {
+  const thisWeek = weekIdOf(today);
+  const limit = addWeeks(weekIdOf(firstRecord && firstRecord < today ? firstRecord : today), -52);
+  if (unit === "day") {
+    const end = minWeek(anchor ?? thisWeek, thisWeek);
+    const start = addWeeks(end, -11);
+    const prevEnd = addWeeks(end, -12);
+    return {
+      unit,
+      anchor: end,
+      from: weekStart(start),
+      to: weekRange(end).end,
+      label: `${start} ~ ${start.slice(0, 4) === end.slice(0, 4) ? end.slice(5) : end}`,
+      prev: compareWeekId(prevEnd, limit) >= 0 ? prevEnd : null,
+      next: compareWeekId(end, thisWeek) < 0 ? minWeek(addWeeks(end, 12), thisWeek) : null,
+    };
+  }
+  const thisYear = parseWeekId(thisWeek).year;
+  const year = Math.min(Number(anchor ?? thisYear) || thisYear, thisYear);
+  const n = weeksOfIsoYear(year).length;
+  return {
+    unit,
+    anchor: String(year),
+    from: weekStart(`${year}-W01`),
+    to: weekRange(`${year}-W${String(n).padStart(2, "0")}`).end,
+    label: `${year}년 (${n}주)`,
+    prev: year - 1 >= parseWeekId(limit).year ? String(year - 1) : null,
+    next: year < thisYear ? String(year + 1) : null,
+  };
+}
+
+export interface HeatColumn {
+  /** 일: 날짜, 주: WeekId */
+  key: string;
+  from: DateStr;
+  to: DateStr;
+  /** 토·일(일 단위, 폭 절반) */
+  weekend: boolean;
+  /** 오늘 / 이번 주 */
+  current: boolean;
+  /** 오늘 뒤 */
+  future: boolean;
+  /** 연차·반차(일 단위 열 머리) */
+  mark: DayMarkKind | null;
+  /** 달 머리 묶음: 일 = 그 날의 달, 주 = 목요일의 달 */
+  month: string;
+  week: WeekId;
+}
+
+export function heatColumns(
+  range: HeatRange,
+  today: DateStr,
+  dayMarks: Record<DateStr, DayMarkKind> = {},
+): HeatColumn[] {
+  const out: HeatColumn[] = [];
+  if (range.unit === "day") {
+    for (let d = range.from; d <= range.to; d = addDays(d, 1)) {
+      const wd = parseDate(d).getDay();
+      out.push({
+        key: d,
+        from: d,
+        to: d,
+        weekend: wd === 0 || wd === 6,
+        current: d === today,
+        future: d > today,
+        mark: dayMarks[d] ?? null,
+        month: d.slice(0, 7),
+        week: weekIdOf(d),
+      });
+    }
+    return out;
+  }
+  const thisWeek = weekIdOf(today);
+  for (const { weekId } of weeksOfIsoYear(Number(range.anchor))) {
+    const { start, end } = weekRange(weekId);
+    out.push({
+      key: weekId,
+      from: start,
+      to: end,
+      weekend: false,
+      current: weekId === thisWeek,
+      future: start > today,
+      mark: null,
+      month: monthOf(weekId),
+      week: weekId,
+    });
+  }
+  return out;
+}
+
+/** 열 머리 묶음(달·주): 이어진 같은 값의 열 수 */
+export function columnSpans(cols: HeatColumn[], by: (c: HeatColumn) => string) {
+  const out: { key: string; count: number }[] = [];
+  for (const c of cols) {
+    const k = by(c);
+    const last = out.at(-1);
+    if (last && last.key === k) last.count++;
+    else out.push({ key: k, count: 1 });
+  }
+  return out;
+}
+
+export interface HeatCell {
+  key: string;
+  /** 칸 값: 일 = 본 항목 수, 주 = 기록한 날 수 */
+  value: number;
+  level: 0 | 1 | 2 | 3 | 4;
+  mains: number;
+  subs: number;
+  /** 기록한 날 수(일 칸은 0/1) */
+  days: number;
+  firstText: string | null;
+  /** 업무 기간 밖(기록 없음) */
+  outside: boolean;
+  /** 오지 않은 날·주(기록 없음 — 미리 적은 기록이 있으면 false로 값대로 칠함) */
+  future: boolean;
+  /** 모든 업무 행: 업무별 값(값 > 0만, 보드 순서) */
+  parts?: { categoryId: string; value: number }[];
+}
+
+export interface HeatRow {
+  /** 업무 id, 모든 업무 = null */
+  categoryId: string | null;
+  cells: HeatCell[];
+  /** 그 범위에서 기록한 날 수 */
+  recordedDays: number;
+}
+
+/**
+ * 격자(4·5절): 맨 위 모든 업무(보이는 업무의 합) + 업무 행(받은 순서). 기록이 없는 업무도 행은 남긴다.
+ * 일 칸 = 본 항목 수(itemLevel), 주 칸 = 기록한 날 수(dayLevel — 경과 지도와 같은 함수)
+ */
+export function heatGrid(
+  activity: ActivityRow[],
+  categoryIds: string[],
+  periods: CategoryPeriod[],
+  columns: HeatColumn[],
+  unit: HeatUnit,
+): HeatRow[] {
+  const shown = new Set(categoryIds);
+  const byKey = new Map<string, ActivityRow>();
+  for (const a of activity) if (shown.has(a.categoryId)) byKey.set(`${a.categoryId}|${a.date}`, a);
+  const has = (a: ActivityRow | undefined): a is ActivityRow => !!a && a.mains + a.subs > 0;
+  const own = new Map(categoryIds.map((id) => [id, periods.filter((p) => p.categoryId === id)]));
+
+  const cellOf = (id: string, col: HeatColumn): HeatCell => {
+    const ps = own.get(id) ?? [];
+    if (unit === "day") {
+      const a = byKey.get(`${id}|${col.key}`);
+      const rec = has(a);
+      const mains = a?.mains ?? 0;
+      return {
+        key: col.key,
+        value: mains,
+        level: itemLevel(mains),
+        mains,
+        subs: a?.subs ?? 0,
+        days: rec ? 1 : 0,
+        firstText: a?.firstText ?? null,
+        outside: !rec && !ps.some((p) => overlaps(p, col.from, col.to)),
+        future: !rec && col.future,
+      };
+    }
+    let mains = 0;
+    let subs = 0;
+    let days = 0;
+    for (let d = col.from; d <= col.to; d = addDays(d, 1)) {
+      const a = byKey.get(`${id}|${d}`);
+      if (!has(a)) continue;
+      days++;
+      mains += a.mains;
+      subs += a.subs;
+    }
+    return {
+      key: col.key,
+      value: days,
+      level: dayLevel(days),
+      mains,
+      subs,
+      days,
+      firstText: null,
+      outside: days === 0 && !isActiveWeek(ps, col.key),
+      future: days === 0 && col.future,
+    };
+  };
+
+  const rows: HeatRow[] = categoryIds.map((id) => {
+    const cells = columns.map((c) => cellOf(id, c));
+    return { categoryId: id, cells, recordedDays: cells.reduce((s, c) => s + c.days, 0) };
+  });
+
+  // 모든 업무: 일 = 본 항목 합, 주 = 무엇이든 기록한 날 수
+  const anyDates = new Set(activity.filter((a) => shown.has(a.categoryId) && has(a)).map((a) => a.date));
+  const total: HeatCell[] = columns.map((col, i) => {
+    const parts = rows
+      .map((r) => ({ categoryId: r.categoryId!, value: r.cells[i]!.value }))
+      .filter((p) => p.value > 0);
+    const mains = rows.reduce((s, r) => s + r.cells[i]!.mains, 0);
+    const subs = rows.reduce((s, r) => s + r.cells[i]!.subs, 0);
+    let days = 0;
+    for (let d = col.from; d <= col.to; d = addDays(d, 1)) if (anyDates.has(d)) days++;
+    const value = unit === "day" ? mains : days;
+    return {
+      key: col.key,
+      value,
+      level: unit === "day" ? itemLevel(mains) : dayLevel(days),
+      mains,
+      subs,
+      days,
+      firstText: null,
+      outside: false,
+      future: days === 0 && col.future,
+      parts,
+    };
+  });
+  const recordedDays = [...anyDates].filter(
+    (d) => columns.length > 0 && d >= columns[0]!.from && d <= columns.at(-1)!.to,
+  ).length;
+  return [{ categoryId: null, cells: total, recordedDays }, ...rows];
+}
+
+export interface HeatTableCell {
+  mains: number;
+  days: number;
+  /** 묶음 전체가 업무 기간 밖 */
+  outside: boolean;
+}
+
+/** [표로 보기](8절): 일 = 업무 × 주(본 항목 수 · 기록한 날 수), 주 = 업무 × 달(기록한 날 수). 끝 열 = 합계 */
+export function heatTable(rows: HeatRow[], columns: HeatColumn[], unit: HeatUnit) {
+  const groups = columnSpans(columns, (c) => (unit === "day" ? c.week : c.month));
+  const head = groups.map((g) => g.key);
+  const body = rows.map((r) => {
+    let i = 0;
+    const cells: HeatTableCell[] = groups.map((g) => {
+      const part = r.cells.slice(i, i + g.count);
+      i += g.count;
+      return {
+        mains: part.reduce((s, c) => s + c.mains, 0),
+        days: part.reduce((s, c) => s + c.days, 0),
+        outside: part.every((c) => c.outside),
+      };
+    });
+    return {
+      categoryId: r.categoryId,
+      cells,
+      total: { mains: cells.reduce((s, c) => s + c.mains, 0), days: r.recordedDays, outside: false },
+    };
+  });
+  return { head, body };
 }

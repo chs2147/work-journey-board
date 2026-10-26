@@ -12,6 +12,7 @@ import type { SummaryInput } from "../domain/aggregate";
 import { isDayMarkKind, isLeaveWeek, type DayMarkKind } from "../domain/dayMark";
 import { normalizeTagName, tagNameProblem, type Tag } from "../domain/tags";
 import type { ExistingItem, ImportContext, ImportPlan } from "../domain/importer";
+import type { ActivityRow } from "../domain/insights";
 import {
   docFromDayMemos,
   emptyDoc,
@@ -1314,6 +1315,35 @@ export class JournalRepository {
       [categoryId],
     );
     return rows.map((r) => ({ date: r.date, items: Number(r.n) }));
+  }
+
+  /** 날짜 범위의 업무·날짜별 본/세부 항목 수와 첫 본 항목 글 — 활동 히트맵(m3-s2-spec 10-1) */
+  async getActivity(from: DateStr, to: DateStr): Promise<ActivityRow[]> {
+    const rows = await this.db.select<{
+      category_id: string;
+      date: string;
+      mains: number;
+      subs: number;
+      first_text: string | null;
+    }>(
+      `SELECT e.category_id, e.date,
+              SUM(CASE WHEN e.depth = 0 THEN 1 ELSE 0 END) AS mains,
+              SUM(CASE WHEN e.depth = 1 THEN 1 ELSE 0 END) AS subs,
+              (SELECT f.text FROM entry_item f
+                WHERE f.category_id = e.category_id AND f.date = e.date AND f.depth = 0 AND trim(f.text) <> ''
+                ORDER BY f.seq LIMIT 1) AS first_text
+       FROM entry_item e
+       WHERE e.date BETWEEN ? AND ? AND trim(e.text) <> ''
+       GROUP BY e.category_id, e.date ORDER BY e.date`,
+      [from, to],
+    );
+    return rows.map((r) => ({
+      categoryId: r.category_id,
+      date: r.date,
+      mains: Number(r.mains),
+      subs: Number(r.subs),
+      firstText: r.first_text ?? null,
+    }));
   }
 
   /** 주 범위의 저장된 메모 문서 — 업무연계 메모(ref.item)를 타임라인에 붙일 때. 예전 요일 메모는 연결이 없어 읽지 않는다 */

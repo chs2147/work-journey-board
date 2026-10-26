@@ -200,3 +200,20 @@ test("인사이트(경과 지도·타임라인·검색·연결 메모·월 단�
   await expect(page.getByTestId("journey-map").locator("table")).toBeVisible();
   expect(await violations(page)).toEqual([]);
 });
+
+test("인사이트 활동 개요(히트맵·툴팁·연간·표·업무 고르기) — CSP 위반 0", async ({ page }) => {
+  await page.goto("/?today=2026-10-22&sample=insights");
+  await expect(page.locator(":focus")).toHaveValue("테스트 데이터 이관 스크립트 작성 착수");
+  await page.keyboard.press("Alt+Digit3");
+  await page.getByTestId("insight-tab-overview").click();
+  await expect(page.getByTestId("heat-row")).toHaveCount(3);
+  await page.locator('[data-heat-cat="cat-a"] [data-heat-key="2026-10-12"]').hover();
+  await expect(page.getByTestId("heat-tip")).toBeVisible();
+  await page.getByTestId("heat-unit-week").click();
+  await page.getByTestId("heat-table-toggle").click();
+  await expect(page.getByTestId("heat-table")).toBeVisible();
+  await page.getByTestId("insight-pick").click();
+  await page.getByTestId("pick-option").first().click();
+  await expect(page.getByTestId("heat-row")).toHaveCount(2);
+  expect(await violations(page)).toEqual([]);
+});

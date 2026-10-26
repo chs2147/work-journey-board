@@ -523,6 +523,19 @@ export async function revealItem(it: Pick<ImportantItem, "id" | "date" | "catego
   }, PULSE_MS);
 }
 
+/**
+ * 히트맵 칸 → 보드의 그 날·그 업무 칸 첫 항목(m3-s2-spec 7절). 그 주에 보드에 없는 업무(태그 필터·종료)이거나
+ * 업무를 주지 않으면(모든 업무) 그 날의 첫 업무 칸
+ */
+export async function revealCell(date: DateStr, categoryId: string | null) {
+  const wk = weekIdOf(date);
+  if (wk !== get().weekId) await loadWeek(wk, date);
+  else setFocusDay(date);
+  const shown = categoryId && shownCategories(get()).some((c) => c.category.id === categoryId);
+  if (shown) enterCell(cellKey(date, categoryId), "above");
+  else focusStartCell();
+}
+
 // ── 매주 반복(important-repeat-spec 3절) ───────────────
 /** 같은 주를 다시 불러오고 커서를 그 칸·그 위치로 돌려놓는다 */
 async function reloadAt(key: string, index: number) {
