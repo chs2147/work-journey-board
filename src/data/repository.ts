@@ -804,6 +804,26 @@ export class JournalRepository {
    * 추가·수정·삭제·순서·깊이 변경이 모두 이 한 경로를 지난다. 저장된 항목을 돌려준다.
    */
   async saveCell(date: DateStr, categoryId: string, drafts: ItemDraft[]): Promise<EntryItem[]> {
+    const { stmts, items } = this.cellStatements(date, categoryId, drafts);
+    await this.db.batch(stmts);
+    return items;
+  }
+
+  /**
+   * 여러 칸을 한 batch로(improve-1026v2-spec 3-4, 행 끌어서 옮기기). **받는 칸을 먼저** 넘긴다 —
+   * 같은 id의 upsert가 행의 날짜·업무를 바꾸므로, 그다음 원래 칸의 "목록에 없는 행 삭제"가 옮겨 간 행을 지우지 않는다
+   * (순서가 바뀌면 지웠다 새로 만들어 처리 완료 기록·가져오기 묶음 등이 사라진다).
+   */
+  async saveCells(cells: { date: DateStr; categoryId: string; items: ItemDraft[] }[]): Promise<void> {
+    const stmts = cells.flatMap((c) => this.cellStatements(c.date, c.categoryId, c.items).stmts);
+    await this.db.batch(stmts);
+  }
+
+  private cellStatements(
+    date: DateStr,
+    categoryId: string,
+    drafts: ItemDraft[],
+  ): { stmts: SqlStatement[]; items: EntryItem[] } {
     if (!DATE_RE.test(date)) throw new ValidationError(`날짜 형식 오류: ${date}`);
     const items: EntryItem[] = normalizeCell(drafts).map((d, i) => ({
       id: d.id,
@@ -853,8 +873,7 @@ export class JournalRepository {
         ],
       })),
     ];
-    await this.db.batch(stmts);
-    return items;
+    return { stmts, items };
   }
 
   // ── 중요 업무(important-repeat-spec 2절) ──────────────

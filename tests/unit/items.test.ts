@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   deleteAt,
   deleteRange,
+  moveRows,
+  snapGap,
   indentAt,
   moveItem,
   normalizeCell,
@@ -100,5 +102,46 @@ describe("행 삭제 범위 (improve-1026v2-spec 1·2절)", () => {
   it("본 항목을 지우면 세부 항목도 함께라 남은 첫 항목은 늘 본 항목", () => {
     expect(deleteAt([d("a"), d("b", 1)], 0).items).toEqual([]);
     expect(ids(deleteAt([d("a"), d("a1", 1), d("b", 1)], 0).items)).toBe("");
+  });
+});
+
+describe("행 끌어서 옮기기 (improve-1026v2-spec 3절)", () => {
+  const xs = [d("a"), d("a1", 1), d("a2", 1), d("b"), d("b1", 1), d("c")];
+
+  it("본 항목 묶음은 세부 항목 사이에 끼지 않고 묶음 끝으로 밀린다", () => {
+    expect(snapGap(xs, 4, true)).toBe(5);
+    expect(snapGap(xs, 1, true)).toBe(3);
+    expect(snapGap(xs, 4, false)).toBe(4);
+    expect(snapGap(xs, 99, true)).toBe(6);
+  });
+
+  it("같은 칸: 본 항목은 세부 항목과 함께, 제자리면 null", () => {
+    const r = moveRows(xs, 0, null, 6)!;
+    expect(ids(r.src)).toBe("b b1' c a a1' a2'");
+    expect(r.at).toBe(3);
+    expect(ids(moveRows(xs, 3, null, 0)!.src)).toBe("b b1' a a1' a2' c");
+    expect(moveRows(xs, 0, null, 0)).toBeNull();
+    expect(moveRows(xs, 0, null, 2)).toBeNull(); // 자기 세부 항목 사이 = 제자리
+    expect(moveRows(xs, 3, null, 5)).toBeNull();
+  });
+
+  it("같은 칸: 세부 항목은 혼자, 놓은 자리 위 항목에 딸리고 맨 위면 본 항목", () => {
+    expect(ids(moveRows(xs, 1, null, 5)!.src)).toBe("a a2' b b1' a1' c");
+    expect(ids(moveRows(xs, 4, null, 0)!.src)).toBe("b1 a a1' a2' b c");
+    expect(ids(moveRows(xs, 4, null, 6)!.src)).toBe("a a1' a2' b c b1'");
+  });
+
+  it("다른 칸: 원래 칸에서 빠지고 받는 칸 틈에 들어간다", () => {
+    const dst = [d("x"), d("x1", 1), d("y")];
+    const r = moveRows(xs, 3, dst, 1)!;
+    expect(ids(r.src)).toBe("a a1' a2' c");
+    expect(ids(r.dst)).toBe("x x1' b b1' y");
+    expect(r.at).toBe(2);
+    expect(ids(r.moved)).toBe("b b1'");
+    const sub = moveRows(xs, 1, dst, 1)!;
+    expect(ids(sub.dst)).toBe("x a1' x1' y");
+    expect(ids(moveRows(xs, 1, dst, 0)!.dst)).toBe("a1 x x1' y");
+    expect(ids(moveRows(xs, 1, [], 0)!.dst)).toBe("a1");
+    expect(ids(moveRows(xs, 0, [], 0)!.src)).toBe("b b1' c");
   });
 });

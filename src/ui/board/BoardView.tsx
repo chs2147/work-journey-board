@@ -68,7 +68,7 @@ export function BoardView() {
   return (
     <>
       <TagFilterBanner />
-      <div className={styles.scroll} ref={scrollRef}>
+      <div className={styles.scroll} ref={scrollRef} data-drag-scroll>
         <div className={styles.grid} style={gridStyle} data-testid="board-grid">
           <div className={`${styles.colHeader} ${styles.corner}`}>{STR.board.categoryHeader}</div>
           {view.days.map((day, i) => (
@@ -112,6 +112,7 @@ export function BoardView() {
                       vc.state !== "active" ? styles.cellEnded : "",
                     ].join(" ")}
                     data-testid={`cell-${vc.category.name}-${day}`}
+                    data-cell-key={key}
                     onMouseDown={(e) => {
                       if (narrow && e.target === e.currentTarget) {
                         e.preventDefault();

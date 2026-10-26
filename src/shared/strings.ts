@@ -41,6 +41,7 @@ export const STR = {
     todaySuffix: "오늘",
     addRecord: "+ 기록 추가",
     deleteRow: "이 항목 삭제 (Alt+Delete)",
+    dragRow: "끌어서 자리 바꾸기 (같은 칸 안은 Alt+↑/↓도 됨)",
     deleteGroup: (subs: number) => `이 항목과 세부 항목 ${subs}개 삭제 (Alt+Delete)`,
     addCategory: "+ 업무 추가",
     addCategoryPlaceholder: "업무 이름 입력 후 Enter (Esc 닫기)",

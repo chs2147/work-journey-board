@@ -332,6 +332,7 @@ interface SqlDriver {
 interface JournalRepository {          // SqlDriver 위의 단일 구현
   getWeek(weekId: string): Promise<WeekView>;  // 보일 카테고리 + 7일 항목 + 주간 메모 + 요약
   saveCell(date: string, categoryId: string, items: ItemDraft[]): Promise<void>; // 셀 단위 통째 저장(트랜잭션)
+  saveCells(cells: { date; categoryId; items }[]): Promise<void>; // 여러 칸 한 batch(행 끌어서 옮기기, v0.2.10) — 받는 칸을 먼저: 같은 id upsert가 행의 날짜·업무를 바꾼 뒤 원래 칸의 "목록에 없는 행 삭제"가 돈다(improve-1026v2-spec 3-4)
   getWeekNote(weekId: string): Promise<{ doc: NoteDoc; legacy: boolean }>; // legacy = 요일 메모를 옮겨 보여 주는 중
   saveWeekNote(weekId: string, doc: NoteDoc): Promise<void>;              // 문서 통째(허용 노드만 남겨 저장)
   addNoteAsset(weekId, image): Promise<string>; getNoteAssets(weekId); pruneNoteAssets(weekId, keepIds); noteAssetStats();

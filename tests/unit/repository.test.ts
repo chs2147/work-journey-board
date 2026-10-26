@@ -89,6 +89,35 @@ describe("셀 저장 (data-spec 2·8-1)", () => {
     ]);
   });
 
+  it("saveCells: 받는 칸 먼저 한 batch — 옮긴 행은 id·생성 시각을 지키고 날짜·업무만 바뀐다(improve-1026v2-spec 3-4)", async () => {
+    const { repo, db, clock } = await freshRepo();
+    const a = await repo.createCategory("A", "2026-W43");
+    const b = await repo.createCategory("B", "2026-W43");
+    const x = draft("옮길 것"),
+      x1 = draft("세부", 1, uuidv7()),
+      y = draft("남을 것"),
+      z = draft("원래 있던 것");
+    await repo.saveCell("2026-10-22", a.id, [x, x1, y]);
+    await repo.saveCell("2026-10-23", b.id, [z]);
+    const created = async (id: string) =>
+      (await db.select<{ created_at: string }>("SELECT created_at FROM entry_item WHERE id = ?", [id]))[0]
+        ?.created_at;
+    const before = await created(x.id);
+    clock.set(2026, 10, 23, 15); // 다시 만들어지면 생성 시각이 바뀐다
+    await repo.saveCells([
+      { date: "2026-10-23", categoryId: b.id, items: [z, x, x1] },
+      { date: "2026-10-22", categoryId: a.id, items: [y] },
+    ]);
+    const week = await repo.getWeek("2026-W43");
+    expect(week.items[cellKey("2026-10-22", a.id)]!.map((i) => i.text)).toEqual(["남을 것"]);
+    expect(week.items[cellKey("2026-10-23", b.id)]!.map((i) => [i.id, i.seq, i.depth])).toEqual([
+      [z.id, 1, 0],
+      [x.id, 2, 0],
+      [x1.id, 3, 1],
+    ]);
+    expect(await created(x.id)).toBe(before);
+  });
+
   it("빈 항목은 저장 안 함, 첫 항목은 본 항목으로", async () => {
     const { repo } = await freshRepo();
     const c = await repo.createCategory("A", "2026-W43");

@@ -1,6 +1,6 @@
 # 개선사항 1026 v2 — 상세 설계
 
-> 작성: 2026-10-26 · 상태: **12절 추천안으로 확정(2026-10-26 "V1부터 진행") · V1 구현(`0.2.9`)** · V2·V3 대기
+> 작성: 2026-10-26 · 상태: **12절 추천안으로 확정(2026-10-26 "V1부터 진행") · V1 구현(`0.2.9`) · V2 구현(`0.2.10`)** · V3 대기
 > 요청: 2026-10-26 사용자 개선 목록 v2(아래 0절 표의 #1~#10)
 > 시안: 사용자 개인 미리보기(클로드 아티팩트 "개선사항 1026 v2 시안" — ① 주간 보드 ② 행 삭제·끌어서 옮기기 ③ 업무연계 메모 ④ 중요 업무 목록 ⑤ 보기 아이콘). 시안 속 기록은 모두 가상 예시다.
 > 관련: [improve-1026-spec.md](improve-1026-spec.md)(v1, U1~U4) · [overview.md](overview.md) 10-3(개조식 입력·단축키) · [important-repeat-spec.md](important-repeat-spec.md) 2절(중요 업무 목록) · [weekly-note-spec.md](weekly-note-spec.md) 4·5절(메모 상자·문서 JSON) · CLAUDE.md 4-3(데이터 안전)·4-6(입력 UX)
@@ -185,4 +185,11 @@
 - **중요 목록**: `groupImportant`가 묶음마다 `categories`(id·이름·색·종료·항목)를 함께 돌려주고, `items`는 보이는 순서(업무 → 날짜 → 칸 안 순서)로 펼친 목록. 패널은 업무 머리(`h4`, 접지 않음) + 들여쓴 항목, "오늘" 묶음은 아랫줄 없음, 그 밖은 날짜(+지남). `↑↓`는 `[data-row]`만 지나가 머리를 건너뜀.
 - **보기 아이콘**: `icons.tsx` `IconWeekView`·`IconDayView({ day })`(SVG `<text>` 숫자, 본문 글꼴). 숫자 = 오늘 뷰의 날(`focusDay`), 주간 뷰에서는 오늘. `aria-label`·`title` = `주간 뷰 (Alt+V)` / `오늘 뷰 · 10/22(목) (Alt+V)`.
 - 테스트: 단위 `items.test.ts`(삭제 범위)·`important.test.ts`(업무 묶음), E2E `tests/e2e/v1.spec.ts`(단추·미리보기·토스트 되돌리기, `Alt+Delete`·`Ctrl+Z`, 빈 항목, 중요 목록 묶음·키보드, 보기 아이콘). 회사 PC 확인표 m1-check 7-9.
+
+### V2 (`0.2.10`, 2026-10-26)
+- **도메인**: `items.ts` `snapGap`(본 항목 묶음은 다른 묶음의 세부 항목 사이에 끼지 않게 그 묶음 끝으로) · `moveRows`(같은 칸이면 옮기기 전 목록 기준 틈, 제자리면 null; 세부 항목은 틈 0이면 본 항목, 그 밖은 세부 항목).
+- **저장소**: `saveCells(cells[])` — `saveCell`의 문장 만들기를 `cellStatements`로 나눠 여러 칸을 한 batch로. 받는 칸을 먼저(id·생성 시각·처리 완료·가져오기 묶음 보존, 단위 테스트로 고정).
+- **스토어**: `moveRowsTo(fromKey, fromIndex, toKey, gap)` — 먼저 `flushAll`, 같은 칸은 지금 칸 저장 길, 다른 칸은 `applyCells`(받는 칸 먼저) → 실행 취소 1단계(되돌릴 때는 원래 칸이 받는 칸). 옮긴 항목을 잠깐 강조, 받는 칸의 요일을 포커스 열로.
+- **화면**: `ui/board/rowDrag.ts` — ⋮⋮(`tabIndex -1`)의 포인터 이벤트로 직접 끌기(`setPointerCapture`, 4px 넘게 움직여야 시작). 놓을 칸 = `elementFromPoint` → `[data-cell-key]`(주간 보드 칸·오늘 뷰 카드), 틈 = `[data-item-index]` 행 가운데 기준. 좁은 열(편집기 없음)에 대면 `setFocusDay`로 넓힘. 그림자는 `document.body`에 붙인 고정 상자(위치는 CSSOM `transform` — CSP 인라인 style 금지와 무관). 스크롤 상자(`[data-drag-scroll]`) 가장자리 40px에서 자동 스크롤. `Esc`·칸 밖에 놓기 = 아무 일 없음. 파란 선은 높이 0 요소의 `::after`라 끄는 동안 줄이 밀리지 않는다.
+- 테스트: 단위 `items.test.ts`(끌기 규칙)·`repository.test.ts`(saveCells), E2E `tests/e2e/v2.spec.ts`(칸 안·칸 사이 묶음 이동과 ★·중요 목록, 세부 항목 깊이, Esc·칸 밖, 오늘 뷰 카드 사이, Ctrl+Z/Ctrl+Y). 회사 PC 확인표 m1-check 7-10.
 

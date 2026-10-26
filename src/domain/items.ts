@@ -57,6 +57,52 @@ export function deleteAt(
   return { items: next, removed: items.slice(start, end), start };
 }
 
+/**
+ * 끌어 놓을 틈(0 = 맨 위 … items.length = 맨 아래, improve-1026v2-spec 3-1).
+ * 본 항목 묶음은 다른 묶음의 세부 항목 사이에 끼지 않도록 그 묶음 끝으로 민다(늘 본 항목으로 남게).
+ */
+export function snapGap(items: ItemDraft[], gap: number, movingParent: boolean): number {
+  let g = Math.max(0, Math.min(gap, items.length));
+  if (movingParent) while (g < items.length && items[g]!.depth === 1) g++;
+  return g;
+}
+
+/**
+ * 행 끌어서 옮기기(3절). index 항목(본 항목이면 딸린 세부 항목까지)을 dst의 gap 틈으로.
+ * dst = null이면 같은 칸 안 이동(gap은 옮기기 전 목록 기준). 세부 항목은 놓은 자리의 위 항목에 딸리고,
+ * 맨 위(gap 0)에 놓이면 본 항목이 된다. 제자리면 null. moved = 옮긴 줄(새 깊이), at = 받는 칸에서의 첫 위치
+ */
+export function moveRows(
+  src: ItemDraft[],
+  index: number,
+  dst: ItemDraft[] | null,
+  gap: number,
+): { src: ItemDraft[]; dst: ItemDraft[]; moved: ItemDraft[]; at: number } | null {
+  if (!src[index]) return null;
+  const [start, end] = deleteRange(src, index);
+  const movingParent = src[index]!.depth === 0;
+  const rest = [...src.slice(0, start), ...src.slice(end)];
+  let target: ItemDraft[];
+  let at: number;
+  if (dst === null) {
+    const g = snapGap(src, gap, movingParent);
+    if (g >= start && g <= end) return null;
+    target = rest;
+    at = g > start ? g - (end - start) : g;
+  } else {
+    target = dst;
+    at = snapGap(dst, gap, movingParent);
+  }
+  const block = src.slice(start, end);
+  const moved = movingParent ? block : [{ ...block[0]!, depth: (at === 0 ? 0 : 1) as Depth }];
+  const placed = [...target.slice(0, at), ...moved, ...target.slice(at)];
+  const fix = (xs: ItemDraft[]) =>
+    xs[0]?.depth === 1 ? [{ ...xs[0], depth: 0 as Depth }, ...xs.slice(1)] : xs;
+  return dst === null
+    ? { src: fix(placed), dst: fix(placed), moved, at }
+    : { src: fix(rest), dst: fix(placed), moved, at };
+}
+
 /** 본 항목 + 딸린 세부 항목의 범위 [start, end) */
 function blockRange(items: ItemDraft[], start: number): [number, number] {
   let end = start + 1;

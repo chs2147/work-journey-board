@@ -1,6 +1,7 @@
 // 셀 하나의 개조식 입력기. 항목마다 <textarea> 1개(자동 높이) — contenteditable의 커서·IME 문제를 피한다(i-m1-plan 4절).
 // 키 동작은 overview 10-3절 표가 기준이다. 한글 조합 중(isComposing)에는 Enter·Tab 등을 처리하지 않는다.
 import {
+  Fragment,
   useCallback,
   useLayoutEffect,
   useRef,
@@ -33,6 +34,7 @@ import { pasteImagesFromBoard } from "../note/noteStore";
 import { autoSize, isComposingKey, useRemeasure } from "./helpers";
 import { LinkedText } from "./LinkedText";
 import { IconTrash } from "../common/icons";
+import { startRowDrag, useRowDrag } from "./rowDrag";
 import styles from "./Board.module.css";
 
 export interface CellNav {
@@ -63,6 +65,17 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
   /** 삭제 단추에 마우스를 올린 항목 — 지워질 묶음을 붉게 미리 보인다(improve-1026v2-spec 2절) */
   const [deleteHover, setDeleteHover] = useState<number | null>(null);
   const [delStart, delEnd] = deleteHover === null ? [-1, -1] : deleteRange(items, deleteHover);
+  // 행 끌어서 옮기기(improve-1026v2-spec 3절): 원래 자리는 흐리게, 놓을 칸은 테두리, 놓을 틈에 파란 선
+  const drag = useRowDrag((s) => s.drag);
+  const dragFrom = drag?.fromKey === cellKey ? drag : null;
+  const dropGap = drag?.overKey === cellKey ? drag.gap : null;
+  const dropLine = (
+    <div
+      className={drag?.sub ? styles.dropLineSub : styles.dropLine}
+      data-testid="drop-line"
+      aria-hidden="true"
+    />
+  );
   const containerRef = useRef<HTMLDivElement>(null);
   const measureAll = useCallback(() => refs.current.forEach(autoSize), []);
   useRemeasure(containerRef, measureAll);
@@ -216,7 +229,11 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
   return (
     <div
       ref={containerRef}
-      className={styles.cellBody}
+      className={[
+        styles.cellBody,
+        drag?.overKey === cellKey && drag.fromKey !== cellKey ? styles.dropCell : "",
+      ].join(" ")}
+      data-cell-editor
       onFocus={() => setFocusDay(splitKey(cellKey).date)}
       onBlur={(e) => {
         if (!containerRef.current?.contains(e.relatedTarget as Node | null)) void leaveCell(cellKey);
@@ -236,97 +253,116 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
           !(focus?.kind === "item" && focus.key === cellKey && focus.index === i) &&
           hasLink(it.text);
         return (
-          <div
-            key={it.id}
-            className={[
-              it.depth === 1 ? styles.itemSub : styles.item,
-              it.flagged ? styles.flagged : "",
-              isRepeating ? styles.repeating : "",
-              pulseId === it.id ? styles.pulse : "",
-              i >= delStart && i < delEnd ? styles.deleting : "",
-            ].join(" ")}
-            data-flagged={it.flagged ? "true" : undefined}
-            data-repeating={isRepeating ? "true" : undefined}
-          >
-            {/* 개조 부호 = 중요 표시 단추. 마우스를 올리면 ☆, 켜지면 ★. 키보드는 Alt+I(Tab 순서에서는 뺀다) */}
-            <button
-              type="button"
-              tabIndex={-1}
-              className={styles.bullet}
-              aria-label={it.flagged ? STR.important.flagOff : STR.important.flagOn}
-              aria-pressed={Boolean(it.flagged)}
-              title={it.flagged ? STR.important.flagOff : STR.important.flagOn}
-              disabled={!it.text.trim()}
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => void toggleFlag(cellKey, i)}
-            />
-            {viewing ? (
-              <LinkedText
-                text={it.text}
-                ariaLabel={ariaLabel}
-                onEdit={(caret) => {
-                  setFocusDay(splitKey(cellKey).date);
-                  setFocus({ kind: "item", key: cellKey, index: i, caret });
-                }}
-              />
-            ) : (
-              <textarea
-                ref={(el) => {
-                  refs.current[i] = el;
-                }}
-                className={styles.itemInput}
-                rows={1}
-                value={it.text}
-                aria-label={ariaLabel}
-                spellCheck={false}
-                onFocus={() => setActiveIndex(i)}
-                onBlur={() => setActiveIndex((a) => (a === i ? null : a))}
-                onChange={(e) => onChange(i, e.target.value)}
-                onKeyDown={(e) => onKeyDown(e, i)}
-                onPaste={(e) => onPaste(e, i)}
-              />
-            )}
-            {/* 매주 반복: 반복 중이면 ↻를 늘 보이고(누르면 끔), 아니면 마우스를 올릴 때만 ↻(누르면 켬) */}
-            {it.depth === 0 && it.text.trim() && (
+          <Fragment key={it.id}>
+            {dropGap === i && dropLine}
+            <div
+              className={[
+                it.depth === 1 ? styles.itemSub : styles.item,
+                it.flagged ? styles.flagged : "",
+                isRepeating ? styles.repeating : "",
+                pulseId === it.id ? styles.pulse : "",
+                i >= delStart && i < delEnd ? styles.deleting : "",
+                dragFrom && i >= dragFrom.start && i < dragFrom.end ? styles.dragSource : "",
+              ].join(" ")}
+              data-item-index={i}
+              data-flagged={it.flagged ? "true" : undefined}
+              data-repeating={isRepeating ? "true" : undefined}
+            >
+              {/* 개조 부호 = 중요 표시 단추. 마우스를 올리면 ☆, 켜지면 ★. 키보드는 Alt+I(Tab 순서에서는 뺀다) */}
               <button
                 type="button"
                 tabIndex={-1}
-                className={isRepeating ? styles.repeatOn : styles.repeatHover}
-                aria-label={isRepeating ? STR.repeat.toggleOff : STR.repeat.toggleOn}
-                aria-pressed={isRepeating}
-                title={
-                  isRepeating
-                    ? `${STR.repeat.badge(DAY_LABELS[dayIndex(splitKey(cellKey).date)]!)} · ${STR.repeat.toggleOff}`
-                    : STR.repeat.toggleOn
-                }
+                className={styles.bullet}
+                aria-label={it.flagged ? STR.important.flagOff : STR.important.flagOn}
+                aria-pressed={Boolean(it.flagged)}
+                title={it.flagged ? STR.important.flagOff : STR.important.flagOn}
+                disabled={!it.text.trim()}
                 onMouseDown={(e) => e.preventDefault()}
-                onClick={() => void toggleRepeat(cellKey, i)}
-              >
-                ↻
-              </button>
-            )}
-            {(it.text.trim() || items.length > 1) && (
-              <button
-                type="button"
-                tabIndex={-1}
-                className={styles.deleteRow}
-                aria-label={deleteLabel(items, i)}
-                title={deleteLabel(items, i)}
-                data-testid="delete-row"
-                onMouseDown={(e) => e.preventDefault()}
-                onMouseEnter={() => setDeleteHover(i)}
-                onMouseLeave={() => setDeleteHover(null)}
-                onClick={() => {
-                  setDeleteHover(null);
-                  void deleteItemAt(cellKey, i);
-                }}
-              >
-                <IconTrash />
-              </button>
-            )}
-          </div>
+                onClick={() => void toggleFlag(cellKey, i)}
+              />
+              {/* ⋮⋮ 끌기 손잡이(improve-1026v2-spec 3-1) — 부호 단추 다음(자리는 CSS로 왼쪽 여백) */}
+              {it.text.trim() && (
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  className={styles.grip}
+                  aria-label={STR.board.dragRow}
+                  title={STR.board.dragRow}
+                  data-testid="drag-row"
+                  onPointerDown={(e) => startRowDrag(e, cellKey, i)}
+                >
+                  ⋮⋮
+                </button>
+              )}
+              {viewing ? (
+                <LinkedText
+                  text={it.text}
+                  ariaLabel={ariaLabel}
+                  onEdit={(caret) => {
+                    setFocusDay(splitKey(cellKey).date);
+                    setFocus({ kind: "item", key: cellKey, index: i, caret });
+                  }}
+                />
+              ) : (
+                <textarea
+                  ref={(el) => {
+                    refs.current[i] = el;
+                  }}
+                  className={styles.itemInput}
+                  rows={1}
+                  value={it.text}
+                  aria-label={ariaLabel}
+                  spellCheck={false}
+                  onFocus={() => setActiveIndex(i)}
+                  onBlur={() => setActiveIndex((a) => (a === i ? null : a))}
+                  onChange={(e) => onChange(i, e.target.value)}
+                  onKeyDown={(e) => onKeyDown(e, i)}
+                  onPaste={(e) => onPaste(e, i)}
+                />
+              )}
+              {/* 매주 반복: 반복 중이면 ↻를 늘 보이고(누르면 끔), 아니면 마우스를 올릴 때만 ↻(누르면 켬) */}
+              {it.depth === 0 && it.text.trim() && (
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  className={isRepeating ? styles.repeatOn : styles.repeatHover}
+                  aria-label={isRepeating ? STR.repeat.toggleOff : STR.repeat.toggleOn}
+                  aria-pressed={isRepeating}
+                  title={
+                    isRepeating
+                      ? `${STR.repeat.badge(DAY_LABELS[dayIndex(splitKey(cellKey).date)]!)} · ${STR.repeat.toggleOff}`
+                      : STR.repeat.toggleOn
+                  }
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => void toggleRepeat(cellKey, i)}
+                >
+                  ↻
+                </button>
+              )}
+              {(it.text.trim() || items.length > 1) && (
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  className={styles.deleteRow}
+                  aria-label={deleteLabel(items, i)}
+                  title={deleteLabel(items, i)}
+                  data-testid="delete-row"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onMouseEnter={() => setDeleteHover(i)}
+                  onMouseLeave={() => setDeleteHover(null)}
+                  onClick={() => {
+                    setDeleteHover(null);
+                    void deleteItemAt(cellKey, i);
+                  }}
+                >
+                  <IconTrash />
+                </button>
+              )}
+            </div>
+          </Fragment>
         );
       })}
+      {dropGap !== null && dropGap >= items.length && dropLine}
       {previews?.map((p) => (
         <button
           key={p.rule.id}

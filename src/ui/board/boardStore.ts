@@ -3,7 +3,7 @@
 // - 실행 취소 단위 = 저장 1회(체크포인트). 저장 전에는 대기 중인 저장을 먼저 끝낸다.
 import { create } from "zustand";
 import type { DayMarkKind } from "../../domain/dayMark";
-import { appendCopies, deleteAt, normalizeCell } from "../../domain/items";
+import { appendCopies, deleteAt, moveRows, normalizeCell } from "../../domain/items";
 import { matchesTagFilter, NO_TAG, type Tag } from "../../domain/tags";
 import type { VisibleCategory } from "../../domain/categories";
 import { groupRange, type Recurrence } from "../../domain/recurrence";
@@ -277,6 +277,71 @@ export async function deleteItemAt(key: string, index: number, moveFocus = false
     label: STR.toast.undo,
     run: () => void undo(),
   });
+}
+
+/** 여러 칸을 한 batch로 저장하고 상태를 맞춘다(끌어서 옮기기·그 실행 취소/다시 실행). list는 받는 칸을 먼저 */
+async function applyCells(list: [string, ItemDraft[]][]) {
+  for (const [key] of list) {
+    const t = timers.get(key);
+    if (t) clearTimeout(t);
+    timers.delete(key);
+  }
+  set((s) => {
+    const cells = { ...s.cells };
+    for (const [key, items] of list) if (key in cells) cells[key] = items;
+    return { cells };
+  });
+  await track(() =>
+    requireRepo().saveCells(list.map(([key, items]) => ({ ...splitKey(key), items: normalizeCell(items) }))),
+  );
+  for (const [key, items] of list) persistedCells.set(key, normalizeCell(items));
+  void refreshImportant();
+  void refreshPrevDates();
+}
+
+/**
+ * 행 끌어서 옮기기(improve-1026v2-spec 3절): fromKey 칸 fromIndex 항목(본 항목이면 세부 항목까지)을 toKey 칸 gap 틈으로.
+ * 같은 칸이면 지금 칸 저장과 같은 길, 다른 칸이면 두 칸을 한 batch(saveCells, 받는 칸 먼저)로 → 실행 취소 1단계.
+ * 항목 id가 그대로라 ★·처리 완료·매주 반복 연결·가져오기 묶음이 따라간다.
+ */
+export async function moveRowsTo(fromKey: string, fromIndex: number, toKey: string, gap: number) {
+  await flushAll();
+  const cells = get().cells;
+  const src = cells[fromKey] ?? [];
+  const same = fromKey === toKey;
+  const r = moveRows(src, fromIndex, same ? null : (cells[toKey] ?? []), gap);
+  if (!r) return;
+  const movedId = r.moved[0]!.id;
+  const pulse = () => {
+    set({ pulseId: movedId });
+    setTimeout(() => {
+      if (get().pulseId === movedId) set({ pulseId: null });
+    }, PULSE_MS);
+  };
+  if (same) {
+    set((s) => ({ cells: { ...s.cells, [fromKey]: r.src } }));
+    await persistCell(fromKey);
+    pulse();
+    return;
+  }
+  const before: [string, ItemDraft[]][] = [
+    [fromKey, persistedCells.get(fromKey) ?? []],
+    [toKey, persistedCells.get(toKey) ?? []],
+  ];
+  const after: [string, ItemDraft[]][] = [
+    [toKey, r.dst],
+    [fromKey, r.src],
+  ];
+  try {
+    await applyCells(after);
+  } catch (e) {
+    reportError(e);
+    set((s) => ({ cells: { ...s.cells, [fromKey]: before[0]![1], [toKey]: before[1]![1] } }));
+    return;
+  }
+  pushUndo({ undo: () => applyCells(before), redo: () => applyCells(after) });
+  if (splitKey(toKey).date !== get().focusDay) setFocusDay(splitKey(toKey).date);
+  pulse();
 }
 
 function schedule(key: string, run: () => Promise<unknown>) {

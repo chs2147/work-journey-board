@@ -162,7 +162,7 @@ export function TodayView() {
           )}
         </div>
         <TagFilterBanner />
-        <div className={styles.cards}>
+        <div className={styles.cards} data-drag-scroll>
           {cats.length === 0 && <p className={styles.empty}>{STR.today.empty}</p>}
           {cats.map((vc, row) => {
             const id = vc.category.id;
@@ -188,7 +188,11 @@ export function TodayView() {
                   {chips.more > 0 && <span className={styles.chip}>{STR.tags.more(chips.more)}</span>}
                   {vc.state !== "active" && <span className={styles.chip}>{STR.board.ended}</span>}
                 </header>
-                <div className={styles.cardBody} data-testid={`cell-${vc.category.name}-${day}`}>
+                <div
+                  className={styles.cardBody}
+                  data-testid={`cell-${vc.category.name}-${day}`}
+                  data-cell-key={key}
+                >
                   <CellEditor
                     cellKey={key}
                     ariaLabel={STR.board.itemAria(vc.category.name, `${DAY_LABELS[dayIndex(day)]} ${day}`)}
