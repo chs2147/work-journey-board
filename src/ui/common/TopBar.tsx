@@ -9,6 +9,7 @@ import { useAppStore } from "./appStore";
 import { BrandLockup } from "./Brand";
 import { IconDayView, IconWeekView } from "./icons";
 import { TagFilterMenu } from "./TagFilterMenu";
+import { useInsights } from "../insights/insightsStore";
 import styles from "./TopBar.module.css";
 
 export function TopBar() {
@@ -31,6 +32,8 @@ export function TopBar() {
   const failed = useBoard((s) => s.failed.length);
   const journalReady = useAppStore((s) => s.journal.state === "ready");
   const summaryOpen = useSummary((s) => s.open);
+  // 인사이트 모드(m3-s1-spec 1-3): 주 단위 기능(주 이동·오늘·연간·보기·주간 요약·내보내기)은 감추고 태그 필터는 남긴다
+  const insights = useInsights((s) => s.open);
 
   return (
     <header className={styles.header}>
@@ -40,7 +43,13 @@ export function TopBar() {
       </div>
       {/* 2줄: 연도·주차 이동 · 저장 상태 · 설정 */}
       <div className={styles.bar}>
-        {ready && journalReady && (
+        {ready && journalReady && insights && (
+          <div className={styles.insightTitle} data-testid="insights-title">
+            <b>{STR.insights.title}</b>
+            <span>{STR.insights.subtitle}</span>
+          </div>
+        )}
+        {ready && journalReady && !insights && (
           <nav className={styles.nav}>
             <button
               type="button"
@@ -111,7 +120,7 @@ export function TopBar() {
         )}
         <div className={styles.spacer} />
         {ready && journalReady && <TagFilterMenu />}
-        {ready && journalReady && (
+        {ready && journalReady && !insights && (
           <button
             type="button"
             className={styles.textButton}
@@ -123,7 +132,7 @@ export function TopBar() {
             {STR.summary.button}
           </button>
         )}
-        {ready && journalReady && (
+        {ready && journalReady && !insights && (
           <button
             type="button"
             className={styles.textButton}

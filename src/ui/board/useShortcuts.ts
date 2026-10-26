@@ -18,6 +18,7 @@ import {
 import { toggleExport, useExport } from "../export/exportStore";
 import { toggleSummary } from "../summary/summaryStore";
 import { focusNote, leaveNote } from "../note/noteStore";
+import { closeInsights, focusedCategory, openInsights, useInsights } from "../insights/insightsStore";
 
 const isTyping = (el: Element | null) => el instanceof HTMLTextAreaElement || el instanceof HTMLInputElement;
 
@@ -28,6 +29,28 @@ export function useShortcuts() {
       const { ready, yearOpen, focusDay, weekId, panelOpen, viewMode } = useBoard.getState();
       if (!ready) return;
       const mod = e.ctrlKey || e.metaKey;
+      const insights = useInsights.getState().open;
+
+      // 인사이트(m3-s1-spec 10절): Alt+3 = 열기(칸의 업무)/보드로, Alt+1 = 보드로. 보이는 동안 보드 단축키는 쉰다
+      if (e.altKey && !mod && !e.shiftKey && e.code === "Digit3") {
+        e.preventDefault();
+        if (insights) {
+          closeInsights();
+          focusStartCell();
+        } else void openInsights(focusedCategory());
+        return;
+      }
+      if (insights) {
+        if (e.altKey && !mod && !e.shiftKey && e.code === "Digit1") {
+          e.preventDefault();
+          closeInsights();
+          focusStartCell();
+        } else if (e.altKey && !mod && !e.shiftKey && e.code === "Digit2") {
+          e.preventDefault();
+          setPanelOpen(!panelOpen, !panelOpen);
+        }
+        return;
+      }
 
       // 내보내기 대화상자가 열려 있으면 Alt+E(닫기) 말고는 보드 단축키를 받지 않는다
       if (useExport.getState().open) {

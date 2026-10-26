@@ -2,6 +2,7 @@
 import { importantBadge } from "../../domain/important";
 import { STR } from "../../shared/strings";
 import { focusStartCell, setPanelOpen, useBoard } from "../board/boardStore";
+import { closeInsights, openInsights, useInsights } from "../insights/insightsStore";
 import styles from "./Rail.module.css";
 
 const BoardIcon = () => (
@@ -23,7 +24,27 @@ const StarIcon = ({ filled }: { filled: boolean }) => (
   </svg>
 );
 
+/** 인사이트: 세로 시간축 + 점 + 줄(흐름, m3-s1-spec 1-1) */
+const InsightsIcon = () => (
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 18 18"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.6"
+    strokeLinecap="round"
+    aria-hidden="true"
+  >
+    <path d="M5 2.5v13" />
+    <circle cx="5" cy="5" r="1.6" fill="currentColor" />
+    <circle cx="5" cy="10" r="1.6" fill="currentColor" />
+    <path d="M8.5 5h7M8.5 10h5M8.5 14h6" />
+  </svg>
+);
+
 export function Rail() {
+  const insightsOpen = useInsights((s) => s.open);
   const important = useBoard((s) => s.important);
   const today = useBoard((s) => s.today);
   const panelOpen = useBoard((s) => s.panelOpen);
@@ -34,13 +55,28 @@ export function Rail() {
     <nav className={styles.rail} aria-label={STR.rail.label}>
       <button
         type="button"
-        className={`${styles.btn} ${styles.on}`}
-        aria-current="page"
+        className={`${styles.btn} ${insightsOpen ? "" : styles.on}`}
+        aria-current={insightsOpen ? undefined : "page"}
         aria-label={STR.rail.board}
         title={STR.rail.board}
-        onClick={() => focusStartCell()}
+        data-testid="rail-board"
+        onClick={() => {
+          closeInsights();
+          focusStartCell();
+        }}
       >
         <BoardIcon />
+      </button>
+      <button
+        type="button"
+        className={`${styles.btn} ${insightsOpen ? styles.on : ""}`}
+        aria-current={insightsOpen ? "page" : undefined}
+        aria-label={STR.insights.rail}
+        title={STR.insights.rail}
+        data-testid="rail-insights"
+        onClick={() => void openInsights()}
+      >
+        <InsightsIcon />
       </button>
       <span className={styles.sep} aria-hidden="true" />
       <button

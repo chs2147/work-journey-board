@@ -31,6 +31,10 @@ export interface Settings {
     todaySplit: number;
     /** 보드 태그 필터(improve-1026-spec 6절) — 태그 id들(OR), "__none__" = 태그 없음. 빈 배열 = 전체. 다시 켜도 유지 */
     tagFilter: string[];
+    /** 인사이트에서 마지막으로 본 업무(m3-s1-spec 1-2) — 레일로 열면 그 업무 */
+    insightCategory: string | null;
+    /** 인사이트 업무 경과 지도 펼침(4-0) */
+    insightMapOpen: boolean;
   };
 }
 
@@ -65,6 +69,8 @@ export const DEFAULT_SETTINGS: Settings = {
     noteMinimap: true,
     viewMode: "week",
     todaySplit: 0.42,
+    insightCategory: null,
+    insightMapOpen: true,
   },
 };
 
@@ -115,6 +121,8 @@ export function mergeSettings(base: Settings, patch: unknown): Settings {
     s.ui.todaySplit = DEFAULT_SETTINGS.ui.todaySplit;
   if (!Array.isArray(s.ui.tagFilter) || !s.ui.tagFilter.every((x) => typeof x === "string"))
     s.ui.tagFilter = [];
+  if (s.ui.insightCategory !== null && typeof s.ui.insightCategory !== "string") s.ui.insightCategory = null;
+  if (typeof s.ui.insightMapOpen !== "boolean") s.ui.insightMapOpen = true;
   if (!(s.ui.noteDockHeight >= NOTE_DOCK_MIN)) s.ui.noteDockHeight = DEFAULT_SETTINGS.ui.noteDockHeight;
   return s;
 }

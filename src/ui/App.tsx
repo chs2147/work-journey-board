@@ -21,6 +21,8 @@ import { setSummaryOpen, useSummary } from "./summary/summaryStore";
 import { SummaryPanel } from "./summary/SummaryPanel";
 import { NoteDock } from "./note/NoteDock";
 import { TodayView } from "./today/TodayView";
+import { InsightsView } from "./insights/InsightsView";
+import { useInsights } from "./insights/insightsStore";
 import { useNote } from "./note/noteStore";
 import { finishSplash } from "./splash";
 import styles from "./App.module.css";
@@ -88,6 +90,8 @@ function Workspace() {
   const viewMode = useBoard((s) => s.viewMode);
   const summaryOpen = useSummary((s) => s.open);
   const noteExpanded = useNote((s) => s.expanded);
+  // 인사이트(m3-s1-spec 1-2): 보드는 숨겨 둔 채 그대로 — 보던 주·뷰·커서·메모가 남는다
+  const insightsOpen = useInsights((s) => s.open);
   // 메모 도크가 자동 높이면 보드는 필요한 만큼만(남는 공간은 메모) — 접혀 있으면 보드가 다 쓴다
   const noteAutoHeight = useNote((s) => s.dockAuto && !s.collapsed);
   // 좁은 창이면 패널을 보드 위에 겹쳐 띄우고, 보드를 누르면 닫는다(spec 1-3)
@@ -99,8 +103,9 @@ function Workspace() {
     <div className={styles.workspace}>
       <Rail />
       {panelOpen && <ImportantPanel overlay={narrow} />}
+      {insightsOpen && <InsightsView />}
       <div
-        className={styles.boardArea}
+        className={insightsOpen ? styles.hidden : styles.boardArea}
         onMouseDown={() => {
           if (narrow && panelOpen) setPanelOpen(false);
           if (summaryOverlay && summaryOpen) setSummaryOpen(false);
@@ -124,7 +129,7 @@ function Workspace() {
           </>
         )}
       </div>
-      {summaryOpen && <SummaryPanel overlay={summaryOverlay} />}
+      {summaryOpen && !insightsOpen && <SummaryPanel overlay={summaryOverlay} />}
     </div>
   );
 }

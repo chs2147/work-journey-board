@@ -15,6 +15,7 @@ import {
   useBoard,
 } from "./boardStore";
 import { TagPopover } from "./TagPopover";
+import { openInsights } from "../insights/insightsStore";
 import { isComposingKey } from "./helpers";
 import styles from "./Board.module.css";
 
@@ -196,6 +197,15 @@ export function CategoryHeader({
           </button>
           {menuOpen && (
             <div className={styles.menu} role="menu" ref={menuListRef}>
+              <button
+                role="menuitem"
+                type="button"
+                className={styles.menuStrong}
+                onClick={() => run(() => void openInsights(category.id))}
+              >
+                {STR.insights.open}
+                <span className={styles.menuKey}>{STR.insights.openKey}</span>
+              </button>
               <button role="menuitem" type="button" onClick={() => run(() => setEditing(true))}>
                 {STR.categoryMenu.rename}
               </button>

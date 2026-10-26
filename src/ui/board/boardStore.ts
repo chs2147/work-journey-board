@@ -830,6 +830,17 @@ export async function archiveCategory(id: string) {
   });
 }
 
+/** 종료된 업무 다시 시작(인사이트 타임라인 머리 — m3-s1-spec 4-1). 되돌리기 = 다시 종료 */
+export async function reactivateCategory(id: string, name: string) {
+  await flushAll();
+  await track(() => requireRepo().reactivateCategory(id));
+  await reload();
+  toast(STR.settings.reactivated(name), {
+    label: STR.toast.undo,
+    run: () => void archiveCategory(id),
+  });
+}
+
 export async function countItems(id: string) {
   return requireRepo().countItems(id);
 }

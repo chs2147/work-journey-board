@@ -1277,6 +1277,54 @@ export class JournalRepository {
     return out;
   }
 
+  // ── 인사이트(m3-s1-spec 11-1) — 읽기 전용 ─────────────
+  /** 한 업무의 기록(날짜 → 칸 안 순서). 경과 타임라인 본문 */
+  async getCategoryEntries(categoryId: string, from: DateStr, to: DateStr): Promise<EntryItem[]> {
+    const rows = await this.db.select<ItemRow>(
+      `SELECT id, date, category_id, seq, depth, text, flagged, flag_done_at, recurrence_id FROM entry_item
+       WHERE category_id = ? AND date BETWEEN ? AND ? ORDER BY date, seq`,
+      [categoryId, from, to],
+    );
+    return rows.map(toItem);
+  }
+
+  /** 업무별 처음·마지막 기록일(전체)과 기간 안 항목 수 — 업무 목록·기간 밖 안내 */
+  async getCategoryStats(
+    from: DateStr,
+    to: DateStr,
+  ): Promise<{ categoryId: string; first: DateStr; last: DateStr; inRange: number }[]> {
+    const rows = await this.db.select<{ category_id: string; first: string; last: string; n: number }>(
+      `SELECT category_id, MIN(date) AS first, MAX(date) AS last,
+              SUM(CASE WHEN date BETWEEN ? AND ? THEN 1 ELSE 0 END) AS n
+       FROM entry_item WHERE trim(text) <> '' GROUP BY category_id`,
+      [from, to],
+    );
+    return rows.map((r) => ({
+      categoryId: r.category_id,
+      first: r.first,
+      last: r.last,
+      inRange: Number(r.n),
+    }));
+  }
+
+  /** 한 업무의 날짜별 항목 수(전체 수명) — 업무 경과 지도(m3-s1-spec 4-0) */
+  async getCategoryDays(categoryId: string): Promise<{ date: DateStr; items: number }[]> {
+    const rows = await this.db.select<{ date: string; n: number }>(
+      "SELECT date, COUNT(*) AS n FROM entry_item WHERE category_id = ? AND trim(text) <> '' GROUP BY date ORDER BY date",
+      [categoryId],
+    );
+    return rows.map((r) => ({ date: r.date, items: Number(r.n) }));
+  }
+
+  /** 주 범위의 저장된 메모 문서 — 업무연계 메모(ref.item)를 타임라인에 붙일 때. 예전 요일 메모는 연결이 없어 읽지 않는다 */
+  async getWeekNotesBetween(fromWeek: WeekId, toWeek: WeekId): Promise<Record<WeekId, NoteDoc>> {
+    const rows = await this.db.select<{ week_id: string; doc: string }>(
+      "SELECT week_id, doc FROM week_note WHERE week_id BETWEEN ? AND ?",
+      [fromWeek, toWeek],
+    );
+    return Object.fromEntries(rows.map((r) => [r.week_id, parseNoteDoc(r.doc)]));
+  }
+
   // ── 기존 일지 가져오기(i-m3-plan 3절) ─────────────────
   /** 가져오기 양식의 `업무` 시트에 미리 채울 업무: 이번 주 진행 중인 업무(보드 순서) */
   async importTemplateCategories(): Promise<string[]> {

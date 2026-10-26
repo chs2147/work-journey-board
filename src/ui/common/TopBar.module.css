@@ -229,3 +229,20 @@
   width: 18px;
   height: 18px;
 }
+
+/* 인사이트 모드 제목(m3-s1-spec 1-3) */
+.insightTitle {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+.insightTitle b {
+  font-size: var(--fs-lg);
+}
+
+.insightTitle span {
+  color: var(--text-2);
+  font-size: var(--fs-xs);
+}

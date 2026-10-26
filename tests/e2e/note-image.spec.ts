@@ -115,6 +115,7 @@ test("빈 곳 클릭 → Ctrl+V(캡처) → 그 자리에 이미지 상자(빈 �
   expect(pos).toEqual(["400px", "104px", "400px"]); // 작은 그림은 제 크기
   // 글 상자 아래에 붙이기
   await page.mouse.click(c.x + 24, c.y + 24);
+  await expect(page.locator(":focus")).toHaveClass(/note-prose/); // 새 상자 편집기가 커서를 받은 뒤 입력
   await page.keyboard.type("가상 메모");
   await pasteImage(page, ":focus", await makePng(page, 200, 100, "#e55"));
   await expect(images(page)).toHaveCount(2);

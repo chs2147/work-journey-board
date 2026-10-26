@@ -63,19 +63,18 @@ export function splitCategories(input: SummaryInput) {
   return { byCat, withItems, empty };
 }
 
+/** 항목 하나의 줄들: 본 항목 `- (월) 내용`, 세부 항목 `  · 내용`(여러 줄은 이어 쓰기 들여쓰기) — 경과 복사도 같은 표기 */
+export function summaryItemLines(it: { date: DateStr; depth: Depth; text: string }): string[] {
+  return it.depth === 0 ? lines(MAIN + dayTag(it.date), MAIN_CONT, it.text) : lines(SUB, SUB_CONT, it.text);
+}
+
 export function buildWeeklySummary(input: SummaryInput, opt: SummaryOptions): string {
   const { byCat, withItems, empty } = splitCategories(input);
   const out: string[] = [`[주간 업무 요약] ${weekTitle(input.weekId)}`];
 
   for (const c of withItems) {
     out.push("", `■ ${c.name}`);
-    for (const it of byCat.get(c.id)!) {
-      out.push(
-        ...(it.depth === 0
-          ? lines(MAIN + dayTag(it.date), MAIN_CONT, it.text)
-          : lines(SUB, SUB_CONT, it.text)),
-      );
-    }
+    for (const it of byCat.get(c.id)!) out.push(...summaryItemLines(it));
   }
 
   // 메모: 주간 메모의 글을 그대로(예전 요일 메모는 `- (요일) 내용` 줄로 옮겨져 있어 결과가 예전과 같다)

@@ -15,6 +15,7 @@ import { STR } from "../../shared/strings";
 import { flushAll, init as initBoard, toast } from "../board/boardStore";
 import { flushDraft, initSummary } from "../summary/summaryStore";
 import { finishNote, flushNote, initNote } from "../note/noteStore";
+import { initInsights } from "../insights/insightsStore";
 import { useAppStore, type JournalStatus } from "./appStore";
 
 const set = useAppStore.setState;
@@ -81,6 +82,7 @@ async function activate(driver: SqlDriver, dataDir: string) {
   await initBoard(repo);
   await initSummary(repo);
   await initNote(repo);
+  await initInsights(repo);
   set({ journal: { state: "ready", driver, repo, dataDir, sqliteVersion: row?.v ?? "?" } });
 }
 

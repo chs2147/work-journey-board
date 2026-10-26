@@ -183,3 +183,20 @@ test("보드·주간 메모 편집기(서식 전부)·엑셀 내보내기 — CS
   expect(await violations(page)).toEqual([]);
   expect(external).toEqual([]);
 });
+
+test("인사이트(경과 지도·타임라인·검색·연결 메모·월 단위) — CSP 위반 0", async ({ page }) => {
+  await page.goto("/?today=2026-10-22&sample=insights");
+  await expect(page.locator(":focus")).toHaveValue("테스트 데이터 이관 스크립트 작성 착수");
+  await page.keyboard.press("Alt+Digit3");
+  await expect(page.getByTestId("journey-map")).toBeVisible();
+  await expect(page.getByTestId("timeline-week").first()).toBeVisible();
+  await page.getByTestId("insight-period").selectOption("all");
+  await page.getByTestId("month-folded").first().click();
+  await page.getByTestId("insight-search").fill("배포");
+  await page.getByTestId("memo-chip").first().click();
+  await expect(page.getByTestId("memo-box")).toBeVisible();
+  await page.getByTestId("journey-map").getByRole("button", { name: "월", exact: true }).click();
+  await page.getByTestId("journey-map").getByRole("button", { name: "표로 보기" }).click();
+  await expect(page.getByTestId("journey-map").locator("table")).toBeVisible();
+  expect(await violations(page)).toEqual([]);
+});

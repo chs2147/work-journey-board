@@ -364,6 +364,16 @@
   cursor: default;
 }
 
+/* 업무 머리 메뉴 맨 위 [경과 타임라인 보기](m3-s1-spec 1-1) */
+.menu > .menuStrong {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--sp-1);
+  color: var(--accent);
+  font-weight: var(--fw-bold);
+  box-shadow: 0 1px 0 var(--line);
+}
+
 .swatches {
   display: grid;
   grid-template-columns: repeat(8, 16px);

@@ -546,3 +546,36 @@ describe("주간 요약 수정본(output-spec 2-3)", () => {
     expect((await repo.getWeeklySummary("2026-W43")).editedText).toBeNull();
   });
 });
+
+describe("인사이트 조회(m3-s1-spec 11-1)", () => {
+  it("업무 기록·통계·날짜별 수·주 범위 메모 — 다른 업무·기간 밖은 섞이지 않음", async () => {
+    const { repo } = await freshRepo();
+    const a = await repo.createCategory("A", "2026-W40");
+    const b = await repo.createCategory("B", "2026-W40");
+    await repo.saveCell("2026-10-05", a.id, [draft("가"), draft("가-세부", 1)]);
+    await repo.saveCell("2026-10-21", a.id, [draft("나")]);
+    await repo.saveCell("2026-10-22", b.id, [draft("다")]);
+    const entries = await repo.getCategoryEntries(a.id, "2026-10-01", "2026-10-31");
+    expect(entries.map((e) => [e.date, e.depth, e.text])).toEqual([
+      ["2026-10-05", 0, "가"],
+      ["2026-10-05", 1, "가-세부"],
+      ["2026-10-21", 0, "나"],
+    ]);
+    expect(await repo.getCategoryEntries(a.id, "2026-10-10", "2026-10-31")).toHaveLength(1);
+    const stats = await repo.getCategoryStats("2026-10-19", "2026-10-25");
+    expect(stats.find((s) => s.categoryId === a.id)).toEqual({
+      categoryId: a.id,
+      first: "2026-10-05",
+      last: "2026-10-21",
+      inRange: 1,
+    });
+    expect(await repo.getCategoryDays(a.id)).toEqual([
+      { date: "2026-10-05", items: 2 },
+      { date: "2026-10-21", items: 1 },
+    ]);
+    const doc = emptyDoc();
+    await repo.saveWeekNote("2026-W43", doc);
+    await repo.saveWeekNote("2026-W50", doc);
+    expect(Object.keys(await repo.getWeekNotesBetween("2026-W40", "2026-W45"))).toEqual(["2026-W43"]);
+  });
+});
