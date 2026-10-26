@@ -260,9 +260,17 @@ test("보드 우선 자동 높이: 작은 화면에서도 업무 행이 다 보�
   // 아주 작은 화면: 보드가 줄어들며 스크롤되고 메모는 최소 160
   await page.setViewportSize({ width: 1280, height: 560 });
   await expect.poll(async () => Math.round((await box()).height)).toBe(160);
-  // 경계선을 끌면 그 높이로 고정
+  // 경계선을 끌면 그 높이로 고정 — 창을 키운 뒤 자동 높이가 자리 잡을 때까지 기다려 시작 높이를 잰다
   await page.setViewportSize({ width: 1440, height: 900 });
-  const h0 = (await box()).height;
+  await expect.poll(async () => Math.round((await box()).height)).toBeGreaterThan(200);
+  let h0 = 0;
+  await expect
+    .poll(async () => {
+      const prev = h0;
+      h0 = (await box()).height;
+      return Math.round(h0 - prev);
+    })
+    .toBe(0);
   const split = (await page.getByRole("button", { name: /메모 높이 조절/ }).boundingBox())!;
   await page.mouse.move(split.x + split.width / 2, split.y + 4);
   await page.mouse.down();

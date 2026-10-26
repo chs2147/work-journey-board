@@ -95,6 +95,8 @@ test("보드·주간 메모 편집기(서식 전부)·엑셀 내보내기 — CS
   const canvas = page.getByTestId("note-canvas");
   const c = (await canvas.boundingBox())!;
   await page.mouse.click(c.x + 600, c.y + 80);
+  // 새 상자의 편집기는 다음 프레임에 커서를 받는다 — 받은 뒤에 친다(note.spec newBoxInW44와 같음)
+  await expect(page.locator(":focus")).toHaveClass(/note-prose/);
   await page.keyboard.type("가상 회의 정리");
   await page.keyboard.press("Control+Alt+Digit1");
   await page.keyboard.press("Enter");
