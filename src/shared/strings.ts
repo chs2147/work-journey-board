@@ -116,6 +116,18 @@ export const STR = {
     resizeSplit: "메모 폭 조절(끌기) · 두 번 누르면 기본 폭",
     empty: "보일 업무가 없습니다",
   },
+  /** 업무연계 메모(improve-1026v2-spec 4~7절) */
+  linked: {
+    create: "이 항목과 연결된 메모 만들기",
+    badge: (n: number) => `연결된 메모 ${n}개 — 메모로 가기`,
+    strip: (cat: string, date: string, text: string) => `${cat} · ${date} · ${text} — 이 항목으로 가기`,
+    unlink: "연결 해제",
+    gone: "연결된 항목이 삭제됨",
+    linked: "메모를 항목에 연결했습니다",
+    unlinked: "연결을 해제했습니다",
+    dropToLink: "여기에 연결",
+    dropToCreate: "여기에 놓으면 이 항목과 연결된 메모",
+  },
   /** 링크(improve-1026-spec 9·10절) — 앱은 주소에 접속하지 않고 기본 브라우저에 넘긴다 */
   links: {
     open: "기본 브라우저로 열기",

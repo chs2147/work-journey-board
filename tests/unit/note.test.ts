@@ -7,6 +7,8 @@ import {
   docFromDayMemos,
   fitWithin,
   isNoteEmpty,
+  linkCounts,
+  linkedBoxes,
   noteAssetIds,
   noteToText,
   parseNoteDoc,
@@ -277,5 +279,62 @@ describe("이미지 상자(스펙 4-4·6절)", () => {
     expect(fitWithin(3200, 1800)).toEqual({ width: 1600, height: 900 });
     expect(fitWithin(900, 2400)).toEqual({ width: 600, height: 1600 });
     expect(fitWithin(1600, 1000)).toEqual({ width: 1600, height: 1000 });
+  });
+});
+
+describe("업무 항목 연결(improve-1026v2-spec 6-4)", () => {
+  const linked = (id: string, y: number, item?: unknown): TextBox =>
+    ({ ...box(id, 0, y, [p(t(id))]), ...(item === undefined ? {} : { ref: { item } }) }) as TextBox;
+
+  it("ref.item은 비지 않은 문자열만 남고, 타이틀 글은 저장하지 않는다", () => {
+    const raw = {
+      v: 1,
+      boxes: [
+        { ...linked("a", 0, "item-1"), ref: { item: "item-1", title: "저장 안 함" } },
+        linked("b", 100, 42),
+        linked("c", 200, ""),
+        { ...linked("d", 300), ref: "item-2" },
+        {
+          id: "img",
+          kind: "image",
+          x: 0,
+          y: 400,
+          w: 200,
+          z: 1,
+          asset: "as1",
+          caption: "",
+          ref: { item: "item-3" },
+        },
+        {
+          id: "lnk",
+          kind: "link",
+          x: 0,
+          y: 500,
+          w: 260,
+          z: 1,
+          url: "https://wiki.example.local/a",
+          title: "위키",
+          note: "",
+          ref: { item: "item-1" },
+        },
+      ],
+    };
+    const parsed = parseNoteDoc(JSON.stringify(raw));
+    expect(parsed.boxes.map((b) => [b.id, b.ref ?? null])).toEqual([
+      ["a", { item: "item-1" }],
+      ["b", null],
+      ["c", null],
+      ["d", null],
+      ["img", { item: "item-3" }],
+      ["lnk", { item: "item-1" }],
+    ]);
+  });
+
+  it("연결 수·연결된 상자(읽는 순서), 집계 글에는 영향 없음", () => {
+    const d = doc(linked("y2", 200, "i1"), linked("y1", 100, "i1"), linked("z", 50, "i2"), linked("n", 10));
+    expect(linkCounts(d)).toEqual({ i1: 2, i2: 1 });
+    expect(linkedBoxes(d, "i1").map((b) => b.id)).toEqual(["y1", "y2"]);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    expect(noteToText(d)).toBe(noteToText({ v: 1, boxes: d.boxes.map(({ ref: _r, ...b }) => b as TextBox) }));
   });
 });

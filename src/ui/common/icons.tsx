@@ -132,3 +132,18 @@ export const IconDayView = ({ day }: { day: number }) => (
     </text>
   </Svg>
 );
+
+/** 업무연계 메모 만들기·배지: 메모 종이(improve-1026v2-spec 4·6-2절) */
+export const IconNote = () => (
+  <Svg>
+    <rect x="2.5" y="2.5" width="11" height="11" rx="1.5" />
+    <path d="M5 6h6M5 8.5h4" />
+  </Svg>
+);
+
+/** 연결 해제: 끊긴 사슬(7절) */
+export const IconUnlink = () => (
+  <Svg>
+    <path d="M6.5 9.5l3-3M4.6 8.4l-1 1a2.5 2.5 0 0 0 3.5 3.5l1-1M11.4 7.6l1-1a2.5 2.5 0 0 0-3.5-3.5l-1 1M2.5 2.5l11 11" />
+  </Svg>
+);

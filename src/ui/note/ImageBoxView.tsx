@@ -13,8 +13,10 @@ import {
   selectBox,
   sendToBack,
   setCaption,
+  unlinkBox,
   useNote,
 } from "./noteStore";
+import { LinkStrip } from "./LinkStrip";
 import styles from "./Note.module.css";
 
 export function ImageBoxView({
@@ -30,6 +32,7 @@ export function ImageBoxView({
   const captionRef = useRef<HTMLInputElement>(null);
   const img = useNote((s) => s.assets[box.asset]);
   const [menuOpen, setMenuOpen] = useState(false);
+  const pulse = useNote((s) => s.pulseId === box.id);
   useBoxFrame(wrapRef, box.id, selected);
 
   const editCaption = () => {
@@ -44,7 +47,13 @@ export function ImageBoxView({
   return (
     <div
       ref={wrapRef}
-      className={[styles.box, styles.imageBox, selected ? styles.selected : ""].join(" ")}
+      className={[
+        styles.box,
+        styles.imageBox,
+        selected ? styles.selected : "",
+        box.ref ? styles.hasStrip : "",
+        pulse ? styles.pulse : "",
+      ].join(" ")}
       style={{ left: box.x, top: box.y, width: box.w, zIndex: box.z + 1 }}
       tabIndex={-1}
       role="group"
@@ -97,6 +106,11 @@ export function ImageBoxView({
           <button type="button" role="menuitem" onClick={run(() => sendToBack(box.id))}>
             {STR.note.back}
           </button>
+          {box.ref && (
+            <button type="button" role="menuitem" onClick={run(() => unlinkBox(box.id))}>
+              {STR.linked.unlink}
+            </button>
+          )}
           <button
             type="button"
             role="menuitem"
@@ -107,6 +121,7 @@ export function ImageBoxView({
           </button>
         </div>
       )}
+      {box.ref && <LinkStrip boxId={box.id} link={box.ref} />}
       {img ? (
         <img
           className={styles.image}

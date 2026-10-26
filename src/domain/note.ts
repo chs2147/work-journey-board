@@ -15,6 +15,14 @@ export interface PMNode {
 export const NOTE_BG = ["yellow", "blue", "green", "pink"] as const;
 export type NoteBg = (typeof NOTE_BG)[number];
 
+/**
+ * 업무 항목 연결(improve-1026v2-spec 6-4): 상자가 가리키는 같은 주의 entry_item id 하나.
+ * 타이틀 글(업무명·날짜·항목 글)은 저장하지 않고 화면이 늘 지금 항목에서 만든다
+ */
+export interface BoxRef {
+  item: string;
+}
+
 export interface TextBox {
   id: string;
   kind: "text";
@@ -26,6 +34,7 @@ export interface TextBox {
   h?: number;
   bg: NoteBg | null;
   content: PMNode;
+  ref?: BoxRef;
 }
 
 /** 이미지 상자(스펙 4-4) — 그림 자체는 일지 파일 안 `note_asset`에, 문서는 그 id만 가리킨다 */
@@ -41,6 +50,7 @@ export interface ImageBox {
   asset: string;
   /** 한 줄 설명(선택) — 자동 집계·엑셀에 `- (이미지) 설명`으로 들어간다 */
   caption: string;
+  ref?: BoxRef;
 }
 
 /**
@@ -59,6 +69,7 @@ export interface LinkBox {
   title: string;
   note: string;
   asset?: string;
+  ref?: BoxRef;
 }
 
 export type NoteBox = TextBox | ImageBox | LinkBox;
@@ -241,6 +252,12 @@ export function sanitizeContent(raw: unknown): PMNode | null {
 }
 
 /** 저장된 JSON → 메모 문서(잘못된 상자는 버린다). 읽을 수 없으면 빈 문서 */
+/** `ref.item`이 비지 않은 문자열일 때만 남긴다(6-4) */
+function parseRef(raw: unknown): { ref: BoxRef } | Record<string, never> {
+  if (!isObj(raw) || typeof raw.item !== "string" || !raw.item || raw.item.length > 64) return {};
+  return { ref: { item: raw.item } };
+}
+
 export function parseNoteDoc(json: string | null | undefined): NoteDoc {
   if (!json) return emptyDoc();
   let raw: unknown;
@@ -253,6 +270,7 @@ export function parseNoteDoc(json: string | null | undefined): NoteDoc {
   const boxes: NoteBox[] = [];
   for (const b of raw.boxes) {
     if (!isObj(b) || typeof b.id !== "string") continue;
+    const ref = parseRef(b.ref);
     if (b.kind === "image") {
       if (typeof b.asset !== "string" || !b.asset) continue;
       boxes.push({
@@ -265,6 +283,7 @@ export function parseNoteDoc(json: string | null | undefined): NoteDoc {
         ...(typeof b.h === "number" ? { h: b.h } : {}),
         asset: b.asset,
         caption: typeof b.caption === "string" ? b.caption.replace(/\s+/g, " ").slice(0, CAPTION_MAX) : "",
+        ...ref,
       });
       continue;
     }
@@ -282,6 +301,7 @@ export function parseNoteDoc(json: string | null | undefined): NoteDoc {
         title: cleanLine(b.title) || titleFromUrl(b.url),
         note: cleanLine(b.note),
         ...(typeof b.asset === "string" && b.asset ? { asset: b.asset } : {}),
+        ...ref,
       });
       continue;
     }
@@ -298,6 +318,7 @@ export function parseNoteDoc(json: string | null | undefined): NoteDoc {
       ...(typeof b.h === "number" ? { h: b.h } : {}),
       bg: NOTE_BG.includes(b.bg as NoteBg) ? (b.bg as NoteBg) : null,
       content,
+      ...ref,
     });
   }
   // 글이 없는 텍스트 상자는 남기지 않는다(improve-1026-spec 2-2) — 어떤 길로 편집을 떠나도 빈 상자가 쌓이지 않게
@@ -472,5 +493,16 @@ export function positionBelow(doc: NoteDoc): { x: number; y: number } {
   const left = Math.min(...doc.boxes.map((b) => b.x));
   return { x: snap(left), y: snap(bottom + BOX_GAP) };
 }
+
+/** 항목별 연결된 상자 수(보드 배지, 6-2) */
+export function linkCounts(doc: NoteDoc): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const b of doc.boxes) if (b.ref) out[b.ref.item] = (out[b.ref.item] ?? 0) + 1;
+  return out;
+}
+
+/** 항목에 연결된 상자들(읽는 순서) */
+export const linkedBoxes = (doc: NoteDoc, itemId: string) =>
+  readingOrder(doc.boxes.filter((b) => b.ref?.item === itemId));
 
 export const topZ = (doc: NoteDoc) => doc.boxes.reduce((m, b) => Math.max(m, b.z), 0);

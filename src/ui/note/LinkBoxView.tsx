@@ -19,8 +19,10 @@ import {
   sendToBack,
   setLinkThumb,
   updateLinkText,
+  unlinkBox,
   useNote,
 } from "./noteStore";
+import { LinkStrip } from "./LinkStrip";
 import styles from "./Note.module.css";
 
 export function LinkBoxView({ box, selected }: { box: LinkBox; selected: boolean }) {
@@ -28,6 +30,7 @@ export function LinkBoxView({ box, selected }: { box: LinkBox; selected: boolean
   const fileRef = useRef<HTMLInputElement>(null);
   const thumb = useNote((s) => (box.asset ? s.assets[box.asset] : undefined));
   const [menuOpen, setMenuOpen] = useState(false);
+  const pulse = useNote((s) => s.pulseId === box.id);
   const [editing, setEditing] = useState(false);
   useBoxFrame(wrapRef, box.id, selected);
   const domain = domainOf(box.url);
@@ -56,7 +59,13 @@ export function LinkBoxView({ box, selected }: { box: LinkBox; selected: boolean
   return (
     <div
       ref={wrapRef}
-      className={[styles.box, styles.linkBox, selected ? styles.selected : ""].join(" ")}
+      className={[
+        styles.box,
+        styles.linkBox,
+        selected ? styles.selected : "",
+        box.ref ? styles.hasStrip : "",
+        pulse ? styles.pulse : "",
+      ].join(" ")}
       style={{ left: box.x, top: box.y, width: box.w, zIndex: box.z + 1 }}
       tabIndex={-1}
       role="group"
@@ -123,6 +132,11 @@ export function LinkBoxView({ box, selected }: { box: LinkBox; selected: boolean
           <button type="button" role="menuitem" onClick={run(() => sendToBack(box.id))}>
             {STR.note.back}
           </button>
+          {box.ref && (
+            <button type="button" role="menuitem" onClick={run(() => unlinkBox(box.id))}>
+              {STR.linked.unlink}
+            </button>
+          )}
           <button
             type="button"
             role="menuitem"
@@ -133,6 +147,7 @@ export function LinkBoxView({ box, selected }: { box: LinkBox; selected: boolean
           </button>
         </div>
       )}
+      {box.ref && <LinkStrip boxId={box.id} link={box.ref} />}
       <input
         ref={fileRef}
         type="file"

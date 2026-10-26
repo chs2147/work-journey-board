@@ -1,6 +1,6 @@
 # 개선사항 1026 v2 — 상세 설계
 
-> 작성: 2026-10-26 · 상태: **12절 추천안으로 확정(2026-10-26 "V1부터 진행") · V1 구현(`0.2.9`) · V2 구현(`0.2.10`)** · V3 대기
+> 작성: 2026-10-26 · 상태: **12절 추천안으로 확정(2026-10-26 "V1부터 진행") · V1 구현(`0.2.9`) · V2 구현(`0.2.10`) · V3 구현(`0.2.11`)**
 > 요청: 2026-10-26 사용자 개선 목록 v2(아래 0절 표의 #1~#10)
 > 시안: 사용자 개인 미리보기(클로드 아티팩트 "개선사항 1026 v2 시안" — ① 주간 보드 ② 행 삭제·끌어서 옮기기 ③ 업무연계 메모 ④ 중요 업무 목록 ⑤ 보기 아이콘). 시안 속 기록은 모두 가상 예시다.
 > 관련: [improve-1026-spec.md](improve-1026-spec.md)(v1, U1~U4) · [overview.md](overview.md) 10-3(개조식 입력·단축키) · [important-repeat-spec.md](important-repeat-spec.md) 2절(중요 업무 목록) · [weekly-note-spec.md](weekly-note-spec.md) 4·5절(메모 상자·문서 JSON) · CLAUDE.md 4-3(데이터 안전)·4-6(입력 UX)
@@ -192,4 +192,12 @@
 - **스토어**: `moveRowsTo(fromKey, fromIndex, toKey, gap)` — 먼저 `flushAll`, 같은 칸은 지금 칸 저장 길, 다른 칸은 `applyCells`(받는 칸 먼저) → 실행 취소 1단계(되돌릴 때는 원래 칸이 받는 칸). 옮긴 항목을 잠깐 강조, 받는 칸의 요일을 포커스 열로.
 - **화면**: `ui/board/rowDrag.ts` — ⋮⋮(`tabIndex -1`)의 포인터 이벤트로 직접 끌기(`setPointerCapture`, 4px 넘게 움직여야 시작). 놓을 칸 = `elementFromPoint` → `[data-cell-key]`(주간 보드 칸·오늘 뷰 카드), 틈 = `[data-item-index]` 행 가운데 기준. 좁은 열(편집기 없음)에 대면 `setFocusDay`로 넓힘. 그림자는 `document.body`에 붙인 고정 상자(위치는 CSSOM `transform` — CSP 인라인 style 금지와 무관). 스크롤 상자(`[data-drag-scroll]`) 가장자리 40px에서 자동 스크롤. `Esc`·칸 밖에 놓기 = 아무 일 없음. 파란 선은 높이 0 요소의 `::after`라 끄는 동안 줄이 밀리지 않는다.
 - 테스트: 단위 `items.test.ts`(끌기 규칙)·`repository.test.ts`(saveCells), E2E `tests/e2e/v2.spec.ts`(칸 안·칸 사이 묶음 이동과 ★·중요 목록, 세부 항목 깊이, Esc·칸 밖, 오늘 뷰 카드 사이, Ctrl+Z/Ctrl+Y). 회사 PC 확인표 m1-check 7-10.
+
+### V3 (`0.2.11`, 2026-10-26)
+- **데이터**: `domain/note.ts` 상자 세 종류에 `ref?: BoxRef`(`{ item }`), `parseNoteDoc`이 `ref.item` 검증(비지 않은 문자열·64자 이하), `linkCounts`·`linkedBoxes`. 저장소·스키마 변경 없음(`saveWeekNote`가 같은 검증으로 저장).
+- **메모 스토어**: `addLinkedBox(itemId, at?)`(대기 상자 + ref — 글을 쳐야 상자, 빈 상자 규칙 그대로, 접힌 도크는 펼침) · `linkBox(id, itemId, before?)`(끌기로 연결하면 자리는 끌기 전으로, 메모 기록 1단계) · `unlinkBox` · `revealBox`(선택 + 회차 있는 `revealRequest`로 이미 선택된 상자여도 포커스·화면 안으로, 잠깐 강조).
+- **타이틀 띠** `ui/note/LinkStrip.tsx`: 보고 있는 주의 칸에서 항목을 찾아(`useShallow`) 업무 색 점·업무명·`shortDateLabel`·항목 글. 누르면 `revealItem`(중요 목록과 같은 이동 — `Pick<id·date·categoryId>`로 넓힘), 끊긴 사슬 = 해제. 없으면 "연결된 항목이 삭제됨" + [연결 해제]. 글·이미지·링크 카드 상자 모두 띠 + ⋯ [연결 해제], 띠가 있으면 ⋯ 단추는 띠 아래.
+- **보드**: 행 [메모](본 항목은 휴지통·↻ 왼쪽, 세부 항목은 휴지통 왼쪽) · 연결 배지(이 칸 항목에 걸린 연결만 글자열로 골라 메모 글을 칠 때마다 칸이 다시 그려지지 않게). 연결된 항목은 배지를 오른쪽 끝에 고정하고 숨은 단추들을 늘 그 왼쪽에 둔다(투명 단추도 눌림을 가로채므로 — E2E에서 발견).
+- **끌기**: 행 ⋮⋮ → 메모 판(`[data-note-drop]`, 배율 반영 문서 좌표) = 점선 자리 "여기에 놓으면 이 항목과 연결된 메모" → `addLinkedBox`. 메모 상자 끌기(`startBoxDrag` move) 중 `document.elementsFromPoint`로 아래의 `[data-cell-key] [data-item-id]`를 찾아 그 행에 파란 테두리 + "여기에 연결"(`useLinkDrop`), 놓으면 `linkBox`.
+- 테스트: 단위 `note.test.ts`(ref 검증·연결 수), E2E `tests/e2e/v3.spec.ts`(행 [메모]·띠·배지·주 이동 후 유지·집계, 빈 연결 상자, 해제·되돌리기·항목 삭제 표시, 행 → 메모 판, 메모 → 항목·연결 옮김, 오늘 뷰). 회사 PC 확인표 m1-check 7-11.
 

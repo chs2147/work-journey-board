@@ -28,6 +28,8 @@ import { noteExtensions } from "./editorExtensions";
 import { ImageBoxView, ImagePreview } from "./ImageBoxView";
 import { Minimap } from "./Minimap";
 import { LinkBoxView } from "./LinkBoxView";
+import { LinkStrip } from "./LinkStrip";
+import { useRowDrag } from "../board/rowDrag";
 import { singleUrl } from "../../domain/links";
 import { openLink } from "../common/openLink";
 import {
@@ -46,6 +48,7 @@ import {
   sendToBack,
   setBoxBg,
   setEditing,
+  unlinkBox,
   updateContent,
   useNote,
 } from "./noteStore";
@@ -65,6 +68,8 @@ export default function NoteCanvas() {
   const pendingId = useNote((s) => s.pendingId);
   const zoom = useNote((s) => s.zoom);
   const fitRequest = useNote((s) => s.fitRequest);
+  // 보드 행을 이 판에 끌어 오는 중이면 놓을 자리(improve-1026v2-spec 4절)
+  const rowDrop = useRowDrag((s) => s.drag?.note ?? null);
   const canvasRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [view, setView] = useState({ w: 0, h: 0 });
@@ -274,6 +279,7 @@ export default function NoteCanvas() {
             aria-label={STR.note.canvasAria}
             data-testid="note-canvas"
             data-zoom={zoom}
+            data-note-drop
             onPointerDown={onCanvasPointerDown}
             // 빈 곳 클릭의 기본 동작(포커스 옮기기)이 방금 커서를 넣은 새 상자를 빼앗지 않게
             onMouseDown={(e) => e.target === e.currentTarget && e.preventDefault()}
@@ -305,6 +311,15 @@ export default function NoteCanvas() {
                   onEditor={onEditor}
                 />
               ),
+            )}
+            {rowDrop && (
+              <div
+                className={styles.linkDropSpot}
+                style={{ left: rowDrop.x, top: rowDrop.y }}
+                data-testid="link-drop-spot"
+              >
+                {STR.linked.dropToCreate}
+              </div>
             )}
           </div>
           {/* 서식 막대는 배율과 상관없이 100% 크기로 상자 위(11-2) */}
@@ -344,6 +359,7 @@ function TextBoxView({
   /** 편집기가 마지막으로 내보낸 글 — 실행 취소 등으로 바깥에서 바뀐 글만 편집기에 다시 넣는다 */
   const emitted = useRef<PMNode>(box.content);
   const focusRequest = useNote((s) => s.focusRequest);
+  const pulse = useNote((s) => s.pulseId === box.id);
   const [menuOpen, setMenuOpen] = useState(false);
 
   const editor = useEditor(
@@ -442,6 +458,8 @@ function TextBoxView({
         editing ? styles.editing : "",
         selected ? styles.selected : "",
         pending ? styles.ghost : "",
+        box.ref ? styles.hasStrip : "",
+        pulse ? styles.pulse : "",
       ].join(" ")}
       style={{ left: box.x, top: box.y, width: box.w, zIndex: box.z + 1 }}
       tabIndex={-1}
@@ -513,6 +531,11 @@ function TextBoxView({
           <button type="button" role="menuitem" onClick={() => void copyText()}>
             {STR.note.copyText}
           </button>
+          {box.ref && (
+            <button type="button" role="menuitem" onClick={() => (setMenuOpen(false), unlinkBox(box.id))}>
+              {STR.linked.unlink}
+            </button>
+          )}
           <button
             type="button"
             role="menuitem"
@@ -523,6 +546,7 @@ function TextBoxView({
           </button>
         </div>
       )}
+      {box.ref && <LinkStrip boxId={box.id} link={box.ref} />}
       <EditorContent editor={editor} className={styles.editor} />
       {/* 대기 상자의 안내 — 글자를 치면 사라진다(조합 중에도 같은 편집기를 그대로 쓰게 구조는 바꾸지 않는다) */}
       {pending && (

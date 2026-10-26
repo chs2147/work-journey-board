@@ -1,11 +1,13 @@
 // 텍스트·이미지 상자가 함께 쓰는 동작: 끌어 옮기기·폭 조절, 선택 상태의 키(방향키·Delete·Ctrl+Z·Esc), 높이 재기.
 import { useEffect, useLayoutEffect, type KeyboardEvent, type PointerEvent, type RefObject } from "react";
 import type { NoteBox } from "../../domain/note";
+import { itemAtPoint, useLinkDrop } from "../board/rowDrag";
 import {
   beginGesture,
   deleteBox,
   endGesture,
   leaveNote,
+  linkBox,
   measureBox,
   moveBoxLive,
   nudgeBox,
@@ -42,13 +44,24 @@ export function startBoxDrag(
     if (!moved && Math.hypot(ev.clientX - sx, ev.clientY - sy) < DRAG_SLOP) return;
     const [dx, dy] = [(ev.clientX - sx) / zoom, (ev.clientY - sy) / zoom];
     moved = true;
-    if (kind === "move") moveBoxLive(box.id, x0 + dx, y0 + dy);
-    else resizeBoxLive(box.id, w0 + dx);
+    if (kind === "move") {
+      moveBoxLive(box.id, x0 + dx, y0 + dy);
+      // 보드의 항목 위로 가져가면 "여기에 연결"(improve-1026v2-spec 5절)
+      const itemId = itemAtPoint(ev.clientX, ev.clientY);
+      if (useLinkDrop.getState().itemId !== itemId) useLinkDrop.setState({ itemId });
+    } else resizeBoxLive(box.id, w0 + dx);
   };
   const up = () => {
     el.removeEventListener("pointermove", move);
     el.removeEventListener("pointerup", up);
     el.removeEventListener("pointercancel", up);
+    const target = useLinkDrop.getState().itemId;
+    if (target) {
+      // 항목에 놓음 = 상자는 원래 자리로, 연결만(메모 기록 1단계)
+      useLinkDrop.setState({ itemId: null });
+      linkBox(box.id, target, before);
+      return;
+    }
     endGesture(before);
     if (!moved) onClick?.();
   };
@@ -95,6 +108,14 @@ export function useBoxFrame(ref: RefObject<HTMLDivElement | null>, id: string, s
   useEffect(() => {
     if (selected) ref.current?.focus();
   }, [selected, ref]);
+
+  // 보드 배지로 찾아옴(improve-1026v2-spec 6-2) — 이미 선택돼 있어도 포커스·화면 안으로
+  const reveal = useNote((s) => (s.revealRequest?.id === id ? s.revealRequest.n : 0));
+  useEffect(() => {
+    if (!reveal) return;
+    ref.current?.focus();
+    ref.current?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
+  }, [reveal, ref]);
 
   useLayoutEffect(() => {
     const el = ref.current;

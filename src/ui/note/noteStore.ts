@@ -79,6 +79,10 @@ export interface NoteState {
   minimap: boolean;
   /** [화면에 맞춤] 요청 회차(판이 보이는 영역을 알아 배율을 정한다) */
   fitRequest: number;
+  /** 잠깐 강조할 상자(보드 배지로 찾아온 상자) */
+  pulseId: string | null;
+  /** 상자로 포커스·화면 안으로(보드 배지) — 이미 선택된 상자여도 다시 가게 회차를 둔다 */
+  revealRequest: { id: string; n: number } | null;
 }
 
 export interface NoteImage {
@@ -108,6 +112,8 @@ export const useNote = create<NoteState>(() => ({
   zoom: 1,
   minimap: true,
   fitRequest: 0,
+  pulseId: null,
+  revealRequest: null,
 }));
 
 const set = useNote.setState;
@@ -236,7 +242,7 @@ const boxOf = (id: string) => get().doc.boxes.find((b) => b.id === id);
  * 그 자리(8px 맞춤)에 커서를 둔다 — "대기" 상자(improve-1026-spec 2절). 첫 글자를 치면 그때 상자가 생겨
  * 메모 기록에 들어가고, 아무것도 치지 않고 떠나면 흔적 없이 사라진다.
  */
-export function addBox(x: number, y: number): string {
+export function addBox(x: number, y: number, itemId?: string): string {
   const old = get().pendingId;
   if (old) dropPending(old);
   const doc = get().doc;
@@ -249,6 +255,7 @@ export function addBox(x: number, y: number): string {
     z: topZ(doc) + 1,
     bg: null,
     content: emptyContent(),
+    ...(itemId ? { ref: { item: itemId } } : {}),
   };
   // 저장도 기록도 하지 않는다 — 첫 글자(updateContent)에서 상자가 된다
   set({ doc: { ...doc, boxes: [...doc.boxes, box] }, pendingId: box.id });
@@ -271,6 +278,70 @@ function dropPending(id: string) {
 export function addBoxBelow(): string {
   const { x, y } = positionBelow(withoutPending(get().doc));
   return addBox(x, y);
+}
+
+// ── 업무 항목 연결(improve-1026v2-spec 4~7절) ─────────
+/** 메모가 접혀 있으면 펼친다(주간 뷰의 아래 도크만 — 오늘 뷰의 왼쪽 메모는 늘 펼쳐져 있다) */
+function openDock() {
+  if (get().collapsed && useBoard.getState().viewMode === "week") setCollapsed(false);
+}
+
+/**
+ * 항목과 연결된 글 상자(4절): 행의 [메모] = 가장 아래 상자 밑, 행을 판에 끌어 놓기 = 놓은 자리.
+ * 본문은 비어 있고(타이틀 띠가 항목을 보여 줌) 글자를 쳐야 상자가 남는다(빈 상자 규칙 그대로)
+ */
+export function addLinkedBox(itemId: string, at?: { x: number; y: number }): string {
+  openDock();
+  const editing = get().editingId;
+  if (editing) endEditing(editing);
+  const place = at ?? positionBelow(withoutPending(get().doc));
+  return addBox(place.x, place.y, itemId);
+}
+
+/** 기존 상자를 항목에 연결(5절) — 이미 연결돼 있으면 옮겨 간다. 메모 기록 1단계 */
+export function linkBox(id: string, itemId: string, before?: NoteDoc) {
+  const b = boxOf(id);
+  if (!b || b.ref?.item === itemId) return;
+  const next = mapBox(id, (x) => ({ ...x, ref: { item: itemId } }));
+  if (before) {
+    // 끌기 도중 바뀐 자리는 버리고(상자는 원래 자리로) 연결만 한 번에 기록
+    undoStack.push(withoutPending(before));
+    if (undoStack.length > UNDO_LIMIT) undoStack.shift();
+    redoStack.length = 0;
+    syncUndo();
+    const kept = before.boxes.find((x) => x.id === id) ?? b;
+    set({
+      doc: { ...next, boxes: next.boxes.map((x) => (x.id === id ? { ...x, x: kept.x, y: kept.y } : x)) },
+    });
+    scheduleSave();
+  } else commit(next, true);
+  toast(STR.linked.linked, { label: STR.toast.undo, run: () => undoNote() });
+}
+
+/** 연결 해제(7절) — 띠만 사라지고 상자·본문·자리는 그대로 */
+export function unlinkBox(id: string) {
+  const b = boxOf(id);
+  if (!b?.ref) return;
+  commit(
+    mapBox(id, (x) => {
+      const { ref: _gone, ...rest } = x; // eslint-disable-line @typescript-eslint/no-unused-vars
+      return rest as NoteBox;
+    }),
+    true,
+  );
+  toast(STR.linked.unlinked, { label: STR.toast.undo, run: () => undoNote() });
+}
+
+/** 보드 배지 → 그 메모 상자로(6-2): 메모를 펼치고 상자를 선택(선택되면 포커스·화면 안으로) */
+export function revealBox(id: string) {
+  openDock();
+  if (get().expanded) set({ expanded: false });
+  const editing = get().editingId;
+  if (editing && editing !== id) endEditing(editing);
+  set({ selectedId: id, editingId: null, pulseId: id, revealRequest: { id, n: ++focusSeq } });
+  setTimeout(() => {
+    if (get().pulseId === id) set({ pulseId: null });
+  }, 1200);
 }
 
 export function requestFocus(id: string) {
@@ -596,7 +667,7 @@ export function redoNote() {
 /** 메모로 가기(Alt+M·마지막 업무 칸 ↓): 마지막으로 고친 상자 끝, 없으면 읽는 순서 마지막 상자, 그것도 없으면 새 상자 */
 export function focusNote() {
   // 오늘 뷰의 왼쪽 메모는 늘 펼쳐져 있다 — 아래 도크의 접힘 상태는 건드리지 않는다
-  if (get().collapsed && useBoard.getState().viewMode === "week") setCollapsed(false);
+  openDock();
   const texts = get().doc.boxes.filter((b) => b.kind === "text");
   const target = (lastEditedId && texts.find((b) => b.id === lastEditedId)) || readingOrder(texts).at(-1);
   if (target) requestFocus(target.id);

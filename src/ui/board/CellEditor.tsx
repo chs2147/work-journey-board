@@ -30,11 +30,12 @@ import {
   toggleRepeat,
   useBoard,
 } from "./boardStore";
-import { pasteImagesFromBoard } from "../note/noteStore";
+import { addLinkedBox, pasteImagesFromBoard, revealBox, useNote } from "../note/noteStore";
+import { linkedBoxes } from "../../domain/note";
 import { autoSize, isComposingKey, useRemeasure } from "./helpers";
 import { LinkedText } from "./LinkedText";
-import { IconTrash } from "../common/icons";
-import { startRowDrag, useRowDrag } from "./rowDrag";
+import { IconNote, IconTrash } from "../common/icons";
+import { startRowDrag, useLinkDrop, useRowDrag } from "./rowDrag";
 import styles from "./Board.module.css";
 
 export interface CellNav {
@@ -67,6 +68,17 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
   const [delStart, delEnd] = deleteHover === null ? [-1, -1] : deleteRange(items, deleteHover);
   // 행 끌어서 옮기기(improve-1026v2-spec 3절): 원래 자리는 흐리게, 놓을 칸은 테두리, 놓을 틈에 파란 선
   const drag = useRowDrag((s) => s.drag);
+  // 연결된 메모 수(improve-1026v2-spec 6-2) — 이 칸 항목에 걸린 것만 글자열로 골라 메모 글을 칠 때마다 다시 그리지 않게
+  const linkKey = useNote((st) => {
+    const ids = new Set(items.map((x) => x.id));
+    let out = "";
+    for (const b of st.doc.boxes)
+      if (b.ref && b.id !== st.pendingId && ids.has(b.ref.item)) out += `${b.ref.item},`;
+    return out;
+  });
+  const linkCount: Record<string, number> = {};
+  for (const id of linkKey.split(",")) if (id) linkCount[id] = (linkCount[id] ?? 0) + 1;
+  const linkTarget = useLinkDrop((st) => st.itemId);
   const dragFrom = drag?.fromKey === cellKey ? drag : null;
   const dropGap = drag?.overKey === cellKey ? drag.gap : null;
   const dropLine = (
@@ -263,8 +275,11 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
                 pulseId === it.id ? styles.pulse : "",
                 i >= delStart && i < delEnd ? styles.deleting : "",
                 dragFrom && i >= dragFrom.start && i < dragFrom.end ? styles.dragSource : "",
+                linkCount[it.id] ? styles.linked : "",
+                linkTarget === it.id ? styles.linkTarget : "",
               ].join(" ")}
               data-item-index={i}
+              data-item-id={it.text.trim() ? it.id : undefined}
               data-flagged={it.flagged ? "true" : undefined}
               data-repeating={isRepeating ? "true" : undefined}
             >
@@ -338,6 +353,45 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
                 >
                   ↻
                 </button>
+              )}
+              {/* [메모] = 이 항목과 연결된 메모 만들기(4절) */}
+              {it.text.trim() && (
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  className={it.depth === 0 ? styles.memoRow : styles.memoRowSub}
+                  aria-label={STR.linked.create}
+                  title={STR.linked.create}
+                  data-testid="memo-row"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => addLinkedBox(it.id)}
+                >
+                  <IconNote />
+                </button>
+              )}
+              {/* 연결된 메모 배지 — 누르면 그 메모 상자로 */}
+              {linkCount[it.id] && (
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  className={styles.memoBadge}
+                  aria-label={STR.linked.badge(linkCount[it.id]!)}
+                  title={STR.linked.badge(linkCount[it.id]!)}
+                  data-testid="memo-badge"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => {
+                    const first = linkedBoxes(useNote.getState().doc, it.id)[0];
+                    if (first) revealBox(first.id);
+                  }}
+                >
+                  <IconNote />
+                  {linkCount[it.id]}
+                </button>
+              )}
+              {linkTarget === it.id && (
+                <span className={styles.linkTargetLabel} aria-hidden="true">
+                  {STR.linked.dropToLink}
+                </span>
               )}
               {(it.text.trim() || items.length > 1) && (
                 <button

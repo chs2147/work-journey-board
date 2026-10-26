@@ -4,6 +4,7 @@
 import type { PointerEvent as ReactPointerEvent } from "react";
 import { create } from "zustand";
 import { deleteRange, moveRows, snapGap } from "../../domain/items";
+import { addLinkedBox } from "../note/noteStore";
 import { flushAll, moveRowsTo, setFocusDay, splitKey, useBoard } from "./boardStore";
 import styles from "./Board.module.css";
 
@@ -18,9 +19,23 @@ export interface RowDrag {
   gap: number | null;
   /** 놓이면 세부 항목이 되는가(파란 선 들여쓰기) */
   sub: boolean;
+  /** 메모 판 위(문서 좌표) — 놓으면 이 항목과 연결된 메모(improve-1026v2-spec 4절) */
+  note: { x: number; y: number } | null;
 }
 
 export const useRowDrag = create<{ drag: RowDrag | null }>(() => ({ drag: null }));
+
+/** 메모 상자를 보드 항목 위로 끌고 있을 때 그 항목(improve-1026v2-spec 5절 "여기에 연결") */
+export const useLinkDrop = create<{ itemId: string | null }>(() => ({ itemId: null }));
+
+/** 화면 좌표 아래의 보드 항목 id(메모 상자 끌기 — 상자 자신이 위에 있어 겹친 요소를 모두 본다) */
+export function itemAtPoint(x: number, y: number): string | null {
+  for (const el of document.elementsFromPoint(x, y)) {
+    const row = el.closest<HTMLElement>("[data-cell-key] [data-item-id]");
+    if (row) return row.dataset.itemId ?? null;
+  }
+  return null;
+}
 
 const THRESHOLD = 4;
 const EDGE = 40;
@@ -74,25 +89,36 @@ export function startRowDrag(e: ReactPointerEvent<HTMLElement>, fromKey: string,
     document.body.append(ghost);
     document.body.style.userSelect = "none";
     document.body.style.cursor = "grabbing";
-    useRowDrag.setState({ drag: { fromKey, fromIndex, start, end, overKey: null, gap: null, sub: false } });
+    useRowDrag.setState({
+      drag: { fromKey, fromIndex, start, end, overKey: null, gap: null, sub: false, note: null },
+    });
   };
 
-  const target = (x: number, y: number): Pick<RowDrag, "overKey" | "gap" | "sub"> => {
-    const cellEl = document.elementFromPoint(x, y)?.closest<HTMLElement>("[data-cell-key]");
+  const target = (x: number, y: number): Pick<RowDrag, "overKey" | "gap" | "sub" | "note"> => {
+    const under = document.elementFromPoint(x, y);
+    const canvas = under?.closest<HTMLElement>("[data-note-drop]");
+    if (canvas) {
+      // 메모 판: 화면 px → 문서 px(배율), 놓을 자리 = 커서 조금 왼쪽 위
+      const r = canvas.getBoundingClientRect();
+      const zoom = Number(canvas.dataset.zoom) || 1;
+      const note = { x: Math.max(0, (x - r.left) / zoom - 16), y: Math.max(0, (y - r.top) / zoom - 12) };
+      return { overKey: null, gap: null, sub: false, note };
+    }
+    const cellEl = under?.closest<HTMLElement>("[data-cell-key]");
     const key = cellEl?.dataset.cellKey;
-    if (!cellEl || !key) return { overKey: null, gap: null, sub: false };
+    if (!cellEl || !key) return { overKey: null, gap: null, sub: false, note: null };
     // 좁은 토·일 열 = 편집기가 없음 → 그 열을 넓힌다(포커스 열)
     if (!cellEl.querySelector("[data-cell-editor]")) {
       setFocusDay(splitKey(key).date);
-      return { overKey: key, gap: null, sub: false };
+      return { overKey: key, gap: null, sub: false, note: null };
     }
     const raw = gapAt(cellEl, y);
     const cells = useBoard.getState().cells;
     if (key === fromKey && !moveRows(cells[key] ?? [], fromIndex, null, raw)) {
-      return { overKey: key, gap: null, sub: false }; // 제자리
+      return { overKey: key, gap: null, sub: false, note: null }; // 제자리
     }
     const gap = snapGap(cells[key] ?? [], raw, movingParent);
-    return { overKey: key, gap, sub: !movingParent && gap > 0 };
+    return { overKey: key, gap, sub: !movingParent && gap > 0, note: null };
   };
 
   const move = (ev: PointerEvent) => {
@@ -105,7 +131,8 @@ export function startRowDrag(e: ReactPointerEvent<HTMLElement>, fromKey: string,
     autoScroll(grip, ev.clientY);
     const next = target(ev.clientX, ev.clientY);
     const cur = useRowDrag.getState().drag;
-    if (cur && (cur.overKey !== next.overKey || cur.gap !== next.gap || cur.sub !== next.sub)) {
+    const noteMoved = cur?.note?.x !== next.note?.x || cur?.note?.y !== next.note?.y;
+    if (cur && (cur.overKey !== next.overKey || cur.gap !== next.gap || cur.sub !== next.sub || noteMoved)) {
       useRowDrag.setState({ drag: { ...cur, ...next } });
     }
   };
@@ -121,7 +148,9 @@ export function startRowDrag(e: ReactPointerEvent<HTMLElement>, fromKey: string,
     document.body.style.cursor = "";
     const drag = useRowDrag.getState().drag;
     useRowDrag.setState({ drag: null });
-    if (commit && drag?.overKey && drag.gap !== null)
+    const itemId = items[fromIndex]?.id;
+    if (commit && drag?.note && itemId) addLinkedBox(itemId, drag.note);
+    else if (commit && drag?.overKey && drag.gap !== null)
       void moveRowsTo(fromKey, fromIndex, drag.overKey, drag.gap);
   };
   const up = (ev: PointerEvent) => {

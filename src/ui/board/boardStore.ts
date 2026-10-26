@@ -510,7 +510,7 @@ export async function undoImportant(id: string) {
 }
 
 /** 목록 항목으로 이동: 그 주·그 요일로 가서 그 항목 입력칸에 커서(글 끝) + 잠깐 강조 */
-export async function revealItem(it: ImportantItem) {
+export async function revealItem(it: Pick<ImportantItem, "id" | "date" | "categoryId">) {
   const wk = weekIdOf(it.date);
   if (wk !== get().weekId) await loadWeek(wk, it.date);
   else set({ focusDay: it.date });

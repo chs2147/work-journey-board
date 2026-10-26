@@ -717,6 +717,124 @@
   color: var(--text-2);
 }
 
+/* 업무연계 메모(improve-1026v2-spec 4·6-2절): 마우스를 올린 항목에 [메모](휴지통·↻ 왼쪽), 연결된 메모가 있으면 끝에 배지.
+   메모 상자를 항목 위로 끌어 오면 그 행이 파란 테두리 + "여기에 연결" */
+.memoRow,
+.memoRowSub,
+.memoBadge {
+  position: absolute;
+  top: 3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: calc(var(--fs-md) * 1.45);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.memoRow,
+.memoRowSub {
+  width: 17px;
+  opacity: 0;
+  color: var(--text-3);
+  background: var(--surface-card);
+  box-shadow: 0 0 0 1px var(--line);
+}
+
+.memoRow {
+  right: 39px;
+}
+
+.memoRowSub {
+  right: 20px;
+}
+
+.memoRow svg,
+.memoRowSub svg {
+  width: 13px;
+  height: 13px;
+}
+
+.item:hover > .memoRow,
+.itemSub:hover > .memoRowSub {
+  opacity: 1;
+}
+
+.memoRow:hover,
+.memoRowSub:hover {
+  color: var(--accent);
+}
+
+.memoBadge {
+  right: 1px;
+  gap: 1px;
+  min-width: 26px;
+  padding: 0 3px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  font-variant-numeric: tabular-nums;
+}
+
+.memoBadge svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* 연결된 항목: 배지는 늘 오른쪽 끝에 고정(누를 수 있게), ↻·[메모]·휴지통은 배지 왼쪽으로 비켜 선다 */
+.linked > .repeatOn {
+  right: 30px;
+}
+
+/* 숨은(투명) 단추도 눌림을 가로채므로 마우스를 올리기 전부터 배지 자리를 비운다 */
+.linked > .deleteRow {
+  right: 30px;
+}
+
+.item.linked:hover > .repeatOn,
+.linked > .repeatHover,
+.item.linked:hover > .repeatHover,
+.itemSub.linked > .memoRowSub {
+  right: 49px;
+}
+
+.item.linked > .memoRow {
+  right: 68px;
+}
+
+.linked .itemInput,
+.linked .itemView {
+  padding-right: 30px;
+}
+
+.repeating.linked .itemInput,
+.repeating.linked .itemView {
+  padding-right: 48px;
+}
+
+.linkTarget {
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.linkTargetLabel {
+  position: absolute;
+  left: 12px;
+  top: -20px;
+  z-index: 5;
+  padding: 1px 8px;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #ffffff;
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
 /* 미래 주의 반복 "예정"(저장 전) — 누르면 지금 만든다 */
 .preview {
   position: relative;
