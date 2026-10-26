@@ -72,6 +72,7 @@
   flex: 1 1 auto;
 }
 
+/* 글자 단추(그림 크게 보기의 [닫기]) */
 .headButton {
   height: 28px;
   padding: 0 var(--sp-3);
@@ -85,10 +86,78 @@
   white-space: nowrap;
 }
 
-.headButton[aria-pressed="true"] {
+/* 머리 기능 단추 = 아이콘(improve-1026-spec 11-3): 28×28, 이웃과 4px. 이름·단축키는 툴팁(title)·aria-label */
+.iconButton {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-1);
+  cursor: pointer;
+}
+
+.iconButton:hover {
+  background: var(--surface-sub);
+}
+
+.iconButton[aria-pressed="true"] {
   border-color: var(--accent);
   background: var(--accent-soft);
   color: var(--accent);
+}
+
+/* [− 80% ▾ +] 한 묶음 */
+.zoomGroup {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+}
+
+.zoomGroup > .iconButton {
+  height: 26px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.zoomGroup > .iconButton:hover {
+  background: var(--surface-sub);
+}
+
+.zoomSelect {
+  height: 26px;
+  padding: 0 var(--sp-1);
+  border: 0;
+  border-left: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+  background: transparent;
+  color: var(--text-1);
+  font: inherit;
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.headSep {
+  width: 1px;
+  height: 18px;
+  margin: 0 var(--sp-1);
+  background: var(--line);
+}
+
+/* 오늘 뷰 왼쪽 판: 부모가 정한 높이를 다 쓴다 */
+.dockSide {
+  flex: 1 1 auto;
+  border-top: 0;
 }
 
 .body {
@@ -103,7 +172,15 @@
   color: var(--text-3);
 }
 
-/* ── 판 ── */
+/* ── 판 ── (improve-1026-spec 11-2: 배율만큼의 자리(sizer) 안에 판을 CSS scale로) */
+.canvasWrap {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 .canvasScroll {
   flex: 1 1 auto;
   min-height: 0;
@@ -111,12 +188,94 @@
   background: var(--note-canvas);
 }
 
-.canvas {
+.panReady,
+.panReady * {
+  cursor: grab !important;
+}
+
+.panning,
+.panning * {
+  cursor: grabbing !important;
+  user-select: none;
+}
+
+.sizer {
   position: relative;
-  min-height: 100%;
+}
+
+.canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
   background-image: radial-gradient(var(--note-dot) 1px, transparent 1px);
   background-size: 16px 16px;
   cursor: text;
+}
+
+/* 미니맵(11-1) — 오른쪽 아래 */
+.minimap {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  z-index: 3;
+  padding: 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--surface-card) 94%, transparent);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.1);
+}
+
+.minimapMap {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.minimapBox,
+.minimapImage,
+.minimapFrame {
+  position: absolute;
+  pointer-events: none;
+}
+
+.minimapBox {
+  background: var(--line-strong);
+}
+
+.minimapImage {
+  background: var(--note-bg-blue);
+  outline: 1px solid var(--line-strong);
+}
+
+.minimapFrame {
+  border: 2px solid var(--accent);
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.minimapClose {
+  position: absolute;
+  top: -9px;
+  right: -9px;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  background: var(--surface-card);
+  color: var(--text-2);
+  font-size: 12px;
+  line-height: 14px;
+  cursor: pointer;
+}
+
+.minimapToggle {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  z-index: 3;
 }
 
 .empty {

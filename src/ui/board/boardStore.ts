@@ -9,6 +9,7 @@ import type { VisibleCategory } from "../../domain/categories";
 import { groupRange, type Recurrence } from "../../domain/recurrence";
 import type { ImportantItem, ItemDraft } from "../../domain/types";
 import {
+  addDays,
   addWeeks,
   DAY_LABELS,
   dayIndex,
@@ -93,6 +94,10 @@ export interface BoardState {
   categoryTags: Record<string, string[]>;
   /** 보드 태그 필터(spec 6절) — 빈 배열 = 전체 */
   tagFilter: string[];
+  /** 주간 뷰 / 오늘 뷰(spec 8절) — 오늘 뷰는 focusDay 하루를 보여 준다 */
+  viewMode: "week" | "today";
+  /** 포커스 열 기준 업무별 직전 기록 내역(오늘 뷰 카드 미리보기) — 키: 업무 id */
+  prevItems: Record<string, { depth: 0 | 1; text: string }[]>;
 }
 
 // 화면 밖 상태(렌더링과 무관)
@@ -149,6 +154,8 @@ export const useBoard = create<BoardState>(() => ({
   tags: [],
   categoryTags: {},
   tagFilter: [],
+  viewMode: "week",
+  prevItems: {},
 }));
 
 const set = useBoard.setState;
@@ -334,7 +341,8 @@ export async function init(r: JournalRepository) {
   undoStack.length = 0;
   redoStack.length = 0;
   const today = r.today();
-  set({ tagFilter: (await r.getSettings()).ui.tagFilter });
+  const ui = (await r.getSettings()).ui;
+  set({ tagFilter: ui.tagFilter, viewMode: ui.viewMode });
   await loadWeek(weekIdOf(today), today);
   // 패널 열림은 기억하되, 켤 때 0건이면 닫힌 채 시작(spec 2-5)
   const settings = await r.getSettings();
@@ -502,6 +510,23 @@ export async function goWeek(delta: number) {
 export async function goToWeek(weekId: WeekId) {
   const { focusDay, today } = get();
   await loadWeek(weekId, focusDayFor(weekId, dayIndex(focusDay), today));
+}
+
+/** 오늘 뷰의 하루 이동(◀ ▶·Alt+←/→, spec 8-1). 주를 넘으면 그 주를 불러온다 */
+export async function goDay(delta: number) {
+  const { focusDay, weekId } = get();
+  const day = addDays(focusDay, delta);
+  if (weekIdOf(day) !== weekId) await loadWeek(weekIdOf(day), day);
+  else setFocusDay(day);
+  focusStartCell();
+}
+
+/** 주간 / 오늘 뷰 바꾸기(상단 [주간|오늘]·Alt+V) — 마지막 뷰를 기억하고 그 뷰의 첫 업무 칸으로 */
+export function setViewMode(viewMode: "week" | "today") {
+  if (get().viewMode === viewMode) return;
+  set({ viewMode });
+  void repo?.updateSettings({ ui: { viewMode } }).catch(() => undefined);
+  focusStartCell();
 }
 
 export async function goToday() {
@@ -759,8 +784,16 @@ async function refreshPrevDates() {
   const day = get().focusDay;
   if (!r || !day) return;
   try {
-    const prevDates = await r.previousRecordDates(day);
-    if (get().focusDay === day) set({ prevDates });
+    const recs = await r.previousRecordsByCategory(day);
+    if (get().focusDay !== day) return;
+    const prevDates: Record<string, DateStr> = {};
+    const prevItems: BoardState["prevItems"] = {};
+    for (const rec of recs)
+      for (const [id, items] of Object.entries(rec.cells)) {
+        prevDates[id] = rec.date;
+        prevItems[id] = items;
+      }
+    set({ prevDates, prevItems });
   } catch {
     // 단추 표시용 — 실패해도 가져오기(Alt+P)는 그때 다시 찾는다
   }

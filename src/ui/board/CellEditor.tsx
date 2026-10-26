@@ -35,9 +35,11 @@ interface Props {
   ariaLabel: string;
   showPlaceholder: boolean;
   nav: CellNav;
+  /** 빈 칸의 [직전 기록일 내역 가져오기] 단추 — 오늘 뷰는 카드 아래 미리보기 줄이 대신한다 */
+  pullButton?: boolean;
 }
 
-export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav }: Props) {
+export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButton = true }: Props) {
   const items = useBoard((s) => s.cells[cellKey]) ?? [];
   const focus = useBoard((s) => s.focus);
   const pulseId = useBoard((s) => s.pulseId);
@@ -286,7 +288,7 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav }: Props) 
           {STR.board.addRecord}
         </button>
       )}
-      {items.length === 0 && showPlaceholder && prevDate && (
+      {items.length === 0 && showPlaceholder && pullButton && prevDate && (
         <button
           type="button"
           className={styles.pullButton}

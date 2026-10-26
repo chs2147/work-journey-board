@@ -20,6 +20,7 @@ import { SettingsPanel } from "./settings/SettingsPanel";
 import { setSummaryOpen, useSummary } from "./summary/summaryStore";
 import { SummaryPanel } from "./summary/SummaryPanel";
 import { NoteDock } from "./note/NoteDock";
+import { TodayView } from "./today/TodayView";
 import { useNote } from "./note/noteStore";
 import { finishSplash } from "./splash";
 import styles from "./App.module.css";
@@ -84,6 +85,7 @@ const BOARD_MIN_W = 900;
 /** 일지가 열린 화면: 왼쪽 레일 + (중요 업무 패널) + 보드 + (주간 요약 패널) */
 function Workspace() {
   const panelOpen = useBoard((s) => s.panelOpen);
+  const viewMode = useBoard((s) => s.viewMode);
   const summaryOpen = useSummary((s) => s.open);
   const noteExpanded = useNote((s) => s.expanded);
   // 메모 도크가 자동 높이면 보드는 필요한 만큼만(남는 공간은 메모) — 접혀 있으면 보드가 다 쓴다
@@ -104,17 +106,23 @@ function Workspace() {
           if (summaryOverlay && summaryOpen) setSummaryOpen(false);
         }}
       >
-        {/* [크게 보기]면 메모가 보드 영역을 덮는다(보드는 그대로 두고 숨김 — 입력 상태 유지) */}
-        <div
-          className={
-            noteExpanded
-              ? styles.hidden
-              : `${styles.boardFill} ${noteAutoHeight ? styles.boardFillNatural : ""}`
-          }
-        >
-          <BoardView />
-        </div>
-        <NoteDock />
+        {viewMode === "today" ? (
+          <TodayView />
+        ) : (
+          <>
+            {/* [크게 보기]면 메모가 보드 영역을 덮는다(보드는 그대로 두고 숨김 — 입력 상태 유지) */}
+            <div
+              className={
+                noteExpanded
+                  ? styles.hidden
+                  : `${styles.boardFill} ${noteAutoHeight ? styles.boardFillNatural : ""}`
+              }
+            >
+              <BoardView />
+            </div>
+            <NoteDock />
+          </>
+        )}
       </div>
       {summaryOpen && <SummaryPanel overlay={summaryOverlay} />}
     </div>

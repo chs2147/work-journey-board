@@ -573,6 +573,26 @@ export class JournalRepository {
     return { date: row.d, cells };
   }
 
+  /** 업무별 직전 기록일과 그날 내역(오늘 뷰 카드의 미리보기, spec 8-2) — 키: 업무 id */
+  async previousRecordsByCategory(before: DateStr): Promise<PreviousRecord[]> {
+    const dates = await this.previousRecordDates(before);
+    const pairs = Object.entries(dates);
+    if (pairs.length === 0) return [];
+    const rows = await this.db.select<{ category_id: string; date: string; depth: number; text: string }>(
+      `SELECT category_id, date, depth, text FROM entry_item
+       WHERE trim(text) <> '' AND (${pairs.map(() => "(category_id = ? AND date = ?)").join(" OR ")})
+       ORDER BY category_id, seq`,
+      pairs.flat(),
+    );
+    const out = new Map<string, PreviousRecord>();
+    for (const r of rows) {
+      const rec = out.get(r.category_id) ?? { date: r.date, cells: { [r.category_id]: [] } };
+      rec.cells[r.category_id]!.push({ depth: Number(r.depth) as Depth, text: r.text });
+      out.set(r.category_id, rec);
+    }
+    return [...out.values()];
+  }
+
   /** 업무별 직전 기록일(빈 칸의 [10/28(수) 내역 가져오기] 단추용) — 키: 업무 id */
   async previousRecordDates(before: DateStr): Promise<Record<string, DateStr>> {
     if (!DATE_RE.test(before)) return {};

@@ -1,0 +1,264 @@
+/* 오늘 뷰(improve-1026-spec 8-2): 왼쪽 메모 | 경계선 | 오른쪽 카드. 좁은 창은 메모가 위쪽 띠 */
+.today {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  background: var(--surface-page);
+}
+
+.narrow {
+  flex-direction: column;
+}
+
+.memo {
+  flex: 0 0 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-card);
+}
+
+.splitter {
+  flex: 0 0 auto;
+  width: 8px;
+  padding: 0;
+  border: 0;
+  border-left: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+  background: var(--surface-sub);
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.splitter:hover {
+  background: var(--line);
+}
+
+.memoBand {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-card);
+}
+
+.memoBandOpen {
+  height: 45%;
+}
+
+.bandToggle {
+  flex: 0 0 auto;
+  padding: var(--sp-2) var(--sp-4);
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-sub);
+  color: var(--text-1);
+  font-size: var(--fs-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.right {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.head {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-5);
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-card);
+}
+
+.date {
+  margin: 0;
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+}
+
+.todayBadge {
+  padding: 0 var(--sp-2);
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  line-height: 20px;
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+.textButton {
+  height: 28px;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-1);
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.textButton:hover {
+  background: var(--surface-sub);
+}
+
+.marked {
+  border-color: var(--leave);
+  color: var(--leave);
+}
+
+.pickerWrap {
+  position: relative;
+}
+
+.picker {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  min-width: 150px;
+  padding: var(--sp-1);
+  background: var(--surface-card);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  box-shadow: 0 6px 18px rgb(0 0 0 / 0.14);
+}
+
+.picker > button {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-1);
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.picker > button:hover,
+.picker > button:focus-visible {
+  background: var(--surface-sub);
+  outline: none;
+}
+
+.radio {
+  flex: 0 0 auto;
+  width: 13px;
+  height: 13px;
+  border: 1.5px solid var(--text-3);
+  border-radius: 50%;
+}
+
+.radioOn {
+  border-color: var(--accent);
+  background: radial-gradient(circle, var(--accent) 0 3px, transparent 3.5px);
+}
+
+.cards {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding: var(--sp-4) var(--sp-5) var(--sp-6);
+}
+
+.empty {
+  color: var(--text-2);
+}
+
+.card {
+  flex: 0 0 auto;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+}
+
+.cardEnded {
+  opacity: 0.75;
+}
+
+.cardHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4) 0;
+}
+
+.cardName {
+  font-weight: var(--fw-bold);
+  margin-right: var(--sp-1);
+}
+
+.chip {
+  padding: 0 var(--sp-2);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-sub);
+  color: var(--text-2);
+  font-size: var(--fs-xs);
+  line-height: 18px;
+}
+
+.cardBody {
+  min-height: 44px;
+  padding: 0 var(--sp-2);
+}
+
+.prev {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-4);
+  border-top: 1px dashed var(--line);
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+}
+
+.prevText {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.prevText b {
+  font-weight: var(--fw-bold);
+  color: var(--text-2);
+}
+
+.pull {
+  flex: 0 0 auto;
+  padding: 1px var(--sp-3);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
+.pull:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}

@@ -21,10 +21,25 @@ export interface Settings {
     noteDockAuto: boolean;
     noteDockHeight: number;
     noteDockCollapsed: boolean;
+    /** 메모 보드 배율(improve-1026-spec 11절) — 앱 전체 하나, 0.25~2 */
+    noteZoom: number;
+    /** 메모 보드 미니맵 펼침 */
+    noteMinimap: boolean;
+    /** 마지막으로 본 뷰(spec 8절) — 다시 켜면 그 뷰로 */
+    viewMode: "week" | "today";
+    /** 오늘 뷰 왼쪽 메모 폭(창 폭 비율 0.2~0.7) */
+    todaySplit: number;
     /** 보드 태그 필터(improve-1026-spec 6절) — 태그 id들(OR), "__none__" = 태그 없음. 빈 배열 = 전체. 다시 켜도 유지 */
     tagFilter: string[];
   };
 }
+
+/** 메모 보드 배율 범위(improve-1026-spec 11-1) */
+export const NOTE_ZOOM_MIN = 0.25;
+export const NOTE_ZOOM_MAX = 2;
+/** 오늘 뷰 메모 폭 비율 범위(spec 8-2) */
+export const TODAY_SPLIT_MIN = 0.2;
+export const TODAY_SPLIT_MAX = 0.7;
 
 /** 메모 도크 최소 높이(px) — 끌어서 정할 때 */
 export const NOTE_DOCK_MIN = 120;
@@ -46,6 +61,10 @@ export const DEFAULT_SETTINGS: Settings = {
     noteDockHeight: 280,
     noteDockCollapsed: false,
     tagFilter: [],
+    noteZoom: 1,
+    noteMinimap: true,
+    viewMode: "week",
+    todaySplit: 0.42,
   },
 };
 
@@ -89,6 +108,11 @@ export function mergeSettings(base: Settings, patch: unknown): Settings {
   if (!(s.backup.dailyKeep >= 1)) s.backup.dailyKeep = DEFAULT_SETTINGS.backup.dailyKeep;
   if (!(s.backup.monthlyKeep >= 0)) s.backup.monthlyKeep = DEFAULT_SETTINGS.backup.monthlyKeep;
   if (s.ai.mode === "api") s.ai.mode = "clipboard"; // v1에서는 API 모드 선택 불가(자리만)
+  if (!(s.ui.noteZoom >= NOTE_ZOOM_MIN && s.ui.noteZoom <= NOTE_ZOOM_MAX)) s.ui.noteZoom = 1;
+  if (typeof s.ui.noteMinimap !== "boolean") s.ui.noteMinimap = true;
+  if (s.ui.viewMode !== "week" && s.ui.viewMode !== "today") s.ui.viewMode = "week";
+  if (!(s.ui.todaySplit >= TODAY_SPLIT_MIN && s.ui.todaySplit <= TODAY_SPLIT_MAX))
+    s.ui.todaySplit = DEFAULT_SETTINGS.ui.todaySplit;
   if (!Array.isArray(s.ui.tagFilter) || !s.ui.tagFilter.every((x) => typeof x === "string"))
     s.ui.tagFilter = [];
   if (!(s.ui.noteDockHeight >= NOTE_DOCK_MIN)) s.ui.noteDockHeight = DEFAULT_SETTINGS.ui.noteDockHeight;

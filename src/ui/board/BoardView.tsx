@@ -4,15 +4,8 @@ import { cellKey } from "../../data/repository";
 import { DAY_LABELS, type DateStr } from "../../domain/week";
 import { STR } from "../../shared/strings";
 import { focusNote } from "../note/noteStore";
-import { filterLabel } from "../../domain/tags";
-import {
-  enterCell,
-  reorderVisible,
-  setFocusDay,
-  setTagFilter,
-  shownCategories,
-  useBoard,
-} from "./boardStore";
+import { enterCell, reorderVisible, setFocusDay, shownCategories, useBoard } from "./boardStore";
+import { TagFilterBanner } from "./TagFilterBanner";
 import { CategoryHeader } from "./CategoryHeader";
 import { DayHeader } from "./DayHeader";
 import { CellEditor, type CellNav } from "./CellEditor";
@@ -32,7 +25,6 @@ export function BoardView() {
   const dayMarks = useBoard((s) => s.dayMarks);
   const categoryTags = useBoard((s) => s.categoryTags);
   const tagFilter = useBoard((s) => s.tagFilter);
-  const tags = useBoard((s) => s.tags);
   const [dragId, setDragId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -44,7 +36,6 @@ export function BoardView() {
   if (!view) return null;
   // 태그로 거른 보기(improve-1026-spec 6절) — 키보드 이동·순서 바꾸기도 보이는 업무만 지난다
   const cats = shownCategories({ view, categoryTags, tagFilter });
-  const hidden = view.categories.length - cats.length;
 
   const hasRecords = (day: DateStr) =>
     cats.some((c) => (cells[cellKey(day, c.category.id)] ?? []).some((i) => i.text.trim()));
@@ -76,17 +67,7 @@ export function BoardView() {
 
   return (
     <>
-      {tagFilter.length > 0 && (
-        <div className={styles.filterBanner} role="status" data-testid="tag-filter-banner">
-          <span>
-            {STR.tags.banner(filterLabel(tagFilter, tags, STR.tags.noTag), hidden)}
-            {cats.length === 0 && view.categories.length > 0 && ` — ${STR.tags.allHidden}`}
-          </span>
-          <button type="button" onClick={() => setTagFilter([])}>
-            {STR.tags.clear}
-          </button>
-        </div>
-      )}
+      <TagFilterBanner />
       <div className={styles.scroll} ref={scrollRef}>
         <div className={styles.grid} style={gridStyle} data-testid="board-grid">
           <div className={`${styles.colHeader} ${styles.corner}`}>{STR.board.categoryHeader}</div>

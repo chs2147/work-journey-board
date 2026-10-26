@@ -153,12 +153,12 @@ test.describe("설정 > 백업·업무·무기록", () => {
   test("무기록 종료 제안 기준을 끄고 켜기", async ({ page }) => {
     await page.goto(q());
     await page.getByRole("button", { name: "설정" }).click();
-    const select = page.getByRole("combobox");
+    const select = page.getByRole("combobox", { name: "기록이 없는 업무에 종료를 제안할 기준" });
     await expect(select).toHaveValue("3");
     await select.selectOption("0");
     await page.getByRole("button", { name: "닫기" }).click();
     await page.getByRole("button", { name: "설정" }).click();
-    await expect(page.getByRole("combobox")).toHaveValue("0");
+    await expect(select).toHaveValue("0");
   });
 });
 

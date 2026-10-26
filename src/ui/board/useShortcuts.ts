@@ -4,8 +4,10 @@ import { addDays, weekDays } from "../../domain/week";
 import {
   focusStartCell,
   goToday,
+  goDay,
   goWeek,
   pullPreviousDay,
+  setViewMode,
   redo,
   setFocusDay,
   setPanelOpen,
@@ -23,7 +25,7 @@ export function useShortcuts() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.isComposing || e.keyCode === 229) return;
-      const { ready, yearOpen, focusDay, weekId, panelOpen } = useBoard.getState();
+      const { ready, yearOpen, focusDay, weekId, panelOpen, viewMode } = useBoard.getState();
       if (!ready) return;
       const mod = e.ctrlKey || e.metaKey;
 
@@ -45,7 +47,12 @@ export function useShortcuts() {
       if (e.altKey && !mod && !e.shiftKey) {
         if (e.code === "ArrowLeft" || e.code === "ArrowRight") {
           e.preventDefault();
-          void goWeek(e.code === "ArrowLeft" ? -1 : 1);
+          // 오늘 뷰는 하루씩, 주간 뷰는 한 주씩(improve-1026-spec 8-1)
+          if (viewMode === "today") void goDay(e.code === "ArrowLeft" ? -1 : 1);
+          else void goWeek(e.code === "ArrowLeft" ? -1 : 1);
+        } else if (e.code === "KeyV") {
+          e.preventDefault();
+          setViewMode(viewMode === "today" ? "week" : "today");
         } else if (e.code === "KeyT") {
           e.preventDefault();
           void goToday();

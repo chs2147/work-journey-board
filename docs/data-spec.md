@@ -156,7 +156,8 @@ CREATE TABLE app_meta (
   },
   "ui": { "summaryPanelOpen": false, "lastExportDir": null,
           "noteDockAuto": true, "noteDockHeight": 280, "noteDockCollapsed": false,
-          "tagFilter": [] }
+          "tagFilter": [], "noteZoom": 1, "noteMinimap": true,
+          "viewMode": "week", "todaySplit": 0.42 }
           // 메모 도크: 자동 높이(기본) / 끌어서 정한 높이(최소 120)·접힘(weekly-note-spec 3절·14절)
 }
 ```

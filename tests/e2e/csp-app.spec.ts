@@ -70,6 +70,13 @@ test("보드·주간 메모 편집기(서식 전부)·엑셀 내보내기 — CS
   await expect(page.getByTestId("tag-filter-banner")).toBeVisible();
   await page.getByRole("menuitem", { name: "필터 해제" }).click();
 
+  // 메모 줌(판을 CSS scale로 — CSSOM) · 오늘 뷰 전환 후 다시 주간 뷰(improve-1026-spec 8·11절)
+  await page.getByTestId("note-zoom").selectOption("0.5");
+  await page.keyboard.press("Alt+KeyV");
+  await expect(page.getByTestId("today-view")).toBeVisible();
+  await page.getByTestId("view-week").click();
+  await page.getByTestId("note-zoom").selectOption("1");
+
   // 메모: 새 상자 → 제목·크기·색·형광펜·굵게·체크 목록
   const canvas = page.getByTestId("note-canvas");
   const c = (await canvas.boundingBox())!;

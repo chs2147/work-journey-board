@@ -1,6 +1,6 @@
-import { weekTitle } from "../../domain/week";
+import { DAY_LABELS, dayIndex, weekTitle } from "../../domain/week";
 import { STR } from "../../shared/strings";
-import { goToday, goWeek, retryFailed, setYearOpen, useBoard } from "../board/boardStore";
+import { goDay, goToday, goWeek, retryFailed, setViewMode, setYearOpen, useBoard } from "../board/boardStore";
 import { YearMinimap } from "../board/YearMinimap";
 import { toggleExport } from "../export/exportStore";
 import { toggleSummary, useSummary } from "../summary/summaryStore";
@@ -14,6 +14,12 @@ export function TopBar() {
   const ready = useBoard((s) => s.ready);
   const weekId = useBoard((s) => s.weekId);
   const yearOpen = useBoard((s) => s.yearOpen);
+  const viewMode = useBoard((s) => s.viewMode);
+  const focusDay = useBoard((s) => s.focusDay);
+  const todayView = viewMode === "today";
+  const dayLabel = focusDay
+    ? `${Number(focusDay.slice(5, 7))}/${Number(focusDay.slice(8, 10))}(${DAY_LABELS[dayIndex(focusDay)]})`
+    : "";
   const saving = useBoard((s) => s.saving);
   const failed = useBoard((s) => s.failed.length);
   const journalReady = useAppStore((s) => s.journal.state === "ready");
@@ -32,21 +38,21 @@ export function TopBar() {
             <button
               type="button"
               className={styles.iconButton}
-              aria-label={STR.topBar.prevWeek}
-              title={STR.topBar.prevWeek}
-              onClick={() => void goWeek(-1)}
+              aria-label={todayView ? STR.today.prevDay : STR.topBar.prevWeek}
+              title={todayView ? STR.today.prevDay : STR.topBar.prevWeek}
+              onClick={() => void (todayView ? goDay(-1) : goWeek(-1))}
             >
               ◀
             </button>
             <span className={styles.week} data-testid="week-title">
-              {weekTitle(weekId)}
+              {todayView ? `${dayLabel} · ${weekId}` : weekTitle(weekId)}
             </span>
             <button
               type="button"
               className={styles.iconButton}
-              aria-label={STR.topBar.nextWeek}
-              title={STR.topBar.nextWeek}
-              onClick={() => void goWeek(1)}
+              aria-label={todayView ? STR.today.nextDay : STR.topBar.nextWeek}
+              title={todayView ? STR.today.nextDay : STR.topBar.nextWeek}
+              onClick={() => void (todayView ? goDay(1) : goWeek(1))}
             >
               ▶
             </button>
@@ -70,6 +76,30 @@ export function TopBar() {
                 {STR.topBar.year}
               </button>
               {yearOpen && <YearMinimap />}
+            </div>
+            {/* [주간 | 오늘] 보기(improve-1026-spec 8-1) */}
+            <div
+              className={styles.segment}
+              role="group"
+              aria-label={STR.today.viewGroup}
+              title={STR.today.viewTitle}
+            >
+              <button
+                type="button"
+                aria-pressed={!todayView}
+                data-testid="view-week"
+                onClick={() => setViewMode("week")}
+              >
+                {STR.today.week}
+              </button>
+              <button
+                type="button"
+                aria-pressed={todayView}
+                data-testid="view-today"
+                onClick={() => setViewMode("today")}
+              >
+                {STR.today.today}
+              </button>
             </div>
           </nav>
         )}

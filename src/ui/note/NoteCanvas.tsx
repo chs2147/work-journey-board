@@ -1,7 +1,16 @@
 // 메모 판(weekly-note-spec 4절, 시안 A): 점 격자 위 자유 배치 텍스트 상자. 빈 곳 클릭 = 새 상자, 위 막대 끌기 = 이동,
 // 오른쪽 손잡이 = 폭, Esc = 선택(방향키·Delete), 편집 중에는 서식 막대. 편집기(TipTap)는 이 조각과 함께 처음 열 때만 불러온다.
 import { EditorContent, useEditor, useEditorState, type Editor } from "@tiptap/react";
-import { useEffect, useRef, useState, type DragEvent, type KeyboardEvent, type PointerEvent } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type DragEvent,
+  type KeyboardEvent,
+  type PointerEvent,
+} from "react";
+import { anchoredScroll, canvasSize, fitZoom, wheelZoom } from "../../domain/noteZoom";
 import {
   boxText,
   FONT_SIZES,
@@ -17,12 +26,15 @@ import { useAppStore } from "../common/appStore";
 import { onSelectedBoxKey, startBoxDrag, useBoxFrame } from "./boxShared";
 import { noteExtensions } from "./editorExtensions";
 import { ImageBoxView, ImagePreview } from "./ImageBoxView";
+import { Minimap } from "./Minimap";
 import {
   addBox,
   addBoxBelow,
   addImages,
   pastePlace,
   bringToFront,
+  setZoom,
+  takeZoomAnchor,
   deleteBox,
   duplicateBox,
   endEditing,
@@ -36,15 +48,29 @@ import {
 import "./prosemirror.css";
 import styles from "./Note.module.css";
 
-/** 판 아래 늘 남겨 둘 빈 공간(이어 붙이기용, 스펙 4-1) */
-const BOTTOM_ROOM = 160;
+/** 판 아래·오른쪽에 늘 남겨 둘 빈 공간(이어 붙이기용, 스펙 4-1) */
+const ROOM = { right: 40, bottom: 160 };
+
+/** 글자를 치는 중인 곳(Space가 글자인 곳) */
+const isEditable = (el: Element | null) => !!el?.closest('input, textarea, select, [contenteditable="true"]');
 
 export default function NoteCanvas() {
   const doc = useNote((s) => s.doc);
   const editingId = useNote((s) => s.editingId);
   const selectedId = useNote((s) => s.selectedId);
   const pendingId = useNote((s) => s.pendingId);
+  const zoom = useNote((s) => s.zoom);
+  const fitRequest = useNote((s) => s.fitRequest);
   const canvasRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [view, setView] = useState({ w: 0, h: 0 });
+  /** Space를 누르고 있어 끌면 판이 움직이는 상태 / 지금 끌어 옮기는 중 */
+  const [panReady, setPanReady] = useState(false);
+  const [panning, setPanning] = useState(false);
+  const spaceDown = useRef(false);
+  const hover = useRef(false);
+  const prevZoom = useRef(zoom);
+  const fitPending = useRef(false);
   const [previewId, setPreviewId] = useState<string | null>(null);
   // 상자마다 편집기 — 서식 막대가 편집 중인 상자의 편집기를 쓴다
   const [editors, setEditors] = useState<Record<string, Editor>>({});
@@ -56,8 +82,8 @@ export default function NoteCanvas() {
       return rest;
     });
 
-  const bottom = doc.boxes.reduce((m, b) => Math.max(m, b.y + (b.h ?? 48)), 0);
-  const right = doc.boxes.reduce((m, b) => Math.max(m, b.x + b.w), 0);
+  // 판 크기(문서 px) — 축소해도 보이는 영역을 다 채워 빈 곳을 누를 수 있게(improve-1026-spec 11-2)
+  const size = canvasSize(doc.boxes, view, zoom, ROOM);
   const editingBox = doc.boxes.find((b): b is TextBox => b.id === editingId && b.kind === "text");
   const editingEditor = editingId ? editors[editingId] : undefined;
   const previewBox = doc.boxes.find((b): b is ImageBox => b.id === previewId && b.kind === "image");
@@ -77,12 +103,111 @@ export default function NoteCanvas() {
     return () => document.removeEventListener("paste", onPaste, true);
   }, []);
 
+  // 보이는 영역 크기
+  useLayoutEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const measure = () => setView({ w: el.clientWidth, h: el.clientHeight });
+    measure();
+    if (typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  // 배율이 바뀌면 커서(또는 가운데) 아래 문서 위치를 그대로 둔다. [화면에 맞춤]이면 왼쪽 위로
+  useLayoutEffect(() => {
+    const el = scrollRef.current;
+    if (!el || prevZoom.current === zoom) return;
+    const at = takeZoomAnchor() ?? { x: el.clientWidth / 2, y: el.clientHeight / 2 };
+    const next = fitPending.current
+      ? { left: 0, top: 0 }
+      : anchoredScroll({ left: el.scrollLeft, top: el.scrollTop }, at, prevZoom.current, zoom);
+    prevZoom.current = zoom;
+    fitPending.current = false;
+    el.scrollLeft = next.left;
+    el.scrollTop = next.top;
+  }, [zoom]);
+
+  // [화면에 맞춤]·Ctrl+1 — 이 판이 뜬 뒤에 온 요청만(뷰를 바꿔 판이 새로 떠도 지난 요청을 다시 쓰지 않게)
+  const handledFit = useRef(fitRequest);
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (fitRequest === handledFit.current || !el) return;
+    handledFit.current = fitRequest;
+    const z = fitZoom(useNote.getState().doc.boxes, el.clientWidth, el.clientHeight);
+    if (z === useNote.getState().zoom) el.scrollTo({ left: 0, top: 0 });
+    else {
+      fitPending.current = true;
+      setZoom(z);
+    }
+  }, [fitRequest]);
+
+  // Ctrl+휠(터치패드 두 손가락 벌리기 포함) = 커서 위치 중심 확대·축소. React onWheel은 기본 동작을 막을 수 없어 직접 단다
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      if (!e.ctrlKey && !e.metaKey) return;
+      e.preventDefault();
+      const r = el.getBoundingClientRect();
+      setZoom(wheelZoom(useNote.getState().zoom, e.deltaY), { x: e.clientX - r.left, y: e.clientY - r.top });
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, []);
+
+  // Space를 누르고 있는 동안(글자를 치는 중이 아니고 판 위에 마우스가 있을 때) 끌면 판이 움직인다
+  useEffect(() => {
+    const down = (e: globalThis.KeyboardEvent) => {
+      if (e.code !== "Space" || e.repeat || !hover.current || isEditable(document.activeElement)) return;
+      e.preventDefault();
+      spaceDown.current = true;
+      setPanReady(true);
+    };
+    const up = (e: globalThis.KeyboardEvent) => {
+      if (e.code !== "Space") return;
+      spaceDown.current = false;
+      setPanReady(false);
+    };
+    window.addEventListener("keydown", down);
+    window.addEventListener("keyup", up);
+    return () => {
+      window.removeEventListener("keydown", down);
+      window.removeEventListener("keyup", up);
+    };
+  }, []);
+
+  /** 가운데 단추 끌기 또는 Space+끌기 = 이동(상자 위에서 시작해도 상자를 옮기지 않는다) */
+  const onPanPointerDown = (e: PointerEvent<HTMLDivElement>) => {
+    if (!(e.button === 1 || (e.button === 0 && spaceDown.current))) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const el = e.currentTarget;
+    el.setPointerCapture(e.pointerId);
+    const [x0, y0, l0, t0] = [e.clientX, e.clientY, el.scrollLeft, el.scrollTop];
+    setPanning(true);
+    const move = (ev: globalThis.PointerEvent) => {
+      el.scrollLeft = l0 - (ev.clientX - x0);
+      el.scrollTop = t0 - (ev.clientY - y0);
+    };
+    const up = () => {
+      el.removeEventListener("pointermove", move);
+      el.removeEventListener("pointerup", up);
+      el.removeEventListener("pointercancel", up);
+      setPanning(false);
+    };
+    el.addEventListener("pointermove", move);
+    el.addEventListener("pointerup", up);
+    el.addEventListener("pointercancel", up);
+  };
+
   const onCanvasPointerDown = (e: PointerEvent<HTMLDivElement>) => {
     if (e.target !== e.currentTarget || e.button !== 0) return;
     e.preventDefault();
     const rect = e.currentTarget.getBoundingClientRect();
     if (editingId) endEditing(editingId);
-    addBox(e.clientX - rect.left, e.clientY - rect.top);
+    addBox((e.clientX - rect.left) / zoom, (e.clientY - rect.top) / zoom);
   };
 
   const hasFiles = (e: DragEvent) => [...e.dataTransfer.types].includes("Files");
@@ -92,57 +217,83 @@ export default function NoteCanvas() {
     e.preventDefault();
     e.stopPropagation();
     const rect = canvasRef.current!.getBoundingClientRect();
-    void addImages([...e.dataTransfer.files], { x: e.clientX - rect.left, y: e.clientY - rect.top });
+    void addImages([...e.dataTransfer.files], {
+      x: (e.clientX - rect.left) / zoom,
+      y: (e.clientY - rect.top) / zoom,
+    });
   };
 
   return (
-    <div className={styles.canvasScroll}>
+    <div className={styles.canvasWrap}>
       <div
-        ref={canvasRef}
-        className={styles.canvas}
-        style={{ height: Math.max(bottom + BOTTOM_ROOM, 0), minWidth: right + 40 }}
-        role="application"
-        aria-label={STR.note.canvasAria}
-        data-testid="note-canvas"
-        onPointerDown={onCanvasPointerDown}
-        // 빈 곳 클릭의 기본 동작(포커스 옮기기)이 방금 커서를 넣은 새 상자를 빼앗지 않게
-        onMouseDown={(e) => e.target === e.currentTarget && e.preventDefault()}
-        onDragOverCapture={(e) => {
-          if (!hasFiles(e)) return;
-          e.preventDefault();
-          e.dataTransfer.dropEffect = "copy";
-        }}
-        onDropCapture={onDropCapture}
+        ref={scrollRef}
+        className={[styles.canvasScroll, panReady ? styles.panReady : "", panning ? styles.panning : ""].join(
+          " ",
+        )}
+        data-testid="note-scroll"
+        onPointerDownCapture={onPanPointerDown}
+        // 가운데 단추의 자동 스크롤(브라우저 기본)을 막는다
+        onMouseDownCapture={(e) => e.button === 1 && e.preventDefault()}
+        onPointerEnter={() => (hover.current = true)}
+        onPointerLeave={() => (hover.current = false)}
       >
-        {doc.boxes.length === 0 && (
-          <div className={styles.empty} data-testid="note-empty">
-            <div className={styles.emptyTitle}>{STR.note.emptyTitle}</div>
-            <div>{STR.note.emptyHint}</div>
+        {/* 배율만큼의 자리(스크롤 범위) 안에 판을 CSS scale로 그린다 — 상자 좌표는 늘 문서 px */}
+        <div className={styles.sizer} style={{ width: size.w * zoom, height: size.h * zoom }}>
+          <div
+            ref={canvasRef}
+            className={styles.canvas}
+            style={{
+              width: size.w,
+              height: size.h,
+              transform: zoom === 1 ? undefined : `scale(${zoom})`,
+            }}
+            role="application"
+            aria-label={STR.note.canvasAria}
+            data-testid="note-canvas"
+            data-zoom={zoom}
+            onPointerDown={onCanvasPointerDown}
+            // 빈 곳 클릭의 기본 동작(포커스 옮기기)이 방금 커서를 넣은 새 상자를 빼앗지 않게
+            onMouseDown={(e) => e.target === e.currentTarget && e.preventDefault()}
+            onDragOverCapture={(e) => {
+              if (!hasFiles(e)) return;
+              e.preventDefault();
+              e.dataTransfer.dropEffect = "copy";
+            }}
+            onDropCapture={onDropCapture}
+          >
+            {doc.boxes.map((b) =>
+              b.kind === "image" ? (
+                <ImageBoxView
+                  key={b.id}
+                  box={b}
+                  selected={b.id === selectedId}
+                  onPreview={() => setPreviewId(b.id)}
+                />
+              ) : (
+                <TextBoxView
+                  key={b.id}
+                  box={b}
+                  editing={b.id === editingId}
+                  selected={b.id === selectedId}
+                  pending={b.id === pendingId}
+                  onEditor={onEditor}
+                />
+              ),
+            )}
           </div>
-        )}
-        {doc.boxes.map((b) =>
-          b.kind === "image" ? (
-            <ImageBoxView
-              key={b.id}
-              box={b}
-              selected={b.id === selectedId}
-              onPreview={() => setPreviewId(b.id)}
-            />
-          ) : (
-            <TextBoxView
-              key={b.id}
-              box={b}
-              editing={b.id === editingId}
-              selected={b.id === selectedId}
-              pending={b.id === pendingId}
-              onEditor={onEditor}
-            />
-          ),
-        )}
-        {editingBox && editingEditor && editingBox.id !== pendingId && (
-          <FormatToolbar editor={editingEditor} box={editingBox} />
-        )}
+          {/* 서식 막대는 배율과 상관없이 100% 크기로 상자 위(11-2) */}
+          {editingBox && editingEditor && editingBox.id !== pendingId && (
+            <FormatToolbar editor={editingEditor} box={editingBox} zoom={zoom} />
+          )}
+        </div>
       </div>
+      {doc.boxes.length === 0 && (
+        <div className={styles.empty} data-testid="note-empty">
+          <div className={styles.emptyTitle}>{STR.note.emptyTitle}</div>
+          <div>{STR.note.emptyHint}</div>
+        </div>
+      )}
+      <Minimap scrollRef={scrollRef} boxes={doc.boxes} size={size} view={view} zoom={zoom} />
       {previewBox && <ImagePreview box={previewBox} onClose={() => setPreviewId(null)} />}
     </div>
   );
@@ -355,7 +506,7 @@ function focusEnd(editor: Editor) {
 }
 
 // ── 서식 막대 ─────────────────────────────────────────
-function FormatToolbar({ editor, box }: { editor: Editor; box: TextBox }) {
+function FormatToolbar({ editor, box, zoom }: { editor: Editor; box: TextBox; zoom: number }) {
   const st = useEditorState({
     editor,
     selector: ({ editor: ed }) => ({
@@ -378,8 +529,8 @@ function FormatToolbar({ editor, box }: { editor: Editor; box: TextBox }) {
   });
   const run = (f: (c: ReturnType<Editor["chain"]>) => ReturnType<Editor["chain"]>) =>
     f(editor.chain().focus()).run();
-  // 상자 바로 위, 판 맨 위라 자리가 없으면 상자 아래
-  const top = box.y >= 44 ? box.y - 44 : box.y + (box.h ?? 48) + 8;
+  // 상자 바로 위, 판 맨 위라 자리가 없으면 상자 아래(화면 px = 문서 px × 배율)
+  const top = box.y * zoom >= 44 ? box.y * zoom - 44 : (box.y + (box.h ?? 48)) * zoom + 8;
   const keep = (e: { preventDefault(): void }) => e.preventDefault(); // 단추를 눌러도 편집기 포커스 유지
 
   const toggle = (label: string, active: boolean, onClick: () => void, text: string, cls = "") => (
@@ -399,7 +550,7 @@ function FormatToolbar({ editor, box }: { editor: Editor; box: TextBox }) {
   return (
     <div
       className={styles.toolbar}
-      style={{ left: box.x, top }}
+      style={{ left: box.x * zoom, top }}
       role="toolbar"
       aria-label={STR.note.toolbar}
       data-note-toolbar

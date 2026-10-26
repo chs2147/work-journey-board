@@ -24,6 +24,7 @@ import {
   type PMNode,
 } from "../../domain/note";
 import type { WeekId } from "../../domain/week";
+import { clampZoom, stepZoom } from "../../domain/noteZoom";
 import { uuidv7 } from "../../data/ids";
 import type { JournalRepository } from "../../data/repository";
 import { NOTE_DOCK_MIN } from "../../data/settings";
@@ -69,6 +70,12 @@ export interface NoteState {
   assets: Record<string, NoteImage>;
   /** 그림을 넣는 중(줄이기·저장) */
   busy: boolean;
+  /** 메모 보드 배율(improve-1026-spec 11절) — 앱 전체 하나 */
+  zoom: number;
+  /** 미니맵 펼침 */
+  minimap: boolean;
+  /** [화면에 맞춤] 요청 회차(판이 보이는 영역을 알아 배율을 정한다) */
+  fitRequest: number;
 }
 
 export interface NoteImage {
@@ -95,6 +102,9 @@ export const useNote = create<NoteState>(() => ({
   canRedo: false,
   assets: {},
   busy: false,
+  zoom: 1,
+  minimap: true,
+  fitRequest: 0,
 }));
 
 const set = useNote.setState;
@@ -119,6 +129,8 @@ export async function initNote(r: JournalRepository) {
     dockAuto: s.ui.noteDockAuto,
     collapsed: s.ui.noteDockCollapsed,
     expanded: false,
+    zoom: clampZoom(s.ui.noteZoom),
+    minimap: s.ui.noteMinimap,
   });
   await loadWeek(useBoard.getState().weekId);
   unsubscribe?.();
@@ -517,7 +529,8 @@ export function redoNote() {
 // ── 키보드 흐름·도크 ──────────────────────────────────
 /** 메모로 가기(Alt+M·마지막 업무 칸 ↓): 마지막으로 고친 상자 끝, 없으면 읽는 순서 마지막 상자, 그것도 없으면 새 상자 */
 export function focusNote() {
-  if (get().collapsed) setCollapsed(false);
+  // 오늘 뷰의 왼쪽 메모는 늘 펼쳐져 있다 — 아래 도크의 접힘 상태는 건드리지 않는다
+  if (get().collapsed && useBoard.getState().viewMode === "week") setCollapsed(false);
   const texts = get().doc.boxes.filter((b) => b.kind === "text");
   const target = (lastEditedId && texts.find((b) => b.id === lastEditedId)) || readingOrder(texts).at(-1);
   if (target) requestFocus(target.id);
@@ -554,6 +567,41 @@ export function pasteImagesFromBoard(files: Blob[]) {
 export function setCollapsed(collapsed: boolean) {
   set({ collapsed, expanded: collapsed ? false : get().expanded });
   void repo?.updateSettings({ ui: { noteDockCollapsed: collapsed } }).catch(() => undefined);
+}
+
+// ── 줌·미니맵(improve-1026-spec 11절) ─────────────────
+let zoomAnchor: { x: number; y: number } | null = null;
+let zoomSaveTimer: ReturnType<typeof setTimeout> | null = null;
+
+/** 배율 바꾸기. at = 보이는 영역 안에서 그대로 둘 점(커서) — 없으면 가운데 */
+export function setZoom(z: number, at?: { x: number; y: number }) {
+  const zoom = clampZoom(z);
+  if (zoom === get().zoom) return;
+  zoomAnchor = at ?? null;
+  set({ zoom });
+  // 휠은 잇달아 오므로 멈춘 뒤 한 번만 저장
+  if (zoomSaveTimer) clearTimeout(zoomSaveTimer);
+  zoomSaveTimer = setTimeout(() => {
+    void repo?.updateSettings({ ui: { noteZoom: get().zoom } }).catch(() => undefined);
+  }, 400);
+}
+
+/** 판이 배율을 그린 직후 한 번 꺼내 쓴다 */
+export function takeZoomAnchor() {
+  const a = zoomAnchor;
+  zoomAnchor = null;
+  return a;
+}
+
+export const zoomStep = (dir: 1 | -1) => setZoom(stepZoom(get().zoom, dir));
+
+export function requestFit() {
+  set({ fitRequest: get().fitRequest + 1 });
+}
+
+export function setMinimap(minimap: boolean) {
+  set({ minimap });
+  void repo?.updateSettings({ ui: { noteMinimap: minimap } }).catch(() => undefined);
 }
 
 export function setExpanded(expanded: boolean) {

@@ -12,6 +12,7 @@ import {
   redoNote,
   resizeBoxLive,
   undoNote,
+  useNote,
 } from "./noteStore";
 
 /** 이만큼 움직여야 끌기로 본다(그보다 작으면 클릭) */
@@ -34,10 +35,12 @@ export function startBoxDrag(
   el.setPointerCapture(e.pointerId);
   const before = beginGesture();
   const [sx, sy, x0, y0, w0] = [e.clientX, e.clientY, box.x, box.y, box.w];
+  // 판이 배율로 그려지므로 화면 px를 문서 px로(improve-1026-spec 11-2)
+  const zoom = useNote.getState().zoom;
   let moved = false;
   const move = (ev: globalThis.PointerEvent) => {
-    const [dx, dy] = [ev.clientX - sx, ev.clientY - sy];
-    if (!moved && Math.hypot(dx, dy) < DRAG_SLOP) return;
+    if (!moved && Math.hypot(ev.clientX - sx, ev.clientY - sy) < DRAG_SLOP) return;
+    const [dx, dy] = [(ev.clientX - sx) / zoom, (ev.clientY - sy) / zoom];
     moved = true;
     if (kind === "move") moveBoxLive(box.id, x0 + dx, y0 + dy);
     else resizeBoxLive(box.id, w0 + dx);
