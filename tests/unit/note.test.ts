@@ -123,21 +123,31 @@ describe("예전 요일 메모 → 상자 1개(스펙 5-1)", () => {
 });
 
 describe("문서 검증", () => {
-  it("허용 밖 노드는 벗기고 글은 살림, 허용 밖 서식·빈 글은 버림, 문서가 아니면 null", () => {
+  it("허용 밖 노드는 벗기고 글은 살림, 허용 밖 서식·빈 글은 버림, 문서가 아니면 null(링크는 v0.2.8부터 허용)", () => {
     const s = sanitizeContent({
       type: "doc",
       content: [
         { type: "blockquote", content: [p(t("인용 안 글"))] },
-        p(t("링크", [{ type: "link", attrs: { href: "https://example.com" } }, { type: "bold" }]), {
-          type: "text",
-          text: "",
-        }),
+        p(
+          t("링크", [
+            { type: "link", attrs: { href: "https://example.com" } },
+            { type: "comment" },
+            { type: "bold" },
+          ]),
+          {
+            type: "text",
+            text: "",
+          },
+        ),
         { type: "image", attrs: { src: "https://example.com/a.png" } },
       ],
     });
     expect(s).toEqual({
       type: "doc",
-      content: [p(t("인용 안 글")), p(t("링크", [{ type: "bold" }]))],
+      content: [
+        p(t("인용 안 글")),
+        p(t("링크", [{ type: "link", attrs: { href: "https://example.com" } }, { type: "bold" }])),
+      ],
     });
     expect(sanitizeContent({ type: "paragraph" })).toBeNull();
     expect(sanitizeContent({ type: "doc", content: [] })).toEqual({

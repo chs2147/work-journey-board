@@ -6,7 +6,10 @@ import {
   BOX_DEFAULT_W,
   BOX_GAP,
   clampImageWidth,
+  clampLinkWidth,
   clampWidth,
+  cleanLinkText,
+  makeLinkBox,
   emptyContent,
   emptyDoc,
   IMAGE_FIRST_W,
@@ -357,6 +360,64 @@ export async function addImages(files: Blob[], at: { x: number; y: number }) {
   }
 }
 
+// ── 링크 카드(improve-1026-spec 10-1) ─────────────────
+/** 링크 카드 넣기(붙여넣기·끌어다 놓기·[링크 넣기]) — 앱은 그 주소에 접속하지 않는다. 넣은 카드를 선택 */
+export function addLinkBox(url: string, at: { x: number; y: number }, title = "", note = ""): string {
+  const editing = get().editingId;
+  if (editing) endEditing(editing); // 빈 곳의 커서 자리(대기 상자)는 카드에 자리를 내준다
+  const doc = get().doc;
+  const box = makeLinkBox(uuidv7(), url, { ...at, z: topZ(doc) + 1 }, title, note);
+  commit({ ...doc, boxes: [...doc.boxes, box] }, true);
+  set({ selectedId: box.id, editingId: null });
+  return box.id;
+}
+
+/** 카드 제목·메모 고치기(한 번의 메모 기록) */
+export function updateLinkText(id: string, title: string, note: string) {
+  const b = boxOf(id);
+  if (!b || b.kind !== "link") return;
+  const next = cleanLinkText(b, title, note);
+  if (next.title === b.title && next.note === b.note) return;
+  commit(
+    mapBox(id, (x) => (x.kind === "link" ? { ...x, ...next } : x)),
+    true,
+  );
+}
+
+/** 카드 썸네일 = 사용자가 고른 그림(이미지 상자와 같은 줄이기·저장) */
+export async function setLinkThumb(id: string, file: Blob) {
+  const r = repo;
+  if (!r) return;
+  const weekId = get().weekId;
+  set({ busy: true });
+  try {
+    const img = await prepareImage(file);
+    const asset = await r.addNoteAsset(weekId, img);
+    if (get().weekId !== weekId) return;
+    set({ assets: { ...get().assets, [asset]: img } });
+    commit(
+      mapBox(id, (x) => (x.kind === "link" ? { ...x, asset } : x)),
+      true,
+    );
+  } catch (e) {
+    if (e instanceof ImageInputError) toast(e.message);
+    else reportError(e);
+  } finally {
+    set({ busy: false });
+  }
+}
+
+export function clearLinkThumb(id: string) {
+  commit(
+    mapBox(id, (x) => {
+      if (x.kind !== "link") return x;
+      const { asset: _gone, ...rest } = x; // eslint-disable-line @typescript-eslint/no-unused-vars
+      return rest;
+    }),
+    true,
+  );
+}
+
 export function setEditing(id: string | null) {
   set(id ? { editingId: id, selectedId: null } : { editingId: null });
 }
@@ -443,7 +504,12 @@ export async function saveImage(id: string) {
 }
 
 export function resizeBoxLive(id: string, w: number) {
-  set({ doc: mapBox(id, (b) => ({ ...b, w: b.kind === "image" ? clampImageWidth(w) : clampWidth(w) })) });
+  set({
+    doc: mapBox(id, (b) => ({
+      ...b,
+      w: b.kind === "image" ? clampImageWidth(w) : b.kind === "link" ? clampLinkWidth(w) : clampWidth(w),
+    })),
+  });
 }
 
 /** 방향키 이동(8px, Shift 32px) */

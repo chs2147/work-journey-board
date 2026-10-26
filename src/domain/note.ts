@@ -1,5 +1,6 @@
 // 주간 메모(weekly-note-spec): 한 주에 문서 1개, 자유 배치 상자들. 순수 함수만(UI·저장소·플랫폼 import 금지).
 // 상자 안 글은 편집기(ProseMirror 계열)의 문서 JSON — 허용하는 노드·서식은 스펙 4-3 표뿐이고, 밖은 버린다.
+import { isOpenableUrl, LINK_TEXT_MAX, titleFromUrl } from "./links";
 import { DAY_LABELS, dayIndex, weekDays, type DateStr, type WeekId } from "./week";
 
 /** 편집기 문서 노드(ProseMirror JSON) */
@@ -42,7 +43,25 @@ export interface ImageBox {
   caption: string;
 }
 
-export type NoteBox = TextBox | ImageBox;
+/**
+ * 링크 카드(improve-1026-spec 10-1, A 오프라인 카드): 제목·메모는 사용자가 쓰고, 앱은 그 주소에 접속하지 않는다.
+ * 썸네일은 사용자가 붙인 캡처(선택, 그림은 note_asset — 이미지 상자와 같은 저장)
+ */
+export interface LinkBox {
+  id: string;
+  kind: "link";
+  x: number;
+  y: number;
+  w: number;
+  z: number;
+  h?: number;
+  url: string;
+  title: string;
+  note: string;
+  asset?: string;
+}
+
+export type NoteBox = TextBox | ImageBox | LinkBox;
 
 export interface NoteDoc {
   v: 1;
@@ -72,6 +91,45 @@ export const IMAGE_MAX_SOURCE_BYTES = 10 * 1024 * 1024;
 export const CAPTION_MAX = 200;
 export const IMAGE_MIMES = ["image/webp", "image/png", "image/jpeg", "image/gif"] as const;
 export type ImageMime = (typeof IMAGE_MIMES)[number];
+
+// ── 링크 카드(improve-1026-spec 10-1) ─────────────────
+export const LINK_MIN_W = 200;
+export const LINK_MAX_W = 640;
+export const LINK_DEFAULT_W = 304;
+export const clampLinkWidth = (w: number) => Math.min(LINK_MAX_W, Math.max(LINK_MIN_W, snap(w)));
+const cleanLine = (s: unknown) =>
+  typeof s === "string" ? s.replace(/\s+/g, " ").trim().slice(0, LINK_TEXT_MAX) : "";
+
+/** 새 링크 카드(제목을 비우면 주소에서 만든다) */
+export function makeLinkBox(
+  id: string,
+  url: string,
+  at: { x: number; y: number; z: number },
+  title = "",
+  note = "",
+): LinkBox {
+  return {
+    id,
+    kind: "link",
+    x: snap(at.x),
+    y: snap(at.y),
+    w: LINK_DEFAULT_W,
+    z: at.z,
+    url,
+    title: cleanLine(title) || titleFromUrl(url),
+    note: cleanLine(note),
+  };
+}
+
+/** 카드 제목·메모 고치기(제목을 지우면 주소에서 다시 만든다) */
+export const cleanLinkText = (
+  box: LinkBox,
+  title: string,
+  note: string,
+): Pick<LinkBox, "title" | "note"> => ({
+  title: cleanLine(title) || titleFromUrl(box.url),
+  note: cleanLine(note),
+});
 
 /** 이미지 폭은 비율을 지키므로 눈금에 맞추지 않는다(1px 단위) */
 export const clampImageWidth = (w: number) => Math.round(Math.min(IMAGE_MAX_W, Math.max(IMAGE_MIN_W, w)));
@@ -104,7 +162,16 @@ const BLOCKS = new Set([
   "hardBreak",
   "text",
 ]);
-const MARKS = new Set(["bold", "italic", "underline", "strike", "fontSize", "textColor", "highlight"]);
+const MARKS = new Set([
+  "bold",
+  "italic",
+  "underline",
+  "strike",
+  "fontSize",
+  "textColor",
+  "highlight",
+  "link",
+]);
 export const FONT_SIZES = ["s", "m", "l", "xl"] as const;
 export const TEXT_COLORS = ["gray", "orange", "blue", "green", "red"] as const;
 
@@ -152,8 +219,13 @@ export function sanitizeContent(raw: unknown): PMNode | null {
               isObj(m) && MARKS.has(String(m.type)),
           )
         : [];
-      if (marks.length)
-        out.marks = marks.map((m) => (m.attrs ? { type: m.type, attrs: m.attrs } : { type: m.type }));
+      // 링크는 http/https 주소만, 속성은 주소 하나만 남긴다(improve-1026-spec 9-2)
+      const kept = marks.flatMap((m) => {
+        if (m.type !== "link") return [m.attrs ? { type: m.type, attrs: m.attrs } : { type: m.type }];
+        const href = isObj(m.attrs) && typeof m.attrs.href === "string" ? m.attrs.href : "";
+        return isOpenableUrl(href) ? [{ type: "link", attrs: { href } }] : [];
+      });
+      if (kept.length) out.marks = kept;
       return [out];
     }
     if (n.type === "heading")
@@ -193,6 +265,23 @@ export function parseNoteDoc(json: string | null | undefined): NoteDoc {
         ...(typeof b.h === "number" ? { h: b.h } : {}),
         asset: b.asset,
         caption: typeof b.caption === "string" ? b.caption.replace(/\s+/g, " ").slice(0, CAPTION_MAX) : "",
+      });
+      continue;
+    }
+    if (b.kind === "link") {
+      if (typeof b.url !== "string" || !isOpenableUrl(b.url)) continue;
+      boxes.push({
+        id: b.id,
+        kind: "link",
+        x: snap(num(b.x, 0)),
+        y: snap(num(b.y, 0)),
+        w: clampLinkWidth(num(b.w, LINK_DEFAULT_W)),
+        z: num(b.z, 0),
+        ...(typeof b.h === "number" ? { h: b.h } : {}),
+        url: b.url,
+        title: cleanLine(b.title) || titleFromUrl(b.url),
+        note: cleanLine(b.note),
+        ...(typeof b.asset === "string" && b.asset ? { asset: b.asset } : {}),
       });
       continue;
     }
@@ -274,9 +363,10 @@ export function readingOrder(boxes: NoteBox[]): NoteBox[] {
   return [...boxes].sort((a, b) => (Math.abs(a.y - b.y) <= 16 ? a.x - b.x : a.y - b.y));
 }
 
-/** 상자 하나의 글(이미지는 설명이 있을 때만 `- (이미지) 설명`) */
+/** 상자 하나의 글(이미지는 설명이 있을 때만 `- (이미지) 설명`, 링크 카드는 `- (링크) 제목 — 주소`) */
 export function boxText(b: NoteBox): string {
   if (b.kind === "image") return b.caption.trim() ? `- (이미지) ${b.caption.trim()}` : "";
+  if (b.kind === "link") return `- (링크) ${b.title} — ${b.url}`;
   return blockLines(b.content.content, "").join("\n");
 }
 
@@ -294,7 +384,11 @@ export const isNoteEmpty = (doc: NoteDoc) =>
 
 /** 문서가 가리키는 이미지 id(복제한 상자는 같은 그림을 함께 쓴다) */
 export const noteAssetIds = (doc: NoteDoc): string[] => [
-  ...new Set(doc.boxes.flatMap((b) => (b.kind === "image" ? [b.asset] : []))),
+  ...new Set(
+    doc.boxes.flatMap((b) =>
+      b.kind === "image" ? [b.asset] : b.kind === "link" && b.asset ? [b.asset] : [],
+    ),
+  ),
 ];
 
 // ── 예전 요일 메모 → 주간 메모(스펙 5-1, 11절 #5) ─────

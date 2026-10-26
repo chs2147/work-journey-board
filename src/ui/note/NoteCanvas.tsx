@@ -27,10 +27,14 @@ import { onSelectedBoxKey, startBoxDrag, useBoxFrame } from "./boxShared";
 import { noteExtensions } from "./editorExtensions";
 import { ImageBoxView, ImagePreview } from "./ImageBoxView";
 import { Minimap } from "./Minimap";
+import { LinkBoxView } from "./LinkBoxView";
+import { singleUrl } from "../../domain/links";
+import { openLink } from "../common/openLink";
 import {
   addBox,
   addBoxBelow,
   addImages,
+  addLinkBox,
   pastePlace,
   bringToFront,
   setZoom,
@@ -94,7 +98,20 @@ export default function NoteCanvas() {
       const target = e.target as Element | null;
       if (!target?.closest?.("[data-note-root]") || !e.clipboardData) return;
       const files = [...e.clipboardData.files].filter((f) => f.type.startsWith("image/"));
-      if (!files.length || e.clipboardData.getData("text/plain").trim()) return;
+      const text = e.clipboardData.getData("text/plain");
+      // 주소 하나를 판에(빈 곳의 커서 자리·선택한 상자 상태) 붙이면 링크 카드(improve-1026-spec 10-1).
+      // 글이 있는 상자 안에 붙이면 편집기가 글 속 링크로 만든다
+      const url = singleUrl(text);
+      if (url && !files.length) {
+        const st = useNote.getState();
+        const inText = st.editingId && st.editingId !== st.pendingId;
+        if (inText) return;
+        e.preventDefault();
+        e.stopPropagation();
+        addLinkBox(url, pastePlace());
+        return;
+      }
+      if (!files.length || text.trim()) return;
       e.preventDefault();
       e.stopPropagation();
       void addImages(files, pastePlace());
@@ -212,15 +229,21 @@ export default function NoteCanvas() {
 
   const hasFiles = (e: DragEvent) => [...e.dataTransfer.types].includes("Files");
   /** 탐색기에서 끌어 놓은 그림 → 놓은 자리에 이미지 상자(편집기 안에 놓아도 상자로) */
+  /** 브라우저 주소창·링크를 끌어다 놓음 — 파일이 아니고 주소 하나 */
+  const droppedUrl = (e: DragEvent) =>
+    hasFiles(e)
+      ? null
+      : (singleUrl(e.dataTransfer.getData("text/uri-list").split("\n")[0] ?? "") ??
+        singleUrl(e.dataTransfer.getData("text/plain")));
   const onDropCapture = (e: DragEvent<HTMLDivElement>) => {
-    if (!hasFiles(e)) return;
+    const url = droppedUrl(e);
+    if (!hasFiles(e) && !url) return;
     e.preventDefault();
     e.stopPropagation();
     const rect = canvasRef.current!.getBoundingClientRect();
-    void addImages([...e.dataTransfer.files], {
-      x: (e.clientX - rect.left) / zoom,
-      y: (e.clientY - rect.top) / zoom,
-    });
+    const at = { x: (e.clientX - rect.left) / zoom, y: (e.clientY - rect.top) / zoom };
+    if (url) addLinkBox(url, at);
+    else void addImages([...e.dataTransfer.files], at);
   };
 
   return (
@@ -255,7 +278,8 @@ export default function NoteCanvas() {
             // 빈 곳 클릭의 기본 동작(포커스 옮기기)이 방금 커서를 넣은 새 상자를 빼앗지 않게
             onMouseDown={(e) => e.target === e.currentTarget && e.preventDefault()}
             onDragOverCapture={(e) => {
-              if (!hasFiles(e)) return;
+              const types = [...e.dataTransfer.types];
+              if (!hasFiles(e) && !types.includes("text/uri-list")) return;
               e.preventDefault();
               e.dataTransfer.dropEffect = "copy";
             }}
@@ -269,6 +293,8 @@ export default function NoteCanvas() {
                   selected={b.id === selectedId}
                   onPreview={() => setPreviewId(b.id)}
                 />
+              ) : b.kind === "link" ? (
+                <LinkBoxView key={b.id} box={b} selected={b.id === selectedId} />
               ) : (
                 <TextBoxView
                   key={b.id}
@@ -325,7 +351,24 @@ function TextBoxView({
       extensions: noteExtensions(),
       content: box.content,
       injectCSS: false,
-      editorProps: { attributes: { class: "note-prose", "aria-label": STR.note.boxAria } },
+      editorProps: {
+        attributes: { class: "note-prose", "aria-label": STR.note.boxAria },
+        handleDOMEvents: {
+          // 글 속 링크: Ctrl+클릭 = 기본 브라우저(그냥 클릭은 편집 — improve-1026-spec 9-1)
+          mousedown: (_view, ev) => {
+            const a = (ev.target as Element | null)?.closest?.("a[href]");
+            if (!a || !(ev.ctrlKey || ev.metaKey)) return false;
+            ev.preventDefault();
+            void openLink(a.getAttribute("href") ?? "");
+            return true;
+          },
+          // 앱 창 안에서 페이지가 열리지 않게 링크의 기본 동작은 늘 막는다
+          click: (_view, ev) => {
+            if ((ev.target as Element | null)?.closest?.("a[href]")) ev.preventDefault();
+            return false;
+          },
+        },
+      },
       onUpdate: ({ editor: ed }) => {
         const json = ed.getJSON() as PMNode;
         emitted.current = json;

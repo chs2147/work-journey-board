@@ -1,6 +1,14 @@
 // 셀 하나의 개조식 입력기. 항목마다 <textarea> 1개(자동 높이) — contenteditable의 커서·IME 문제를 피한다(i-m1-plan 4절).
 // 키 동작은 overview 10-3절 표가 기준이다. 한글 조합 중(isComposing)에는 Enter·Tab 등을 처리하지 않는다.
-import { useCallback, useLayoutEffect, useRef, type ClipboardEvent, type KeyboardEvent } from "react";
+import {
+  useCallback,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ClipboardEvent,
+  type KeyboardEvent,
+} from "react";
+import { hasLink } from "../../domain/links";
 import { indentAt, moveItem, outdentAt, parsePastedLines } from "../../domain/items";
 import type { ItemDraft } from "../../domain/types";
 import { STR } from "../../shared/strings";
@@ -22,6 +30,7 @@ import {
 } from "./boardStore";
 import { pasteImagesFromBoard } from "../note/noteStore";
 import { autoSize, isComposingKey, useRemeasure } from "./helpers";
+import { LinkedText } from "./LinkedText";
 import styles from "./Board.module.css";
 
 export interface CellNav {
@@ -47,6 +56,8 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
   const previews = useBoard((s) => s.previews[cellKey]);
   const prevDate = useBoard((s) => s.prevDates[splitKey(cellKey).categoryId]);
   const refs = useRef<(HTMLTextAreaElement | null)[]>([]);
+  /** 입력칸에 커서가 있는 항목 — 링크가 든 항목은 이때만 입력칸, 아니면 "보기"(improve-1026-spec 9-1) */
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const measureAll = useCallback(() => refs.current.forEach(autoSize), []);
   useRemeasure(containerRef, measureAll);
@@ -208,6 +219,11 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
     >
       {items.map((it, i) => {
         const isRepeating = it.depth === 0 && !!it.recurrenceId && repeating.includes(it.recurrenceId);
+        // 링크가 든 항목은 편집 중(커서가 있거나 막 커서를 넣으려는 중)이 아니면 링크로 그린다
+        const viewing =
+          activeIndex !== i &&
+          !(focus?.kind === "item" && focus.key === cellKey && focus.index === i) &&
+          hasLink(it.text);
         return (
           <div
             key={it.id}
@@ -232,19 +248,32 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => void toggleFlag(cellKey, i)}
             />
-            <textarea
-              ref={(el) => {
-                refs.current[i] = el;
-              }}
-              className={styles.itemInput}
-              rows={1}
-              value={it.text}
-              aria-label={ariaLabel}
-              spellCheck={false}
-              onChange={(e) => onChange(i, e.target.value)}
-              onKeyDown={(e) => onKeyDown(e, i)}
-              onPaste={(e) => onPaste(e, i)}
-            />
+            {viewing ? (
+              <LinkedText
+                text={it.text}
+                ariaLabel={ariaLabel}
+                onEdit={(caret) => {
+                  setFocusDay(splitKey(cellKey).date);
+                  setFocus({ kind: "item", key: cellKey, index: i, caret });
+                }}
+              />
+            ) : (
+              <textarea
+                ref={(el) => {
+                  refs.current[i] = el;
+                }}
+                className={styles.itemInput}
+                rows={1}
+                value={it.text}
+                aria-label={ariaLabel}
+                spellCheck={false}
+                onFocus={() => setActiveIndex(i)}
+                onBlur={() => setActiveIndex((a) => (a === i ? null : a))}
+                onChange={(e) => onChange(i, e.target.value)}
+                onKeyDown={(e) => onKeyDown(e, i)}
+                onPaste={(e) => onPaste(e, i)}
+              />
+            )}
             {/* 매주 반복: 반복 중이면 ↻를 늘 보이고(누르면 끔), 아니면 마우스를 올릴 때만 ↻(누르면 켬) */}
             {it.depth === 0 && it.text.trim() && (
               <button

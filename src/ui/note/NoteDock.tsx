@@ -1,7 +1,7 @@
 // 주간 메모(weekly-note-spec 3절): 보드 아래 도크(경계선 끌어 높이 조절, 접기, 크게 보기) 또는
 // 오늘 뷰 왼쪽 판(improve-1026-spec 8-2, variant="side"). 머리 기능 단추는 아이콘(11-3), 배율은 값 표시(11-1).
 // 판(편집기 포함)은 늦게 불러온다.
-import { lazy, Suspense, useRef, type KeyboardEvent, type PointerEvent } from "react";
+import { lazy, Suspense, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 import { ZOOM_STEPS } from "../../domain/noteZoom";
 import { STR } from "../../shared/strings";
 import {
@@ -10,6 +10,7 @@ import {
   IconExpand,
   IconFit,
   IconImage,
+  IconLink,
   IconMinus,
   IconPlus,
   IconShrink,
@@ -29,6 +30,7 @@ import {
   useNote,
   zoomStep,
 } from "./noteStore";
+import { LinkDialog } from "./LinkDialog";
 import styles from "./Note.module.css";
 
 const NoteCanvas = lazy(() => import("./NoteCanvas"));
@@ -84,6 +86,7 @@ export function NoteDock({ variant = "dock" }: Props) {
   const images = useNote((s) => s.doc.boxes.filter((b) => b.kind === "image").length);
   const busy = useNote((s) => s.busy);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [linkOpen, setLinkOpen] = useState(false);
   const legacy = useNote((s) => s.legacy);
   const height = useNote((s) => s.dockHeight);
   const auto = useNote((s) => s.dockAuto);
@@ -211,6 +214,15 @@ export function NoteDock({ variant = "dock" }: Props) {
           </IconButton>
         )}
         {!collapsed && (
+          <IconButton
+            label={STR.links.insert}
+            title={STR.links.insertTitle}
+            onClick={() => setLinkOpen(true)}
+          >
+            <IconLink />
+          </IconButton>
+        )}
+        {!collapsed && (
           <IconButton label={STR.note.addImage} title={STR.note.addImageTitle} onClick={pickImage}>
             <IconImage />
           </IconButton>
@@ -253,6 +265,7 @@ export function NoteDock({ variant = "dock" }: Props) {
           </button>
         )}
       </div>
+      {linkOpen && <LinkDialog onClose={() => setLinkOpen(false)} />}
       {!collapsed && (
         <div className={styles.body}>
           <Suspense fallback={<div className={styles.loading}>…</div>}>

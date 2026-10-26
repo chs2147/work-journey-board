@@ -51,6 +51,8 @@ export interface Platform {
   writeExport(path: string, bytes: Uint8Array): Promise<void>;
   /** 파일을 그 파일의 기본 프로그램으로 열기(내보낸 엑셀 [파일 열기]) */
   openFile(path: string): Promise<void>;
+  /** 링크를 OS 기본 브라우저로 열기 — http/https만(improve-1026-spec 9-2). 앱은 주소에 접속하지 않는다. Rust `open_url`이 한 번 더 검사 */
+  openUrl(url: string): Promise<void>;
   /** 클립보드에 글 쓰기 — 사용자가 [복사]를 누를 때만 부른다(output-spec 5-2) */
   writeClipboard(text: string): Promise<void>;
   join(...parts: string[]): string;

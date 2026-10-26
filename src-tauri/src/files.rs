@@ -223,9 +223,63 @@ pub fn open_folder(app: AppHandle, path: String) -> Result<(), String> {
     app.opener().open_path(path, None::<&str>).map_err(err)
 }
 
+/// 링크 열기(improve-1026-spec 9-2): http/https 주소만, 공백·제어 문자 없이, 2048자까지.
+/// 앱은 주소에 접속하지 않고 OS 기본 브라우저에 넘길 뿐이다(외부 통신 0, CLAUDE.md 4-1). TS `isOpenableUrl`과 같은 규칙.
+fn url_openable(url: &str) -> bool {
+    if url.is_empty() || url.len() > 2048 || url.chars().any(|c| c.is_whitespace() || c.is_control()) {
+        return false;
+    }
+    let lower = url.to_ascii_lowercase();
+    let rest = if let Some(r) = lower.strip_prefix("https://") {
+        r
+    } else if let Some(r) = lower.strip_prefix("http://") {
+        r
+    } else {
+        return false;
+    };
+    // 호스트가 있어야 한다(`https:///x`·`http://?a` 거부), 사용자 정보(`a@b`)로 호스트를 숨기는 주소도 거부
+    let authority = rest.split(['/', '?', '#']).next().unwrap_or("");
+    !authority.is_empty() && !authority.contains('@') && !authority.starts_with(':')
+}
+
+#[tauri::command]
+pub fn open_url(app: AppHandle, url: String) -> Result<(), String> {
+    if !url_openable(&url) {
+        return Err("http·https 주소만 열 수 있습니다".into());
+    }
+    app.opener().open_url(url, None::<&str>).map_err(err)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn open_url_only_http_https() {
+        for ok in [
+            "https://wiki.example.local/deploy/checklist",
+            "http://intranet.example.local:8080/a?b=1#c",
+            "HTTPS://Example.com",
+        ] {
+            assert!(url_openable(ok), "{ok}");
+        }
+        for no in [
+            "",
+            "file:///C:/Windows/system32/calc.exe",
+            "javascript:alert(1)",
+            "ftp://example.com/a",
+            "https://",
+            "https:///path",
+            "https://user@evil.example/",
+            "https://exa mple.com",
+            "https://example.com/\nx",
+            "ms-settings:display",
+            "\\\\server\\share",
+        ] {
+            assert!(!url_openable(no), "{no}");
+        }
+        assert!(!url_openable(&format!("https://a.example/{}", "x".repeat(2100))));
+    }
 
     #[test]
     fn export_only_xlsx_and_not_into_backups() {

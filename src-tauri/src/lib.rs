@@ -50,7 +50,8 @@ pub fn run() {
             files::fs_rename_backup,
             files::fs_copy_new,
             files::export_write,
-            files::open_folder
+            files::open_folder,
+            files::open_url
         ])
         .run(tauri::generate_context!())
         .expect("Work Journey Board 실행 중 오류");

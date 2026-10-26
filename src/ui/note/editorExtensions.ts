@@ -3,6 +3,7 @@
 import { Extension, Mark, mergeAttributes, type Extensions } from "@tiptap/core";
 import { TaskItem, TaskList } from "@tiptap/extension-list";
 import StarterKit from "@tiptap/starter-kit";
+import { isOpenableUrl } from "../../domain/links";
 import { FONT_SIZES, TEXT_COLORS } from "../../domain/note";
 import { STR } from "../../shared/strings";
 
@@ -79,7 +80,17 @@ export function noteExtensions(): Extensions {
       blockquote: false,
       code: false,
       codeBlock: false,
-      link: false,
+      // 글 속 링크(improve-1026-spec 9-1): http/https 주소만 링크로, 누르면 열지 않는다(Ctrl+클릭 = 기본 브라우저, NoteCanvas).
+      // target·rel 속성 없이 클래스로만 그린다 — 앱 창 안에서 페이지가 열리지 않게
+      link: {
+        openOnClick: false,
+        autolink: true,
+        linkOnPaste: true,
+        defaultProtocol: "https",
+        shouldAutoLink: (url) => /^https?:\/\//i.test(url),
+        isAllowedUri: (url) => isOpenableUrl(url),
+        HTMLAttributes: { class: "note-link", target: null, rel: null },
+      },
       // 목록 뒤에 빈 문단을 늘 붙이는 동작 — 상자가 글보다 커 보여서 끈다(빈 목록 항목에서 Enter로 목록을 빠져나옴)
       trailingNode: false,
     }),

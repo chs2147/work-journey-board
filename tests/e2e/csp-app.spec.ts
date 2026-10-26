@@ -77,6 +77,20 @@ test("보드·주간 메모 편집기(서식 전부)·엑셀 내보내기 — CS
   await page.getByTestId("view-week").click();
   await page.getByTestId("note-zoom").selectOption("1");
 
+  // 기록 속 링크 보기·메모 링크 카드(improve-1026-spec 9·10절) — 링크를 눌러도 앱 창이 다른 곳으로 가지 않는다
+  await page.getByTestId("cell-협력사 보안 점검-2026-10-22").locator("textarea").first().click();
+  await page.keyboard.press("Control+End");
+  await page.keyboard.type(" https://wiki.example.local/csp");
+  await page.keyboard.press("Escape");
+  await expect(page.getByTestId("cell-협력사 보안 점검-2026-10-22").getByTestId("item-view")).toBeVisible();
+  await page.getByTestId("note-dock").getByRole("button", { name: "링크 넣기" }).click();
+  await page
+    .getByTestId("link-dialog")
+    .getByRole("textbox", { name: "주소", exact: true })
+    .fill("https://wiki.example.local/a");
+  await page.getByTestId("link-dialog").getByRole("button", { name: "넣기", exact: true }).click();
+  await expect(page.getByTestId("note-link")).toHaveCount(1);
+
   // 메모: 새 상자 → 제목·크기·색·형광펜·굵게·체크 목록
   const canvas = page.getByTestId("note-canvas");
   const c = (await canvas.boundingBox())!;

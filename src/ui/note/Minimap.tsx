@@ -84,7 +84,13 @@ export function Minimap({ scrollRef, boxes, size, view, zoom }: Props) {
         {boxes.map((b) => (
           <span
             key={b.id}
-            className={b.kind === "image" ? styles.minimapImage : styles.minimapBox}
+            className={
+              b.kind === "image"
+                ? styles.minimapImage
+                : b.kind === "link"
+                  ? styles.minimapLink
+                  : styles.minimapBox
+            }
             style={{ left: b.x * s, top: b.y * s, width: b.w * s, height: (b.h ?? 48) * s }}
           />
         ))}

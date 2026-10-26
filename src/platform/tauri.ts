@@ -86,6 +86,7 @@ export const tauriPlatform: Platform = {
   writeExport: (path, bytes) => invoke("export_write", { path, bytes: Array.from(bytes) }),
   // opener의 open_path는 폴더·파일 모두 기본 프로그램으로 연다
   openFile: (path) => invoke("open_folder", { path }),
+  openUrl: (url) => invoke("open_url", { url }),
   join,
 
   openDatabase: (path) => openTauriSql(path),

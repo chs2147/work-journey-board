@@ -893,3 +893,45 @@
   font-size: var(--fs-sm);
   cursor: pointer;
 }
+
+/* 링크가 든 항목의 "보기"(improve-1026-spec 9-1) — 입력칸과 같은 글자 자리, 링크는 밑줄 + ↗ */
+.itemView {
+  min-height: calc(var(--fs-md) * 1.45 + 6px);
+  padding: 3px 2px;
+  border-radius: var(--radius-sm);
+  color: var(--text-1);
+  font-size: var(--fs-md);
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  cursor: text;
+}
+
+.itemSub .itemView {
+  color: var(--text-2);
+}
+
+.link {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  overflow-wrap: anywhere;
+  word-break: break-all;
+}
+
+.linkOpen {
+  display: inline-block;
+  margin: 0 2px 0 1px;
+  padding: 0 2px;
+  border-radius: var(--radius-sm);
+  color: var(--accent);
+  font-size: var(--fs-xs);
+  line-height: 1;
+  cursor: pointer;
+  user-select: none;
+}
+
+.linkOpen:hover {
+  background: var(--accent-soft);
+}

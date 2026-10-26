@@ -30,6 +30,8 @@ let config: AppConfig | null = null;
 let exitHandler: (() => Promise<void>) | null = null;
 let lastClipboard: string | null = null;
 let lastExport: { path: string; size: number } | null = null;
+/** 브라우저 모드는 링크를 실제로 열지 않고 적어 두기만 한다(외부 접속 없음 — E2E 확인용) */
+const openedUrls: string[] = [];
 
 async function makeJournal(dir: string, withSample: boolean) {
   await fs.ensureDir(dir);
@@ -108,6 +110,9 @@ export const browserPlatform: Platform = {
     lastExport = { path, size: bytes.byteLength };
   },
   openFile: async () => undefined,
+  async openUrl(url) {
+    openedUrls.push(url);
+  },
   async writeClipboard(text) {
     lastClipboard = text; // E2E 확인용(엔진마다 클립보드 권한이 달라 직접 읽지 않는다)
     await navigator.clipboard?.writeText(text).catch(() => undefined);
@@ -130,6 +135,7 @@ Object.assign(globalThis, {
     files: () => fs.listAll(),
     clipboard: () => lastClipboard,
     lastExport: () => lastExport,
+    openedUrls: () => [...openedUrls],
     setToday(date: string) {
       if (!isDate(date)) throw new Error(`날짜 형식이 아닙니다: ${date}`);
       fixedToday = date;
