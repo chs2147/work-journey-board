@@ -9,11 +9,12 @@ import {
   type KeyboardEvent,
 } from "react";
 import { hasLink } from "../../domain/links";
-import { indentAt, moveItem, outdentAt, parsePastedLines } from "../../domain/items";
+import { deleteRange, indentAt, moveItem, outdentAt, parsePastedLines } from "../../domain/items";
 import type { ItemDraft } from "../../domain/types";
 import { STR } from "../../shared/strings";
 import { DAY_LABELS, dayIndex } from "../../domain/week";
 import {
+  deleteItemAt,
   editCell,
   leaveCell,
   materializePreview,
@@ -31,6 +32,7 @@ import {
 import { pasteImagesFromBoard } from "../note/noteStore";
 import { autoSize, isComposingKey, useRemeasure } from "./helpers";
 import { LinkedText } from "./LinkedText";
+import { IconTrash } from "../common/icons";
 import styles from "./Board.module.css";
 
 export interface CellNav {
@@ -58,6 +60,9 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
   const refs = useRef<(HTMLTextAreaElement | null)[]>([]);
   /** 입력칸에 커서가 있는 항목 — 링크가 든 항목은 이때만 입력칸, 아니면 "보기"(improve-1026-spec 9-1) */
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  /** 삭제 단추에 마우스를 올린 항목 — 지워질 묶음을 붉게 미리 보인다(improve-1026v2-spec 2절) */
+  const [deleteHover, setDeleteHover] = useState<number | null>(null);
+  const [delStart, delEnd] = deleteHover === null ? [-1, -1] : deleteRange(items, deleteHover);
   const containerRef = useRef<HTMLDivElement>(null);
   const measureAll = useCallback(() => refs.current.forEach(autoSize), []);
   useRemeasure(containerRef, measureAll);
@@ -103,6 +108,12 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
     if (e.code === "KeyP" && e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
       e.preventDefault();
       void pullPrevious(cellKey);
+      return;
+    }
+    // 행 삭제(improve-1026v2-spec 1-1) — 본 항목이면 딸린 세부 항목까지
+    if (e.key === "Delete" && e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+      e.preventDefault();
+      void deleteItemAt(cellKey, i, true);
       return;
     }
     // 매주 반복 켜기/끄기(spec 3-1) — 세부 항목에서 눌러도 본 항목 묶음에 적용
@@ -232,6 +243,7 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
               it.flagged ? styles.flagged : "",
               isRepeating ? styles.repeating : "",
               pulseId === it.id ? styles.pulse : "",
+              i >= delStart && i < delEnd ? styles.deleting : "",
             ].join(" ")}
             data-flagged={it.flagged ? "true" : undefined}
             data-repeating={isRepeating ? "true" : undefined}
@@ -293,6 +305,25 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
                 ↻
               </button>
             )}
+            {(it.text.trim() || items.length > 1) && (
+              <button
+                type="button"
+                tabIndex={-1}
+                className={styles.deleteRow}
+                aria-label={deleteLabel(items, i)}
+                title={deleteLabel(items, i)}
+                data-testid="delete-row"
+                onMouseDown={(e) => e.preventDefault()}
+                onMouseEnter={() => setDeleteHover(i)}
+                onMouseLeave={() => setDeleteHover(null)}
+                onClick={() => {
+                  setDeleteHover(null);
+                  void deleteItemAt(cellKey, i);
+                }}
+              >
+                <IconTrash />
+              </button>
+            )}
           </div>
         );
       })}
@@ -331,4 +362,11 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
       )}
     </div>
   );
+}
+
+/** 본 항목에 세부 항목이 딸려 있으면 함께 지워진다는 것을 이름에 */
+function deleteLabel(items: ItemDraft[], i: number) {
+  const [start, end] = deleteRange(items, i);
+  const subs = end - start - 1;
+  return items[i]?.depth === 0 && subs > 0 ? STR.board.deleteGroup(subs) : STR.board.deleteRow;
 }

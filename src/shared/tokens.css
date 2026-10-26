@@ -42,6 +42,7 @@
   --warn: #8a5a00;
   --warn-soft: #fdf3e1;
   --danger: #b3261e;
+  --danger-soft: #fbe4e6;
   --today-mark: #d85a30;
   /* 연차·반차(improve-1026-spec 1-1) — 업무 색·중요 표시와 겹치지 않는 주황. --leave는 --leave-soft·카드 바탕에서 4.5:1 이상 */
   --leave: #a8471a;
@@ -102,6 +103,7 @@
     --warn: #e0a83a;
     --warn-soft: #3a2f17;
     --danger: #f08b84;
+    --danger-soft: #42201f;
     --today-mark: #ef7a4d;
     --leave: #f0a070;
     --leave-soft: #33241b;

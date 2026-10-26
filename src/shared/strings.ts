@@ -40,6 +40,8 @@ export const STR = {
     categoryHeader: "업무",
     todaySuffix: "오늘",
     addRecord: "+ 기록 추가",
+    deleteRow: "이 항목 삭제 (Alt+Delete)",
+    deleteGroup: (subs: number) => `이 항목과 세부 항목 ${subs}개 삭제 (Alt+Delete)`,
     addCategory: "+ 업무 추가",
     addCategoryPlaceholder: "업무 이름 입력 후 Enter (Esc 닫기)",
     memoPlaceholder: "메모",
@@ -96,9 +98,8 @@ export const STR = {
   /** 주간 뷰 / 오늘 뷰(improve-1026-spec 8절) */
   today: {
     viewGroup: "보기",
-    week: "주간",
-    today: "오늘",
-    viewTitle: "주간 / 오늘 보기 바꾸기 (Alt+V)",
+    weekView: "주간 뷰 (Alt+V)",
+    dayView: (label: string) => (label ? `오늘 뷰 · ${label} (Alt+V)` : "오늘 뷰 (Alt+V)"),
     prevDay: "이전 날 (Alt+←)",
     nextDay: "다음 날 (Alt+→)",
     title: (label: string) => label,
@@ -172,7 +173,6 @@ export const STR = {
     close: "중요 업무 닫기 (Alt+2)",
     groups: { late: "지난 날짜", today: "오늘", thisWeek: "이번 주", later: "다음 주 이후" },
     lateTag: "지남",
-    todayTag: "오늘",
     ended: "종료됨",
     dateLabel: (md: string, day: string) => `${md} (${day})`,
     complete: (text: string) => `처리 완료: ${text}`,
@@ -491,6 +491,9 @@ export const STR = {
   toast: {
     archived: (name: string) => `"${name}" 종료됨`,
     itemsDeleted: (n: number) => `항목 ${n}개 삭제됨`,
+    /** 행 삭제(improve-1026v2-spec 1-2) — 세부 항목이 함께 지워졌으면 그 수도 */
+    rowsDeleted: (n: number, subs: number) =>
+      subs > 0 ? `항목 ${n}개를 지웠습니다(세부 ${subs}개 포함)` : `항목 ${n}개를 지웠습니다`,
     undo: "되돌리기",
     nameInvalid: "업무 이름은 1~40자여야 합니다",
     error: (m: string) => `오류: ${m}`,

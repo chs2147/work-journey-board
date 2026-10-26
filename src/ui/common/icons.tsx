@@ -97,3 +97,38 @@ export const IconLink = () => (
     <path d="M9.25 6.75a2.5 2.5 0 0 0-3.54 0L3.6 8.87a2.5 2.5 0 0 0 3.54 3.54l.7-.7" />
   </Svg>
 );
+
+/** 행 삭제: 휴지통(improve-1026v2-spec 1-1) */
+export const IconTrash = () => (
+  <Svg>
+    <path d="M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.6 8.5h5.8l.6-8.5" />
+  </Svg>
+);
+
+/** 주간 뷰: 달력 + 요일 칸(improve-1026v2-spec 9절) */
+export const IconWeekView = () => (
+  <Svg>
+    <rect x="1.75" y="2.75" width="12.5" height="11.5" rx="1.75" />
+    <path d="M1.75 6.25h12.5M4.75 8.5v3.5M7 8.5v3.5M9.25 8.5v3.5M11.5 8.5v3.5" />
+  </Svg>
+);
+
+/** 오늘 뷰: 한 장짜리 일력 + 그 날 날짜 숫자(10절) — 숫자는 본문 글꼴 */
+export const IconDayView = ({ day }: { day: number }) => (
+  <Svg>
+    <rect x="2.75" y="2.75" width="10.5" height="11.5" rx="1.75" />
+    <path d="M2.75 6.25h10.5M5.75 1.5v2.5M10.25 1.5v2.5" />
+    <text
+      x="8"
+      y="12.9"
+      textAnchor="middle"
+      fontSize={day >= 10 ? 6.4 : 7}
+      fontWeight="700"
+      fill="currentColor"
+      stroke="none"
+      fontFamily="inherit"
+    >
+      {day}
+    </text>
+  </Svg>
+);

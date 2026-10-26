@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { indentAt, moveItem, normalizeCell, outdentAt, parsePastedLines } from "../../src/domain/items";
+import {
+  deleteAt,
+  deleteRange,
+  indentAt,
+  moveItem,
+  normalizeCell,
+  outdentAt,
+  parsePastedLines,
+} from "../../src/domain/items";
 import type { ItemDraft } from "../../src/domain/types";
 
 const d = (id: string, depth: 0 | 1 = 0, text = id): ItemDraft => ({ id, depth, text });
@@ -65,5 +73,32 @@ describe("깊이·순서 (overview 10-3)", () => {
     const xs = [d("a"), d("a1", 1), d("b")];
     expect(moveItem(xs, 1, -1).items).toBe(xs);
     expect(ids(moveItem(xs, 1, 1).items)).toBe("a b a1'");
+  });
+});
+
+describe("행 삭제 범위 (improve-1026v2-spec 1·2절)", () => {
+  const xs = [d("a"), d("a1", 1), d("a2", 1), d("b"), d("b1", 1), d("c")];
+
+  it("본 항목 = 딸린 세부 항목까지 묶음째, 세부 항목 = 그 항목만", () => {
+    expect(deleteRange(xs, 0)).toEqual([0, 3]);
+    expect(deleteRange(xs, 3)).toEqual([3, 5]);
+    expect(deleteRange(xs, 5)).toEqual([5, 6]);
+    expect(deleteRange(xs, 1)).toEqual([1, 2]);
+    expect(deleteRange(xs, 4)).toEqual([4, 5]);
+  });
+
+  it("지운 결과·지운 줄·시작 위치", () => {
+    const r = deleteAt(xs, 3);
+    expect(ids(r.items)).toBe("a a1' a2' c");
+    expect(ids(r.removed)).toBe("b b1'");
+    expect(r.start).toBe(3);
+    expect(ids(deleteAt(xs, 2).items)).toBe("a a1' b b1' c");
+    expect(ids(deleteAt(xs, 0).items)).toBe("b b1' c");
+    expect(deleteAt([d("a")], 0).items).toEqual([]);
+  });
+
+  it("본 항목을 지우면 세부 항목도 함께라 남은 첫 항목은 늘 본 항목", () => {
+    expect(deleteAt([d("a"), d("b", 1)], 0).items).toEqual([]);
+    expect(ids(deleteAt([d("a"), d("a1", 1), d("b", 1)], 0).items)).toBe("");
   });
 });

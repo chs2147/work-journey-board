@@ -570,6 +570,59 @@
   color: var(--accent);
 }
 
+/* 행 삭제(improve-1026v2-spec 1·2절): 마우스를 올린 항목 끝에 휴지통, ↻는 그 왼쪽으로 비켜 선다.
+   휴지통에 올리면 지워질 묶음(본 항목 + 세부 항목)을 옅은 빨강 + 취소선으로 미리 보인다 */
+.deleteRow {
+  position: absolute;
+  top: 3px;
+  right: 1px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 17px;
+  height: calc(var(--fs-md) * 1.45);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  opacity: 0;
+  color: var(--danger);
+  background: var(--surface-card);
+  box-shadow: 0 0 0 1px var(--line);
+  cursor: pointer;
+}
+
+.deleteRow svg {
+  width: 13px;
+  height: 13px;
+}
+
+.item:hover > .deleteRow,
+.itemSub:hover > .deleteRow {
+  opacity: 1;
+}
+
+.item:hover > .repeatOn,
+.item:hover > .repeatHover {
+  right: 20px;
+}
+
+.deleting {
+  border-radius: var(--radius-sm);
+  background: var(--danger-soft);
+}
+
+.deleting .itemInput,
+.deleting .itemView,
+.itemSub.deleting .itemInput,
+.itemSub.deleting .itemView {
+  color: var(--danger);
+  text-decoration: line-through;
+}
+
+.deleting .itemInput:focus {
+  background: transparent;
+}
+
 /* 미래 주의 반복 "예정"(저장 전) — 누르면 지금 만든다 */
 .preview {
   position: relative;

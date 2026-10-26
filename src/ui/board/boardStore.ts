@@ -3,7 +3,7 @@
 // - 실행 취소 단위 = 저장 1회(체크포인트). 저장 전에는 대기 중인 저장을 먼저 끝낸다.
 import { create } from "zustand";
 import type { DayMarkKind } from "../../domain/dayMark";
-import { appendCopies, normalizeCell } from "../../domain/items";
+import { appendCopies, deleteAt, normalizeCell } from "../../domain/items";
 import { matchesTagFilter, NO_TAG, type Tag } from "../../domain/tags";
 import type { VisibleCategory } from "../../domain/categories";
 import { groupRange, type Recurrence } from "../../domain/recurrence";
@@ -223,20 +223,21 @@ async function applyCell(key: string, items: ItemDraft[]) {
   void refreshImportant();
 }
 
-async function persistCell(key: string) {
+/** 칸을 저장한다. 실행 취소 1단계를 쌓았으면 true. quiet = 기본 "항목 N개 삭제됨" 토스트를 부르는 쪽이 대신 띄움 */
+async function persistCell(key: string, quiet = false): Promise<boolean> {
   timers.delete(key);
   const current = get().cells[key];
-  if (!current) return;
+  if (!current) return false;
   const before = persistedCells.get(key) ?? [];
   const after = normalizeCell(current);
-  if (sameItems(before, after)) return;
+  if (sameItems(before, after)) return false;
   const { date, categoryId } = splitKey(key);
   try {
     await track(() => requireRepo().saveCell(date, categoryId, after));
   } catch (e) {
     markFailed(key, true);
     reportError(e);
-    return;
+    return false;
   }
   persistedCells.set(key, after);
   markFailed(key, false);
@@ -246,10 +247,39 @@ async function persistCell(key: string) {
   pushUndo(entry);
   const keptIds = new Set(after.map((i) => i.id));
   const lost = before.filter((i) => !keptIds.has(i.id) && i.text.trim()).length;
-  if (lost > 0) toast(STR.toast.itemsDeleted(lost), { label: STR.toast.undo, run: () => void undo() });
+  if (lost > 0 && !quiet)
+    toast(STR.toast.itemsDeleted(lost), { label: STR.toast.undo, run: () => void undo() });
+  return true;
 }
 
-function schedule(key: string, run: () => Promise<void>) {
+/**
+ * 행 삭제(improve-1026v2-spec 1·2절): 본 항목이면 딸린 세부 항목까지 묶음째. 확인 없이 지우고 바로 저장 →
+ * 실행 취소 1단계 + 토스트 [되돌리기]. moveFocus = 키보드(Alt+Delete)일 때 커서를 위 항목 끝(없으면 아래 항목 앞)으로
+ */
+export async function deleteItemAt(key: string, index: number, moveFocus = false) {
+  const items = get().cells[key] ?? [];
+  if (!items[index]) return;
+  const { items: next, removed, start } = deleteAt(items, index);
+  const focus: FocusTarget | null =
+    !moveFocus || next.length === 0
+      ? null
+      : start > 0
+        ? { kind: "item", key, index: start - 1, caret: "end" }
+        : { kind: "item", key, index: 0, caret: "start" };
+  set((s) => ({ cells: { ...s.cells, [key]: next }, ...(focus ? { focus } : {}) }));
+  const t = timers.get(key);
+  if (t) clearTimeout(t);
+  const pushed = await persistCell(key, true);
+  const written = removed.filter((i) => i.text.trim());
+  if (!pushed || written.length === 0) return;
+  const subs = written.filter((i) => i.depth === 1).length;
+  toast(STR.toast.rowsDeleted(written.length, removed[0]!.depth === 0 ? subs : 0), {
+    label: STR.toast.undo,
+    run: () => void undo(),
+  });
+}
+
+function schedule(key: string, run: () => Promise<unknown>) {
   const t = timers.get(key);
   if (t) clearTimeout(t);
   timers.set(

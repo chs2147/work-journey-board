@@ -7,6 +7,7 @@ import { toggleSummary, useSummary } from "../summary/summaryStore";
 import { setSettingsOpen } from "./appController";
 import { useAppStore } from "./appStore";
 import { BrandLockup } from "./Brand";
+import { IconDayView, IconWeekView } from "./icons";
 import { TagFilterMenu } from "./TagFilterMenu";
 import styles from "./TopBar.module.css";
 
@@ -19,6 +20,12 @@ export function TopBar() {
   const todayView = viewMode === "today";
   const dayLabel = focusDay
     ? `${Number(focusDay.slice(5, 7))}/${Number(focusDay.slice(8, 10))}(${DAY_LABELS[dayIndex(focusDay)]})`
+    : "";
+  const today = useBoard((s) => s.today);
+  // 오늘 뷰 아이콘의 숫자 = 그 뷰가 보여 주는 날, 주간 뷰일 때는 오늘(improve-1026v2-spec 10절)
+  const iconDay = (todayView ? focusDay : today) || focusDay;
+  const iconDayLabel = iconDay
+    ? `${Number(iconDay.slice(5, 7))}/${Number(iconDay.slice(8, 10))}(${DAY_LABELS[dayIndex(iconDay)]})`
     : "";
   const saving = useBoard((s) => s.saving);
   const failed = useBoard((s) => s.failed.length);
@@ -77,28 +84,27 @@ export function TopBar() {
               </button>
               {yearOpen && <YearMinimap />}
             </div>
-            {/* [주간 | 오늘] 보기(improve-1026-spec 8-1) */}
-            <div
-              className={styles.segment}
-              role="group"
-              aria-label={STR.today.viewGroup}
-              title={STR.today.viewTitle}
-            >
+            {/* [주간 | 오늘] 보기 — 아이콘 두 개(improve-1026v2-spec 9·10절), 이름·단축키는 aria-label·title */}
+            <div className={styles.segment} role="group" aria-label={STR.today.viewGroup}>
               <button
                 type="button"
                 aria-pressed={!todayView}
+                aria-label={STR.today.weekView}
+                title={STR.today.weekView}
                 data-testid="view-week"
                 onClick={() => setViewMode("week")}
               >
-                {STR.today.week}
+                <IconWeekView />
               </button>
               <button
                 type="button"
                 aria-pressed={todayView}
+                aria-label={STR.today.dayView(iconDayLabel)}
+                title={STR.today.dayView(iconDayLabel)}
                 data-testid="view-today"
                 onClick={() => setViewMode("today")}
               >
-                {STR.today.today}
+                <IconDayView day={iconDay ? Number(iconDay.slice(8, 10)) : new Date().getDate()} />
               </button>
             </div>
           </nav>

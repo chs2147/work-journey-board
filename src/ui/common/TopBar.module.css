@@ -204,7 +204,11 @@
 }
 
 .segment > button {
-  padding: 0 var(--sp-4);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  padding: 0;
   border: 0;
   background: var(--surface-card);
   color: var(--text-2);
@@ -219,5 +223,9 @@
 .segment > button[aria-pressed="true"] {
   background: var(--accent-soft);
   color: var(--accent);
-  font-weight: var(--fw-bold);
+}
+
+.segment svg {
+  width: 18px;
+  height: 18px;
 }

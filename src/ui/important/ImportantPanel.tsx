@@ -1,4 +1,4 @@
-// 왼쪽 중요 업무 패널(important-repeat-spec 2-3~2-5): 모든 주의 중요 항목을 묶음별로, 체크 = 처리 완료, 누르면 그 칸으로.
+// 왼쪽 중요 업무 패널(important-repeat-spec 2-3~2-5): 모든 주의 중요 항목을 묶음 › 업무별로(improve-1026v2-spec 8절), 체크 = 처리 완료, 누르면 그 칸으로.
 import { useEffect, useRef, type KeyboardEvent } from "react";
 import { groupImportant } from "../../domain/important";
 import type { ImportantItem } from "../../domain/types";
@@ -97,45 +97,51 @@ export function ImportantPanel({ overlay }: { overlay: boolean }) {
                 <span>{STR.important.groups[g.key]}</span>
                 <span>{g.items.length}</span>
               </h3>
-              <ul className={styles.rows}>
-                {g.items.map((it) => (
-                  <li key={it.id} className={styles.row}>
-                    <button
-                      type="button"
-                      className={styles.check}
-                      aria-label={STR.important.complete(it.text)}
-                      title={STR.important.completeTitle}
-                      onClick={() => void completeImportant(it.id)}
-                    >
-                      ✓
-                    </button>
-                    <button
-                      type="button"
-                      className={styles.main}
-                      data-row
-                      data-testid="important-row"
-                      onClick={() => void revealItem(it)}
-                      onKeyDown={(e) => onRowKey(e, it)}
-                    >
-                      {it.parentText && <span className={styles.parent}>{it.parentText} ›</span>}
-                      <span className={styles.text}>{it.text}</span>
-                      <span className={styles.meta}>
-                        <span>{shortDateLabel(it.date)}</span>
-                        {g.key === "late" && <span className={styles.lateTag}>{STR.important.lateTag}</span>}
-                        {g.key === "today" && (
-                          <span className={styles.todayTag}>{STR.important.todayTag}</span>
-                        )}
-                        <span
-                          className={styles.dot}
-                          style={{ background: `var(--cat-${it.categoryColor})` }}
-                        />
-                        <span>{it.categoryName}</span>
-                        {it.categoryEnded && <span>· {STR.important.ended}</span>}
-                      </span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
+              {g.categories.map((c) => (
+                <div key={c.id} role="group" aria-label={c.name} data-testid="important-category">
+                  <h4 className={styles.cat}>
+                    <span className={styles.dot} style={{ background: `var(--cat-${c.color})` }} />
+                    <span className={styles.catName}>{c.name}</span>
+                    {c.ended && <span className={styles.catEnded}>{STR.important.ended}</span>}
+                    <span className={styles.catCount}>{c.items.length}</span>
+                  </h4>
+                  <ul className={styles.rows}>
+                    {c.items.map((it) => (
+                      <li key={it.id} className={styles.row}>
+                        <button
+                          type="button"
+                          className={styles.check}
+                          aria-label={STR.important.complete(it.text)}
+                          title={STR.important.completeTitle}
+                          onClick={() => void completeImportant(it.id)}
+                        >
+                          ✓
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.main}
+                          data-row
+                          data-testid="important-row"
+                          onClick={() => void revealItem(it)}
+                          onKeyDown={(e) => onRowKey(e, it)}
+                        >
+                          {it.parentText && <span className={styles.parent}>{it.parentText} ›</span>}
+                          <span className={styles.text}>{it.text}</span>
+                          {/* 업무명은 머리에 있으니 빼고, 날짜는 "오늘" 묶음이면 생략(8절) */}
+                          {g.key !== "today" && (
+                            <span className={styles.meta}>
+                              <span>{shortDateLabel(it.date)}</span>
+                              {g.key === "late" && (
+                                <span className={styles.lateTag}>{STR.important.lateTag}</span>
+                              )}
+                            </span>
+                          )}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
             </section>
           ))
         )}

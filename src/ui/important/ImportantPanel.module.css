@@ -84,6 +84,50 @@
   color: var(--danger);
 }
 
+/* 묶음 안 업무 머리(improve-1026v2-spec 8절): 색 점 + 이름 + 수. 접지 않는다(12절 #10) */
+.cat {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3) 2px;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  color: var(--text-1);
+}
+
+.cat .dot {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+}
+
+.catName {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.catEnded {
+  flex: 0 0 auto;
+  font-weight: var(--fw-regular);
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+}
+
+.catCount {
+  flex: 0 0 auto;
+  font-weight: var(--fw-regular);
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.cat + .rows .row {
+  padding-left: calc(var(--sp-3) + 14px);
+}
+
 .rows {
   margin: 0;
   padding: 0;
@@ -178,14 +222,6 @@
   border-radius: 4px;
   background: var(--warn-soft);
   color: var(--danger);
-  font-weight: var(--fw-bold);
-}
-
-.todayTag {
-  padding: 0 5px;
-  border: 1px solid var(--today-mark);
-  border-radius: 4px;
-  color: var(--today-mark);
   font-weight: var(--fw-bold);
 }
 

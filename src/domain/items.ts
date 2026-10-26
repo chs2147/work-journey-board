@@ -37,6 +37,26 @@ export function outdentAt(items: ItemDraft[], index: number): ItemDraft[] {
   return items.map((it, i) => (i === index ? { ...it, depth: 0 } : it));
 }
 
+/**
+ * 행 삭제(improve-1026v2-spec 1·2절)가 지우는 범위 [start, end).
+ * 본 항목 = 그 항목 + 바로 아래 이어지는 세부 항목 전부(Alt+↑/↓ 묶음과 같은 범위), 세부 항목 = 그 항목만.
+ */
+export function deleteRange(items: ItemDraft[], index: number): [number, number] {
+  if (index < 0 || index >= items.length) return [index, index];
+  return items[index]!.depth === 1 ? [index, index + 1] : blockRange(items, index);
+}
+
+/** 범위를 지운 결과. 첫 항목이 세부 항목으로 남으면 본 항목으로 올린다 */
+export function deleteAt(
+  items: ItemDraft[],
+  index: number,
+): { items: ItemDraft[]; removed: ItemDraft[]; start: number } {
+  const [start, end] = deleteRange(items, index);
+  const next = [...items.slice(0, start), ...items.slice(end)];
+  if (next[0]?.depth === 1) next[0] = { ...next[0], depth: 0 };
+  return { items: next, removed: items.slice(start, end), start };
+}
+
 /** 본 항목 + 딸린 세부 항목의 범위 [start, end) */
 function blockRange(items: ItemDraft[], start: number): [number, number] {
   let end = start + 1;
