@@ -1,6 +1,6 @@
 # 디자인 리뉴얼 v1 — R0 시안 검토 (글꼴·모드)
 
-> 작성: 2026-10-28 · 브랜치: `design-renewal-v1`(main에서 분기) · 상태: **R0 시안 검토 중** — 글꼴 적용 범위 결정 후 R1 착수
+> 작성: 2026-10-28 · 브랜치: `design-renewal-v1`(main에서 분기) · 상태: **R1 구현(시그니처 테마 토큰·글꼴·테마 선택지)** — 글꼴은 A안 확정(2026-10-28)
 > 기준: [design-style-spec.md](design-style-spec.md)(정본) · [design-concept.md](design-concept.md)(원칙) · [reference-research.md](reference-research.md)
 > 시안: 사용자 개인 미리보기(클로드 아티팩트 "디자인 리뉴얼 v1 — 글꼴·모드 비교 시안"). 시안 속 기록은 모두 가상 예시, 기준일 2026-10-28(수).
 
@@ -49,3 +49,19 @@
 2. R1: 토큰(`tokens.css`에 `:root[data-theme="signature"]`) · 고운돋움 번들(원본 woff2 + OFL, CLAUDE.md 4-1 갱신) · 테마 선택지에 시그니처 추가.
 3. R2~R4: 공통 조작 요소 → 보드·메모·오늘 뷰 → 패널·인사이트·설정·대화상자·스플래시.
 4. R5: 회사 PC 확인 → main 병합(판올림 `0.3.0` 후보).
+
+## 5. 결정 (2026-10-28 사용자)
+- 글꼴 적용 범위 = **A안 — 시그니처 테마만 고운돋움**, 라이트·다크는 Pretendard 그대로.
+- 로고·타이틀은 모든 모드에서 그대로(1절).
+
+## 6. 구현 기록 — R1
+| 항목 | 구현 |
+|---|---|
+| 테마 값 | `ThemePref`·`ResolvedTheme`에 `signature` · `<html data-theme="signature">` · `public/theme-early.js`도 같은 규칙 · 창 제목 표시줄은 라이트(`Platform.setWindowTheme`) |
+| 토큰 | `tokens.css` `:root[data-theme="signature"]` — 스타일 명세 2절 색을 지금 토큰 이름에 매핑(면·글자·선·강조·의미색·날짜 띠·완료·저장됨·코드 블록·중요·토스트·메모·툴팁). `--today-mark`(워드마크 Journey)·업무 색·히트맵은 라이트 값 그대로 |
+| 글꼴 | `src/shared/fonts.css`에 고운돋움 `@font-face`(파일 `src/shared/fonts/GowunDodum-Regular.woff2` = 티저 사이트와 같은 원본, 한글 11,172자) · 시그니처에서 `--font-sans` 교체, `--fw-bold: 400`, `body { font-synthesis: none }` · 라이선스 `public/licenses/GowunDodum-OFL-1.1.txt` |
+| 설정 | 설정 › 화면 › 테마 카드 4개(시그니처 미리보기 `.thumbSignature`), 좁은 창은 2열 |
+| 시작 창 | `splash.html` 시그니처 색·글꼴(`splash.test`가 tokens.css와 대조) |
+| 테스트 | `theme.test.ts`(theme-early.js = theme.ts, 시그니처 포함) · `splash.test.ts` 블록 단위 대조 + 시그니처 · E2E `renewal.spec.ts`(베이지·고운돋움·로고 색 그대로·다시 켜도 유지·라이트로 돌리면 Pretendard) |
+
+R1은 색·글꼴만 바꿨다 — 오늘 머리 채움(지금은 브라운으로 채워짐)·중요 형광펜·단추 테두리·세로선 등 **표현** 차이(2-1절)는 R2~R3에서 시그니처 전용으로 다듬는다.

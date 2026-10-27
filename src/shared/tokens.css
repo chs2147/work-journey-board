@@ -1,6 +1,7 @@
 /* 디자인 토큰 — 화면은 여기 정의된 값만 쓴다(일회성 값 금지, 공통 규칙 6절).
    업무 색 --cat-cN 의 실제 값은 shared/palette.ts가 주입한 --cat-cN-light/-dark 에서 고른다.
-   다크 = <html data-theme="dark">(shared/theme.ts·public/theme-early.js가 시스템/라이트/다크 설정으로 정함, improve-1027v5-spec 4-3). */
+   다크 = <html data-theme="dark">(shared/theme.ts·public/theme-early.js가 시스템/라이트/다크 설정으로 정함, improve-1027v5-spec 4-3).
+   시그니처 = <html data-theme="signature">(docs/renewal/design-style-spec.md Warm Beige + 고운돋움, design-renewal-v1). */
 :root {
   color-scheme: light;
   --font-sans: "Pretendard Variable", "Malgun Gothic", "맑은 고딕", "Segoe UI", system-ui, sans-serif;
@@ -188,6 +189,71 @@
   --cat-c8: var(--cat-c8-dark);
 }
 
+/* 시그니처 테마(docs/renewal/design-style-spec.md 2·3절) — 따뜻한 베이지 면, 짙은 웜그레이 본문, 브라운 강조, 고운돋움.
+   로고(워드마크 Journey = --today-mark)는 바꾸지 않는다(라이트 값 그대로, 2026-10-28 사용자 지시). 업무 색은 라이트 값. */
+:root[data-theme="signature"] {
+  color-scheme: light;
+  --font-sans: "Gowun Dodum", "Malgun Gothic", "맑은 고딕", sans-serif;
+  /* 고운돋움은 굵기 400 하나 — 굵은 글자를 흉내 내지 않고(font-synthesis: none) 크기·색으로 위계 */
+  --fw-bold: 400;
+  --surface-page: #ede6dc;
+  --surface-card: #fcf9f3;
+  --surface-sub: #f3ede3;
+  --surface-focus: #f4ebdd;
+  --line: #e9e1d5;
+  --line-strong: #d6c3aa;
+  --text-1: #423c34;
+  --text-2: #6b6054;
+  --text-3: #786f63;
+  --accent: #856748;
+  --accent-soft: #f0e5d5;
+  --on-accent: #fcf9f3;
+  --ok: #526847;
+  --warn: #806031;
+  --warn-soft: #f6eedc;
+  --danger: #a94f42;
+  --danger-soft: #f8ece6;
+  --today-mark: #d85a30;
+  --leave: #8a4f24;
+  --leave-soft: #f6eedc;
+  --band-late-bg: #f8ece6;
+  --band-late-bar: #a94f42;
+  --band-late-text: #8f3f34;
+  --band-today-bg: #e8d9c3;
+  --band-today-bar: #856748;
+  --band-today-text: #5f4b36;
+  --band-week-bg: #eef1e7;
+  --band-week-bar: #526847;
+  --band-week-text: #435737;
+  --band-later-bg: #f0e9df;
+  --band-later-bar: #786f63;
+  --band-later-text: #6b6054;
+  --done: #526847;
+  --on-done: #fcf9f3;
+  --save-ok-bg: #eef1e7;
+  --save-ok-line: #c9d3bc;
+  --code-bg: #f7f2e9;
+  --code-head: #f0e9df;
+  --star: #ac7754;
+  --mark: #f6eedc;
+  --mark-line: #e3c9a8;
+  --toast-bg: #423c34;
+  --toast-text: #fcf9f3;
+  --toast-action: #e8d9c3;
+  --note-canvas: #f7f2e9;
+  --note-dot: #e3d8c8;
+  --note-bg-yellow: #f6ecd0;
+  --note-bg-blue: #e6ebee;
+  --note-bg-green: #e6ede0;
+  --note-bg-pink: #f4e3df;
+  --tip-bg: #423c34;
+  --tip-fg: #fcf9f3;
+  --tip-go: #e8d9c3;
+}
+
+:root[data-theme="signature"] body {
+  font-synthesis: none;
+}
 * {
   box-sizing: border-box;
 }

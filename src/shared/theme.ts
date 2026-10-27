@@ -1,13 +1,13 @@
-// 화면 테마(improve-1027v5-spec 4절): 시스템 설정 / 라이트 / 다크.
-// 화면은 <html data-theme="light|dark"> 하나로 정한다(다크 값은 tokens.css의 :root[data-theme="dark"] 한 곳).
+// 화면 테마(improve-1027v5-spec 4절): 시스템 설정 / 라이트 / 다크 / 시그니처(design-renewal-v1, 따뜻한 베이지 + 고운돋움).
+// 화면은 <html data-theme="light|dark|signature"> 하나로 정한다(값은 tokens.css의 :root[data-theme="…"] 한 곳씩).
 // 정본 = 이 PC 설정(config.json `theme`), 켤 때 깜빡임을 막는 사본 = localStorage `wjb.theme`
 // — public/theme-early.js가 페이지 맨 앞에서 같은 규칙으로 먼저 적용한다(tests/unit/theme.test.ts가 대조).
 
-export type ThemePref = "system" | "light" | "dark";
-export type ResolvedTheme = "light" | "dark";
+export type ThemePref = "system" | "light" | "dark" | "signature";
+export type ResolvedTheme = "light" | "dark" | "signature";
 
 export const THEME_KEY = "wjb.theme";
-export const THEME_PREFS: readonly ThemePref[] = ["system", "light", "dark"];
+export const THEME_PREFS: readonly ThemePref[] = ["system", "light", "dark", "signature"];
 const DARK_QUERY = "(prefers-color-scheme: dark)";
 
 export const isThemePref = (v: unknown): v is ThemePref =>
@@ -31,7 +31,7 @@ export function storeTheme(pref: ThemePref) {
   }
 }
 
-export function systemTheme(): ResolvedTheme {
+export function systemTheme(): "light" | "dark" {
   return window.matchMedia?.(DARK_QUERY).matches ? "dark" : "light";
 }
 

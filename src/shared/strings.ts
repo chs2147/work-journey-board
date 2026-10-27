@@ -881,13 +881,14 @@ export const STR = {
       },
     },
     theme: "테마",
-    themeDesc: "시스템 설정을 따르거나, 윈도우 설정과 관계없이 라이트·다크로 고정합니다.",
+    themeDesc: "시스템 설정을 따르거나, 윈도우 설정과 관계없이 라이트·다크·시그니처로 고정합니다.",
     themeDefault: "기본",
-    themeNames: { system: "시스템 설정", light: "라이트", dark: "다크" },
+    themeNames: { system: "시스템 설정", light: "라이트", dark: "다크", signature: "시그니처" },
     themeNow: (dark: boolean) =>
       `윈도우 설정 › 개인 설정 › 색 › 앱 모드를 따릅니다 · 지금: ${dark ? "다크" : "라이트"}`,
     themeLight: "밝은 바탕 — 윈도우가 다크여도 이 앱은 밝게",
     themeDark: "어두운 바탕 — 윈도우가 라이트여도 이 앱은 어둡게",
+    themeSignature: "따뜻한 베이지 바탕 · 고운돋움 글꼴",
     themeNote:
       "테마는 이 PC에 저장됩니다(일지 파일과 따로). 다른 PC에서 같은 일지를 열면 그 PC의 테마를 따릅니다. 시작 창도 같은 테마로 뜹니다.",
     locationDesc: "일지 = 이 폴더의 파일 1개",

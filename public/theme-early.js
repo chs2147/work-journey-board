@@ -5,12 +5,15 @@
   var pref = "system";
   try {
     var v = localStorage.getItem("wjb.theme");
-    if (v === "light" || v === "dark" || v === "system") pref = v;
+    if (v === "light" || v === "dark" || v === "system" || v === "signature") pref = v;
   } catch {
     // 읽을 수 없으면 시스템 설정
   }
   var dark =
     pref === "dark" ||
     (pref === "system" && !!window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
-  document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+  document.documentElement.setAttribute(
+    "data-theme",
+    pref === "signature" ? "signature" : dark ? "dark" : "light",
+  );
 })();

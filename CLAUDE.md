@@ -69,7 +69,7 @@ fixtures/     sample-*.json — 가상 업무 기록만
 ## 4. 이 프로젝트 고유 규칙
 
 ### 4-1. 외부 통신 0 (제품의 존재 이유)
-- 앱 코드에서 외부 호스트로 가는 `fetch`·XHR·WebSocket·이미지/폰트 CDN 로드를 **넣지 않는다**. 본문 글꼴은 **Pretendard Variable**(SIL OFL 1.1) — npm `pretendard`(버전 고정)의 공식 woff2를 **수정 없이** 번들한다(`src/shared/fonts.css`, 라이선스 `public/licenses/`). OFL 예약 글꼴 이름 조항 때문에 글자 잘라내기 등 파일 수정 금지. 기본 글자 크기 14px(`--fs-md`).
+- 앱 코드에서 외부 호스트로 가는 `fetch`·XHR·WebSocket·이미지/폰트 CDN 로드를 **넣지 않는다**. 본문 글꼴은 **Pretendard Variable**(SIL OFL 1.1) — npm `pretendard`(버전 고정)의 공식 woff2를 **수정 없이** 번들한다(`src/shared/fonts.css`, 라이선스 `public/licenses/`). OFL 예약 글꼴 이름 조항 때문에 글자 잘라내기 등 파일 수정 금지. 기본 글자 크기 14px(`--fs-md`). **시그니처 테마만** 고운돋움 Regular(SIL OFL 1.1, `src/shared/fonts/GowunDodum-Regular.woff2` 한글 전체 · 라이선스 `public/licenses/GowunDodum-OFL-1.1.txt`, 굵기 400 하나 → `--fw-bold: 400` + `font-synthesis: none`) — 라이트·다크는 Pretendard(design-renewal-v1 3절 A안, 2026-10-28 사용자 확정).
 - Tauri CSP: `default-src 'self'; connect-src ipc: http://ipc.localhost; img-src 'self' data:; style-src 'self' 'unsafe-inline'`. 외부 도메인을 CSP에 추가하는 변경은 **사용자 승인 필수**.
 - 자동 업데이트 플러그인(tauri updater)·텔레메트리·오류 리포팅 SDK·분석 도구 금지.
 - **새 판 확인·설치 예외(v0.2.19, 2026-10-27 사용자 승인, improve-1027v4-spec 1절 B안)**: 인터넷에 나가는 곳은 Rust `src-tauri/src/update.rs` **하나** — GitHub Releases(이 저장소)의 판 목록·설치 파일·`SHA256SUMS.txt`만, **앱을 켤 때 1번 + 설정 [업데이트 확인]** 때만. 받은 설치 파일은 SHA256 확인 → 일지 자동 백업(`_pre-update`) → 실행. 웹 화면 CSP(`connect-src`)는 그대로, 기록·메모 등 사용자 데이터는 보내지 않는다. 주소·시점을 넓히려면 사용자 승인.

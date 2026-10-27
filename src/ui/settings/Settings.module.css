@@ -246,8 +246,8 @@
 /* 테마 카드(spec 4-1) */
 .themeGrid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--sp-4);
   padding: var(--sp-3) var(--sp-5) var(--sp-5);
 }
 
@@ -340,6 +340,16 @@
   flex: 0 0 12px;
   background: var(--t-card);
   border-right: 1px solid var(--t-line);
+}
+
+.thumbSignature {
+  --t-page: #ede6dc;
+  --t-card: #fcf9f3;
+  --t-line: #e8dfd1;
+  --t-accent: #e8d9c3;
+  --t-accent-line: #d6c3aa;
+  --t-mark: #f6eedc;
+  --t-mark-line: #e3c9a8;
 }
 
 .thumbCells {
@@ -464,6 +474,10 @@
 
   .pair {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .themeGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 

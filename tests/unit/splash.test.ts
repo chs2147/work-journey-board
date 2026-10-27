@@ -22,9 +22,14 @@ function vars(css: string, prefix: string): Record<string, string> {
     out[m[1]!] = m[2]!;
   return out;
 }
-const DARK = ':root[data-theme="dark"]';
-const lightPart = (css: string) => css.slice(0, css.indexOf(DARK));
-const darkPart = (css: string) => css.slice(css.indexOf(DARK));
+/** 선택자 블록 하나의 글(`:root[data-theme="dark"] { … }`) — 라이트 = 첫 `:root {` 블록 */
+function block(css: string, selector: string): string {
+  const start = css.indexOf(selector);
+  return start < 0 ? "" : css.slice(start, css.indexOf("}", start));
+}
+const lightPart = (css: string) => block(css, ":root {");
+const darkPart = (css: string) => block(css, ':root[data-theme="dark"]');
+const signaturePart = (css: string) => block(css, ':root[data-theme="signature"]');
 const body = (html: string) => html.slice(html.indexOf("<body>") + 6, html.indexOf("</body>"));
 
 const TOKEN_OF: Record<string, string> = {
@@ -51,6 +56,12 @@ describe("splash.html = 원본 값", () => {
         expect(sp[c], c).toBe(CATEGORY_COLORS[c][mode]);
     });
   }
+
+  it("색(signature)이 tokens.css와 같다", () => {
+    const sp = vars(signaturePart(splashHtml), "sp-");
+    const tk = vars(signaturePart(tokens), "");
+    for (const [s, t] of Object.entries(TOKEN_OF)) expect(sp[s], s).toBe(tk[t]);
+  });
 
   it("문구가 strings.ts·week.ts와 같다", () => {
     document.body.innerHTML = body(splashHtml);

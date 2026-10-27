@@ -1,16 +1,22 @@
-// 설정 › 화면 › 테마(improve-1027v5-spec 4-1): 시스템 설정 / 라이트 / 다크 미리보기 카드 — 고르면 바로 적용.
+// 설정 › 화면 › 테마(improve-1027v5-spec 4-1): 시스템 설정 / 라이트 / 다크 / 시그니처(design-renewal-v1) 미리보기 카드 — 고르면 바로 적용.
 import { useEffect, useState } from "react";
 import { STR } from "../../shared/strings";
-import { systemTheme, THEME_PREFS, type ThemePref } from "../../shared/theme";
+import { systemTheme, THEME_PREFS, type ResolvedTheme, type ThemePref } from "../../shared/theme";
 import { setTheme } from "../common/appController";
 import { useAppStore } from "../common/appStore";
 import { Card } from "./SettingsCard";
 import styles from "./Settings.module.css";
 
+const THUMB_CLASS: Record<ResolvedTheme, string | undefined> = {
+  light: styles.thumbLight,
+  dark: styles.thumbDark,
+  signature: styles.thumbSignature,
+};
+
 /** 미리보기 한 장(앱 모양을 줄인 그림) — 색은 고정값(테마와 관계없이 그 테마의 모습) */
-function Thumb({ kind }: { kind: "light" | "dark" }) {
+function Thumb({ kind }: { kind: ResolvedTheme }) {
   return (
-    <span className={`${styles.thumbHalf} ${kind === "dark" ? styles.thumbDark : styles.thumbLight}`}>
+    <span className={`${styles.thumbHalf} ${THUMB_CLASS[kind]}`}>
       <span className={styles.thumbBar} />
       <span className={styles.thumbBody}>
         <span className={styles.thumbRail} />
@@ -46,6 +52,7 @@ export function ThemeSettings() {
     system: STR.settings.themeNow(sysDark),
     light: STR.settings.themeLight,
     dark: STR.settings.themeDark,
+    signature: STR.settings.themeSignature,
   };
   return (
     <Card id="s-theme" title={STR.settings.theme} desc={STR.settings.themeDesc} testId="theme-settings">

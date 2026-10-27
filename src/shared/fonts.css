@@ -8,3 +8,13 @@
   src: url("../../node_modules/pretendard/dist/web/variable/woff2/PretendardVariable.woff2")
     format("woff2-variations");
 }
+
+/* 시그니처 테마 글꼴: 고운돋움 Regular (SIL OFL 1.1, Copyright 2021 The Gowun Dodum Project Authors — 라이선스: public/licenses/GowunDodum-OFL-1.1.txt).
+   굵기 400 하나뿐(design-renewal-v1 3절 A안: 시그니처 테마에서만 쓴다). 한글 11,172자 전체. 쓰는 테마일 때만 브라우저가 읽는다. */
+@font-face {
+  font-family: "Gowun Dodum";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("./fonts/GowunDodum-Regular.woff2") format("woff2");
+}
