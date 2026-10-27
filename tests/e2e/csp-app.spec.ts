@@ -171,7 +171,7 @@ test("보드·주간 메모 편집기(서식 전부)·엑셀 내보내기 — CS
   await wizard.getByRole("button", { name: "붙여 넣은 표 읽기" }).click();
   await wizard.getByRole("button", { name: "가져오기" }).click();
   await expect(page.getByTestId("import-result")).toContainText("기록 1개(1주)");
-  await wizard.getByRole("button", { name: "닫기" }).click();
+  await wizard.getByRole("button", { name: "닫기", exact: true }).click();
 
   // 엑셀 내보내기(ExcelJS 지연 로딩 포함)
   await page.keyboard.press("Escape");

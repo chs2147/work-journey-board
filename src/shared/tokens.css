@@ -67,6 +67,9 @@
   /* 저장됨 알약(improve-1027v5-spec 2절) — 글자는 --ok(바탕 대비 약 5.7:1) */
   --save-ok-bg: #eef7f2;
   --save-ok-line: #8cc7b2;
+  /* 가져오기 AI 지시문 코드 블록(improve-1027v5-spec 3-3) — 글자는 --text-1 */
+  --code-bg: #f7f6f2;
+  --code-head: #eceae3;
   /* 중요 표시(important-repeat-spec 2-1) */
   --star: #c98500;
   --mark: #fff1bf;
@@ -146,6 +149,8 @@
   --on-done: #0b0b0b;
   --save-ok-bg: #1a2c24;
   --save-ok-line: #2f7a60;
+  --code-bg: #171716;
+  --code-head: #1f1f1e;
   --star: #e0a83a;
   --mark: #3a3116;
   --mark-line: #7a6222;

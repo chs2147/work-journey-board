@@ -155,7 +155,7 @@ test("표 붙여넣기(사내 AI가 파일을 못 줄 때) · 기록 있는 주 
   });
   await wizard(page).getByRole("button", { name: "가져오기" }).click();
   await expect(page.getByTestId("import-result")).toContainText("기록 2개(1주)를 가져왔습니다");
-  await wizard(page).getByRole("button", { name: "닫기" }).click();
+  await wizard(page).getByRole("button", { name: "닫기", exact: true }).click();
   // 덮어쓰기: W43의 다른 업무 기록도 사라지고 파일 내용만
   const texts = () =>
     page

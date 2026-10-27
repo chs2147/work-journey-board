@@ -1,6 +1,6 @@
 // 기존 일지 가져오기 마법사(i-m3-plan 3-5): ① 준비(절차·양식·AI 지시문) ② 파일(엑셀·CSV·표 붙여넣기, 열 맞추기)
 // ③ 미리보기(주별 병합·덮어쓰기·건너뛰기, 새 업무, 건너뜀·확인 필요) ④ 결과.
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { columnLabels, type ImportIssue, type ImportRole } from "../../domain/importer";
 import { weekTitle } from "../../domain/week";
 import { STR } from "../../shared/strings";
@@ -67,20 +67,22 @@ export function ImportWizard() {
         data-testid="import-wizard"
       >
         <header className={styles.head}>
-          <h2 id="import-title" className={styles.title}>
-            {T.title}
-          </h2>
-          <ol className={styles.steps} aria-label={T.title}>
-            {T.steps.map((label, i) => (
-              <li
-                key={label}
-                aria-current={i === step ? "step" : undefined}
-                className={i === step ? styles.stepOn : ""}
-              >
-                {i + 1}. {label}
-              </li>
-            ))}
-          </ol>
+          <div className={styles.titleRow}>
+            <h2 id="import-title" className={styles.title}>
+              {T.title}
+            </h2>
+            <button
+              type="button"
+              className={styles.x}
+              aria-label={T.closeX}
+              title={T.closeX}
+              disabled={busy}
+              onClick={close}
+            >
+              ✕
+            </button>
+          </div>
+          <Stepper step={step} busy={busy} />
         </header>
         <div className={styles.body}>
           {step === 0 && <Prepare />}
@@ -90,6 +92,8 @@ export function ImportWizard() {
         </div>
         {step < 3 && (
           <footer className={styles.actions}>
+            <span className={styles.stepOf}>{T.stepOf(step + 1)}</span>
+            <span className={styles.spacer} />
             {step > 0 && (
               <button
                 type="button"
@@ -100,13 +104,12 @@ export function ImportWizard() {
                 {T.back}
               </button>
             )}
-            <span className={styles.spacer} />
             <button type="button" className={styles.button} disabled={busy} onClick={close}>
               {T.close}
             </button>
             {step === 0 && (
               <button type="button" className={styles.primary} data-autofocus onClick={() => setStep(1)}>
-                {T.next}
+                {T.nextPick}
               </button>
             )}
             {step === 2 && <RunButton />}
@@ -117,30 +120,253 @@ export function ImportWizard() {
   );
 }
 
+// ── 단계 표시(improve-1027v5-spec 3-1) ─────────────────────
+const IconCheck = () => (
+  <svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true">
+    <path
+      d="M3.2 7.3 5.8 9.8 10.8 4.6"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+/** 원 + 선: 지난 단계 ✓(누르면 그 단계로 — [이전]과 같은 규칙) · 지금 단계 강조 · 남은 단계 빈 원 */
+function Stepper({ step, busy }: { step: number; busy: boolean }) {
+  return (
+    <ol className={styles.stepper} aria-label={T.stepsLabel} data-testid="import-steps">
+      {T.steps.map((label, i) => {
+        const done = i < step || step === 3;
+        const now = i === step;
+        const canGo = i < step && step < 3 && !busy;
+        const dot = `${styles.dot} ${now ? styles.dotNow : done ? styles.dotDone : styles.dotTodo}`;
+        return (
+          <Fragment key={label}>
+            {i > 0 && <li aria-hidden="true" className={i <= step ? styles.connOn : styles.connOff} />}
+            <li className={styles.step} aria-current={now ? "step" : undefined}>
+              {canGo ? (
+                <button
+                  type="button"
+                  className={dot}
+                  aria-label={T.stepBack(i + 1, label)}
+                  title={T.stepBack(i + 1, label)}
+                  onClick={() => setStep(i as 0 | 1)}
+                >
+                  <IconCheck />
+                </button>
+              ) : (
+                <span className={dot}>{done ? <IconCheck /> : i + 1}</span>
+              )}
+              <span className={styles.stepText}>
+                <span className={now ? styles.stepNameNow : styles.stepName}>{label}</span>
+                <span className={styles.stepDesc}>{T.stepDesc[i]}</span>
+              </span>
+            </li>
+          </Fragment>
+        );
+      })}
+    </ol>
+  );
+}
+
 // ── ① 준비 ───────────────────────────────────────────
+const IconDownload = () => (
+  <svg
+    width="14"
+    height="14"
+    viewBox="0 0 14 14"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.4"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M7 2v7M4 6.5 7 9.5 10 6.5M2.5 11.5h9" />
+  </svg>
+);
+
+const IconCopy = () => (
+  <svg
+    width="14"
+    height="14"
+    viewBox="0 0 14 14"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.4"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <rect x="4.5" y="4.5" width="7.5" height="7.5" rx="1.5" />
+    <path d="M9.5 4.5V3a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v5.5a1 1 0 0 0 1 1h1.5" />
+  </svg>
+);
+
+const COPIED_MS = 2000;
+const PROMPT_LINES = T.prompt.split("\n").length;
+const BLANK_AT = T.prompt.indexOf(T.promptBlank);
+
 function Prepare() {
   const busy = useImport((s) => s.busy);
+  const [open, setOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [copyFailed, setCopyFailed] = useState(false);
+  const preRef = useRef<HTMLPreElement>(null);
+
+  useEffect(() => {
+    if (!copied) return;
+    const t = setTimeout(() => setCopied(false), COPIED_MS);
+    return () => clearTimeout(t);
+  }, [copied]);
+
+  const copy = async () => {
+    const ok = await copyPrompt();
+    setCopied(ok);
+    setCopyFailed(!ok);
+    if (ok) return;
+    // 복사하지 못하면 지시문을 펼쳐 전체를 선택해 둔다(Ctrl+C로 복사)
+    setOpen(true);
+    requestAnimationFrame(() => {
+      const pre = preRef.current;
+      if (!pre) return;
+      const range = document.createRange();
+      range.selectNodeContents(pre);
+      const sel = window.getSelection();
+      sel?.removeAllRanges();
+      sel?.addRange(range);
+      pre.focus();
+    });
+  };
+
+  // 단계 줄 끝 단추: 1단계 = 양식 엑셀 받기, 2단계 = AI 지시문 복사
+  const stepAction = (i: number) =>
+    i === 0 ? (
+      <button type="button" className={styles.small} disabled={busy} onClick={() => void saveTemplate()}>
+        <IconDownload />
+        {T.templateButton}
+      </button>
+    ) : i === 1 ? (
+      <button type="button" className={styles.small} onClick={() => void copy()}>
+        <IconCopy />
+        {T.promptButton}
+      </button>
+    ) : null;
+
   return (
     <>
-      <ol className={styles.procedure} data-testid="import-procedure">
-        {T.procedure.map((p) => (
-          <li key={p}>{p}</li>
+      <p className={styles.intro}>{T.intro}</p>
+      <section className={styles.proc} aria-labelledby="import-proc-title" data-testid="import-procedure">
+        <div className={styles.procHead}>
+          <h3 id="import-proc-title">{T.procTitle}</h3>
+          <span>{T.procMeta}</span>
+        </div>
+        {T.phases.map((ph) => (
+          <div key={ph.key} className={styles.phase}>
+            <div className={styles.phaseHead}>
+              <span className={styles.phaseKey} aria-hidden="true">
+                {ph.key}
+              </span>
+              <span>{ph.name}</span>
+            </div>
+            <ol className={styles.procSteps} start={ph.from + 1}>
+              {T.procedure.slice(ph.from, ph.to).map((p, j) => {
+                const i = ph.from + j;
+                return (
+                  <li key={p} className={styles.procStep}>
+                    <span className={styles.num} aria-hidden="true">
+                      {i + 1}
+                    </span>
+                    <span className={styles.procText}>{p}</span>
+                    {stepAction(i)}
+                  </li>
+                );
+              })}
+            </ol>
+          </div>
         ))}
-      </ol>
-      <div className={styles.row}>
-        <button type="button" className={styles.button} disabled={busy} onClick={() => void saveTemplate()}>
-          {T.templateButton}
+      </section>
+
+      <div className={styles.promptWrap}>
+        <button
+          type="button"
+          className={styles.promptToggle}
+          aria-expanded={open}
+          aria-controls="import-prompt-block"
+          data-testid="import-prompt-toggle"
+          onClick={() => setOpen(!open)}
+        >
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 12 12"
+            aria-hidden="true"
+            className={open ? styles.caretOpen : ""}
+          >
+            <path
+              d="M4.2 2.5 7.8 6 4.2 9.5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          {T.promptShow}
+          <span className={styles.promptHint}>{T.promptShowHint}</span>
         </button>
-        <button type="button" className={styles.button} onClick={() => void copyPrompt()}>
-          {T.promptButton}
-        </button>
+        {copyFailed && (
+          <p className={styles.error} role="alert">
+            {T.copyFallback}
+          </p>
+        )}
+        {open && (
+          <div className={styles.code} id="import-prompt-block">
+            <div className={styles.codeHead}>
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 14 14"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M4.5 4 1.8 7l2.7 3M9.5 4l2.7 3-2.7 3" />
+              </svg>
+              <b>{T.promptLabel}</b>
+              <span className={styles.codeMeta}>{T.promptMeta(PROMPT_LINES)}</span>
+              <span className={styles.spacer} />
+              <button
+                type="button"
+                className={`${styles.small} ${copied ? styles.copied : ""}`}
+                title={T.copyTitle}
+                data-testid="import-prompt-copy"
+                onClick={() => void copy()}
+              >
+                {copied ? <IconCheck /> : <IconCopy />}
+                <span aria-live="polite">{copied ? T.copied : T.copy}</span>
+              </button>
+            </div>
+            {/* 맨 위 빈칸(그 주 월요일)은 노란 강조 — 사용자가 고쳐 적는 유일한 곳 */}
+            <pre className={styles.prompt} data-testid="import-prompt" tabIndex={0} ref={preRef}>
+              {BLANK_AT < 0 ? (
+                T.prompt
+              ) : (
+                <>
+                  {T.prompt.slice(0, BLANK_AT)}
+                  <mark className={styles.blank}>{T.promptBlank}</mark>
+                  {T.prompt.slice(BLANK_AT + T.promptBlank.length)}
+                </>
+              )}
+            </pre>
+          </div>
+        )}
       </div>
-      <details className={styles.details}>
-        <summary>{T.promptButton}</summary>
-        <pre className={styles.prompt} data-testid="import-prompt">
-          {T.prompt}
-        </pre>
-      </details>
     </>
   );
 }

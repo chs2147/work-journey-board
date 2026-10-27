@@ -556,10 +556,36 @@ export const STR = {
     openHint: "OneNote 등에 적어 온 업무 일지를 양식 엑셀로 옮겨 한 번에 가져옵니다",
     title: "기존 일지 가져오기",
     steps: ["준비", "파일", "미리보기", "결과"] as const,
+    // 단계 표시(improve-1027v5-spec 3-1)
+    stepsLabel: "가져오기 단계",
+    stepDesc: ["양식·지시문", "엑셀·표 붙여넣기", "주별 처리 확인", "가져온 기록"] as const,
+    stepBack: (n: number, label: string) => `${n}단계 ${label}(으)로 돌아가기`,
+    stepOf: (n: number) => `${n} / 4 단계`,
+    nextPick: "다음 — 파일 고르기",
+    closeX: "창 닫기 (Esc)",
+    // ① 준비 — 진행 순서 상자(spec 3-2)
+    intro: "OneNote 등에 적어 온 업무 일지를 양식 엑셀로 옮겨 한 번에 가져옵니다. 아래 순서대로 진행하세요.",
+    procTitle: "진행 순서",
+    procMeta: "8단계 · 한 번에 1~4주씩",
+    phases: [
+      { key: "A", name: "앱에서 준비", from: 0, to: 2 },
+      { key: "B", name: "사내 AI로 옮기기", from: 2, to: 5 },
+      { key: "C", name: "앱으로 가져오기", from: 5, to: 8 },
+    ] as const,
+    // AI 지시문 코드 블록(spec 3-3)
+    promptShow: "AI 지시문 보기",
+    promptShowHint: "— 사내 AI 도구에 그대로 붙여 넣는 글",
+    promptLabel: "AI 지시문",
+    promptMeta: (lines: number) => `일반 텍스트 · ${lines}줄`,
+    promptBlank: "____-__-__",
+    copy: "복사",
+    copyTitle: "AI 지시문 복사",
+    copied: "복사됨",
+    copyFallback: "복사하지 못했습니다 — 지시문 전체를 선택해 두었으니 Ctrl+C로 복사하세요",
     // ① 준비 — 절차(i-m3-plan 3-2)
     procedure: [
-      "아래 [양식 엑셀 받기]로 가져오기 양식을 저장합니다(이번 주 진행 중 업무가 미리 채워져 있습니다).",
-      "[AI 지시문 복사]를 누릅니다.",
+      "[양식 엑셀 받기]로 가져오기 양식을 저장합니다(이번 주 진행 중 업무가 미리 채워져 있습니다).",
+      "[AI 지시문 복사]를 누릅니다. 아래 [AI 지시문 보기]로 내용을 볼 수 있습니다.",
       "OneNote에서 가져올 주간 페이지를 한 주씩 캡처합니다(Win+Shift+S, 표 전체가 보이게).",
       "사내 AI 도구에서 새 대화를 열고 양식 엑셀과 캡처 1~4주 분량을 첨부한 뒤 지시문을 붙여 넣습니다. 캡처에 날짜가 없으면 지시문 맨 위 빈칸에 그 주 월요일 날짜를 적습니다.",
       "AI가 작성한 엑셀 파일을 받습니다. 파일을 줄 수 없는 도구면 AI가 출력한 표를 복사합니다.",

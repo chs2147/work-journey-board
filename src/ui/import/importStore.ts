@@ -132,12 +132,15 @@ export async function saveTemplate() {
 }
 
 /** [AI 지시문 복사] — 사용자가 누를 때만 클립보드에 쓴다(클립보드 다리, output-spec 5-2와 같은 성격) */
-export async function copyPrompt() {
+/** [AI 지시문 복사] — 성공하면 true(코드 블록 [복사]가 잠깐 "복사됨"으로 바뀜, improve-1027v5-spec 3-3) */
+export async function copyPrompt(): Promise<boolean> {
   try {
     await ready().platform.writeClipboard(STR.importer.prompt);
     toast(STR.importer.promptCopied);
+    return true;
   } catch (e) {
     reportError(e);
+    return false;
   }
 }
 

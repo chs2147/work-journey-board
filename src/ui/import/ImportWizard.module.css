@@ -13,7 +13,7 @@
 .dialog {
   display: flex;
   flex-direction: column;
-  width: min(760px, 100%);
+  width: min(900px, 100%);
   max-height: 100%;
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-lg);
@@ -24,31 +24,125 @@
 .head {
   flex: 0 0 auto;
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: var(--sp-3);
-  padding: var(--sp-4) var(--sp-5) var(--sp-3);
+  flex-direction: column;
+  gap: var(--sp-5);
+  padding: var(--sp-5) 22px var(--sp-5);
   border-bottom: 1px solid var(--line);
 }
 
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
 .title {
+  flex: 1 1 auto;
   margin: 0;
   font-size: var(--fs-lg);
 }
 
-.steps {
-  display: flex;
-  gap: var(--sp-3);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  color: var(--text-3);
-  font-size: var(--fs-sm);
+.x {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 28px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-1);
+  cursor: pointer;
 }
 
-.stepOn {
-  color: var(--accent);
+/* 단계 표시(improve-1027v5-spec 3-1): 원(28px) + 이름·설명, 단계 사이 2px 선 */
+.stepper {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  padding: 0 var(--sp-1);
+  list-style: none;
+}
+
+.step {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.connOn,
+.connOff {
+  flex: 1 1 auto;
+  min-width: 16px;
+  height: 2px;
+  margin: 0 var(--sp-4);
+  border-radius: 2px;
+  background: var(--line);
+}
+
+.connOn {
+  background: var(--accent);
+}
+
+.dot {
+  flex: 0 0 28px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  box-sizing: border-box;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  font: inherit;
+  font-size: var(--fs-sm);
   font-weight: var(--fw-bold);
+}
+
+.dotNow {
+  background: var(--accent);
+  color: var(--on-accent);
+  box-shadow: 0 0 0 4px var(--accent-soft);
+}
+
+.dotDone {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+button.dotDone {
+  cursor: pointer;
+}
+
+button.dotDone:hover {
+  box-shadow: 0 0 0 4px var(--accent-soft);
+}
+
+.dotTodo {
+  border: 1.5px solid var(--line-strong);
+  background: var(--surface-card);
+  color: var(--text-3);
+}
+
+.stepText {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.35;
+}
+
+.stepName,
+.stepNameNow {
+  font-size: var(--fs-sm);
+  color: var(--text-1);
+}
+
+.stepNameNow {
+  font-weight: var(--fw-bold);
+  color: var(--accent);
+}
+
+.stepDesc {
+  font-size: var(--fs-xs);
+  color: var(--text-2);
 }
 
 .body {
@@ -96,7 +190,7 @@
 .primary {
   border-color: var(--accent);
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .button:disabled,
@@ -105,10 +199,211 @@
   cursor: default;
 }
 
-.procedure {
+.intro {
   margin: 0;
-  padding-left: 1.4em;
-  line-height: 1.6;
+  color: var(--text-2);
+}
+
+/* 진행 순서 상자(spec 3-2): 다른 바탕 + 묶음 제목 글상자(정사각형 A·B·C) + 번호 원 단계 */
+.proc {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: 14px var(--sp-5) var(--sp-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface-sub);
+}
+
+.procHead {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.procHead h3 {
+  margin: 0;
+  font-size: var(--fs-md);
+}
+
+.procHead span {
+  font-size: var(--fs-xs);
+  color: var(--text-2);
+}
+
+.phase {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.phaseHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0 var(--sp-1);
+  padding: var(--sp-2) 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+}
+
+.phaseKey {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  box-sizing: border-box;
+  border: 1.5px solid var(--text-2);
+  border-radius: 3px;
+  font-size: var(--fs-xs);
+}
+
+.procSteps {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.procStep {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: var(--sp-1) var(--sp-3) var(--sp-1) 20px;
+  line-height: 1.55;
+}
+
+.num {
+  flex: 0 0 22px;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  margin-top: 1px;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  background: var(--surface-card);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+}
+
+.procText {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.small {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-1);
+  font: inherit;
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.small:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* 복사한 직후 2초: 저장됨과 같은 초록 */
+.copied {
+  border-color: var(--save-ok-line);
+  background: var(--save-ok-bg);
+  color: var(--ok);
+  font-weight: var(--fw-bold);
+}
+
+/* AI 지시문 코드 블록(spec 3-3) */
+.promptWrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.promptToggle {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 2px var(--sp-1);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-1);
+  font: inherit;
+  font-weight: var(--fw-bold);
+  cursor: pointer;
+}
+
+.caretOpen {
+  transform: rotate(90deg);
+}
+
+.promptHint {
+  font-weight: var(--fw-regular);
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+}
+
+.code {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--code-bg);
+}
+
+.codeHead {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  height: 38px;
+  padding: 0 var(--sp-3) 0 var(--sp-4);
+  border-bottom: 1px solid var(--line);
+  background: var(--code-head);
+  font-size: var(--fs-sm);
+}
+
+.codeMeta {
+  color: var(--text-2);
+}
+
+.prompt {
+  max-height: 240px;
+  overflow: auto;
+  margin: 0;
+  padding: var(--sp-4) 14px;
+  color: var(--text-1);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+
+.prompt:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.blank {
+  padding: 0 3px;
+  border-radius: 3px;
+  background: var(--mark);
+  color: var(--text-1);
+  font-weight: var(--fw-bold);
 }
 
 .details summary {
@@ -116,16 +411,9 @@
   color: var(--text-2);
 }
 
-.prompt {
-  max-height: 220px;
-  overflow: auto;
-  margin: var(--sp-2) 0 0;
-  padding: var(--sp-3);
-  border-radius: var(--radius-md);
-  background: var(--surface-sub);
-  font: inherit;
-  font-size: var(--fs-sm);
-  white-space: pre-wrap;
+.stepOf {
+  font-size: var(--fs-xs);
+  color: var(--text-3);
 }
 
 .hint {
