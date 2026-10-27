@@ -50,6 +50,11 @@ npm run tauri dev    # 실앱 모드(윈도우 / 리눅스는 webkit2gtk-4.1 필
 - 윈도우 설치 파일: `main`에 반영되면 [Releases](https://github.com/chs2147/work-journey-board/releases)에 `v<버전>` 사전 릴리스로 올라간다. WebView2 오프라인 설치판은 Actions → *Build Windows installer* → Run workflow → `offline`.
 
 ## Version History
+### v0.2.19 (2026-10-27) — 새 판 확인·설치
+- 앱을 켤 때 1번 + 설정 › 업데이트 **[업데이트 확인]**으로 GitHub Releases에 새 판을 묻는다
+- 새 판이 있으면 보드 위 띠 + 설정 단추 파란 점, **[자세히·설치]**: 릴리스 노트 · 내려받기 진행 · SHA256 확인 · 일지 자동 백업(`_pre-update`) · 설치하고 다시 시작
+- 외부 통신 예외: 새 판 확인·내려받기만 GitHub(Rust 한 곳, 이 저장소 주소만), 웹 화면 CSP 그대로, 기록·메모 전송 없음
+
 ### v0.2.18 (2026-10-27) — 중요 업무 완료 뱃지·이 주 완료
 - 처리 완료한 중요 항목에 **초록 원 + 체크 뱃지**(보드), 누르거나 `Alt+I` → 처리한 때 · [되돌리기]
 - 연결된 메모 상자: 띠 줄마다 ✓, 연결한 중요 업무가 모두 끝나면 상자 오른쪽 위 ✓ · 경과 타임라인·스냅샷 그림에도
