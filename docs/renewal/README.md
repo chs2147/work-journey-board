@@ -15,6 +15,8 @@
 
 ## T1. 티저 사이트 배포
 
+> **진행(2026-10-27)**: 사용자 지시로 A안 — zip을 `site/`에 받은 그대로 풀고 `.github/workflows/pages.yml`로 GitHub Pages 배포(`site/` 변경 main 푸시 때만, Prettier 검사 제외). 주소 `https://chs2147.github.io/work-journey-board/`
+
 **받은 상태 그대로**(빌드 없음) 정적 호스팅에 올린다. 압축을 풀어 확인한 것:
 - 외부 호출 없음 — 서체는 로컬 `gowun-dodum.woff2`(원본, 한글 11,172자 전부 포함 · Version 2.000), 링크는 이 저장소 GitHub 주소 3개뿐(저장소·README·Releases).
 - [다운로드] → `https://github.com/chs2147/work-journey-board/releases`. 저장소가 공개라 로그인 없이 열린다(새 판 확인도 같은 전제).
