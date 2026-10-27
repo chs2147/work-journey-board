@@ -4,6 +4,7 @@
 > 바꾸는 것: 보드 맨 아래 **요일별 메모 행**(overview 10-5) → **주간 메모 1개**(자유 배치·리치 서식·이미지)
 > 관련: [overview.md](overview.md) 10-5(지금 메모 행)·10-7(주간 요약)·10-9(화면 목록) · [data-spec.md](data-spec.md) 3절(스키마)·5절(무기록 판정) · [output-spec.md](output-spec.md) 2절(자동 집계 `[메모]`)·3절(엑셀 메모 행·원장) · CLAUDE.md 4-1(외부 통신 0)·4-3(데이터 파일 안전)·4-6(입력 UX)
 > 후속: 상자끼리 관계선(잇기·해제) — [note-relation-spec.md](note-relation-spec.md)(2026-10-27 확정, `0.2.14`). 메모 문서 JSON에 선택 필드 `edges`(`{id, from, to, dir, dash, label}`)가 더해졌다(5-2절과 함께 볼 것, 스키마 변경 없음). 상자의 업무 항목 연결은 `ref`(한 칸) → `refs`(배열) — [multi-link-spec.md](multi-link-spec.md)(`0.2.15`, 예전 `ref`는 읽을 때 바꿈).
+> 후속: 메모 보드 스냅샷(PNG 저장·그림으로 복사·엑셀 "메모 보드" 시트) — [improve-1027v3-spec.md](improve-1027v3-spec.md) 1절(`0.2.17`).
 > 시안 목업은 사용자 개인 미리보기(클로드 아티팩트 "주간 메모 시안")로 비교한다. 목업 속 기록은 가상 예시다.
 
 ---

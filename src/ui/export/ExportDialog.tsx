@@ -14,6 +14,7 @@ import {
   type ExportChoice,
   type RangeKind,
 } from "./exportStore";
+import { memoWeeks as listMemoWeeks } from "../note/snapshot";
 import styles from "./ExportDialog.module.css";
 
 const KINDS: RangeKind[] = ["thisWeek", "last4", "custom", "all"];
@@ -29,6 +30,8 @@ const rangeText = ([a, b]: [WeekId, WeekId]) => (a === b ? a : `${a} ~ ${b}`);
 export function ExportDialog() {
   const journal = useAppStore((s) => s.journal);
   const busy = useExport((s) => s.busy);
+  const progress = useExport((s) => s.progress);
+  const [memoWeeks, setMemoWeeks] = useState<number | null>(null);
   const [choice, setChoice] = useState<ExportChoice>(defaultChoice);
   const [first, setFirst] = useState<WeekId | null>(null);
   const [stats, setStats] = useState<{ weeks: number; categories: number; items: number } | null>(null);
@@ -39,12 +42,15 @@ export function ExportDialog() {
   useEffect(() => {
     dialogRef.current?.querySelector<HTMLInputElement>('input[type="radio"]:checked')?.focus();
     void repo?.firstRecordWeek().then(setFirst);
+    // [메모 보드 스냅샷]은 마지막 선택을 기억(기본 꺼짐)
+    void repo?.getSettings().then((s) => setChoice((c) => ({ ...c, snapshots: s.ui.exportSnapshots })));
   }, [repo]);
 
   const range = resolveRange(choice, current, first);
   useEffect(() => {
     let alive = true;
     void repo?.exportStats(range[0], range[1]).then((s) => alive && setStats(s));
+    if (repo) void listMemoWeeks(repo, range[0], range[1]).then((m) => alive && setMemoWeeks(m.length));
     return () => {
       alive = false;
     };
@@ -59,7 +65,7 @@ export function ExportDialog() {
     focusStartCell();
   };
   const set = (patch: Partial<ExportChoice>) => setChoice((c) => ({ ...c, ...patch }));
-  const noSheet = !choice.weekly && !choice.ledger;
+  const noSheet = !choice.weekly && !choice.ledger && !choice.snapshots;
 
   const save = async () => {
     const path = await runExport(choice);
@@ -156,6 +162,25 @@ export function ExportDialog() {
             />
             {STR.export.ledger}
           </label>
+          <label className={styles.check}>
+            <input
+              type="checkbox"
+              checked={choice.snapshots}
+              onChange={(e) => set({ snapshots: e.target.checked })}
+              data-testid="export-snapshots"
+            />
+            {STR.export.snapshots}
+            {memoWeeks !== null && (
+              <span className={styles.checkInfo}>{STR.export.snapshotsInfo(memoWeeks)}</span>
+            )}
+          </label>
+          {choice.snapshots && (
+            <p className={styles.note} data-testid="export-snapshots-note">
+              {memoWeeks !== null && memoWeeks > 20
+                ? STR.export.snapshotsMany(memoWeeks)
+                : STR.export.snapshotsNote}
+            </p>
+          )}
         </fieldset>
 
         <p className={styles.note}>{STR.export.summaryNote}</p>
@@ -174,7 +199,7 @@ export function ExportDialog() {
             disabled={noSheet || busy}
             title={noSheet ? STR.export.noSheet : undefined}
           >
-            {busy ? STR.export.saving : STR.export.save}
+            {busy ? (progress ?? STR.export.saving) : STR.export.save}
           </button>
         </div>
       </div>

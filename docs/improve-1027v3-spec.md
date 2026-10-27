@@ -1,6 +1,6 @@
 # 개선사항 v3 (2026-10-27) — 상세 설계
 
-> 작성: 2026-10-27 · 상태: **확정(2026-10-27, 8절 17건 모두 추천안)** · 구현 W1 `0.2.16`(#2~#7, 구현 기록 10절) · W2 `0.2.17`(#1)
+> 작성: 2026-10-27 · 상태: **확정(2026-10-27, 8절 17건 모두 추천안)** · 구현 W1 `0.2.16`(#2~#7, 구현 기록 10절) · W2 `0.2.17`(#1, 구현 기록 11절)
 > 요청: 2026-10-27 사용자 — "개선사항 v3" 7건(아래 0절 표의 원문 요지)
 > 시안: 사용자 개인 미리보기(클로드 아티팩트 "개선사항 v3 시안" — ① 스냅샷 ② 메모↔업무 항목 끌어 놓기 ③ 컬러칩·연결점 4방향·중요 업무 띠 ④ 릴리스 노트). 시안 속 기록은 모두 가상 예시다.
 > 관련: [weekly-note-spec.md](weekly-note-spec.md)(메모 보드·4-3 글 서식) · [improve-1026v2-spec.md](improve-1026v2-spec.md) 5절(상자를 항목에 끌어 연결) · [multi-link-spec.md](multi-link-spec.md) 2절(연결 더하기) · [note-relation-spec.md](note-relation-spec.md) 3절(연결점) · [important-repeat-spec.md](important-repeat-spec.md)(중요 업무 패널) · [output-spec.md](output-spec.md) 3절(엑셀) · CLAUDE.md 4-1(외부 통신 0)·4-3(내보내기 파일 예외)·6절(릴리스)
@@ -233,4 +233,23 @@
 - **"오늘 뷰 왼쪽 중요 목록"(6절)**: 오늘 뷰에는 중요 목록이 따로 없다(왼쪽 레일의 중요 업무 패널 하나뿐) — 패널에만 적용.
 - **"없음" 칩(4절)**: 이미 "흰색" 칩(흰 바탕)이 그 역할 — 사선 표시는 넣지 않았다.
 - **띠 구조(6절)**: 실제 패널은 날짜 묶음 › 업무 순서(시안은 업무 › 날짜로 그렸음). 띠는 날짜 묶음 머리에 붙는다.
+
+---
+
+## 11. 구현 기록 — W2 (`0.2.17`, #1 스냅샷)
+
+| 곳 | 구현 |
+|---|---|
+| 그리기 | 새 `src/export/noteSnapshot.ts` — `layoutSnapshot`(글자 폭 재기 함수만 받는 순수 배치: 글 줄바꿈·서식·목록·체크·구분선·띠 접기·이미지·링크 카드·관계선 `routeEdge`) → `drawSnapshot`(Canvas 2D, `Path2D`로 선, 화살표·이름표) → `renderNoteSnapshot`(PNG/WebP Blob). 글꼴은 `document.fonts.load`로 Pretendard를 먼저 불러 잰다. 긴 변 8192px 제한(`snapshotScale`) |
+| 화면 | `NoteDock` 머리 끝 [스냅샷](카메라 `IconCamera`) — 메뉴 [PNG 그림으로 저장…]·[그림으로 복사]·안내 한 줄, `Esc`·바깥 누르기로 닫힘. 메모가 비면 `aria-disabled`(누르면 안내) |
+| 동작 | `src/ui/note/snapshot.ts` — `saveSnapshot`(saveImage와 같은 저장 대화상자·`exportPathProblem(…, "image")`·`writeExport`, `.webp`를 고르면 WebP로), `copySnapshot`(`ClipboardItem` PNG), `weekSnapshotInput`(저장소 `getWeek`·`getNoteAssets`로 다른 주), `memoWeeks`(예전 요일 메모도 세는 메모 있는 주) |
+| 엑셀 | `excel.ts` `ExportOptions.snapshots`·`writeSnapshotSheet`(B열 제목 + `addImage` base64 PNG, 폭 ≤1000px, 행 20px 기준으로 비움) · `exportStore` 그림 만들기(1.5배, 진행 "메모 그림 만드는 중 i/n") · `ExportDialog` 세 번째 체크 + "(메모 있는 주 N개 · 시트 1개 추가)" · 설정 `ui.exportSnapshots`(기억, 기본 꺼짐) |
+
+- 테스트: 단위 `noteSnapshot.test.ts`(줄바꿈·서식·목록·크기·관계선·띠 순서·접기·배율·`snapLines`) / E2E `snapshot.spec.ts`(PNG 저장 이름·2배 크기, 복사(Chromium), 빈 주, 엑셀 시트·기억) · `csp-app.spec.ts`(스냅샷·엑셀 시트 CSP 위반 0). 회사 PC 확인표 [m1-check.md](m1-check.md) 7-17.
+
+### 11-1. 설계와 달라진 점·구현에서 정한 것
+- **그림 제목**: `이번 주 메모 · …` 대신 `메모 보드 · 2026-W43 (10/19~10/25)` — 엑셀에서 지난 주를 그릴 때도 같은 말이 맞게.
+- **연결 띠의 지워진 항목 순서**: 화면 띠(`LinkStrip`)도 지워진 항목이 맨 위로 가던 정렬(`localeCompare`가 "~"를 숫자 앞에 둠)을 함께 고쳐 맨 아래로(multi-link-spec 1절대로).
+- **[관계선 보기]가 꺼져 있어도** 그림에는 관계선을 그린다(8절 #1-4). 손잡이·연결점·메뉴·선택 테두리·미니맵·대기 상자는 그리지 않는다.
+- **비교 테스트**: "같은 문서 → 같은 픽셀 해시"는 글꼴 렌더링이 엔진마다 달라 빼고, 배치(좌표·크기)를 단위 테스트로 고정했다.
 

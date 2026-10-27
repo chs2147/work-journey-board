@@ -91,6 +91,14 @@ export const IconMap = () => (
 );
 
 /** 링크 넣기: 사슬 */
+/** 메모 보드 스냅샷(improve-1027v3-spec 1-2): 카메라 */
+export const IconCamera = () => (
+  <Svg>
+    <path d="M2 5.25h2.5l1.2-2h4.6l1.2 2H14v7.5H2z" />
+    <circle cx="8" cy="9" r="2.25" />
+  </Svg>
+);
+
 /** 관계선 보기(note-relation-spec 1-2): 두 상자를 잇는 꺾은선 */
 export const IconRelation = () => (
   <Svg>

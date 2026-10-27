@@ -57,7 +57,10 @@ function useLinkedLines(refs: BoxRef[]): LinkedLine[] {
     return JSON.stringify(
       ids
         .map((item) => ({ item, found: found.get(item) ?? null }))
-        .sort((a, b) => (a.found?.order ?? "~").localeCompare(b.found?.order ?? "~")),
+        // 지워진 항목은 맨 아래(localeCompare는 "~"를 숫자보다 앞에 두므로 따로 가른다)
+        .sort((a, b) =>
+          !a.found || !b.found ? Number(!a.found) - Number(!b.found) : a.found.order < b.found.order ? -1 : 1,
+        ),
     );
   });
   return useMemo(() => JSON.parse(json) as LinkedLine[], [json]);

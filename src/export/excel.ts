@@ -20,11 +20,23 @@ export interface ExportWeek {
   summary: { editedText: string | null; aiText: string | null };
 }
 
+/** 메모 보드 스냅샷 한 장(improve-1027v3-spec 1-5) — 그림은 내보내기 전에 만들어 넘긴다(이 모듈은 캔버스를 모른다) */
+export interface ExportSnapshot {
+  weekId: WeekId;
+  /** PNG base64(머리 없이) */
+  base64: string;
+  /** 그림의 화면 크기(px, 해상도 배율 전) */
+  width: number;
+  height: number;
+}
+
 export interface ExportOptions {
   from: WeekId;
   to: WeekId;
   weekly: boolean;
   ledger: boolean;
+  /** 메모 보드 시트(최신 주가 위) + 메모가 없는 주. 없으면 시트를 만들지 않는다 */
+  snapshots?: { images: ExportSnapshot[]; noMemo: WeekId[] };
   appVersion: string;
   exportedAt: Date;
 }
@@ -300,13 +312,46 @@ function writeLedgerSheet(ws: Worksheet, weeks: ExportWeek[]) {
   };
 }
 
+export const SNAPSHOT_SHEET = "메모 보드";
+/** 시트에서 그림 폭(px) — 이보다 작은 그림은 제 크기 */
+export const SNAPSHOT_W = 1000;
+/** 기본 행 높이(15pt ≈ 20px) */
+const ROW_PX = 20;
+
+/** 메모 보드 시트: 주마다 제목 행 + 셀 위에 뜬 그림(아래 행은 그림 높이만큼 비움) + 빈 행 2개, 맨 끝에 메모가 없는 주 */
+export function writeSnapshotSheet(
+  wb: import("exceljs").Workbook,
+  ws: Worksheet,
+  images: ExportSnapshot[],
+  noMemo: WeekId[],
+) {
+  ws.getColumn(1).width = 2;
+  ws.getColumn(2).width = 140;
+  let row = 1;
+  for (const s of images) {
+    const title = ws.getCell(row, 2);
+    title.value = `${weekTitle(s.weekId)} 메모 보드`;
+    title.font = { name: FONT, size: 11, bold: true };
+    const w = Math.min(SNAPSHOT_W, s.width);
+    const h = Math.round((w * s.height) / Math.max(1, s.width));
+    const id = wb.addImage({ base64: `data:image/png;base64,${s.base64}`, extension: "png" });
+    ws.addImage(id, { tl: { col: 1, row }, ext: { width: w, height: h }, editAs: "oneCell" });
+    row += 1 + Math.ceil(h / ROW_PX) + 2;
+  }
+  if (noMemo.length) {
+    const c = ws.getCell(row, 2);
+    c.value = `메모가 없는 주: ${noMemo.join(", ")}`;
+    c.font = { name: FONT, size: FONT_SIZE, color: { argb: MEMO_COLOR } };
+  }
+}
+
 /** 내보내기 엑셀 파일 바이트 */
 export async function buildWorkbook(
   ExcelJS: ExcelJSModule,
   weeks: ExportWeek[],
   opt: ExportOptions,
 ): Promise<Uint8Array> {
-  if (!opt.weekly && !opt.ledger) throw new Error("내보낼 시트를 하나 이상 고르세요");
+  if (!opt.weekly && !opt.ledger && !opt.snapshots) throw new Error("내보낼 시트를 하나 이상 고르세요");
   const wb = new ExcelJS.Workbook();
   wb.title = exportTitle(opt.from, opt.to);
   wb.creator = `Work Journey Board ${opt.appVersion}`;
@@ -329,6 +374,13 @@ export async function buildWorkbook(
   if (opt.ledger) {
     const ws = wb.addWorksheet("원장", { pageSetup: page, headerFooter: { oddFooter: footer } });
     writeLedgerSheet(ws, weeks);
+  }
+  if (opt.snapshots) {
+    const ws = wb.addWorksheet(SNAPSHOT_SHEET, {
+      pageSetup: { ...page, orientation: "portrait" },
+      headerFooter: { oddFooter: footer },
+    });
+    writeSnapshotSheet(wb, ws, opt.snapshots.images, opt.snapshots.noMemo);
   }
   wb.views = [
     { x: 0, y: 0, width: 20000, height: 12000, firstSheet: 0, activeTab: 0, visibility: "visible" },

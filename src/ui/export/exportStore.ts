@@ -1,8 +1,10 @@
 // 엑셀 내보내기 흐름(output-spec 4절, i-m2-plan M2-S2): 대화상자 → 저장 대화상자 → (OneDrive 경고) → 파일 쓰기 → 토스트.
 // 영속 데이터는 저장소, 파일 쓰기는 Platform만 거친다(CLAUDE.md 4-3). ExcelJS는 처음 내보낼 때만 불러온다.
 import { create } from "zustand";
+import { weekList } from "../../data/repository";
 import { addWeeks, type WeekId } from "../../domain/week";
-import { buildWorkbook } from "../../export/excel";
+import { buildWorkbook, type ExportSnapshot } from "../../export/excel";
+import { renderNoteSnapshot } from "../../export/noteSnapshot";
 import { exportFileName } from "../../export/filename";
 import { baseName, dirOf, exportPathProblem } from "../../platform";
 import { STR } from "../../shared/strings";
@@ -10,6 +12,7 @@ import { flushAll, reportError, toast, useBoard } from "../board/boardStore";
 import { useAppStore } from "../common/appStore";
 import { flushDraft } from "../summary/summaryStore";
 import { flushNote } from "../note/noteStore";
+import { memoWeeks, weekSnapshotInput } from "../note/snapshot";
 
 export type RangeKind = "thisWeek" | "last4" | "custom" | "all";
 
@@ -20,14 +23,28 @@ export interface ExportChoice {
   to: WeekId;
   weekly: boolean;
   ledger: boolean;
+  /** 메모 보드 스냅샷 시트(improve-1027v3-spec 1-5) */
+  snapshots: boolean;
 }
 
 interface ExportState {
   open: boolean;
   busy: boolean;
+  /** 메모 그림 만드는 중 i/n */
+  progress: string | null;
 }
 
-export const useExport = create<ExportState>(() => ({ open: false, busy: false }));
+export const useExport = create<ExportState>(() => ({ open: false, busy: false, progress: null }));
+
+/** 엑셀용 메모 그림 해상도 배율(파일 크기와 선명도 절충) */
+const EXCEL_SNAPSHOT_SCALE = 1.5;
+
+const toBase64 = async (blob: Blob) => {
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  let bin = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(bin);
+};
 
 export function setExportOpen(open: boolean) {
   if (useExport.getState().busy) return;
@@ -93,17 +110,43 @@ export async function runExport(c: ExportChoice): Promise<string | null> {
     if ((await platform.isOneDrivePath(path)) && !window.confirm(STR.export.oneDrive)) return null;
 
     const weeks = await repo.exportWeeks(from, to);
+    let snapshots: { images: ExportSnapshot[]; noMemo: WeekId[] } | undefined;
+    if (c.snapshots) {
+      // 최신 주가 위 — 메모가 있는 주만 그림, 없는 주는 맨 끝 한 줄
+      const ids = weekList(from, to).reverse();
+      const images: ExportSnapshot[] = [];
+      const noMemo: WeekId[] = [];
+      const withMemo = await memoWeeks(repo, from, to);
+      for (const w of ids) {
+        if (!withMemo.includes(w)) {
+          noMemo.push(w);
+          continue;
+        }
+        useExport.setState({
+          progress: STR.export.snapshotsProgress(images.length + 1, withMemo.length),
+        });
+        const input = await weekSnapshotInput(repo, w, platform.now());
+        if (!input) {
+          noMemo.push(w);
+          continue;
+        }
+        const { blob, width, height } = await renderNoteSnapshot(input, { scale: EXCEL_SNAPSHOT_SCALE });
+        images.push({ weekId: w, base64: await toBase64(blob), width, height });
+      }
+      snapshots = { images, noMemo: noMemo.reverse() };
+    }
     const ExcelJS = (await import("exceljs")).default;
     const bytes = await buildWorkbook(ExcelJS, weeks, {
       from,
       to,
       weekly: c.weekly,
       ledger: c.ledger,
+      snapshots,
       appVersion: __APP_VERSION__,
       exportedAt: platform.now(),
     });
     await platform.writeExport(path, bytes);
-    await repo.updateSettings({ ui: { lastExportDir: dirOf(path) } });
+    await repo.updateSettings({ ui: { lastExportDir: dirOf(path), exportSnapshots: c.snapshots } });
 
     useExport.setState({ open: false });
     toast(STR.export.saved(baseName(path)), [
@@ -115,12 +158,19 @@ export async function runExport(c: ExportChoice): Promise<string | null> {
     reportError(e);
     return null;
   } finally {
-    useExport.setState({ busy: false });
+    useExport.setState({ busy: false, progress: null });
   }
 }
 
 /** 대화상자 기본값: 기간 지정은 최근 4주 */
 export function defaultChoice(): ExportChoice {
   const current = useBoard.getState().weekId;
-  return { kind: "thisWeek", from: addWeeks(current, -3), to: current, weekly: true, ledger: true };
+  return {
+    kind: "thisWeek",
+    from: addWeeks(current, -3),
+    to: current,
+    weekly: true,
+    ledger: true,
+    snapshots: false,
+  };
 }

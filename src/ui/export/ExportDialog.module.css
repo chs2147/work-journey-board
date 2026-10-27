@@ -60,6 +60,11 @@
   cursor: pointer;
 }
 
+.checkInfo {
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+}
+
 .kind {
   min-width: 72px;
 }

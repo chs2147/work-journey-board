@@ -270,3 +270,22 @@ test("메모 여러 항목 연결(여러 줄 띠·고르기 목록·접기) — 
   await expect(box.getByTestId("link-line")).toHaveCount(5);
   expect(await violations(page)).toEqual([]);
 });
+
+test("메모 보드 스냅샷(PNG 저장·엑셀 메모 보드 시트) — CSP 위반 0", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/?today=2026-10-22");
+  await expect(page.getByTestId("note-box").first()).toBeVisible();
+  await page.getByTestId("snapshot-button").click();
+  page.once("dialog", (d) => void d.accept(d.defaultValue()));
+  const png = page.waitForEvent("download");
+  await page.getByRole("menuitem", { name: "PNG 그림으로 저장…" }).click();
+  await png;
+  await expect(page.getByText(/메모 보드 그림을 저장했습니다/)).toBeVisible();
+  await page.keyboard.press("Alt+KeyE");
+  await page.getByTestId("export-snapshots").check();
+  page.once("dialog", (d) => void d.accept(d.defaultValue()));
+  const xlsx = page.waitForEvent("download");
+  await page.getByTestId("export-dialog").getByRole("button", { name: "저장 위치 선택…" }).click();
+  await xlsx;
+  expect(await violations(page)).toEqual([]);
+});

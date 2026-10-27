@@ -1,7 +1,7 @@
 // 주간 메모(weekly-note-spec 3절): 보드 아래 도크(경계선 끌어 높이 조절, 접기, 크게 보기) 또는
 // 오늘 뷰 왼쪽 판(improve-1026-spec 8-2, variant="side"). 머리 기능 단추는 아이콘(11-3), 배율은 값 표시(11-1).
 // 판(편집기 포함)은 늦게 불러온다.
-import { lazy, Suspense, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
+import { lazy, Suspense, useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 import { ZOOM_STEPS } from "../../domain/noteZoom";
 import { STR } from "../../shared/strings";
 import { toast } from "../board/boardStore";
@@ -14,6 +14,7 @@ import {
   IconLink,
   IconMinus,
   IconPlus,
+  IconCamera,
   IconRelation,
   IconShrink,
   IconTextBox,
@@ -34,6 +35,7 @@ import {
   zoomStep,
 } from "./noteStore";
 import { LinkDialog } from "./LinkDialog";
+import { copySnapshot, saveSnapshot } from "./snapshot";
 import styles from "./Note.module.css";
 
 const NoteCanvas = lazy(() => import("./NoteCanvas"));
@@ -79,6 +81,64 @@ function IconButton({
     >
       {children}
     </button>
+  );
+}
+
+/** [스냅샷] 단추 + 메뉴(improve-1027v3-spec 1-2): PNG 저장 · 그림으로 복사. 메모가 비면 흐림 */
+function SnapshotButton({ empty }: { empty: boolean }) {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const away = (e: globalThis.PointerEvent) => {
+      if (!wrapRef.current?.contains(e.target as Node)) setOpen(false);
+    };
+    window.addEventListener("pointerdown", away, true);
+    return () => window.removeEventListener("pointerdown", away, true);
+  }, [open]);
+  const pick = (f: () => Promise<void>) => {
+    setOpen(false);
+    wrapRef.current?.querySelector("button")?.focus();
+    void f();
+  };
+  return (
+    <span
+      ref={wrapRef}
+      className={styles.snapWrap}
+      onKeyDown={(e) => {
+        if (e.key === "Escape" && open) {
+          e.preventDefault();
+          e.stopPropagation();
+          setOpen(false);
+          wrapRef.current?.querySelector("button")?.focus();
+        }
+      }}
+    >
+      <button
+        type="button"
+        className={styles.iconButton}
+        aria-label={STR.note.snapshot}
+        title={empty ? STR.note.snapshotEmpty : STR.note.snapshot}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-disabled={empty}
+        data-testid="snapshot-button"
+        onClick={() => (empty ? toast(STR.note.snapshotEmpty) : setOpen((o) => !o))}
+      >
+        <IconCamera />
+      </button>
+      {open && (
+        <div className={styles.snapMenu} role="menu" aria-label={STR.note.snapshot}>
+          <button type="button" role="menuitem" autoFocus onClick={() => pick(saveSnapshot)}>
+            {STR.note.snapshotSave}
+          </button>
+          <button type="button" role="menuitem" onClick={() => pick(copySnapshot)}>
+            {STR.note.snapshotCopy}
+          </button>
+          <span className={styles.snapHint}>{STR.note.snapshotHint}</span>
+        </div>
+      )}
+    </span>
   );
 }
 
@@ -257,6 +317,7 @@ export function NoteDock({ variant = "dock" }: Props) {
             <IconRelation />
           </IconButton>
         )}
+        {!collapsed && <SnapshotButton empty={boxes === 0} />}
         {!collapsed && !side && (
           <IconButton
             label={expanded ? STR.note.shrink : STR.note.expand}

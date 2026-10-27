@@ -37,6 +37,8 @@ export interface Settings {
     insightMapOpen: boolean;
     /** 인사이트에서 마지막으로 본 탭(m3-s2-spec 1절) */
     insightTab: "timeline" | "overview";
+    /** 엑셀 내보내기 [포함] "메모 보드 스냅샷" 마지막 선택(improve-1027v3-spec 1-5, 기본 꺼짐) */
+    exportSnapshots: boolean;
   };
 }
 
@@ -74,6 +76,7 @@ export const DEFAULT_SETTINGS: Settings = {
     insightCategory: null,
     insightMapOpen: true,
     insightTab: "timeline",
+    exportSnapshots: false,
   },
 };
 
@@ -127,6 +130,7 @@ export function mergeSettings(base: Settings, patch: unknown): Settings {
   if (s.ui.insightCategory !== null && typeof s.ui.insightCategory !== "string") s.ui.insightCategory = null;
   if (typeof s.ui.insightMapOpen !== "boolean") s.ui.insightMapOpen = true;
   if (s.ui.insightTab !== "timeline" && s.ui.insightTab !== "overview") s.ui.insightTab = "timeline";
+  if (typeof s.ui.exportSnapshots !== "boolean") s.ui.exportSnapshots = false;
   if (!(s.ui.noteDockHeight >= NOTE_DOCK_MIN)) s.ui.noteDockHeight = DEFAULT_SETTINGS.ui.noteDockHeight;
   return s;
 }
