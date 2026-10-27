@@ -468,6 +468,7 @@ export const STR = {
     edgesRemoved: (n: number) => `관계선 ${n}개를 해제했습니다`,
     edgeNone: "이 상자에는 관계선이 없습니다 — L로 이을 수 있습니다",
     edgeKnob: "관계선 잇기(끌어서 다른 상자에 놓기)",
+    linkTagHint: "연결할 업무 항목에 놓으세요 · Esc 취소",
     edgeShow: "관계선 보기",
     edgeShowTitle: (on: boolean) => (on ? "관계선 숨기기" : "관계선 보기"),
     edgeShowEmpty: "상자의 연결점(왼쪽·아래 동그라미)을 끌어 다른 상자에 놓으면 관계선이 생깁니다",

@@ -613,6 +613,11 @@ export function endGesture(before: NoteDoc) {
   scheduleSave();
 }
 
+/** 끌기를 없던 일로(Esc·연결 모드에서 아무 데도 안 놓음) — 기록을 남기지 않는다 */
+export function cancelGesture(before: NoteDoc) {
+  if (before !== get().doc) set({ doc: before });
+}
+
 export function moveBoxLive(id: string, x: number, y: number) {
   set({ doc: mapBox(id, (b) => ({ ...b, x: snap(x), y: snap(y) })) });
 }

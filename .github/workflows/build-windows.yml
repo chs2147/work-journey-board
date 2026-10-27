@@ -1,6 +1,6 @@
 # Work Journey Board 윈도우 설치 파일(NSIS, 현재 사용자 전용) 빌드.
 # - 작업 브랜치(claude/**) 푸시: 빌드만 하고 Actions 산출물로 업로드(검증용)
-# - main 푸시: 빌드 + 사전 릴리스 v<package.json 버전> 생성·갱신(태그는 워크플로가 생성)
+# - main 푸시: 빌드 + 사전 릴리스 v<package.json 버전> 생성·갱신(태그는 워크플로가 생성, 본문 = docs/release-notes/v<버전>.md)
 # - 수동 실행: webview=offline 을 고르면 WebView2 오프라인 설치판(+약 130 MB)을 만든다(overview 13-4)
 name: Build Windows installer
 
@@ -15,6 +15,8 @@ on:
       - "public/**"
       - "package.json"
       - "package-lock.json"
+      - "docs/release-notes/**"
+      - "scripts/release-notes.mjs"
       - "vite.config.ts"
       - "tsconfig.json"
       - ".github/workflows/build-windows.yml"
@@ -87,6 +89,11 @@ jobs:
           path: out/*
           retention-days: 14
 
+      # 릴리스 본문 = docs/release-notes/v<버전>.md + 설치 파일 표(improve-1027v3-spec 5절, 공통 규칙 3-6)
+      - name: Compose release notes (main only)
+        if: github.ref == 'refs/heads/main'
+        run: node scripts/release-notes.mjs body ${{ steps.collect.outputs.version }} --out release-body.md
+
       - name: Publish pre-release (main only)
         if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
@@ -96,14 +103,5 @@ jobs:
           name: "Work Journey Board v${{ steps.collect.outputs.version }}"
           prerelease: true
           overwrite_files: true
-          body: |
-            **Work Journey Board v${{ steps.collect.outputs.version }}** (개발 중 사전 릴리스)
-
-            | 파일 | 용도 |
-            |---|---|
-            | `WorkJourneyBoard_${{ steps.collect.outputs.version }}_setup.exe` | 기본 설치 파일(현재 사용자 전용, WebView2 없으면 자동 설치) |
-            | `…_setup_offline.exe` | (있을 때만) WebView2 오프라인 설치판 — 인터넷이 막힌 PC용 |
-            | `SHA256SUMS*.txt` | 무결성 확인: `certutil -hashfile <파일> SHA256` |
-
-            앱은 실행 중 인터넷으로 아무것도 보내지 않습니다.
+          body_path: release-body.md
           files: out/*

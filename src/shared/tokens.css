@@ -47,6 +47,19 @@
   /* 연차·반차(improve-1026-spec 1-1) — 업무 색·중요 표시와 겹치지 않는 주황. --leave는 --leave-soft·카드 바탕에서 4.5:1 이상 */
   --leave: #a8471a;
   --leave-soft: #fbeee6;
+  /* 중요 업무 날짜 띠(improve-1027v3-spec 6절): 옅은 바탕 + 왼쪽 막대 + 글자 — 글자는 띠 바탕에서 4.5:1 이상 */
+  --band-late-bg: #fbe4e6;
+  --band-late-bar: #b3261e;
+  --band-late-text: #9a2019;
+  --band-today-bg: #e6f1fb;
+  --band-today-bar: #185fa5;
+  --band-today-text: #124a80;
+  --band-week-bg: #e3f1ea;
+  --band-week-bar: #0f6e56;
+  --band-week-text: #0b5a46;
+  --band-later-bg: #f1efe8;
+  --band-later-bar: #8a8983;
+  --band-later-text: #5f5e5a;
   /* 중요 표시(important-repeat-spec 2-1) */
   --star: #c98500;
   --mark: #fff1bf;
@@ -111,6 +124,18 @@
     --today-mark: #ef7a4d;
     --leave: #f0a070;
     --leave-soft: #33241b;
+    --band-late-bg: #42201f;
+    --band-late-bar: #f08b84;
+    --band-late-text: #f5b0aa;
+    --band-today-bg: #1d2a38;
+    --band-today-bar: #6da7ec;
+    --band-today-text: #a3c8f3;
+    --band-week-bg: #1f3329;
+    --band-week-bar: #4fc29a;
+    --band-week-text: #8ad9b9;
+    --band-later-bg: #2c2c2a;
+    --band-later-bar: #8f8e86;
+    --band-later-text: #c3c2b7;
     --star: #e0a83a;
     --mark: #3a3116;
     --mark-line: #7a6222;

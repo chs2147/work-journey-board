@@ -1,4 +1,4 @@
-// 상자 쪽 관계선 조각(note-relation-spec 2·4절): 연결점 2개(왼쪽 가운데·아래 가운데)와 ⋯ 메뉴의 관계선 항목.
+// 상자 쪽 관계선 조각(note-relation-spec 2·4절): 연결점 4개(위·오른쪽·아래·왼쪽 가운데, improve-1027v3-spec 7절)와 ⋯ 메뉴의 관계선 항목.
 // 텍스트·이미지·링크 카드 상자가 함께 쓴다.
 import { useEffect, type PointerEvent } from "react";
 import { boxEdges, boxName } from "../../domain/note";
@@ -67,18 +67,26 @@ function focusBox(boxId: string) {
   );
 }
 
-/** 연결점 2개 — 마우스를 올리거나 선택했을 때만(CSS), 대기 상자·[관계선 보기] 끔이면 없음 */
+const SIDES = ["top", "right", "bottom", "left"] as const;
+const KNOB_CLASS: Record<(typeof SIDES)[number], string | undefined> = {
+  top: styles.knobTop,
+  right: styles.knobRight,
+  bottom: styles.knobBottom,
+  left: styles.knobLeft,
+};
+
+/** 연결점 4개 — 어느 쪽에서 끌어도 선 경로는 두 상자 위치로 정한다(routeEdge). 마우스를 올리거나 선택했을 때만(CSS), 대기 상자·[관계선 보기] 끔이면 없음 */
 export function EdgeKnobs({ boxId }: { boxId: string }) {
   const on = useNote((s) => s.showEdges && s.pendingId !== boxId && s.editingId !== boxId);
   const dragging = useNote((s) => s.linking?.from === boxId);
   if (!on) return null;
   return (
     <>
-      {(["left", "bottom"] as const).map((side) => (
+      {SIDES.map((side) => (
         <button
           key={side}
           type="button"
-          className={`${styles.knob} ${side === "left" ? styles.knobLeft : styles.knobBottom} ${dragging ? styles.knobActive : ""}`}
+          className={`${styles.knob} ${KNOB_CLASS[side]} ${dragging ? styles.knobActive : ""}`}
           aria-label={STR.note.edgeKnob}
           title={STR.note.edgeKnob}
           tabIndex={-1}

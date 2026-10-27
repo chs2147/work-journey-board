@@ -2,7 +2,7 @@
 import { useEffect, useRef, type KeyboardEvent } from "react";
 import { groupImportant } from "../../domain/important";
 import type { ImportantItem } from "../../domain/types";
-import { shortDateLabel } from "../../domain/week";
+import { shortDateLabel, weekIdOf, weekRange } from "../../domain/week";
 import { STR } from "../../shared/strings";
 import {
   completeImportant,
@@ -93,8 +93,17 @@ export function ImportantPanel({ overlay }: { overlay: boolean }) {
         ) : (
           groups.map((g) => (
             <section key={g.key} aria-label={STR.important.groups[g.key]}>
-              <h3 className={`${styles.group} ${g.key === "late" ? styles.lateGroup : ""}`}>
-                <span>{STR.important.groups[g.key]}</span>
+              <h3 className={`${styles.group} ${styles[`group_${g.key}`] ?? ""}`} data-group={g.key}>
+                <span>
+                  {STR.important.groups[g.key]}
+                  {g.key === "today" && <span className={styles.groupWhen}> · {shortDateLabel(today)}</span>}
+                  {g.key === "thisWeek" && (
+                    <span className={styles.groupWhen}>
+                      {" "}
+                      · ~{shortDateLabel(weekRange(weekIdOf(today)).end)}
+                    </span>
+                  )}
+                </span>
                 <span>{g.items.length}</span>
               </h3>
               {g.categories.map((c) => (

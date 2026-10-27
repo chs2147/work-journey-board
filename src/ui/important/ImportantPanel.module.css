@@ -70,18 +70,44 @@
   outline: none;
 }
 
+/* 날짜 묶음 띠(improve-1027v3-spec 6절): 옅은 바탕 + 왼쪽 3px 막대 + 굵은 글자, 오른쪽에 개수 */
 .group {
   display: flex;
   justify-content: space-between;
-  margin: 0;
-  padding: var(--sp-3) var(--sp-3) var(--sp-1);
-  font-size: var(--fs-xs);
+  gap: var(--sp-2);
+  margin: var(--sp-2) 0 var(--sp-1);
+  padding: 5px var(--sp-3) 5px calc(var(--sp-3) - 3px);
+  border-left: 3px solid var(--band-later-bar);
+  background: var(--band-later-bg);
+  font-size: var(--fs-sm);
   font-weight: var(--fw-bold);
-  color: var(--text-3);
+  color: var(--band-later-text);
 }
 
-.lateGroup {
-  color: var(--danger);
+section:first-child > .group {
+  margin-top: 0;
+}
+
+.group_late {
+  border-left-color: var(--band-late-bar);
+  background: var(--band-late-bg);
+  color: var(--band-late-text);
+}
+
+.group_today {
+  border-left-color: var(--band-today-bar);
+  background: var(--band-today-bg);
+  color: var(--band-today-text);
+}
+
+.group_thisWeek {
+  border-left-color: var(--band-week-bar);
+  background: var(--band-week-bg);
+  color: var(--band-week-text);
+}
+
+.groupWhen {
+  font-weight: var(--fw-regular);
 }
 
 /* 묶음 안 업무 머리(improve-1026v2-spec 8절): 색 점 + 이름 + 수. 접지 않는다(12절 #10) */

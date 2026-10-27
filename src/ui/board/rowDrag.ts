@@ -4,6 +4,7 @@
 import type { PointerEvent as ReactPointerEvent } from "react";
 import { create } from "zustand";
 import { deleteRange, moveRows, snapGap } from "../../domain/items";
+import { boxAtPoint, freeSpot } from "../../domain/note";
 import { addLinkedBox, linkBox, useNote } from "../note/noteStore";
 import { flushAll, moveRowsTo, setFocusDay, splitKey, useBoard } from "./boardStore";
 import styles from "./Board.module.css";
@@ -110,11 +111,16 @@ export function startRowDrag(e: ReactPointerEvent<HTMLElement>, fromKey: string,
     if (boxId && boxId !== useNote.getState().pendingId) return { ...none, box: boxId };
     const canvas = under?.closest<HTMLElement>("[data-note-drop]");
     if (canvas) {
-      // 메모 판: 화면 px → 문서 px(배율), 놓을 자리 = 커서 조금 왼쪽 위
+      // 메모 판: 화면 px → 문서 px(배율). 상자 둘레 16px 안 = 그 상자(improve-1027v3-spec 3절)
       const r = canvas.getBoundingClientRect();
       const zoom = Number(canvas.dataset.zoom) || 1;
-      const note = { x: Math.max(0, (x - r.left) / zoom - 16), y: Math.max(0, (y - r.top) / zoom - 12) };
-      return { ...none, note };
+      const p = { x: (x - r.left) / zoom, y: (y - r.top) / zoom };
+      const { doc, pendingId } = useNote.getState();
+      const near = boxAtPoint(doc, p, undefined, pendingId);
+      if (near) return { ...none, box: near.id };
+      // 빈 곳: 놓을 자리 = 커서 조금 왼쪽 위, 다른 상자와 겹치면 아래로 비킴
+      const at = { x: Math.max(0, p.x - 16), y: Math.max(0, p.y - 12) };
+      return { ...none, note: freeSpot(doc, at, undefined, pendingId) };
     }
     const cellEl = under?.closest<HTMLElement>("[data-cell-key]");
     const key = cellEl?.dataset.cellKey;

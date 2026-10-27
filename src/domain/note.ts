@@ -622,6 +622,55 @@ export function positionBelow(doc: NoteDoc): { x: number; y: number } {
   return { x: snap(left), y: snap(bottom + BOX_GAP) };
 }
 
+/** 상자 둘레 이만큼은 "빈 곳"이 아니라 그 상자로 본다(행 놓기, improve-1027v3-spec 3절) */
+export const DROP_MARGIN = 16;
+/** 행을 빈 곳에 놓을 때 새 상자 자리(미리보기 크기) */
+export const DROP_SPOT = { w: 300, h: 72 };
+
+const boxH = (b: NoteBox) => b.h ?? 48;
+
+/** 문서 좌표 p에 있는 상자(둘레 margin 포함, 위에 그려진 상자 먼저) */
+export function boxAtPoint(
+  doc: NoteDoc,
+  p: { x: number; y: number },
+  margin = DROP_MARGIN,
+  skip?: string | null,
+): NoteBox | undefined {
+  return [...doc.boxes]
+    .filter((b) => b.id !== skip)
+    .sort((a, b) => b.z - a.z)
+    .find(
+      (b) =>
+        p.x >= b.x - margin &&
+        p.x <= b.x + b.w + margin &&
+        p.y >= b.y - margin &&
+        p.y <= b.y + boxH(b) + margin,
+    );
+}
+
+/** 새 상자 자리: 다른 상자와 겹치면 그 상자 아래(간격 BOX_GAP)로 비킨다 — 최대 상자 수만큼 */
+export function freeSpot(
+  doc: NoteDoc,
+  at: { x: number; y: number },
+  size = DROP_SPOT,
+  skip?: string | null,
+): { x: number; y: number } {
+  const boxes = doc.boxes.filter((b) => b.id !== skip);
+  const spot = { ...at };
+  for (let i = 0; i <= boxes.length; i++) {
+    const hit = boxes.find(
+      (b) =>
+        spot.x < b.x + b.w + BOX_GAP &&
+        spot.x + size.w + BOX_GAP > b.x &&
+        spot.y < b.y + boxH(b) + BOX_GAP &&
+        spot.y + size.h + BOX_GAP > b.y,
+    );
+    if (!hit) break;
+    spot.y = snap(hit.y + boxH(hit) + BOX_GAP);
+  }
+  return spot;
+}
+
 /** 항목별 연결된 상자 수(보드 배지, 6-2) */
 export function linkCounts(doc: NoteDoc): Record<string, number> {
   const out: Record<string, number> = {};

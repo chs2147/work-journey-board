@@ -26,6 +26,8 @@ jobs:
       - run: npm run format:check
       - run: npm run typecheck
       - run: npm test
+      - name: Release notes for this version (improve-1027v3-spec 5절)
+        run: node scripts/release-notes.mjs check
 
       - name: Install Playwright browsers (Chromium, WebKit)
         run: npx playwright install --with-deps chromium webkit
