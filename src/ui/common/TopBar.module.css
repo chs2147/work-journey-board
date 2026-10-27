@@ -62,7 +62,20 @@
 }
 
 .iconButton {
+  position: relative;
   width: 32px;
+}
+
+/* 새 판이 있을 때 설정 단추의 파란 점(improve-1027v4-spec 1-2) */
+.updateDot {
+  position: absolute;
+  right: 3px;
+  top: 3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 2px var(--surface-card);
 }
 
 .textButton {

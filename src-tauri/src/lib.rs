@@ -3,6 +3,7 @@
 mod db_batch;
 mod files;
 mod splash;
+mod update;
 
 use tauri::Manager;
 use tauri_plugin_window_state::StateFlags;
@@ -25,6 +26,8 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_opener::init())
+        // 새 판 확인·설치(update.rs) — 확인한 판의 주소·해시를 들고 있는 곳
+        .manage(update::UpdateState::default())
         // 창 배경색은 설정 파일 값이 라이트라서, 다크 테마면 여기서 바꿔 밝은 번쩍임을 막는다(docs/splash-spec.md).
         .setup(|app| {
             for (label, (r, g, b)) in [("splash", (0x23, 0x23, 0x22)), ("main", (0x1a, 0x1a, 0x19))] {
@@ -51,7 +54,10 @@ pub fn run() {
             files::fs_copy_new,
             files::export_write,
             files::open_folder,
-            files::open_url
+            files::open_url,
+            update::update_check,
+            update::update_download,
+            update::update_install
         ])
         .run(tauri::generate_context!())
         .expect("Work Journey Board 실행 중 오류");

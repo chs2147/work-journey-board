@@ -19,6 +19,8 @@ export const backupNames = {
     `work-journey_${localStamp(now)}_pre-migration-v${toVersion}.db`,
   beforeRestore: (now: Date) => `work-journey_${localStamp(now)}_before-restore.db`,
   preImport: (now: Date) => `work-journey_${localStamp(now)}_pre-import.db`,
+  /** 새 판 설치 직전(improve-1027v4-spec 1-3) */
+  preUpdate: (now: Date) => `work-journey_${localStamp(now)}_pre-update.db`,
 };
 
 export const isDailyBackup = (name: string) => DAILY_RE.test(name);
@@ -139,6 +141,17 @@ export function runPreImportBackup(
   verify?: VerifyCopy,
 ) {
   return writeBackup(driver, fs, fs.join(dataDir, BACKUP_DIR), backupNames.preImport(now), verify);
+}
+
+/** 새 판 설치 직전 백업(자동 삭제 대상 아님, improve-1027v4-spec 1-3) */
+export function runPreUpdateBackup(
+  driver: SqlDriver,
+  fs: BackupFs,
+  dataDir: string,
+  now: Date,
+  verify?: VerifyCopy,
+) {
+  return writeBackup(driver, fs, fs.join(dataDir, BACKUP_DIR), backupNames.preUpdate(now), verify);
 }
 
 /** 마이그레이션 직전 백업(자동 삭제 대상 아님) */

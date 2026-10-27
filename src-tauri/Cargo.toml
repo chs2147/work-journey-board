@@ -23,3 +23,7 @@ tauri-plugin-window-state = "2"
 sqlx = { version = "0.8", default-features = false, features = ["sqlite"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+# 새 판 확인·내려받기(update.rs, improve-1027v4-spec 1절 B안 — 2026-10-27 사용자 승인). GitHub Releases 주소만 부른다.
+# 이미 tauri 의존성 트리에 있는 판을 쓴다(기본 TLS = 윈도우 인증서 저장소 검증, 시스템 프록시 사용)
+reqwest = "0.13"
+sha2 = "0.10"

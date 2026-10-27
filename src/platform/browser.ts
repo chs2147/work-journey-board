@@ -19,6 +19,7 @@ import { baseName, dirOf, isOneDriveLike, type AppConfig, type Platform } from "
 //   ?fresh=1            설정 없음 → 첫 실행 화면
 //   ?existing=/경로     그 폴더에 샘플이 든 기존 일지를 미리 만들어 둠(첫 실행 "기존 일지 열기" 시험)
 //   ?config=/경로       설정의 저장 폴더를 그 경로로(없는 폴더면 "저장 폴더를 찾을 수 없음" 화면)
+//   ?update=0.9.0       새 판 확인이 이 판을 돌려준다(가짜 — 인터넷에 묻지 않음) · ?update=fail = 연결 실패 · ?update=bad = SHA 불일치
 const params = new URLSearchParams(globalThis.location?.search ?? "");
 const isDate = (s: string | null) => /^\d{4}-\d{2}-\d{2}$/.test(s ?? "");
 let fixedToday = isDate(params.get("today")) ? params.get("today")! : null;
@@ -34,6 +35,10 @@ let lastClipboard: string | null = null;
 let lastExport: { path: string; size: number } | null = null;
 /** 브라우저 모드는 링크를 실제로 열지 않고 적어 두기만 한다(외부 접속 없음 — E2E 확인용) */
 const openedUrls: string[] = [];
+/** 가짜 새 판 확인(외부 접속 없음 — E2E 확인용): 확인·내려받기·설치 호출 기록 */
+const updateCalls: string[] = [];
+const fakeUpdate = params.get("update");
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 async function makeJournal(dir: string, withSample: boolean) {
   await fs.ensureDir(dir);
@@ -130,6 +135,32 @@ export const browserPlatform: Platform = {
   onExit(handler) {
     exitHandler = handler;
   },
+
+  async updateCheck() {
+    updateCalls.push("check");
+    await sleep(50);
+    if (fakeUpdate === "fail") throw new Error("GitHub에 연결하지 못했습니다(가짜)");
+    if (!fakeUpdate) return null;
+    const version = fakeUpdate === "bad" ? "0.9.0" : fakeUpdate;
+    return {
+      version,
+      notes: `**Work Journey Board v${version}** (개발 중 사전 릴리스)\n\n**가상 개선 묶음** — 2026-10-28\n\n### 새 기능\n- 가상 기능 하나\n- 가상 기능 둘\n\n### 주의\n- 데이터 형식: 변경 없음\n\n### 설치 파일\n\n| 파일 | 용도 |\n|---|---|\n| a | b |`,
+      size: 5_200_000,
+      hasHash: true,
+    };
+  },
+  async updateDownload(onProgress) {
+    updateCalls.push("download");
+    const total = 5_200_000;
+    for (let i = 1; i <= 4; i++) {
+      await sleep(60);
+      onProgress((total * i) / 4, total);
+    }
+    if (fakeUpdate === "bad") throw new Error("받은 설치 파일이 SHA256SUMS와 다릅니다 — 설치하지 않습니다");
+  },
+  async updateInstall() {
+    updateCalls.push("install");
+  },
 };
 
 // E2E 훅: "창 닫기" 흉내, 가짜 파일 목록, 마지막 클립보드 글, 날짜 넘기기(앱을 켠 채 며칠·몇 주가 지난 상황 — 통합 시나리오)
@@ -140,6 +171,7 @@ Object.assign(globalThis, {
     clipboard: () => lastClipboard,
     lastExport: () => lastExport,
     openedUrls: () => [...openedUrls],
+    updateCalls: () => [...updateCalls],
     setToday(date: string) {
       if (!isDate(date)) throw new Error(`날짜 형식이 아닙니다: ${date}`);
       fixedToday = date;

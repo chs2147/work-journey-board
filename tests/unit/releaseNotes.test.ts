@@ -55,7 +55,7 @@ describe("release-notes body", () => {
     expect(md).toContain("### 새 기능\n- 가상 기능");
     expect(md).toContain("### 주의");
     expect(md).toContain("| `WorkJourneyBoard_0.2.16_setup.exe` |");
-    expect(md.trimEnd().endsWith("앱은 실행 중 인터넷으로 아무것도 보내지 않습니다.")).toBe(true);
+    expect(md.trimEnd().endsWith("기록·메모는 어디에도 보내지 않습니다.")).toBe(true);
   });
   it("노트가 빠진 새 판은 본문을 만들지 않고 실패", () => {
     expect(run(repo("0.2.16", { readme: README }), "body", "0.2.16").status).toBe(1);

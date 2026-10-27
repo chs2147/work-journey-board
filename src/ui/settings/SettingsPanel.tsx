@@ -15,6 +15,7 @@ import type { ImportBatchInfo } from "../../data/repository";
 import { useAppStore } from "../common/appStore";
 import styles from "./Settings.module.css";
 import { TagSettings } from "./TagSettings";
+import { UpdateSettings } from "../update/UpdateViews";
 
 type Pending =
   | { kind: "same" }
@@ -462,6 +463,8 @@ export function SettingsPanel() {
             </select>
           </label>
         </section>
+
+        <UpdateSettings />
 
         <section className={styles.section} aria-labelledby="s-about">
           <h3 id="s-about">{STR.settings.about}</h3>

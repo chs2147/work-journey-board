@@ -10,6 +10,7 @@ import { BrandLockup } from "./Brand";
 import { IconDayView, IconWeekView } from "./icons";
 import { TagFilterMenu } from "./TagFilterMenu";
 import { useInsights } from "../insights/insightsStore";
+import { hasUpdate, useUpdate } from "../update/updateStore";
 import styles from "./TopBar.module.css";
 
 export function TopBar() {
@@ -31,6 +32,7 @@ export function TopBar() {
   const saving = useBoard((s) => s.saving);
   const failed = useBoard((s) => s.failed.length);
   const journalReady = useAppStore((s) => s.journal.state === "ready");
+  const updateDot = useUpdate(hasUpdate);
   const summaryOpen = useSummary((s) => s.open);
   // 인사이트 모드(m3-s1-spec 1-3): 주 단위 기능(주 이동·오늘·연간·보기·주간 요약·내보내기)은 감추고 태그 필터는 남긴다
   const insights = useInsights((s) => s.open);
@@ -167,7 +169,10 @@ export function TopBar() {
           disabled={!journalReady}
           onClick={() => setSettingsOpen(true)}
         >
-          ⚙
+          ⚙{/* 새 판이 있으면 파란 점(improve-1027v4-spec 1-2) */}
+          {updateDot && (
+            <span className={styles.updateDot} title={STR.update.railDot} data-testid="update-dot" />
+          )}
         </button>
       </div>
     </header>

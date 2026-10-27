@@ -66,6 +66,26 @@ export interface Platform {
 
   /** 시작 스플래시 창(실앱만, docs/splash-spec.md). 브라우저 모드에는 없다. */
   readonly splash?: SplashWindow;
+
+  /**
+   * 새 판 확인(improve-1027v4-spec 1절 B안) — GitHub Releases에 묻는다(앱에서 인터넷으로 나가는 유일한 곳, Rust update.rs).
+   * 지금보다 높은 판이 없으면 null, 연결 실패는 오류.
+   */
+  updateCheck(): Promise<UpdateInfo | null>;
+  /** 확인한 새 판 설치 파일 내려받기 + SHA256 확인(앱 자료 폴더). 진행은 콜백으로 */
+  updateDownload(onProgress: (received: number, total: number) => void): Promise<void>;
+  /** 내려받은 설치 파일을 다시 확인하고 실행한 뒤 앱을 닫는다(설치가 끝나면 새 판이 열림) */
+  updateInstall(): Promise<void>;
+}
+
+/** 새 판 정보 — 주소는 Rust가 들고 있고 웹 화면에는 넘기지 않는다 */
+export interface UpdateInfo {
+  version: string;
+  /** 릴리스 노트 본문(마크다운) */
+  notes: string;
+  size: number;
+  /** SHA256SUMS.txt로 무결성을 확인할 수 있는가 */
+  hasHash: boolean;
 }
 
 export interface SplashWindow {

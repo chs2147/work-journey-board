@@ -25,6 +25,8 @@ import { InsightsView } from "./insights/InsightsView";
 import { useInsights } from "./insights/insightsStore";
 import { useNote } from "./note/noteStore";
 import { finishSplash } from "./splash";
+import { checkOnStart, useUpdate } from "./update/updateStore";
+import { UpdateBanner, UpdateDialog } from "./update/UpdateViews";
 import styles from "./App.module.css";
 
 let started = false;
@@ -34,6 +36,7 @@ export function App() {
   const settingsOpen = useAppStore((s) => s.settingsOpen);
   const exportOpen = useExport((s) => s.open);
   const importOpen = useImport((s) => s.open);
+  const updateOpen = useUpdate((s) => s.dialogOpen);
   useShortcuts();
 
   useEffect(() => {
@@ -47,9 +50,17 @@ export function App() {
     if (journal.state !== "loading") void finishSplash(useAppStore.getState().platform);
   }, [journal.state]);
 
+  // 새 판 확인은 앱을 켤 때 1번(improve-1027v4-spec 1절) — 보드가 뜬 뒤 조금 있다가, 실패해도 조용히
+  useEffect(() => {
+    if (journal.state !== "ready") return;
+    const t = setTimeout(() => void checkOnStart(), 1500);
+    return () => clearTimeout(t);
+  }, [journal.state]);
+
   return (
     <div className={styles.shell}>
       <TopBar />
+      {journal.state === "ready" && <UpdateBanner />}
       <main className={styles.main}>{screen(journal)}</main>
       <footer className={styles.status} data-testid="journal-status">
         {statusText(journal)}
@@ -57,6 +68,7 @@ export function App() {
       {settingsOpen && journal.state === "ready" && <SettingsPanel />}
       {exportOpen && journal.state === "ready" && <ExportDialog />}
       {importOpen && journal.state === "ready" && <ImportWizard />}
+      {updateOpen && journal.state === "ready" && <UpdateDialog />}
       <Toasts />
     </div>
   );

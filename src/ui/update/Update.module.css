@@ -1,0 +1,201 @@
+/* 새 판 확인·설치(improve-1027v4-spec 1-2): 설정 절 · 보드 위 띠 · 설치 창 */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4) 0;
+  border-top: 1px solid var(--line);
+}
+
+.section h3 {
+  margin: 0;
+  font-size: var(--fs-lg);
+}
+
+.section p {
+  margin: 0;
+}
+
+.line {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-3);
+}
+
+.label {
+  min-width: 64px;
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+}
+
+.actions,
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.footer {
+  justify-content: flex-end;
+}
+
+.button,
+.primary {
+  flex: 0 0 auto;
+  height: 30px;
+  padding: 0 var(--sp-4);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-1);
+  font: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.button:disabled,
+.primary:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.status {
+  min-height: 1.4em;
+  font-size: var(--fs-sm);
+}
+
+.when,
+.note,
+.meta {
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+}
+
+/* 보드 위 띠 */
+.banner {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  padding: 6px var(--sp-4);
+  border-bottom: 1px solid var(--line);
+  background: var(--accent-soft);
+  color: var(--text-1);
+  font-size: var(--fs-sm);
+}
+
+.banner .button,
+.banner .primary {
+  height: 26px;
+}
+
+.grow {
+  flex: 1 1 auto;
+}
+
+/* 설치 창 */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-4);
+  background: rgb(0 0 0 / 0.28);
+}
+
+.dialog {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  width: min(520px, 100%);
+  max-height: 100%;
+  overflow: auto;
+  padding: var(--sp-5);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 0.22);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--fs-lg);
+}
+
+.meta {
+  margin: 0;
+}
+
+.notes {
+  max-height: 240px;
+  overflow: auto;
+  padding: var(--sp-3);
+  border-radius: var(--radius-md);
+  background: var(--surface-sub);
+  font-size: var(--fs-sm);
+}
+
+.notes p {
+  margin: 0 0 2px;
+}
+
+.noteHead {
+  margin: var(--sp-2) 0 2px;
+  font-size: var(--fs-sm);
+}
+
+.noteHead:first-child {
+  margin-top: 0;
+}
+
+.noteItem {
+  padding-left: var(--sp-2);
+}
+
+.steps {
+  margin: 0;
+  padding-left: 1.4em;
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  line-height: 1.7;
+}
+
+.warn {
+  margin: 0;
+  color: var(--warn);
+  font-size: var(--fs-sm);
+}
+
+.error {
+  margin: 0;
+  color: var(--danger);
+  font-size: var(--fs-sm);
+}
+
+.progress {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: var(--fs-sm);
+}
+
+.bar {
+  height: 6px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--surface-sub);
+}
+
+.fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.15s;
+}

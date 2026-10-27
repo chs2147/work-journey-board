@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import { emitTo } from "@tauri-apps/api/event";
+import { emitTo, listen } from "@tauri-apps/api/event";
 import { homeDir } from "@tauri-apps/api/path";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import Database from "@tauri-apps/plugin-sql";
@@ -7,7 +7,14 @@ import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import type { BackupFs } from "../data/backup";
 import { openTauriSql } from "../data/drivers/tauriSql";
-import { isOneDriveLike, type AppConfig, type PathInfo, type Platform, type SplashWindow } from "./index";
+import {
+  isOneDriveLike,
+  type AppConfig,
+  type PathInfo,
+  type Platform,
+  type SplashWindow,
+  type UpdateInfo,
+} from "./index";
 import { SPLASH_STATUS_EVENT } from "./splashEvents";
 
 // 실앱(윈도우). 파일 동작은 src-tauri/src/files.rs의 얇은 명령을 쓴다(삭제·이름 바꾸기는 Rust에서도 패턴 검사).
@@ -118,4 +125,18 @@ export const tauriPlatform: Platform = {
   },
 
   splash,
+
+  // 새 판 확인·내려받기·설치(src-tauri/src/update.rs) — 주소·해시는 Rust가 들고 있다
+  updateCheck: () => invoke<UpdateInfo | null>("update_check"),
+  async updateDownload(onProgress) {
+    const off = await listen<{ received: number; total: number }>("update-progress", (e) =>
+      onProgress(e.payload.received, e.payload.total),
+    );
+    try {
+      await invoke("update_download");
+    } finally {
+      off();
+    }
+  },
+  updateInstall: () => invoke("update_install"),
 };
