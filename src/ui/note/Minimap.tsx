@@ -1,9 +1,10 @@
 // 메모 보드 미니맵(improve-1026-spec 11-1): 오른쪽 아래 작은 지도 — 상자 배치 + 보이는 범위 틀. 누르거나 끌면 그곳으로.
 // 판이 보이는 영역보다 클 때만 보이고, 접어 둘 수 있다(설정 ui.noteMinimap).
 import { useEffect, useState, type PointerEvent, type RefObject } from "react";
-import type { NoteBox } from "../../domain/note";
+import type { NoteDoc } from "../../domain/note";
 import { STR } from "../../shared/strings";
 import { IconMap } from "../common/icons";
+import { useEdgeRoutes } from "./edgeHooks";
 import { setMinimap, useNote } from "./noteStore";
 import styles from "./Note.module.css";
 
@@ -12,7 +13,8 @@ const MAX_H = 104;
 
 interface Props {
   scrollRef: RefObject<HTMLDivElement | null>;
-  boxes: readonly NoteBox[];
+  /** 상자 + 관계선(가는 회색 선, note-relation-spec 1-2) */
+  doc: NoteDoc;
   /** 판 크기(문서 px) */
   size: { w: number; h: number };
   /** 보이는 영역(화면 px) */
@@ -20,8 +22,11 @@ interface Props {
   zoom: number;
 }
 
-export function Minimap({ scrollRef, boxes, size, view, zoom }: Props) {
+export function Minimap({ scrollRef, doc, size, view, zoom }: Props) {
   const open = useNote((s) => s.minimap);
+  const showEdges = useNote((s) => s.showEdges);
+  const routes = useEdgeRoutes(doc);
+  const boxes = doc.boxes;
   const [scroll, setScroll] = useState({ left: 0, top: 0 });
 
   useEffect(() => {
@@ -81,6 +86,17 @@ export function Minimap({ scrollRef, boxes, size, view, zoom }: Props) {
         }}
         onPointerMove={(e) => e.buttons === 1 && moveTo(e)}
       >
+        {showEdges && routes.length > 0 && (
+          <svg className={styles.minimapEdges} width={size.w * s} height={size.h * s} aria-hidden="true">
+            {routes.map(({ edge, route }) => (
+              <polyline
+                key={edge.id}
+                points={route.points.map((p) => `${p.x * s},${p.y * s}`).join(" ")}
+                strokeDasharray={edge.dash ? "2 2" : undefined}
+              />
+            ))}
+          </svg>
+        )}
         {boxes.map((b) => (
           <span
             key={b.id}

@@ -20,6 +20,14 @@ import {
   snap,
   topZ,
   CAPTION_MAX,
+  boxEdges,
+  cleanEdgeLabel,
+  edgesOf,
+  findEdge,
+  withEdges,
+  withoutBoxes,
+  type EdgeDir,
+  type NoteEdge,
   type ImageMime,
   type NoteBg,
   type NoteBox,
@@ -83,6 +91,24 @@ export interface NoteState {
   pulseId: string | null;
   /** 상자로 포커스·화면 안으로(보드 배지) — 이미 선택된 상자여도 다시 가게 회차를 둔다 */
   revealRequest: { id: string; n: number } | null;
+  // ── 관계선(note-relation-spec) ──
+  /** 선택한 관계선(상자 선택과 동시에 하나만) */
+  edgeId: string | null;
+  /** 선 선택 전에 선택돼 있던 상자(Esc로 돌아갈 곳·Shift+L 차례) */
+  edgeOrigin: string | null;
+  /** 이름표 입력 칸이 열려 있음 */
+  edgeLabelOpen: boolean;
+  /** 상자 ⋯ 목록에서 마우스를 올린 선(판에서 강조) */
+  edgeHover: string | null;
+  /** 잇는 중: 끌기(연결점) 또는 키보드(L) */
+  linking: {
+    from: string;
+    mode: "drag" | "keys";
+    target: string | null;
+    pointer: { x: number; y: number } | null;
+  } | null;
+  /** [관계선 보기] — 앱 실행 중만 */
+  showEdges: boolean;
 }
 
 export interface NoteImage {
@@ -114,6 +140,12 @@ export const useNote = create<NoteState>(() => ({
   fitRequest: 0,
   pulseId: null,
   revealRequest: null,
+  edgeId: null,
+  edgeOrigin: null,
+  edgeLabelOpen: false,
+  edgeHover: null,
+  linking: null,
+  showEdges: true,
 }));
 
 const set = useNote.setState;
@@ -127,6 +159,9 @@ let focusSeq = 0;
 let lastEditedId: string | null = null;
 const undoStack: NoteDoc[] = [];
 const redoStack: NoteDoc[] = [];
+
+/** 선 선택·잇기 상태 비우기(주 이동·실행 취소 등) */
+const EDGE_RESET = { edgeId: null, edgeOrigin: null, edgeLabelOpen: false, edgeHover: null, linking: null };
 
 const syncUndo = () => set({ canUndo: undoStack.length > 0, canRedo: redoStack.length > 0 });
 
@@ -167,6 +202,7 @@ async function loadWeek(weekId: WeekId, finish = true) {
       selectedId: null,
       pendingId: null,
       focusRequest: null,
+      ...EDGE_RESET,
     });
     syncUndo();
   } catch (e) {
@@ -267,7 +303,7 @@ export function addBox(x: number, y: number, itemId?: string): string {
 function dropPending(id: string) {
   const doc = get().doc;
   set({
-    doc: { ...doc, boxes: doc.boxes.filter((b) => b.id !== id) },
+    doc: withoutBoxes(doc, new Set([id])),
     pendingId: null,
     editingId: get().editingId === id ? null : get().editingId,
     selectedId: get().selectedId === id ? null : get().selectedId,
@@ -490,7 +526,7 @@ export function clearLinkThumb(id: string) {
 }
 
 export function setEditing(id: string | null) {
-  set(id ? { editingId: id, selectedId: null } : { editingId: null });
+  set(id ? { editingId: id, selectedId: null, ...EDGE_RESET } : { editingId: null });
 }
 
 /** 편집 끝 — 빈 상자는 저절로 없앤다(빈 상자가 쌓이지 않게, 스펙 4-2) */
@@ -505,7 +541,7 @@ export function endEditing(id: string, select = false) {
       undoStack.pop();
       syncUndo();
     }
-    commit({ ...doc, boxes: doc.boxes.filter((b) => b.id !== id) }, false);
+    commit(withoutBoxes(doc, new Set([id])), false);
     set({ editingId: null, selectedId: null });
     return;
   }
@@ -516,7 +552,7 @@ export function endEditing(id: string, select = false) {
 }
 
 export function selectBox(id: string | null) {
-  set({ selectedId: id, editingId: id ? null : get().editingId });
+  set({ selectedId: id, editingId: id ? null : get().editingId, edgeId: null, edgeLabelOpen: false });
 }
 
 /** 끌기·크기 조절 같은 연속 동작: 시작할 때 문서를 기억해 두고, 끝날 때 바뀌었으면 한 번만 기록 */
@@ -603,9 +639,14 @@ export function measureBox(id: string, h: number) {
 export function deleteBox(id: string) {
   const doc = get().doc;
   if (!doc.boxes.some((b) => b.id === id)) return;
-  commit({ ...doc, boxes: doc.boxes.filter((b) => b.id !== id) }, true);
-  set({ editingId: null, selectedId: null });
-  toast(STR.note.deleted, { label: STR.toast.undo, run: () => undoNote() });
+  // 그 상자의 관계선도 함께 — 되돌리기 한 번에 둘 다(note-relation-spec 5-2)
+  const lines = boxEdges(doc, id).length;
+  commit(withoutBoxes(doc, new Set([id])), true);
+  set({ editingId: null, selectedId: null, ...EDGE_RESET });
+  toast(lines ? STR.note.deletedWithEdges(lines) : STR.note.deleted, {
+    label: STR.toast.undo,
+    run: () => undoNote(),
+  });
 }
 
 export function duplicateBox(id: string) {
@@ -647,7 +688,7 @@ export function undoNote() {
   const prev = undoStack.pop();
   if (!prev) return;
   redoStack.push(get().doc);
-  set({ doc: prev, editingId: null, selectedId: null });
+  set({ doc: prev, editingId: null, selectedId: null, ...EDGE_RESET });
   syncUndo();
   scheduleSave();
 }
@@ -658,7 +699,7 @@ export function redoNote() {
   const next = redoStack.pop();
   if (!next) return;
   undoStack.push(get().doc);
-  set({ doc: next, editingId: null, selectedId: null });
+  set({ doc: next, editingId: null, selectedId: null, ...EDGE_RESET });
   syncUndo();
   scheduleSave();
 }
@@ -678,7 +719,7 @@ export function focusNote() {
 export function leaveNote() {
   const { editingId } = get();
   if (editingId) endEditing(editingId);
-  set({ selectedId: null, expanded: false });
+  set({ selectedId: null, expanded: false, ...EDGE_RESET });
   focusStartCell();
 }
 
@@ -743,4 +784,157 @@ export function setMinimap(minimap: boolean) {
 
 export function setExpanded(expanded: boolean) {
   set({ expanded, collapsed: expanded ? false : get().collapsed });
+}
+
+// ── 관계선(note-relation-spec) ─────────────────────────
+const edgeOf = (id: string) => edgesOf(get().doc).find((e) => e.id === id);
+/** 이을 수 있는 상자(대기 상자 빼고) */
+const linkable = (id: string | null) => !!id && id !== get().pendingId && !!boxOf(id);
+
+/** 선 선택(상자 선택은 풀고, 돌아갈 상자를 기억) */
+export function selectEdge(id: string | null, origin?: string | null) {
+  const editing = get().editingId;
+  if (editing) endEditing(editing);
+  if (!id) return set({ edgeId: null, edgeLabelOpen: false });
+  const e = edgeOf(id);
+  if (!e) return;
+  set({
+    edgeId: id,
+    edgeOrigin: origin ?? get().selectedId ?? e.from,
+    selectedId: null,
+    editingId: null,
+    edgeLabelOpen: false,
+    linking: null,
+  });
+}
+
+/** 두 상자 잇기(2-1·2-2): 같은 쌍이 있으면 그 선을 선택하고 알린다. 새 선 = →·실선·이름표 없음, 바로 선택 */
+export function connect(from: string, to: string) {
+  set({ linking: null });
+  if (from === to || !linkable(from) || !linkable(to)) return;
+  const doc = get().doc;
+  const same = findEdge(doc, from, to);
+  if (same) {
+    selectEdge(same.id, from);
+    toast(STR.note.edgeExists);
+    return;
+  }
+  const e: NoteEdge = { id: uuidv7(), from, to, dir: "one", dash: false, label: "" };
+  commit(withEdges(doc, [...edgesOf(doc), e]), true);
+  selectEdge(e.id, from);
+}
+
+export function updateEdge(id: string, patch: Partial<Pick<NoteEdge, "dir" | "dash" | "label">>) {
+  const e = edgeOf(id);
+  if (!e) return;
+  const next: NoteEdge = {
+    ...e,
+    ...patch,
+    ...(patch.label !== undefined ? { label: cleanEdgeLabel(patch.label) } : {}),
+  };
+  if (next.dir === e.dir && next.dash === e.dash && next.label === e.label) return;
+  const doc = get().doc;
+  commit(
+    withEdges(
+      doc,
+      edgesOf(doc).map((x) => (x.id === id ? next : x)),
+    ),
+    true,
+  );
+}
+
+export const setEdgeDir = (id: string, dir: EdgeDir) => updateEdge(id, { dir });
+
+/** 방향 바꾸기(출발·도착 맞바꿈) */
+export function reverseEdge(id: string) {
+  const e = edgeOf(id);
+  if (!e) return;
+  const doc = get().doc;
+  commit(
+    withEdges(
+      doc,
+      edgesOf(doc).map((x) => (x.id === id ? { ...x, from: e.to, to: e.from } : x)),
+    ),
+    true,
+  );
+}
+
+/** 선 해제(하나 또는 여러 개) — 확인 없이, 토스트 [되돌리기] */
+export function removeEdges(ids: string[]) {
+  const doc = get().doc;
+  const gone = new Set(ids);
+  const kept = edgesOf(doc).filter((e) => !gone.has(e.id));
+  const n = edgesOf(doc).length - kept.length;
+  if (!n) return;
+  commit(withEdges(doc, kept), true);
+  const origin = get().edgeOrigin;
+  const back = get().edgeId && gone.has(get().edgeId!) ? origin : null;
+  set({ edgeId: null, edgeLabelOpen: false, edgeHover: null });
+  if (back && boxOf(back)) set({ selectedId: back });
+  toast(n === 1 ? STR.note.edgeRemoved : STR.note.edgesRemoved(n), {
+    label: STR.toast.undo,
+    run: () => undoNote(),
+  });
+}
+
+/** 상자의 관계선 모두 해제 */
+export const removeBoxEdges = (boxId: string) => removeEdges(boxEdges(get().doc, boxId).map((e) => e.id));
+
+export function setEdgeLabelOpen(edgeLabelOpen: boolean) {
+  set({ edgeLabelOpen });
+}
+
+export function setEdgeHover(edgeHover: string | null) {
+  if (get().edgeHover !== edgeHover) set({ edgeHover });
+}
+
+/** 선 선택 → 원래 상자 선택으로(Esc) */
+export function backToOrigin() {
+  const origin = get().edgeOrigin;
+  set({ edgeId: null, edgeLabelOpen: false });
+  if (origin && boxOf(origin)) selectBox(origin);
+}
+
+/** Shift+L: 이 상자의 선을 차례로 선택(지금 선 다음) */
+export function cycleBoxEdges(boxId: string) {
+  const list = boxEdges(get().doc, boxId);
+  if (!list.length) {
+    toast(STR.note.edgeNone);
+    return;
+  }
+  const cur = list.findIndex((e) => e.id === get().edgeId);
+  selectEdge(list[(cur + 1) % list.length]!.id, boxId);
+}
+
+// 잇기(연결점 끌기·L)
+export function startLinking(from: string, mode: "drag" | "keys") {
+  if (!linkable(from)) return;
+  if (!get().showEdges) set({ showEdges: true });
+  set({ linking: { from, mode, target: null, pointer: null }, edgeId: null, edgeLabelOpen: false });
+}
+
+export function setLinkTarget(target: string | null, pointer?: { x: number; y: number } | null) {
+  const l = get().linking;
+  if (!l) return;
+  const t = target && target !== l.from && linkable(target) ? target : null;
+  set({ linking: { ...l, target: t, pointer: pointer === undefined ? l.pointer : pointer } });
+}
+
+/** 잇기 끝: 고른 상자가 있으면 잇고, 없으면 취소 */
+export function finishLinking() {
+  const l = get().linking;
+  if (!l) return;
+  if (l.target) connect(l.from, l.target);
+  else cancelLinking();
+}
+
+export function cancelLinking() {
+  const l = get().linking;
+  set({ linking: null });
+  // 키보드로 시작했으면 그 상자 선택으로 돌아간다(포커스가 판에 남게)
+  if (l?.mode === "keys" && boxOf(l.from)) set({ selectedId: l.from });
+}
+
+export function setShowEdges(showEdges: boolean) {
+  set({ showEdges, ...(showEdges ? {} : EDGE_RESET) });
 }

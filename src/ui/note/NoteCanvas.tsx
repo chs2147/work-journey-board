@@ -12,11 +12,13 @@ import {
 } from "react";
 import { anchoredScroll, canvasSize, fitZoom, wheelZoom } from "../../domain/noteZoom";
 import {
+  boxName,
   boxText,
   FONT_SIZES,
   NOTE_BG,
   TEXT_COLORS,
   type ImageBox,
+  type NoteDoc,
   type PMNode,
   type TextBox,
 } from "../../domain/note";
@@ -29,6 +31,10 @@ import { ImageBoxView, ImagePreview } from "./ImageBoxView";
 import { Minimap } from "./Minimap";
 import { LinkBoxView } from "./LinkBoxView";
 import { LinkStrip } from "./LinkStrip";
+import { EdgeKnobs, EdgeMenuItems } from "./EdgeBoxParts";
+import { useEdgeCount } from "./edgeHooks";
+import { EdgeLayer, EdgeToolbar } from "./EdgeLayer";
+import { linkCandidates } from "./edgeHooks";
 import { useRowDrag } from "../board/rowDrag";
 import { singleUrl } from "../../domain/links";
 import { openLink } from "../common/openLink";
@@ -39,6 +45,11 @@ import {
   addLinkBox,
   pastePlace,
   bringToFront,
+  cancelLinking,
+  connect,
+  finishLinking,
+  selectEdge,
+  setLinkTarget,
   setZoom,
   takeZoomAnchor,
   deleteBox,
@@ -55,6 +66,11 @@ import {
 import "./prosemirror.css";
 import styles from "./Note.module.css";
 
+const boxNameOf = (doc: NoteDoc, id: string) => {
+  const b = doc.boxes.find((x) => x.id === id);
+  return b ? boxName(b) : "";
+};
+
 /** 판 아래·오른쪽에 늘 남겨 둘 빈 공간(이어 붙이기용, 스펙 4-1) */
 const ROOM = { right: 40, bottom: 160 };
 
@@ -68,6 +84,7 @@ export default function NoteCanvas() {
   const pendingId = useNote((s) => s.pendingId);
   const zoom = useNote((s) => s.zoom);
   const fitRequest = useNote((s) => s.fitRequest);
+  const linking = useNote((s) => s.linking);
   // 보드 행을 이 판에 끌어 오는 중이면 놓을 자리(improve-1026v2-spec 4절)
   const rowDrop = useRowDrag((s) => s.drag?.note ?? null);
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -124,6 +141,35 @@ export default function NoteCanvas() {
     document.addEventListener("paste", onPaste, true);
     return () => document.removeEventListener("paste", onPaste, true);
   }, []);
+
+  // 키보드로 잇는 중(note-relation-spec 2-2): Tab·번호·Enter·Esc. 상자 단축키(방향키·Delete)는 잠시 쉰다
+  const keysFrom = linking?.mode === "keys" ? linking.from : null;
+  useEffect(() => {
+    if (!keysFrom) return;
+    const st = () => useNote.getState();
+    const list = () => linkCandidates(st().doc, keysFrom, st().pendingId);
+    // 처음엔 가장 가까운 상자
+    if (!st().linking?.target) setLinkTarget(list()[0]?.id ?? null);
+    const onKey = (e: globalThis.KeyboardEvent) => {
+      if (e.isComposing || isEditable(document.activeElement)) return;
+      const cands = list();
+      const cur = cands.findIndex((b) => b.id === st().linking?.target);
+      if (e.key === "Tab") {
+        const n = cands.length;
+        if (n) setLinkTarget(cands[(cur + (e.shiftKey ? n - 1 : 1) + n) % n]!.id);
+      } else if (/^Digit[1-9]$/.test(e.code) && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        const b = cands[Number(e.code.slice(5)) - 1];
+        if (b) setLinkTarget(b.id);
+      } else if (e.key === "Enter") finishLinking();
+      else if (e.key === "Escape") cancelLinking();
+      else if (!e.key.startsWith("Arrow") && e.key !== "Delete" && e.key !== "Backspace" && e.code !== "KeyL")
+        return;
+      e.preventDefault();
+      e.stopPropagation();
+    };
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, [keysFrom]);
 
   // 보이는 영역 크기
   useLayoutEffect(() => {
@@ -224,9 +270,21 @@ export default function NoteCanvas() {
     el.addEventListener("pointercancel", up);
   };
 
+  /** 키보드로 잇는 중에 마우스로 상자를 누르면 그 상자와 잇고, 빈 곳이면 취소 */
+  const onCanvasPointerDownCapture = (e: PointerEvent<HTMLDivElement>) => {
+    const l = useNote.getState().linking;
+    if (!l || l.mode !== "keys" || e.button !== 0) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const id = (e.target as Element).closest<HTMLElement>("[data-box-id]")?.dataset.boxId;
+    if (id && id !== l.from) connect(l.from, id);
+    else cancelLinking();
+  };
+
   const onCanvasPointerDown = (e: PointerEvent<HTMLDivElement>) => {
     if (e.target !== e.currentTarget || e.button !== 0) return;
     e.preventDefault();
+    if (useNote.getState().edgeId) selectEdge(null);
     const rect = e.currentTarget.getBoundingClientRect();
     if (editingId) endEditing(editingId);
     addBox((e.clientX - rect.left) / zoom, (e.clientY - rect.top) / zoom);
@@ -280,6 +338,7 @@ export default function NoteCanvas() {
             data-testid="note-canvas"
             data-zoom={zoom}
             data-note-drop
+            onPointerDownCapture={onCanvasPointerDownCapture}
             onPointerDown={onCanvasPointerDown}
             // 빈 곳 클릭의 기본 동작(포커스 옮기기)이 방금 커서를 넣은 새 상자를 빼앗지 않게
             onMouseDown={(e) => e.target === e.currentTarget && e.preventDefault()}
@@ -291,6 +350,7 @@ export default function NoteCanvas() {
             }}
             onDropCapture={onDropCapture}
           >
+            <EdgeLayer doc={doc} size={size} />
             {doc.boxes.map((b) =>
               b.kind === "image" ? (
                 <ImageBoxView
@@ -326,6 +386,7 @@ export default function NoteCanvas() {
           {editingBox && editingEditor && editingBox.id !== pendingId && (
             <FormatToolbar editor={editingEditor} box={editingBox} zoom={zoom} />
           )}
+          <EdgeToolbar doc={doc} zoom={zoom} />
         </div>
       </div>
       {doc.boxes.length === 0 && (
@@ -334,7 +395,18 @@ export default function NoteCanvas() {
           <div>{STR.note.emptyHint}</div>
         </div>
       )}
-      <Minimap scrollRef={scrollRef} boxes={doc.boxes} size={size} view={view} zoom={zoom} />
+      {linking?.mode === "keys" && (
+        <div className={styles.linkingBar} role="status" data-testid="note-linking">
+          <b>
+            {STR.note.edgeLinking(
+              boxNameOf(doc, linking.from),
+              linking.target ? boxNameOf(doc, linking.target) : null,
+            )}
+          </b>
+          <span>{STR.note.edgeLinkingHelp}</span>
+        </div>
+      )}
+      <Minimap scrollRef={scrollRef} doc={doc} size={size} view={view} zoom={zoom} />
       {previewBox && <ImagePreview box={previewBox} onClose={() => setPreviewId(null)} />}
     </div>
   );
@@ -361,6 +433,7 @@ function TextBoxView({
   const focusRequest = useNote((s) => s.focusRequest);
   const pulse = useNote((s) => s.pulseId === box.id);
   const [menuOpen, setMenuOpen] = useState(false);
+  const edges = useEdgeCount(box.id);
 
   const editor = useEditor(
     {
@@ -461,10 +534,10 @@ function TextBoxView({
         box.ref ? styles.hasStrip : "",
         pulse ? styles.pulse : "",
       ].join(" ")}
-      style={{ left: box.x, top: box.y, width: box.w, zIndex: box.z + 1 }}
+      style={{ left: box.x, top: box.y, width: box.w, zIndex: menuOpen ? 100000 : box.z + 1 }}
       tabIndex={-1}
       role="group"
-      aria-label={STR.note.boxAria}
+      aria-label={edges ? `${STR.note.boxAria} · ${STR.note.edgeCount(edges)}` : STR.note.boxAria}
       data-testid={pending ? "note-ghost" : "note-box"}
       data-box-id={box.id}
       onPointerDown={(e) => {
@@ -536,6 +609,7 @@ function TextBoxView({
               {STR.linked.unlink}
             </button>
           )}
+          <EdgeMenuItems boxId={box.id} close={() => setMenuOpen(false)} />
           <button
             type="button"
             role="menuitem"
@@ -562,6 +636,7 @@ function TextBoxView({
         tabIndex={-1}
         onPointerDown={(e) => startBoxDrag(e, box, "resize")}
       />
+      <EdgeKnobs boxId={box.id} />
     </div>
   );
 }

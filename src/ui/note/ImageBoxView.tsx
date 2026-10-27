@@ -17,6 +17,8 @@ import {
   useNote,
 } from "./noteStore";
 import { LinkStrip } from "./LinkStrip";
+import { EdgeKnobs, EdgeMenuItems } from "./EdgeBoxParts";
+import { useEdgeCount } from "./edgeHooks";
 import styles from "./Note.module.css";
 
 export function ImageBoxView({
@@ -33,6 +35,7 @@ export function ImageBoxView({
   const img = useNote((s) => s.assets[box.asset]);
   const [menuOpen, setMenuOpen] = useState(false);
   const pulse = useNote((s) => s.pulseId === box.id);
+  const edges = useEdgeCount(box.id);
   useBoxFrame(wrapRef, box.id, selected);
 
   const editCaption = () => {
@@ -54,10 +57,10 @@ export function ImageBoxView({
         box.ref ? styles.hasStrip : "",
         pulse ? styles.pulse : "",
       ].join(" ")}
-      style={{ left: box.x, top: box.y, width: box.w, zIndex: box.z + 1 }}
+      style={{ left: box.x, top: box.y, width: box.w, zIndex: menuOpen ? 100000 : box.z + 1 }}
       tabIndex={-1}
       role="group"
-      aria-label={STR.note.imageAria}
+      aria-label={edges ? `${STR.note.imageAria} · ${STR.note.edgeCount(edges)}` : STR.note.imageAria}
       data-testid="note-image"
       data-box-id={box.id}
       onPointerDown={(e) => {
@@ -111,6 +114,7 @@ export function ImageBoxView({
               {STR.linked.unlink}
             </button>
           )}
+          <EdgeMenuItems boxId={box.id} close={() => setMenuOpen(false)} />
           <button
             type="button"
             role="menuitem"
@@ -166,6 +170,7 @@ export function ImageBoxView({
         tabIndex={-1}
         onPointerDown={(e) => startBoxDrag(e, box, "resize")}
       />
+      <EdgeKnobs boxId={box.id} />
     </div>
   );
 }

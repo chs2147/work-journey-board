@@ -74,9 +74,27 @@ export interface LinkBox {
 
 export type NoteBox = TextBox | ImageBox | LinkBox;
 
+/** 관계선 방향(note-relation-spec 1-1): from → to / 양쪽 / 화살표 없음 */
+export const EDGE_DIRS = ["one", "both", "none"] as const;
+export type EdgeDir = (typeof EDGE_DIRS)[number];
+
+/** 상자끼리의 관계선(note-relation-spec 5-1) — 모양(경로)은 저장하지 않고 늘 지금 상자 자리에서 그린다 */
+export interface NoteEdge {
+  id: string;
+  from: string;
+  to: string;
+  dir: EdgeDir;
+  /** 점선 */
+  dash: boolean;
+  /** 이름표(0~20자) */
+  label: string;
+}
+
 export interface NoteDoc {
   v: 1;
   boxes: NoteBox[];
+  /** 관계선(선택 필드 — 없으면 0개) */
+  edges?: NoteEdge[];
 }
 
 /** 위치 눈금(px) — 상자는 8px 단위로 맞춘다(스펙 4-1) */
@@ -158,6 +176,79 @@ export function fitWithin(
 }
 
 export const emptyDoc = (): NoteDoc => ({ v: 1, boxes: [] });
+
+// ── 관계선(note-relation-spec) ───────────────────────
+export const EDGE_LABEL_MAX = 20;
+/** 한 주 메모의 관계선 상한(넘는 것은 읽을 때 버린다) */
+export const EDGE_MAX = 500;
+
+export const cleanEdgeLabel = (s: unknown) =>
+  typeof s === "string" ? s.replace(/\s+/g, " ").trim().slice(0, EDGE_LABEL_MAX) : "";
+
+export const edgesOf = (doc: NoteDoc): NoteEdge[] => doc.edges ?? [];
+
+/** 같은 두 상자 사이의 선(방향 무관) */
+export const findEdge = (doc: NoteDoc, a: string, b: string) =>
+  edgesOf(doc).find((e) => (e.from === a && e.to === b) || (e.from === b && e.to === a));
+
+/** 이 상자에 닿은 선 */
+export const boxEdges = (doc: NoteDoc, id: string) =>
+  edgesOf(doc).filter((e) => e.from === id || e.to === id);
+
+/** 선 목록을 바꾼 문서(0개면 필드를 뺀다 — 관계선을 쓰지 않은 문서는 지금 모양 그대로) */
+export function withEdges(doc: NoteDoc, edges: NoteEdge[]): NoteDoc {
+  const { edges: _old, ...rest } = doc; // eslint-disable-line @typescript-eslint/no-unused-vars
+  return edges.length ? { ...rest, edges } : rest;
+}
+
+/** 상자를 빼고, 그 상자에 닿은 선도 함께 뺀다 */
+export function withoutBoxes(doc: NoteDoc, ids: ReadonlySet<string>): NoteDoc {
+  return withEdges(
+    { ...doc, boxes: doc.boxes.filter((b) => !ids.has(b.id)) },
+    edgesOf(doc).filter((e) => !ids.has(e.from) && !ids.has(e.to)),
+  );
+}
+
+/** 목록에 쓰는 상자 이름(4절): 글 상자 첫 줄 · 이미지 설명(없으면 `(이미지)`) · 링크 카드 제목, 30자 */
+export function boxName(b: NoteBox): string {
+  const raw =
+    b.kind === "image"
+      ? b.caption.trim() || "(이미지)"
+      : b.kind === "link"
+        ? b.title
+        : (boxText(b)
+            .split("\n")
+            .find((l) => l.trim())
+            ?.replace(/^\s*(- \(완료\) |- |\d+\. )/, "") ?? "");
+  const t = raw.trim() || "(빈 상자)";
+  return t.length > 30 ? `${t.slice(0, 30)}…` : t;
+}
+
+/** 저장된 선 정리: 없는 상자·자기 자신·같은 쌍의 두 번째는 버리고, 모르는 값은 기본값으로 */
+function parseEdges(raw: unknown, boxIds: ReadonlySet<string>): NoteEdge[] {
+  if (!Array.isArray(raw)) return [];
+  const out: NoteEdge[] = [];
+  const pairs = new Set<string>();
+  for (const e of raw) {
+    if (out.length >= EDGE_MAX) break;
+    if (!isObj(e) || typeof e.id !== "string" || !e.id || e.id.length > 64) continue;
+    const { from, to } = e;
+    if (typeof from !== "string" || typeof to !== "string" || from === to) continue;
+    if (!boxIds.has(from) || !boxIds.has(to)) continue;
+    const pair = from < to ? `${from}|${to}` : `${to}|${from}`;
+    if (pairs.has(pair)) continue;
+    pairs.add(pair);
+    out.push({
+      id: e.id,
+      from,
+      to,
+      dir: EDGE_DIRS.includes(e.dir as EdgeDir) ? (e.dir as EdgeDir) : "one",
+      dash: e.dash === true,
+      label: cleanEdgeLabel(e.label),
+    });
+  }
+  return out;
+}
 export const emptyContent = (): PMNode => ({ type: "doc", content: [{ type: "paragraph" }] });
 
 // ── 허용 스키마(스펙 4-3) ─────────────────────────────
@@ -322,7 +413,8 @@ export function parseNoteDoc(json: string | null | undefined): NoteDoc {
     });
   }
   // 글이 없는 텍스트 상자는 남기지 않는다(improve-1026-spec 2-2) — 어떤 길로 편집을 떠나도 빈 상자가 쌓이지 않게
-  return { v: 1, boxes: boxes.filter((b) => b.kind !== "text" || boxText(b) !== "") };
+  const kept = boxes.filter((b) => b.kind !== "text" || boxText(b) !== "");
+  return withEdges({ v: 1, boxes: kept }, parseEdges(raw.edges, new Set(kept.map((b) => b.id))));
 }
 
 // ── 글 추출(자동 집계·엑셀, 스펙 6절) ─────────────────

@@ -23,6 +23,8 @@ import {
   useNote,
 } from "./noteStore";
 import { LinkStrip } from "./LinkStrip";
+import { EdgeKnobs, EdgeMenuItems } from "./EdgeBoxParts";
+import { useEdgeCount } from "./edgeHooks";
 import styles from "./Note.module.css";
 
 export function LinkBoxView({ box, selected }: { box: LinkBox; selected: boolean }) {
@@ -32,6 +34,7 @@ export function LinkBoxView({ box, selected }: { box: LinkBox; selected: boolean
   const [menuOpen, setMenuOpen] = useState(false);
   const pulse = useNote((s) => s.pulseId === box.id);
   const [editing, setEditing] = useState(false);
+  const edges = useEdgeCount(box.id);
   useBoxFrame(wrapRef, box.id, selected);
   const domain = domainOf(box.url);
 
@@ -66,10 +69,14 @@ export function LinkBoxView({ box, selected }: { box: LinkBox; selected: boolean
         box.ref ? styles.hasStrip : "",
         pulse ? styles.pulse : "",
       ].join(" ")}
-      style={{ left: box.x, top: box.y, width: box.w, zIndex: box.z + 1 }}
+      style={{ left: box.x, top: box.y, width: box.w, zIndex: menuOpen ? 100000 : box.z + 1 }}
       tabIndex={-1}
       role="group"
-      aria-label={STR.links.cardAria(box.title)}
+      aria-label={
+        edges
+          ? `${STR.links.cardAria(box.title)} · ${STR.note.edgeCount(edges)}`
+          : STR.links.cardAria(box.title)
+      }
       data-testid="note-link"
       data-box-id={box.id}
       onPointerDown={(e) => {
@@ -137,6 +144,7 @@ export function LinkBoxView({ box, selected }: { box: LinkBox; selected: boolean
               {STR.linked.unlink}
             </button>
           )}
+          <EdgeMenuItems boxId={box.id} close={() => setMenuOpen(false)} />
           <button
             type="button"
             role="menuitem"
@@ -217,6 +225,7 @@ export function LinkBoxView({ box, selected }: { box: LinkBox; selected: boolean
         tabIndex={-1}
         onPointerDown={(e) => startBoxDrag(e, box, "resize")}
       />
+      <EdgeKnobs boxId={box.id} />
     </div>
   );
 }

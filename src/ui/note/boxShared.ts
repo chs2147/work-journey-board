@@ -4,6 +4,7 @@ import type { NoteBox } from "../../domain/note";
 import { itemAtPoint, useLinkDrop } from "../board/rowDrag";
 import {
   beginGesture,
+  cycleBoxEdges,
   deleteBox,
   endGesture,
   leaveNote,
@@ -13,6 +14,7 @@ import {
   nudgeBox,
   redoNote,
   resizeBoxLive,
+  startLinking,
   undoNote,
   useNote,
 } from "./noteStore";
@@ -82,6 +84,11 @@ export function onSelectedBoxKey(e: KeyboardEvent<HTMLDivElement>, id: string, o
   } else if (mod && !e.altKey && e.code === "KeyY") {
     e.preventDefault();
     redoNote();
+  } else if (e.code === "KeyL" && !mod && !e.altKey) {
+    // 관계선(note-relation-spec 2-2·4절): L = 잇기 시작, Shift+L = 이 상자의 선 차례로
+    e.preventDefault();
+    if (e.shiftKey) cycleBoxEdges(id);
+    else startLinking(id, "keys");
   } else if (e.key.startsWith("Arrow")) {
     e.preventDefault();
     const [dx, dy] = {

@@ -4,6 +4,7 @@
 import { lazy, Suspense, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 import { ZOOM_STEPS } from "../../domain/noteZoom";
 import { STR } from "../../shared/strings";
+import { toast } from "../board/boardStore";
 import {
   IconChevronDown,
   IconChevronUp,
@@ -13,6 +14,7 @@ import {
   IconLink,
   IconMinus,
   IconPlus,
+  IconRelation,
   IconShrink,
   IconTextBox,
 } from "../common/icons";
@@ -26,6 +28,7 @@ import {
   setDockAuto,
   setDockHeight,
   setExpanded,
+  setShowEdges,
   setZoom,
   useNote,
   zoomStep,
@@ -85,6 +88,8 @@ export function NoteDock({ variant = "dock" }: Props) {
   const boxes = useNote((s) => s.doc.boxes.filter((b) => b.id !== s.pendingId).length);
   const images = useNote((s) => s.doc.boxes.filter((b) => b.kind === "image").length);
   const busy = useNote((s) => s.busy);
+  const showEdges = useNote((s) => s.showEdges);
+  const edgeCount = useNote((s) => s.doc.edges?.length ?? 0);
   const fileRef = useRef<HTMLInputElement>(null);
   const [linkOpen, setLinkOpen] = useState(false);
   const legacy = useNote((s) => s.legacy);
@@ -242,6 +247,16 @@ export function NoteDock({ variant = "dock" }: Props) {
             if (files.length) void addImages(files, pastePlace());
           }}
         />
+        {!collapsed && (
+          <IconButton
+            label={STR.note.edgeShow}
+            title={STR.note.edgeShowTitle(showEdges)}
+            pressed={edgeCount > 0 && showEdges}
+            onClick={() => (edgeCount ? setShowEdges(!showEdges) : toast(STR.note.edgeShowEmpty))}
+          >
+            <IconRelation />
+          </IconButton>
+        )}
         {!collapsed && !side && (
           <IconButton
             label={expanded ? STR.note.shrink : STR.note.expand}

@@ -217,3 +217,32 @@ test("인사이트 활동 개요(히트맵·툴팁·연간·표·업무 고르�
   await expect(page.getByTestId("heat-row")).toHaveCount(2);
   expect(await violations(page)).toEqual([]);
 });
+
+test("메모 관계선(잇기·선 도구·이름표·미니맵) — CSP 위반 0", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/?today=2026-10-22");
+  await expect(page.getByTestId("week-title")).toContainText("2026-W43");
+  await page.keyboard.press("Alt+ArrowRight");
+  await expect(page.getByTestId("note-empty")).toBeVisible();
+  const c = (await page.getByTestId("note-canvas").boundingBox())!;
+  for (const [x, y, text] of [
+    [40, 30, "가상 원인"],
+    [460, 160, "가상 결과"],
+  ] as const) {
+    await page.mouse.click(c.x + x, c.y + y);
+    await expect(page.locator(":focus")).toHaveClass(/note-prose/);
+    await page.keyboard.type(text);
+    await page.keyboard.press("Escape");
+  }
+  const a = page.getByTestId("note-box").filter({ hasText: "가상 원인" });
+  await a.click({ position: { x: 4, y: 4 } });
+  await page.keyboard.press("l");
+  await page.keyboard.press("Enter");
+  await expect(page.getByTestId("note-edge")).toHaveCount(1);
+  await page.getByTestId("edge-toolbar").getByRole("button", { name: "점선" }).click();
+  await page.keyboard.press("Enter");
+  await page.getByTestId("edge-label-input").fill("원인");
+  await page.keyboard.press("Enter");
+  await expect(page.getByTestId("note-edge-label")).toHaveText("원인");
+  expect(await violations(page)).toEqual([]);
+});

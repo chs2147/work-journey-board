@@ -595,3 +595,29 @@ describe("인사이트 조회(m3-s1-spec 11-1)", () => {
     ]);
   });
 });
+
+describe("메모 관계선(note-relation-spec 5-1)", () => {
+  it("저장·읽기 왕복에 edges가 남고, 없는 상자를 가리키는 선은 저장할 때 빠진다", async () => {
+    const { repo } = await freshRepo();
+    const mk = (id: string, x: number): TextBox => ({
+      id,
+      kind: "text",
+      x,
+      y: 0,
+      w: 160,
+      z: 1,
+      bg: null,
+      content: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: id }] }] },
+    });
+    await repo.saveWeekNote("2026-W43", {
+      v: 1,
+      boxes: [mk("a", 0), mk("b", 400)],
+      edges: [
+        { id: "e1", from: "a", to: "b", dir: "both", dash: true, label: "원인" },
+        { id: "e2", from: "a", to: "gone", dir: "one", dash: false, label: "" },
+      ],
+    });
+    const { doc } = await repo.getWeekNote("2026-W43");
+    expect(doc.edges).toEqual([{ id: "e1", from: "a", to: "b", dir: "both", dash: true, label: "원인" }]);
+  });
+});

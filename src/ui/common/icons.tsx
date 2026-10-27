@@ -91,6 +91,15 @@ export const IconMap = () => (
 );
 
 /** 링크 넣기: 사슬 */
+/** 관계선 보기(note-relation-spec 1-2): 두 상자를 잇는 꺾은선 */
+export const IconRelation = () => (
+  <Svg>
+    <rect x="1.75" y="2.25" width="5" height="4" rx="1" />
+    <rect x="9.25" y="9.75" width="5" height="4" rx="1" />
+    <path d="M6.75 4.25h2a2 2 0 0 1 2 2v3.5" />
+  </Svg>
+);
+
 export const IconLink = () => (
   <Svg>
     <path d="M6.75 9.25a2.5 2.5 0 0 0 3.54 0l2.12-2.12a2.5 2.5 0 0 0-3.54-3.54l-.7.7" />

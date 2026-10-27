@@ -207,6 +207,8 @@
   position: absolute;
   top: 0;
   left: 0;
+  /* 상자·관계선 층의 z를 판 안에서만 비교(맨 뒤로 보낸 상자·선이 판 바탕 밑으로 가지 않게) */
+  isolation: isolate;
   transform-origin: 0 0;
   background-image: radial-gradient(var(--note-dot) 1px, transparent 1px);
   background-size: 16px 16px;
@@ -1049,4 +1051,313 @@ button.stripText:hover {
   font-size: var(--fs-sm);
   pointer-events: none;
   z-index: 100000;
+}
+
+/* ── 관계선(note-relation-spec) — 선은 상자 뒤 층, 색은 보조 글자색·강조색 토큰만 ── */
+.edgeLayer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.edge {
+  outline: none;
+  cursor: pointer;
+}
+
+.edgeHit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 12;
+  pointer-events: stroke;
+}
+
+.edgeLine {
+  fill: none;
+  stroke: var(--text-2);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  pointer-events: none;
+}
+
+.edgeOn .edgeLine {
+  stroke: var(--accent);
+  stroke-width: 2.5;
+}
+
+.edgeGlow {
+  fill: none;
+  stroke: var(--accent);
+  stroke-opacity: 0.18;
+  stroke-width: 10;
+  stroke-linecap: round;
+  pointer-events: none;
+}
+
+.edgeArrow {
+  fill: var(--text-2);
+}
+
+.edgeArrowOn {
+  fill: var(--accent);
+}
+
+.edgePreview {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-dasharray: 5 4;
+  pointer-events: none;
+}
+
+.edgeLabel {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  max-width: 220px;
+  padding: 1px 8px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-card);
+  color: var(--text-2);
+  font-size: var(--fs-xs);
+  line-height: 1.5;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.edgeLabelOn {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* 연결점: 왼쪽 가운데·아래 가운데(위 = 옮기기 막대, 오른쪽 = 폭 손잡이) — 마우스를 올리거나 선택했을 때만 */
+.knob {
+  position: absolute;
+  z-index: 3;
+  width: 12px;
+  height: 12px;
+  padding: 0;
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  background: var(--surface-card);
+  cursor: crosshair;
+  opacity: 0;
+  transition: opacity 0.1s;
+}
+
+.knobLeft {
+  left: -7px;
+  top: 50%;
+  margin-top: -6px;
+}
+
+.knobBottom {
+  left: 50%;
+  bottom: -7px;
+  margin-left: -6px;
+}
+
+.box:hover .knob,
+.selected .knob,
+.knobActive {
+  opacity: 1;
+}
+
+.knob:hover,
+.knobActive {
+  background: var(--accent);
+}
+
+/* 잇는 중: 놓을 상자 강조, 키보드 후보 번호 */
+.linkTarget {
+  position: absolute;
+  z-index: 100000;
+  box-sizing: border-box;
+  border: 2px solid var(--accent);
+  border-radius: var(--radius-md);
+  box-shadow: 0 0 0 4px var(--accent-soft);
+  pointer-events: none;
+}
+
+.linkBadge {
+  position: absolute;
+  z-index: 100001;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  box-sizing: border-box;
+  border-radius: 11px;
+  background: var(--accent);
+  color: var(--surface-card);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  line-height: 22px;
+  text-align: center;
+  pointer-events: none;
+}
+
+.linkBadgeLinked {
+  background: var(--text-2);
+}
+
+.linkingBar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  padding: 6px 12px;
+  background: var(--toast-bg);
+  color: var(--toast-text);
+  font-size: var(--fs-sm);
+}
+
+/* 선 도구 막대(서식 막대와 같은 모양, 선 가운데 아래) */
+.edgeBar {
+  position: absolute;
+  z-index: 100000;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transform: translateX(-50%);
+}
+
+.edgeBarRow {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  border-radius: var(--radius-md);
+  background: var(--toast-bg);
+  color: var(--toast-text);
+  box-shadow: 0 6px 16px rgb(0 0 0 / 0.22);
+  white-space: nowrap;
+}
+
+.edgeBarRow .tool {
+  padding: 0 6px;
+}
+
+.toolDanger {
+  color: var(--toast-action);
+  font-weight: var(--fw-bold);
+}
+
+.edgeLabelRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-2);
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+}
+
+.edgeLabelRow input {
+  width: 160px;
+  height: 26px;
+  padding: 0 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-card);
+  color: var(--text-1);
+  font: inherit;
+  font-size: var(--fs-sm);
+}
+
+.edgeLabelHint {
+  color: var(--text-3);
+}
+
+/* 상자 ⋯ 메뉴의 관계선 항목 */
+.menuSep {
+  height: 1px;
+  margin: 4px 0;
+  background: var(--line);
+}
+
+.menuKey {
+  float: right;
+  margin-left: 16px;
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+}
+
+.menuHead {
+  padding: 4px 10px 2px;
+  color: var(--text-2);
+  font-size: var(--fs-xs);
+}
+
+.menuEdge {
+  display: flex;
+  align-items: center;
+  border-radius: var(--radius-sm);
+}
+
+.menuEdge:hover {
+  background: var(--surface-sub);
+}
+
+.menuEdgeMain,
+.menuEdgeX {
+  border: 0;
+  background: transparent;
+  color: var(--text-1);
+  font: inherit;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
+.menuEdgeMain {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 280px;
+  padding: 5px 4px 5px 10px;
+  text-align: left;
+}
+
+.menuEdgeArrow {
+  flex: 0 0 16px;
+  color: var(--text-2);
+}
+
+.menuEdgeName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.menuEdgeX {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  color: var(--danger);
+}
+
+.minimapEdges {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+}
+
+.minimapEdges polyline {
+  fill: none;
+  stroke: var(--text-3);
+  stroke-width: 1;
 }
