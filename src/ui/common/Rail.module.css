@@ -7,7 +7,7 @@
   align-items: center;
   gap: var(--sp-1);
   padding: var(--sp-2) 0 var(--sp-3);
-  background: var(--surface-card);
+  background: var(--surface-chrome);
   border-right: 1px solid var(--line);
 }
 
@@ -85,7 +85,7 @@
   height: 7px;
   border-radius: 50%;
   background: var(--danger);
-  box-shadow: 0 0 0 2px var(--surface-card);
+  box-shadow: 0 0 0 2px var(--surface-chrome);
 }
 
 /* 보기·패널 단추와 맨 아래 설정 사이 빈 공간(improve-1027v5-spec 1-1) */
@@ -102,5 +102,5 @@
   height: 8px;
   border-radius: 50%;
   background: var(--accent);
-  box-shadow: 0 0 0 2px var(--surface-card);
+  box-shadow: 0 0 0 2px var(--surface-chrome);
 }

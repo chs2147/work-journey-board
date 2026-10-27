@@ -3,7 +3,7 @@
   position: relative;
   z-index: 20;
   flex: 0 0 auto;
-  background: var(--surface-card);
+  background: var(--surface-chrome);
   border-bottom: 1px solid var(--line);
 }
 
@@ -53,12 +53,17 @@
 .saveFailed {
   flex: 0 0 auto;
   height: 30px;
-  border: 1px solid var(--line-strong);
+  border: 1px solid var(--btn-line);
   border-radius: var(--radius-md);
-  background: var(--surface-card);
+  background: var(--btn-bg);
   color: var(--text-1);
   cursor: pointer;
   white-space: nowrap;
+}
+
+.iconButton:hover:not(:disabled),
+.textButton:hover {
+  background: var(--btn-hover);
 }
 
 .iconButton {
@@ -84,7 +89,7 @@
   height: 26px;
   padding: 0 10px 0 var(--sp-3);
   border: 1px solid;
-  border-radius: 999px;
+  border-radius: var(--pill-radius);
   font-size: var(--fs-sm);
   white-space: nowrap;
 }
@@ -240,7 +245,7 @@
   display: inline-flex;
   flex: 0 0 auto;
   height: 30px;
-  border: 1px solid var(--line-strong);
+  border: 1px solid var(--btn-line);
   border-radius: var(--radius-md);
   overflow: hidden;
 }
@@ -252,14 +257,14 @@
   width: 38px;
   padding: 0;
   border: 0;
-  background: var(--surface-card);
+  background: var(--btn-bg);
   color: var(--text-2);
   cursor: pointer;
   white-space: nowrap;
 }
 
 .segment > button + button {
-  border-left: 1px solid var(--line-strong);
+  border-left: 1px solid var(--btn-line);
 }
 
 .segment > button[aria-pressed="true"] {

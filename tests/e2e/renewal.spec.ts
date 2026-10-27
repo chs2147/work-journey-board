@@ -47,3 +47,33 @@ test("시그니처: 베이지 바탕·고운돋움, 로고는 그대로 · 라�
   await page.getByRole("radio", { name: "라이트", exact: true }).check();
   expect((await look(page)).font).toContain("Pretendard");
 });
+
+test("R2·R3 표현: 시그니처만 오늘 머리 = 작은 표식·단추 테두리 없음, 라이트·다크는 지금 그대로", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const style = () =>
+    page.evaluate(() => {
+      const head = document.querySelector("[class*='colToday']")!;
+      const badge = head.querySelector("[class*='todayBadge']")!;
+      const btn = [...document.querySelectorAll("button")].find((b) => b.textContent === "주간 요약")!;
+      return {
+        headBg: getComputedStyle(head).backgroundColor,
+        badgeBg: getComputedStyle(badge).backgroundColor,
+        btnBorder: getComputedStyle(btn).borderTopColor,
+      };
+    });
+  for (const [theme, expected] of [
+    ["light", { headBg: "rgb(24, 95, 165)", badgeBg: "rgb(255, 255, 255)", btnBorder: "rgb(180, 178, 169)" }],
+    ["dark", { headBg: "rgb(109, 167, 236)", badgeBg: "rgb(11, 11, 11)", btnBorder: "rgb(85, 85, 79)" }],
+    [
+      "signature",
+      { headBg: "rgb(243, 237, 227)", badgeBg: "rgb(232, 217, 195)", btnBorder: "rgba(0, 0, 0, 0)" },
+    ],
+  ] as const) {
+    await page.addInitScript((t) => localStorage.setItem("wjb.theme", t), theme);
+    await page.goto("/?today=2026-10-22");
+    await expect(page.getByTestId("category-header")).toHaveCount(4);
+    expect(await style(), theme).toEqual(expected);
+  }
+});
