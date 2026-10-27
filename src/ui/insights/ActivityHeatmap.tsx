@@ -434,7 +434,8 @@ export function ActivityHeatmap({ range, heat, rows, periods, today }: Props) {
                     const lines = tipLines(row, cell, columns[c]!);
                     return (
                       <button
-                        key={cell.key}
+                        // 자리(열 번호)로 키 — ◀ ▶(PageUp/Down)로 범위가 바뀌어도 같은 단추가 남아 포커스가 유지된다
+                        key={c}
                         type="button"
                         role="gridcell"
                         className={cellClass(cell, isTotal)}
