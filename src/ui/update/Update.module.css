@@ -47,9 +47,9 @@
   flex: 0 0 auto;
   height: 30px;
   padding: 0 var(--sp-4);
-  border: 1px solid var(--line-strong);
+  border: 1px solid var(--btn-line);
   border-radius: var(--radius-md);
-  background: var(--surface-card);
+  background: var(--btn-bg);
   color: var(--text-1);
   font: inherit;
   white-space: nowrap;
@@ -57,9 +57,9 @@
 }
 
 .primary {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: var(--on-accent);
+  border-color: var(--primary-line);
+  background: var(--primary-bg);
+  color: var(--primary-fg);
 }
 
 .button:disabled,

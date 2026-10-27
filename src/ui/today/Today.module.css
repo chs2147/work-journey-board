@@ -85,9 +85,9 @@
 
 .todayBadge {
   padding: 0 var(--sp-2);
-  border-radius: 999px;
-  background: var(--accent);
-  color: var(--on-accent);
+  border-radius: var(--today-chip-radius);
+  background: var(--today-chip-bg);
+  color: var(--today-chip-fg);
   font-size: var(--fs-xs);
   font-weight: var(--fw-bold);
   line-height: 20px;
@@ -100,9 +100,9 @@
 .textButton {
   height: 28px;
   padding: 0 var(--sp-3);
-  border: 1px solid var(--line-strong);
+  border: 1px solid var(--btn-line);
   border-radius: var(--radius-md);
-  background: var(--surface-card);
+  background: var(--btn-bg);
   color: var(--text-1);
   font-size: var(--fs-sm);
   white-space: nowrap;

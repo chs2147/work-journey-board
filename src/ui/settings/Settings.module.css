@@ -231,9 +231,9 @@
 }
 
 .card .primary {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: var(--on-accent);
+  border-color: var(--primary-line);
+  background: var(--primary-bg);
+  color: var(--primary-fg);
   font-weight: var(--fw-bold);
 }
 

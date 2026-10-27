@@ -416,9 +416,9 @@
 .nudgeActions button {
   flex: 0 0 auto;
   padding: 1px var(--sp-3);
-  border: 1px solid var(--line-strong);
+  border: 1px solid var(--btn-line);
   border-radius: var(--radius-sm);
-  background: var(--surface-card);
+  background: var(--btn-bg);
   color: var(--text-1);
   font-size: var(--fs-sm);
   cursor: pointer;
@@ -574,9 +574,9 @@
 .donePopUndo {
   margin-top: 4px;
   padding: 4px 10px;
-  border: 1px solid var(--line-strong);
+  border: 1px solid var(--btn-line);
   border-radius: var(--radius-sm);
-  background: var(--surface-card);
+  background: var(--btn-bg);
   color: var(--text-1);
   font: inherit;
   font-size: var(--fs-xs);
@@ -1223,9 +1223,9 @@
 
 .filterBanner button {
   padding: 1px var(--sp-3);
-  border: 1px solid var(--line-strong);
+  border: 1px solid var(--btn-line);
   border-radius: var(--radius-sm);
-  background: var(--surface-card);
+  background: var(--btn-bg);
   color: var(--text-1);
   font-size: var(--fs-sm);
   cursor: pointer;

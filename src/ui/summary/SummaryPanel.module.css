@@ -230,8 +230,8 @@
   padding: 6px var(--sp-3);
   border: 0;
   border-radius: var(--radius-md);
-  background: var(--accent);
-  color: var(--on-accent);
+  background: var(--primary-bg);
+  color: var(--primary-fg);
   font: inherit;
   font-weight: var(--fw-bold);
   cursor: pointer;

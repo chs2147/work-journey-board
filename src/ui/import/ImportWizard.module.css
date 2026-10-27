@@ -46,9 +46,9 @@
   flex: 0 0 auto;
   width: 30px;
   height: 28px;
-  border: 1px solid var(--line-strong);
+  border: 1px solid var(--btn-line);
   border-radius: var(--radius-md);
-  background: var(--surface-card);
+  background: var(--btn-bg);
   color: var(--text-1);
   cursor: pointer;
 }
@@ -179,18 +179,18 @@ button.dotDone:hover {
 .primary {
   height: 32px;
   padding: 0 var(--sp-4);
-  border: 1px solid var(--line-strong);
+  border: 1px solid var(--btn-line);
   border-radius: var(--radius-md);
-  background: var(--surface-card);
+  background: var(--btn-bg);
   color: var(--text-1);
   font: inherit;
   cursor: pointer;
 }
 
 .primary {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: var(--on-accent);
+  border-color: var(--primary-line);
+  background: var(--primary-bg);
+  color: var(--primary-fg);
 }
 
 .button:disabled,
@@ -304,9 +304,9 @@ button.dotDone:hover {
   gap: var(--sp-2);
   height: 28px;
   padding: 0 10px;
-  border: 1px solid var(--line-strong);
+  border: 1px solid var(--btn-line);
   border-radius: var(--radius-md);
-  background: var(--surface-card);
+  background: var(--btn-bg);
   color: var(--text-1);
   font: inherit;
   font-size: var(--fs-sm);

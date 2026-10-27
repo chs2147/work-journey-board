@@ -76,9 +76,9 @@
 .headButton {
   height: 28px;
   padding: 0 var(--sp-3);
-  border: 1px solid var(--line-strong);
+  border: 1px solid var(--btn-line);
   border-radius: var(--radius-md);
-  background: var(--surface-card);
+  background: var(--btn-bg);
   color: var(--text-1);
   font: inherit;
   font-size: var(--fs-sm);
@@ -95,9 +95,9 @@
   width: 28px;
   height: 28px;
   padding: 0;
-  border: 1px solid var(--line-strong);
+  border: 1px solid var(--btn-line);
   border-radius: var(--radius-md);
-  background: var(--surface-card);
+  background: var(--btn-bg);
   color: var(--text-1);
   cursor: pointer;
 }
@@ -117,9 +117,9 @@
   display: inline-flex;
   align-items: center;
   height: 28px;
-  border: 1px solid var(--line-strong);
+  border: 1px solid var(--btn-line);
   border-radius: var(--radius-md);
-  background: var(--surface-card);
+  background: var(--btn-bg);
 }
 
 .zoomGroup > .iconButton {
@@ -264,9 +264,9 @@
   width: 18px;
   height: 18px;
   padding: 0;
-  border: 1px solid var(--line-strong);
+  border: 1px solid var(--btn-line);
   border-radius: 50%;
-  background: var(--surface-card);
+  background: var(--btn-bg);
   color: var(--text-2);
   font-size: 12px;
   line-height: 14px;
@@ -929,9 +929,9 @@
 }
 
 .primary {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: var(--on-accent);
+  border-color: var(--primary-line);
+  background: var(--primary-bg);
+  color: var(--primary-fg);
 }
 
 /* 글 상자 안 링크(TipTap link mark) */

@@ -122,15 +122,15 @@
 }
 
 .button {
-  border: 1px solid var(--line-strong);
-  background: var(--surface-card);
+  border: 1px solid var(--btn-line);
+  background: var(--btn-bg);
   color: var(--text-1);
 }
 
 .primary {
   border: 0;
-  background: var(--accent);
-  color: var(--on-accent);
+  background: var(--primary-bg);
+  color: var(--primary-fg);
   font-weight: var(--fw-bold);
 }
 

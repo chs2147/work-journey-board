@@ -116,6 +116,13 @@
   --today-badge-radius: 999px;
   --focus-head-shadow: inset 0 3px 0 var(--text-1);
   --edit-ring: 0 0 0 1px var(--accent);
+  --primary-bg: var(--accent);
+  --primary-fg: var(--on-accent);
+  --primary-line: var(--accent);
+  /* 오늘 뷰 머리의 [오늘] = 채운 강조색(보드 머리 안의 흰 표식과 반대) */
+  --today-chip-bg: var(--accent);
+  --today-chip-fg: var(--on-accent);
+  --today-chip-radius: 999px;
 
   --cat-c1: var(--cat-c1-light);
   --cat-c2: var(--cat-c2-light);
@@ -278,6 +285,13 @@
   --today-badge-radius: var(--radius-sm);
   --focus-head-shadow: inset 0 -2px 0 var(--accent);
   --edit-ring: 0 0 0 2px var(--accent);
+  /* 주요 동작 단추 = 샌드색 면 + 짙은 갈색 글자(명세 6-1, 대비 약 6.2:1) */
+  --primary-bg: #e9ddcc;
+  --primary-fg: #5f4b36;
+  --primary-line: #e9ddcc;
+  --today-chip-bg: #e8d9c3;
+  --today-chip-fg: #71583e;
+  --today-chip-radius: var(--radius-sm);
 }
 
 :root[data-theme="signature"] body {

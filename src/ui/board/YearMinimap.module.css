@@ -23,9 +23,9 @@
   flex: 0 0 auto;
   width: 28px;
   height: 26px;
-  border: 1px solid var(--line-strong);
+  border: 1px solid var(--btn-line);
   border-radius: var(--radius-sm);
-  background: var(--surface-card);
+  background: var(--btn-bg);
   color: var(--text-1);
   cursor: pointer;
 }
