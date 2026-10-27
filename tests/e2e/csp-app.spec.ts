@@ -1,6 +1,7 @@
 // 프로덕션 빌드를 실앱 CSP(+ Tauri처럼 nonce) 아래에서 띄워, 화면 전체·메모 편집기·메모 이미지·기존 일지 가져오기·엑셀 내보내기가 CSP를 어기지 않는지.
 // (vite.config.ts preview 헤더 = src-tauri/tauri.conf.json의 CSP + 가짜 nonce → 'unsafe-inline'이 무시되는 실앱과 같은 조건)
 import { expect, test, type Page } from "@playwright/test";
+import { openSettings } from "./settings-helper";
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
@@ -156,7 +157,7 @@ test("보드·주간 메모 편집기(서식 전부)·엑셀 내보내기 — CS
 
   // 기존 일지 가져오기(M3-S0): 양식 엑셀 만들기(ExcelJS) + 표 붙여넣기 → 미리보기 → 가져오기
   await page.keyboard.press("Escape");
-  await page.getByRole("button", { name: "설정" }).click();
+  await openSettings(page, "import");
   await page.getByRole("button", { name: "기존 일지 가져오기…" }).click();
   const wizard = page.getByTestId("import-wizard");
   page.once("dialog", (d) => void d.accept(d.defaultValue()));

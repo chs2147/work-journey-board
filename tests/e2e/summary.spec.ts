@@ -10,7 +10,8 @@ const panel = (page: Page) => page.getByTestId("summary-panel");
 const auto = (page: Page) => page.getByTestId("summary-auto");
 const edited = (page: Page) => page.getByTestId("summary-edited");
 const cell = (page: Page, cat: string, date: string) => page.getByTestId(`cell-${cat}-${date}`);
-const saved = (page: Page) => expect(page.getByTestId("save-state")).toHaveText("저장됨 ✓");
+const saved = (page: Page) =>
+  expect(page.locator('[data-testid="save-state"][data-idle="true"]')).toHaveText("저장됨");
 const clipboard = (page: Page) =>
   page.evaluate(() => (globalThis as unknown as { __wjb: { clipboard(): string | null } }).__wjb.clipboard());
 

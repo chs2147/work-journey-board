@@ -7,6 +7,7 @@ import { prepareConnection } from "../data/driver";
 import { openSqlJs } from "../data/drivers/sqlJs";
 import { migrate } from "../data/migrate";
 import { seedSample } from "../data/seed";
+import { isThemePref } from "../shared/theme";
 import { createFakeFs } from "./fakeFs";
 import { baseName, dirOf, isOneDriveLike, type AppConfig, type Platform } from "./index";
 
@@ -61,6 +62,9 @@ const ready = (async () => {
     await makeJournal(DEMO_DIR, params.get("empty") !== "1");
     config = { dataDir: DEMO_DIR };
   }
+  // ?theme=dark — 이 PC 설정(config.json)에 테마가 적혀 있는 상태 흉내(improve-1027v5-spec 4-2)
+  const theme = params.get("theme");
+  if (config && isThemePref(theme)) config.theme = theme;
 })();
 
 export const browserPlatform: Platform = {
@@ -74,11 +78,13 @@ export const browserPlatform: Platform = {
 
   async loadConfig() {
     await ready;
-    return config;
+    return config?.dataDir ? { ...config } : null;
   },
-  async saveConfig(c) {
-    config = { ...c };
+  async saveConfig(patch) {
+    // 실앱처럼 합쳐 쓴다(저장 폴더가 없는 상태에서 테마만 오면 테마만 남는 것까지는 흉내 내지 않음)
+    config = { ...(config ?? { dataDir: "" }), ...patch };
   },
+  setWindowTheme: async () => undefined,
 
   suggestedDataDir: async () => DEMO_DIR,
   async pickFolder(title) {

@@ -64,6 +64,8 @@ export interface BoardState {
   nudges: string[];
   nudgeWeeks: number;
   saving: number;
+  /** 마지막으로 저장을 마친 시각 `14:03`(저장됨 표시 툴팁, improve-1027v5-spec 2절) */
+  savedAt: string | null;
   failed: string[];
   canUndo: boolean;
   canRedo: boolean;
@@ -136,6 +138,7 @@ export const useBoard = create<BoardState>(() => ({
   nudges: [],
   nudgeWeeks: 3,
   saving: 0,
+  savedAt: null,
   failed: [],
   canUndo: false,
   canRedo: false,
@@ -190,7 +193,9 @@ export async function track<T>(work: () => Promise<T>): Promise<T> {
   try {
     return await work();
   } finally {
-    set((s) => ({ saving: s.saving - 1 }));
+    const d = new Date();
+    const at = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+    set((s) => ({ saving: s.saving - 1, savedAt: s.saving === 1 ? at : s.savedAt }));
   }
 }
 

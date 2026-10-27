@@ -6,7 +6,7 @@
   flex-direction: column;
   align-items: center;
   gap: var(--sp-1);
-  padding: var(--sp-2) 0;
+  padding: var(--sp-2) 0 var(--sp-3);
   background: var(--surface-card);
   border-right: 1px solid var(--line);
 }
@@ -85,5 +85,22 @@
   height: 7px;
   border-radius: 50%;
   background: var(--danger);
+  box-shadow: 0 0 0 2px var(--surface-card);
+}
+
+/* 보기·패널 단추와 맨 아래 설정 사이 빈 공간(improve-1027v5-spec 1-1) */
+.fill {
+  flex: 1 1 auto;
+}
+
+/* 새 판이 있을 때 설정 단추의 파란 점(improve-1027v4-spec 1-2) */
+.updateDot {
+  position: absolute;
+  right: 5px;
+  top: 5px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
   box-shadow: 0 0 0 2px var(--surface-card);
 }

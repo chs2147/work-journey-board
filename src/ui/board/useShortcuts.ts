@@ -19,6 +19,8 @@ import { toggleExport, useExport } from "../export/exportStore";
 import { toggleSummary } from "../summary/summaryStore";
 import { focusNote, leaveNote } from "../note/noteStore";
 import { closeInsights, focusedCategory, openInsights, useInsights } from "../insights/insightsStore";
+import { leaveSettings, setSettingsOpen } from "../common/appController";
+import { useAppStore } from "../common/appStore";
 
 const isTyping = (el: Element | null) => el instanceof HTMLTextAreaElement || el instanceof HTMLInputElement;
 
@@ -30,6 +32,27 @@ export function useShortcuts() {
       if (!ready) return;
       const mod = e.ctrlKey || e.metaKey;
       const insights = useInsights.getState().open;
+      const settings = useAppStore.getState().settingsOpen;
+
+      // 설정(improve-1027v5-spec 1-2): Ctrl+, = 열기/닫기. 보이는 동안은 Alt+1·2·3(다른 화면으로)만 받는다
+      if (mod && !e.altKey && !e.shiftKey && e.code === "Comma") {
+        e.preventDefault();
+        if (settings) leaveSettings();
+        else setSettingsOpen(true);
+        return;
+      }
+      if (settings) {
+        if (e.altKey && !mod && !e.shiftKey && ["Digit1", "Digit2", "Digit3"].includes(e.code)) {
+          e.preventDefault();
+          setSettingsOpen(false);
+          if (e.code === "Digit1") {
+            closeInsights();
+            focusStartCell();
+          } else if (e.code === "Digit2") setPanelOpen(true, true);
+          else if (!insights) void openInsights(focusedCategory());
+        }
+        return;
+      }
 
       // 인사이트(m3-s1-spec 10절): Alt+3 = 열기(칸의 업무)/보드로, Alt+1 = 보드로. 보이는 동안 보드 단축키는 쉰다
       if (e.altKey && !mod && !e.shiftKey && e.code === "Digit3") {

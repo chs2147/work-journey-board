@@ -21,13 +21,15 @@ export const STR = {
     todayTitle: "이번 주·오늘로 (Alt+T)",
     year: "연간 보기",
     yearTitle: "연간 보기 (Alt+Y)",
-    settings: "설정",
-    settingsDisabled: "일지를 연 뒤에 쓸 수 있습니다",
   },
   save: {
-    saved: "저장됨 ✓",
+    saved: "저장됨",
+    savedTitle: (at: string | null) =>
+      at
+        ? `모든 변경이 일지 파일에 저장되었습니다 · 마지막 저장 ${at}`
+        : "모든 변경이 일지 파일에 저장되었습니다",
     saving: "저장 중…",
-    failed: "저장 실패 — 다시 시도",
+    failed: "저장하지 못함 · 다시 시도",
     failedTitle: "저장하지 못한 칸이 있습니다. 눌러서 다시 저장합니다.",
   },
   status: {
@@ -341,6 +343,8 @@ export const STR = {
   rail: {
     label: "메뉴",
     board: "주간 보드 (Alt+1)",
+    settings: "설정 (Ctrl+,)",
+    settingsUpdate: "설정 (Ctrl+,) — 새 판이 있습니다",
     important: (n: number) => (n ? `중요 업무 ${n}건 (Alt+2)` : "중요 업무 (Alt+2)"),
     late: "지난 날짜의 중요 업무가 있습니다",
   },
@@ -799,7 +803,6 @@ export const STR = {
     banner: (v: string) => `새 판 ${v}이(가) 있습니다`,
     details: "자세히·설치",
     later: "나중에",
-    railDot: "새 판이 있습니다",
     dialogTitle: (v: string) => `${v}(으)로 업데이트`,
     from: (cur: string, v: string) => `${cur} → ${v}`,
     size: (mb: string) => `설치 파일 ${mb}MB`,
@@ -822,6 +825,59 @@ export const STR = {
   settings: {
     title: "설정",
     close: "닫기",
+    // 전체 설정 화면(improve-1027v5-spec 1절)
+    backBoard: "← 주간 보드로",
+    backInsights: "← 인사이트로",
+    backTitle: "설정 닫기 (Esc)",
+    catsLabel: "설정 분류",
+    keysHint: "↑ ↓ 분류 이동 · Esc 보드로",
+    cats: {
+      screen: { name: "화면", desc: "테마", intro: "앱의 색 테마를 고릅니다. 고르면 바로 바뀝니다." },
+      data: {
+        name: "데이터·백업",
+        desc: "저장 위치 · 백업 · 용량",
+        intro: "일지 파일이 있는 곳과 자동 백업, 쓰고 있는 용량입니다.",
+      },
+      import: {
+        name: "가져오기",
+        desc: "기존 일지 가져오기 · 가져온 기록",
+        intro: "다른 곳에 적어 온 일지를 한 번에 가져오고, 가져온 기록을 되돌립니다.",
+      },
+      work: {
+        name: "업무 관리",
+        desc: "매주 반복 · 태그 · 종료된 업무 · 무기록 종료 제안",
+        intro: "업무와 항목을 다루는 규칙 — 반복·태그·종료입니다.",
+      },
+      update: {
+        name: "업데이트·정보",
+        desc: "새 판 확인 · 버전 · 글꼴",
+        intro: "새 판을 확인하고 이 앱의 정보를 봅니다.",
+      },
+    },
+    theme: "테마",
+    themeDesc: "시스템 설정을 따르거나, 윈도우 설정과 관계없이 라이트·다크로 고정합니다.",
+    themeDefault: "기본",
+    themeNames: { system: "시스템 설정", light: "라이트", dark: "다크" },
+    themeNow: (dark: boolean) =>
+      `윈도우 설정 › 개인 설정 › 색 › 앱 모드를 따릅니다 · 지금: ${dark ? "다크" : "라이트"}`,
+    themeLight: "밝은 바탕 — 윈도우가 다크여도 이 앱은 밝게",
+    themeDark: "어두운 바탕 — 윈도우가 라이트여도 이 앱은 어둡게",
+    themeNote:
+      "테마는 이 PC에 저장됩니다(일지 파일과 따로). 다른 PC에서 같은 일지를 열면 그 PC의 테마를 따릅니다. 시작 창도 같은 테마로 뜹니다.",
+    locationDesc: "일지 = 이 폴더의 파일 1개",
+    folderLabel: "일지 폴더",
+    backupDesc: "하루 첫 실행·종료 때 자동",
+    lastBackupLabel: "마지막 백업",
+    policyLabel: "보관 규칙",
+    usageTitle: "용량",
+    usageDesc: "메모 이미지는 일지 파일 안에 들어 있어 백업마다 함께 복사됩니다",
+    usageText: (size: string) => `기록·메모 글 ${size}`,
+    usageImages: (size: string) => `메모 이미지 ${size}`,
+    usageBar: (file: string, images: string) => `일지 ${file} 중 메모 이미지 ${images}`,
+    importCardDesc: "OneNote 등에 적어 온 일지를 양식 엑셀로 옮겨 가져옵니다",
+    historyDesc: "가져온 묶음마다 되돌릴 수 있습니다",
+    repeatDesc: "보드에서 항목의 ↻ 또는 Alt+R로 켭니다 · 문구는 다음 생성부터 적용",
+    tagsDesc: "이름 바꾸기 · 순서 · 지우기(모든 업무에서 떨어짐)",
     location: "저장 위치",
     fileSize: (kb: string) => `데이터 파일 ${kb} KB`,
     openFolder: "폴더 열기",
@@ -840,17 +896,15 @@ export const STR = {
     openOld: "이전 폴더 열기",
     failed: (m: string) => `옮기지 못했습니다(기존 위치를 계속 사용합니다): ${m}`,
     backup: "백업",
-    lastBackup: (when: string) => `마지막 백업: ${when}`,
     noBackup: "아직 백업이 없습니다",
     backupNow: "지금 백업",
     openBackups: "백업 폴더 열기",
     backupDone: "백업했습니다",
     usage: (file: string, images: number, imageSize: string) =>
       `일지 파일 ${file}${images ? ` · 그 안의 메모 이미지 ${images}개(${imageSize})` : ""}`,
-    usageBackups: (copies: number, total: string) =>
-      `백업은 일지 파일 사본이라 최대 ${copies}개 × 지금 크기 ≈ ${total}까지 늘 수 있습니다. 이미지를 많이 넣으면 그만큼 커집니다.`,
+    usageBackups: (copies: number, total: string) => `백업 최대 ${copies}개 ≈ ${total}`,
     backupPolicy: (daily: number, monthly: number) =>
-      `자동: 하루 첫 실행·종료 시 · 최근 ${daily}일 + 월 1개 × ${monthly} 보관(수동 백업은 지우지 않음)`,
+      `최근 ${daily}일 + 월 1개 × ${monthly} 보관 · 직접 만든 백업은 지우지 않음`,
     categories: "종료된 업무",
     noArchived: "종료된 업무가 없습니다",
     endedOn: (d: string) => `${d} 종료`,
@@ -872,7 +926,8 @@ export const STR = {
     repeatDeleteConfirm: (t: string) => `"${t}" 반복을 삭제할까요? 이미 들어온 기록은 그대로 남습니다.`,
     about: "정보",
     version: (v: string) => `버전 ${v}`,
-    fontCredit: "글꼴: Pretendard (SIL Open Font License 1.1)",
+    fontLabel: "글꼴",
+    fontCredit: "Pretendard (SIL Open Font License 1.1)",
   },
   splash: {
     tagline: "오늘 한 일을, 한 줄씩",

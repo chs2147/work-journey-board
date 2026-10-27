@@ -1,6 +1,7 @@
 // 개선 U2 E2E(improve-1026-spec 4~6절): 업무 태그(여러 개) · 태그 필터 보기 · 설정 > 태그.
 // 브라우저 모드, 오늘 = 2026-10-22(목, 2026-W43), 가상 샘플만(업무 4개).
 import { expect, test, type Page } from "@playwright/test";
+import { openSettings } from "./settings-helper";
 
 const SETTLE = "차세대 정산 시스템 구축";
 const SEC = "협력사 보안 점검";
@@ -138,7 +139,7 @@ test("설정 > 태그: 이름 바꾸기·순서·지우기(확인) — 칩·필�
   await page.getByRole("menuitemcheckbox", { name: /#개발/ }).click();
   await page.keyboard.press("Escape");
 
-  await page.getByRole("button", { name: "설정" }).click();
+  await openSettings(page, "work");
   const list = page.getByTestId("tag-settings");
   await expect(list.locator("li")).toHaveCount(2);
   const name = list.getByRole("textbox", { name: "태그 이름: 프로젝트A" });

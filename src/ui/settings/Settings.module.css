@@ -1,66 +1,218 @@
-.backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 60;
+/* 설정 화면(improve-1027v5-spec 1-3): 보드 자리를 덮는 전체 화면 — 왼쪽 분류 목록 + 오른쪽 카드 */
+.view {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
   display: flex;
-  justify-content: flex-end;
-  background: rgb(0 0 0 / 0.28);
+  background: var(--surface-page);
 }
 
-.panel {
+.cats {
+  flex: 0 0 248px;
   display: flex;
   flex-direction: column;
-  gap: var(--sp-2);
-  width: min(560px, 100%);
-  height: 100%;
+  gap: var(--sp-1);
+  padding: var(--sp-5) var(--sp-4);
+  border-right: 1px solid var(--line);
+  background: var(--surface-card);
   overflow: auto;
-  padding: var(--sp-5) var(--sp-6) var(--sp-6);
-  background: var(--surface-card);
-  border-left: 1px solid var(--line-strong);
-  outline: none;
 }
 
-.head {
+.cats [role="tablist"] {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.head h2 {
-  margin: 0;
-  font-size: var(--fs-xl);
-}
-
-.close {
-  flex: 0 0 auto;
-  width: 32px;
-  height: 30px;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-md);
-  background: var(--surface-card);
+.cat {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  padding: 10px var(--sp-4);
+  border: 0;
+  border-radius: var(--radius-lg);
+  background: none;
   color: var(--text-1);
+  font: inherit;
+  text-align: left;
   cursor: pointer;
 }
 
-.section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-3);
-  padding: var(--sp-4) 0;
-  border-top: 1px solid var(--line);
+.cat:hover {
+  background: var(--surface-sub);
 }
 
-.section h3 {
+.cat:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.catOn,
+.catOn:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.catIcon {
+  flex: 0 0 18px;
+  margin-top: 2px;
+  color: var(--text-2);
+}
+
+.catOn .catIcon {
+  color: var(--accent);
+}
+
+.catText {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.catName {
+  display: block;
+  font-weight: var(--fw-bold);
+}
+
+.catDesc {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--fs-xs);
+  line-height: 1.45;
+  color: var(--text-2);
+}
+
+.catDot {
+  flex: 0 0 8px;
+  width: 8px;
+  height: 8px;
+  margin-top: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.keys {
+  margin: auto 0 0;
+  padding: var(--sp-4) var(--sp-4) 0;
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+}
+
+.content {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: auto;
+  padding: 28px 40px 40px;
+}
+
+.inner {
+  max-width: 820px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+}
+
+.catHead h2 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.catHead p {
+  margin: var(--sp-2) 0 0;
+  color: var(--text-2);
+}
+
+/* 카드 = 제목 + 한 줄 설명 + 설정 행 */
+.card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+}
+
+.cardHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-1) 10px;
+  padding: 14px var(--sp-5) 10px;
+}
+
+.cardHead h3 {
   margin: 0;
   font-size: var(--fs-lg);
 }
 
-.section p {
+.cardDesc {
   margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--text-2);
 }
 
-.section button,
-.section select {
+.setRow {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-5);
+  padding: var(--sp-4) var(--sp-5);
+  border-top: 1px solid var(--line);
+}
+
+.rowText {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rowLabel {
+  font-weight: var(--fw-bold);
+}
+
+.rowDesc {
+  display: block;
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+  color: var(--text-2);
+}
+
+.rowCtl {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+}
+
+.empty {
+  margin: 0;
+  padding: var(--sp-4) var(--sp-5);
+  border-top: 1px solid var(--line);
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+}
+
+.infoNote {
+  margin: 0 var(--sp-5) var(--sp-5);
+  padding: 10px var(--sp-4);
+  border-radius: var(--radius-lg);
+  background: var(--surface-sub);
+  font-size: var(--fs-sm);
+  line-height: 1.55;
+  color: var(--text-2);
+}
+
+/* 업무 관리의 짧은 두 카드는 넓은 창에서 나란히 */
+.pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-5);
+}
+
+.card button,
+.card select {
   flex: 0 0 auto;
   height: 30px;
   padding: 0 var(--sp-4);
@@ -73,15 +225,246 @@
   cursor: pointer;
 }
 
-.section button:disabled {
+.card button:disabled {
   opacity: 0.5;
   cursor: default;
 }
 
-.section .primary {
+.card .primary {
   border-color: var(--accent);
   background: var(--accent);
   color: var(--on-accent);
+  font-weight: var(--fw-bold);
+}
+
+.card .danger {
+  border-color: transparent;
+  background: none;
+  color: var(--danger);
+}
+
+/* 테마 카드(spec 4-1) */
+.themeGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  padding: var(--sp-3) var(--sp-5) var(--sp-5);
+}
+
+.themeOpt {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+}
+
+.themeOpt:has(input:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.themeOn {
+  padding: 9px;
+  border: 2px solid var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.themeName {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.themeName input {
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.badge {
+  margin-left: auto;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--surface-sub);
+  color: var(--text-2);
+  font-size: var(--fs-xs);
+}
+
+/* 미리보기 그림 — 그 테마의 모습이라 테마 토큰이 아닌 고정 색(tokens.css 라이트/다크 값) */
+.thumb {
+  display: flex;
+  height: 112px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+}
+
+.thumbHalf {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  --t-page: #faf9f5;
+  --t-card: #ffffff;
+  --t-line: #d3d1c7;
+  --t-accent: #e6f1fb;
+  --t-accent-line: #b9d3ee;
+  --t-mark: #fff1bf;
+  --t-mark-line: #f0cf6a;
+  background: var(--t-page);
+}
+
+.thumbDark {
+  --t-page: #1a1a19;
+  --t-card: #232322;
+  --t-line: #3d3d3a;
+  --t-accent: #1d2a38;
+  --t-accent-line: #2f4a6a;
+  --t-mark: #3a3116;
+  --t-mark-line: #7a6222;
+}
+
+.thumbBar {
+  flex: 0 0 14px;
+  background: var(--t-card);
+  border-bottom: 1px solid var(--t-line);
+}
+
+.thumbBody {
+  flex: 1 1 auto;
+  display: flex;
+}
+
+.thumbRail {
+  flex: 0 0 12px;
+  background: var(--t-card);
+  border-right: 1px solid var(--t-line);
+}
+
+.thumbCells {
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+  padding: var(--sp-3);
+}
+
+.thumbCells > span {
+  border: 1px solid var(--t-line);
+  border-radius: 3px;
+  background: var(--t-card);
+}
+
+.thumbCells > .thumbAccent {
+  border-color: var(--t-accent-line);
+  background: var(--t-accent);
+}
+
+.thumbCells > .thumbMark {
+  border-color: var(--t-mark-line);
+  background: var(--t-mark);
+}
+
+.thumbLight + .thumbDark .thumbRail {
+  display: none;
+}
+
+/* 용량 막대(spec 1-4) */
+.usage {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: var(--sp-4) var(--sp-5) var(--sp-5);
+  border-top: 1px solid var(--line);
+}
+
+.usageHead {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--sp-2) var(--sp-5);
+  font-size: var(--fs-sm);
+}
+
+.usageBar {
+  display: flex;
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-sub);
+}
+
+.usageText {
+  background: var(--accent);
+}
+
+.usageImages {
+  background: var(--heat-2);
+}
+
+.usageLegend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-5);
+  font-size: var(--fs-xs);
+  color: var(--text-2);
+}
+
+.usageLegend span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.usageLegend i {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+/* 좁은 창: 분류 목록을 위쪽 가로 탭 줄로(spec 1-3) */
+@media (max-width: 1179px) {
+  .view {
+    flex-direction: column;
+  }
+
+  .cats {
+    flex: 0 0 auto;
+    padding: var(--sp-2) var(--sp-4);
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .cats [role="tablist"] {
+    flex-direction: row;
+    overflow-x: auto;
+  }
+
+  .cat {
+    width: auto;
+    flex: 0 0 auto;
+    align-items: center;
+    padding: var(--sp-2) var(--sp-4);
+  }
+
+  .catDesc,
+  .keys {
+    display: none;
+  }
+
+  .catIcon,
+  .catDot {
+    margin-top: 0;
+  }
+
+  .content {
+    padding: var(--sp-5);
+  }
+
+  .pair {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .row {
@@ -92,7 +475,11 @@
 }
 
 .path {
-  padding: var(--sp-3);
+  display: block;
+  margin-top: var(--sp-1);
+  padding: var(--sp-2) 10px;
+  border: 1px solid var(--line);
+  color: var(--text-1);
   background: var(--surface-sub);
   border-radius: var(--radius-md);
   font-family: var(--font-mono);
@@ -109,9 +496,14 @@
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
+  margin: 0 var(--sp-5) var(--sp-5);
   padding: var(--sp-4);
   background: var(--surface-sub);
   border-radius: var(--radius-md);
+}
+
+.flow p {
+  margin: 0;
 }
 
 .error {
@@ -127,7 +519,6 @@
 .list {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-2);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -137,6 +528,8 @@
   display: flex;
   align-items: center;
   gap: var(--sp-3);
+  padding: 10px var(--sp-5);
+  border-top: 1px solid var(--line);
 }
 
 .dot {
@@ -155,7 +548,6 @@
 .repeatList {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-2);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -168,8 +560,8 @@
   gap: var(--sp-1) var(--sp-3);
 }
 
-.repeatList li + li {
-  padding-top: var(--sp-2);
+.repeatList li {
+  padding: 10px var(--sp-5);
   border-top: 1px solid var(--line);
 }
 
@@ -213,13 +605,6 @@
   opacity: 0.6;
 }
 
-.subhead {
-  margin: var(--sp-3) 0 var(--sp-1);
-  color: var(--text-2);
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-bold);
-}
-
 .muted {
   color: var(--text-3);
   text-decoration: line-through;
@@ -229,7 +614,6 @@
 .tagList {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-2);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -240,4 +624,6 @@
   grid-template-columns: 12px minmax(0, 1fr) auto auto auto auto;
   align-items: center;
   gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-5);
+  border-top: 1px solid var(--line);
 }

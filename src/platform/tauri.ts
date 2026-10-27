@@ -9,7 +9,8 @@ import type { BackupFs } from "../data/backup";
 import { openTauriSql } from "../data/drivers/tauriSql";
 import {
   isOneDriveLike,
-  type AppConfig,
+  mergeConfigJson,
+  parseConfig,
   type PathInfo,
   type Platform,
   type SplashWindow,
@@ -52,16 +53,15 @@ export const tauriPlatform: Platform = {
   now: () => new Date(),
 
   async loadConfig() {
-    const raw = await invoke<string | null>("config_read");
-    if (!raw) return null;
-    try {
-      const c = JSON.parse(raw) as Partial<AppConfig>;
-      return typeof c.dataDir === "string" && c.dataDir ? { dataDir: c.dataDir } : null;
-    } catch {
-      return null;
-    }
+    return parseConfig(await invoke<string | null>("config_read"));
   },
-  saveConfig: (config) => invoke("config_write", { json: JSON.stringify(config, null, 2) }),
+  async saveConfig(patch) {
+    const raw = await invoke<string | null>("config_read");
+    await invoke("config_write", { json: mergeConfigJson(raw, patch) });
+  },
+  async setWindowTheme(pref) {
+    await getCurrentWindow().setTheme(pref === "system" ? null : pref);
+  },
 
   async suggestedDataDir() {
     return join(await homeDir(), "WorkJourney");

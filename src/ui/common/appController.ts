@@ -12,10 +12,11 @@ import {
 import type { SqlDriver } from "../../data/driver";
 import { loadPlatform, type Platform } from "../../platform";
 import { STR } from "../../shared/strings";
-import { flushAll, init as initBoard, toast } from "../board/boardStore";
+import { applyTheme, readStoredTheme, storeTheme, type ThemePref } from "../../shared/theme";
+import { flushAll, focusStartCell, init as initBoard, reload, toast } from "../board/boardStore";
 import { flushDraft, initSummary } from "../summary/summaryStore";
 import { finishNote, flushNote, initNote } from "../note/noteStore";
-import { initInsights } from "../insights/insightsStore";
+import { initInsights, useInsights } from "../insights/insightsStore";
 import { useAppStore, type JournalStatus } from "./appStore";
 
 const set = useAppStore.setState;
@@ -34,6 +35,8 @@ export async function start() {
   set({ platform: p });
   p.onExit(onExit);
   const config = await p.loadConfig();
+  // 테마 정본 = config.json, 없으면 이 창이 이미 적용한 사본(public/theme-early.js)
+  adoptTheme(config?.theme ?? readStoredTheme());
   if (!config) return set({ journal: { state: "first-run" } });
   p.splash?.status(STR.splash.opening);
   await openAt(config.dataDir);
@@ -117,8 +120,34 @@ export function goFirstRun() {
   set({ journal: { state: "first-run" } });
 }
 
+/** 설정 화면(improve-1027v5-spec 1-2) — 보드 자리를 덮는다. 닫을 때 보드를 다시 읽는다(다시 시작한 업무·반복 수정 반영) */
 export function setSettingsOpen(open: boolean) {
+  const was = get().settingsOpen;
+  if (open && get().journal.state !== "ready") return;
   set({ settingsOpen: open });
+  if (was && !open) void reload();
+}
+
+/** 설정에서 나가기(Esc·[← 보드로]·Ctrl+,) — 들어오기 전 화면(보드 또는 인사이트)으로 */
+export function leaveSettings() {
+  setSettingsOpen(false);
+  if (!useInsights.getState().open) focusStartCell();
+}
+
+/** 화면 테마를 적용하고 사본·창 제목 표시줄을 맞춘다 */
+function adoptTheme(pref: ThemePref) {
+  applyTheme(pref);
+  storeTheme(pref);
+  set({ theme: pref });
+  void platform()
+    .setWindowTheme(pref)
+    .catch(() => undefined);
+}
+
+/** 설정 › 화면 › 테마: 바로 적용하고 이 PC 설정(config.json)에 저장 */
+export async function setTheme(pref: ThemePref) {
+  adoptTheme(pref);
+  await platform().saveConfig({ theme: pref });
 }
 
 async function closeCurrent() {

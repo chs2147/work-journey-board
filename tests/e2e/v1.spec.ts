@@ -8,7 +8,8 @@ const SEC = "협력사 보안 점검";
 const FIRST = "테스트 데이터 이관 스크립트 작성 착수"; // 오늘 SETTLE 칸 첫 항목(시작 시 커서)
 
 const cell = (page: Page, cat: string, date: string) => page.getByTestId(`cell-${cat}-${date}`);
-const saved = (page: Page) => expect(page.getByTestId("save-state")).toHaveText("저장됨 ✓");
+const saved = (page: Page) =>
+  expect(page.locator('[data-testid="save-state"][data-idle="true"]')).toHaveText("저장됨");
 const values = (page: Page) =>
   cell(page, SETTLE, TODAY)
     .locator("textarea")

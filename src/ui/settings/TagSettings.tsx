@@ -1,6 +1,7 @@
 // 설정 > 태그(improve-1026-spec 4-1): 이름 바꾸기 · 순서 · 지우기(확인 후 — 모든 업무에서 떨어짐).
 import { STR } from "../../shared/strings";
 import { deleteTag, moveTag, renameTag, useBoard } from "../board/boardStore";
+import { Card } from "./SettingsCard";
 import styles from "./Settings.module.css";
 
 export function TagSettings() {
@@ -9,10 +10,9 @@ export function TagSettings() {
   const usage = (id: string) => Object.values(categoryTags).filter((ids) => ids.includes(id)).length;
 
   return (
-    <section className={styles.section} aria-labelledby="s-tags">
-      <h3 id="s-tags">{STR.tags.settingsTitle}</h3>
+    <Card id="s-tags" title={STR.tags.settingsTitle} desc={STR.settings.tagsDesc}>
       {tags.length === 0 ? (
-        <p className={styles.note}>{STR.tags.settingsNone}</p>
+        <p className={styles.empty}>{STR.tags.settingsNone}</p>
       ) : (
         <ul className={styles.tagList} data-testid="tag-settings">
           {tags.map((t, i) => (
@@ -67,6 +67,6 @@ export function TagSettings() {
           ))}
         </ul>
       )}
-    </section>
+    </Card>
   );
 }

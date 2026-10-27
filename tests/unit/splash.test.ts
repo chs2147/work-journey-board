@@ -22,7 +22,7 @@ function vars(css: string, prefix: string): Record<string, string> {
     out[m[1]!] = m[2]!;
   return out;
 }
-const DARK = "@media (prefers-color-scheme: dark)";
+const DARK = ':root[data-theme="dark"]';
 const lightPart = (css: string) => css.slice(0, css.indexOf(DARK));
 const darkPart = (css: string) => css.slice(css.indexOf(DARK));
 const body = (html: string) => html.slice(html.indexOf("<body>") + 6, html.indexOf("</body>"));

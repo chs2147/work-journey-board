@@ -21,7 +21,8 @@ const outline = async (c: Locator) =>
           `${e.parentElement!.className.includes("itemSub") ? "·" : ""}${(e as HTMLTextAreaElement).value}`,
       ),
     );
-const saved = (page: Page) => expect(page.getByTestId("save-state")).toHaveText("저장됨 ✓");
+const saved = (page: Page) =>
+  expect(page.locator('[data-testid="save-state"][data-idle="true"]')).toHaveText("저장됨");
 /** 저장된 내용을 DB에서 다시 읽기: 다음 주로 갔다가 돌아온다. */
 async function reloadWeek(page: Page) {
   await page.keyboard.press("Alt+ArrowRight");
@@ -341,12 +342,18 @@ test("업무 머리를 기록 칸에 떨어뜨려도 칸에 글자가 들어가�
   await expect(target).toHaveValue(value);
 });
 
-test("상단은 2줄 — 1줄 타이틀, 2줄 주 이동·설정", async ({ page }) => {
+test("상단은 2줄 — 1줄 타이틀, 2줄 주 이동·저장 표시 · 설정은 레일 맨 아래", async ({ page }) => {
   const brand = (await page.getByRole("img", { name: "Work Journey Board" }).boundingBox())!;
   const week = (await page.getByTestId("week-title").boundingBox())!;
-  const settings = (await page.getByRole("button", { name: "설정" }).boundingBox())!;
+  const saved = (await page.getByTestId("save-state").boundingBox())!;
   expect(week.y).toBeGreaterThanOrEqual(brand.y + brand.height);
-  expect(Math.abs(settings.y + settings.height / 2 - (week.y + week.height / 2))).toBeLessThan(4);
+  expect(Math.abs(saved.y + saved.height / 2 - (week.y + week.height / 2))).toBeLessThan(4);
+  // 레일: 보드·인사이트·★ 위쪽, ⚙ 맨 아래(improve-1027v5-spec 1-1)
+  const rail = (await page.getByRole("navigation", { name: "메뉴" }).boundingBox())!;
+  const gear = (await page.getByTestId("rail-settings").boundingBox())!;
+  const star = (await page.getByTestId("rail-important").boundingBox())!;
+  expect(gear.y).toBeGreaterThan(star.y + 200);
+  expect(rail.y + rail.height - (gear.y + gear.height)).toBeLessThan(20);
 });
 
 test("개조 부호는 점 — 본 항목 채운 점, 세부 항목 빈 점", async ({ page }) => {

@@ -3,7 +3,8 @@
 import { expect, test, type Page } from "@playwright/test";
 
 const TODAY = "2026-10-22";
-const saved = (page: Page) => expect(page.getByTestId("save-state")).toHaveText("저장됨 ✓");
+const saved = (page: Page) =>
+  expect(page.locator('[data-testid="save-state"][data-idle="true"]')).toHaveText("저장됨");
 const cellTexts = (page: Page, name: string, day: string) =>
   page.getByTestId(`cell-${name}-${day}`).locator("textarea");
 

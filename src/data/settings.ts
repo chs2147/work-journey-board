@@ -41,8 +41,14 @@ export interface Settings {
     exportSnapshots: boolean;
     /** 중요 업무 패널 아래 "이 주 완료" 펼침(improve-1027v4-spec 4절) */
     weekDoneOpen: boolean;
+    /** 설정 화면에서 마지막으로 본 분류(improve-1027v5-spec 1-2) */
+    settingsCategory: SettingsCategory;
   };
 }
+
+/** 설정 화면 분류(improve-1027v5-spec 1-4) */
+export const SETTINGS_CATEGORIES = ["screen", "data", "import", "work", "update"] as const;
+export type SettingsCategory = (typeof SETTINGS_CATEGORIES)[number];
 
 /** 메모 보드 배율 범위(improve-1026-spec 11-1) */
 export const NOTE_ZOOM_MIN = 0.25;
@@ -80,6 +86,7 @@ export const DEFAULT_SETTINGS: Settings = {
     insightTab: "timeline",
     exportSnapshots: false,
     weekDoneOpen: true,
+    settingsCategory: "screen",
   },
 };
 
@@ -135,6 +142,8 @@ export function mergeSettings(base: Settings, patch: unknown): Settings {
   if (s.ui.insightTab !== "timeline" && s.ui.insightTab !== "overview") s.ui.insightTab = "timeline";
   if (typeof s.ui.exportSnapshots !== "boolean") s.ui.exportSnapshots = false;
   if (typeof s.ui.weekDoneOpen !== "boolean") s.ui.weekDoneOpen = true;
+  if (!(SETTINGS_CATEGORIES as readonly string[]).includes(s.ui.settingsCategory))
+    s.ui.settingsCategory = "screen";
   if (!(s.ui.noteDockHeight >= NOTE_DOCK_MIN)) s.ui.noteDockHeight = DEFAULT_SETTINGS.ui.noteDockHeight;
   return s;
 }

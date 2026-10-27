@@ -2,12 +2,15 @@ import { isTauri } from "@tauri-apps/api/core";
 import type { BackupFs, VerifyCopy } from "../data/backup";
 import type { SqlDriver } from "../data/driver";
 import { STR } from "../shared/strings";
+import { isThemePref, type ThemePref } from "../shared/theme";
 
 // 플랫폼 차이는 이 인터페이스 뒤로만(CLAUDE.md 4-5). 실앱 = Tauri(윈도우), 브라우저 모드 = 개발·테스트용 가짜 폴더.
 
 /** `%LOCALAPPDATA%\WorkJourneyBoard\config.json` 내용. DB를 찾기 위한 정보라 DB 안에 둘 수 없다(data-spec 3-4). */
 export interface AppConfig {
   dataDir: string;
+  /** 화면 테마(improve-1027v5-spec 4-2) — 이 PC 취향이라 일지가 아니라 여기에. 없으면 시스템 설정 */
+  theme?: ThemePref;
 }
 
 /** 내보내기 종류 — 저장 대화상자의 파일 형식 거르개와 허용 확장자 */
@@ -29,7 +32,10 @@ export interface Platform {
   now(): Date;
 
   loadConfig(): Promise<AppConfig | null>;
-  saveConfig(config: AppConfig): Promise<void>;
+  /** 주어진 값만 바꾸고 나머지(다른 키 포함)는 그대로 둔다 — 저장 위치를 옮겨도 테마가 남게 */
+  saveConfig(patch: Partial<AppConfig>): Promise<void>;
+  /** 창 제목 표시줄 테마(system = 윈도우 설정 따름). 브라우저 모드는 할 일 없음 */
+  setWindowTheme(pref: ThemePref): Promise<void>;
 
   /** 첫 실행 추천 폴더: `C:\Users\<사용자>\WorkJourney` (문서 폴더 아님, overview 10-8) */
   suggestedDataDir(): Promise<string>;
@@ -104,6 +110,31 @@ export async function loadPlatform(): Promise<Platform> {
 export function dirOf(path: string): string {
   const i = Math.max(path.lastIndexOf("\\"), path.lastIndexOf("/"));
   return i > 0 ? path.slice(0, i) : path;
+}
+
+/** config.json 글 → 설정(저장 폴더가 없으면 첫 실행 = null). 모르는 테마 값은 버린다 */
+export function parseConfig(raw: string | null): AppConfig | null {
+  if (!raw) return null;
+  try {
+    const c = JSON.parse(raw) as Partial<AppConfig>;
+    if (typeof c.dataDir !== "string" || !c.dataDir) return null;
+    return isThemePref(c.theme) ? { dataDir: c.dataDir, theme: c.theme } : { dataDir: c.dataDir };
+  } catch {
+    return null;
+  }
+}
+
+/** 지금 config.json 글에 바꿀 값만 합친 새 글 — 다른 키는 그대로 둔다(improve-1027v5-spec 4-2) */
+export function mergeConfigJson(raw: string | null, patch: Partial<AppConfig>): string {
+  let base: Record<string, unknown> = {};
+  try {
+    const parsed: unknown = raw ? JSON.parse(raw) : {};
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed))
+      base = parsed as Record<string, unknown>;
+  } catch {
+    // 깨진 파일이면 새로 쓴다
+  }
+  return JSON.stringify({ ...base, ...patch }, null, 2);
 }
 
 /** 경로의 파일 이름 부분 */

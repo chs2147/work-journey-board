@@ -7,7 +7,8 @@ const boxes = (page: Page) => page.getByTestId("note-box");
 const edges = (page: Page) => page.getByTestId("note-edge");
 /** 알림(토스트) 묶음 */
 const toasts = (page: Page) => page.locator('[role="status"][aria-live="polite"]');
-const saved = (page: Page) => expect(page.getByTestId("save-state")).toHaveText("저장됨 ✓");
+const saved = (page: Page) =>
+  expect(page.locator('[data-testid="save-state"][data-idle="true"]')).toHaveText("저장됨");
 
 /** W44 메모 판에 글 상자 3개: A(왼쪽 위) · B(오른쪽 위, 같은 높이) · C(왼쪽 아래) */
 async function setup(page: Page) {

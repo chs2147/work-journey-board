@@ -5,7 +5,8 @@ import { expect, test, type Page } from "@playwright/test";
 const TODAY = "2026-10-22";
 const SETTLE = "차세대 정산 시스템 구축";
 const URL1 = "https://wiki.example.local/deploy/checklist";
-const saved = (page: Page) => expect(page.getByTestId("save-state")).toHaveText("저장됨 ✓");
+const saved = (page: Page) =>
+  expect(page.locator('[data-testid="save-state"][data-idle="true"]')).toHaveText("저장됨");
 const opened = (page: Page) =>
   page.evaluate(() => (globalThis as unknown as { __wjb: { openedUrls(): string[] } }).__wjb.openedUrls());
 

@@ -1,6 +1,7 @@
 // 매주 반복(important-repeat-spec 3절). 브라우저 모드, 오늘 = 2026-10-22(목, W43), 가상 샘플.
 // "새 주가 되면 자동으로 들어옴"은 저장소 단위 테스트(materializeWeek)로, 여기서는 화면 흐름을 본다.
 import { expect, test, type Page } from "@playwright/test";
+import { openSettings } from "./settings-helper";
 
 const TODAY = "2026-10-22";
 const SETTLE = "차세대 정산 시스템 구축";
@@ -59,7 +60,7 @@ test("마우스로 ↻ 켜기 → 설정 > 반복 항목에 보이고, 중지하
   await item.getByRole("button", { name: "매주 반복 (Alt+R)" }).click();
   await expect(page.getByText("다음 주부터 수요일에 들어옵니다", { exact: false })).toBeVisible();
 
-  await page.getByRole("button", { name: "설정" }).click();
+  await openSettings(page, "work");
   const list = page.getByTestId("repeat-list");
   await expect(list).toContainText("수");
   await expect(list).toContainText(SEC);

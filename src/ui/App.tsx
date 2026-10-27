@@ -16,7 +16,7 @@ import { ExportDialog } from "./export/ExportDialog";
 import { ImportWizard } from "./import/ImportWizard";
 import { useImport } from "./import/importStore";
 import { useExport } from "./export/exportStore";
-import { SettingsPanel } from "./settings/SettingsPanel";
+import { SettingsView } from "./settings/SettingsView";
 import { setSummaryOpen, useSummary } from "./summary/summaryStore";
 import { SummaryPanel } from "./summary/SummaryPanel";
 import { NoteDock } from "./note/NoteDock";
@@ -33,7 +33,6 @@ let started = false;
 
 export function App() {
   const journal = useAppStore((s) => s.journal);
-  const settingsOpen = useAppStore((s) => s.settingsOpen);
   const exportOpen = useExport((s) => s.open);
   const importOpen = useImport((s) => s.open);
   const updateOpen = useUpdate((s) => s.dialogOpen);
@@ -65,7 +64,6 @@ export function App() {
       <footer className={styles.status} data-testid="journal-status">
         {statusText(journal)}
       </footer>
-      {settingsOpen && journal.state === "ready" && <SettingsPanel />}
       {exportOpen && journal.state === "ready" && <ExportDialog />}
       {importOpen && journal.state === "ready" && <ImportWizard />}
       {updateOpen && journal.state === "ready" && <UpdateDialog />}
@@ -104,20 +102,23 @@ function Workspace() {
   const noteExpanded = useNote((s) => s.expanded);
   // 인사이트(m3-s1-spec 1-2): 보드는 숨겨 둔 채 그대로 — 보던 주·뷰·커서·메모가 남는다
   const insightsOpen = useInsights((s) => s.open);
+  // 설정(improve-1027v5-spec 1-2)도 인사이트처럼 보드 자리를 덮는다 — 보드·인사이트는 그대로 두고 숨김
+  const settingsOpen = useAppStore((s) => s.settingsOpen);
   // 메모 도크가 자동 높이면 보드는 필요한 만큼만(남는 공간은 메모) — 접혀 있으면 보드가 다 쓴다
   const noteAutoHeight = useNote((s) => s.dockAuto && !s.collapsed);
   // 좁은 창이면 패널을 보드 위에 겹쳐 띄우고, 보드를 누르면 닫는다(spec 1-3)
   const narrow = useMediaQuery("(max-width: 1179px)");
   const width = useWindowWidth();
-  const leftW = panelOpen && !narrow ? IMPORTANT_W : 0;
+  const leftW = panelOpen && !narrow && !settingsOpen ? IMPORTANT_W : 0;
   const summaryOverlay = width - RAIL_W - leftW - SUMMARY_W < BOARD_MIN_W;
   return (
     <div className={styles.workspace}>
       <Rail />
-      {panelOpen && <ImportantPanel overlay={narrow} />}
-      {insightsOpen && <InsightsView />}
+      {panelOpen && !settingsOpen && <ImportantPanel overlay={narrow} />}
+      {insightsOpen && !settingsOpen && <InsightsView />}
+      {settingsOpen && <SettingsView />}
       <div
-        className={insightsOpen ? styles.hidden : styles.boardArea}
+        className={insightsOpen || settingsOpen ? styles.hidden : styles.boardArea}
         onMouseDown={() => {
           if (narrow && panelOpen) setPanelOpen(false);
           if (summaryOverlay && summaryOpen) setSummaryOpen(false);
@@ -141,7 +142,7 @@ function Workspace() {
           </>
         )}
       </div>
-      {summaryOpen && !insightsOpen && <SummaryPanel overlay={summaryOverlay} />}
+      {summaryOpen && !insightsOpen && !settingsOpen && <SummaryPanel overlay={summaryOverlay} />}
     </div>
   );
 }

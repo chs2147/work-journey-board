@@ -2,7 +2,8 @@
 // 브라우저 모드, 오늘 = 2026-10-22(목, 2026-W43), 가상 샘플(W43에 예전 요일 메모가 있음).
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
-const saved = (page: Page) => expect(page.getByTestId("save-state")).toHaveText("저장됨 ✓");
+const saved = (page: Page) =>
+  expect(page.locator('[data-testid="save-state"][data-idle="true"]')).toHaveText("저장됨");
 const boxes = (page: Page) => page.getByTestId("note-box");
 const geom = (box: Locator) =>
   box.evaluate((el) => {

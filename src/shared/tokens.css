@@ -1,5 +1,6 @@
 /* 디자인 토큰 — 화면은 여기 정의된 값만 쓴다(일회성 값 금지, 공통 규칙 6절).
-   업무 색 --cat-cN 의 실제 값은 shared/palette.ts가 주입한 --cat-cN-light/-dark 에서 고른다. */
+   업무 색 --cat-cN 의 실제 값은 shared/palette.ts가 주입한 --cat-cN-light/-dark 에서 고른다.
+   다크 = <html data-theme="dark">(shared/theme.ts·public/theme-early.js가 시스템/라이트/다크 설정으로 정함, improve-1027v5-spec 4-3). */
 :root {
   color-scheme: light;
   --font-sans: "Pretendard Variable", "Malgun Gothic", "맑은 고딕", "Segoe UI", system-ui, sans-serif;
@@ -63,6 +64,9 @@
   /* 중요 업무 처리 완료 뱃지(improve-1027v4-spec 2-1) — 바탕 대비 3:1 이상 */
   --done: #0f6e56;
   --on-done: #ffffff;
+  /* 저장됨 알약(improve-1027v5-spec 2절) — 글자는 --ok(바탕 대비 약 5.7:1) */
+  --save-ok-bg: #eef7f2;
+  --save-ok-line: #8cc7b2;
   /* 중요 표시(important-repeat-spec 2-1) */
   --star: #c98500;
   --mark: #fff1bf;
@@ -104,79 +108,79 @@
   --cat-c8: var(--cat-c8-light);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: dark;
-    --surface-page: #1a1a19;
-    --surface-card: #232322;
-    --surface-sub: #2c2c2a;
-    --surface-focus: #1d2a38;
-    --line: #3d3d3a;
-    --line-strong: #55554f;
-    --text-1: #f0efec;
-    --text-2: #c3c2b7;
-    --text-3: #8f8e86;
-    --accent: #6da7ec;
-    --accent-soft: #1d2a38;
-    --on-accent: #0b0b0b;
-    --ok: #4fc29a;
-    --warn: #e0a83a;
-    --warn-soft: #3a2f17;
-    --danger: #f08b84;
-    --danger-soft: #42201f;
-    --today-mark: #ef7a4d;
-    --leave: #f0a070;
-    --leave-soft: #33241b;
-    --band-late-bg: #42201f;
-    --band-late-bar: #f08b84;
-    --band-late-text: #f5b0aa;
-    --band-today-bg: #1d2a38;
-    --band-today-bar: #6da7ec;
-    --band-today-text: #a3c8f3;
-    --band-week-bg: #1f3329;
-    --band-week-bar: #4fc29a;
-    --band-week-text: #8ad9b9;
-    --band-later-bg: #2c2c2a;
-    --band-later-bar: #8f8e86;
-    --band-later-text: #c3c2b7;
-    --done: #4fc29a;
-    --on-done: #0b0b0b;
-    --star: #e0a83a;
-    --mark: #3a3116;
-    --mark-line: #7a6222;
-    --toast-bg: #f0efec;
-    --toast-text: #1a1a19;
-    --toast-action: #185fa5;
-    --note-canvas: #1e1e1d;
-    --note-dot: #3a3a37;
-    --note-bg-yellow: #3a3420;
-    --note-bg-blue: #1f2c3d;
-    --note-bg-green: #1f3329;
-    --note-bg-pink: #3a2430;
-    --note-orange: #f0a070;
-    --note-blue: #8cbcf2;
-    --note-green: #6fd3a6;
-    --note-red: #f08b84;
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --surface-page: #1a1a19;
+  --surface-card: #232322;
+  --surface-sub: #2c2c2a;
+  --surface-focus: #1d2a38;
+  --line: #3d3d3a;
+  --line-strong: #55554f;
+  --text-1: #f0efec;
+  --text-2: #c3c2b7;
+  --text-3: #8f8e86;
+  --accent: #6da7ec;
+  --accent-soft: #1d2a38;
+  --on-accent: #0b0b0b;
+  --ok: #4fc29a;
+  --warn: #e0a83a;
+  --warn-soft: #3a2f17;
+  --danger: #f08b84;
+  --danger-soft: #42201f;
+  --today-mark: #ef7a4d;
+  --leave: #f0a070;
+  --leave-soft: #33241b;
+  --band-late-bg: #42201f;
+  --band-late-bar: #f08b84;
+  --band-late-text: #f5b0aa;
+  --band-today-bg: #1d2a38;
+  --band-today-bar: #6da7ec;
+  --band-today-text: #a3c8f3;
+  --band-week-bg: #1f3329;
+  --band-week-bar: #4fc29a;
+  --band-week-text: #8ad9b9;
+  --band-later-bg: #2c2c2a;
+  --band-later-bar: #8f8e86;
+  --band-later-text: #c3c2b7;
+  --done: #4fc29a;
+  --on-done: #0b0b0b;
+  --save-ok-bg: #1a2c24;
+  --save-ok-line: #2f7a60;
+  --star: #e0a83a;
+  --mark: #3a3116;
+  --mark-line: #7a6222;
+  --toast-bg: #f0efec;
+  --toast-text: #1a1a19;
+  --toast-action: #185fa5;
+  --note-canvas: #1e1e1d;
+  --note-dot: #3a3a37;
+  --note-bg-yellow: #3a3420;
+  --note-bg-blue: #1f2c3d;
+  --note-bg-green: #1f3329;
+  --note-bg-pink: #3a2430;
+  --note-orange: #f0a070;
+  --note-blue: #8cbcf2;
+  --note-green: #6fd3a6;
+  --note-red: #f08b84;
 
-    --heat-0: #262624;
-    --heat-1: #184f95;
-    --heat-2: #256abf;
-    --heat-3: #3987e5;
-    --heat-4: #86b6ef;
-    --heat-on-strong: #0b0b0b;
-    --tip-bg: #efeee9;
-    --tip-fg: #1a1a19;
-    --tip-go: #185fa5;
+  --heat-0: #262624;
+  --heat-1: #184f95;
+  --heat-2: #256abf;
+  --heat-3: #3987e5;
+  --heat-4: #86b6ef;
+  --heat-on-strong: #0b0b0b;
+  --tip-bg: #efeee9;
+  --tip-fg: #1a1a19;
+  --tip-go: #185fa5;
 
-    --cat-c1: var(--cat-c1-dark);
-    --cat-c2: var(--cat-c2-dark);
-    --cat-c3: var(--cat-c3-dark);
-    --cat-c4: var(--cat-c4-dark);
-    --cat-c5: var(--cat-c5-dark);
-    --cat-c6: var(--cat-c6-dark);
-    --cat-c7: var(--cat-c7-dark);
-    --cat-c8: var(--cat-c8-dark);
-  }
+  --cat-c1: var(--cat-c1-dark);
+  --cat-c2: var(--cat-c2-dark);
+  --cat-c3: var(--cat-c3-dark);
+  --cat-c4: var(--cat-c4-dark);
+  --cat-c5: var(--cat-c5-dark);
+  --cat-c6: var(--cat-c6-dark);
+  --cat-c7: var(--cat-c7-dark);
+  --cat-c8: var(--cat-c8-dark);
 }
 
 * {

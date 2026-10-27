@@ -66,18 +66,6 @@
   width: 32px;
 }
 
-/* 새 판이 있을 때 설정 단추의 파란 점(improve-1027v4-spec 1-2) */
-.updateDot {
-  position: absolute;
-  right: 3px;
-  top: 3px;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 0 2px var(--surface-card);
-}
-
 .textButton {
   padding: 0 var(--sp-4);
 }
@@ -87,17 +75,58 @@
   cursor: default;
 }
 
-.saveState {
+/* 저장 표시(improve-1027v5-spec 2절): 저장됨 = 초록 알약 · 저장 중 = 회색 알약 + 도는 고리 · 실패 = 빨간 단추 */
+.savePill {
   flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  height: 26px;
+  padding: 0 10px 0 var(--sp-3);
+  border: 1px solid;
+  border-radius: 999px;
   font-size: var(--fs-sm);
-  color: var(--text-2);
   white-space: nowrap;
 }
 
+.saved {
+  border-color: var(--save-ok-line);
+  background: var(--save-ok-bg);
+  color: var(--ok);
+  font-weight: var(--fw-bold);
+}
+
+.saving {
+  border-color: var(--line-strong);
+  background: var(--surface-card);
+  color: var(--text-2);
+}
+
+.spin {
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spin {
+    animation: none;
+  }
+}
+
 .saveFailed {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
   padding: 0 var(--sp-4);
   border-color: var(--danger);
+  background: var(--danger-soft);
   color: var(--danger);
+  font-weight: var(--fw-bold);
 }
 
 /* 켜고 끄는 버튼(주간 요약 패널)이 켜져 있을 때 */

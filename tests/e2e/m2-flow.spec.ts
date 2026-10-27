@@ -11,7 +11,8 @@ const ExcelJS = require("exceljs") as typeof ExcelJSType;
 const panel = (page: Page) => page.getByTestId("summary-panel");
 const final = (page: Page) => page.getByTestId("summary-final");
 const dialog = (page: Page) => page.getByTestId("export-dialog");
-const saved = (page: Page) => expect(page.getByTestId("save-state")).toHaveText("저장됨 ✓");
+const saved = (page: Page) =>
+  expect(page.locator('[data-testid="save-state"][data-idle="true"]')).toHaveText("저장됨");
 const lastPath = (page: Page) =>
   page.evaluate(
     () =>

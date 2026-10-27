@@ -2,6 +2,7 @@
 // [자세히·설치] 창(릴리스 노트, 설치 파일 표는 빼고) → 내려받기 진행 → 일지 자동 백업(_pre-update) → 설치 호출.
 // 브라우저 모드는 인터넷에 묻지 않는 가짜 확인(?update=판·fail·bad)이다. 가상 샘플만.
 import { expect, test, type Page } from "@playwright/test";
+import { openSettings } from "./settings-helper";
 
 const calls = (page: Page) =>
   page.evaluate(() => (globalThis as unknown as { __wjb: { updateCalls(): string[] } }).__wjb.updateCalls());
@@ -14,14 +15,12 @@ async function open(page: Page, update?: string) {
   await expect(page.getByTestId("journal-status")).toContainText("SQLite");
 }
 
-const openSettings = (page: Page) => page.getByRole("button", { name: "설정", exact: true }).click();
-
 test("새 판 없음: 켤 때 1번 확인(띠 없음) · 설정 [업데이트 확인] → '최신 판입니다'", async ({ page }) => {
   await open(page);
   await expect.poll(() => calls(page)).toEqual(["check"]);
   await expect(page.getByTestId("update-banner")).toHaveCount(0);
   await expect(page.getByTestId("update-dot")).toHaveCount(0);
-  await openSettings(page);
+  await openSettings(page, "update");
   const sec = page.getByTestId("update-settings");
   await expect(sec).toContainText("지금 판");
   await expect(sec.getByTestId("update-status")).toContainText("최신 판입니다");
@@ -42,7 +41,10 @@ test("새 판 있음: 띠 + 설정 점 · [나중에]는 띠만 숨김 · [자�
   await expect(banner).toHaveCount(0);
   await expect(page.getByTestId("update-dot")).toBeVisible();
 
+  // 새 판 점이 켜져 있으면 설정은 업데이트·정보로 열린다(improve-1027v5-spec 1-2)
   await openSettings(page);
+  await expect(page.locator("#settings-tab-update")).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByTestId("settings-update-dot")).toBeVisible();
   const sec = page.getByTestId("update-settings");
   await expect(sec.getByTestId("update-status")).toContainText("새 판 0.9.0이(가) 있습니다");
   await sec.getByRole("button", { name: "자세히·설치" }).click();
@@ -64,7 +66,7 @@ test("연결 실패: 띠 없이 조용히 · 설정에 '확인하지 못했습�
   await open(page, "fail");
   await expect.poll(() => calls(page)).toEqual(["check"]);
   await expect(page.getByTestId("update-banner")).toHaveCount(0);
-  await openSettings(page);
+  await openSettings(page, "update");
   await expect(page.getByTestId("update-status")).toContainText(
     "확인하지 못했습니다 — GitHub에 연결하지 못했습니다",
   );

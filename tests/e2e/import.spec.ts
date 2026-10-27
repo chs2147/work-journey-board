@@ -5,6 +5,7 @@ import type ExcelJSType from "exceljs";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { expect, test, type Page } from "@playwright/test";
+import { openSettings } from "./settings-helper";
 
 const require = createRequire(import.meta.url);
 const ExcelJS = require("exceljs") as typeof ExcelJSType; // (export.spec과 같은 방식 — ESM 가져오기는 Playwright에서 안 됨)
@@ -14,7 +15,7 @@ const clipboard = (page: Page) =>
 const wizard = (page: Page) => page.getByTestId("import-wizard");
 
 async function openWizard(page: Page) {
-  await page.getByRole("button", { name: "설정" }).click();
+  await openSettings(page, "import");
   await page.getByRole("button", { name: "기존 일지 가져오기…" }).click();
   await expect(wizard(page)).toBeVisible();
 }
@@ -115,7 +116,7 @@ test("준비 → 양식 엑셀(이번 주 진행 중 업무 미리 채움) → A
   await expect(page.getByTestId(`cell-${SEC}-2026-10-22`).locator("textarea")).toHaveCount(2); // 병합: 기존 1 + 새 1
 
   // 설정 > 가져오기 기록 → 되돌리기(확인 2번: 되돌림, 고친 항목 없음)
-  await page.getByRole("button", { name: "설정" }).click();
+  await openSettings(page, "import");
   const history = page.getByTestId("import-history");
   await expect(history).toContainText("가상_작성본.xlsx · 2주 · 항목 4개");
   page.once("dialog", (d) => void d.accept());

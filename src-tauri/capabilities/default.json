@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "메인 창 권한: SQLite, 폴더·파일 대화상자, 클립보드 쓰기, 창 상태. 네트워크 관련 권한 없음",
+  "description": "메인 창 권한: SQLite, 폴더·파일 대화상자, 클립보드 쓰기, 창 상태·창 제목 표시줄 테마. 네트워크 관련 권한 없음",
   "windows": ["main"],
   "permissions": [
     "core:default",
@@ -13,6 +13,7 @@
     "dialog:allow-ask",
     "clipboard-manager:allow-write-text",
     "window-state:default",
-    "core:window:allow-destroy"
+    "core:window:allow-destroy",
+    "core:window:allow-set-theme"
   ]
 }

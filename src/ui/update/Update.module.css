@@ -1,10 +1,13 @@
 /* 새 판 확인·설치(improve-1027v4-spec 1-2): 설정 절 · 보드 위 띠 · 설치 창 */
+/* 설정 › 업데이트·정보의 카드(improve-1027v5-spec 1-3 — settings/Settings.module.css .card와 같은 모양) */
 .section {
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
-  padding: var(--sp-4) 0;
-  border-top: 1px solid var(--line);
+  padding: 14px var(--sp-5) var(--sp-5);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
 }
 
 .section h3 {

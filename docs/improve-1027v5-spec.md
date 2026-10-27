@@ -221,3 +221,23 @@
 - Y1에 #4를 함께 넣는 이유: 테마 선택이 새 설정 화면의 "화면" 분류에 들어가고, 테마를 바꿔 가며 새 설정 화면·저장 표시를 라이트/다크로 함께 확인할 수 있다.
 - 판올림은 각 회차를 main에 반영할 때 묻는다. 릴리스 노트(`docs/release-notes/v<판>.md`) 같은 커밋.
 - 회사 PC 확인표(m1-check)에 Y1 = 7-20, Y2 = 7-21 추가 예정(설정 화면 열고 닫기·테마 3가지·창 제목 표시줄·저장 위치 옮긴 뒤 테마 유지·가져오기 복사).
+
+---
+
+## 8. 구현 기록 — Y1 (#1·#2·#4, 판은 main 반영 때)
+
+| 항목 | 구현 |
+|---|---|
+| 레일 ⚙ | `ui/common/Rail.tsx` — ★ 아래 빈 공간(`.fill`) + 구분선 + ⚙(`rail-settings`), 설정이면 `aria-current="page"`, 새 판 파란 점(`update-dot`)도 여기. 상단 바 ⚙·`topBar.settings` 문구 삭제 |
+| 설정 화면 | `ui/settings/SettingsView.tsx`(예전 `SettingsPanel.tsx`) — `App.tsx` Workspace에서 인사이트처럼 보드 자리에(보드·인사이트·중요 업무 패널·주간 요약은 숨긴 채 유지). 분류 = `tablist`(세로), 패널 = `tabpanel`(`settings-cat-<분류>`). 카드·행 = `SettingsCard.tsx`(`Card`·`Row`), 테마 = `ThemeSettings.tsx` |
+| 들어가기·나가기 | `appController.setSettingsOpen`(닫을 때 `reload`) · `leaveSettings`(인사이트가 아니면 보드 시작 칸으로) · `useShortcuts` `Ctrl+,`·설정 중 `Alt+1/2/3` · 상단 바 `settings-back`(인사이트에서 왔으면 `← 인사이트로`) · 레일 ★ = 보드로 + 패널 열기 |
+| 분류 기억 | 설정 JSON `ui.settingsCategory`(기본 `screen`, `mergeSettings`가 검사). 새 판 점이 켜져 있으면 `update`로 열림 |
+| 저장 표시 | `TopBar.tsx` 알약 3상태 — `data-state="saved|saving"`, 실제로 쓰는 중인지는 `data-idle`(테스트가 저장 끝을 기다리는 데 씀). 저장 중은 `useSavingVisible`(0.4초), 툴팁 마지막 저장 시각 = `boardStore.savedAt`. 토큰 `--save-ok-bg`·`--save-ok-line` |
+| 테마 | `shared/theme.ts`(해석·적용·시스템 따라가기·사본 `wjb.theme`) + `public/theme-early.js`(메인·시작 창 `<head>` 동기 스크립트, CSP `'self'` 그대로) · `tokens.css`·`splash.html` 다크 = `:root[data-theme="dark"]` 한 벌 · `AppConfig.theme` + `parseConfig`·`mergeConfigJson`(config.json 합쳐 쓰기) · `Platform.setWindowTheme`(Tauri `setTheme`, 권한 `core:window:allow-set-theme`) · 브라우저 모드 `?theme=dark`(config에 테마가 적힌 상태 흉내) |
+| 테스트 | 단위 `theme.test.ts`(config 읽기·합쳐 쓰기, theme-early.js = theme.ts 전 조합, 시스템 따라가기, 분류 검사) · `splash.test.ts` 다크 구획 표지 변경 · E2E `v5-settings.spec.ts`(6건) + 기존 설정 E2E는 `settings-helper.ts`의 `openSettings(page, 분류)`로 |
+
+### 8-1. 설계와 달라진 점·구현에서 정한 것
+- 테마 라디오의 접근성 이름은 테마 이름만(`시스템 설정`·`라이트`·`다크`), 설명은 `aria-describedby` — 설명 글에 "다크"가 섞여 이름이 겹치지 않게.
+- 마지막 백업 행은 이름 "마지막 백업" + 설명 = 시각만(`2026-10-22 09:02`), 보관 규칙 문구를 행 설명에 맞게 줄임(`최근 14일 + 월 1개 × 12 보관 · 직접 만든 백업은 지우지 않음`).
+- 반복 항목 카드 제목은 기존 문구 "반복 항목" 그대로(문서 1-4절의 "매주 반복"과 같은 것).
+- 시작 창(스플래시)은 창 제목 표시줄이 없어 `setWindowTheme`은 메인 창만.

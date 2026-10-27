@@ -2,8 +2,10 @@
 // 크기(비율 유지)·설명·크게 보기·이미지로 저장·삭제/되돌리기, 다른 주에 다녀와도 그대로, 자동 집계 `- (이미지) 설명`.
 // 그림은 테스트가 그 자리에서 그린 단색 도형(가상 이미지)만 쓴다.
 import { expect, test, type Page } from "@playwright/test";
+import { openSettings, settingsView } from "./settings-helper";
 
-const saved = (page: Page) => expect(page.getByTestId("save-state")).toHaveText("저장됨 ✓");
+const saved = (page: Page) =>
+  expect(page.locator('[data-testid="save-state"][data-idle="true"]')).toHaveText("저장됨");
 const images = (page: Page) => page.getByTestId("note-image");
 
 /** 브라우저 안 canvas로 그린 가상 그림(PNG) — 파일 입력·붙여넣기·끌어다 놓기에 같이 쓴다 */
@@ -272,10 +274,10 @@ test("설정 > 백업에 일지 파일·메모 이미지 용량, 지운 이미�
   await expect(images(page)).toHaveCount(1);
   await saved(page);
   const usage = async () => {
-    await page.getByRole("button", { name: "설정" }).click();
+    await openSettings(page, "data");
     const text = await page.getByTestId("storage-usage").textContent();
     await page.keyboard.press("Escape");
-    await expect(page.getByRole("dialog", { name: "설정" })).toHaveCount(0);
+    await expect(settingsView(page)).toHaveCount(0);
     return text ?? "";
   };
   expect(await usage()).toMatch(/^일지 파일 [\d.]+ (KB|MB) · 그 안의 메모 이미지 1개\([\d.]+ (B|KB)\)$/);

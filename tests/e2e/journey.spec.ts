@@ -1,6 +1,7 @@
 // 통합 시나리오(i-m1-plan S5): 첫 실행 → 업무 3개 → 1주 기록 → 다음 주 이월·매주 반복 → 3주 비우면 무기록 배지
 // → 종료·다시 시작 → 실행 취소. 브라우저 모드에서 앱을 켠 채 날짜만 넘긴다(__wjb.setToday + Alt+T). 가상 업무.
 import { expect, test, type Page } from "@playwright/test";
+import { openSettings, settingsView } from "./settings-helper";
 
 const PLAN = "신규 서비스 기획";
 const TEAM = "팀 운영";
@@ -12,7 +13,8 @@ const values = (page: Page, cat: string, date: string) =>
   cell(page, cat, date)
     .locator("textarea")
     .evaluateAll((els) => els.map((e) => (e as HTMLTextAreaElement).value));
-const saved = (page: Page) => expect(page.getByTestId("save-state")).toHaveText("저장됨 ✓");
+const saved = (page: Page) =>
+  expect(page.locator('[data-testid="save-state"][data-idle="true"]')).toHaveText("저장됨");
 
 /** 앱을 켠 채 날짜가 지나고, 사용자가 [오늘](Alt+T)로 이번 주를 연다 */
 async function passTo(page: Page, date: string, week: string) {
@@ -87,8 +89,8 @@ test("첫 실행부터 5주 사용: 이월 · 매주 반복 · 무기록 배지 
   await expect(cell(page, TEAM, "2026-11-09").getByTestId("repeat-preview")).toContainText("주간 회의 정리");
   await page.keyboard.press("Alt+ArrowLeft");
 
-  await page.getByRole("button", { name: "설정" }).click();
-  const dialog = page.getByRole("dialog", { name: "설정" });
+  await openSettings(page, "work");
+  const dialog = settingsView(page);
   await expect(dialog.getByTestId("repeat-list")).toContainText("2026-W42부터 반복 중");
   await dialog.getByRole("button", { name: "다시 시작" }).click();
   await expect(dialog).toContainText("종료된 업무가 없습니다");

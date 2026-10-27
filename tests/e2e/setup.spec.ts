@@ -1,6 +1,7 @@
 // 첫 실행·저장 위치·설정·백업 E2E (i-m1-plan S4). 브라우저 모드의 가짜 폴더(/demo/...)를 쓴다.
 // 폴더 선택 대화상자는 브라우저 모드에서 경로 입력(prompt)으로 대신한다 → page.once("dialog")로 응답.
 import { expect, test, type Page } from "@playwright/test";
+import { openSettings, settingsView } from "./settings-helper";
 
 const TODAY = "2026-10-22";
 const q = (extra = "") => `/?today=${TODAY}${extra}`;
@@ -61,7 +62,8 @@ test.describe("첫 실행 (overview 10-8)", () => {
   test("저장 폴더를 찾을 수 없으면 안내 화면 → 다른 폴더의 기존 일지 열기", async ({ page }) => {
     await page.goto(q("&config=/demo/Gone&existing=/demo/Old"));
     await expect(page.getByRole("heading", { name: "저장 폴더를 찾을 수 없습니다" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "설정" })).toBeDisabled();
+    // 일지가 열리지 않은 화면에는 레일(설정 포함)이 없다
+    await expect(page.getByTestId("rail-settings")).toHaveCount(0);
     answerFolder(page, "/demo/Old");
     await page.getByRole("button", { name: "다른 폴더의 기존 일지 열기" }).click();
     await expect(headers(page)).toHaveCount(4);
@@ -69,10 +71,6 @@ test.describe("첫 실행 (overview 10-8)", () => {
 });
 
 test.describe("설정 > 저장 위치 (overview 10-10)", () => {
-  async function openSettings(page: Page) {
-    await page.getByRole("button", { name: "설정" }).click();
-    await expect(page.getByRole("dialog", { name: "설정" })).toBeVisible();
-  }
   async function changeTo(page: Page, path: string) {
     answerFolder(page, path);
     await page.getByRole("button", { name: "저장 위치 변경…" }).click();
@@ -81,7 +79,7 @@ test.describe("설정 > 저장 위치 (overview 10-10)", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto(q("&existing=/demo/Other"));
     await expect(headers(page)).toHaveCount(4);
-    await openSettings(page);
+    await openSettings(page, "data");
     await expect(page.getByTestId("settings-data-dir")).toHaveText("/demo/WorkJourney");
   });
 
@@ -105,7 +103,7 @@ test.describe("설정 > 저장 위치 (overview 10-10)", () => {
     expect(
       all.filter((p) => p.startsWith("/demo/WorkJourney/backups/") && p.endsWith("_manual.db")),
     ).toHaveLength(1);
-    await page.getByRole("button", { name: "닫기" }).click();
+    await page.getByTestId("settings-back").click();
     await expect(headers(page)).toHaveCount(4);
     await expect(page.getByTestId("journal-status")).toContainText("/demo/New");
   });
@@ -129,10 +127,10 @@ test.describe("설정 > 저장 위치 (overview 10-10)", () => {
 test.describe("설정 > 백업·업무·무기록", () => {
   test("지금 백업 → 마지막 백업 표시 갱신", async ({ page }) => {
     await page.goto(q());
-    await page.getByRole("button", { name: "설정" }).click();
-    await expect(page.getByTestId("last-backup")).toHaveText("마지막 백업: 2026-10-22");
+    await openSettings(page, "data");
+    await expect(page.getByTestId("last-backup")).toHaveText("2026-10-22");
     await page.getByRole("button", { name: "지금 백업" }).click();
-    await expect(page.getByTestId("last-backup")).toHaveText(/마지막 백업: 2026-10-22 \d{2}:\d{2}/);
+    await expect(page.getByTestId("last-backup")).toHaveText(/^2026-10-22 \d{2}:\d{2}/);
   });
 
   test("종료된 업무 다시 시작", async ({ page }) => {
@@ -141,8 +139,8 @@ test.describe("설정 > 백업·업무·무기록", () => {
     await onb.getByRole("button", { name: "신규 입사자 온보딩 메뉴" }).click();
     await page.getByRole("menuitem", { name: "종료" }).click();
     await expect(onb).toContainText("종료됨");
-    await page.getByRole("button", { name: "설정" }).click();
-    const dialog = page.getByRole("dialog", { name: "설정" });
+    await openSettings(page, "work");
+    const dialog = settingsView(page);
     await expect(dialog).toContainText("신규 입사자 온보딩");
     await dialog.getByRole("button", { name: "다시 시작" }).click();
     await expect(dialog).toContainText("종료된 업무가 없습니다");
@@ -152,12 +150,15 @@ test.describe("설정 > 백업·업무·무기록", () => {
 
   test("무기록 종료 제안 기준을 끄고 켜기", async ({ page }) => {
     await page.goto(q());
-    await page.getByRole("button", { name: "설정" }).click();
+    await openSettings(page, "work");
     const select = page.getByRole("combobox", { name: "기록이 없는 업무에 종료를 제안할 기준" });
     await expect(select).toHaveValue("3");
     await select.selectOption("0");
-    await page.getByRole("button", { name: "닫기" }).click();
-    await page.getByRole("button", { name: "설정" }).click();
+    await page.getByTestId("settings-back").click();
+    await expect(settingsView(page)).toHaveCount(0);
+    // 다시 열면 마지막 본 분류(업무 관리)로(improve-1027v5-spec 1-2)
+    await openSettings(page);
+    await expect(page.locator("#settings-tab-work")).toHaveAttribute("aria-selected", "true");
     await expect(select).toHaveValue("0");
   });
 });
