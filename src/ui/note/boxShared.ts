@@ -1,6 +1,6 @@
 // 텍스트·이미지 상자가 함께 쓰는 동작: 끌어 옮기기·폭 조절, 선택 상태의 키(방향키·Delete·Ctrl+Z·Esc), 높이 재기.
 import { useEffect, useLayoutEffect, type KeyboardEvent, type PointerEvent, type RefObject } from "react";
-import type { NoteBox } from "../../domain/note";
+import { isLinkedTo, type NoteBox } from "../../domain/note";
 import { itemAtPoint, useLinkDrop } from "../board/rowDrag";
 import {
   beginGesture,
@@ -50,7 +50,8 @@ export function startBoxDrag(
       moveBoxLive(box.id, x0 + dx, y0 + dy);
       // 보드의 항목 위로 가져가면 "여기에 연결"(improve-1026v2-spec 5절)
       const itemId = itemAtPoint(ev.clientX, ev.clientY);
-      if (useLinkDrop.getState().itemId !== itemId) useLinkDrop.setState({ itemId });
+      if (useLinkDrop.getState().itemId !== itemId)
+        useLinkDrop.setState({ itemId, linked: !!itemId && isLinkedTo(box, itemId) });
     } else resizeBoxLive(box.id, w0 + dx);
   };
   const up = () => {
@@ -60,7 +61,7 @@ export function startBoxDrag(
     const target = useLinkDrop.getState().itemId;
     if (target) {
       // 항목에 놓음 = 상자는 원래 자리로, 연결만(메모 기록 1단계)
-      useLinkDrop.setState({ itemId: null });
+      useLinkDrop.setState({ itemId: null, linked: false });
       linkBox(box.id, target, before);
       return;
     }

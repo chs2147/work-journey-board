@@ -7,8 +7,13 @@ import {
   docFromDayMemos,
   fitWithin,
   isNoteEmpty,
+  isLinkedTo,
+  LINK_MAX,
   linkCounts,
   linkedBoxes,
+  refItems,
+  withoutRef,
+  withRef,
   noteAssetIds,
   noteToText,
   parseNoteDoc,
@@ -282,18 +287,21 @@ describe("이미지 상자(스펙 4-4·6절)", () => {
   });
 });
 
-describe("업무 항목 연결(improve-1026v2-spec 6-4)", () => {
-  const linked = (id: string, y: number, item?: unknown): TextBox =>
-    ({ ...box(id, 0, y, [p(t(id))]), ...(item === undefined ? {} : { ref: { item } }) }) as TextBox;
+describe("업무 항목 연결(improve-1026v2-spec 6-4 → multi-link-spec 7-1)", () => {
+  const linked = (id: string, y: number, ...items: string[]): TextBox =>
+    ({
+      ...box(id, 0, y, [p(t(id))]),
+      ...(items.length ? { refs: items.map((item) => ({ item })) } : {}),
+    }) as TextBox;
 
-  it("ref.item은 비지 않은 문자열만 남고, 타이틀 글은 저장하지 않는다", () => {
+  it("예전 ref(한 칸)는 refs 한 개로 읽고, 비지 않은 문자열만 남기며 타이틀 글은 저장하지 않는다", () => {
     const raw = {
       v: 1,
       boxes: [
-        { ...linked("a", 0, "item-1"), ref: { item: "item-1", title: "저장 안 함" } },
-        linked("b", 100, 42),
-        linked("c", 200, ""),
-        { ...linked("d", 300), ref: "item-2" },
+        { ...box("a", 0, 0, [p(t("a"))]), ref: { item: "item-1", title: "저장 안 함" } },
+        { ...box("b", 0, 100, [p(t("b"))]), ref: { item: 42 } },
+        { ...box("c", 0, 200, [p(t("c"))]), ref: { item: "" } },
+        { ...box("d", 0, 300, [p(t("d"))]), ref: "item-2" },
         {
           id: "img",
           kind: "image",
@@ -315,26 +323,56 @@ describe("업무 항목 연결(improve-1026v2-spec 6-4)", () => {
           url: "https://wiki.example.local/a",
           title: "위키",
           note: "",
-          ref: { item: "item-1" },
+          refs: [{ item: "item-1" }, { item: "item-4" }],
         },
       ],
     };
     const parsed = parseNoteDoc(JSON.stringify(raw));
-    expect(parsed.boxes.map((b) => [b.id, b.ref ?? null])).toEqual([
-      ["a", { item: "item-1" }],
+    expect(parsed.boxes.map((b) => [b.id, b.refs ?? null])).toEqual([
+      ["a", [{ item: "item-1" }]],
       ["b", null],
       ["c", null],
       ["d", null],
-      ["img", { item: "item-3" }],
-      ["lnk", { item: "item-1" }],
+      ["img", [{ item: "item-3" }]],
+      ["lnk", [{ item: "item-1" }, { item: "item-4" }]],
     ]);
   });
 
-  it("연결 수·연결된 상자(읽는 순서), 집계 글에는 영향 없음", () => {
-    const d = doc(linked("y2", 200, "i1"), linked("y1", 100, "i1"), linked("z", 50, "i2"), linked("n", 10));
-    expect(linkCounts(d)).toEqual({ i1: 2, i2: 1 });
-    expect(linkedBoxes(d, "i1").map((b) => b.id)).toEqual(["y1", "y2"]);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    expect(noteToText(d)).toBe(noteToText({ v: 1, boxes: d.boxes.map(({ ref: _r, ...b }) => b as TextBox) }));
+  it("refs: 같은 항목 중복·빈 id는 버리고 20개까지", () => {
+    const many = Array.from({ length: 25 }, (_, i) => ({ item: `i${i}` }));
+    const raw = {
+      v: 1,
+      boxes: [
+        {
+          ...box("a", 0, 0, [p(t("a"))]),
+          refs: [{ item: "x" }, { item: "x" }, { item: "" }, { nope: 1 }, { item: "y" }],
+        },
+        { ...box("b", 0, 100, [p(t("b"))]), refs: many },
+      ],
+    };
+    const parsed = parseNoteDoc(JSON.stringify(raw));
+    expect(parsed.boxes[0]!.refs).toEqual([{ item: "x" }, { item: "y" }]);
+    expect(parsed.boxes[1]!.refs).toHaveLength(LINK_MAX);
+  });
+
+  it("한 상자가 여러 항목에 셈 · 연결된 상자(읽는 순서) · 더하기/빼기 규칙 · 집계 글에는 영향 없음", () => {
+    const d = doc(
+      linked("y2", 200, "i1", "i2"),
+      linked("y1", 100, "i1"),
+      linked("z", 50, "i2"),
+      linked("n", 10),
+    );
+    expect(linkCounts(d)).toEqual({ i1: 2, i2: 2 });
+    expect(linkedBoxes(d, "i2").map((b) => b.id)).toEqual(["z", "y2"]);
+    const b = linked("b", 0, "i1");
+    expect(refItems(withRef(b, "i2"))).toEqual(["i1", "i2"]);
+    expect(withRef(b, "i1")).toBe(b);
+    expect(refItems(withoutRef(withRef(b, "i2"), "i1"))).toEqual(["i2"]);
+    expect("refs" in withoutRef(b, "i1")).toBe(false);
+    expect("refs" in withoutRef(withRef(b, "i2"))).toBe(false);
+    const full = linked("f", 0, ...Array.from({ length: LINK_MAX }, (_, i) => `k${i}`));
+    expect(withRef(full, "more")).toBe(full);
+    expect(isLinkedTo(d.boxes[0]!, "i2")).toBe(true);
+    expect(noteToText(d)).toBe(noteToText({ v: 1, boxes: d.boxes.map((x) => withoutRef(x)) }));
   });
 });

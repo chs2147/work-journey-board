@@ -157,7 +157,7 @@ describe("타임라인 줄(4절)", () => {
             w: 300,
             z: 1,
             bg: null,
-            ref: { item: a.id },
+            refs: [{ item: a.id }],
             content: {
               type: "doc",
               content: [{ type: "paragraph", content: [{ type: "text", text: "둘째" }] }],
@@ -172,7 +172,8 @@ describe("타임라인 줄(4절)", () => {
             z: 1,
             asset: "as",
             caption: "화면",
-            ref: { item: a.id },
+            // 한 상자가 두 항목에 연결(multi-link-spec 6절) — 두 항목 아래에 모두 나온다
+            refs: [{ item: a.id }, { item: b.id }],
           },
           {
             id: "z",
@@ -201,7 +202,7 @@ describe("타임라인 줄(4절)", () => {
     if (week.kind !== "week") return;
     expect(week.items.map((i) => [i.flagged, i.repeat, i.memos])).toEqual([
       [true, false, ["(이미지) 화면", "둘째"]],
-      [false, true, []],
+      [false, true, ["(이미지) 화면"]],
     ]);
     expect(week.marks).toEqual([
       { date: "2026-10-19", kind: "leave" },
@@ -264,7 +265,7 @@ describe("경과 복사(7절) — 골든", () => {
               w: 300,
               z: 1,
               bg: null,
-              ref: { item: a.id },
+              refs: [{ item: a.id }],
               content: {
                 type: "doc",
                 content: [

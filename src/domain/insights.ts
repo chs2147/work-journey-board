@@ -2,7 +2,7 @@
 // 주차는 week.ts, 활성 구간은 category_period, 항목 표기는 자동 집계(aggregate.ts)와 같은 규칙을 쓴다(CLAUDE.md 4-4).
 import { summaryItemLines } from "./aggregate";
 import { DAY_MARK_KINDS, type DayMark, type DayMarkKind } from "./dayMark";
-import { boxText, readingOrder, type NoteBox, type NoteDoc } from "./note";
+import { boxText, isLinkedTo, readingOrder, type NoteBox, type NoteDoc } from "./note";
 import type { CategoryPeriod, Depth, EntryItem } from "./types";
 import {
   addDays,
@@ -165,7 +165,7 @@ export function buildTimeline(input: TimelineInput): TimelineRow[] {
     byWeek.set(w, [...(byWeek.get(w) ?? []), it]);
   }
   const memoFor = (weekId: WeekId, itemId: string) =>
-    readingOrder((input.notes?.[weekId]?.boxes ?? []).filter((b) => b.ref?.item === itemId))
+    readingOrder((input.notes?.[weekId]?.boxes ?? []).filter((b) => isLinkedTo(b, itemId)))
       .map(linkedMemoText)
       .filter((t) => t.trim() !== "");
 

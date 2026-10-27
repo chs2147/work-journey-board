@@ -16,12 +16,15 @@ export const NOTE_BG = ["yellow", "blue", "green", "pink"] as const;
 export type NoteBg = (typeof NOTE_BG)[number];
 
 /**
- * 업무 항목 연결(improve-1026v2-spec 6-4): 상자가 가리키는 같은 주의 entry_item id 하나.
- * 타이틀 글(업무명·날짜·항목 글)은 저장하지 않고 화면이 늘 지금 항목에서 만든다
+ * 업무 항목 연결(improve-1026v2-spec 6-4 → multi-link-spec 7-1): 상자가 가리키는 같은 주의 entry_item id.
+ * 한 상자 = 여러 항목(`refs`). 타이틀 글(업무명·날짜·항목 글)은 저장하지 않고 화면이 늘 지금 항목에서 만든다
  */
 export interface BoxRef {
   item: string;
 }
+
+/** 한 상자에 연결할 수 있는 항목 수(multi-link-spec 3절) */
+export const LINK_MAX = 20;
 
 export interface TextBox {
   id: string;
@@ -34,7 +37,8 @@ export interface TextBox {
   h?: number;
   bg: NoteBg | null;
   content: PMNode;
-  ref?: BoxRef;
+  /** 연결된 업무 항목(없으면 필드 없음) */
+  refs?: BoxRef[];
 }
 
 /** 이미지 상자(스펙 4-4) — 그림 자체는 일지 파일 안 `note_asset`에, 문서는 그 id만 가리킨다 */
@@ -50,7 +54,8 @@ export interface ImageBox {
   asset: string;
   /** 한 줄 설명(선택) — 자동 집계·엑셀에 `- (이미지) 설명`으로 들어간다 */
   caption: string;
-  ref?: BoxRef;
+  /** 연결된 업무 항목(없으면 필드 없음) */
+  refs?: BoxRef[];
 }
 
 /**
@@ -69,7 +74,8 @@ export interface LinkBox {
   title: string;
   note: string;
   asset?: string;
-  ref?: BoxRef;
+  /** 연결된 업무 항목(없으면 필드 없음) */
+  refs?: BoxRef[];
 }
 
 export type NoteBox = TextBox | ImageBox | LinkBox;
@@ -342,12 +348,42 @@ export function sanitizeContent(raw: unknown): PMNode | null {
   return { type: "doc", content: content.length ? content : [{ type: "paragraph" }] };
 }
 
-/** 저장된 JSON → 메모 문서(잘못된 상자는 버린다). 읽을 수 없으면 빈 문서 */
-/** `ref.item`이 비지 않은 문자열일 때만 남긴다(6-4) */
-function parseRef(raw: unknown): { ref: BoxRef } | Record<string, never> {
-  if (!isObj(raw) || typeof raw.item !== "string" || !raw.item || raw.item.length > 64) return {};
-  return { ref: { item: raw.item } };
+/**
+ * 연결 정리(multi-link-spec 7-1): `refs` 배열 — 예전 문서의 `ref`(한 칸)도 받는다. `item`이 비지 않은 64자 이하 문자열만,
+ * 같은 항목은 한 번, 20개까지
+ */
+function parseRefs(raw: Record<string, unknown>): { refs: BoxRef[] } | Record<string, never> {
+  const list = Array.isArray(raw.refs) ? raw.refs : raw.ref !== undefined ? [raw.ref] : [];
+  const seen = new Set<string>();
+  const refs: BoxRef[] = [];
+  for (const r of list) {
+    if (refs.length >= LINK_MAX) break;
+    if (!isObj(r) || typeof r.item !== "string" || !r.item || r.item.length > 64 || seen.has(r.item))
+      continue;
+    seen.add(r.item);
+    refs.push({ item: r.item });
+  }
+  return refs.length ? { refs } : {};
 }
+
+/** 상자가 연결된 항목 id들 */
+export const refItems = (b: NoteBox): string[] => (b.refs ?? []).map((r) => r.item);
+export const isLinkedTo = (b: NoteBox, itemId: string) => !!b.refs?.some((r) => r.item === itemId);
+
+/** 연결 더하기(이미 있거나 20개면 그대로) */
+export function withRef<T extends NoteBox>(b: T, itemId: string): T {
+  if (isLinkedTo(b, itemId) || (b.refs?.length ?? 0) >= LINK_MAX) return b;
+  return { ...b, refs: [...(b.refs ?? []), { item: itemId }] };
+}
+
+/** 연결 빼기(itemId 없으면 모두) — 0개면 필드를 뺀다 */
+export function withoutRef<T extends NoteBox>(b: T, itemId?: string): T {
+  const kept = itemId ? (b.refs ?? []).filter((r) => r.item !== itemId) : [];
+  const { refs: _old, ...rest } = b; // eslint-disable-line @typescript-eslint/no-unused-vars
+  return (kept.length ? { ...rest, refs: kept } : rest) as T;
+}
+
+/** 저장된 JSON → 메모 문서(잘못된 상자는 버린다). 읽을 수 없으면 빈 문서 */
 
 export function parseNoteDoc(json: string | null | undefined): NoteDoc {
   if (!json) return emptyDoc();
@@ -361,7 +397,7 @@ export function parseNoteDoc(json: string | null | undefined): NoteDoc {
   const boxes: NoteBox[] = [];
   for (const b of raw.boxes) {
     if (!isObj(b) || typeof b.id !== "string") continue;
-    const ref = parseRef(b.ref);
+    const ref = parseRefs(b);
     if (b.kind === "image") {
       if (typeof b.asset !== "string" || !b.asset) continue;
       boxes.push({
@@ -589,12 +625,12 @@ export function positionBelow(doc: NoteDoc): { x: number; y: number } {
 /** 항목별 연결된 상자 수(보드 배지, 6-2) */
 export function linkCounts(doc: NoteDoc): Record<string, number> {
   const out: Record<string, number> = {};
-  for (const b of doc.boxes) if (b.ref) out[b.ref.item] = (out[b.ref.item] ?? 0) + 1;
+  for (const b of doc.boxes) for (const id of refItems(b)) out[id] = (out[id] ?? 0) + 1;
   return out;
 }
 
 /** 항목에 연결된 상자들(읽는 순서) */
 export const linkedBoxes = (doc: NoteDoc, itemId: string) =>
-  readingOrder(doc.boxes.filter((b) => b.ref?.item === itemId));
+  readingOrder(doc.boxes.filter((b) => isLinkedTo(b, itemId)));
 
 export const topZ = (doc: NoteDoc) => doc.boxes.reduce((m, b) => Math.max(m, b.z), 0);

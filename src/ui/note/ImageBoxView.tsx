@@ -13,10 +13,10 @@ import {
   selectBox,
   sendToBack,
   setCaption,
-  unlinkBox,
   useNote,
 } from "./noteStore";
 import { LinkStrip } from "./LinkStrip";
+import { LinkMenuItems } from "./LinkPicker";
 import { EdgeKnobs, EdgeMenuItems } from "./EdgeBoxParts";
 import { useEdgeCount } from "./edgeHooks";
 import styles from "./Note.module.css";
@@ -54,7 +54,7 @@ export function ImageBoxView({
         styles.box,
         styles.imageBox,
         selected ? styles.selected : "",
-        box.ref ? styles.hasStrip : "",
+        box.refs ? styles.hasStrip : "",
         pulse ? styles.pulse : "",
       ].join(" ")}
       style={{ left: box.x, top: box.y, width: box.w, zIndex: menuOpen ? 100000 : box.z + 1 }}
@@ -109,11 +109,7 @@ export function ImageBoxView({
           <button type="button" role="menuitem" onClick={run(() => sendToBack(box.id))}>
             {STR.note.back}
           </button>
-          {box.ref && (
-            <button type="button" role="menuitem" onClick={run(() => unlinkBox(box.id))}>
-              {STR.linked.unlink}
-            </button>
-          )}
+          <LinkMenuItems box={box} close={() => setMenuOpen(false)} />
           <EdgeMenuItems boxId={box.id} close={() => setMenuOpen(false)} />
           <button
             type="button"
@@ -125,7 +121,7 @@ export function ImageBoxView({
           </button>
         </div>
       )}
-      {box.ref && <LinkStrip boxId={box.id} link={box.ref} />}
+      {box.refs && <LinkStrip boxId={box.id} refs={box.refs} />}
       {img ? (
         <img
           className={styles.image}

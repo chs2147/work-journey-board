@@ -246,3 +246,27 @@ test("메모 관계선(잇기·선 도구·이름표·미니맵) — CSP 위반 
   await expect(page.getByTestId("note-edge-label")).toHaveText("원인");
   expect(await violations(page)).toEqual([]);
 });
+
+test("메모 여러 항목 연결(여러 줄 띠·고르기 목록·접기) — CSP 위반 0", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/?today=2026-10-22");
+  await expect(page.getByTestId("note-box").first()).toBeVisible();
+  const c = (await page.getByTestId("note-canvas").boundingBox())!;
+  await page.mouse.click(c.x + 640, c.y + 40);
+  await expect(page.locator(":focus")).toHaveClass(/note-prose/);
+  await page.keyboard.type("가상 연결 메모");
+  await page.keyboard.press("Escape");
+  const box = page.locator("[data-box-id]", {
+    has: page.locator(".note-prose", { hasText: "가상 연결 메모" }),
+  });
+  await box.hover();
+  await box.getByRole("button", { name: "상자 메뉴" }).click();
+  await page.getByTestId("link-pick-open").click();
+  const items = page.getByTestId("link-pick-item");
+  for (let i = 0; i < 5; i++) await items.nth(i).click();
+  await page.keyboard.press("Escape");
+  await expect(box.getByTestId("link-line")).toHaveCount(4);
+  await box.getByTestId("link-more").click();
+  await expect(box.getByTestId("link-line")).toHaveCount(5);
+  expect(await violations(page)).toEqual([]);
+});

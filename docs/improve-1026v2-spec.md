@@ -4,7 +4,7 @@
 > 요청: 2026-10-26 사용자 개선 목록 v2(아래 0절 표의 #1~#10)
 > 시안: 사용자 개인 미리보기(클로드 아티팩트 "개선사항 1026 v2 시안" — ① 주간 보드 ② 행 삭제·끌어서 옮기기 ③ 업무연계 메모 ④ 중요 업무 목록 ⑤ 보기 아이콘). 시안 속 기록은 모두 가상 예시다.
 > 관련: [improve-1026-spec.md](improve-1026-spec.md)(v1, U1~U4) · [overview.md](overview.md) 10-3(개조식 입력·단축키) · [important-repeat-spec.md](important-repeat-spec.md) 2절(중요 업무 목록) · [weekly-note-spec.md](weekly-note-spec.md) 4·5절(메모 상자·문서 JSON) · CLAUDE.md 4-3(데이터 안전)·4-6(입력 UX)
-> 후속: 한 상자를 **여러 항목**에 연결(5·6·7절을 바꿈) — [multi-link-spec.md](multi-link-spec.md)(2026-10-27 시안 제안).
+> 후속: 한 상자를 **여러 항목**에 연결(5·6·7절을 바꿈 — 끌어 놓기는 "더하기", 띠는 여러 줄, `ref` → `refs`) — [multi-link-spec.md](multi-link-spec.md)(2026-10-27 확정, `0.2.15`).
 
 ---
 

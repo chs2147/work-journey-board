@@ -150,7 +150,7 @@ test("행을 ⋮⋮로 끌어 메모 판에 놓기 → 놓은 자리에 연결�
   await expect(firstRow(page).getByTestId("memo-badge")).toHaveText("1");
 });
 
-test("기존 메모 상자를 위 막대로 끌어 보드 항목에 놓기 → '여기에 연결', 상자는 제자리 + 띠 · 다른 항목에 놓으면 연결이 옮겨 감", async ({
+test("기존 메모 상자를 위 막대로 끌어 보드 항목에 놓기 → '+ 여기에 연결 추가', 상자는 제자리 + 띠 · 다른 항목에 놓으면 연결이 더해짐(multi-link-spec 2-1)", async ({
   page,
 }) => {
   const c = (await page.getByTestId("note-canvas").boundingBox())!;
@@ -174,12 +174,13 @@ test("기존 메모 상자를 위 막대로 끌어 보드 항목에 놓기 → '
   expect(Math.round(pos1.x)).toBe(Math.round(pos0.x));
   await expect(firstRow(page).getByTestId("memo-badge")).toHaveText("1");
 
-  // 다른 항목에 놓으면 연결이 옮겨 간다
+  // 다른 항목에 놓으면 연결이 더해진다(줄 2개, 두 항목 모두 배지)
   const other = cell(page, SEC, TODAY).locator("[data-item-index]").first();
   await box.hover();
   await pointerDrag(page, box.getByRole("button", { name: "상자 위치 이동(끌기)" }), other);
+  await expect(box.getByTestId("link-line")).toHaveCount(2);
   await expect(box.getByTestId("link-strip")).toContainText(SEC);
-  await expect(firstRow(page).getByTestId("memo-badge")).toHaveCount(0);
+  await expect(firstRow(page).getByTestId("memo-badge")).toHaveText("1");
   await expect(other.getByTestId("memo-badge")).toHaveText("1");
 });
 

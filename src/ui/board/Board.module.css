@@ -845,6 +845,11 @@
   pointer-events: none;
 }
 
+/* 이미 연결된 항목 위로 끌어 옴(multi-link-spec 2-1) */
+.linkTargetLinked {
+  background: var(--text-2);
+}
+
 /* 미래 주의 반복 "예정"(저장 전) — 누르면 지금 만든다 */
 .preview {
   position: relative;

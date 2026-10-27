@@ -35,7 +35,7 @@ import { linkedBoxes } from "../../domain/note";
 import { autoSize, isComposingKey, useRemeasure } from "./helpers";
 import { LinkedText } from "./LinkedText";
 import { IconNote, IconTrash } from "../common/icons";
-import { startRowDrag, useLinkDrop, useRowDrag } from "./rowDrag";
+import { startRowDrag, useLinkDrop, useLinkHover, useRowDrag } from "./rowDrag";
 import styles from "./Board.module.css";
 
 export interface CellNav {
@@ -72,13 +72,18 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
   const linkKey = useNote((st) => {
     const ids = new Set(items.map((x) => x.id));
     let out = "";
-    for (const b of st.doc.boxes)
-      if (b.ref && b.id !== st.pendingId && ids.has(b.ref.item)) out += `${b.ref.item},`;
+    for (const b of st.doc.boxes) {
+      if (b.id === st.pendingId) continue;
+      // 한 상자가 여러 항목에 연결될 수 있다(multi-link-spec 6절) — 항목마다 셈
+      for (const r of b.refs ?? []) if (ids.has(r.item)) out += `${r.item},`;
+    }
     return out;
   });
   const linkCount: Record<string, number> = {};
   for (const id of linkKey.split(",")) if (id) linkCount[id] = (linkCount[id] ?? 0) + 1;
   const linkTarget = useLinkDrop((st) => st.itemId);
+  const linkAlready = useLinkDrop((st) => st.linked);
+  const linkHover = useLinkHover((st) => st.itemId);
   const dragFrom = drag?.fromKey === cellKey ? drag : null;
   const dropGap = drag?.overKey === cellKey ? drag.gap : null;
   const dropLine = (
@@ -276,7 +281,7 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
                 i >= delStart && i < delEnd ? styles.deleting : "",
                 dragFrom && i >= dragFrom.start && i < dragFrom.end ? styles.dragSource : "",
                 linkCount[it.id] ? styles.linked : "",
-                linkTarget === it.id ? styles.linkTarget : "",
+                linkTarget === it.id || linkHover === it.id ? styles.linkTarget : "",
               ].join(" ")}
               data-item-index={i}
               data-item-id={it.text.trim() ? it.id : undefined}
@@ -389,8 +394,12 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
                 </button>
               )}
               {linkTarget === it.id && (
-                <span className={styles.linkTargetLabel} aria-hidden="true">
-                  {STR.linked.dropToLink}
+                <span
+                  className={`${styles.linkTargetLabel} ${linkAlready ? styles.linkTargetLinked : ""}`}
+                  aria-hidden="true"
+                  data-testid="link-drop-label"
+                >
+                  {linkAlready ? STR.linked.dropLinked : STR.linked.dropAdd}
                 </span>
               )}
               {(it.text.trim() || items.length > 1) && (

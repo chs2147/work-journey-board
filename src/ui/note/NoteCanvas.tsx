@@ -14,6 +14,7 @@ import { anchoredScroll, canvasSize, fitZoom, wheelZoom } from "../../domain/not
 import {
   boxName,
   boxText,
+  isLinkedTo,
   FONT_SIZES,
   NOTE_BG,
   TEXT_COLORS,
@@ -23,7 +24,7 @@ import {
   type TextBox,
 } from "../../domain/note";
 import { STR } from "../../shared/strings";
-import { reportError, toast } from "../board/boardStore";
+import { reportError, toast, useBoard } from "../board/boardStore";
 import { useAppStore } from "../common/appStore";
 import { onSelectedBoxKey, startBoxDrag, useBoxFrame } from "./boxShared";
 import { noteExtensions } from "./editorExtensions";
@@ -31,6 +32,7 @@ import { ImageBoxView, ImagePreview } from "./ImageBoxView";
 import { Minimap } from "./Minimap";
 import { LinkBoxView } from "./LinkBoxView";
 import { LinkStrip } from "./LinkStrip";
+import { LinkMenuItems, LinkPicker } from "./LinkPicker";
 import { EdgeKnobs, EdgeMenuItems } from "./EdgeBoxParts";
 import { useEdgeCount } from "./edgeHooks";
 import { EdgeLayer, EdgeToolbar } from "./EdgeLayer";
@@ -59,7 +61,6 @@ import {
   sendToBack,
   setBoxBg,
   setEditing,
-  unlinkBox,
   updateContent,
   useNote,
 } from "./noteStore";
@@ -87,6 +88,13 @@ export default function NoteCanvas() {
   const linking = useNote((s) => s.linking);
   // 보드 행을 이 판에 끌어 오는 중이면 놓을 자리(improve-1026v2-spec 4절)
   const rowDrop = useRowDrag((s) => s.drag?.note ?? null);
+  // 행을 기존 상자 위로(multi-link-spec 2-2): 그 상자 테두리 + "놓으면 연결 추가"/"연결됨"
+  const rowBoxId = useRowDrag((s) => s.drag?.box ?? null);
+  const rowItem = useBoard((s) => {
+    const d = useRowDrag.getState().drag;
+    return d && rowBoxId ? (s.cells[d.fromKey]?.[d.fromIndex] ?? null) : null;
+  });
+  const rowBox = rowBoxId ? doc.boxes.find((b) => b.id === rowBoxId) : undefined;
   const canvasRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [view, setView] = useState({ w: 0, h: 0 });
@@ -228,7 +236,10 @@ export default function NoteCanvas() {
   // Space를 누르고 있는 동안(글자를 치는 중이 아니고 판 위에 마우스가 있을 때) 끌면 판이 움직인다
   useEffect(() => {
     const down = (e: globalThis.KeyboardEvent) => {
-      if (e.code !== "Space" || e.repeat || !hover.current || isEditable(document.activeElement)) return;
+      // 단추·고르기 목록에 포커스가 있으면 Space는 그 단추를 누르는 키
+      const active = document.activeElement;
+      if (e.code !== "Space" || e.repeat || !hover.current || isEditable(active)) return;
+      if (active?.closest("button, [role='dialog'], [role='menu']")) return;
       e.preventDefault();
       spaceDown.current = true;
       setPanReady(true);
@@ -372,6 +383,26 @@ export default function NoteCanvas() {
                 />
               ),
             )}
+            {rowBox && rowItem && (
+              <>
+                <span
+                  className={styles.linkTarget}
+                  style={{ left: rowBox.x, top: rowBox.y, width: rowBox.w, height: rowBox.h ?? 48 }}
+                  data-testid="link-box-target"
+                />
+                <span
+                  className={`${styles.linkBoxChip} ${isLinkedTo(rowBox, rowItem.id) ? styles.linkBoxChipLinked : ""}`}
+                  style={{ left: rowBox.x, top: rowBox.y - 26 }}
+                  data-testid="link-box-chip"
+                >
+                  {isLinkedTo(rowBox, rowItem.id)
+                    ? STR.linked.dropLinked
+                    : STR.linked.dropOnBox(
+                        rowItem.text.length > 30 ? `${rowItem.text.slice(0, 30)}…` : rowItem.text,
+                      )}
+                </span>
+              </>
+            )}
             {rowDrop && (
               <div
                 className={styles.linkDropSpot}
@@ -387,6 +418,7 @@ export default function NoteCanvas() {
             <FormatToolbar editor={editingEditor} box={editingBox} zoom={zoom} />
           )}
           <EdgeToolbar doc={doc} zoom={zoom} />
+          <LinkPicker doc={doc} zoom={zoom} />
         </div>
       </div>
       {doc.boxes.length === 0 && (
@@ -531,7 +563,7 @@ function TextBoxView({
         editing ? styles.editing : "",
         selected ? styles.selected : "",
         pending ? styles.ghost : "",
-        box.ref ? styles.hasStrip : "",
+        box.refs ? styles.hasStrip : "",
         pulse ? styles.pulse : "",
       ].join(" ")}
       style={{ left: box.x, top: box.y, width: box.w, zIndex: menuOpen ? 100000 : box.z + 1 }}
@@ -604,11 +636,7 @@ function TextBoxView({
           <button type="button" role="menuitem" onClick={() => void copyText()}>
             {STR.note.copyText}
           </button>
-          {box.ref && (
-            <button type="button" role="menuitem" onClick={() => (setMenuOpen(false), unlinkBox(box.id))}>
-              {STR.linked.unlink}
-            </button>
-          )}
+          <LinkMenuItems box={box} close={() => setMenuOpen(false)} />
           <EdgeMenuItems boxId={box.id} close={() => setMenuOpen(false)} />
           <button
             type="button"
@@ -620,7 +648,7 @@ function TextBoxView({
           </button>
         </div>
       )}
-      {box.ref && <LinkStrip boxId={box.id} link={box.ref} />}
+      {box.refs && <LinkStrip boxId={box.id} refs={box.refs} />}
       <EditorContent editor={editor} className={styles.editor} />
       {/* 대기 상자의 안내 — 글자를 치면 사라진다(조합 중에도 같은 편집기를 그대로 쓰게 구조는 바꾸지 않는다) */}
       {pending && (

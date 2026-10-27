@@ -20,6 +20,11 @@ import {
   snap,
   topZ,
   CAPTION_MAX,
+  LINK_MAX,
+  isLinkedTo,
+  refItems,
+  withRef,
+  withoutRef,
   boxEdges,
   cleanEdgeLabel,
   edgesOf,
@@ -91,6 +96,8 @@ export interface NoteState {
   pulseId: string | null;
   /** 상자로 포커스·화면 안으로(보드 배지) — 이미 선택된 상자여도 다시 가게 회차를 둔다 */
   revealRequest: { id: string; n: number } | null;
+  /** [업무 항목 연결…] 고르기 목록이 열린 상자(multi-link-spec 2-3) */
+  pickerId: string | null;
   // ── 관계선(note-relation-spec) ──
   /** 선택한 관계선(상자 선택과 동시에 하나만) */
   edgeId: string | null;
@@ -140,6 +147,7 @@ export const useNote = create<NoteState>(() => ({
   fitRequest: 0,
   pulseId: null,
   revealRequest: null,
+  pickerId: null,
   edgeId: null,
   edgeOrigin: null,
   edgeLabelOpen: false,
@@ -202,6 +210,7 @@ async function loadWeek(weekId: WeekId, finish = true) {
       selectedId: null,
       pendingId: null,
       focusRequest: null,
+      pickerId: null,
       ...EDGE_RESET,
     });
     syncUndo();
@@ -291,7 +300,7 @@ export function addBox(x: number, y: number, itemId?: string): string {
     z: topZ(doc) + 1,
     bg: null,
     content: emptyContent(),
-    ...(itemId ? { ref: { item: itemId } } : {}),
+    ...(itemId ? { refs: [{ item: itemId }] } : {}),
   };
   // 저장도 기록도 하지 않는다 — 첫 글자(updateContent)에서 상자가 된다
   set({ doc: { ...doc, boxes: [...doc.boxes, box] }, pendingId: box.id });
@@ -334,38 +343,74 @@ export function addLinkedBox(itemId: string, at?: { x: number; y: number }): str
   return addBox(place.x, place.y, itemId);
 }
 
-/** 기존 상자를 항목에 연결(5절) — 이미 연결돼 있으면 옮겨 간다. 메모 기록 1단계 */
+/**
+ * 기존 상자에 항목 연결 더하기(multi-link-spec 2절) — 이미 연결된 항목이면 그대로(알림), 20개면 더하지 않음. 메모 기록 1단계.
+ * before = 상자를 끌어 놓은 경우의 끌기 전 문서(상자는 원래 자리로 돌아간다)
+ */
 export function linkBox(id: string, itemId: string, before?: NoteDoc) {
   const b = boxOf(id);
-  if (!b || b.ref?.item === itemId) return;
-  const next = mapBox(id, (x) => ({ ...x, ref: { item: itemId } }));
+  if (!b) return;
+  const kept = before?.boxes.find((x) => x.id === id) ?? b;
+  const restore = (doc: NoteDoc): NoteDoc => ({
+    ...doc,
+    boxes: doc.boxes.map((x) => (x.id === id ? { ...x, x: kept.x, y: kept.y } : x)),
+  });
+  const already = isLinkedTo(b, itemId);
+  const full = !already && refItems(b).length >= LINK_MAX;
+  if (already || full) {
+    // 끌기로 움직인 자리만 되돌리고 기록은 남기지 않는다
+    if (before) set({ doc: restore(get().doc) });
+    toast(already ? STR.linked.already : STR.linked.limit(LINK_MAX));
+    return;
+  }
+  const next = mapBox(id, (x) => withRef(x, itemId));
   if (before) {
     // 끌기 도중 바뀐 자리는 버리고(상자는 원래 자리로) 연결만 한 번에 기록
     undoStack.push(withoutPending(before));
     if (undoStack.length > UNDO_LIMIT) undoStack.shift();
     redoStack.length = 0;
     syncUndo();
-    const kept = before.boxes.find((x) => x.id === id) ?? b;
-    set({
-      doc: { ...next, boxes: next.boxes.map((x) => (x.id === id ? { ...x, x: kept.x, y: kept.y } : x)) },
-    });
+    set({ doc: restore(next) });
     scheduleSave();
   } else commit(next, true);
   toast(STR.linked.linked, { label: STR.toast.undo, run: () => undoNote() });
 }
 
-/** 연결 해제(7절) — 띠만 사라지고 상자·본문·자리는 그대로 */
-export function unlinkBox(id: string) {
+/** 연결 해제(multi-link-spec 4절) — itemId 하나만, 없으면 모두. 띠 줄만 사라지고 상자·본문·자리는 그대로 */
+export function unlinkBox(id: string, itemId?: string) {
   const b = boxOf(id);
-  if (!b?.ref) return;
+  const n = b ? refItems(b).length : 0;
+  if (!b || !n || (itemId && !isLinkedTo(b, itemId))) return;
   commit(
-    mapBox(id, (x) => {
-      const { ref: _gone, ...rest } = x; // eslint-disable-line @typescript-eslint/no-unused-vars
-      return rest as NoteBox;
-    }),
+    mapBox(id, (x) => withoutRef(x, itemId)),
     true,
   );
-  toast(STR.linked.unlinked, { label: STR.toast.undo, run: () => undoNote() });
+  toast(itemId || n === 1 ? STR.linked.unlinked : STR.linked.unlinkedAll(n), {
+    label: STR.toast.undo,
+    run: () => undoNote(),
+  });
+}
+
+/** [업무 항목 연결…] 목록의 체크: 연결돼 있으면 해제, 아니면 더하기(알림 없이) */
+export function toggleLink(id: string, itemId: string) {
+  const b = boxOf(id);
+  if (!b) return;
+  if (isLinkedTo(b, itemId)) {
+    commit(
+      mapBox(id, (x) => withoutRef(x, itemId)),
+      true,
+    );
+  } else if (refItems(b).length >= LINK_MAX) toast(STR.linked.limit(LINK_MAX));
+  else
+    commit(
+      mapBox(id, (x) => withRef(x, itemId)),
+      true,
+    );
+}
+
+/** [업무 항목 연결…] 고르기 목록을 열 상자(한 번에 하나) */
+export function openLinkPicker(id: string | null) {
+  set({ pickerId: id });
 }
 
 /** 보드 배지 → 그 메모 상자로(6-2): 메모를 펼치고 상자를 선택(선택되면 포커스·화면 안으로) */

@@ -927,15 +927,13 @@
 }
 
 /* ── 업무연계 오브젝트의 타이틀 띠(improve-1026v2-spec 6-1) ── 상자 맨 위 한 줄(높이 26px), 상자 여백 밖으로 꽉 차게 */
+/* 여러 줄 타이틀 띠(multi-link-spec 1절): 연결된 항목 하나 = 한 줄 */
 .strip {
   position: relative;
   z-index: 2;
   display: flex;
-  align-items: center;
-  gap: 6px;
-  height: 26px;
+  flex-direction: column;
   margin: -8px -12px 6px;
-  padding: 0 4px 0 8px;
   border-bottom: 1px solid var(--line);
   border-radius: calc(var(--radius-md) - 1px) calc(var(--radius-md) - 1px) 0 0;
   background: var(--surface-sub);
@@ -950,6 +948,43 @@
 .linkBox > .strip {
   margin: 0;
   border-radius: calc(var(--radius-lg) - 1px) calc(var(--radius-lg) - 1px) 0 0;
+}
+
+.stripLine {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 4px 0 8px;
+}
+
+.stripLine + .stripLine {
+  border-top: 1px solid var(--line);
+}
+
+.stripLine[data-item]:hover {
+  background: var(--accent-soft);
+}
+
+/* ✂에 마우스를 올리면 지워질 줄 미리보기 */
+.stripCut,
+.stripCut[data-item]:hover {
+  background: var(--danger-soft);
+}
+
+.stripCut .stripText {
+  text-decoration: line-through;
+}
+
+.stripMore {
+  width: 100%;
+  border: 0;
+  border-top: 1px solid var(--line);
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
 .stripDot {
@@ -1012,21 +1047,13 @@ button.stripText:hover {
   cursor: default;
 }
 
-.stripUnlinkText {
-  flex: 0 0 auto;
-  height: 20px;
-  padding: 0 8px;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-sm);
-  background: var(--surface-card);
-  color: var(--text-1);
-  font: inherit;
-  cursor: pointer;
-}
-
 /* 띠가 있으면 ⋯ 단추는 띠 아래(본문 기준) */
 .hasStrip > .menuButton {
-  top: 30px;
+  top: calc(var(--strip-h, 26px) + 4px);
+}
+
+.hasStrip > .menu {
+  top: calc(var(--strip-h, 26px) + 26px);
 }
 
 /* 보드 배지로 찾아온 상자를 잠깐 강조 */
@@ -1360,4 +1387,145 @@ button.stripText:hover {
   fill: none;
   stroke: var(--text-3);
   stroke-width: 1;
+}
+
+/* 행을 기존 상자 위로 끌어 옴(multi-link-spec 2-2) */
+.linkBoxChip {
+  position: absolute;
+  z-index: 100001;
+  max-width: 420px;
+  padding: 2px 10px;
+  overflow: hidden;
+  border-radius: 11px;
+  background: var(--accent);
+  color: var(--surface-card);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.linkBoxChipLinked {
+  background: var(--text-2);
+}
+
+/* [업무 항목 연결…] 고르기 목록(multi-link-spec 2-3) */
+.picker {
+  position: absolute;
+  z-index: 100000;
+  display: flex;
+  flex-direction: column;
+  width: 360px;
+  max-height: 340px;
+  padding: 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  box-shadow: 0 6px 18px rgb(0 0 0 / 0.16);
+}
+
+.pickerSearch {
+  height: 28px;
+  margin: 2px 2px 6px;
+  padding: 0 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-card);
+  color: var(--text-1);
+  font: inherit;
+  font-size: var(--fs-sm);
+}
+
+.pickerSearch:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+.pickerList {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.pickerGroup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px 2px;
+  color: var(--text-2);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+}
+
+.pickerItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 5px 10px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-1);
+  font: inherit;
+  font-size: var(--fs-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.pickerItem:hover,
+.pickerItem:focus-visible {
+  background: var(--surface-sub);
+  outline: none;
+}
+
+.pickerSub {
+  padding-left: 26px;
+}
+
+.pickerCheck {
+  flex: 0 0 14px;
+  width: 14px;
+  height: 14px;
+  box-sizing: border-box;
+  border: 1.5px solid var(--text-3);
+  border-radius: 3px;
+}
+
+.pickerCheckOn {
+  border-color: var(--accent);
+  background: var(--accent);
+  box-shadow: inset 0 0 0 2px var(--surface-card);
+}
+
+.pickerDate {
+  flex: 0 0 auto;
+  color: var(--text-2);
+  font-size: var(--fs-xs);
+}
+
+.pickerText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pickerEmpty {
+  margin: 0;
+  padding: 8px 10px;
+  color: var(--text-3);
+  font-size: var(--fs-sm);
+}
+
+.pickerFoot {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 4px;
+  padding: 6px 8px 2px;
+  border-top: 1px solid var(--line);
+  color: var(--text-2);
+  font-size: var(--fs-xs);
 }
