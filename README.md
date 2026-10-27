@@ -50,6 +50,11 @@ npm run tauri dev    # 실앱 모드(윈도우 / 리눅스는 webkit2gtk-4.1 필
 - 윈도우 설치 파일: `main`에 반영되면 [Releases](https://github.com/chs2147/work-journey-board/releases)에 `v<버전>` 사전 릴리스로 올라간다. WebView2 오프라인 설치판은 Actions → *Build Windows installer* → Run workflow → `offline`.
 
 ## Version History
+### v0.2.20 (2026-10-27) — 설정 전체 화면·테마·저장 표시·가져오기 화면
+- 설정 ⚙를 왼쪽 레일 맨 아래로, 보드 자리를 덮는 설정 화면(분류 5개·카드), `Ctrl+,`·`Esc`
+- 테마 시스템 설정 / 라이트 / 다크(이 PC 설정 `config.json`, 창 제목 표시줄·시작 창도 같은 테마)
+- 저장됨 = 초록 테두리 알약(저장 중은 0.4초 넘을 때만), 가져오기 마법사 단계 표시·진행 순서 A·B·C 상자·AI 지시문 코드 블록 + [복사]
+
 ### v0.2.19 (2026-10-27) — 새 판 확인·설치
 - 앱을 켤 때 1번 + 설정 › 업데이트 **[업데이트 확인]**으로 GitHub Releases에 새 판을 묻는다
 - 새 판이 있으면 보드 위 띠 + 설정 단추 파란 점, **[자세히·설치]**: 릴리스 노트 · 내려받기 진행 · SHA256 확인 · 일지 자동 백업(`_pre-update`) · 설치하고 다시 시작
