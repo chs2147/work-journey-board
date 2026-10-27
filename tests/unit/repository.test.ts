@@ -376,26 +376,34 @@ describe("중요 표시 (important-repeat-spec 2·4-2)", () => {
     expect(list).toHaveLength(2);
   });
 
-  it("처리 완료 → 목록에서 빠지고 최근 완료(7일)에, 되돌리면 다시 목록으로", async () => {
-    const { repo, clock } = await freshRepo();
+  it("처리 완료 → 목록에서 빠지고 처리한 주의 완료에, 되돌리면 다시 목록으로(완료 기록 삭제)", async () => {
+    const { repo } = await freshRepo();
     const c = await repo.createCategory("A", "2026-W43");
     const x = { ...draft("보고서 제출"), flagged: true };
     await repo.saveCell("2026-10-22", c.id, [x]);
     await repo.completeFlag(x.id);
     expect(await repo.listImportant()).toEqual([]);
-    expect((await repo.listRecentDone()).map((i) => i.text)).toEqual(["보고서 제출"]);
+    expect((await repo.listDoneInWeek("2026-W43")).map((i) => i.text)).toEqual(["보고서 제출"]);
+    expect(await repo.listDoneInWeek("2026-W44")).toEqual([]);
     const item = (await repo.getWeek("2026-W43")).items[cellKey("2026-10-22", c.id)]![0]!;
     expect([item.flagged, item.flagDoneAt !== null]).toEqual([false, true]);
 
     await repo.undoComplete(x.id);
     expect((await repo.listImportant()).map((i) => i.text)).toEqual(["보고서 제출"]);
-    expect(await repo.listRecentDone()).toEqual([]);
+    expect(await repo.listDoneInWeek("2026-W43")).toEqual([]);
+  });
 
-    // 7일이 지나면 최근 완료에서도 빠진다(기록은 그대로)
-    await repo.completeFlag(x.id);
-    clock.set(2026, 10, 31); // 처리한 날(10/23)에서 8일 뒤
-    expect(await repo.listRecentDone()).toEqual([]);
-    expect((await repo.getWeek("2026-W43")).items[cellKey("2026-10-22", c.id)]).toHaveLength(1);
+  it("완료 기록은 영구 보관: 몇 주가 지나도 처리한 주에서 보이고, 지난주 항목을 이번 주에 처리하면 이번 주에", async () => {
+    const { repo, clock } = await freshRepo();
+    const c = await repo.createCategory("A", "2026-W42");
+    const old = { ...draft("지난주 일"), flagged: true };
+    await repo.saveCell("2026-10-14", c.id, [old]);
+    await repo.completeFlag(old.id); // 처리한 날 = 시계(10/23, W43)
+    clock.set(2026, 12, 20); // 두 달 뒤
+    expect((await repo.listDoneInWeek("2026-W43")).map((i) => [i.text, i.date])).toEqual([
+      ["지난주 일", "2026-10-14"],
+    ]);
+    expect(await repo.listDoneInWeek("2026-W42")).toEqual([]);
   });
 
   it("종료된 업무의 중요 항목도 목록에 남고 종료 표시가 붙는다", async () => {

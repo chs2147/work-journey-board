@@ -72,9 +72,10 @@ export interface BoardState {
   yearOpen: boolean;
   /** "+ 업무 추가" 입력칸이 열려 있는가 */
   addOpen: boolean;
-  /** 중요 업무(모든 주, 처리 전) · 최근 완료(7일) — important-repeat-spec 2절 */
+  /** 중요 업무(모든 주, 처리 전) — important-repeat-spec 2절 · 보고 있는 주에 처리 완료한 항목 — improve-1027v4-spec 4절 */
   important: ImportantItem[];
-  recentDone: ImportantItem[];
+  weekDone: ImportantItem[];
+  weekDoneOpen: boolean;
   /** 왼쪽 중요 업무 패널 열림 */
   panelOpen: boolean;
   /** 패널을 열 때 목록으로 포커스를 옮길지 */
@@ -143,7 +144,8 @@ export const useBoard = create<BoardState>(() => ({
   yearOpen: false,
   addOpen: false,
   important: [],
-  recentDone: [],
+  weekDone: [],
+  weekDoneOpen: true,
   panelOpen: false,
   panelFocus: false,
   pulseId: null,
@@ -437,7 +439,7 @@ export async function init(r: JournalRepository) {
   redoStack.length = 0;
   const today = r.today();
   const ui = (await r.getSettings()).ui;
-  set({ tagFilter: ui.tagFilter, viewMode: ui.viewMode });
+  set({ tagFilter: ui.tagFilter, viewMode: ui.viewMode, weekDoneOpen: ui.weekDoneOpen });
   await loadWeek(weekIdOf(today), today);
   // 패널 열림은 기억하되, 켤 때 0건이면 닫힌 채 시작(spec 2-5)
   const settings = await r.getSettings();
@@ -449,8 +451,9 @@ export async function init(r: JournalRepository) {
 export async function refreshImportant() {
   const r = repo;
   if (!r) return;
-  const [important, recentDone] = await Promise.all([r.listImportant(), r.listRecentDone()]);
-  set({ important, recentDone });
+  const weekId = get().weekId;
+  const [important, weekDone] = await Promise.all([r.listImportant(), r.listDoneInWeek(weekId)]);
+  if (get().weekId === weekId) set({ important, weekDone });
 }
 
 /** 입력 중 항목의 중요 표시 켜기/끄기(☆ 버튼·Alt+I). 빈 항목은 무시. 실행 취소 기록에 들어간다. */
@@ -602,6 +605,13 @@ export async function materializePreview(key: string, ruleId: string) {
 export function setPanelOpen(open: boolean, focusList = false) {
   set({ panelOpen: open, panelFocus: open && focusList });
   void repo?.updateSettings({ ui: { importantPanelOpen: open } }).catch(() => undefined);
+}
+
+/** 패널 아래 "이 주 완료" 펼침(improve-1027v4-spec 4절) — 기억 */
+export function setWeekDoneOpen(open: boolean) {
+  if (get().weekDoneOpen === open) return;
+  set({ weekDoneOpen: open });
+  void repo?.updateSettings({ ui: { weekDoneOpen: open } }).catch(() => undefined);
 }
 
 export async function reload() {

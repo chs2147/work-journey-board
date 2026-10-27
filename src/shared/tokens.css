@@ -60,6 +60,9 @@
   --band-later-bg: #f1efe8;
   --band-later-bar: #8a8983;
   --band-later-text: #5f5e5a;
+  /* 중요 업무 처리 완료 뱃지(improve-1027v4-spec 2-1) — 바탕 대비 3:1 이상 */
+  --done: #0f6e56;
+  --on-done: #ffffff;
   /* 중요 표시(important-repeat-spec 2-1) */
   --star: #c98500;
   --mark: #fff1bf;
@@ -136,6 +139,8 @@
     --band-later-bg: #2c2c2a;
     --band-later-bar: #8f8e86;
     --band-later-text: #c3c2b7;
+    --done: #4fc29a;
+    --on-done: #0b0b0b;
     --star: #e0a83a;
     --mark: #3a3116;
     --mark-line: #7a6222;

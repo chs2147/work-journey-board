@@ -42,6 +42,7 @@ import type { Category, CategoryPeriod, Depth, EntryItem, ImportantItem, ItemDra
 import {
   addDays,
   addWeeks,
+  parseDate,
   weekDays,
   weekIdOf,
   weekRange,
@@ -242,8 +243,6 @@ export interface RepeatPreview {
 }
 
 const ITEM_COLUMNS = "id, date, category_id, seq, depth, text, flagged, flag_done_at, recurrence_id";
-/** 최근 완료 보관 기간(spec 2-4) */
-export const RECENT_DONE_DAYS = 7;
 
 const toCategory = (r: CategoryRow): Category => ({
   id: r.id,
@@ -913,10 +912,17 @@ export class JournalRepository {
     return this.importantRows("e.flagged = 1", []);
   }
 
-  /** 최근 완료(처리 완료 후 RECENT_DONE_DAYS일 이내, 최근 순) */
-  async listRecentDone(days = RECENT_DONE_DAYS): Promise<ImportantItem[]> {
-    const since = utcTimestamp(new Date(this.clock().getTime() - days * 86_400_000));
-    const rows = await this.importantRows("e.flagged = 0 AND e.flag_done_at >= ?", [since]);
+  /**
+   * 그 주에 처리 완료한 중요 항목(improve-1027v4-spec 3·4절) — 완료 기록은 영구 보관, "그 주" = 처리한 날(내 PC 날짜)이
+   * 그 주의 월~일. 완료 시각은 UTC ISO로 저장돼 있어 그 주 월요일 0시~다음 월요일 0시(로컬)를 UTC로 바꿔 거른다. 최근 순.
+   */
+  async listDoneInWeek(weekId: WeekId): Promise<ImportantItem[]> {
+    const start = parseDate(weekStart(weekId));
+    const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 7);
+    const rows = await this.importantRows(
+      "e.flagged = 0 AND e.flag_done_at IS NOT NULL AND e.flag_done_at >= ? AND e.flag_done_at < ?",
+      [utcTimestamp(start), utcTimestamp(end)],
+    );
     return rows.sort((a, b) => (b.flagDoneAt ?? "").localeCompare(a.flagDoneAt ?? ""));
   }
 

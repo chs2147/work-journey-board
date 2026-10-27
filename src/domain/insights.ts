@@ -110,6 +110,8 @@ export interface TimelineItem {
   text: string;
   /** 중요(처리 전) */
   flagged: boolean;
+  /** 중요 업무 처리 완료 시각(improve-1027v4-spec 2-2) — 없으면 null */
+  doneAt: string | null;
   /** 매주 반복으로 들어온 항목 */
   repeat: boolean;
   /** 이 항목에 연결된 메모 글(읽는 순서) */
@@ -236,6 +238,7 @@ export function buildTimeline(input: TimelineInput): TimelineRow[] {
           depth: it.depth,
           text: it.text,
           flagged: it.flagged === true,
+          doneAt: it.flagged !== true && it.flagDoneAt ? it.flagDoneAt : null,
           repeat: !!it.recurrenceId,
           memos: memoFor(w, it.id),
         })),

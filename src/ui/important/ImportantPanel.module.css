@@ -287,36 +287,87 @@ section:first-child > .group {
   color: var(--ok);
 }
 
-/* 최근 완료(spec 2-4) */
+/* 이 주 완료(improve-1027v4-spec 4절) — 보고 있는 주에 처리한 항목, 처리한 날로 묶음 */
 .done {
+  flex: 0 0 auto;
   border-top: 1px solid var(--line);
+  background: var(--surface-sub);
 }
 
 .done summary {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-2);
   padding: var(--sp-2) var(--sp-3);
   font-size: var(--fs-sm);
-  color: var(--text-2);
+  font-weight: var(--fw-bold);
+  color: var(--text-1);
   cursor: pointer;
 }
 
+.doneCount {
+  color: var(--done);
+}
+
+.doneEmpty {
+  margin: 0;
+  padding: 0 var(--sp-3) var(--sp-3);
+  color: var(--text-2);
+  font-size: var(--fs-xs);
+}
+
+.doneList {
+  max-height: 40vh;
+  overflow: auto;
+  padding-bottom: var(--sp-2);
+}
+
+.doneDay {
+  margin: 0;
+  padding: var(--sp-1) var(--sp-3) 2px;
+  color: var(--text-2);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+}
+
 .doneRow {
-  display: grid;
-  gap: 1px;
-  padding: 5px var(--sp-3) 5px calc(var(--sp-3) + 26px);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px var(--sp-3) 3px var(--sp-3);
+  font-size: var(--fs-sm);
+}
+
+.doneRow > svg {
+  flex: 0 0 auto;
 }
 
 .doneText {
-  color: var(--text-3);
-  text-decoration: line-through;
-  word-break: keep-all;
-  overflow-wrap: anywhere;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-1);
+  font: inherit;
+  text-align: left;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.doneText:hover {
+  text-decoration: underline;
 }
 
 .restore {
+  flex: 0 0 auto;
   padding: 0;
   border: 0;
   background: none;
   color: var(--accent);
   font: inherit;
+  font-size: var(--fs-xs);
   cursor: pointer;
 }

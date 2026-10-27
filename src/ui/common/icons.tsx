@@ -91,6 +91,24 @@ export const IconMap = () => (
 );
 
 /** 링크 넣기: 사슬 */
+/**
+ * 중요 업무 처리 완료 뱃지(improve-1027v4-spec 2절): 초록 원 + 체크. 색은 --done/--on-done(라이트·다크),
+ * 색만이 아니라 체크 모양으로 구분. 이름은 쓰는 쪽이 aria-label로 단다.
+ */
+export const IconDone = ({ size = 18 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 18 18" aria-hidden="true" focusable="false">
+    <circle cx="9" cy="9" r="8" fill="var(--done)" />
+    <path
+      d="M5.2 9.3 7.8 11.8 12.8 6.6"
+      fill="none"
+      stroke="var(--on-done)"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
 /** 메모 보드 스냅샷(improve-1027v3-spec 1-2): 카메라 */
 export const IconCamera = () => (
   <Svg>

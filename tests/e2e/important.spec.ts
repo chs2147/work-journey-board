@@ -49,7 +49,7 @@ test("부호(☆)를 눌러 표시 — 지난 날짜 묶음과 레일의 빨간 
   await expect(panel(page).getByRole("region", { name: "지난 날짜" })).toContainText("지남");
 });
 
-test("목록에서 처리 완료 → 보드 강조 해제, 되돌리기, 모두 처리하면 '모두 챙겼습니다' + 최근 완료", async ({
+test("목록에서 처리 완료 → 보드 강조 해제, 되돌리기, 모두 처리하면 '모두 챙겼습니다' + 이 주 완료", async ({
   page,
 }) => {
   await page.keyboard.press("Alt+KeyI");
@@ -67,7 +67,10 @@ test("목록에서 처리 완료 → 보드 강조 해제, 되돌리기, 모두 
     .getByRole("button", { name: `처리 완료: ${FIRST}` })
     .click();
   await expect(page.getByTestId("important-empty")).toContainText("모두 챙겼습니다");
-  await panel(page).getByText("최근 완료 1 · 7일간 보관").click();
+  // 이 주 완료(improve-1027v4-spec 4절) — 기본 펼침
+  await expect(panel(page).getByTestId("week-done").locator("summary")).toContainText(
+    "이 주 완료 · 2026-W43",
+  );
   await panel(page)
     .getByRole("button", { name: `되돌리기: ${FIRST}` })
     .click();

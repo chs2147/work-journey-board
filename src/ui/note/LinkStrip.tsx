@@ -8,7 +8,8 @@ import { shortDateLabel } from "../../domain/week";
 import { STR } from "../../shared/strings";
 import { revealItem, splitKey, useBoard } from "../board/boardStore";
 import { useLinkHover } from "../board/rowDrag";
-import { IconUnlink } from "../common/icons";
+import { allImportantDone, doneDate } from "../../domain/important";
+import { IconDone, IconUnlink } from "../common/icons";
 import { unlinkBox } from "./noteStore";
 import styles from "./Note.module.css";
 
@@ -28,6 +29,10 @@ interface LinkedLine {
     catName: string;
     color: string;
     order: string;
+    /** 중요 표시(처리 전) */
+    flagged: boolean;
+    /** 중요 업무 처리 완료 시각(improve-1027v4-spec 2-2) */
+    doneAt: string | null;
   } | null;
 }
 
@@ -51,6 +56,8 @@ function useLinkedLines(refs: BoxRef[]): LinkedLine[] {
           catName: cat?.name ?? "",
           color: cat?.color ?? "c1",
           order: `${String(catIndex.get(categoryId) ?? 999).padStart(4, "0")}|${date}|${String(idx).padStart(4, "0")}`,
+          flagged: !!it.flagged,
+          doneAt: !it.flagged && it.flagDoneAt ? it.flagDoneAt : null,
         });
       });
     }
@@ -97,6 +104,19 @@ export function LinkStrip({ boxId, refs }: { boxId: string; refs: BoxRef[] }) {
       onPointerDown={stop}
       onPointerLeave={() => hover(null)}
     >
+      {allImportantDone(
+        lines.flatMap((l) => (l.found ? [{ flagged: l.found.flagged, done: !!l.found.doneAt }] : [])),
+      ) && (
+        <span
+          className={styles.boxDone}
+          role="img"
+          aria-label={STR.important.doneAll}
+          title={STR.important.doneAll}
+          data-testid="box-done"
+        >
+          <IconDone size={20} />
+        </span>
+      )}
       {shown.map(({ item, found: it }) => {
         if (!it) {
           return (
@@ -132,6 +152,17 @@ export function LinkStrip({ boxId, refs }: { boxId: string; refs: BoxRef[] }) {
             data-item={item}
             onPointerEnter={() => hover(item)}
           >
+            {it.doneAt && (
+              <span
+                className={styles.stripDone}
+                role="img"
+                aria-label={STR.important.doneLine(doneDate(it.doneAt))}
+                title={STR.important.doneLine(doneDate(it.doneAt))}
+                data-testid="link-line-done"
+              >
+                <IconDone size={14} />
+              </span>
+            )}
             <span className={styles.stripDot} style={{ background: `var(--cat-${it.color})` }} />
             <button
               type="button"

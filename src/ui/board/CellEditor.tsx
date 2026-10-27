@@ -28,13 +28,16 @@ import {
   toggleFlag,
   toast,
   toggleRepeat,
+  undoImportant,
   useBoard,
 } from "./boardStore";
+import { doneDate, isDone } from "../../domain/important";
+import { DonePopover } from "./DonePopover";
 import { addLinkedBox, pasteImagesFromBoard, revealBox, useNote } from "../note/noteStore";
 import { linkedBoxes } from "../../domain/note";
 import { autoSize, isComposingKey, useRemeasure } from "./helpers";
 import { LinkedText } from "./LinkedText";
-import { IconNote, IconTrash } from "../common/icons";
+import { IconDone, IconNote, IconTrash } from "../common/icons";
 import { startRowDrag, useLinkDrop, useLinkHover, useRowDrag } from "./rowDrag";
 import styles from "./Board.module.css";
 
@@ -65,6 +68,8 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   /** 삭제 단추에 마우스를 올린 항목 — 지워질 묶음을 붉게 미리 보인다(improve-1026v2-spec 2절) */
   const [deleteHover, setDeleteHover] = useState<number | null>(null);
+  /** 완료 뱃지 창이 열린 항목(improve-1027v4-spec 2-1) */
+  const [doneOpen, setDoneOpen] = useState<number | null>(null);
   const [delStart, delEnd] = deleteHover === null ? [-1, -1] : deleteRange(items, deleteHover);
   // 행 끌어서 옮기기(improve-1026v2-spec 3절): 원래 자리는 흐리게, 놓을 칸은 테두리, 놓을 틈에 파란 선
   const drag = useRowDrag((s) => s.drag);
@@ -129,9 +134,11 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
     const plain = !e.altKey && !e.ctrlKey && !e.metaKey;
 
     // 중요 표시 켜기/끄기(important-repeat-spec 2-2). 한국어 자판에서도 되도록 e.code로 본다.
+    // 처리 완료한 항목이면 완료 창(처리한 때 · [되돌리기])을 연다(improve-1027v4-spec 2-1)
     if (e.code === "KeyI" && e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
       e.preventDefault();
-      void toggleFlag(cellKey, i);
+      if (isDone(item)) setDoneOpen(i);
+      else void toggleFlag(cellKey, i);
       return;
     }
     // 직전 기록 가져오기(improve-1026-spec 3-2) — 그 업무의 직전 기록일 내역을 이 칸 끝에
@@ -288,18 +295,49 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
               data-flagged={it.flagged ? "true" : undefined}
               data-repeating={isRepeating ? "true" : undefined}
             >
-              {/* 개조 부호 = 중요 표시 단추. 마우스를 올리면 ☆, 켜지면 ★. 키보드는 Alt+I(Tab 순서에서는 뺀다) */}
-              <button
-                type="button"
-                tabIndex={-1}
-                className={styles.bullet}
-                aria-label={it.flagged ? STR.important.flagOff : STR.important.flagOn}
-                aria-pressed={Boolean(it.flagged)}
-                title={it.flagged ? STR.important.flagOff : STR.important.flagOn}
-                disabled={!it.text.trim()}
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => void toggleFlag(cellKey, i)}
-              />
+              {/* 개조 부호 = 중요 표시 단추. 마우스를 올리면 ☆, 켜지면 ★. 키보드는 Alt+I(Tab 순서에서는 뺀다)
+                  처리 완료한 중요 항목은 초록 완료 뱃지 — 누르면 완료 창(improve-1027v4-spec 2-1) */}
+              {isDone(it) ? (
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  className={`${styles.bullet} ${styles.bulletDone}`}
+                  aria-label={STR.important.doneBadge(doneDate(it.flagDoneAt!))}
+                  title={STR.important.doneBadge(doneDate(it.flagDoneAt!))}
+                  aria-haspopup="dialog"
+                  aria-expanded={doneOpen === i}
+                  data-testid="done-badge"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => setDoneOpen(doneOpen === i ? null : i)}
+                >
+                  <IconDone size={14} />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  className={styles.bullet}
+                  aria-label={it.flagged ? STR.important.flagOff : STR.important.flagOn}
+                  aria-pressed={Boolean(it.flagged)}
+                  title={it.flagged ? STR.important.flagOff : STR.important.flagOn}
+                  disabled={!it.text.trim()}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => void toggleFlag(cellKey, i)}
+                />
+              )}
+              {doneOpen === i && isDone(it) && (
+                <DonePopover
+                  at={it.flagDoneAt!}
+                  onUndo={() => {
+                    setDoneOpen(null);
+                    void undoImportant(it.id).then(() => refs.current[i]?.focus());
+                  }}
+                  onClose={() => {
+                    setDoneOpen(null);
+                    refs.current[i]?.focus();
+                  }}
+                />
+              )}
               {/* ⋮⋮ 끌기 손잡이(improve-1026v2-spec 3-1) — 부호 단추 다음(자리는 CSS로 왼쪽 여백) */}
               {it.text.trim() && (
                 <button

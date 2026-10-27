@@ -39,6 +39,8 @@ export interface Settings {
     insightTab: "timeline" | "overview";
     /** 엑셀 내보내기 [포함] "메모 보드 스냅샷" 마지막 선택(improve-1027v3-spec 1-5, 기본 꺼짐) */
     exportSnapshots: boolean;
+    /** 중요 업무 패널 아래 "이 주 완료" 펼침(improve-1027v4-spec 4절) */
+    weekDoneOpen: boolean;
   };
 }
 
@@ -77,6 +79,7 @@ export const DEFAULT_SETTINGS: Settings = {
     insightMapOpen: true,
     insightTab: "timeline",
     exportSnapshots: false,
+    weekDoneOpen: true,
   },
 };
 
@@ -131,6 +134,7 @@ export function mergeSettings(base: Settings, patch: unknown): Settings {
   if (typeof s.ui.insightMapOpen !== "boolean") s.ui.insightMapOpen = true;
   if (s.ui.insightTab !== "timeline" && s.ui.insightTab !== "overview") s.ui.insightTab = "timeline";
   if (typeof s.ui.exportSnapshots !== "boolean") s.ui.exportSnapshots = false;
+  if (typeof s.ui.weekDoneOpen !== "boolean") s.ui.weekDoneOpen = true;
   if (!(s.ui.noteDockHeight >= NOTE_DOCK_MIN)) s.ui.noteDockHeight = DEFAULT_SETTINGS.ui.noteDockHeight;
   return s;
 }

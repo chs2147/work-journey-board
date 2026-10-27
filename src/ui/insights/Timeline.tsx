@@ -13,6 +13,8 @@ import {
 import { splitLinks, shortUrl } from "../../domain/links";
 import { DAY_LABELS, dayIndex, type DateStr } from "../../domain/week";
 import { STR } from "../../shared/strings";
+import { doneDate } from "../../domain/important";
+import { IconDone } from "../common/icons";
 import { openLink } from "../common/openLink";
 import { revealOnBoard, setVisibleWeeks, toggleMonth, useInsights } from "./insightsStore";
 import styles from "./Insights.module.css";
@@ -227,6 +229,17 @@ export function Timeline({ rows, today, categoryId, query, search, currentMatch,
           {it.flagged && (
             <span className={styles.star} aria-label={STR.insights.flagged}>
               ★
+            </span>
+          )}
+          {it.doneAt && (
+            <span
+              className={styles.doneMark}
+              role="img"
+              aria-label={STR.important.doneBadge(doneDate(it.doneAt))}
+              title={STR.important.doneBadge(doneDate(it.doneAt))}
+              data-testid="timeline-done"
+            >
+              <IconDone size={14} />
             </span>
           )}
           <ItemText text={it.text} query={query} />

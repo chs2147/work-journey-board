@@ -1,6 +1,7 @@
 // 메모 보드 스냅샷(improve-1027v3-spec 1절): 메모 문서 JSON + 이미지 → Canvas 2D 그림(PNG).
 // 화면을 캡처하지 않고 문서로 직접 그린다 — 화면에 없는 주(엑셀)도 그릴 수 있고, CSP(외부·data 글꼴)와 부딪히지 않는다.
 // 배치(layoutSnapshot)는 글자 폭 재기 함수만 받는 순수 계산, 그리기(drawSnapshot)만 캔버스를 쓴다. 외부 통신 없음.
+import { allImportantDone } from "../domain/important";
 import { readingOrder, type NoteBox, type NoteDoc, type PMNode } from "../domain/note";
 import { midPoint, routeEdge, type Point, type Rect } from "../domain/noteEdge";
 
@@ -16,6 +17,7 @@ export const SNAP_THEME = {
   text2: "#5f5e5a",
   text3: "#8a8983",
   accent: "#185fa5",
+  done: "#0f6e56",
   mark: "#fff1bf",
   bg: { yellow: "#fff6c9", blue: "#e6eefb", green: "#e3f1ea", pink: "#fbe4ec" },
   color: { gray: "#5f5e5a", orange: "#a8471a", blue: "#1f5fa8", green: "#0f6e46", red: "#b3261e" },
@@ -40,7 +42,14 @@ export interface SnapLine {
   text: string;
   /** 보드 순서(업무 → 날짜 → 칸 안) */
   order: string;
+  /** 중요 표시(처리 전) · 처리 완료(improve-1027v4-spec 2-2) */
+  flagged?: boolean;
+  done?: boolean;
 }
+
+/** 상자 오른쪽 위 ✓ — 화면 띠(LinkStrip)와 같은 규칙(domain/important) */
+const allDone = (lines: (SnapLine | undefined)[]) =>
+  allImportantDone(lines.flatMap((l) => (l ? [{ flagged: !!l.flagged, done: !!l.done }] : [])));
 
 export interface SnapImage {
   mime: string;
@@ -84,7 +93,9 @@ export type DrawOp =
   | TextOp
   | { kind: "rule"; x: number; y: number; w: number }
   | { kind: "check"; x: number; y: number; checked: boolean }
-  | { kind: "dot"; x: number; y: number; color: string };
+  | { kind: "dot"; x: number; y: number; color: string }
+  /** 처리 완료 ✓(가운데 x·y, 반지름 r) */
+  | { kind: "done"; x: number; y: number; r: number };
 
 interface Style {
   size: number;
@@ -290,6 +301,8 @@ export interface BoxLayout {
   /** 링크 카드의 머리글자(썸네일 없을 때)·주소 줄 */
   initial?: { x: number; y: number; text: string; color: string };
   urlBar?: number;
+  /** 연결한 중요 업무가 모두 처리 완료 — 오른쪽 위 ✓ */
+  doneAll?: boolean;
 }
 
 export interface SnapshotLayout {
@@ -346,9 +359,11 @@ function stripOps(
       ops.push(text(8, y, ellipsize(input.goneText, width - 16, font, measure), SNAP_THEME.text3, 0));
       return;
     }
-    ops.push({ kind: "dot", x: 12, y, color: line.color });
-    const t = ellipsize(`${line.catName} · ${line.dateLabel} · ${line.text}`, width - 30, font, measure);
-    ops.push(text(22, y, t, SNAP_THEME.text1, measure(t, font)));
+    const dx = line.done ? 16 : 0; // 처리 완료면 줄 앞에 ✓
+    if (line.done) ops.push({ kind: "done", x: 13, y, r: 6 });
+    ops.push({ kind: "dot", x: 12 + dx, y, color: line.color });
+    const t = ellipsize(`${line.catName} · ${line.dateLabel} · ${line.text}`, width - 30 - dx, font, measure);
+    ops.push(text(22 + dx, y, t, SNAP_THEME.text1, measure(t, font)));
   });
   if (fold)
     ops.push(
@@ -388,6 +403,7 @@ export function layoutSnapshot(input: SnapshotInput, measure: Measure): Snapshot
       stripH: strip.height,
       ops: shift(strip.ops, 1, 1),
     };
+    if (box.refs?.length && allDone(box.refs.map((r) => input.lines[r.item]))) L.doneAll = true;
     let h: number;
     if (box.kind === "text") {
       if (box.bg) L.bg = SNAP_THEME.bg[box.bg];
@@ -564,6 +580,24 @@ function arrow(ctx: Ctx, from: Point, to: Point) {
   ctx.fill();
 }
 
+/** 처리 완료 ✓ — 화면의 IconDone(18칸 원 + 체크)과 같은 모양 */
+function drawDone(ctx: Ctx, cx: number, cy: number, r: number) {
+  ctx.fillStyle = SNAP_THEME.done;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.fill();
+  const k = r / 8;
+  ctx.strokeStyle = "#ffffff";
+  ctx.lineWidth = 2 * k;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.beginPath();
+  ctx.moveTo(cx - 3.8 * k, cy + 0.3 * k);
+  ctx.lineTo(cx - 1.2 * k, cy + 2.8 * k);
+  ctx.lineTo(cx + 3.8 * k, cy - 2.4 * k);
+  ctx.stroke();
+}
+
 function drawOps(ctx: Ctx, ops: DrawOp[], ox: number, oy: number) {
   for (const o of ops) {
     const x = ox + o.x;
@@ -591,6 +625,8 @@ function drawOps(ctx: Ctx, ops: DrawOp[], ox: number, oy: number) {
       ctx.beginPath();
       ctx.arc(x, y, 4, 0, Math.PI * 2);
       ctx.fill();
+    } else if (o.kind === "done") {
+      drawDone(ctx, x, y, o.r);
     } else {
       ctx.font = o.font;
       const w = o.w || ctx.measureText(o.text).width;
@@ -747,6 +783,14 @@ export async function drawSnapshot(
       ctx.textAlign = "left";
     }
     drawOps(ctx, b.ops, x, y);
+    if (b.doneAll) {
+      // 오른쪽 위 ✓ — 흰 테두리로 상자 선과 띄운다
+      ctx.fillStyle = SNAP_THEME.card;
+      ctx.beginPath();
+      ctx.arc(x + b.rect.w, y, 12, 0, Math.PI * 2);
+      ctx.fill();
+      drawDone(ctx, x + b.rect.w, y, 10);
+    }
   }
 
   // 관계선 이름표(상자 위)
@@ -805,7 +849,7 @@ export async function renderNoteSnapshot(
 /** 그 주 보드(업무·칸)에서 연결 띠 줄들 — LinkStrip과 같은 글·순서 */
 export function snapLines(
   categories: { id: string; name: string; color: string }[],
-  cells: Record<string, { id: string; text: string }[]>,
+  cells: Record<string, { id: string; text: string; flagged?: boolean; flagDoneAt?: string | null }[]>,
   colorOf: (key: string) => string,
   dateLabel: (date: string) => string,
 ): Record<string, SnapLine> {
@@ -824,6 +868,8 @@ export function snapLines(
         dateLabel: dateLabel(date),
         text: it.text,
         order: `${String(index.get(categoryId) ?? 999).padStart(4, "0")}|${date}|${String(idx).padStart(4, "0")}`,
+        flagged: !!it.flagged,
+        done: !it.flagged && !!it.flagDoneAt,
       };
     });
   }

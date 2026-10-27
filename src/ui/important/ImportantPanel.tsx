@@ -2,21 +2,38 @@
 import { useEffect, useRef, type KeyboardEvent } from "react";
 import { groupImportant } from "../../domain/important";
 import type { ImportantItem } from "../../domain/types";
-import { shortDateLabel, weekIdOf, weekRange } from "../../domain/week";
+import { localDate } from "../../domain/localTime";
+import { shortDateLabel, weekIdOf, weekRange, weekTitle, type DateStr } from "../../domain/week";
 import { STR } from "../../shared/strings";
 import {
   completeImportant,
   focusStartCell,
   revealItem,
   setPanelOpen,
+  setWeekDoneOpen,
   undoImportant,
   useBoard,
 } from "../board/boardStore";
+import { IconDone } from "../common/icons";
 import styles from "./ImportantPanel.module.css";
+
+/** 처리한 날(내 PC 날짜)로 묶음 — 목록은 이미 최근 순 */
+function doneDays(items: ImportantItem[]): [DateStr, ImportantItem[]][] {
+  const out: [DateStr, ImportantItem[]][] = [];
+  for (const it of items) {
+    const day = it.flagDoneAt ? localDate(new Date(it.flagDoneAt)) : it.date;
+    const last = out[out.length - 1];
+    if (last?.[0] === day) last[1].push(it);
+    else out.push([day, [it]]);
+  }
+  return out;
+}
 
 export function ImportantPanel({ overlay }: { overlay: boolean }) {
   const important = useBoard((s) => s.important);
-  const recentDone = useBoard((s) => s.recentDone);
+  const weekDone = useBoard((s) => s.weekDone);
+  const weekDoneOpen = useBoard((s) => s.weekDoneOpen);
+  const weekId = useBoard((s) => s.weekId);
   const today = useBoard((s) => s.today);
   const panelFocus = useBoard((s) => s.panelFocus);
   const listRef = useRef<HTMLDivElement>(null);
@@ -73,7 +90,7 @@ export function ImportantPanel({ overlay }: { overlay: boolean }) {
 
       <div className={styles.list} ref={listRef} tabIndex={-1}>
         {groups.length === 0 ? (
-          recentDone.length > 0 ? (
+          weekDone.length > 0 ? (
             <div className={`${styles.empty} ${styles.cleared}`} data-testid="important-empty">
               <span className={styles.emptyIcon} aria-hidden="true">
                 ✓
@@ -156,29 +173,48 @@ export function ImportantPanel({ overlay }: { overlay: boolean }) {
         )}
       </div>
 
-      {recentDone.length > 0 && (
-        <details className={styles.done}>
-          <summary>{STR.important.recent(recentDone.length)}</summary>
-          <ul className={styles.rows}>
-            {recentDone.map((it) => (
-              <li key={it.id} className={styles.doneRow}>
-                <span className={styles.doneText}>{it.text}</span>
-                <span className={styles.meta}>
-                  {shortDateLabel(it.date)} ·{" "}
-                  <button
-                    type="button"
-                    className={styles.restore}
-                    aria-label={STR.important.restoreAria(it.text)}
-                    onClick={() => void undoImportant(it.id)}
-                  >
-                    {STR.important.restore}
-                  </button>
-                </span>
-              </li>
+      {/* 이 주 완료(improve-1027v4-spec 4절): 보고 있는 주에 처리한 항목만, 처리한 날로 묶어 최근 위 */}
+      <details
+        className={styles.done}
+        open={weekDoneOpen}
+        data-testid="week-done"
+        onToggle={(e) => setWeekDoneOpen(e.currentTarget.open)}
+      >
+        <summary>
+          <span>{STR.important.weekDone(weekTitle(weekId))}</span>
+          <span className={weekDone.length ? styles.doneCount : styles.meta}>{weekDone.length}</span>
+        </summary>
+        {weekDone.length === 0 ? (
+          <p className={styles.doneEmpty}>{STR.important.weekDoneEmpty}</p>
+        ) : (
+          <div className={styles.doneList}>
+            {doneDays(weekDone).map(([day, items]) => (
+              <section key={day} aria-label={STR.important.doneOn(shortDateLabel(day))}>
+                <h3 className={styles.doneDay}>{STR.important.doneOn(shortDateLabel(day))}</h3>
+                <ul className={styles.rows}>
+                  {items.map((it) => (
+                    <li key={it.id} className={styles.doneRow} data-testid="week-done-row">
+                      <IconDone size={14} />
+                      <button type="button" className={styles.doneText} onClick={() => void revealItem(it)}>
+                        {it.text}
+                      </button>
+                      <span className={styles.meta}>{shortDateLabel(it.date)}</span>
+                      <button
+                        type="button"
+                        className={styles.restore}
+                        aria-label={STR.important.restoreAria(it.text)}
+                        onClick={() => void undoImportant(it.id)}
+                      >
+                        {STR.important.restore}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </section>
             ))}
-          </ul>
-        </details>
-      )}
+          </div>
+        )}
+      </details>
     </aside>
   );
 }
