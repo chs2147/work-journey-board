@@ -71,14 +71,20 @@
   text-overflow: ellipsis;
 }
 
+.colWeekend {
+  background: var(--day-weekend-bg);
+  color: var(--day-weekend-fg);
+}
+
 .colFocus {
+  background: var(--day-focus-bg);
   font-weight: var(--fw-bold);
   color: var(--text-1);
   box-shadow: var(--focus-head-shadow);
 }
 
 .colLeave {
-  background: var(--leave-soft);
+  background: var(--day-leave-bg);
 }
 
 .colToday {
@@ -433,17 +439,24 @@
   background: var(--surface-card);
 }
 
-.cellFocus,
+.cellWeekend {
+  background: var(--cell-weekend-bg);
+}
+
+.cellFocus {
+  background: var(--cell-focus-bg);
+}
+
 .cellToday {
-  background: var(--surface-focus);
+  background: var(--cell-today-bg);
 }
 
 .cellLeave {
-  background: var(--leave-soft);
+  background: var(--cell-leave-bg);
 }
 
 .cellNarrow {
-  background: var(--surface-sub);
+  background: var(--cell-narrow-bg);
   cursor: pointer;
 }
 

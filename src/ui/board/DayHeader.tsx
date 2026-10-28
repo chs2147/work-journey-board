@@ -91,6 +91,7 @@ export function DayHeader({ day, index, narrow }: Props) {
       className={[
         styles.colHeader,
         styles.dayHeader,
+        index >= 5 ? styles.colWeekend : "",
         isFocus ? styles.colFocus : "",
         mark === "leave" ? styles.colLeave : "",
         isToday ? styles.colToday : "",

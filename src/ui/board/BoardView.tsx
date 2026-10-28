@@ -105,6 +105,7 @@ export function BoardView() {
                     key={day}
                     className={[
                       styles.cell,
+                      i >= 5 ? styles.cellWeekend : "",
                       day === focusDay ? styles.cellFocus : "",
                       day === today ? styles.cellToday : "",
                       dayMarks[day] === "leave" ? styles.cellLeave : "",

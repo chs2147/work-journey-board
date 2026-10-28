@@ -48,7 +48,7 @@ test("시그니처: 베이지 바탕·고운돋움, 로고는 그대로 · 라�
   expect((await look(page)).font).toContain("Pretendard");
 });
 
-test("R2·R3 표현: 시그니처만 오늘 머리 = 작은 표식·단추 테두리 없음, 라이트·다크는 지금 그대로", async ({
+test("R2·R3 표현: 시그니처만 오늘 머리 = 브라운 채움 + 흰 표식·단추 테두리 없음, 라이트·다크는 지금 그대로", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
@@ -68,7 +68,7 @@ test("R2·R3 표현: 시그니처만 오늘 머리 = 작은 표식·단추 테�
     ["dark", { headBg: "rgb(109, 167, 236)", badgeBg: "rgb(11, 11, 11)", btnBorder: "rgb(85, 85, 79)" }],
     [
       "signature",
-      { headBg: "rgb(243, 237, 227)", badgeBg: "rgb(232, 217, 195)", btnBorder: "rgba(0, 0, 0, 0)" },
+      { headBg: "rgb(133, 103, 72)", badgeBg: "rgb(252, 249, 243)", btnBorder: "rgba(0, 0, 0, 0)" },
     ],
   ] as const) {
     await page.addInitScript((t) => localStorage.setItem("wjb.theme", t), theme);

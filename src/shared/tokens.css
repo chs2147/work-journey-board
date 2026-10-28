@@ -115,6 +115,16 @@
   --today-badge-fg: var(--accent);
   --today-badge-radius: 999px;
   --focus-head-shadow: inset 0 3px 0 var(--text-1);
+  /* 주간 보드 요일 상태(오늘·선택·연차·주말)별 머리·칸 바탕 — 라이트·다크는 지금 그대로(주말 = 보통 칸) */
+  --day-focus-bg: var(--surface-sub);
+  --day-leave-bg: var(--leave-soft);
+  --day-weekend-bg: var(--surface-sub);
+  --day-weekend-fg: var(--text-2);
+  --cell-today-bg: var(--surface-focus);
+  --cell-focus-bg: var(--surface-focus);
+  --cell-leave-bg: var(--leave-soft);
+  --cell-weekend-bg: var(--surface-card);
+  --cell-narrow-bg: var(--surface-sub);
   --edit-ring: 0 0 0 1px var(--accent);
   --primary-bg: var(--accent);
   --primary-fg: var(--on-accent);
@@ -278,12 +288,23 @@
   --btn-line: transparent;
   --btn-hover: #e9ddcc;
   --pill-radius: var(--radius-md);
-  --day-today-bg: var(--surface-sub);
-  --day-today-fg: var(--text-1);
-  --today-badge-bg: #e8d9c3;
+  /* 요일 상태는 색 계열을 나눠 한눈에 구분(2026-10-28 사용자 지시): 오늘 = 브라운 채움 + 꿀색 칸,
+     선택 = 세이지 회색 + 브라운 밑줄 3px, 연차 = 로즈, 주말 = 흐린 회베이지 */
+  --day-today-bg: #856748;
+  --day-today-fg: #fcf9f3;
+  --today-badge-bg: #fcf9f3;
   --today-badge-fg: #71583e;
   --today-badge-radius: var(--radius-sm);
-  --focus-head-shadow: inset 0 -2px 0 var(--accent);
+  --focus-head-shadow: inset 0 -3px 0 var(--accent);
+  --day-focus-bg: #dfe5df;
+  --day-leave-bg: #f0d6cc;
+  --day-weekend-bg: #e4ddd2;
+  --day-weekend-fg: #786f63;
+  --cell-today-bg: #f8e9d2;
+  --cell-focus-bg: #edf1ec;
+  --cell-leave-bg: #f9e8e2;
+  --cell-weekend-bg: #f2eee8;
+  --cell-narrow-bg: #e9e3d9;
   --edit-ring: 0 0 0 2px var(--accent);
   /* 주요 동작 단추 = 샌드색 면 + 짙은 갈색 글자(명세 6-1, 대비 약 6.2:1) */
   --primary-bg: #e9ddcc;
