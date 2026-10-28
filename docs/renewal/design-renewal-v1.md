@@ -1,6 +1,6 @@
 # 디자인 리뉴얼 v1 — R0 시안 검토 (글꼴·모드)
 
-> 작성: 2026-10-28 · 브랜치: `design-renewal-v1`(main에서 분기) · 상태: **R1 구현(시그니처 테마 토큰·글꼴·테마 선택지)** — 글꼴은 A안 확정(2026-10-28)
+> 작성: 2026-10-28 · 브랜치: `design-renewal-v1`(main에서 분기) · 상태: **main 반영 `v0.3.0`(2026-10-28 사용자 승인)** — 글꼴은 A안 확정(2026-10-28)
 > 기준: [design-style-spec.md](design-style-spec.md)(정본) · [design-concept.md](design-concept.md)(원칙) · [reference-research.md](reference-research.md)
 > 시안: 사용자 개인 미리보기(클로드 아티팩트 "디자인 리뉴얼 v1 — 글꼴·모드 비교 시안"). 시안 속 기록은 모두 가상 예시, 기준일 2026-10-28(수).
 
