@@ -81,6 +81,9 @@ npm run tauri dev    # 실앱 모드(윈도우 / 리눅스는 webkit2gtk-4.1 필
 - 윈도우 설치 파일: `main`에 반영되면 [Releases](https://github.com/chs2147/work-journey-board/releases)에 `v<버전>`으로 올라간다 — 0.x·`-rc`는 사전 릴리스, 1.0.0 이상 정식 판은 정식 릴리스(기본판). 오프라인 설치판은 요청할 때만 Actions → *Build Windows installer* → Run workflow(main) → `offline`으로 그 판 릴리스에 더한다.
 
 ## Version History
+### v1.1.1 (2026-11-01) — 데일리 뷰 날짜 이동 다듬기
+- 데일리 뷰 날짜 띠(7일) → 머리 한 줄 `‹ 10/22(목) ›` + [오늘], 날짜·요일 한 줄
+
 ### v1.1.0 (2026-11-01) — 데일리 뷰·패널 폭·오픈소스 라이선스
 - "오늘 뷰" → **데일리 뷰**: 날짜 띠(월~일, 하루씩 이동·기록 점·연차 표시), 메모 [크게 보기]
 - 중요 업무·주간 요약 패널 폭을 끌어서 조절(기억)
