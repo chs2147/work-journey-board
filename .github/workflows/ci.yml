@@ -28,6 +28,8 @@ jobs:
       - run: npm test
       - name: Release notes for this version (improve-1027v3-spec 5절)
         run: node scripts/release-notes.mjs check
+      - name: Quick guide check (features-1102-spec F6)
+        run: node scripts/guide/guide.mjs check
 
       - name: Install Playwright browsers (Chromium, WebKit)
         run: npx playwright install --with-deps chromium webkit

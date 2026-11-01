@@ -168,3 +168,5 @@ main{padding-top:94px}
 @media(max-width:1180px){.section-indicator{display:none}}
 @media(max-width:700px){main{padding-top:72px}.site-header.is-scrolled{height:58px}:target,section[id],article[id]{scroll-margin-top:68px}}
 @media(prefers-reduced-motion:reduce){.site-header,.brand,.si-dot,.si-label{transition:none}}
+
+.closing-guide{margin-top:22px;font-size:13px}

@@ -1,0 +1,182 @@
+<!doctype html>
+<!-- 만든 파일 — 고치지 마세요. 원본 docs/guide/*.md → node scripts/guide/guide.mjs build -->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>빠른 이용 가이드 · Work Journey Board</title>
+<link rel="icon" href="../icon.svg">
+<style>
+@font-face{font-family:Gowun;src:url("../gowun-dodum.woff2") format("woff2");font-display:swap}
+:root{--ink:#393832;--soft:#71695f;--paper:#fbf8f2;--cream:#f5f0e7;--line:#e8e0d4;--clay:#a45e43}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:Gowun,"Malgun Gothic",sans-serif;font-size:16px;line-height:1.8;word-break:keep-all;overflow-wrap:anywhere;font-synthesis:none}
+a{color:var(--clay)}
+.wrap{max-width:920px;margin:0 auto;padding:0 24px}
+header.top{border-bottom:1px solid var(--line);background:var(--paper);position:sticky;top:0;z-index:2}
+header.top .wrap{display:flex;align-items:center;gap:14px;height:64px}
+header.top img.icon{width:30px;height:30px}
+header.top img.word{height:22px}
+header.top nav{margin-left:auto;display:flex;gap:18px;font-size:13px}
+header.top nav a{color:var(--soft);text-decoration:none}
+.hero{padding:48px 0 24px}
+.hero h1{font-size:36px;letter-spacing:-.04em;margin:0 0 8px}
+.hero p{color:var(--soft);margin:0}
+.meta{font-size:13px;color:#8b7e6f;margin-top:10px}
+.dl{display:inline-block;margin-top:18px;padding:10px 16px;border-radius:6px;background:#775a43;color:#fffaf3;text-decoration:none;font-size:14px}
+.toc{background:var(--cream);border:1px solid var(--line);border-radius:12px;padding:20px 24px;margin:24px 0 8px}
+.toc h2{font-size:15px;margin:0 0 8px;color:var(--soft)}
+.toc ol{list-style:none;margin:0;padding:0;columns:2;column-gap:32px}
+.toc li{break-inside:avoid}
+.toc a{display:flex;gap:10px;padding:3px 0;color:var(--ink);text-decoration:none}
+.toc .no{display:inline-block;min-width:22px;color:var(--clay)}
+.scene{padding:40px 0 24px;border-bottom:1px solid var(--line)}
+.scene h2{font-size:26px;letter-spacing:-.03em;margin:0 0 16px;display:flex;flex-direction:column;gap:2px}
+.scene h2 .no{font-size:12px;letter-spacing:.12em;color:var(--clay)}
+.scene p.lead{margin:12px 0 4px}
+ol.steps{counter-reset:s;list-style:none;padding:0;margin:12px 0}
+ol.steps li{counter-increment:s;position:relative;padding:6px 0 6px 40px}
+ol.steps li::before{content:counter(s);position:absolute;left:0;top:8px;width:26px;height:26px;border-radius:50%;background:var(--clay);color:#fff;font-size:13px;line-height:26px;text-align:center}
+ul{padding-left:22px}
+code{font-family:Consolas,"Malgun Gothic",monospace;font-size:.88em;background:#efe8dc;border-radius:4px;padding:1px 5px}
+figure{margin:18px 0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}
+figure img{display:block;width:100%;height:auto}
+figcaption{font-size:13px;color:var(--soft);padding:8px 14px;border-top:1px solid var(--line);background:var(--cream)}
+table{border-collapse:collapse;width:100%;margin:12px 0;font-size:14px}
+th,td{border:1px solid var(--line);padding:6px 10px;text-align:left;vertical-align:top}
+th{background:var(--cream)}
+footer{padding:32px 0 48px;color:#9c8f81;font-size:12px}
+@media (max-width:640px){.toc ol{columns:1}.hero h1{font-size:28px}header.top nav{display:none}}
+@media print{
+  @page{size:A4;margin:16mm 14mm 18mm}
+  body{font-size:11.5pt;background:#fff}
+  header.top{position:static}
+  header.top nav,.dl{display:none}
+  .scene{break-before:page;border:0;padding-top:0}
+  figure,table,ol.steps li{break-inside:avoid}
+  a{text-decoration:none;color:var(--ink)}
+}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+<a href="../"><img class="icon" src="../icon.svg" alt=""></a><img class="word" src="../wordmark.svg" alt="Work Journey Board">
+<nav aria-label="가이드 메뉴"><a href="../">소개</a><a href="#toc">목차</a><a href="./work-journey-board-guide.pdf">PDF</a></nav>
+</div></header>
+<main class="wrap">
+<div class="hero">
+<h1>빠른 이용 가이드</h1>
+<p>자주 쓰는 장면별로 — 언제 쓰나요 → 순서 → 화면 → 팁.</p>
+<p class="meta">v1.4.0 기준 · 갱신 2026-11-01 · 화면은 가상 샘플입니다</p>
+<a class="dl" href="./work-journey-board-guide.pdf">PDF로 내려받기</a>
+</div>
+<nav class="toc" id="toc" aria-label="목차"><h2>목차</h2><ol><li><a href="#s1"><span class="no">1</span>처음 설치와 저장 폴더</a></li><li><a href="#s2"><span class="no">2</span>매일 2분 기록(키보드)</a></li><li><a href="#s3"><span class="no">3</span>직전 기록 가져오기·매주 반복</a></li><li><a href="#s4"><span class="no">4</span>중요 업무 챙기기</a></li><li><a href="#s5"><span class="no">5</span>메모 보드로 맥락 남기기</a></li><li><a href="#s6"><span class="no">6</span>금요일 주간 보고 만들기</a></li><li><a href="#s7"><span class="no">7</span>엑셀·마크다운 내보내기</a></li><li><a href="#s8"><span class="no">8</span>지난 일 돌아보기(인사이트)</a></li><li><a href="#s9"><span class="no">9</span>검색</a></li><li><a href="#s10"><span class="no">10</span>휴일·휴가</a></li><li><a href="#s11"><span class="no">11</span>Cabinet — 자주 쓰는 폴더·링크</a></li><li><a href="#s12"><span class="no">12</span>백업과 복원</a></li><li><a href="#s90"><span class="no"></span>부록 — 단축키·자주 묻는 질문</a></li></ol></nav>
+<section class="scene" id="s1">
+<h2><span class="no">장면 1</span>처음 설치와 저장 폴더</h2>
+<p class="lead"><strong>언제 쓰나요</strong> — 회사 PC에 처음 설치할 때, 또는 PC를 바꿔 일지를 옮길 때.</p>
+<ol class="steps"><li><a href="https://github.com/chs2147/work-journey-board/releases/latest" target="_blank" rel="noopener">최신 판 내려받기 ↗</a>에서 <code>WorkJourneyBoard_&lt;판&gt;_setup.exe</code>를 받아 실행합니다. 관리자 권한 없이 내 계정에만 설치됩니다.</li><li>처음 켜면 <strong>저장 폴더</strong>를 고릅니다. 추천 위치는 <code>C:\Users\&lt;사용자&gt;\WorkJourney</code>입니다 — OneDrive 동기화 폴더는 안내가 뜹니다.</li><li>기존 일지가 있으면 <strong>기존 일지 열기</strong>로 그 폴더를 고릅니다(<code>work-journey.db</code> 파일 하나가 일지 전체).</li><li>보드가 뜨면 <code>+ 업무 추가</code>에 지금 하고 있는 업무 이름을 적고 <code>Enter</code>.</li></ol>
+<figure><img src="shots/01-setup.png" alt="첫 실행 — 저장 폴더 고르기"><figcaption>첫 실행 — 저장 폴더 고르기</figcaption></figure>
+<p class="lead"><strong>팁</strong></p>
+<ul><li>일지는 고른 폴더의 SQLite 파일 하나뿐이고, 앱은 기록을 어디에도 보내지 않습니다.</li><li>저장 위치는 나중에 설정 › 데이터·백업 › 저장 위치에서 옮길 수 있습니다. → <a href="#s12">12. 백업과 복원</a></li></ul>
+</section>
+<section class="scene" id="s2">
+<h2><span class="no">장면 2</span>매일 2분 기록(키보드)</h2>
+<p class="lead"><strong>언제 쓰나요</strong> — 하루를 마치며(또는 틈틈이) 오늘 한 일을 업무별로 적을 때.</p>
+<ol class="steps"><li>앱을 켜면 오늘 칸에 커서가 있습니다. 바로 적고 <code>Enter</code> = 다음 항목, <code>Tab</code> = 세부 항목, <code>Shift+Tab</code> = 본 항목.</li><li>칸의 첫·끝 줄에서 <code>↑</code>/<code>↓</code> = 위·아래 업무 칸, <code>Esc</code> = 편집 끝. 입력을 멈추면 0.5초 뒤 자동 저장(위쪽 <code>저장됨 ✓</code>).</li><li>지난 요일·다른 주는 <code>Alt+←</code>/<code>Alt+→</code>(주 이동), [오늘]로 돌아오기. 하루만 크게 보려면 <code>Alt+V</code> = <strong>데일리 뷰</strong>.</li><li>붙여 넣으면 줄마다 항목으로 나뉘고, 들여 쓴 줄은 세부 항목이 됩니다.</li></ol>
+<figure><img src="shots/02-daily.png" alt="주간 보드 — 오늘 칸에 바로 기록"><figcaption>주간 보드 — 오늘 칸에 바로 기록</figcaption></figure>
+<p class="lead"><strong>팁</strong></p>
+<ul><li>실수는 <code>Ctrl+Z</code>/<code>Ctrl+Y</code>(50단계), 항목 지우기는 <code>Alt+Delete</code>(토스트 [되돌리기]).</li><li>항목 순서는 <code>Alt+↑</code>/<code>Alt+↓</code> 또는 왼쪽 ⋮⋮를 끌어 다른 요일·업무 칸으로도 옮깁니다.</li><li>주소(<code>https://…</code>)는 링크가 되고 <code>Ctrl+클릭</code>으로 기본 브라우저에서 열립니다.</li></ul>
+</section>
+<section class="scene" id="s3">
+<h2><span class="no">장면 3</span>직전 기록 가져오기·매주 반복</h2>
+<p class="lead"><strong>언제 쓰나요</strong> — 어제 하던 일이 오늘도 이어질 때, 매주 같은 요일에 하는 일이 있을 때.</p>
+<ol class="steps"><li>빈 칸에 보이는 <code>[10/20(화) 내역 가져오기 Alt+P]</code>를 누르거나 <code>Alt+P</code> — 그 업무의 직전 기록일 내역이 이 칸 끝에 들어옵니다(같은 내용은 건너뜀).</li><li>모든 업무를 한꺼번에: <code>Alt+Shift+P</code>(요일 머리 ⋯ 메뉴도 같음) — 되돌리기 한 번이면 원래대로.</li><li>매주 반복할 항목에서 <code>Alt+R</code>(또는 항목의 ↻) — 다음 주 같은 요일에 미리 보이고, 그 주를 열면 자동으로 만들어집니다.</li></ol>
+<figure><img src="shots/03-carry.png" alt="빈 칸의 직전 기록 가져오기"><figcaption>빈 칸의 직전 기록 가져오기</figcaption></figure>
+<p class="lead"><strong>팁</strong></p>
+<ul><li>하루 종일 쉬는 날(연차·공휴일·기타 휴가)은 직전 기록일 찾기에서 건너뜁니다. → <a href="#s10">10. 휴일·휴가</a></li><li>반복 규칙 목록·끄기는 설정 › 업무 관리 › 매주 반복.</li></ul>
+</section>
+<section class="scene" id="s4">
+<h2><span class="no">장면 4</span>중요 업무 챙기기</h2>
+<p class="lead"><strong>언제 쓰나요</strong> — 마감이 있거나 놓치면 안 되는 일을 따로 모아 볼 때.</p>
+<ol class="steps"><li>항목에서 <code>Alt+I</code>(또는 개조 부호 ☆ 누르기) — 노란 바탕과 ★로 강조됩니다.</li><li>왼쪽 레일 ★ 또는 <code>Alt+2</code> = <strong>중요 업무 패널</strong>: 지난 날짜·오늘·이번 주·다음 주 이후로 묶여 보입니다(지난 날짜가 있으면 레일에 빨간 점).</li><li>끝낸 일은 패널에서 <code>Space</code>(또는 ✓) = 처리 완료 — 보드 항목에 완료 뱃지가 남고, 아래 &quot;이 주 완료&quot;에 모입니다.</li></ol>
+<figure><img src="shots/04-important.png" alt="중요 업무 패널"><figcaption>중요 업무 패널</figcaption></figure>
+<p class="lead"><strong>팁</strong></p>
+<ul><li>패널 폭은 가장자리를 끌어 바꾸고, 두 번 누르면 기본 폭으로 돌아옵니다.</li><li>패널 항목 <code>Enter</code> = 그 주·그 칸으로 이동.</li></ul>
+</section>
+<section class="scene" id="s5">
+<h2><span class="no">장면 5</span>메모 보드로 맥락 남기기</h2>
+<p class="lead"><strong>언제 쓰나요</strong> — 항목 한 줄로는 부족한 배경·결정·그림을 그 주에 함께 남길 때.</p>
+<ol class="steps"><li>보드 아래 <strong>이번 주 메모</strong>의 빈 곳을 누르면 글 상자가 생깁니다. 서식·체크 목록·링크를 쓸 수 있습니다.</li><li>항목에 마우스를 올려 <strong>[메모]</strong>를 누르면 그 항목과 <strong>연결된 메모</strong>가 생기고, 항목 옆에 메모 수 배지가 붙습니다(항목을 상자에 끌어 놓아도 연결).</li><li>그림은 붙여 넣기·끌어 놓기로 <strong>이미지 상자</strong>, 주소는 <strong>링크 카드</strong>로.</li><li>상자 가장자리의 연결점을 끌어 다른 상자에 놓으면 <strong>관계선</strong> — 이름표·화살표·점선을 고릅니다.</li></ol>
+<figure><img src="shots/05-memo.png" alt="메모 보드 — 연결 메모·이미지·관계선"><figcaption>메모 보드 — 연결 메모·이미지·관계선</figcaption></figure>
+<p class="lead"><strong>팁</strong></p>
+<ul><li>크게 보기(⤢)·줌·미니맵으로 넓은 판을 다룹니다. 지난 주 메모는 인사이트 타임라인에서 다시 볼 수 있습니다. → <a href="#s8">8. 지난 일 돌아보기</a></li><li>메모 머리 카메라 메뉴: PNG 그림 저장·복사, 마크다운 내보내기. → <a href="#s7">7. 내보내기</a></li></ul>
+</section>
+<section class="scene" id="s6">
+<h2><span class="no">장면 6</span>금요일 주간 보고 만들기</h2>
+<p class="lead"><strong>언제 쓰나요</strong> — 한 주 기록을 보고용 글로 정리할 때.</p>
+<ol class="steps"><li>위쪽 <strong>[주간 요약]</strong> — 이번 주 기록이 업무별 개조식으로 자동 정리됩니다(요일·세부 항목·휴가 표시 포함).</li><li>그대로 [복사]해 메일·메신저에 붙이거나, 패널에서 고쳐 쓴 글을 저장합니다(기록이 바뀌면 안내).</li><li>AI로 다듬으려면 [AI 지시문 복사] → 쓰는 AI에 붙여 넣고, 받은 글을 다시 붙여 넣어 보관합니다(앱은 AI에 직접 접속하지 않음).</li></ol>
+<figure><img src="shots/06-summary.png" alt="주간 요약 패널"><figcaption>주간 요약 패널</figcaption></figure>
+<p class="lead"><strong>팁</strong></p>
+<ul><li>업무가 많으면 태그 필터(위쪽 [태그: 전체 ▾])로 보고 대상만 골라 볼 수 있습니다.</li></ul>
+</section>
+<section class="scene" id="s7">
+<h2><span class="no">장면 7</span>엑셀·마크다운 내보내기</h2>
+<p class="lead"><strong>언제 쓰나요</strong> — 월간·분기 보고, 다른 사람과 기록을 나눌 때.</p>
+<ol class="steps"><li><strong>엑셀</strong>: [내보내기] 또는 <code>Alt+E</code> → 기간(이번 주·최근 4주·기간 지정) → [저장…]. 주간보고 시트와 상세 기록이 들어가고, 원하면 메모 보드 스냅샷 시트도 넣습니다.</li><li><strong>마크다운</strong>: 메모 머리 카메라 메뉴 › [마크다운으로 내보내기…] → 범위·포함 항목을 고르고 미리본 뒤 <code>.md</code>(+ 이미지 폴더)로 저장하거나 복사합니다.</li><li>저장이 끝나면 토스트의 [폴더 열기]·[파일 열기].</li></ol>
+<figure><img src="shots/07-export.png" alt="엑셀 내보내기"><figcaption>엑셀 내보내기</figcaption></figure>
+<p class="lead"><strong>팁</strong></p>
+<ul><li>저장은 고른 경로에만 하고, 일지 파일·<code>backups</code> 폴더에는 쓰지 않습니다.</li></ul>
+</section>
+<section class="scene" id="s8">
+<h2><span class="no">장면 8</span>지난 일 돌아보기(인사이트)</h2>
+<p class="lead"><strong>언제 쓰나요</strong> — 한 업무가 어떻게 흘러왔는지, 언제 바빴는지 볼 때.</p>
+<ol class="steps"><li>레일 인사이트 아이콘 또는 <code>Alt+3</code>(칸에 커서가 있으면 그 업무) — <strong>경과 지도</strong>와 <strong>경과 타임라인</strong>이 열립니다.</li><li>타임라인에서 주마다 항목·★·↻·연결 메모를 따라가고, <code>Enter</code> = 보드의 그 칸으로. <code>Ctrl+F</code> 찾기, <code>Ctrl+Shift+C</code> 경과 복사.</li><li><strong>활동 개요</strong> 탭: 12주(일)·연간(주) 히트맵으로 업무별 기록 밀도를 봅니다.</li></ol>
+<figure><img src="shots/08-insights.png" alt="인사이트 — 경과 타임라인"><figcaption>인사이트 — 경과 타임라인</figcaption></figure>
+<p class="lead"><strong>팁</strong></p>
+<ul><li>업무 머리 ⋯ › [경과 타임라인 보기]로도 들어갑니다. <code>Alt+1</code> = 보드로.</li></ul>
+</section>
+<section class="scene" id="s9">
+<h2><span class="no">장면 9</span>검색</h2>
+<p class="lead"><strong>언제 쓰나요</strong> — &quot;그거 언제 했더라?&quot; 싶을 때.</p>
+<ol class="steps"><li>위쪽 검색 칸 또는 <code>Ctrl+Shift+F</code> → 낱말 입력(띄어 쓰면 모두 들어간 것) → <code>Enter</code>.</li><li>오른쪽 결과 목록: 업무 기록·메모 보드(글·이미지 설명·링크 카드·관계선)·Cabinet 폴더/링크가 꼬리표와 함께. 누르면 그 칸·메모 상자로.</li><li><code>F3</code>/<code>Shift+F3</code> = 다음/이전 결과, 보드 위 노란 띠의 [검색 초기화]로 끝냅니다.</li></ol>
+<figure><img src="shots/09-search.png" alt="검색 결과 패널"><figcaption>검색 결과 패널</figcaption></figure>
+<p class="lead"><strong>팁</strong></p>
+<ul><li>기간(전체·올해·최근 12주)과 거르기(업무 기록·메모 보드)로 좁힙니다.</li></ul>
+</section>
+<section class="scene" id="s10">
+<h2><span class="no">장면 10</span>휴일·휴가</h2>
+<p class="lead"><strong>언제 쓰나요</strong> — 연차·반차, 공휴일, 회사 휴일·공가 같은 쉬는 날을 표시할 때.</p>
+<ol class="steps"><li>요일 머리 ⋯(데일리 뷰는 [근무 ▾]) → 연차·오전/오후 반차·<strong>공휴일(이름)</strong>·<strong>기타 휴가(사유)</strong>. 사유는 칩(공가·야유회·경조사·교육·대체휴무)이나 직접 입력.</li><li>대한민국 공휴일(설·추석 연휴, 대체공휴일, 선거일)은 앱 안 표로 자동 표시됩니다(인터넷 접속 없음).</li><li>설정 › <strong>달력·휴일</strong>: 자동 표시 켜기/끄기, 날짜별 끄기, 회사 휴일(매년·그 해만), 기타 휴가 사유 목록.</li></ol>
+<figure><img src="shots/10-holiday.png" alt="설정 › 달력·휴일"><figcaption>설정 › 달력·휴일</figcaption></figure>
+<p class="lead"><strong>팁</strong></p>
+<ul><li>공휴일인 날 근무했다면 그 날을 [근무]로 돌리세요 — 그 날 표시만 꺼집니다.</li><li>쉬는 날은 주간 요약 끝 줄·엑셀 날짜 머리에 이름이 들어가고, 3주 무기록 판정에서 빠집니다.</li></ul>
+</section>
+<section class="scene" id="s11">
+<h2><span class="no">장면 11</span>Cabinet — 자주 쓰는 폴더·링크</h2>
+<p class="lead"><strong>언제 쓰나요</strong> — 업무마다 여는 작업 폴더·위키·대시보드를 한곳에 모아 두고 바로 열 때.</p>
+<ol class="steps"><li>레일 🗄 또는 <code>Alt+4</code> → Cabinet 창. 탐색기의 폴더나 브라우저의 링크·주소를 끌어 놓으면 지금 고른 업무에 등록됩니다([+ 폴더…] [+ 링크…]도 됨).</li><li>링크는 <strong>링크 등록</strong> 창에서 제목(브라우저가 함께 준 페이지 제목)을 확인·고치고 <code>Enter</code>.</li><li>[전체 · 📁 폴더 · 🔗 링크]로 나눠 보고, 폴더는 두 번 누르면 <strong>폴더 창</strong>(별도 창, 여러 개 동시) — 파일 두 번 누르기 = 기본 앱으로 열기. 링크는 누르면 기본 브라우저.</li><li>⋯ 메뉴: 제목 고치기(<code>F2</code>)·업무·항목 연결·경로 복사·탐색기에서 열기·등록 해제.</li></ol>
+<figure><img src="shots/11-cabinet.png" alt="Cabinet 창과 폴더 창"><figcaption>Cabinet 창과 폴더 창</figcaption></figure>
+<p class="lead"><strong>팁</strong></p>
+<ul><li>Cabinet은 폴더를 읽고 열기만 합니다 — 파일을 지우거나 옮기지 않습니다.</li><li>항목에 연결해 두면 보드 그 항목 옆에 🗄 표시가 붙어 바로 열 수 있습니다. 열어 둔 창은 다음에 켤 때 다시 열립니다.</li></ul>
+</section>
+<section class="scene" id="s12">
+<h2><span class="no">장면 12</span>백업과 복원</h2>
+<p class="lead"><strong>언제 쓰나요</strong> — 기록을 안전하게 지키고, 문제가 생겼을 때 되돌릴 때.</p>
+<ol class="steps"><li>앱이 자동으로 <strong>일일 백업</strong>(켤 때·2시간마다·닫을 때)과 <strong>월간 백업</strong>을 <code>저장 폴더\backups</code>에 만듭니다. 업데이트·구조 변경·가져오기 직전에도 따로 남깁니다.</li><li>설정 › <strong>데이터·백업</strong>: 지금 백업, 백업 폴더 열기, 보관 개수, 보조 백업 위치(다른 폴더에 하나 더).</li><li><strong>복원</strong>: 설정 › 데이터·백업 › [백업에서 복원…] → 사본 고르기. 지금 일지는 <code>…_before-restore.db</code>로 보존된 뒤 바뀝니다.</li></ol>
+<figure><img src="shots/12-backup.png" alt="설정 › 데이터·백업"><figcaption>설정 › 데이터·백업</figcaption></figure>
+<p class="lead"><strong>팁</strong></p>
+<ul><li>일지 파일이 깨졌다고 나오면 시작 화면에서 바로 최근 백업으로 복원할 수 있습니다.</li><li>다른 PC로 옮길 때는 저장 폴더째(<code>work-journey.db</code> + <code>backups</code>) 복사하면 됩니다.</li></ul>
+</section>
+<section class="scene" id="s90">
+<h2><span class="no">부록</span>부록 — 단축키·자주 묻는 질문</h2>
+<p><strong>화면 이동</strong></p>
+<table><thead><tr><th>키</th><th>동작</th></tr></thead><tbody><tr><td><code>Alt+1</code> / <code>Alt+2</code> / <code>Alt+3</code> / <code>Alt+4</code></td><td>보드 / 중요 업무 패널 / 인사이트 / Cabinet</td></tr><tr><td><code>Ctrl+,</code></td><td>설정</td></tr><tr><td><code>Alt+←</code> / <code>Alt+→</code> · <code>Alt+V</code></td><td>앞·뒤 주(데일리 뷰는 하루) · 주간 ↔ 데일리 뷰</td></tr><tr><td><code>Ctrl+Shift+F</code> · <code>F3</code></td><td>검색 · 다음 결과</td></tr><tr><td><code>Alt+E</code></td><td>엑셀 내보내기</td></tr></tbody></table>
+<p><strong>칸 입력</strong></p>
+<table><thead><tr><th>키</th><th>동작</th></tr></thead><tbody><tr><td><code>Enter</code> / <code>Shift+Enter</code></td><td>새 항목 / 항목 안 줄바꿈</td></tr><tr><td><code>Tab</code> / <code>Shift+Tab</code></td><td>세부 ↔ 본 항목</td></tr><tr><td><code>Alt+↑</code> / <code>Alt+↓</code></td><td>항목 순서</td></tr><tr><td><code>Alt+I</code> · <code>Alt+R</code></td><td>중요 표시 · 매주 반복</td></tr><tr><td><code>Alt+P</code> · <code>Alt+Shift+P</code></td><td>직전 기록 가져오기(이 칸 · 모든 업무)</td></tr><tr><td><code>Alt+Delete</code> · <code>Ctrl+Z</code></td><td>항목 지우기 · 되돌리기</td></tr></tbody></table>
+<p><strong>자주 묻는 질문</strong></p>
+<ul><li><strong>인터넷이 없어도 되나요?</strong> — 네. 새 판 확인(켤 때 1번)만 GitHub에 묻고, 기록·메모는 어디에도 보내지 않습니다.</li><li><strong>기록은 어디에 있나요?</strong> — 처음 고른 저장 폴더의 <code>work-journey.db</code> 한 파일입니다.</li><li><strong>새 판은 어떻게 받나요?</strong> — 켤 때 새 판이 있으면 위쪽 띠가 알려 줍니다. 설정 › 업데이트·정보에서도 확인·설치합니다(설치 전 자동 백업).</li></ul>
+</section>
+</main>
+<footer class="wrap">Work Journey Board · Copyright 2026 sanbonjini · <a href="https://chs2147.github.io/work-journey-board/">소개 사이트</a></footer>
+</body>
+</html>

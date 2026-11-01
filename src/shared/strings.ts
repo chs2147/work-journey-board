@@ -1171,6 +1171,9 @@ export const STR = {
     aboutTagline: "오늘 한 일을, 한 줄씩. — 기록은 이 PC의 고른 폴더에만 저장됩니다.",
     siteLink: "소개 사이트",
     siteUrl: "https://chs2147.github.io/work-journey-board/",
+    /** 빠른 이용 가이드(features-1102-spec F6) — OS 브라우저로 */
+    guideLink: "이용 가이드",
+    guideUrl: "https://chs2147.github.io/work-journey-board/guide/",
     notesLink: "이 판의 릴리스 노트",
     notesUrl: (v: string) => `https://github.com/chs2147/work-journey-board/releases/tag/v${v}`,
     oss: {

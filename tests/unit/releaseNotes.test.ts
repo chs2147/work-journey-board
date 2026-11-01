@@ -30,6 +30,14 @@ describe("release-notes check", () => {
   it("노트·README 제목이 있으면 통과", () => {
     expect(run(repo("0.2.16", { notes: NOTES, readme: README }), "check").status).toBe(0);
   });
+  it("1.3.0부터는 '## 가이드' 절(바뀐 장면 또는 변경 없음)이 있어야 통과", () => {
+    const readme = "## Version History\n### v1.3.0 (2026-11-02) — 가상\n- 가상\n";
+    const no = run(repo("1.3.0", { notes: NOTES, readme }), "check");
+    expect(no.status).toBe(1);
+    expect(no.stderr).toContain("'## 가이드' 절이 없습니다");
+    const ok = run(repo("1.3.0", { notes: `${NOTES}\n## 가이드\n- 변경 없음\n`, readme }), "check");
+    expect(ok.status).toBe(0);
+  });
   it("노트 없음 · 주의 절 없음 · README 제목 없음 = 실패", () => {
     const a = run(repo("0.2.16", { readme: README }), "check");
     expect(a.status).toBe(1);

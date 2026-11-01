@@ -7,6 +7,8 @@ import { join } from "node:path";
 
 /** 이 판부터 노트가 반드시 있어야 한다(그 전 릴리스는 고치지 않는다) */
 const FIRST = "0.2.16";
+/** 이 판부터 노트에 '## 가이드' 절(바뀐 이용 가이드 장면 또는 "변경 없음")이 있어야 한다(features-1102-spec F6) */
+const FIRST_GUIDE = "1.3.0";
 
 const args = process.argv.slice(2);
 const opt = (name) => {
@@ -36,6 +38,10 @@ function problems(v) {
     if (!/^# \S/.test(text.trimStart())) out.push("노트 첫 줄은 '# 한 줄 요약'이어야 합니다");
     if (!/^## 주의\s*$/m.test(text))
       out.push("노트에 '## 주의' 절이 없습니다(데이터 형식·되돌려 설치·외부 통신)");
+    if (cmp(v, FIRST_GUIDE) >= 0 && !/^## 가이드\s*\n+\s*\S/m.test(text))
+      out.push(
+        "노트에 '## 가이드' 절이 없습니다(바뀐 이용 가이드 장면 또는 '변경 없음' — docs/guide/map.md)",
+      );
   }
   if (!readmeHeading(v)) out.push(`README Version History에 '### v${v} (날짜) — 요약' 제목이 없습니다`);
   return out;

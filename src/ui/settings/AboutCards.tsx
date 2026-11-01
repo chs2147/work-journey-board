@@ -49,6 +49,13 @@ export function AboutCard() {
           </button>
           <button
             type="button"
+            data-testid="about-guide"
+            onClick={() => void platform?.openUrl(STR.settings.guideUrl)}
+          >
+            {STR.settings.guideLink} <span aria-hidden="true">↗</span>
+          </button>
+          <button
+            type="button"
             onClick={() => void platform?.openUrl(STR.settings.notesUrl(__APP_VERSION__))}
           >
             {STR.settings.notesLink} <span aria-hidden="true">↗</span>
