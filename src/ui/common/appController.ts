@@ -60,6 +60,24 @@ let lastBackup = { writes: -1, at: 0 };
 let periodicTimer: ReturnType<typeof setInterval> | null = null;
 let backupRunning = false;
 
+/** 마지막 키·마우스 입력 시각 — 자동 백업은 입력이 쉬는 틈에만 시작한다(백업 동안 저장이 기다리므로 입력 흐름을 막지 않게) */
+let lastInputAt = 0;
+const INPUT_IDLE_MS = 3000;
+/** 시작 백업이 입력 쉬는 틈을 기다리는 최대 시간 */
+const START_BACKUP_MAX_WAIT_MS = 60_000;
+if (typeof window !== "undefined") {
+  const mark = () => (lastInputAt = Date.now());
+  window.addEventListener("keydown", mark, true);
+  window.addEventListener("pointerdown", mark, true);
+}
+const inputIdle = () => Date.now() - lastInputAt >= INPUT_IDLE_MS;
+
+/** 입력이 INPUT_IDLE_MS 쉴 때까지(최대 maxMs) 기다린다 */
+async function waitInputIdle(maxMs: number) {
+  const until = Date.now() + maxMs;
+  while (!inputIdle() && Date.now() < until) await new Promise((r) => setTimeout(r, 500));
+}
+
 type BackupKind = "start" | "periodic" | "exit";
 
 /**
@@ -109,7 +127,7 @@ async function periodicTick() {
   const { periodicHours } = (await j.repo.getSettings()).backup;
   if (periodicHours <= 0 || j.repo.writeCount === lastBackup.writes) return;
   if (platform().now().getTime() - lastBackup.at < periodicHours * 3_600_000) return;
-  if (useBoard.getState().saving > 0) return; // 저장 중이면 다음 차례에
+  if (useBoard.getState().saving > 0 || !inputIdle()) return; // 저장·입력 중이면 다음 차례에
   await autoBackup("periodic");
 }
 
@@ -153,7 +171,7 @@ async function activate(driver: SqlDriver, dataDir: string) {
   await initInsights(repo);
   set({ journal: { state: "ready", driver, repo, dataDir, sqliteVersion: row?.v ?? "?" } });
   lastBackup = { writes: repo.writeCount, at: p.now().getTime() };
-  void autoBackup("start");
+  void waitInputIdle(START_BACKUP_MAX_WAIT_MS).then(() => autoBackup("start"));
   periodicTimer = setInterval(() => void periodicTick().catch(() => undefined), PERIODIC_CHECK_MS);
 }
 

@@ -29,10 +29,12 @@ test.describe("첫 실행 (overview 10-8)", () => {
 
     await expect(headers(page)).toHaveCount(2);
     await expect(page.locator(":focus")).toHaveAttribute("aria-label", `가 업무 · 목 ${TODAY} 기록`);
-    const all = await files(page);
-    expect(all).toContain("/demo/WorkJourney/work-journey.db");
-    expect(all).toContain("/demo/WorkJourney/backups/work-journey_2026-10-22.db");
-    expect(all).toContain("/demo/WorkJourney/backups/work-journey_2026-10_monthly.db");
+    expect(await files(page)).toContain("/demo/WorkJourney/work-journey.db");
+    // 시작 백업은 보드를 띄운 뒤, 입력이 3초 쉬는 틈에(optimize-1031-plan B2)
+    await expect
+      .poll(() => files(page), { timeout: 15_000 })
+      .toContain("/demo/WorkJourney/backups/work-journey_2026-10-22.db");
+    expect(await files(page)).toContain("/demo/WorkJourney/backups/work-journey_2026-10_monthly.db");
   });
 
   test("OneDrive 폴더를 고르면 경고, 추천 폴더로 되돌리기", async ({ page }) => {
@@ -96,9 +98,11 @@ test.describe("설정 > 저장 위치 (overview 10-10)", () => {
       "옮겼습니다. 이전 폴더의 파일은 그대로 남아 있습니다.",
     );
     await expect(page.getByTestId("settings-data-dir")).toHaveText("/demo/New");
+    await expect
+      .poll(() => files(page), { timeout: 15_000 })
+      .toContain("/demo/New/backups/work-journey_2026-10-22.db");
     const all = await files(page);
     expect(all).toContain("/demo/New/work-journey.db");
-    expect(all).toContain("/demo/New/backups/work-journey_2026-10-22.db");
     expect(all).toContain("/demo/WorkJourney/work-journey.db");
     expect(
       all.filter((p) => p.startsWith("/demo/WorkJourney/backups/") && p.endsWith("_manual.db")),
@@ -127,6 +131,10 @@ test.describe("설정 > 저장 위치 (overview 10-10)", () => {
 test.describe("설정 > 백업·업무·무기록", () => {
   test("지금 백업 → 마지막 백업 표시 갱신", async ({ page }) => {
     await page.goto(q());
+    await expect(headers(page).first()).toBeVisible();
+    await expect
+      .poll(() => files(page), { timeout: 15_000 })
+      .toContain("/demo/WorkJourney/backups/work-journey_2026-10-22.db");
     await openSettings(page, "data");
     await expect(page.getByTestId("last-backup")).toHaveText("2026-10-22");
     await page.getByRole("button", { name: "지금 백업" }).click();
