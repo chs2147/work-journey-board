@@ -636,6 +636,8 @@
 }
 
 .repeatHover {
+  /* 안 보일 때도 휴지통 왼쪽 자리에 둔다 — 올린 순간 자리가 바뀌면 누르는 곳이 휴지통과 겹친다 */
+  right: 20px;
   opacity: 0;
   color: var(--text-3);
   background: var(--surface-card);

@@ -462,7 +462,7 @@ function inlineText(n: PMNode | undefined): string {
 }
 
 /** 블록들 → 줄. 목록은 `- `·`1. `·체크 `- `/`- (완료) `, 중첩은 2칸 들여쓰기, 줄바꿈은 같은 들여쓰기로 이어 쓴다 */
-function blockLines(nodes: PMNode[] | undefined, indent: string): string[] {
+export function blockLines(nodes: PMNode[] | undefined, indent: string): string[] {
   const out: string[] = [];
   for (const n of nodes ?? []) {
     switch (n.type) {

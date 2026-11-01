@@ -13,6 +13,7 @@ import { isDayMarkKind, isLeaveWeek, type DayMarkKind } from "../domain/dayMark"
 import { normalizeTagName, tagNameProblem, type Tag } from "../domain/tags";
 import type { ExistingItem, ImportContext, ImportPlan } from "../domain/importer";
 import type { ActivityRow } from "../domain/insights";
+import { SEARCH_LIMIT, searchNote, searchTerms, sortHits, type SearchHit } from "../domain/search";
 import {
   docFromDayMemos,
   emptyDoc,
@@ -1530,6 +1531,49 @@ export class JournalRepository {
   }
 
   /** 주 범위의 저장된 메모 문서 — 업무연계 메모(ref.item)를 타임라인에 붙일 때. 예전 요일 메모는 연결이 없어 읽지 않는다 */
+  /**
+   * 검색(features-1102-spec F1): 업무 기록(본 항목·세부)과 메모 보드(글 상자·이미지 설명·링크 카드·관계선 이름표).
+   * 낱말 AND·부분 일치, `from`(날짜)부터. 결과는 최근 주 먼저, 최대 SEARCH_LIMIT건(넘으면 truncated)
+   */
+  async search(query: string, from?: DateStr): Promise<{ hits: SearchHit[]; truncated: boolean }> {
+    const terms = searchTerms(query);
+    if (!terms.length) return { hits: [], truncated: false };
+    const esc = (w: string) => `%${w.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
+    const where = terms.map(() => "lower(i.text) LIKE ? ESCAPE '\\'").join(" AND ");
+    const params: SqlParam[] = terms.map(esc);
+    if (from) params.push(from);
+    const rows = await this.db.select<{
+      id: string;
+      date: string;
+      category_id: string;
+      depth: number;
+      text: string;
+      name: string;
+    }>(
+      `SELECT i.id, i.date, i.category_id, i.depth, i.text, c.name FROM entry_item i JOIN category c ON c.id = i.category_id
+       WHERE ${where}${from ? " AND i.date >= ?" : ""} ORDER BY i.date DESC, c.sort_order, i.seq LIMIT ${SEARCH_LIMIT + 1}`,
+      params,
+    );
+    const itemHits: SearchHit[] = rows.map((r) => ({
+      key: `i:${r.id}`,
+      area: "item",
+      kind: Number(r.depth) > 0 ? "subitem" : "item",
+      weekId: weekIdOf(r.date as DateStr),
+      date: r.date as DateStr,
+      categoryId: r.category_id,
+      categoryName: r.name,
+      itemId: r.id,
+      text: r.text,
+    }));
+    const notes = await this.db.select<{ week_id: string; doc: string }>(
+      `SELECT week_id, doc FROM week_note${from ? " WHERE week_id >= ?" : ""}`,
+      from ? [weekIdOf(from)] : [],
+    );
+    const memoHits = notes.flatMap((n) => searchNote(n.week_id as WeekId, parseNoteDoc(n.doc), terms));
+    const all = sortHits([...itemHits, ...memoHits]);
+    return { hits: all.slice(0, SEARCH_LIMIT), truncated: all.length > SEARCH_LIMIT };
+  }
+
   async getWeekNotesBetween(fromWeek: WeekId, toWeek: WeekId): Promise<Record<WeekId, NoteDoc>> {
     const rows = await this.db.select<{ week_id: string; doc: string }>(
       "SELECT week_id, doc FROM week_note WHERE week_id BETWEEN ? AND ?",

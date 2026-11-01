@@ -12,6 +12,8 @@ import { useMediaQuery, useWindowWidth } from "./common/useMediaQuery";
 import { FirstRun } from "./first-run/FirstRun";
 import { IntegrityProblem, MissingFolder } from "./first-run/StartScreens";
 import { ImportantPanel } from "./important/ImportantPanel";
+import { SearchBand, SearchPanel } from "./search/SearchViews";
+import { onSearchKey, useSearch } from "./search/searchStore";
 import { usePanelWidths } from "./common/panelWidths";
 import { ExportDialog } from "./export/ExportDialog";
 import { ImportWizard } from "./import/ImportWizard";
@@ -100,6 +102,11 @@ function Workspace() {
   const panelOpen = useBoard((s) => s.panelOpen);
   const viewMode = useBoard((s) => s.viewMode);
   const summaryOpen = useSummary((s) => s.open);
+  const searchPanelOpen = useSearch((s) => s.panelOpen);
+  useEffect(() => {
+    window.addEventListener("keydown", onSearchKey);
+    return () => window.removeEventListener("keydown", onSearchKey);
+  }, []);
   const noteExpanded = useNote((s) => s.expanded);
   // 인사이트(m3-s1-spec 1-2): 보드는 숨겨 둔 채 그대로 — 보던 주·뷰·커서·메모가 남는다
   const insightsOpen = useInsights((s) => s.open);
@@ -127,6 +134,9 @@ function Workspace() {
           if (summaryOverlay && summaryOpen) setSummaryOpen(false);
         }}
       >
+        <SearchBand
+          rightInset={searchPanelOpen && summaryOverlay && !insightsOpen && !settingsOpen ? summaryW : 0}
+        />
         {viewMode === "today" ? (
           <TodayView />
         ) : (
@@ -145,7 +155,11 @@ function Workspace() {
           </>
         )}
       </div>
-      {summaryOpen && !insightsOpen && !settingsOpen && <SummaryPanel overlay={summaryOverlay} />}
+      {searchPanelOpen && !insightsOpen && !settingsOpen ? (
+        <SearchPanel overlay={summaryOverlay} />
+      ) : (
+        summaryOpen && !insightsOpen && !settingsOpen && <SummaryPanel overlay={summaryOverlay} />
+      )}
     </div>
   );
 }

@@ -10,6 +10,7 @@ import { useAppStore } from "./appStore";
 import { BrandLockup } from "./Brand";
 import { IconDayView, IconWeekView } from "./icons";
 import { TagFilterMenu } from "./TagFilterMenu";
+import { SearchBox } from "../search/SearchViews";
 import { useInsights } from "../insights/insightsStore";
 import styles from "./TopBar.module.css";
 
@@ -140,6 +141,7 @@ export function TopBar() {
           </nav>
         )}
         <div className={styles.spacer} />
+        {ready && journalReady && week && <SearchBox />}
         {ready && journalReady && !settings && <TagFilterMenu />}
         {ready && journalReady && week && (
           <button
