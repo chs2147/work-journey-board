@@ -89,7 +89,9 @@ export const tauriPlatform: Platform = {
     const filters =
       kind === "image"
         ? [{ name: "이미지", extensions: ["png", "webp"] }]
-        : [{ name: "Excel", extensions: ["xlsx"] }];
+        : kind === "markdown"
+          ? [{ name: "Markdown", extensions: ["md"] }]
+          : [{ name: "Excel", extensions: ["xlsx"] }];
     const picked = await save({ title, defaultPath, filters });
     return picked ?? null;
   },

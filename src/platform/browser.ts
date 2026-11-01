@@ -39,6 +39,8 @@ let config: AppConfig | null = null;
 let exitHandler: (() => Promise<void>) | null = null;
 let lastClipboard: string | null = null;
 let lastExport: { path: string; size: number } | null = null;
+/** 이번 실행에서 내보낸 파일들(E2E 확인용 — 마크다운은 글도) */
+const exportLog: { path: string; size: number; text?: string }[] = [];
 /** 브라우저 모드는 링크를 실제로 열지 않고 적어 두기만 한다(외부 접속 없음 — E2E 확인용) */
 const openedUrls: string[] = [];
 /** 가짜 새 판 확인(외부 접속 없음 — E2E 확인용): 확인·내려받기·설치 호출 기록 */
@@ -137,7 +139,9 @@ export const browserPlatform: Platform = {
           ? "image/png"
           : name.toLowerCase().endsWith(".webp")
             ? "image/webp"
-            : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            : name.toLowerCase().endsWith(".md")
+              ? "text/markdown"
+              : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       }),
     );
     const a = Object.assign(document.createElement("a"), { href: url, download: name });
@@ -147,6 +151,11 @@ export const browserPlatform: Platform = {
     setTimeout(() => URL.revokeObjectURL(url), 10_000);
     await fs.ensureDir(dirOf(path)); // 실제 저장 대화상자에서 고른 폴더는 늘 있다
     lastExport = { path, size: bytes.byteLength };
+    exportLog.push({
+      path,
+      size: bytes.byteLength,
+      text: name.toLowerCase().endsWith(".md") ? new TextDecoder().decode(bytes) : undefined,
+    });
   },
   openFile: async () => undefined,
   async openUrl(url) {
@@ -200,6 +209,7 @@ Object.assign(globalThis, {
     files: () => fs.listAll(),
     clipboard: () => lastClipboard,
     lastExport: () => lastExport,
+    exportLog: () => [...exportLog],
     openedUrls: () => [...openedUrls],
     updateCalls: () => [...updateCalls],
     /** DB 호출 수(조회·쓰기·batch) — 주 전환당 왕복 수 측정 */

@@ -16,11 +16,16 @@ export interface AppConfig {
 }
 
 /** 내보내기 종류 — 저장 대화상자의 파일 형식 거르개와 허용 확장자 */
-export type ExportKind = "xlsx" | "image";
+export type ExportKind = "xlsx" | "image" | "markdown" | "markdownImage";
 export const EXPORT_EXTS: Record<ExportKind, readonly string[]> = {
   xlsx: [".xlsx"],
   image: [".png", ".webp"],
+  /** 메모 보드 마크다운(features-1102-spec F4) */
+  markdown: [".md"],
+  /** 마크다운 옆 `<문서 이름>_images` 폴더 안 원본 이미지 — 그 폴더 안에서만 */
+  markdownImage: [".png", ".webp", ".jpg", ".jpeg", ".gif"],
 };
+export const MD_IMAGE_DIR_SUFFIX = "_images";
 
 export interface PathInfo {
   exists: boolean;
@@ -55,7 +60,7 @@ export interface Platform {
   /** 내보내기 저장: 저장 대화상자(같은 이름이면 대화상자가 덮어쓰기를 묻는다)에서 고른 경로. 취소하면 null */
   pickSaveFile(title: string, defaultPath: string, kind?: ExportKind): Promise<string | null>;
   /**
-   * 내보내기 파일 쓰기 — 엑셀 `.xlsx`와 메모 이미지 `.png`·`.webp`만, 일지 파일·backups 폴더는 거부
+   * 내보내기 파일 쓰기 — 엑셀 `.xlsx`·메모 이미지 `.png`·`.webp`·마크다운 `.md`(+ `_images` 폴더 안 이미지)만, 일지 파일·backups 폴더는 거부
    * (CLAUDE.md 4-3 내보내기 예외). Rust `export_write`가 한 번 더 검사한다.
    */
   writeExport(path: string, bytes: Uint8Array): Promise<void>;
@@ -155,7 +160,13 @@ export function exportPathProblem(path: string, dataDir: string, kind: ExportKin
   const norm = (p: string) => p.replace(/\//g, "\\").replace(/\\+$/, "").toLowerCase();
   const name = baseName(path).toLowerCase();
   if (!EXPORT_EXTS[kind].some((ext) => name.endsWith(ext) && name.length > ext.length))
-    return kind === "image" ? STR.note.onlyImage : STR.export.onlyXlsx;
+    return kind === "image"
+      ? STR.note.onlyImage
+      : kind === "xlsx"
+        ? STR.export.onlyXlsx
+        : STR.mdExport.onlyMd;
+  if (kind === "markdownImage" && !baseName(dirOf(path)).toLowerCase().endsWith(MD_IMAGE_DIR_SUFFIX))
+    return STR.mdExport.onlyMd;
   if (norm(dirOf(path)) === `${norm(dataDir)}\\backups`) return STR.export.notBackups;
   return null;
 }

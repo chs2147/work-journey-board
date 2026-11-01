@@ -4,6 +4,7 @@
 import { lazy, Suspense, useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 import { ZOOM_STEPS } from "../../domain/noteZoom";
 import { STR } from "../../shared/strings";
+import { openMdExport } from "./markdownExport";
 import { toast } from "../board/boardStore";
 import {
   IconChevronDown,
@@ -134,6 +135,9 @@ function SnapshotButton({ empty }: { empty: boolean }) {
           </button>
           <button type="button" role="menuitem" onClick={() => pick(copySnapshot)}>
             {STR.note.snapshotCopy}
+          </button>
+          <button type="button" role="menuitem" onClick={() => pick(async () => openMdExport())}>
+            {STR.mdExport.menu}
           </button>
           <span className={styles.snapHint}>{STR.note.snapshotHint}</span>
         </div>

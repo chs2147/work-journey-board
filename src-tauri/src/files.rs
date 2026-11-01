@@ -306,18 +306,29 @@ fn norm(p: &str) -> String {
 /// 내보내기 파일 쓰기 허용 규칙(CLAUDE.md 4-3 내보내기 예외): 확장자 `.xlsx`·`.png`·`.webp`만,
 /// 저장 폴더의 일지 파일·`backups` 폴더 안은 거부. 웹 앱의 저장 대화상자와 별개로 한 번 더 검사한다.
 /// 윈도우 경로를 어느 플랫폼에서든 같게 다루려고 문자열로 본다(`\\`·`/` 모두 구분자).
-/// 내보낼 수 있는 확장자: 엑셀 + 메모 이미지(CLAUDE.md 4-3 내보내기 예외, weekly-note-spec 11절 #3)
-const EXPORT_EXTS: [&str; 3] = [".xlsx", ".png", ".webp"];
+/// 내보낼 수 있는 확장자: 엑셀 + 메모 이미지 + 메모 보드 마크다운(CLAUDE.md 4-3 내보내기 예외, weekly-note-spec 11절 #3,
+/// features-1102-spec F4)
+const EXPORT_EXTS: [&str; 4] = [".xlsx", ".png", ".webp", ".md"];
+/// 마크다운과 함께 쓰는 이미지 폴더(`<문서 이름>_images`) 안에서만 허용하는 원본 이미지 확장자
+const MD_IMAGE_EXTS: [&str; 5] = [".png", ".webp", ".jpg", ".jpeg", ".gif"];
+const MD_IMAGE_DIR_SUFFIX: &str = "_images";
+
+fn has_ext(name: &str, exts: &[&str]) -> bool {
+    exts.iter()
+        .any(|ext| name.ends_with(ext) && name.len() > ext.len())
+}
 
 fn export_path_allowed(path: &str, data_dir: Option<&str>) -> Result<(), String> {
     let p = norm(path);
     let (parent, name) = p.rsplit_once('\\').unwrap_or(("", p.as_str()));
-    if !EXPORT_EXTS
-        .iter()
-        .any(|ext| name.ends_with(ext) && name.len() > ext.len())
-    {
+    let in_md_images = parent
+        .rsplit_once('\\')
+        .map(|(_, d)| d)
+        .unwrap_or(parent)
+        .ends_with(MD_IMAGE_DIR_SUFFIX);
+    if !has_ext(name, &EXPORT_EXTS) && !(in_md_images && has_ext(name, &MD_IMAGE_EXTS)) {
         return Err(format!(
-            "엑셀(.xlsx) 또는 이미지(.png·.webp) 파일로만 저장할 수 있습니다: {name}"
+            "엑셀(.xlsx)·이미지(.png·.webp)·마크다운(.md) 파일로만 저장할 수 있습니다: {name}"
         ));
     }
     if let Some(dir) = data_dir {
@@ -334,6 +345,16 @@ fn export_path_allowed(path: &str, data_dir: Option<&str>) -> Result<(), String>
 pub fn export_write(app: AppHandle, path: String, bytes: Vec<u8>) -> Result<(), String> {
     export_path_allowed(&path, configured_data_dir(&app).as_deref())?;
     let target = PathBuf::from(&path);
+    // 마크다운 이미지 폴더(`…_images`)는 없으면 한 단계만 만든다(그 위 폴더는 사용자가 고른 곳이라 이미 있다)
+    if let Some(dir) = target.parent() {
+        let is_md_dir = dir
+            .file_name()
+            .and_then(|n| n.to_str())
+            .is_some_and(|n| n.to_lowercase().ends_with(MD_IMAGE_DIR_SUFFIX));
+        if is_md_dir && !dir.exists() {
+            fs::create_dir(dir).map_err(|e| format!("이미지 폴더를 만들지 못했습니다: {e}"))?;
+        }
+    }
     let ext = target
         .extension()
         .and_then(|e| e.to_str())
@@ -454,6 +475,22 @@ mod tests {
             "D:\\x\\a.svg",
             "D:\\x\\.webp",
             "D:\\x\\a.png.exe",
+        ] {
+            assert!(export_path_allowed(no, Some(dir)).is_err(), "{no}");
+        }
+        // 메모 보드 마크다운(F4): .md + 같은 이름 _images 폴더 안 원본 이미지(jpg·gif 포함)
+        assert!(export_path_allowed("D:\\보고\\메모보드_2026-W43.md", Some(dir)).is_ok());
+        assert!(
+            export_path_allowed("D:\\보고\\메모보드_2026-W43_images\\box-1.jpg", Some(dir)).is_ok()
+        );
+        assert!(
+            export_path_allowed("D:\\보고\\메모보드_2026-W43_images\\box-2.GIF", Some(dir)).is_ok()
+        );
+        for no in [
+            "D:\\보고\\a.jpg",
+            "D:\\보고\\x_images\\a.exe",
+            "D:\\보고\\x_images\\a.md.bat",
+            "C:\\Users\\u\\WorkJourney\\backups\\a.md",
         ] {
             assert!(export_path_allowed(no, Some(dir)).is_err(), "{no}");
         }

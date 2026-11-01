@@ -13,6 +13,7 @@ import { FirstRun } from "./first-run/FirstRun";
 import { IntegrityProblem, MissingFolder } from "./first-run/StartScreens";
 import { ImportantPanel } from "./important/ImportantPanel";
 import { SearchBand, SearchPanel } from "./search/SearchViews";
+import { MarkdownExportDialog } from "./note/MarkdownExportDialog";
 import { onSearchKey, useSearch } from "./search/searchStore";
 import { usePanelWidths } from "./common/panelWidths";
 import { ExportDialog } from "./export/ExportDialog";
@@ -155,6 +156,7 @@ function Workspace() {
           </>
         )}
       </div>
+      <MarkdownExportDialog />
       {searchPanelOpen && !insightsOpen && !settingsOpen ? (
         <SearchPanel overlay={summaryOverlay} />
       ) : (
