@@ -434,6 +434,22 @@
                 "item": "it-deploy"
               }
             ]
+          },
+          {
+            "id": "box-wiki",
+            "kind": "link",
+            "x": 24,
+            "y": 216,
+            "w": 296,
+            "z": 5,
+            "url": "https://wiki.example.com/settlement/batch-design",
+            "title": "정산 배치 설계서 v2(사내 위키)",
+            "note": "리뷰 의견 5건 반영본 — 재처리 조건은 4장",
+            "refs": [
+              {
+                "item": "it-review"
+              }
+            ]
           }
         ],
         "edges": [
@@ -460,6 +476,14 @@
             "dir": "one",
             "dash": true,
             "label": "후속"
+          },
+          {
+            "id": "e4",
+            "from": "box-wiki",
+            "to": "box-flow",
+            "dir": "one",
+            "dash": true,
+            "label": "참고"
           }
         ]
       }
