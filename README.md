@@ -32,7 +32,7 @@
 | 파일 | 용도 |
 |---|---|
 | `WorkJourneyBoard_<버전>_setup.exe` | **기본판**(약 10MB) — WebView2가 없으면 설치 중 자동으로 받음 |
-| `WorkJourneyBoard_<버전>_setup_offline.exe` | **오프라인 설치판**(약 140MB) — 인터넷이 막힌 PC용, WebView2 포함 |
+| `WorkJourneyBoard_<버전>_setup_offline.exe` | **오프라인 설치판**(약 220MB) — 인터넷이 막힌 PC용, WebView2 포함 |
 
 - 관리자 권한 없이 **현재 사용자에게만** 설치됩니다. 처음 켜면 시그니처 테마(설정 › 화면 › 테마에서 라이트·다크·시스템 설정으로 바꿀 수 있음).
 - 새 판이 나오면 앱이 켤 때 알려 주고, 설정 › 업데이트에서 내려받아 설치합니다(SHA256 확인 · 설치 전 일지 자동 백업).
