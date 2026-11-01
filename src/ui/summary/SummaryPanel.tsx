@@ -3,6 +3,8 @@ import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react"
 import { basisText, finalVersion } from "../../domain/aggregate";
 import { sha256Hex } from "../../shared/hash";
 import { STR } from "../../shared/strings";
+import { PanelResizer } from "../common/PanelResizer";
+import { usePanelWidths } from "../common/panelWidths";
 import { focusStartCell, useBoard } from "../board/boardStore";
 import { useNote } from "../note/noteStore";
 import {
@@ -74,8 +76,10 @@ export function SummaryPanel({ overlay }: { overlay: boolean }) {
     editorRef.current?.focus();
   };
 
+  const panelW = usePanelWidths((st) => st.summary);
   return (
     <aside
+      style={{ width: panelW }}
       ref={panelRef}
       className={`${styles.panel} ${overlay ? styles.overlay : ""}`}
       aria-label={STR.summary.title}
@@ -87,6 +91,7 @@ export function SummaryPanel({ overlay }: { overlay: boolean }) {
         }
       }}
     >
+      <PanelResizer panel="summary" />
       <div className={styles.head}>
         <h2 className={styles.title}>
           {STR.summary.title} <span className={styles.week}>{weekId}</span>

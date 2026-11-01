@@ -1,5 +1,6 @@
 /* 왼쪽 중요 업무 패널 264px(important-repeat-spec 1-3·2-3). 좁은 창에서는 보드 위에 겹쳐 뜬다 */
 .panel {
+  position: relative;
   flex: 0 0 auto;
   width: 264px;
   display: flex;

@@ -151,7 +151,8 @@
       "seq": 1,
       "depth": 0,
       "text": "개발계 1차 배포 일정 확정(11/2)",
-      "id": "it-deploy"
+      "id": "it-deploy",
+      "flagged": true
     },
     {
       "date": "2026-10-24",
@@ -180,7 +181,8 @@
       "seq": 2,
       "depth": 1,
       "text": "계정 관리 미흡 2건 발견",
-      "id": "it-acct"
+      "id": "it-acct",
+      "flagged": true
     },
     {
       "date": "2026-10-22",
@@ -271,6 +273,27 @@
                               "text": "재처리 조건은 수요일 리뷰에서"
                             }
                           ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "회의록: "
+                    },
+                    {
+                      "type": "text",
+                      "text": "10/20 배치 협의",
+                      "marks": [
+                        {
+                          "type": "link",
+                          "attrs": {
+                            "href": "https://wiki.example.com/settlement/meeting-1020"
+                          }
                         }
                       ]
                     }

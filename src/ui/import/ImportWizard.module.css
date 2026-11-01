@@ -525,8 +525,10 @@ button.dotDone:hover {
   font-weight: var(--fw-bold);
 }
 
-.num {
+.numCell {
   font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
 }
 
 .danger {

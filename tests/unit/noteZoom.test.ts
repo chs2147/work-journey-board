@@ -74,4 +74,26 @@ describe("배율", () => {
       viewMode: "today",
     });
   });
+
+  it("설정: 패널 폭(improve-1101 #2) 기본 264·360, 범위(220~520·300~720) 밖·숫자 아님은 기본으로", () => {
+    expect(DEFAULT_SETTINGS.ui).toMatchObject({ importantPanelW: 264, summaryPanelW: 360 });
+    expect(
+      mergeSettings(DEFAULT_SETTINGS, { ui: { importantPanelW: 400, summaryPanelW: 700 } }).ui,
+    ).toMatchObject({
+      importantPanelW: 400,
+      summaryPanelW: 700,
+    });
+    expect(
+      mergeSettings(DEFAULT_SETTINGS, { ui: { importantPanelW: 100, summaryPanelW: "wide" } }).ui,
+    ).toMatchObject({
+      importantPanelW: 264,
+      summaryPanelW: 360,
+    });
+    expect(
+      mergeSettings(DEFAULT_SETTINGS, { ui: { importantPanelW: 600, summaryPanelW: 299 } }).ui,
+    ).toMatchObject({
+      importantPanelW: 264,
+      summaryPanelW: 360,
+    });
+  });
 });

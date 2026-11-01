@@ -4,12 +4,15 @@
 import { useEffect, useRef, useState, type PointerEvent } from "react";
 import { cellKey } from "../../data/repository";
 import { TODAY_SPLIT_MAX, TODAY_SPLIT_MIN, DEFAULT_SETTINGS } from "../../data/settings";
-import { DAY_MARK_KINDS, type DayMarkKind } from "../../domain/dayMark";
+import { DAY_MARK_KINDS, DAY_MARK_LABEL, type DayMarkKind } from "../../domain/dayMark";
 import { chipsToShow } from "../../domain/tags";
 import { dayIndex, DAY_LABELS } from "../../domain/week";
 import { STR } from "../../shared/strings";
 import {
+  goDay,
+  goToday,
   enterCell,
+  setFocusDay,
   pullLabel,
   pullPrevious,
   pullPreviousDay,
@@ -22,7 +25,7 @@ import { TagFilterBanner } from "../board/TagFilterBanner";
 import { useAppStore } from "../common/appStore";
 import { useMediaQuery } from "../common/useMediaQuery";
 import { NoteDock } from "../note/NoteDock";
-import { focusNote } from "../note/noteStore";
+import { focusNote, useNote } from "../note/noteStore";
 import styles from "./Today.module.css";
 
 export function TodayView() {
@@ -38,6 +41,8 @@ export function TodayView() {
   const [memoOpen, setMemoOpen] = useState(false);
   const [split, setSplit] = useState(DEFAULT_SETTINGS.ui.todaySplit);
   const wrapRef = useRef<HTMLDivElement>(null);
+  // 메모 [크게 보기](improve-1101 #3): 주간 뷰처럼 메모가 데일리 뷰 전체를 덮는다(카드는 숨겨 둔 채 그대로)
+  const noteExpanded = useNote((s) => s.expanded);
 
   // 기억해 둔 메모 폭
   useEffect(() => {
@@ -109,7 +114,7 @@ export function TodayView() {
 
   return (
     <div ref={wrapRef} className={`${styles.today} ${narrow ? styles.narrow : ""}`} data-testid="today-view">
-      {narrow ? (
+      {narrow && !noteExpanded ? (
         <div className={`${styles.memoBand} ${memoOpen ? styles.memoBandOpen : ""}`}>
           <button
             type="button"
@@ -123,25 +128,32 @@ export function TodayView() {
         </div>
       ) : (
         <>
-          <div className={styles.memo} style={{ width: `${split * 100}%` }}>
+          {/* 크게 보기여도 같은 요소를 그대로 두고 폭만 바꾼다 — 메모를 다시 그리지 않아 포커스·Esc가 이어진다 */}
+          <div
+            className={noteExpanded ? styles.memoFull : styles.memo}
+            style={noteExpanded ? undefined : { width: `${split * 100}%` }}
+          >
             <NoteDock variant="side" />
           </div>
-          <button
-            type="button"
-            className={styles.splitter}
-            aria-label={STR.today.resizeSplit}
-            title={STR.today.resizeSplit}
-            tabIndex={-1}
-            onPointerDown={startSplit}
-            onDoubleClick={() => {
-              setSplit(DEFAULT_SETTINGS.ui.todaySplit);
-              saveSplit(DEFAULT_SETTINGS.ui.todaySplit);
-            }}
-          />
+          {!noteExpanded && (
+            <button
+              type="button"
+              className={styles.splitter}
+              aria-label={STR.today.resizeSplit}
+              title={STR.today.resizeSplit}
+              tabIndex={-1}
+              onPointerDown={startSplit}
+              onDoubleClick={() => {
+                setSplit(DEFAULT_SETTINGS.ui.todaySplit);
+                saveSplit(DEFAULT_SETTINGS.ui.todaySplit);
+              }}
+            />
+          )}
         </>
       )}
 
-      <div className={styles.right}>
+      <div className={noteExpanded ? styles.hidden : styles.right}>
+        <DayStrip />
         <div className={styles.head}>
           <h2 className={styles.date} data-testid="today-date">
             {dateLabel}
@@ -296,5 +308,68 @@ function DayMarkPicker({ day }: { day: string }) {
         </div>
       )}
     </div>
+  );
+}
+
+/** 날짜 이동 띠(improve-1101 #4): ‹ 월~일 › — 한 칸씩 이동(주를 넘으면 그 주를 불러옴), 날짜를 누르면 그 날로 */
+function DayStrip() {
+  const view = useBoard((s) => s.view);
+  const day = useBoard((s) => s.focusDay);
+  const today = useBoard((s) => s.today);
+  const cells = useBoard((s) => s.cells);
+  if (!view) return null;
+  const has = (d: string) =>
+    view.categories.some((c) => (cells[cellKey(d, c.category.id)] ?? []).some((it) => it.text.trim() !== ""));
+  return (
+    <nav className={styles.strip} aria-label={STR.today.stripAria} data-testid="day-strip">
+      <button
+        type="button"
+        className={styles.stripArrow}
+        title={STR.today.prevDay}
+        aria-label={STR.today.prevDay}
+        onClick={() => void goDay(-1)}
+      >
+        ‹
+      </button>
+      <ol className={styles.stripDays}>
+        {view.days.map((d) => {
+          const [, m, dd] = d.split("-");
+          const wd = DAY_LABELS[dayIndex(d)];
+          const mark = view.dayMarks[d];
+          return (
+            <li key={d}>
+              <button
+                type="button"
+                className={`${styles.stripDay} ${d === day ? styles.stripOn : ""} ${d === today ? styles.stripToday : ""} ${dayIndex(d) >= 5 ? styles.stripWeekend : ""}`}
+                aria-current={d === day ? "date" : undefined}
+                onClick={() => setFocusDay(d)}
+              >
+                <span className={styles.stripWd}>{wd}</span>
+                <span className={styles.stripDate}>
+                  {Number(m)}/{Number(dd)}
+                </span>
+                <span className={styles.stripMeta}>
+                  {mark ? DAY_MARK_LABEL[mark] : has(d) ? <i className={styles.stripDot} /> : null}
+                </span>
+              </button>
+            </li>
+          );
+        })}
+      </ol>
+      <button
+        type="button"
+        className={styles.stripArrow}
+        title={STR.today.nextDay}
+        aria-label={STR.today.nextDay}
+        onClick={() => void goDay(1)}
+      >
+        ›
+      </button>
+      {day !== today && (
+        <button type="button" className={styles.stripTodayBtn} onClick={() => void goToday()}>
+          {STR.topBar.today}
+        </button>
+      )}
+    </nav>
   );
 }

@@ -155,15 +155,15 @@ test("보기 아이콘: 주간 = 달력 칸, 오늘 = 일력 + 날짜 숫자(그
   const day = page.getByTestId("view-today");
   await expect(week).toHaveAttribute("aria-label", "주간 뷰 (Alt+V)");
   await expect(week).toHaveAttribute("aria-pressed", "true");
-  await expect(day).toHaveAttribute("aria-label", "오늘 뷰 · 10/22(목) (Alt+V)");
-  await expect(day).toHaveAttribute("title", "오늘 뷰 · 10/22(목) (Alt+V)");
+  await expect(day).toHaveAttribute("aria-label", "데일리 뷰 · 10/22(목) (Alt+V)");
+  await expect(day).toHaveAttribute("title", "데일리 뷰 · 10/22(목) (Alt+V)");
   await expect(day.locator("svg text")).toHaveText("22");
   await expect(page.getByRole("button", { name: "주간 뷰 (Alt+V)" })).toBeVisible();
 
   await day.click();
   await expect(day).toHaveAttribute("aria-pressed", "true");
-  await page.getByRole("button", { name: "다음 날 (Alt+→)" }).click();
-  await expect(day).toHaveAttribute("aria-label", "오늘 뷰 · 10/23(금) (Alt+V)");
+  await page.getByRole("button", { name: "다음 날 (Alt+→)" }).first().click();
+  await expect(day).toHaveAttribute("aria-label", "데일리 뷰 · 10/23(금) (Alt+V)");
   await expect(day.locator("svg text")).toHaveText("23");
   // 주간 뷰로 돌아가면 다시 오늘 날짜
   await week.click();

@@ -85,17 +85,45 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: var(--sp-2);
-  padding: 6px var(--sp-4);
-  border-bottom: 1px solid var(--line);
-  background: var(--accent-soft);
-  color: var(--text-1);
+  gap: var(--sp-2) var(--sp-3);
+  padding: 8px var(--sp-4);
+  background: var(--accent);
+  color: var(--on-accent);
   font-size: var(--fs-sm);
+  box-shadow: inset 0 -1px 0 rgb(0 0 0 / 0.12);
+}
+
+/* improve-1101 #8: 업무 화면과 확실히 구분 — 진한 강조색 바탕 + 아이콘 + 반전 단추 */
+.bannerIcon {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--on-accent) 22%, transparent);
+}
+
+.bannerSub {
+  opacity: 0.82;
 }
 
 .banner .button,
 .banner .primary {
-  height: 26px;
+  height: 28px;
+}
+
+.banner .primary {
+  border-color: var(--on-accent);
+  background: var(--on-accent);
+  color: var(--accent);
+  font-weight: var(--fw-bold);
+}
+
+.banner .button {
+  border-color: color-mix(in srgb, var(--on-accent) 55%, transparent);
+  background: transparent;
+  color: var(--on-accent);
 }
 
 .grow {

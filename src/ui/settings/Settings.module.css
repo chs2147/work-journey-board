@@ -642,7 +642,12 @@
   border-top: 1px solid var(--line);
 }
 
-/* 진단 정보(optimize-1031-plan O1) */
+/* 진단 정보(optimize-1031-plan O1) — 카드 안 여백은 다른 행과 같게(improve-1101 #1) */
+.diag {
+  padding: var(--sp-3) var(--sp-5) var(--sp-5);
+  border-top: 1px solid var(--line);
+}
+
 .diag > summary {
   cursor: pointer;
   color: var(--text-2);
@@ -739,4 +744,91 @@
   height: 40px;
   width: auto;
   margin: 6px 0;
+}
+
+/* 정보·오픈소스 라이선스(improve-1101 #7) */
+.aboutHero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3) var(--sp-5);
+  padding: var(--sp-4) var(--sp-5) var(--sp-5);
+  border-top: 1px solid var(--line);
+}
+
+.aboutMeta {
+  flex: 1 1 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.aboutVer {
+  font-size: var(--fs-lg);
+  font-variant-numeric: tabular-nums;
+}
+
+.ossGroup {
+  padding: var(--sp-3) var(--sp-5) var(--sp-4);
+  border-top: 1px solid var(--line);
+}
+
+.ossGroup h4 {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  color: var(--text-2);
+}
+
+.ossFont {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: var(--sp-2) 0;
+}
+
+.ossFont + .ossFont {
+  border-top: 1px dashed var(--line);
+}
+
+.ossVer {
+  margin-left: 4px;
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+  font-weight: normal;
+}
+
+.ossTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+}
+
+.ossTable th,
+.ossTable td {
+  padding: 5px 0;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  font-weight: normal;
+}
+
+.ossTable td {
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.ossTable td:last-child {
+  text-align: right;
+}
+
+.ossText {
+  max-height: 50vh;
+  overflow: auto;
+  margin: 0;
+  padding: var(--sp-3);
+  border-radius: var(--radius-md);
+  background: var(--surface-sub);
+  font-size: var(--fs-xs);
+  line-height: 1.55;
+  white-space: pre-wrap;
 }

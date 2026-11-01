@@ -126,7 +126,7 @@ test("자리: 넓은 창은 보드를 밀어내고, 좁은 창(또는 중요 업
   await page.setViewportSize({ width: 1500, height: 900 }); // 1500 − 레일 52 − 요약 360 = 1088 ≥ 900
   await page.keyboard.press("Alt+KeyS");
   const position = () => panel(page).evaluate((e) => getComputedStyle(e).position);
-  expect(await position()).toBe("static");
+  expect(await position()).toBe("relative"); // 보드 옆 자리(폭 손잡이 때문에 relative — 겹치면 absolute)
   await page.keyboard.press("Alt+Digit2"); // 중요 업무 패널(264)까지 열면 824 < 900
   await expect(page.getByTestId("important-panel")).toBeVisible();
   expect(await position()).toBe("absolute");

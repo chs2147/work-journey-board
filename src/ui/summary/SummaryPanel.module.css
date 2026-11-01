@@ -1,5 +1,6 @@
 /* 주간 요약 패널 360px(overview 10-7). 보드 폭이 900px 미만으로 줄면 보드 위에 겹쳐 뜬다(i-m2-plan 6절 #2) */
 .panel {
+  position: relative;
   flex: 0 0 auto;
   width: 360px;
   display: flex;

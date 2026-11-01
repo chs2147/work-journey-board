@@ -1,7 +1,7 @@
 # 2026-11-01 릴리스 후 개선 8건 (상세 설계·시안)
 
-> 작성: 2026-11-01 · 기준: `v1.0.0` · 상태: **시안 검토 대기** — 승인 후 구현(사용자 지시: "반영 예상 시안을 우선 검토 후, 승인하면 구현")
-> 시안 = 브라우저 모드에 실제로 임시 적용해 찍은 화면(`docs/mockups/1101/`, 가상 샘플 `?sample=showcase`). 시안 코드는 로컬 작업 브랜치에만 있고 main에는 없다.
+> 작성: 2026-11-01 · 기준: `v1.0.0` · 상태: **2026-11-01 추천안대로 승인·구현(11절)** — 판올림 대기
+> 시안 = 브라우저 모드에 실제로 임시 적용해 찍은 화면(`docs/mockups/1101/`, 가상 샘플 `?sample=showcase`). 
 
 | # | 요청 | 시안 |
 |---|---|---|
@@ -70,3 +70,18 @@
 | 2 | 링크 여는 방식 | ↗ 아이콘 = 열기, 글자 = 편집(Ctrl+클릭 열기 유지) |
 | 3 | 상단 ◀ ▶ 유지 여부 | 유지(날짜 띠와 함께) |
 | 4 | 라이브러리 목록 범위 | 주요 8종 표(전체 의존성 고지는 하지 않음) |
+
+## 11. 구현 기록 (2026-11-01, 10절 추천안 4건 확정)
+
+| # | 구현 |
+|---|---|
+| 1 | `Settings.module.css` `.diag` 위 구분선 + 좌우·아래 여백 |
+| 2 | `settings.ts` `ui.importantPanelW`·`ui.summaryPanelW` + `PANEL_W` 범위(범위 밖 저장값은 기본으로) · `ui/common/panelWidths.ts`(화면 상태·놓을 때 저장·일지 열 때 불러옴) · `PanelResizer.tsx`(끌기·두 번 누름·`←/→`, `role="separator"`) · App의 겹쳐 띄우기 판단도 지금 폭으로 |
+| 3 | `NoteDock` 데일리 뷰에도 [크게 보기]([카드와 함께 보기]) · `TodayView` 같은 메모 요소의 폭만 바꿔 덮음(다시 그리지 않아 포커스·`Esc` 유지) · 좁은 메모 머리는 컨테이너 폭 620px 이하에서 개수 글자 숨김 |
+| 4 | 화면 이름 "데일리 뷰"(툴팁·overview 10절·단축키 표) · `TodayView` `DayStrip`(날짜 누르기 = `setFocusDay`, `‹ ›` = `goDay`, [오늘] = `goToday`, 점 = 그 날 칸에 글이 있는 업무가 하나라도, 연차·반차 = `DAY_MARK_LABEL`) |
+| 5 | 미리보기 숫자 칸 CSS 이름 `.numCell`(단계 번호 `.num`과 분리) |
+| 6 | `editorExtensions.ts` `LinkOpener` — 링크 묶음 끝에 장식 위젯 `.note-link-open`(문서에 저장 안 됨), 누르면 `openLink`(http/https 재검사 → `Platform.openUrl`) |
+| 7 | `settings/AboutCards.tsx` 정보 카드(로고·버전·한 줄 소개·소개 사이트·이 판의 릴리스 노트·만든 이) + 오픈소스 라이선스 카드(OFL 전문은 `public/licenses/*.txt`를 `?raw`로 번들 — 네트워크 없음) · 문자열은 `strings.ts` `settings.oss` |
+| 8 | `Update.module.css` 띠 = `--accent` 바탕·`--on-accent` 글자·↑ 아이콘·반전 단추, 문구 `update.bannerSub` |
+| 테스트 | E2E `improve-1101.spec.ts` 7건(진단 여백 · 패널 끌기·최대·키보드·닫았다 열기·두 번 누름·주간 요약 · 데일리 뷰 이름·날짜 띠·주 넘김·크게 보기·Esc · 미리보기 숫자 칸 · 링크 ↗ → `openedUrls`·집계에 ↗ 없음 · 정보 링크·라이선스 전문 창·라이브러리 8행 · 띠 색 = 강조색) |
+

@@ -30,6 +30,9 @@ export interface Settings {
     viewMode: "week" | "today";
     /** 오늘 뷰 왼쪽 메모 폭(창 폭 비율 0.2~0.7) */
     todaySplit: number;
+    /** 왼쪽 중요 업무·오른쪽 주간 요약 패널 폭(px, improve-1101 #2) — 가장자리를 끌어 조절, 두 번 누르면 기본 */
+    importantPanelW: number;
+    summaryPanelW: number;
     /** 보드 태그 필터(improve-1026-spec 6절) — 태그 id들(OR), "__none__" = 태그 없음. 빈 배열 = 전체. 다시 켜도 유지 */
     tagFilter: string[];
     /** 인사이트에서 마지막으로 본 업무(m3-s1-spec 1-2) — 레일로 열면 그 업무 */
@@ -57,6 +60,12 @@ export const NOTE_ZOOM_MAX = 2;
 /** 오늘 뷰 메모 폭 비율 범위(spec 8-2) */
 export const TODAY_SPLIT_MIN = 0.2;
 export const TODAY_SPLIT_MAX = 0.7;
+/** 패널 폭 범위(improve-1101 #2, 2026-11-01 추천안 확정) */
+export const PANEL_W = {
+  important: { def: 264, min: 220, max: 520 },
+  summary: { def: 360, min: 300, max: 720 },
+} as const;
+export type PanelWidthSpec = { def: number; min: number; max: number };
 
 /** 메모 도크 최소 높이(px) — 끌어서 정할 때 */
 export const NOTE_DOCK_MIN = 120;
@@ -82,6 +91,8 @@ export const DEFAULT_SETTINGS: Settings = {
     noteMinimap: true,
     viewMode: "week",
     todaySplit: 0.42,
+    importantPanelW: 264,
+    summaryPanelW: 360,
     insightCategory: null,
     insightMapOpen: true,
     insightTab: "timeline",
@@ -138,6 +149,13 @@ export function mergeSettings(base: Settings, patch: unknown): Settings {
   if (s.ui.viewMode !== "week" && s.ui.viewMode !== "today") s.ui.viewMode = "week";
   if (!(s.ui.todaySplit >= TODAY_SPLIT_MIN && s.ui.todaySplit <= TODAY_SPLIT_MAX))
     s.ui.todaySplit = DEFAULT_SETTINGS.ui.todaySplit;
+  for (const [k, spec] of [
+    ["importantPanelW", PANEL_W.important],
+    ["summaryPanelW", PANEL_W.summary],
+  ] as const) {
+    const v = s.ui[k];
+    if (!(typeof v === "number" && v >= spec.min && v <= spec.max)) s.ui[k] = spec.def;
+  }
   if (!Array.isArray(s.ui.tagFilter) || !s.ui.tagFilter.every((x) => typeof x === "string"))
     s.ui.tagFilter = [];
   if (s.ui.insightCategory !== null && typeof s.ui.insightCategory !== "string") s.ui.insightCategory = null;

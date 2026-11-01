@@ -262,3 +262,129 @@
   border-color: var(--accent);
   color: var(--accent);
 }
+
+/* 메모 크게 보기(improve-1101 #3) */
+.memoFull {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-card);
+}
+
+.hidden {
+  display: none;
+}
+
+/* 날짜 이동 띠(improve-1101 #4) */
+.strip {
+  display: flex;
+  align-items: stretch;
+  gap: var(--sp-1);
+  padding: var(--sp-2) var(--sp-4);
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-card);
+}
+
+.stripArrow,
+.stripTodayBtn {
+  flex: 0 0 auto;
+  min-width: 32px;
+  border: 1px solid var(--btn-line);
+  border-radius: var(--radius-md);
+  background: var(--btn-bg);
+  color: var(--text-1);
+  font: inherit;
+  font-size: var(--fs-lg);
+  cursor: pointer;
+}
+
+.stripTodayBtn {
+  font-size: var(--fs-sm);
+  padding: 0 var(--sp-3);
+}
+
+.stripDays {
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--sp-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stripDay {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  align-items: baseline;
+  column-gap: 6px;
+  padding: 5px 10px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-1);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.stripDay:hover {
+  background: var(--surface-sub);
+}
+
+.stripWd {
+  font-size: var(--fs-xs);
+  color: var(--text-2);
+}
+
+.stripDate {
+  font-variant-numeric: tabular-nums;
+}
+
+.stripMeta {
+  grid-column: 1 / 3;
+  min-height: 14px;
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+}
+
+.stripDot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  vertical-align: 1px;
+}
+
+.stripWeekend .stripWd,
+.stripWeekend .stripDate {
+  color: var(--text-3);
+}
+
+.stripToday {
+  border-color: var(--accent);
+}
+
+.stripOn {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+
+.stripOn:hover {
+  background: var(--accent);
+}
+
+.stripOn .stripWd,
+.stripOn .stripDate,
+.stripOn .stripMeta {
+  color: var(--on-accent);
+}
+
+.stripOn .stripDot {
+  background: var(--on-accent);
+}

@@ -516,8 +516,8 @@ function Preview() {
             <thead>
               <tr>
                 <th>{T.colWeek}</th>
-                <th>{T.colFile}</th>
-                <th>{T.colExisting}</th>
+                <th className={styles.numCell}>{T.colFile}</th>
+                <th className={styles.numCell}>{T.colExisting}</th>
                 <th>{T.colAction}</th>
               </tr>
             </thead>
@@ -527,11 +527,11 @@ function Preview() {
                   <td title={w.byCategory.map((c) => `${c.name}: ${c.file} / ${c.existing}`).join("\n")}>
                     {weekTitle(w.weekId)}
                   </td>
-                  <td className={styles.num}>
+                  <td className={styles.numCell}>
                     {w.fileItems}
                     {w.fileMemo ? ` ${T.memoMark}` : ""}
                   </td>
-                  <td className={styles.num}>
+                  <td className={styles.numCell}>
                     {w.existingItems || w.existingMemoBoxes ? (
                       <>
                         {w.existingItems}

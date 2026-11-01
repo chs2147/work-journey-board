@@ -33,8 +33,8 @@ import { useAppStore } from "../common/appStore";
 import { hasUpdate, useUpdate } from "../update/updateStore";
 import styles from "./Settings.module.css";
 import { Card, Row } from "./SettingsCard";
+import { AboutCard, LicensesCard } from "./AboutCards";
 import { DiagnosticsCard } from "./DiagnosticsCard";
-import { MakerRow } from "./MakerRow";
 import { TagSettings } from "./TagSettings";
 import { ThemeSettings } from "./ThemeSettings";
 import { UpdateSettings } from "../update/UpdateViews";
@@ -666,11 +666,8 @@ export function SettingsView() {
   const update = (
     <>
       <UpdateSettings />
-      <Card id="s-about" title={STR.settings.about}>
-        <Row label={STR.appName} desc={STR.settings.version(__APP_VERSION__)} />
-        <Row label={STR.settings.fontLabel} desc={STR.settings.fontCredit} />
-        <MakerRow />
-      </Card>
+      <AboutCard />
+      <LicensesCard />
       <DiagnosticsCard />
     </>
   );

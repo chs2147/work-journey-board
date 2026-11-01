@@ -5,6 +5,8 @@ import type { ImportantItem } from "../../domain/types";
 import { localDate } from "../../domain/localTime";
 import { shortDateLabel, weekIdOf, weekRange, weekTitle, type DateStr } from "../../domain/week";
 import { STR } from "../../shared/strings";
+import { PanelResizer } from "../common/PanelResizer";
+import { usePanelWidths } from "../common/panelWidths";
 import {
   completeImportant,
   focusStartCell,
@@ -63,12 +65,15 @@ export function ImportantPanel({ overlay }: { overlay: boolean }) {
     }
   };
 
+  const panelW = usePanelWidths((st) => st.important);
   return (
     <aside
+      style={{ width: panelW }}
       className={`${styles.panel} ${overlay ? styles.overlay : ""}`}
       aria-label={STR.important.title}
       data-testid="important-panel"
     >
+      <PanelResizer panel="important" />
       <header className={styles.head}>
         <h2 className={styles.title}>
           <span className={styles.star} aria-hidden="true">

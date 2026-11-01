@@ -158,6 +158,15 @@
 .dockSide {
   flex: 1 1 auto;
   border-top: 0;
+  container-type: inline-size;
+}
+
+/* 데일리 뷰 왼쪽 메모가 좁으면 머리를 한 줄로(improve-1101 #3): 개수 글자부터 숨긴다 */
+@container (max-width: 620px) {
+  .dockSide .counts,
+  .dockSide .legacy {
+    display: none;
+  }
 }
 
 .body {
@@ -942,6 +951,28 @@
   text-decoration: underline;
   text-underline-offset: 2px;
   cursor: text;
+}
+
+/* 링크 끝 ↗(improve-1101 #6) — 누르면 기본 브라우저 */
+:global(.note-prose .note-link-open) {
+  display: inline-grid;
+  place-items: center;
+  width: 1.15em;
+  height: 1.15em;
+  margin: 0 1px 0 2px;
+  border-radius: 4px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.8em;
+  line-height: 1;
+  vertical-align: 0.1em;
+  cursor: pointer;
+  user-select: none;
+}
+
+:global(.note-prose .note-link-open:hover) {
+  background: var(--accent);
+  color: var(--on-accent);
 }
 
 /* ── 업무연계 오브젝트의 타이틀 띠(improve-1026v2-spec 6-1) ── 상자 맨 위 한 줄(높이 26px), 상자 여백 밖으로 꽉 차게 */

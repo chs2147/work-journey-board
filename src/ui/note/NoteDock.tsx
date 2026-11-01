@@ -1,5 +1,5 @@
 // 주간 메모(weekly-note-spec 3절): 보드 아래 도크(경계선 끌어 높이 조절, 접기, 크게 보기) 또는
-// 오늘 뷰 왼쪽 판(improve-1026-spec 8-2, variant="side"). 머리 기능 단추는 아이콘(11-3), 배율은 값 표시(11-1).
+// 데일리 뷰 왼쪽 판(improve-1026-spec 8-2, variant="side" — [크게 보기]는 improve-1101 #3). 머리 기능 단추는 아이콘(11-3), 배율은 값 표시(11-1).
 // 판(편집기 포함)은 늦게 불러온다.
 import { lazy, Suspense, useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 import { ZOOM_STEPS } from "../../domain/noteZoom";
@@ -158,7 +158,7 @@ export function NoteDock({ variant = "dock" }: Props) {
   const zoom = useNote((s) => s.zoom);
   const dockRef = useRef<HTMLElement>(null);
   const collapsed = useNote((s) => s.collapsed) && !side;
-  const expanded = useNote((s) => s.expanded) && !side;
+  const expanded = useNote((s) => s.expanded);
 
   /** 경계선 끌기: 위로 끌면 메모가 커진다 */
   const startResize = (e: PointerEvent<HTMLButtonElement>) => {
@@ -318,10 +318,10 @@ export function NoteDock({ variant = "dock" }: Props) {
           </IconButton>
         )}
         {!collapsed && <SnapshotButton empty={boxes === 0} />}
-        {!collapsed && !side && (
+        {!collapsed && (
           <IconButton
-            label={expanded ? STR.note.shrink : STR.note.expand}
-            title={expanded ? STR.note.shrink : STR.note.expand}
+            label={expanded ? (side ? STR.note.shrinkDaily : STR.note.shrink) : STR.note.expand}
+            title={expanded ? (side ? STR.note.shrinkDaily : STR.note.shrink) : STR.note.expand}
             onClick={() => setExpanded(!expanded)}
             pressed={expanded}
           >

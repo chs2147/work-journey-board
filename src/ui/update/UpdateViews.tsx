@@ -69,7 +69,22 @@ export function UpdateBanner() {
   if (!hasUpdate(s) || s.dismissed || !s.info) return null;
   return (
     <div className={styles.banner} role="status" data-testid="update-banner">
+      <span className={styles.bannerIcon} aria-hidden="true">
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 16 16"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M8 13V3M3.5 7.5 8 3l4.5 4.5" />
+        </svg>
+      </span>
       <b>{STR.update.banner(s.info.version)}</b>
+      <span className={styles.bannerSub}>{STR.update.bannerSub(__APP_VERSION__)}</span>
       <span className={styles.grow} />
       <button type="button" className={styles.primary} onClick={openUpdateDialog}>
         {STR.update.details}

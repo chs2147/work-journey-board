@@ -28,6 +28,7 @@ import {
 } from "../../data/repository";
 import type { CategoryColorKey } from "../../shared/palette";
 import { STR } from "../../shared/strings";
+import { loadPanelWidths } from "../common/panelWidths";
 
 export const SAVE_DELAY_MS = 500;
 /** 목록에서 항목으로 이동했을 때 강조 테두리 시간 */
@@ -467,6 +468,7 @@ export async function init(r: JournalRepository) {
   const today = r.today();
   const ui = (await r.getSettings()).ui;
   set({ tagFilter: ui.tagFilter, viewMode: ui.viewMode, weekDoneOpen: ui.weekDoneOpen });
+  loadPanelWidths(ui);
   await loadWeek(weekIdOf(today), today);
   // 패널 열림은 기억하되, 켤 때 0건이면 닫힌 채 시작(spec 2-5)
   const settings = await r.getSettings();

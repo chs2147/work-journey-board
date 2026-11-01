@@ -1,11 +1,15 @@
 // 메모 상자 편집기 확장(weekly-note-spec 4-3). 허용 서식만 켜고, 글자 크기·색·형광펜은 **클래스로만** 그린다 —
 // 실앱 CSP에서는 HTML 속 style="…" 속성이 막히기 때문(Tauri가 <style>에 nonce를 붙여 'unsafe-inline'이 무시됨).
 import { Extension, Mark, mergeAttributes, type Extensions } from "@tiptap/core";
+import { Plugin, PluginKey } from "@tiptap/pm/state";
+import { Decoration, DecorationSet } from "@tiptap/pm/view";
+import type { Node as PMDocNode } from "@tiptap/pm/model";
 import { TaskItem, TaskList } from "@tiptap/extension-list";
 import StarterKit from "@tiptap/starter-kit";
 import { isOpenableUrl } from "../../domain/links";
 import { FONT_SIZES, TEXT_COLORS } from "../../domain/note";
 import { STR } from "../../shared/strings";
+import { openLink } from "../common/openLink";
 
 /** 글자 크기: 작게·보통·크게·아주 크게 — `<span data-size class="note-fs-l">` */
 const FontSize = Mark.create({
@@ -72,6 +76,79 @@ const StrikeKey = Extension.create({
   },
 });
 
+/**
+ * 글 속 링크 끝 ↗ 단추(improve-1101 #6): 링크 글자 뒤에 편집되지 않는 아이콘을 붙이고, 누르면 OS 기본 브라우저로 연다.
+ * 글자 자체를 누르면 지금처럼 편집(Ctrl+클릭은 그대로 열기). 문서(JSON)에는 아무것도 저장되지 않는다(장식).
+ */
+function linkOpenDecorations(doc: PMDocNode): DecorationSet {
+  const decos: Decoration[] = [];
+  let run: { href: string; end: number } | null = null;
+  const flush = () => {
+    if (!run) return;
+    const href = run.href;
+    decos.push(
+      Decoration.widget(
+        run.end,
+        () => {
+          const b = document.createElement("span");
+          b.className = "note-link-open";
+          b.setAttribute("role", "button");
+          b.setAttribute("contenteditable", "false");
+          b.setAttribute("aria-label", STR.note.openLinkAria(href));
+          b.title = STR.note.openLinkTitle(href);
+          b.dataset.href = href;
+          b.textContent = "↗";
+          return b;
+        },
+        { side: -1, key: `lo-${run.end}-${href}`, ignoreSelection: true },
+      ),
+    );
+    run = null;
+  };
+  doc.descendants((node, pos) => {
+    if (!node.isText) {
+      if (node.isBlock) flush();
+      return true;
+    }
+    const mark = node.marks.find((m) => m.type.name === "link");
+    const href = (mark?.attrs.href as string | undefined) ?? null;
+    if (run && (href !== run.href || pos !== run.end)) flush();
+    if (href) run = { href, end: pos + node.nodeSize };
+    return false;
+  });
+  flush();
+  return DecorationSet.create(doc, decos);
+}
+
+const LinkOpener = Extension.create({
+  name: "linkOpener",
+  addProseMirrorPlugins() {
+    return [
+      new Plugin({
+        key: new PluginKey("linkOpener"),
+        state: {
+          init: (_, { doc }) => linkOpenDecorations(doc),
+          apply: (tr, old) => (tr.docChanged ? linkOpenDecorations(tr.doc) : old),
+        },
+        props: {
+          decorations(state) {
+            return this.getState(state);
+          },
+          handleDOMEvents: {
+            mousedown: (_view, ev) => {
+              const el = (ev.target as Element | null)?.closest?.(".note-link-open") as HTMLElement | null;
+              if (!el) return false;
+              ev.preventDefault();
+              void openLink(el.dataset.href ?? "");
+              return true;
+            },
+          },
+        },
+      }),
+    ];
+  },
+});
+
 export function noteExtensions(): Extensions {
   return [
     StarterKit.configure({
@@ -103,5 +180,6 @@ export function noteExtensions(): Extensions {
     TextColor,
     Highlight,
     StrikeKey,
+    LinkOpener,
   ];
 }

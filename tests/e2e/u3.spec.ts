@@ -47,7 +47,7 @@ test("Alt+V → 오늘 뷰: 날짜·카드·첫 카드에 커서, 카드 편집�
   // 하루씩: 금 → 토 → 일 → 다음 주 월
   await page.keyboard.press("Alt+ArrowRight");
   await expect(page.getByTestId("today-date")).toHaveText("10/23(금)");
-  await page.getByRole("button", { name: "다음 날 (Alt+→)" }).click();
+  await page.getByRole("button", { name: "다음 날 (Alt+→)" }).first().click();
   await page.keyboard.press("Alt+ArrowRight");
   await page.keyboard.press("Alt+ArrowRight");
   await expect(page.getByTestId("today-date")).toHaveText("10/26(월)");

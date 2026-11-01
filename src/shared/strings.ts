@@ -98,11 +98,16 @@ export const STR = {
       `'#${name}' 태그를 지울까요?${n ? ` 업무 ${n}개에서 떨어집니다.` : ""}`,
     used: (n: number) => `업무 ${n}개`,
   },
-  /** 주간 뷰 / 오늘 뷰(improve-1026-spec 8절) */
+  /** 패널 폭 손잡이(improve-1101 #2) */
+  panels: {
+    resize: "패널 폭 조절(끌기·←/→) · 두 번 누르면 기본 폭",
+  },
+  /** 주간 뷰 / 데일리 뷰(improve-1026-spec 8절, 이름 improve-1101 #4) */
   today: {
     viewGroup: "보기",
     weekView: "주간 뷰 (Alt+V)",
-    dayView: (label: string) => (label ? `오늘 뷰 · ${label} (Alt+V)` : "오늘 뷰 (Alt+V)"),
+    dayView: (label: string) => (label ? `데일리 뷰 · ${label} (Alt+V)` : "데일리 뷰 (Alt+V)"),
+    stripAria: "날짜 이동",
     prevDay: "이전 날 (Alt+←)",
     nextDay: "다음 날 (Alt+→)",
     title: (label: string) => label,
@@ -390,6 +395,8 @@ export const STR = {
     subCount: (n: number) => `세부 ${n}개`,
   },
   note: {
+    openLinkTitle: (url: string) => `기본 브라우저에서 열기 — ${url}`,
+    openLinkAria: (url: string) => `링크 열기: ${url}`,
     title: "이번 주 메모",
     counts: (boxes: number, images = 0) =>
       boxes ? `상자 ${boxes - images}개${images ? ` · 이미지 ${images}개` : ""}` : "비어 있음",
@@ -412,6 +419,7 @@ export const STR = {
     minimapAria: "미니맵 — 누르거나 끌어서 보이는 곳 옮기기",
     expand: "크게 보기",
     shrink: "보드와 함께 보기",
+    shrinkDaily: "카드와 함께 보기",
     collapse: "메모 접기",
     open: "메모 펼치기",
     resizeDock: "메모 높이 조절(끌기) · 두 번 누르면 자동 높이",
@@ -827,6 +835,7 @@ export const STR = {
     failed: (msg: string) => `확인하지 못했습니다 — ${msg}`,
     available: (v: string) => `새 판 ${v}이(가) 있습니다`,
     banner: (v: string) => `새 판 ${v}이(가) 있습니다`,
+    bannerSub: (cur: string) => `지금 판 ${cur} · 설치 전에 일지를 자동으로 백업합니다`,
     details: "자세히·설치",
     later: "나중에",
     dialogTitle: (v: string) => `${v}(으)로 업데이트`,
@@ -954,8 +963,24 @@ export const STR = {
     repeatDeleteConfirm: (t: string) => `"${t}" 반복을 삭제할까요? 이미 들어온 기록은 그대로 남습니다.`,
     about: "정보",
     version: (v: string) => `버전 ${v}`,
-    fontLabel: "글꼴",
-    fontCredit: "Pretendard · 고운돋움 (SIL Open Font License 1.1)",
+    aboutTagline: "오늘 한 일을, 한 줄씩. — 기록은 이 PC의 고른 폴더에만 저장됩니다.",
+    siteLink: "소개 사이트",
+    siteUrl: "https://chs2147.github.io/work-journey-board/",
+    notesLink: "이 판의 릴리스 노트",
+    notesUrl: (v: string) => `https://github.com/chs2147/work-journey-board/releases/tag/v${v}`,
+    oss: {
+      title: "오픈소스 라이선스",
+      desc: "이 앱에 함께 들어 있는 글꼴과 라이브러리입니다.",
+      fonts: "글꼴",
+      libs: "라이브러리",
+      ofl: "SIL Open Font License 1.1",
+      fullText: "라이선스 전문",
+      dialogTitle: (name: string) => `${name} — SIL Open Font License 1.1`,
+      dialogAria: (name: string) => `${name} 라이선스 전문`,
+      close: "닫기",
+      useLightDark: "라이트·다크 테마 본문",
+      useSignature: "시그니처 테마 본문",
+    },
     // 만든 이 표시(release-phase2-spec 5절 B2) — sanbonjini 브랜드 키트 v2.0.0
     makerLabel: "만든 이",
     makerLine: "상상을 작동시키다. · Copyright 2026 sanbonjini",

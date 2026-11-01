@@ -12,6 +12,7 @@ import { useMediaQuery, useWindowWidth } from "./common/useMediaQuery";
 import { FirstRun } from "./first-run/FirstRun";
 import { IntegrityProblem, MissingFolder } from "./first-run/StartScreens";
 import { ImportantPanel } from "./important/ImportantPanel";
+import { usePanelWidths } from "./common/panelWidths";
 import { ExportDialog } from "./export/ExportDialog";
 import { ImportWizard } from "./import/ImportWizard";
 import { useImport } from "./import/importStore";
@@ -89,10 +90,8 @@ function screen(journal: JournalStatus) {
   }
 }
 
-/** 레일·패널 폭(important-repeat-spec 1-3, overview 10-7) */
+/** 레일 폭(important-repeat-spec 1-3) — 패널 폭은 사용자가 조절(panelWidths, improve-1101 #2) */
 const RAIL_W = 52;
-const IMPORTANT_W = 264;
-const SUMMARY_W = 360;
 /** 주간 요약 패널을 열어도 보드에 남겨 둘 최소 폭 — 모자라면 패널을 겹쳐 띄운다(i-m2-plan 6절 #2) */
 const BOARD_MIN_W = 900;
 
@@ -111,8 +110,10 @@ function Workspace() {
   // 좁은 창이면 패널을 보드 위에 겹쳐 띄우고, 보드를 누르면 닫는다(spec 1-3)
   const narrow = useMediaQuery("(max-width: 1179px)");
   const width = useWindowWidth();
-  const leftW = panelOpen && !narrow && !settingsOpen ? IMPORTANT_W : 0;
-  const summaryOverlay = width - RAIL_W - leftW - SUMMARY_W < BOARD_MIN_W;
+  const importantW = usePanelWidths((s) => s.important);
+  const summaryW = usePanelWidths((s) => s.summary);
+  const leftW = panelOpen && !narrow && !settingsOpen ? importantW : 0;
+  const summaryOverlay = width - RAIL_W - leftW - summaryW < BOARD_MIN_W;
   return (
     <div className={styles.workspace}>
       <Rail />
