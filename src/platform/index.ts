@@ -38,6 +38,29 @@ export interface FolderWindowSpec {
 
 export type FolderWindowEvent = { type: "nav"; id: string; sub: string } | { type: "closed"; id: string };
 
+/** Cabinet을 열 때 고를 업무·강조할 항목 */
+export interface CabinetFocus {
+  categoryId?: string;
+  itemId?: string;
+}
+
+/**
+ * Cabinet 별도 창(실앱만, improve-1102-spec C1) — Cabinet 창은 일지를 열지 않고, 메인 창(일지의 주인)과 이벤트로 주고받는다.
+ * 메인 창: open·close·onClosed·serve·sync / Cabinet 창: call·onSync·onFocus·closeSelf·installDropBridge
+ */
+export interface CabinetWindowBridge {
+  open(focus: CabinetFocus | null, theme: string): Promise<void>;
+  close(): Promise<void>;
+  onClosed(cb: () => void): void;
+  serve(handler: (name: string, args: unknown[]) => Promise<unknown>): Promise<void>;
+  sync(snapshot: unknown): Promise<void>;
+  call(name: string, args: unknown[]): Promise<unknown>;
+  onSync(cb: (snapshot: unknown) => void): Promise<() => void>;
+  onFocus(cb: (focus: CabinetFocus) => void): Promise<() => void>;
+  closeSelf(): Promise<void>;
+  installDropBridge(): Promise<void>;
+}
+
 /** 폴더 창을 별도 OS 창으로 다루기(실앱만) — 브라우저 모드는 앱 안 떠 있는 창으로 대신한다 */
 export interface FolderWindows {
   open(spec: FolderWindowSpec): Promise<void>;
@@ -131,6 +154,8 @@ export interface Platform {
   droppedPaths(files: File[]): Promise<{ path: string; isDir: boolean }[] | null>;
   /** 폴더 창을 별도 OS 창으로(실앱만) */
   readonly folderWindows?: FolderWindows;
+  /** Cabinet 창을 별도 OS 창으로(실앱만) — 없으면 앱 안 떠 있는 창 */
+  readonly cabinetWindow?: CabinetWindowBridge;
 
   /**
    * 새 판 확인(improve-1027v4-spec 1절 B안) — GitHub Releases에 묻는다(앱에서 인터넷으로 나가는 유일한 곳, Rust update.rs).

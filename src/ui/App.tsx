@@ -112,7 +112,10 @@ function Workspace() {
     return () => window.removeEventListener("keydown", onSearchKey);
   }, []);
   const noteExpanded = useNote((s) => s.expanded);
+  // 실앱은 Cabinet이 별도 OS 창이라 여기서 그리지 않는다(improve-1102-spec C1)
   const cabinetOpen = useCabinet((s) => s.open);
+  const cabinetOsWindow = useAppStore((s) => !!s.platform?.cabinetWindow);
+  const cabinetInApp = cabinetOpen && !cabinetOsWindow;
   // 인사이트(m3-s1-spec 1-2): 보드는 숨겨 둔 채 그대로 — 보던 주·뷰·커서·메모가 남는다
   const insightsOpen = useInsights((s) => s.open);
   // 설정(improve-1027v5-spec 1-2)도 인사이트처럼 보드 자리를 덮는다 — 보드·인사이트는 그대로 두고 숨김
@@ -162,7 +165,7 @@ function Workspace() {
       </div>
       <MarkdownExportDialog />
       {/* Cabinet(F5): 모달리스 — 보드·인사이트·설정 어디서나 위에 떠 있다 */}
-      {cabinetOpen && <CabinetPanel />}
+      {cabinetInApp && <CabinetPanel />}
       <FolderPanels />
       {searchPanelOpen && !insightsOpen && !settingsOpen ? (
         <SearchPanel overlay={summaryOverlay} />

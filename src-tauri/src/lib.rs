@@ -31,6 +31,7 @@ pub fn run() {
         .manage(update::UpdateState::default())
         // Cabinet(F5) — 등록한 폴더 목록(읽기·열기 허용 범위)
         .manage(cabinet::CabinetRoots::default())
+        .manage(cabinet::DropBridges::default())
         // 창 배경색은 설정 파일 값이 라이트라서, 다크 테마면 여기서 바꿔 밝은 번쩍임을 막는다(docs/splash-spec.md).
         .setup(|app| {
             for (label, (r, g, b)) in [("splash", (0x23, 0x23, 0x22)), ("main", (0x1a, 0x1a, 0x19))]
@@ -45,7 +46,9 @@ pub fn run() {
             // Cabinet 끌어 놓기 다리(A안, 윈도우 WebView2만) — 메인 창
             #[cfg(windows)]
             if let Some(w) = app.get_webview_window("main") {
-                cabinet::install_drop_bridge(&w);
+                if app.state::<cabinet::DropBridges>().claim("main") {
+                    cabinet::install_drop_bridge(&w);
+                }
             }
             Ok(())
         })
@@ -71,7 +74,8 @@ pub fn run() {
             cabinet::cabinet_set_roots,
             cabinet::cabinet_list,
             cabinet::cabinet_open,
-            cabinet::cabinet_reveal
+            cabinet::cabinet_reveal,
+            cabinet::cabinet_drop_bridge
         ])
         .run(tauri::generate_context!())
         .expect("Work Journey Board 실행 중 오류");

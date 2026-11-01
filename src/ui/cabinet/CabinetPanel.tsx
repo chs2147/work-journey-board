@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState, type DragEvent, type KeyboardEvent } from "react";
 import { useWindowDrag } from "./useWindowDrag";
 import {
+  ALL_GROUP,
   countKinds,
   firstAnchor,
   linkTitleFromUrl,
@@ -15,10 +16,10 @@ import {
 import { isOpenableUrl } from "../../domain/links";
 import { weekTitle } from "../../domain/week";
 import { STR } from "../../shared/strings";
-import { useBoard } from "../board/boardStore";
 import { FolderIcon, LinkIcon } from "./CabinetIcons";
 import {
   acceptsDrop,
+  addItemToCategory,
   closeCabinet,
   closeLinkDialog,
   copyTarget,
@@ -33,6 +34,7 @@ import {
   patchLinkDialog,
   pickAndAddFolders,
   removeItem,
+  reorderItem,
   revealItem,
   saveLinkDialog,
   saveLinks,
@@ -41,11 +43,20 @@ import {
 } from "./cabinetStore";
 import styles from "./Cabinet.module.css";
 
-export function CabinetPanel() {
+/** 앱 안에서만 쓰는 끌기 자료 형식(줄 순서·업무에 놓기, improve-1102-spec C3·C4) — 등록용 놓기와 섞이지 않는다 */
+export const CAB_MIME = "application/x-wjb-cabinet";
+const isInternal = (dt: DataTransfer | null) => !!dt && [...dt.types].includes(CAB_MIME);
+/** 끄는 중인 줄 id(dragover 중에는 자료를 읽을 수 없어 따로 들고 있다) */
+let draggingId: string | null = null;
+
+/** standalone = 실앱 별도 OS 창(창 머리·위치는 OS가) */
+export function CabinetPanel({ standalone = false }: { standalone?: boolean }) {
   const s = useCabinet();
   const { pos, onPointerDown, z, raise } = useWindowDrag({ x: 76, y: 96 });
   const [dropOn, setDropOn] = useState(false);
-  const groups = useMemo(() => groupsOf(s), [s.items, s.links, s.categories]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [groupOver, setGroupOver] = useState<string | null>(null);
+  const [mark, setMark] = useState<{ id: string; after: boolean } | null>(null);
+  const groups = useMemo(() => groupsOf(s), [s.items, s.links, s.categories, s.activeIds]); // eslint-disable-line react-hooks/exhaustive-deps
   const group = currentGroup(s);
   const groupIds = groups.find((g) => g.key === group)?.itemIds ?? [];
   const inGroup = s.items.filter((i) => groupIds.includes(i.id));
@@ -54,7 +65,32 @@ export function CabinetPanel() {
     .filter((i) => s.filter === "all" || i.kind === s.filter)
     .sort((a, b) => groupIds.indexOf(a.id) - groupIds.indexOf(b.id));
   const groupName = (key: string) =>
-    key === UNLINKED ? STR.cabinet.unlinked : (s.categories.find((c) => c.id === key)?.name ?? "");
+    key === ALL_GROUP
+      ? STR.cabinet.allGroup
+      : key === UNLINKED
+        ? STR.cabinet.unlinked
+        : (s.categories.find((c) => c.id === key)?.name ?? "");
+  const canTakeItem = (key: string) => key !== ALL_GROUP && key !== UNLINKED;
+  const rowDrag = {
+    mark,
+    onStart: (id: string) => {
+      draggingId = id;
+    },
+    onEnd: () => {
+      draggingId = null;
+      setMark(null);
+      setGroupOver(null);
+    },
+    onOver: (id: string, after: boolean) => {
+      if (!mark || mark.id !== id || mark.after !== after) setMark({ id, after });
+    },
+    onDrop: (id: string, after: boolean) => {
+      const moving = draggingId;
+      setMark(null);
+      if (!moving || moving === id) return;
+      void reorderItem(moving, after ? { afterId: id } : { beforeId: id });
+    },
+  };
   const groupColor = (key: string) => s.categories.find((c) => c.id === key)?.color;
 
   useEffect(() => {
@@ -75,7 +111,7 @@ export function CabinetPanel() {
 
   const dragProps = {
     onDragOver: (e: DragEvent) => {
-      if (!acceptsDrop(e.dataTransfer)) return;
+      if (isInternal(e.dataTransfer) || !acceptsDrop(e.dataTransfer)) return;
       e.preventDefault();
       e.stopPropagation();
       e.dataTransfer.dropEffect = "copy";
@@ -85,6 +121,7 @@ export function CabinetPanel() {
       if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDropOn(false);
     },
     onDrop: (e: DragEvent) => {
+      if (isInternal(e.dataTransfer)) return;
       e.preventDefault();
       e.stopPropagation();
       setDropOn(false);
@@ -95,31 +132,33 @@ export function CabinetPanel() {
   return (
     <div
       ref={panelRef}
-      className={styles.win}
-      style={{ left: pos.x, top: pos.y, width: 820, height: 560, zIndex: z }}
-      onPointerDownCapture={raise}
-      onFocusCapture={raise}
-      role="dialog"
+      className={standalone ? styles.standalone : styles.win}
+      style={standalone ? undefined : { left: pos.x, top: pos.y, width: 820, height: 560, zIndex: z }}
+      onPointerDownCapture={standalone ? undefined : raise}
+      onFocusCapture={standalone ? undefined : raise}
+      role={standalone ? "main" : "dialog"}
       aria-label={`${STR.cabinet.title} — ${STR.cabinet.subtitle}`}
       data-testid="cabinet"
       {...dragProps}
     >
-      <div className={styles.winHead} onPointerDown={onPointerDown}>
-        <span className={styles.winTitle}>
-          <CabinetGlyph />
-          {STR.cabinet.title} <small>— {STR.cabinet.subtitle}</small>
-        </span>
-        <button
-          type="button"
-          className={styles.iconBtn}
-          aria-label={STR.cabinet.close}
-          title={STR.cabinet.close}
-          data-testid="cabinet-close"
-          onClick={closeCabinet}
-        >
-          ✕
-        </button>
-      </div>
+      {!standalone && (
+        <div className={styles.winHead} onPointerDown={onPointerDown}>
+          <span className={styles.winTitle}>
+            <CabinetGlyph />
+            {STR.cabinet.title} <small>— {STR.cabinet.subtitle}</small>
+          </span>
+          <button
+            type="button"
+            className={styles.iconBtn}
+            aria-label={STR.cabinet.close}
+            title={STR.cabinet.close}
+            data-testid="cabinet-close"
+            onClick={closeCabinet}
+          >
+            ✕
+          </button>
+        </div>
+      )}
       <div className={styles.body}>
         <nav className={styles.side} aria-label={STR.cabinet.groups}>
           <div className={styles.sideLabel}>{STR.cabinet.groups}</div>
@@ -127,17 +166,43 @@ export function CabinetPanel() {
             <button
               key={g.key}
               type="button"
-              className={`${styles.group} ${g.key === group ? styles.groupOn : ""}`}
+              className={[
+                styles.group,
+                g.key === group ? styles.groupOn : "",
+                g.ended ? styles.groupEnded : "",
+                groupOver === g.key ? styles.groupDrop : "",
+                g.key === ALL_GROUP ? styles.groupAll : "",
+              ].join(" ")}
               aria-current={g.key === group ? "true" : undefined}
               data-testid={`cabinet-group-${g.key}`}
+              title={canTakeItem(g.key) && draggingId ? STR.cabinet.groupDrop : undefined}
               onClick={() => useCabinet.setState({ group: g.key })}
+              onDragOver={(e) => {
+                if (!isInternal(e.dataTransfer) || !canTakeItem(g.key)) return;
+                e.preventDefault();
+                e.stopPropagation();
+                e.dataTransfer.dropEffect = "copy";
+                if (groupOver !== g.key) setGroupOver(g.key);
+              }}
+              onDragLeave={() => setGroupOver((k) => (k === g.key ? null : k))}
+              onDrop={(e) => {
+                if (!isInternal(e.dataTransfer) || !canTakeItem(g.key)) return;
+                e.preventDefault();
+                e.stopPropagation();
+                setGroupOver(null);
+                const id = e.dataTransfer.getData(CAB_MIME) || draggingId;
+                if (id) void addItemToCategory(id, g.key);
+              }}
             >
-              {g.key === UNLINKED ? (
+              {g.key === ALL_GROUP ? (
+                <CabinetGlyph />
+              ) : g.key === UNLINKED ? (
                 <span className={styles.dot} style={{ border: "1px solid var(--line-strong)" }} />
               ) : (
                 <span className={styles.dot} style={{ background: `var(--cat-${groupColor(g.key)})` }} />
               )}
               <span className={styles.groupName}>{groupName(g.key)}</span>
+              {g.ended && <span className={styles.endedTag}>{STR.cabinet.endedTag}</span>}
               <span className={styles.groupCount}>{g.itemIds.length}</span>
             </button>
           ))}
@@ -148,7 +213,7 @@ export function CabinetPanel() {
         <section className={`${styles.main} ${dropOn ? styles.mainOn : ""}`}>
           <div className={styles.mainHead}>
             <span className={styles.mainTitle} data-testid="cabinet-group-title">
-              {group ? groupName(group) : STR.cabinet.title}
+              {groupName(group)}
             </span>
             <div className={styles.chips} role="radiogroup" aria-label={STR.cabinet.filterAria}>
               {(["all", "folder", "link"] as CabinetFilter[]).map((f) => (
@@ -175,7 +240,7 @@ export function CabinetPanel() {
           ) : (
             <ul className={styles.list} data-testid="cabinet-list">
               {shown.map((it) => (
-                <CabinetRow key={it.id} item={it} />
+                <CabinetRow key={it.id} item={it} drag={rowDrag} />
               ))}
             </ul>
           )}
@@ -221,7 +286,15 @@ const CabinetGlyph = () => (
   </svg>
 );
 
-function CabinetRow({ item }: { item: CabinetItem }) {
+interface RowDrag {
+  mark: { id: string; after: boolean } | null;
+  onStart(id: string): void;
+  onEnd(): void;
+  onOver(id: string, after: boolean): void;
+  onDrop(id: string, after: boolean): void;
+}
+
+function CabinetRow({ item, drag }: { item: CabinetItem; drag: RowDrag }) {
   const renaming = useCabinet((s) => s.renaming === item.id);
   const isOpen = useCabinet((s) => s.folders.some((f) => f.id === item.id));
   const flash = useCabinet((s) => s.flash === item.id);
@@ -260,10 +333,37 @@ function CabinetRow({ item }: { item: CabinetItem }) {
     <li
       ref={rowRef}
       tabIndex={0}
-      className={`${styles.row} ${isOpen ? styles.rowOpen : ""} ${flash ? styles.flash : ""}`}
+      className={[
+        styles.row,
+        isOpen ? styles.rowOpen : "",
+        flash ? styles.flash : "",
+        drag.mark?.id === item.id ? (drag.mark.after ? styles.markAfter : styles.markBefore) : "",
+      ].join(" ")}
       data-testid="cabinet-row"
       data-kind={item.kind}
       data-id={item.id}
+      draggable={!renaming}
+      onDragStart={(e) => {
+        e.dataTransfer.setData(CAB_MIME, item.id);
+        e.dataTransfer.effectAllowed = "copyMove"; // 업무에 놓기 = copy, 순서 = move
+        drag.onStart(item.id);
+      }}
+      onDragEnd={drag.onEnd}
+      onDragOver={(e) => {
+        if (!isInternal(e.dataTransfer)) return;
+        e.preventDefault();
+        e.stopPropagation();
+        e.dataTransfer.dropEffect = "move";
+        const r = e.currentTarget.getBoundingClientRect();
+        drag.onOver(item.id, e.clientY > r.top + r.height / 2);
+      }}
+      onDrop={(e) => {
+        if (!isInternal(e.dataTransfer)) return;
+        e.preventDefault();
+        e.stopPropagation();
+        const r = e.currentTarget.getBoundingClientRect();
+        drag.onDrop(item.id, e.clientY > r.top + r.height / 2);
+      }}
       onKeyDown={onKeyDown}
       onDoubleClick={() => void openItem(item.id)}
       onClick={(e) => {
@@ -438,24 +538,15 @@ function RowMenu({
   );
 }
 
-/** 이번 주(보드가 보는 주) 본 항목 — 항목 연결 고르기 */
+/** 이번 주(보드가 보는 주) 본 항목 — 항목 연결 고르기(메인 창이 채워 Cabinet 창에도 보낸다) */
 function useWeekEntries() {
-  const view = useBoard((s) => s.view);
+  const weekId = useCabinet((s) => s.weekId);
+  const entries = useCabinet((s) => s.weekEntries);
   return useMemo(() => {
-    if (!view) return { weekId: "", byCat: new Map<string, { id: string; date: string; text: string }[]>() };
     const byCat = new Map<string, { id: string; date: string; text: string }[]>();
-    for (const day of view.days)
-      for (const vc of view.categories) {
-        const items = view.items[`${day}|${vc.category.id}`] ?? [];
-        for (const it of items)
-          if (it.depth === 0)
-            byCat.set(vc.category.id, [
-              ...(byCat.get(vc.category.id) ?? []),
-              { id: it.id, date: it.date, text: it.text.split("\n")[0]! },
-            ]);
-      }
-    return { weekId: view.weekId, byCat };
-  }, [view]);
+    for (const e of entries) byCat.set(e.categoryId, [...(byCat.get(e.categoryId) ?? []), e]);
+    return { weekId, byCat };
+  }, [weekId, entries]);
 }
 
 function LinkChips({

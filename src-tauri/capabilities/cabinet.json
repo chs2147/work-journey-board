@@ -1,0 +1,15 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "cabinet",
+  "description": "Cabinet 창 권한(improve-1102-spec C1): 폴더 고르기 대화상자, 클립보드 쓰기(경로 복사), 창 상태·닫기, 메인 창과 이벤트 주고받기. 일지(DB)·네트워크 권한 없음 — 등록·고치기는 메인 창이 대신 한다",
+  "windows": ["cabinet"],
+  "permissions": [
+    "core:default",
+    "core:window:allow-close",
+    "core:window:allow-set-focus",
+    "dialog:allow-open",
+    "dialog:allow-message",
+    "clipboard-manager:allow-write-text",
+    "window-state:default"
+  ]
+}

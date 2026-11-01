@@ -14,6 +14,8 @@ import {
   mergeConfigJson,
   parseConfig,
   type PathInfo,
+  type CabinetFocus,
+  type CabinetWindowBridge,
   type FolderWindowEvent,
   type FolderWindows,
   type Platform,
@@ -79,7 +81,9 @@ const folderWindows: FolderWindows = {
   async closeAll() {
     const all = await getAllWebviewWindows();
     await Promise.all(
-      all.filter((w) => w.label.startsWith("folder-")).map((w) => w.destroy().catch(() => undefined)),
+      all
+        .filter((w) => w.label.startsWith("folder-") || w.label === CABINET_LABEL)
+        .map((w) => w.destroy().catch(() => undefined)),
     );
   },
   async onEvent(cb) {
@@ -88,6 +92,86 @@ const folderWindows: FolderWindows = {
   async notifyNav(id, sub) {
     await emitTo("main", FOLDER_EVENT, { type: "nav", id, sub } satisfies FolderWindowEvent);
   },
+};
+
+// Cabinet 별도 창(improve-1102-spec C1): 창 `cabinet` = index.html?win=cabinet. 일지는 메인 창만 열고, 이벤트로 주고받는다.
+const CABINET_LABEL = "cabinet";
+const RPC = "cabinet-rpc";
+const RPC_RESULT = "cabinet-rpc-result";
+const SYNC = "cabinet-sync";
+const FOCUS = "cabinet-focus";
+let cabinetClosed: (() => void) | null = null;
+
+const cabinetWindow: CabinetWindowBridge = {
+  async open(focus, theme) {
+    const existing = await WebviewWindow.getByLabel(CABINET_LABEL);
+    if (existing) {
+      await existing.unminimize().catch(() => undefined);
+      await existing.setFocus();
+      if (focus) await emitTo(CABINET_LABEL, FOCUS, focus satisfies CabinetFocus);
+      return;
+    }
+    const q = new URLSearchParams({ win: "cabinet", t: theme, f: JSON.stringify(focus ?? {}) });
+    const w = new WebviewWindow(CABINET_LABEL, {
+      url: `index.html?${q.toString()}`,
+      title: "Cabinet — 자주 쓰는 폴더·링크",
+      width: 880,
+      height: 600,
+      minWidth: 560,
+      minHeight: 360,
+      dragDropEnabled: false,
+      focus: true,
+    });
+    void w.once("tauri://destroyed", () => cabinetClosed?.());
+  },
+  async close() {
+    const w = await WebviewWindow.getByLabel(CABINET_LABEL);
+    await w?.destroy().catch(() => undefined);
+  },
+  onClosed(cb) {
+    cabinetClosed = cb;
+  },
+  async serve(handler) {
+    await listen<{ id: string; name: string; args: unknown[] }>(RPC, (e) => {
+      const { id, name, args } = e.payload;
+      void handler(name, args).then(
+        (value) => emitTo(CABINET_LABEL, RPC_RESULT, { id, ok: true, value }),
+        (err: unknown) =>
+          emitTo(CABINET_LABEL, RPC_RESULT, {
+            id,
+            ok: false,
+            error: err instanceof Error ? err.message : String(err),
+          }),
+      );
+    });
+  },
+  async sync(snapshot) {
+    if (await WebviewWindow.getByLabel(CABINET_LABEL)) await emitTo(CABINET_LABEL, SYNC, snapshot);
+  },
+  async call(name, args) {
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    return new Promise((resolve, reject) => {
+      let off: (() => void) | null = null;
+      const timer = setTimeout(() => {
+        off?.();
+        reject(new Error("메인 창이 응답하지 않습니다"));
+      }, 20_000);
+      void listen<{ id: string; ok: boolean; value?: unknown; error?: string }>(RPC_RESULT, (e) => {
+        if (e.payload.id !== id) return;
+        clearTimeout(timer);
+        off?.();
+        if (e.payload.ok) resolve(e.payload.value);
+        else reject(new Error(e.payload.error));
+      }).then((u) => {
+        off = u;
+        void emitTo("main", RPC, { id, name, args });
+      });
+    });
+  },
+  onSync: (cb) => listen(SYNC, (e) => cb(e.payload)),
+  onFocus: (cb) => listen<CabinetFocus>(FOCUS, (e) => cb(e.payload)),
+  closeSelf: () => getCurrentWindow().close(),
+  installDropBridge: () => invoke("cabinet_drop_bridge"),
 };
 
 /** 끌어 놓은 File → WebView2가 아는 경로(cabinet.rs 다리). 다리가 없거나 1.5초 안에 답이 없으면 null */
@@ -229,6 +313,7 @@ export const tauriPlatform: Platform = {
   cabinetReveal: (path) => invoke("cabinet_reveal", { path }),
   droppedPaths,
   folderWindows,
+  cabinetWindow,
 
   // 새 판 확인·내려받기·설치(src-tauri/src/update.rs) — 주소·해시는 Rust가 들고 있다
   updateCheck: () => invoke<UpdateInfo | null>("update_check"),

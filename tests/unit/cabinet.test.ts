@@ -1,6 +1,11 @@
 // Cabinet(features-1102-spec F5): 경로·링크 정리, 끌어 놓기 제목(브라우저가 준 것만), 묶음·정렬, 저장소 등록·연결·해제·검색.
 import { describe, expect, it } from "vitest";
 import {
+  ALL_GROUP,
+  cabinetGroups,
+  moveInOrder,
+  parseUrlShortcut,
+  urlShortcutTitle,
   fileKind,
   folderTitle,
   formatSize,
@@ -212,5 +217,49 @@ describe("JournalRepository — Cabinet", () => {
     await repo.saveCell("2026-10-21", cat.id, []);
     ({ links } = await repo.listCabinet());
     expect(links.filter((l) => l.itemId === r[0]!.id).map((l) => l.categoryId)).toEqual([cat.id]);
+  });
+});
+
+describe("domain/cabinet — 2026-11-02 개선", () => {
+  const items = [
+    { id: "a", kind: "folder" as const, title: "A", target: "/a", sortOrder: 2 },
+    { id: "b", kind: "link" as const, title: "B", target: "https://b.example", sortOrder: 1 },
+    { id: "c", kind: "folder" as const, title: "C", target: "/c", sortOrder: 3 },
+  ];
+  const links = [
+    { id: "1", itemId: "a", categoryId: "x", entryId: null },
+    { id: "2", itemId: "b", categoryId: "old", entryId: null },
+  ];
+
+  it("업무별: 맨 위 전체 → 진행 중 업무 전부(0개도) → 종료 업무는 연결 있을 때만 → 연결 없음", () => {
+    expect(cabinetGroups(items, links, ["y", "x", "old", "gone"], ["x", "y"])).toEqual([
+      { key: ALL_GROUP, itemIds: ["b", "a", "c"] },
+      { key: "y", itemIds: [] },
+      { key: "x", itemIds: ["a"] },
+      { key: "old", itemIds: ["b"], ended: true },
+      { key: "__none__", itemIds: ["c"] },
+    ]);
+    expect(cabinetGroups([], [], ["x"], ["x"])).toEqual([
+      { key: ALL_GROUP, itemIds: [] },
+      { key: "x", itemIds: [] },
+    ]);
+  });
+
+  it("순서 바꾸기: 앞에·뒤에·끝으로, 없는 대상이면 끝", () => {
+    expect(moveInOrder(["a", "b", "c", "d"], "d", { beforeId: "b" })).toEqual(["a", "d", "b", "c"]);
+    expect(moveInOrder(["a", "b", "c", "d"], "a", { afterId: "c" })).toEqual(["b", "c", "a", "d"]);
+    expect(moveInOrder(["a", "b", "c"], "a", { beforeId: "zz" })).toEqual(["b", "c", "a"]);
+    expect(moveInOrder(["a", "b"], "x", { beforeId: "a" })).toEqual(["a", "b"]);
+  });
+
+  it("인터넷 바로 가기(.url): URL= 줄의 http/https 주소, 파일 이름 = 제목", () => {
+    expect(parseUrlShortcut("[InternetShortcut]\r\nURL=https://wiki.example.com/a?b=1\r\n")).toBe(
+      "https://wiki.example.com/a?b=1",
+    );
+    expect(parseUrlShortcut("[InternetShortcut]\nURL=file:///C:/Windows")).toBeNull();
+    expect(parseUrlShortcut("아무 글")).toBeNull();
+    expect(urlShortcutTitle("정산 배치 운영 가이드 - 사내 위키.url")).toBe(
+      "정산 배치 운영 가이드 - 사내 위키",
+    );
   });
 });

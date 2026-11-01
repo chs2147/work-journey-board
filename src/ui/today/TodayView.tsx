@@ -2,6 +2,7 @@
 // 카드 안 기록은 보드 칸과 같은 편집기(개조식 규칙·단축키·자동 저장 그대로), 카드 아래 = 직전 기록 한 줄 + [가져오기].
 // 창이 좁으면(1100px 미만) 메모는 위쪽 접힌 띠가 된다.
 import { useEffect, useRef, useState, type PointerEvent } from "react";
+import { CabinetCategoryBadge } from "../cabinet/CabinetCategoryBadge";
 import { cellKey } from "../../data/repository";
 import { TODAY_SPLIT_MAX, TODAY_SPLIT_MIN, DEFAULT_SETTINGS } from "../../data/settings";
 import { markText } from "../../domain/dayMark";
@@ -217,6 +218,7 @@ export function TodayView() {
               >
                 <header className={styles.cardHead}>
                   <span className={styles.cardName}>{vc.category.name}</span>
+                  <CabinetCategoryBadge categoryId={vc.category.id} name={vc.category.name} />
                   {chips.shown.map((t) => (
                     <span key={t.id} className={styles.chip}>
                       #{t.name}

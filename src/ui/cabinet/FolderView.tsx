@@ -172,11 +172,15 @@ export function FolderView({ platform, root, sub, title, links, onNav, notify }:
           type="button"
           className={styles.button}
           data-testid="folder-reveal"
-          onClick={() =>
-            void platform
-              .cabinetReveal(sel ? joinPath(path, sel) : path)
-              .catch((e: unknown) => notify(String(e instanceof Error ? e.message : e)))
-          }
+          onClick={() => {
+            // 탐색기에서 열기(improve-1102-spec C6): 폴더는 그 안으로, 골라 둔 파일만 선택한 채
+            const picked = sel ? (entries ?? []).find((x) => x.name === sel) : undefined;
+            const run =
+              picked && !picked.dir
+                ? platform.cabinetReveal(joinPath(path, picked.name))
+                : platform.cabinetOpen(picked ? joinPath(path, picked.name) : path);
+            void run.catch((e: unknown) => notify(String(e instanceof Error ? e.message : e)));
+          }}
         >
           {STR.cabinet.folder.reveal}
         </button>

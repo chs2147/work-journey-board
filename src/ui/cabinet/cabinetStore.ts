@@ -2,12 +2,18 @@
 // 폴더 창: 실앱 = 별도 OS 창(Platform.folderWindows), 브라우저 모드 = 앱 안 떠 있는 창(같은 FolderView).
 import { create } from "zustand";
 import {
+  ALL_GROUP,
+  cabinetGroups,
   folderTitle,
-  groupCabinet,
   isFolderPathLike,
+  isUrlShortcutName,
   itemCategories,
+  linkTitleFromUrl,
+  moveInOrder,
   parseLinkTransfer,
+  parseUrlShortcut,
   UNLINKED,
+  urlShortcutTitle,
   type CabinetFilter,
   type CabinetItem,
   type CabinetLink,
@@ -16,10 +22,11 @@ import {
 } from "../../domain/cabinet";
 import { shortDateLabel } from "../../domain/week";
 import type { Category } from "../../domain/types";
-import type { CabinetConfig, FolderWindowSpec } from "../../platform";
+import type { CabinetConfig, CabinetFocus, CabinetWindowBridge, FolderWindowSpec } from "../../platform";
+import type { JournalRepository } from "../../data/repository";
 import { resolveTheme } from "../../shared/theme";
 import { STR } from "../../shared/strings";
-import { reportError, toast } from "../board/boardStore";
+import { reportError, toast, useBoard } from "../board/boardStore";
 import { useAppStore } from "../common/appStore";
 import { openLink } from "../common/openLink";
 
@@ -38,7 +45,12 @@ export interface CabinetState {
   items: CabinetItem[];
   links: CabinetLink[];
   categories: Category[];
-  /** 왼쪽에서 고른 묶음(업무 id 또는 UNLINKED) */
+  /** 진행 중(종료 안 된) 업무 id(improve-1102-spec C2) */
+  activeIds: string[];
+  /** 보드가 보는 주의 본 항목(항목 연결 고르기) — 메인 창이 채워 Cabinet 창에도 보낸다 */
+  weekId: string;
+  weekEntries: WeekEntry[];
+  /** 왼쪽에서 고른 묶음(ALL_GROUP·업무 id·UNLINKED) */
   group: string | null;
   filter: CabinetFilter;
   /** 이름 고치는 중인 항목 */
@@ -52,11 +64,21 @@ export interface CabinetState {
   flash: string | null;
 }
 
+export interface WeekEntry {
+  id: string;
+  date: string;
+  text: string;
+  categoryId: string;
+}
+
 export const useCabinet = create<CabinetState>(() => ({
   open: false,
   items: [],
   links: [],
   categories: [],
+  activeIds: [],
+  weekId: "",
+  weekEntries: [],
   group: null,
   filter: "all",
   renaming: null,
@@ -67,7 +89,36 @@ export const useCabinet = create<CabinetState>(() => ({
 }));
 
 const app = () => useAppStore.getState();
-const repo = () => {
+
+/** Cabinet이 쓰는 저장소 메서드(별도 창에서는 메인 창에 대신 부탁 — 허용 목록) */
+const REPO_METHODS = [
+  "addCabinetItems",
+  "updateCabinetItem",
+  "setCabinetLinks",
+  "removeCabinetItem",
+  "restoreCabinetItem",
+  "reorderCabinet",
+] as const;
+type CabinetRepo = Pick<JournalRepository, (typeof REPO_METHODS)[number]>;
+
+/** 실앱 Cabinet 별도 창(?win=cabinet)이면 메인 창으로 가는 다리 — 이 창은 일지를 열지 않는다(improve-1102-spec C1) */
+let remote: CabinetWindowBridge | null = null;
+export function setCabinetRemote(bridge: CabinetWindowBridge) {
+  remote = bridge;
+}
+export const isCabinetRemote = () => remote !== null;
+
+const remoteRepo = (): CabinetRepo =>
+  Object.fromEntries(
+    REPO_METHODS.map((m) => [m, (...args: unknown[]) => remote!.call("repo", [m, ...args])]),
+  ) as unknown as CabinetRepo;
+
+const repo = (): CabinetRepo | null => {
+  if (remote) return remoteRepo();
+  const j = app().journal;
+  return j.state === "ready" ? j.repo : null;
+};
+const localRepo = () => {
   const j = app().journal;
   return j.state === "ready" ? j.repo : null;
 };
@@ -77,7 +128,7 @@ let saveTimer: ReturnType<typeof setTimeout> | null = null;
 let exiting = false;
 let listening = false;
 function persist() {
-  if (exiting) return;
+  if (exiting || remote) return;
   if (saveTimer) clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
     saveTimer = null;
@@ -89,12 +140,37 @@ function persist() {
   }, 300);
 }
 
+export interface CabinetSnapshot {
+  items: CabinetItem[];
+  links: CabinetLink[];
+  categories: Category[];
+  activeIds: string[];
+  weekId: string;
+  weekEntries: WeekEntry[];
+  folders: { id: string; sub: string }[];
+}
+
+export function snapshot(): CabinetSnapshot {
+  const { items, links, categories, activeIds, weekId, weekEntries, folders } = useCabinet.getState();
+  return { items, links, categories, activeIds, weekId, weekEntries, folders };
+}
+
+export function applySnapshot(snap: unknown) {
+  if (!snap || typeof snap !== "object") return;
+  useCabinet.setState(snap as CabinetSnapshot);
+}
+
 export async function loadCabinet() {
-  const r = repo();
+  if (remote) return applySnapshot(await remote.call("snapshot", []));
+  const r = localRepo();
   if (!r) return;
-  const [{ items, links }, { categories }] = await Promise.all([r.listCabinet(), r.listCategories()]);
+  const [{ items, links }, { categories, periods }] = await Promise.all([
+    r.listCabinet(),
+    r.listCategories(),
+  ]);
   const sorted = [...categories].sort((a, b) => a.sortOrder - b.sortOrder);
-  useCabinet.setState({ items, links, categories: sorted });
+  const activeIds = [...new Set(periods.filter((p) => p.endDate === null).map((p) => p.categoryId))];
+  useCabinet.setState({ items, links, categories: sorted, activeIds });
   await app()
     .platform?.cabinetSetRoots(items.filter((i) => i.kind === "folder").map((i) => i.target))
     .catch(() => undefined);
@@ -104,49 +180,113 @@ export async function loadCabinet() {
   if (gone.length) useCabinet.setState((s) => ({ folders: s.folders.filter((f) => ids.has(f.id)) }));
 }
 
-export function groupsOf(s: Pick<CabinetState, "items" | "links" | "categories">) {
-  return groupCabinet(
+export function groupsOf(s: Pick<CabinetState, "items" | "links" | "categories" | "activeIds">) {
+  return cabinetGroups(
     s.items,
     s.links,
     s.categories.map((c) => c.id),
+    s.activeIds,
   );
 }
 
-/** 지금 보일 묶음 — 고른 게 없거나 사라졌으면 첫 묶음 */
-export function currentGroup(s: CabinetState): string | null {
+/** 지금 보일 묶음 — 고른 게 없거나 사라졌으면 '전체' */
+export function currentGroup(s: CabinetState): string {
   const gs = groupsOf(s);
-  if (s.group && (gs.some((g) => g.key === s.group) || s.group === UNLINKED)) return s.group;
-  return gs[0]?.key ?? null;
+  if (s.group && gs.some((g) => g.key === s.group)) return s.group;
+  return ALL_GROUP;
 }
 
-export async function openCabinet(opts: { categoryId?: string; itemId?: string } = {}) {
-  useCabinet.setState({ open: true });
-  await loadCabinet();
-  const s = useCabinet.getState();
+/** 고를 업무·강조할 항목 적용(항목이면 '전체'에서 그 줄을 잠깐 강조) */
+export function applyFocus(opts: CabinetFocus) {
   if (opts.itemId) {
-    const cats = itemCategories(opts.itemId, s.links);
-    useCabinet.setState({ group: cats[0] ?? UNLINKED, filter: "all", flash: opts.itemId });
+    const id = opts.itemId;
+    useCabinet.setState({ group: ALL_GROUP, filter: "all", flash: id });
     setTimeout(() => {
-      if (useCabinet.getState().flash === opts.itemId) useCabinet.setState({ flash: null });
+      if (useCabinet.getState().flash === id) useCabinet.setState({ flash: null });
     }, 1600);
-  } else if (opts.categoryId) useCabinet.setState({ group: opts.categoryId });
+  } else if (opts.categoryId) useCabinet.setState({ group: opts.categoryId, filter: "all" });
+}
+
+export async function openCabinet(opts: CabinetFocus = {}) {
+  if (remote) return applyFocus(opts);
+  const bridge = app().platform?.cabinetWindow;
+  useCabinet.setState({ open: true });
   persist();
+  if (bridge) {
+    // 실앱: 별도 OS 창 — 자료는 그 창이 켜지면서 메인 창에 묻는다
+    await bridge
+      .open(opts.categoryId || opts.itemId ? opts : null, resolveTheme(app().theme))
+      .catch(reportError);
+    return;
+  }
+  await loadCabinet();
+  applyFocus(opts);
 }
 
 export function closeCabinet() {
+  if (remote) {
+    void remote.closeSelf();
+    return;
+  }
   useCabinet.setState({ open: false, renaming: null, linkDialog: null, linksFor: null });
   persist();
+  void app().platform?.cabinetWindow?.close();
 }
 
 export function toggleCabinet() {
-  if (useCabinet.getState().open) closeCabinet();
+  if (remote || useCabinet.getState().open) closeCabinet();
   else void openCabinet();
 }
 
-/** 묶음에 맞는 기본 연결(업무 묶음이면 그 업무) */
+/** 묶음에 맞는 기본 연결(업무 묶음이면 그 업무, 전체·연결 없음이면 없음) */
 function defaultLinks(): CabinetLinkDraft[] {
   const g = currentGroup(useCabinet.getState());
-  return g && g !== UNLINKED ? [{ categoryId: g }] : [];
+  return g !== ALL_GROUP && g !== UNLINKED ? [{ categoryId: g }] : [];
+}
+
+const draftsOf = (itemId: string): CabinetLinkDraft[] =>
+  useCabinet
+    .getState()
+    .links.filter((l) => l.itemId === itemId)
+    .map((l) => (l.categoryId ? { categoryId: l.categoryId } : { entryId: l.entryId! }));
+
+/** 줄을 왼쪽 업무에 끌어 놓기 = 그 업무 연결 더하기(기존 연결 유지, improve-1102-spec C3) */
+export async function addItemToCategory(itemId: string, categoryId: string) {
+  const s = useCabinet.getState();
+  const it = s.items.find((i) => i.id === itemId);
+  const cat = s.categories.find((c) => c.id === categoryId);
+  const r = repo();
+  if (!it || !cat || !r) return;
+  const drafts = draftsOf(itemId);
+  if (drafts.some((d) => "categoryId" in d && d.categoryId === categoryId))
+    return toast(STR.cabinet.alreadyIn(cat.name));
+  try {
+    await r.setCabinetLinks(itemId, [...drafts, { categoryId }]);
+    await loadCabinet();
+    toast(STR.cabinet.linkedToCat(it.title, cat.name));
+  } catch (e) {
+    reportError(e);
+  }
+}
+
+/** 줄 끌어 순서 바꾸기 — 지금 보는 묶음 안의 앞뒤 관계를 전체 순서에 반영(C4) */
+export async function reorderItem(id: string, target: { beforeId?: string | null; afterId?: string | null }) {
+  const r = repo();
+  if (!r) return;
+  const order = [...useCabinet.getState().items].sort((a, b) => a.sortOrder - b.sortOrder).map((i) => i.id);
+  const next = moveInOrder(order, id, target);
+  if (next.join() === order.join()) return;
+  // 화면을 먼저 바꿔 끌어 놓은 자리가 바로 보이게
+  useCabinet.setState((st) => ({
+    items: st.items.map((i) => ({ ...i, sortOrder: next.indexOf(i.id) + 1 })),
+  }));
+  try {
+    await r.reorderCabinet(next);
+    await loadCabinet();
+  } catch (e) {
+    reportError(e);
+    await loadCabinet();
+  }
 }
 
 async function addFolderPaths(paths: string[], links = defaultLinks()) {
@@ -187,20 +327,34 @@ export function acceptsDrop(dt: DataTransfer | null): boolean {
   return types.includes("Files") || types.includes("text/uri-list") || types.includes("text/plain");
 }
 
-/** 놓기: 탐색기 폴더(A안 — 경로) 또는 브라우저 링크 */
+/**
+ * 놓기: 탐색기 폴더(A안 — 경로) 또는 브라우저 링크(improve-1102-spec C5).
+ * 크롬은 주소 아이콘을 끌 때 주소와 함께 인터넷 바로 가기 파일(`*.url`)을 넘긴다 — 폴더 경로가 없고 주소가 있으면 링크로 본다.
+ */
 export async function handleDrop(dt: DataTransfer) {
   const files = [...dt.files];
-  if (files.length) {
+  const urlFiles = files.filter((f) => isUrlShortcutName(f.name));
+  const others = files.filter((f) => !isUrlShortcutName(f.name));
+  let link = parseLinkTransfer(transferOf(dt));
+  if (others.length) {
     const p = app().platform;
-    const got = (await p?.droppedPaths(files).catch(() => null)) ?? null;
-    if (!got) return toast(STR.cabinet.noPath);
-    const dirs = got.filter((g) => g.isDir).map((g) => g.path);
-    if (!dirs.length) return toast(STR.cabinet.onlyFolders);
-    await addFolderPaths(dirs);
-    if (dirs.length < got.length) toast(STR.cabinet.onlyFolders);
-    return;
+    const got = (await p?.droppedPaths(others).catch(() => null)) ?? null;
+    const dirs = (got ?? []).filter((g) => g.isDir).map((g) => g.path);
+    if (dirs.length) {
+      await addFolderPaths(dirs);
+      if (dirs.length < (got?.length ?? 0)) toast(STR.cabinet.onlyFolders);
+      return;
+    }
+    if (!link && !urlFiles.length) return toast(got ? STR.cabinet.onlyFolders : STR.cabinet.noPath);
   }
-  const link = parseLinkTransfer(transferOf(dt));
+  if (urlFiles.length) {
+    const f = urlFiles[0]!;
+    const fromFile = parseUrlShortcut(await f.text().catch(() => ""));
+    const title = urlShortcutTitle(f.name);
+    if (!link && fromFile)
+      link = { url: fromFile, title: title || linkTitleFromUrl(fromFile), titleFromBrowser: !!title };
+    else if (link && !link.titleFromBrowser && title) link = { ...link, title, titleFromBrowser: true };
+  }
   if (!link) {
     // 글로 끌어 온 폴더 경로(탐색기 주소창 글 등)
     const plain = dt.getData("text/plain").trim();
@@ -338,9 +492,10 @@ export async function copyTarget(id: string) {
   toast(STR.cabinet.copied);
 }
 
+/** 탐색기에서 열기 = 그 폴더 안으로(상위 폴더에서 선택된 채가 아니라, improve-1102-spec C6) */
 export async function revealItem(id: string) {
   const it = useCabinet.getState().items.find((i) => i.id === id);
-  if (it?.kind === "folder") await app().platform?.cabinetReveal(it.target).catch(reportError);
+  if (it?.kind === "folder") await app().platform?.cabinetOpen(it.target).catch(reportError);
 }
 
 /** 연결 표시 글(폴더 창 머리·목록) — 업무 이름, 항목이면 "10/21 설계안 팀 리뷰" */
@@ -367,6 +522,10 @@ export async function openItem(id: string) {
 }
 
 export async function openFolder(id: string, sub?: string) {
+  if (remote) {
+    await remote.call("openFolder", [id, sub ?? null]).catch(reportError);
+    return;
+  }
   const s = useCabinet.getState();
   const it = s.items.find((i) => i.id === id && i.kind === "folder");
   if (!it) return;
@@ -393,6 +552,10 @@ export function setFolderSub(id: string, sub: string) {
 }
 
 export async function closeFolder(id: string) {
+  if (remote) {
+    await remote.call("closeFolder", [id]).catch(() => undefined);
+    return;
+  }
   useCabinet.setState((s) => ({ folders: s.folders.filter((f) => f.id !== id) }));
   persist();
 }
@@ -401,17 +564,43 @@ export async function closeFolder(id: string) {
 export async function restoreCabinet() {
   const p = app().platform;
   if (!p) return;
-  await loadCabinet();
-  if (!listening && p.folderWindows) {
+  if (!listening) {
     listening = true;
-    await p.folderWindows.onEvent((e) => {
-      if (e.type === "nav") setFolderSub(e.id, e.sub);
-      else if (!exiting) void closeFolder(e.id);
-    });
+    watchBoard();
+    if (p.folderWindows)
+      await p.folderWindows.onEvent((e) => {
+        if (e.type === "nav") setFolderSub(e.id, e.sub);
+        else if (!exiting) void closeFolder(e.id);
+      });
+    const bridge = p.cabinetWindow;
+    if (bridge) {
+      bridge.onClosed(() => {
+        if (exiting) return;
+        useCabinet.setState({ open: false });
+        persist();
+      });
+      await bridge.serve(serveRemote);
+      // 메인 창 자료가 바뀌면 Cabinet 창에 보낸다
+      useCabinet.subscribe((st, prev) => {
+        if (
+          st.items !== prev.items ||
+          st.links !== prev.links ||
+          st.categories !== prev.categories ||
+          st.activeIds !== prev.activeIds ||
+          st.weekEntries !== prev.weekEntries ||
+          st.folders !== prev.folders
+        )
+          void bridge.sync(snapshot()).catch(() => undefined);
+      });
+    }
   }
+  await loadCabinet();
   const cfg = (await p.loadConfig().catch(() => null))?.cabinet;
   if (!cfg) return;
-  if (cfg.open) useCabinet.setState({ open: true });
+  if (cfg.open) {
+    if (p.cabinetWindow) void openCabinet();
+    else useCabinet.setState({ open: true });
+  }
   const ids = new Set(useCabinet.getState().items.map((i) => i.id));
   for (const w of cfg.windows) if (ids.has(w.id)) await openFolder(w.id, w.sub);
 }
@@ -432,4 +621,72 @@ export function entryLinks(
   s: Pick<CabinetState, "links" | "items"> = useCabinet.getState(),
 ) {
   return s.links.filter((l) => l.entryId === entryId).map((l) => l.itemId);
+}
+
+/** Cabinet 창이 부탁한 일을 메인 창(일지의 주인)이 대신 한다 — 허용한 것만(improve-1102-spec C1) */
+async function serveRemote(name: string, args: unknown[]): Promise<unknown> {
+  if (name === "snapshot") {
+    await loadCabinet();
+    return snapshot();
+  }
+  if (name === "repo") {
+    const [method, ...rest] = args as [string, ...unknown[]];
+    const r = localRepo();
+    if (!r || !(REPO_METHODS as readonly string[]).includes(method))
+      throw new Error(`허용되지 않은 요청: ${method}`);
+    const fn = r[method as (typeof REPO_METHODS)[number]] as (...a: unknown[]) => Promise<unknown>;
+    const out = await fn.apply(r, rest);
+    await loadCabinet();
+    return out ?? null;
+  }
+  if (name === "openFolder") {
+    const [id, sub] = args as [string, string | null];
+    await openFolder(id, sub ?? undefined);
+    return null;
+  }
+  if (name === "closeFolder") {
+    await closeFolder(args[0] as string);
+    return null;
+  }
+  throw new Error(`알 수 없는 요청: ${name}`);
+}
+
+/** 보드가 보는 주의 본 항목(항목 연결 고르기)·업무 변화 따라가기 — 메인 창만 */
+let reloadTimer: ReturnType<typeof setTimeout> | null = null;
+function watchBoard() {
+  const update = () => {
+    const view = useBoard.getState().view;
+    if (!view) return;
+    const weekEntries: WeekEntry[] = [];
+    for (const day of view.days)
+      for (const vc of view.categories)
+        for (const it of view.items[`${day}|${vc.category.id}`] ?? [])
+          if (it.depth === 0)
+            weekEntries.push({
+              id: it.id,
+              date: it.date,
+              text: it.text.split("\n")[0]!,
+              categoryId: vc.category.id,
+            });
+    useCabinet.setState({ weekId: view.weekId, weekEntries });
+  };
+  update();
+  useBoard.subscribe((st, prev) => {
+    if (st.view === prev.view) return;
+    update();
+    // 업무 추가·종료·항목 삭제 등을 Cabinet 목록에도(묶어서 한 번)
+    if (reloadTimer) clearTimeout(reloadTimer);
+    reloadTimer = setTimeout(() => void loadCabinet().catch(() => undefined), 800);
+  });
+}
+
+/** 업무에 연결된 폴더·링크(업무 연결 + 그 업무 항목 연결) — 보드 업무 이름 옆 🗄(improve-1102-spec C7) */
+export function categoryItems(
+  categoryId: string,
+  s: Pick<CabinetState, "items" | "links"> = useCabinet.getState(),
+) {
+  return [...s.items]
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .filter((it) => itemCategories(it.id, s.links).includes(categoryId))
+    .map((it) => it.id);
 }

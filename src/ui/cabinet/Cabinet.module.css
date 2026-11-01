@@ -805,3 +805,85 @@
   background: var(--surface-sub);
   color: var(--text-1);
 }
+
+/* 2026-11-02 개선(improve-1102-spec) */
+/* 실앱 Cabinet 별도 OS 창 — 창 전체를 쓴다 */
+.standalone {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-card);
+  color: var(--text-1);
+}
+
+.groupAll {
+  margin-bottom: 4px;
+}
+
+.groupAll svg {
+  flex: 0 0 auto;
+  color: var(--text-2);
+}
+
+.groupEnded .groupName {
+  color: var(--text-3);
+}
+
+.endedTag {
+  flex: 0 0 auto;
+  padding: 0 5px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-sub);
+  color: var(--text-3);
+  font-size: 11px;
+}
+
+/* 줄을 업무에 끌어 놓을 때 */
+.groupDrop {
+  outline: 2px dashed var(--accent);
+  outline-offset: -2px;
+  background: var(--accent-soft);
+}
+
+/* 줄 순서 끌기 — 놓을 자리 파란 선 */
+.markBefore {
+  box-shadow: inset 0 2px 0 var(--accent);
+}
+
+.markAfter {
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+
+.row[draggable="true"] {
+  cursor: grab;
+}
+
+/* 보드 업무 이름 옆 Cabinet 바로가기(C7) */
+.catBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex: 0 0 auto;
+  height: 20px;
+  padding: 0 4px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-3);
+  font: inherit;
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.catBadge:hover,
+.catBadge:focus-visible {
+  background: var(--surface-sub);
+  color: var(--text-1);
+}
+
+.catBadge svg {
+  width: 13px;
+  height: 13px;
+}

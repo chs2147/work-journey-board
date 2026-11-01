@@ -69,7 +69,7 @@ describe("splash.html = 원본 값", () => {
     expect(days).toEqual(DAY_LABELS.slice(0, 5));
     expect(document.querySelector(".tag")?.textContent).toBe(STR.splash.tagline);
     expect(document.querySelector("#status")?.textContent).toBe(STR.splash.starting);
-    expect(document.querySelector(".ver")?.textContent).toBe("v%APP_VERSION%");
+    expect(document.querySelector(".title-row .ver")?.textContent).toBe("버전 %APP_VERSION%");
   });
 
   it("인라인 script·style 속성이 없다(실앱 CSP: Tauri가 <style>에 nonce를 넣으면 'unsafe-inline'이 무시됨)", () => {

@@ -132,6 +132,29 @@ pub fn cabinet_reveal(
     app.opener().reveal_item_in_dir(path).map_err(err)
 }
 
+/// 끌어 놓기 다리를 단 창(창마다 한 번만 — 처리기가 겹치면 같은 경로가 두 번 온다)
+#[derive(Default)]
+pub struct DropBridges(Mutex<std::collections::HashSet<String>>);
+
+impl DropBridges {
+    /// 처음 다는 창이면 true
+    pub fn claim(&self, label: &str) -> bool {
+        self.0.lock().unwrap().insert(label.to_string())
+    }
+}
+
+/// Cabinet 창(improve-1102-spec C1)이 켜질 때 부른다 — 그 창에 끌어 놓기 다리(A안)를 단다(윈도우만, 창마다 한 번)
+#[tauri::command]
+pub fn cabinet_drop_bridge(window: tauri::WebviewWindow, state: State<DropBridges>) {
+    if !state.claim(window.label()) {
+        return;
+    }
+    #[cfg(windows)]
+    install_drop_bridge(&window);
+    #[cfg(not(windows))]
+    let _ = window;
+}
+
 /// 웹 화면이 끌어 놓은 파일을 넘길 때 쓰는 약속 글(src/platform/tauri.ts와 같아야 한다)
 pub const DROP_MESSAGE: &str = "wjb-cabinet-drop";
 /// 받은 경로를 웹 화면에 돌려주는 이벤트

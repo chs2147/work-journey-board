@@ -33,7 +33,10 @@ test("Alt+4로 열기 → 업무별 묶음·거르기 → 폴더 창 이동·파
   await page.keyboard.press("Alt+4");
   const cab = page.getByTestId("cabinet");
   await expect(cab).toBeVisible();
-  await expect(page.getByTestId("cabinet-group-title")).toHaveText("차세대 정산 시스템 구축");
+  // 처음엔 '전체'(업무 무관 모든 폴더·링크)
+  await expect(page.getByTestId("cabinet-group-title")).toHaveText("전체");
+  await expect(page.getByTestId("cabinet-filter-all")).toHaveText(/전체 8/);
+  await page.getByTestId("cabinet-group-cat-settle").click();
   await expect(page.getByTestId("cabinet-filter-all")).toHaveText(/전체 5/);
   await expect(page.getByTestId("cabinet-filter-folder")).toHaveText(/폴더 3/);
   await page.getByTestId("cabinet-filter-link").click();
@@ -71,8 +74,12 @@ test("Alt+4로 열기 → 업무별 묶음·거르기 → 폴더 창 이동·파
   await expect(win.getByTestId("folder-row")).toHaveCount(2);
   await win.getByTestId("folder-back").click();
   await expect(win.getByTestId("folder-crumbs")).toContainText("2026-10 이관");
+  // 탐색기에서 열기: 고른 것이 없으면 지금 폴더 안으로(open), 파일을 골랐으면 그 파일을 선택한 채(reveal)
   await win.getByTestId("folder-reveal").click();
-  await expect.poll(() => calls(page)).toContain("reveal /demo/업무/정산/테스트/2026-10 이관");
+  await expect.poll(() => calls(page)).toContain("open /demo/업무/정산/테스트/2026-10 이관");
+  await win.locator('[data-testid="folder-row"][data-name="이관 절차.docx"]').click();
+  await win.getByTestId("folder-reveal").click();
+  await expect.poll(() => calls(page)).toContain("reveal /demo/업무/정산/테스트/2026-10 이관/이관 절차.docx");
   await win.getByTestId("folder-close").click();
   await expect(win).toHaveCount(0);
 
@@ -83,6 +90,7 @@ test("Alt+4로 열기 → 업무별 묶음·거르기 → 폴더 창 이동·파
 test("링크 끌어 놓기 → 브라우저가 준 제목(고치기) → Enter 등록 → 검색에 Cabinet · 링크", async ({ page }) => {
   await open(page);
   await page.getByTestId("rail-cabinet").click();
+  await page.getByTestId("cabinet-group-cat-settle").click();
   await drop(page, "cabinet-drop", {
     "text/uri-list": "https://wiki.example.com/settlement/batch-ops",
     "text/html":
@@ -164,7 +172,7 @@ test("보드: 연결된 항목 옆 🗂(여럿이면 Cabinet에서 강조) · �
   await expect(review.getByTestId("cabinet-badge")).toBeVisible();
   await review.getByTestId("cabinet-badge").click();
   await expect(page.getByTestId("cabinet")).toBeVisible();
-  await expect(page.getByTestId("cabinet-group-title")).toHaveText("차세대 정산 시스템 구축");
+  await expect(page.getByTestId("cabinet-group-title")).toHaveText("전체");
   await page.getByTestId("cabinet-close").click();
 
   // 하나만 연결된 항목(계정 관리 미흡)은 그 폴더 창을 바로
@@ -175,4 +183,63 @@ test("보드: 연결된 항목 옆 🗂(여럿이면 Cabinet에서 강조) · �
   await page.getByRole("button", { name: /협력사 보안 점검 메뉴/ }).click();
   await page.getByTestId("category-cabinet").click();
   await expect(page.getByTestId("cabinet-group-title")).toHaveText("협력사 보안 점검");
+});
+
+test("업무별 목록(전체·0개 업무)·줄을 업무에 끌어 연결·끌어 순서 바꾸기·크롬식 놓기·업무 이름 옆 🗄", async ({
+  page,
+}) => {
+  await open(page);
+  // 업무 이름 옆 🗄: 여럿이면 Cabinet을 그 업무로
+  const settleBadge = page.getByTestId("cabinet-cat-badge").first();
+  await expect(settleBadge).toHaveText("5");
+  await settleBadge.click();
+  await expect(page.getByTestId("cabinet-group-title")).toHaveText("차세대 정산 시스템 구축");
+  // 진행 중 업무는 연결이 없어도(0개) 보인다
+  await expect(page.getByTestId("cabinet-group-__all__")).toContainText("전체8");
+  await expect(page.getByTestId("cabinet-group-cat-dash")).toContainText("0");
+  await expect(page.getByTestId("cabinet-group-cat-onb")).toContainText("0");
+
+  // 줄을 끌어 다른 업무(사내 데이터 대시보드)에 놓기 → 그 업무에도 연결(기존 연결 유지)
+  const wiki = page.getByTestId("cabinet-row").filter({ hasText: "정산 배치 설계서 v2" });
+  await wiki.dragTo(page.getByTestId("cabinet-group-cat-dash"));
+  await expect(
+    page.getByText("‘정산 배치 설계서 v2 (사내 위키)’을(를) ‘사내 데이터 대시보드’에도 연결했습니다"),
+  ).toBeVisible();
+  await expect(page.getByTestId("cabinet-group-cat-dash")).toContainText("1");
+  await expect(page.getByTestId("cabinet-group-cat-settle")).toContainText("5");
+
+  // 끌어 순서 바꾸기: '회의록'을 맨 위 '설계 문서' 위로
+  await expect(page.getByTestId("cabinet-row-title").first()).toHaveText("설계 문서");
+  const first = page.getByTestId("cabinet-row").first();
+  await page
+    .getByTestId("cabinet-row")
+    .filter({ hasText: "회의록" })
+    .dragTo(first, { targetPosition: { x: 40, y: 4 } });
+  await expect(page.getByTestId("cabinet-row-title").first()).toHaveText("회의록");
+  await page.getByTestId("cabinet-group-__all__").click();
+  await expect(page.getByTestId("cabinet-row-title").first()).toHaveText("회의록");
+
+  // 크롬 주소 아이콘: 주소 + 인터넷 바로 가기 파일 → 링크로(제목 = 바로 가기 이름), 폴더 오류 없음
+  await drop(page, "cabinet-drop", { "text/uri-list": "https://wiki.example.com/settlement/batch-ops" }, [
+    "정산 배치 운영 가이드 - 사내 위키.url",
+  ]);
+  await expect(page.getByTestId("cabinet-link-dialog")).toBeVisible();
+  await expect(page.getByTestId("cabinet-link-title")).toHaveValue("정산 배치 운영 가이드 - 사내 위키");
+  await page.getByTestId("cabinet-link-title").press("Escape");
+  // 파일(경로 모름) + 주소 → 링크로
+  await drop(page, "cabinet-drop", { "text/uri-list": "https://monitor.example.local/batch" }, [
+    "favicon.png",
+  ]);
+  await expect(page.getByTestId("cabinet-link-url")).toHaveValue("https://monitor.example.local/batch");
+  await page.getByTestId("cabinet-link-title").press("Escape");
+  await expect(page.getByText("폴더만 등록할 수 있습니다 (파일은 등록하지 않음)")).toHaveCount(0);
+
+  // 등록 폴더 ⋯ › 탐색기에서 열기 = 그 폴더 안으로
+  await page
+    .getByTestId("cabinet-row")
+    .filter({ hasText: "설계 문서" })
+    .getByTestId("cabinet-row-more")
+    .click();
+  await page.getByRole("menuitem", { name: "탐색기에서 열기" }).click();
+  await expect.poll(() => calls(page)).toContain("open /demo/업무/정산/설계");
 });

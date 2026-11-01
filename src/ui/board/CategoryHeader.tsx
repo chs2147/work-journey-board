@@ -1,5 +1,6 @@
 // 업무 행 머리: 색 점·이름(더블클릭 편집)·⋯ 메뉴·끌어서 순서 바꾸기·무기록 제안 배지·종료됨 표시(overview 10-4).
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type DragEvent } from "react";
+import { CabinetCategoryBadge } from "../cabinet/CabinetCategoryBadge";
 import { openCabinet } from "../cabinet/cabinetStore";
 import type { VisibleCategory } from "../../domain/categories";
 import { chipsToShow } from "../../domain/tags";
@@ -181,9 +182,12 @@ export function CategoryHeader({
             }}
           />
         ) : (
-          <span className={styles.name} onDoubleClick={() => setEditing(true)}>
-            {category.name}
-          </span>
+          <>
+            <span className={styles.name} onDoubleClick={() => setEditing(true)}>
+              {category.name}
+            </span>
+            <CabinetCategoryBadge categoryId={category.id} name={category.name} />
+          </>
         )}
         <div className={styles.menuWrap} ref={menuRef}>
           <button

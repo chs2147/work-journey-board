@@ -270,3 +270,66 @@ export function formatModified(ms: number | null, now: Date): string {
 export function normalizeCabinetTitle(raw: string): string {
   return raw.replace(/\s+/g, " ").trim().slice(0, CABINET_TITLE_MAX);
 }
+
+// ── 2026-11-02 개선(improve-1102-spec C2·C4·C5) ──────
+
+export const ALL_GROUP = "__all__";
+
+export interface CabinetGroup {
+  key: string;
+  itemIds: string[];
+  /** 종료된 업무(연결된 것이 있을 때만 보인다) */
+  ended?: boolean;
+}
+
+/**
+ * 왼쪽 '업무별' 목록: 맨 위 전체 → 진행 중 업무 전부(0개도, 보드 순서) → 종료된 업무(연결이 있을 때만) → 연결 없음(있을 때만)
+ */
+export function cabinetGroups(
+  items: CabinetItem[],
+  links: CabinetLink[],
+  categoryOrder: string[],
+  activeIds: string[],
+): CabinetGroup[] {
+  const sorted = [...items].sort((a, b) => a.sortOrder - b.sortOrder);
+  const by = new Map<string, string[]>();
+  const unlinked: string[] = [];
+  for (const it of sorted) {
+    const cats = itemCategories(it.id, links).filter((c) => categoryOrder.includes(c));
+    if (!cats.length) unlinked.push(it.id);
+    for (const c of cats) by.set(c, [...(by.get(c) ?? []), it.id]);
+  }
+  const out: CabinetGroup[] = [{ key: ALL_GROUP, itemIds: sorted.map((i) => i.id) }];
+  for (const c of categoryOrder) {
+    const active = activeIds.includes(c);
+    if (active) out.push({ key: c, itemIds: by.get(c) ?? [] });
+    else if (by.has(c)) out.push({ key: c, itemIds: by.get(c)!, ended: true });
+  }
+  if (unlinked.length) out.push({ key: UNLINKED, itemIds: unlinked });
+  return out;
+}
+
+/** 순서 바꾸기: `id`를 `beforeId` 앞(null이면 `afterId` 뒤, 둘 다 없으면 맨 끝)으로 */
+export function moveInOrder(
+  order: string[],
+  id: string,
+  target: { beforeId?: string | null; afterId?: string | null },
+): string[] {
+  const rest = order.filter((x) => x !== id);
+  if (!order.includes(id)) return order;
+  let at = rest.length;
+  if (target.beforeId && rest.includes(target.beforeId)) at = rest.indexOf(target.beforeId);
+  else if (target.afterId && rest.includes(target.afterId)) at = rest.indexOf(target.afterId) + 1;
+  return [...rest.slice(0, at), id, ...rest.slice(at)];
+}
+
+/** 인터넷 바로 가기(`*.url`) 내용의 주소 — 브라우저(크롬)가 주소 아이콘을 끌 때 함께 넘긴다 */
+export function parseUrlShortcut(text: string): string | null {
+  const m = /^\s*URL\s*=\s*(\S+)\s*$/im.exec(text);
+  return m && isOpenableUrl(m[1]!) ? m[1]! : null;
+}
+
+/** `제목.url` → 제목 */
+export const urlShortcutTitle = (fileName: string) => normalizeCabinetTitle(fileName.replace(/\.url$/i, ""));
+
+export const isUrlShortcutName = (name: string) => /\.url$/i.test(name);
