@@ -1,11 +1,13 @@
 <div align="center">
 
-<img src="docs/brand/icon.svg" alt="" width="88" height="88">
+<p align="center"><img src="docs/brand/icon.svg" alt="" width="88" height="88"></p>
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/brand/wordmark-dark.svg">
-  <img src="docs/brand/wordmark-light.svg" alt="Work Journey Board" height="34">
-</picture>
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/brand/wordmark-dark.svg">
+    <img src="docs/brand/wordmark-light.svg" alt="Work Journey Board" height="51">
+  </picture>
+</p>
 
 **오늘 한 일을, 한 줄씩.** 주간 요약 · 진행 경과 · 엑셀 보고서는 자동으로.
 
@@ -13,9 +15,9 @@
 
 </div>
 
-![주간 보드 — 시그니처 테마(가상 기록)](docs/screenshots/board-signature.png)
+![주간 보드와 이번 주 메모 보드 — 시그니처 테마(가상 기록)](docs/screenshots/board-signature.png)
 
-<p align="center"><sub>주간 보드 · 시그니처 테마 · 화면 속 기록은 모두 가상 예시</sub></p>
+<p align="center"><sub>주간 보드 · 이번 주 메모(업무 연결 메모·이미지 메모·관계선) · 시그니처 테마 · 화면 속 기록은 모두 가상 예시</sub></p>
 
 ## 핵심 기능
 - **매일 2분, 키보드만으로** — 요일 × 업무 칸에 개조식 기록(Enter 다음 줄 · Tab 세부 항목 · ↓ 다음 업무), 오늘 열 강조, 직전 기록 가져오기, 중요 표시·매주 반복·연차, 주간 메모 보드
@@ -75,7 +77,7 @@ npm run perf:mem     # 주 전환 메모리·조회 수 측정(가상 1년치 �
 npm run lint && npm run format:check && npm run typecheck
 npm run tauri dev    # 실앱 모드(윈도우 / 리눅스는 webkit2gtk-4.1 필요)
 ```
-- 브라우저 모드 주소 옵션(E2E·시연): `?today=YYYY-MM-DD` 오늘 고정 · `?empty=1` 빈 일지 · `?fresh=1` 첫 실행 화면 · `?existing=/경로` 그 폴더에 샘플 일지 준비 · `?config=/경로` 설정 폴더 지정 · `?sample=year`(`year-img`) 가상 1년치 일지 · `?corrupt=1` 파손 일지
+- 브라우저 모드 주소 옵션(E2E·시연): `?today=YYYY-MM-DD` 오늘 고정 · `?empty=1` 빈 일지 · `?fresh=1` 첫 실행 화면 · `?existing=/경로` 그 폴더에 샘플 일지 준비 · `?config=/경로` 설정 폴더 지정 · `?sample=year`(`year-img`) 가상 1년치 일지 · `?sample=showcase` README·소개 사이트 화면용 메모 보드 예시 · `?corrupt=1` 파손 일지
 - 윈도우 설치 파일: `main`에 반영되면 [Releases](https://github.com/chs2147/work-journey-board/releases)에 `v<버전>`으로 올라간다 — 0.x·`-rc`는 사전 릴리스(기본판만), 1.0.0 이상 정식 판은 정식 릴리스 + 오프라인 설치판 함께. 그 밖의 오프라인 설치판은 Actions → *Build Windows installer* → Run workflow → `offline`.
 
 ## Version History
