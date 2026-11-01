@@ -48,3 +48,27 @@
   if (reduced.addEventListener) reduced.addEventListener('change', configureMotion);
   else if (reduced.addListener) reduced.addListener(configureMotion);
 })();
+
+// 머리 고정(스크롤하면 얇게) + 오른쪽 섹션 인디케이터: 지금 보고 있는 섹션 표시
+(() => {
+  const header = document.querySelector('.site-header');
+  const links = [...document.querySelectorAll('.section-indicator a[data-target]')];
+  const sections = links.map(link => document.getElementById(link.dataset.target)).filter(Boolean);
+  let ticking = false;
+  function update() {
+    ticking = false;
+    header?.classList.toggle('is-scrolled', window.scrollY > 8);
+    const line = window.innerHeight * 0.38;
+    let current = sections[0];
+    for (const section of sections) if (section.getBoundingClientRect().top <= line) current = section;
+    if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4) current = sections[sections.length - 1];
+    for (const link of links) {
+      if (link.dataset.target === current?.id) link.setAttribute('aria-current', 'true');
+      else link.removeAttribute('aria-current');
+    }
+  }
+  const request = () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } };
+  window.addEventListener('scroll', request, { passive: true });
+  window.addEventListener('resize', request);
+  update();
+})();

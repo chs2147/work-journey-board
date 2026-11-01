@@ -28,6 +28,19 @@
     </div>
   </header>
 
+  <nav class="section-indicator" aria-label="페이지 안 이동">
+    <ol>
+      <li><a href="#top" data-target="top"><span class="si-label">처음</span><span class="si-dot"></span></a></li>
+      <li><a href="#how-it-works" data-target="how-it-works"><span class="si-label">01 기록</span><span class="si-dot"></span></a></li>
+      <li><a href="#reflect" data-target="reflect"><span class="si-label">02 주간 요약</span><span class="si-dot"></span></a></li>
+      <li><a href="#journey" data-target="journey"><span class="si-label">03 업무 흐름</span><span class="si-dot"></span></a></li>
+      <li><a href="#features" data-target="features"><span class="si-label">04 핵심 기능</span><span class="si-dot"></span></a></li>
+      <li class="si-sub"><a href="#memo" data-target="memo"><span class="si-label">메모 보드</span><span class="si-dot"></span></a></li>
+      <li><a href="#privacy" data-target="privacy"><span class="si-label">05 기록 보관</span><span class="si-dot"></span></a></li>
+      <li><a href="#get" data-target="get"><span class="si-label">내려받기</span><span class="si-dot"></span></a></li>
+    </ol>
+  </nav>
+
   <main id="main">
     <section class="hero wrap" id="top">
       <div class="hero-copy">
@@ -79,7 +92,7 @@
       </div>
     </section>
 
-    <section class="journey-section wrap">
+    <section class="journey-section wrap" id="journey">
       <div class="section-heading"><div><p class="eyebrow section-eyebrow"><span class="section-index">03</span> FOLLOW YOUR JOURNEY</p><h2>지나온 일에도<br><em>맥락이 남도록.</em></h2></div><p class="section-description">업무별 경과 타임라인과 활동 히트맵에서 쌓인 기록을 다시 살펴보세요. 언제 무엇을 했는지, 일의 흐름이 이어집니다.</p></div>
       <div class="journey-card"><div class="journey-title"><div><span class="micro-label">WORK JOURNEY</span><h3>정산 시스템 개선</h3></div><span class="journey-period">최근 기록</span></div><div class="timeline"><div class="timeline-item"><div class="timeline-mark"></div><div class="timeline-date">10월 12일 <small>W42</small></div><div class="timeline-copy"><strong>현황 파악</strong><p>기존 업무 흐름과 개선 범위 확인</p></div></div><div class="timeline-item"><div class="timeline-mark"></div><div class="timeline-date">10월 19일 <small>W43</small></div><div class="timeline-copy"><strong>요구사항 정리</strong><p>검토 의견과 예외 조건을 함께 정리</p></div></div><div class="timeline-item active"><div class="timeline-mark"></div><div class="timeline-date">10월 28일 <small>W44</small></div><div class="timeline-copy"><strong>설계안 리뷰</strong><p>협의 결과와 수정 내용을 기록</p></div></div></div><div class="journey-aside"><span class="handwritten">step by step,</span><span>쌓여가는 기록을 따라<br>업무의 흐름을 돌아봅니다.</span></div></div>
     </section>
@@ -103,7 +116,7 @@
 
     <section class="privacy-section" id="privacy"><div class="wrap privacy-inner"><div class="privacy-symbol" aria-hidden="true"><span>⌂</span></div><div class="privacy-heading"><p class="eyebrow section-eyebrow"><span class="section-index">05</span> YOUR SPACE</p><h2>나의 기록은<br><em>나의 자리에서.</em></h2></div><div class="privacy-copy"><p>업무 기록과 메모는 직접 선택한 폴더의 로컬 파일에 저장됩니다. 자동 백업도 함께 준비해, 소중한 기록을 곁에 둘 수 있어요.</p><p class="privacy-detail">앱의 새 버전 확인과 다운로드에는 GitHub 연결을 사용하며, 업무 기록과 메모는 전송하지 않습니다.</p><span class="privacy-label">LOCAL FIRST &nbsp;·&nbsp; WINDOWS</span></div></div></section>
 
-    <section class="closing wrap"><div class="closing-mark">✳</div><p class="eyebrow">FOR EVERYDAY WORK</p><h2>오늘의 한 줄부터,<br><em>나만의 여정을 시작하세요.</em></h2><p>매일 쓰는 기록이 내 일의 이야기가 되는 곳.</p><a class="button button-primary" href="https://github.com/chs2147/work-journey-board/releases/latest">Windows용 내려받기 <span aria-hidden="true">↗</span></a><span class="closing-caption">GitHub 릴리스 페이지에서 기본판·오프라인 설치판을 받을 수 있습니다.</span></section>
+    <section class="closing wrap" id="get"><div class="closing-mark">✳</div><p class="eyebrow">FOR EVERYDAY WORK</p><h2>오늘의 한 줄부터,<br><em>나만의 여정을 시작하세요.</em></h2><p>매일 쓰는 기록이 내 일의 이야기가 되는 곳.</p><a class="button button-primary" href="https://github.com/chs2147/work-journey-board/releases/latest">Windows용 내려받기 <span aria-hidden="true">↗</span></a><span class="closing-caption">GitHub 릴리스 페이지에서 기본판·오프라인 설치판을 받을 수 있습니다.</span></section>
     <section class="maker wrap" aria-label="만든 이"><div class="maker-copy"><span class="maker-label">MADE BY</span><img src="./brand/h1-en-color.svg" alt="sanbonjini" class="maker-h1" width="163" height="56"><p>상상을 작동시키다. — 생각을 실제로 작동하는 도구로 만듭니다.</p></div><a class="button button-quiet" href="https://sanbonjini.vercel.app">sanbonjini 브랜드 사이트 <span aria-hidden="true">↗</span></a></section>
   </main>
   <footer class="site-footer"><div class="footer-inner wrap"><a class="brand footer-brand" href="#top" aria-label="처음으로"><img src="./icon.svg" alt="" width="30" height="30"><img src="./wordmark.svg" alt="Work Journey Board" class="brand-wordmark"></a><p>기록은 가볍게, 흐름은 선명하게.</p><div class="footer-links"><a href="https://github.com/chs2147/work-journey-board">GitHub <span aria-hidden="true">↗</span></a><a href="https://github.com/chs2147/work-journey-board/releases/latest">다운로드 <span aria-hidden="true">↗</span></a></div></div><div class="wrap footer-bottom"><img src="./brand/m1-en-color.svg" alt="sanbonjini" class="maker-m1" width="122" height="40"><span>Copyright 2026 sanbonjini</span></div></footer>
