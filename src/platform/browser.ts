@@ -6,7 +6,7 @@ import { BACKUP_DIR, DATA_FILE } from "../data/backup";
 import { prepareConnection } from "../data/driver";
 import { openSqlJs, sqlJsCalls } from "../data/drivers/sqlJs";
 import { migrate } from "../data/migrate";
-import { seedSample } from "../data/seed";
+import { seedSample, type SampleData } from "../data/seed";
 import { isThemePref } from "../shared/theme";
 import { createFakeFs } from "./fakeFs";
 import { makeYearSample } from "./sampleYear";
@@ -20,6 +20,7 @@ import { baseName, dirOf, isOneDriveLike, type AppConfig, type Platform } from "
 //   ?sample=year        가상 1년치(업무 6개·항목 약 4,400개·52주 메모) — 성능 측정(optimize-1031-plan O1)
 //   ?sample=year-img    위 + 주마다 메모 이미지 2장(800×500 PNG)
 //   ?sample=insights    약 6개월·종료/재개·링크·연결 메모·연차 가상 샘플(M3-S1 인사이트, fixtures/sample-insights.json)
+//   ?sample=showcase    기본 샘플 + 2026-W43 메모 보드(업무 연결 메모·이미지 메모·관계선) — README·소개 사이트 화면용(fixtures/sample-showcase.json)
 //   ?corrupt=1          일지 파일을 깨진 바이트로(멀쩡한 일일 백업 1개는 남김) → "데이터 파일 문제" 화면·복원 시험
 //   ?fresh=1            설정 없음 → 첫 실행 화면
 //   ?existing=/경로     그 폴더에 샘플이 든 기존 일지를 미리 만들어 둠(첫 실행 "기존 일지 열기" 시험)
@@ -60,7 +61,9 @@ async function makeJournal(dir: string, withSample: boolean) {
           ? sampleLong
           : which === "insights"
             ? sampleInsights
-            : sample,
+            : which === "showcase"
+              ? ((await import("../../fixtures/sample-showcase.json")).default as SampleData)
+              : sample,
     );
   await d.close();
 }
