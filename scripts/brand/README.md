@@ -23,3 +23,13 @@ PW_CHROMIUM_PATH=/opt/pw-browsers/chromium node scripts/brand/render_icons.mjs /
 python3 scripts/brand/pack_icons.py /tmp/wjb-icons src-tauri/icons
 ```
 `icon.svg`를 바꿨다면 `splash.html`의 `.logo` 안 SVG도 같이 바꾼다(위와 같은 이유·같은 테스트).
+
+## 설치 프로그램 그림(release-phase2-spec 3절 A안·5절 B3)
+
+```bash
+node scripts/brand/render_installer.mjs /tmp/inst      # 왼쪽 그림 164×314 · 머리 그림 150×57 PNG
+python3 scripts/brand/pack_installer.py /tmp/inst      # → src-tauri/installer/sidebar.bmp · header.bmp(24비트)
+```
+
+- 왼쪽 그림 = 앱 아이콘 + 워드마크(시그니처 본문색) + 한 줄 소개 + 업무 색 세 줄 + 만든 이 sanbonjini M1(공식 SVG, 높이 40px).
+- `tauri.conf.json` `bundle.windows.nsis.sidebarImage`·`headerImage`·`installerIcon`이 이 파일을 쓴다.

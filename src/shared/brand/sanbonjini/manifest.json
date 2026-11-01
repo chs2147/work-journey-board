@@ -1,0 +1,37 @@
+{
+  "source": "sanbonjini brand kit v2.0.0 (2026-11-01, chs2147/sanbonjini-brand-identity) — 공식 파일을 수정 없이 사용",
+  "website": "https://sanbonjini.vercel.app",
+  "copyright": "Copyright 2026 sanbonjini",
+  "files": [
+    {
+      "id": "h1-en-color",
+      "layout": "H1",
+      "language": "en",
+      "variant": "color",
+      "width": 347,
+      "height": 119,
+      "minimumHeight": 56,
+      "sha256": "2eec019de9854cd2e9cc74796775952711a8dd95372c777678938b1b901e691e"
+    },
+    {
+      "id": "m1-en-color",
+      "layout": "M1",
+      "language": "en",
+      "variant": "color",
+      "width": 363,
+      "height": 119,
+      "minimumHeight": 40,
+      "sha256": "774564dd9affc143b134589863676e1cdc009e7d4090f38389d29048c06210b4"
+    },
+    {
+      "id": "m1-en-reverse",
+      "layout": "M1",
+      "language": "en",
+      "variant": "reverse",
+      "width": 363,
+      "height": 119,
+      "minimumHeight": 40,
+      "sha256": "3479df97e771881b9fa95ac7c5b9d2289117253c2ff9ff2978b3d524779a49db"
+    }
+  ]
+}

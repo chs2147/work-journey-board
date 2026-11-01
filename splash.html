@@ -315,7 +315,7 @@
       .foot {
         display: flex;
         justify-content: space-between;
-        align-items: baseline;
+        align-items: center;
         gap: 16px;
         font-size: 12px;
         color: var(--sp-text-3);
@@ -330,6 +330,23 @@
       .ver {
         margin: 0;
         font-variant-numeric: tabular-nums;
+      }
+      .maker {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .m1 {
+        display: block;
+        height: 40px;
+        width: auto;
+      }
+      .m1-reverse,
+      :root[data-theme="dark"] .m1-color {
+        display: none;
+      }
+      :root[data-theme="dark"] .m1-reverse {
+        display: block;
       }
       .bar {
         position: absolute;
@@ -448,7 +465,12 @@
     </div>
     <div class="foot">
       <p class="status" id="status" role="status">시작하는 중…</p>
-      <p class="ver">v%APP_VERSION%</p>
+      <div class="maker">
+        <p class="ver">v%APP_VERSION%</p>
+        <!-- 만든 이(release-phase2-spec 5절 B1): sanbonjini M1 공식 SVG, 높이 40px(브랜드 최소) — 어두운 테마는 리버스 -->
+        <img class="m1 m1-color" src="/src/shared/brand/sanbonjini/m1-en-color.svg" alt="sanbonjini" height="40" />
+        <img class="m1 m1-reverse" src="/src/shared/brand/sanbonjini/m1-en-reverse.svg" alt="sanbonjini" height="40" />
+      </div>
     </div>
     <div class="bar" aria-hidden="true"></div>
     <script type="module" src="/src/splash/main.ts"></script>

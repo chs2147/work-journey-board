@@ -731,3 +731,12 @@
   font: inherit;
   cursor: pointer;
 }
+
+/* 만든 이 로고(브랜드 가이드: M1 최소 높이 40px, 보호 여백 = 높이의 15% ≈ 6px) */
+.makerLogo {
+  display: block;
+  align-self: flex-start;
+  height: 40px;
+  width: auto;
+  margin: 6px 0;
+}

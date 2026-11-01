@@ -881,7 +881,8 @@ export const STR = {
       },
     },
     theme: "테마",
-    themeDesc: "시스템 설정을 따르거나, 윈도우 설정과 관계없이 라이트·다크·시그니처로 고정합니다.",
+    themeDesc:
+      "처음 설치하면 시그니처로 시작합니다. 시그니처·라이트·다크로 고정하거나 윈도우 설정을 따를 수 있습니다.",
     themeDefault: "기본",
     themeNames: { system: "시스템 설정", light: "라이트", dark: "다크", signature: "시그니처" },
     themeNow: (dark: boolean) =>
@@ -954,7 +955,12 @@ export const STR = {
     about: "정보",
     version: (v: string) => `버전 ${v}`,
     fontLabel: "글꼴",
-    fontCredit: "Pretendard (SIL Open Font License 1.1)",
+    fontCredit: "Pretendard · 고운돋움 (SIL Open Font License 1.1)",
+    // 만든 이 표시(release-phase2-spec 5절 B2) — sanbonjini 브랜드 키트 v2.0.0
+    makerLabel: "만든 이",
+    makerLine: "상상을 작동시키다. · Copyright 2026 sanbonjini",
+    makerSite: "브랜드 사이트",
+    makerSiteUrl: "https://sanbonjini.vercel.app",
     diag: {
       title: "진단 정보",
       desc: "메모리·용량을 확인합니다. 문제를 알릴 때 [복사]해서 붙여 넣어 주세요(기록 내용은 들어가지 않습니다).",
