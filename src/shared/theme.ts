@@ -7,19 +7,22 @@ export type ThemePref = "system" | "light" | "dark" | "signature";
 export type ResolvedTheme = "light" | "dark" | "signature";
 
 export const THEME_KEY = "wjb.theme";
-export const THEME_PREFS: readonly ThemePref[] = ["system", "light", "dark", "signature"];
+/** 설정 카드 순서(release-phase2-spec 2절): 시그니처 → 라이트 → 다크 → 시스템 설정 */
+export const THEME_PREFS: readonly ThemePref[] = ["signature", "light", "dark", "system"];
+/** 처음 설치(사본·설정 없음)의 기본 테마(release-phase2-spec 1절) */
+export const DEFAULT_THEME: ThemePref = "signature";
 const DARK_QUERY = "(prefers-color-scheme: dark)";
 
 export const isThemePref = (v: unknown): v is ThemePref =>
   typeof v === "string" && (THEME_PREFS as readonly string[]).includes(v);
 
-/** 저장된 사본(없거나 읽을 수 없으면 system) */
-export function readStoredTheme(): ThemePref {
+/** 저장된 사본 — 없거나 읽을 수 없으면 fallback(기본 = 처음 설치 기본값 시그니처) */
+export function readStoredTheme(fallback: ThemePref = DEFAULT_THEME): ThemePref {
   try {
     const v = localStorage.getItem(THEME_KEY);
-    return isThemePref(v) ? v : "system";
+    return isThemePref(v) ? v : fallback;
   } catch {
-    return "system";
+    return fallback;
   }
 }
 

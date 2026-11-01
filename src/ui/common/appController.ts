@@ -38,8 +38,9 @@ export async function start() {
   set({ platform: p });
   p.onExit(onExit);
   const config = await p.loadConfig();
-  // 테마 정본 = config.json, 없으면 이 창이 이미 적용한 사본(public/theme-early.js)
-  adoptTheme(config?.theme ?? readStoredTheme());
+  // 테마 정본 = config.json, 없으면 이 창이 이미 적용한 사본(public/theme-early.js).
+  // 처음 설치(설정 없음) = 시그니처, 이미 쓰던 사용자가 테마를 고른 적 없으면 = 시스템 설정 그대로(release-phase2-spec 1절)
+  adoptTheme(config ? (config.theme ?? readStoredTheme("system")) : readStoredTheme());
   if (!config) return set({ journal: { state: "first-run" } });
   p.splash?.status(STR.splash.opening);
   await openAt(config.dataDir);
@@ -223,7 +224,11 @@ export async function openAt(dataDir: string): Promise<boolean> {
 export async function openFolderAsJournal(dataDir: string): Promise<boolean> {
   await platform().ensureDir(dataDir);
   const ok = await openAt(dataDir);
-  if (ok) await platform().saveConfig({ dataDir });
+  if (ok) {
+    const had = await platform().loadConfig();
+    // 첫 일지를 만들 때 지금 테마(처음 설치면 시그니처)를 함께 남긴다
+    await platform().saveConfig(had?.theme ? { dataDir } : { dataDir, theme: get().theme });
+  }
   return ok;
 }
 

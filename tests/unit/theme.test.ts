@@ -61,10 +61,12 @@ describe("config.json", () => {
 });
 
 describe("테마 해석", () => {
-  it("사본이 없거나 이상하면 시스템 설정", () => {
-    expect(readStoredTheme()).toBe("system");
+  it("사본이 없거나 이상하면 처음 설치 기본값 시그니처(이미 쓰던 사용자는 부르는 쪽이 system을 넘김), 순서는 시그니처부터", () => {
+    expect(readStoredTheme()).toBe("signature");
+    expect(readStoredTheme("system")).toBe("system");
     localStorage.setItem(THEME_KEY, "neon");
-    expect(readStoredTheme()).toBe("system");
+    expect(readStoredTheme()).toBe("signature");
+    expect(THEME_PREFS).toEqual(["signature", "light", "dark", "system"]);
     localStorage.setItem(THEME_KEY, "dark");
     expect(readStoredTheme()).toBe("dark");
   });

@@ -41,8 +41,12 @@ function problems(v) {
   return out;
 }
 
+/** 정식 판 = 1.0.0 이상이고 -rc 같은 꼬리표가 없는 판(release-phase2-spec 4절) — 워크플로도 같은 규칙 */
+const isFormal = (v) => /^\d+\.\d+\.\d+$/.test(v) && Number(v.split(".")[0]) >= 1;
+
 function body(v) {
-  const head = [`**Work Journey Board v${v}** (개발 중 사전 릴리스)`, ""];
+  const formal = isFormal(v);
+  const head = [`**Work Journey Board v${v}**${formal ? "" : " (개발 중 사전 릴리스)"}`, ""];
   if (existsSync(notesPath(v))) {
     const text = readFileSync(notesPath(v), "utf8").replace(/\r\n/g, "\n").trim();
     const [first, ...rest] = text.split("\n");
@@ -62,7 +66,9 @@ function body(v) {
     "| 파일 | 용도 |",
     "|---|---|",
     `| \`WorkJourneyBoard_${v}_setup.exe\` | 기본 설치 파일(현재 사용자 전용, WebView2 없으면 자동 설치) |`,
-    "| `…_setup_offline.exe` | (있을 때만) WebView2 오프라인 설치판 — 인터넷이 막힌 PC용 |",
+    formal
+      ? `| \`WorkJourneyBoard_${v}_setup_offline.exe\` | WebView2 오프라인 설치판(약 140MB) — 인터넷이 막힌 PC용 |`
+      : "| `…_setup_offline.exe` | (있을 때만) WebView2 오프라인 설치판 — 인터넷이 막힌 PC용 |",
     "| `SHA256SUMS*.txt` | 무결성 확인: `certutil -hashfile <파일> SHA256` |",
     "",
     "앱은 새 판 확인·내려받기(GitHub)만 인터넷을 쓰며, 기록·메모는 어디에도 보내지 않습니다.",
@@ -92,7 +98,10 @@ if (cmd === "check") {
   const md = body(version);
   if (out) writeFileSync(out, md, "utf8");
   else process.stdout.write(md);
+} else if (cmd === "formal") {
+  // 워크플로용: 정식 판이면 true(GitHub 릴리스를 정식으로 + 오프라인판 함께)
+  process.stdout.write(isFormal(version) ? "true" : "false");
 } else {
-  console.error("사용법: release-notes.mjs check | body <버전> --out <파일>");
+  console.error("사용법: release-notes.mjs check | body <버전> --out <파일> | formal [버전]");
   process.exit(2);
 }

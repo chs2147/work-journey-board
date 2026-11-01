@@ -50,7 +50,7 @@
 | Tauri 플러그인 | sql · dialog(폴더 선택·저장) · fs(저장 폴더 범위만) · clipboard-manager · single-instance · opener(폴더 열기) · window-state |
 | 테스트 | Vitest(+Testing Library), Playwright(브라우저 모드 E2E·스크린샷 — Chromium 기준 + WebKit 보험) |
 | 품질 | ESLint + Prettier, `tsc --noEmit` |
-| CI | GitHub Actions: `ci.yml`(ubuntu: lint·typecheck·test·e2e) / `build-windows.yml`(windows-latest, main 빌드 → `v<버전>` 사전 릴리스 생성·갱신, 수동 실행 시 오프라인 설치판 선택) |
+| CI | GitHub Actions: `ci.yml`(ubuntu: lint·typecheck·test·e2e) / `build-windows.yml`(windows-latest, main 빌드 → `v<버전>` 릴리스 생성·갱신 — 0.x는 사전 릴리스, 1.0.0 이상 정식 판은 정식 릴리스 + 오프라인판 동시, 수동 실행 시 오프라인 설치판 선택) |
 
 ## 3. 디렉토리 구조
 ```
@@ -129,6 +129,7 @@ npm run lint && npm run typecheck
 - **예외(2026-10-23 사용자 지시)**: `docs/`·`README.md`·`CLAUDE.md` 등 **문서만 바뀌는 변경**은 확인 없이 `main`에 바로 커밋·푸시한다. 코드가 함께 바뀌면 기본 정책을 따른다.
 - 릴리스 = `main` 빌드가 `package.json` 버전으로 `v<버전>` 릴리스·태그를 **워크플로가 직접** 만든다(세션에서 태그 푸시가 막혀 있음). "운영 반영" = 회사 PC에 설치 파일 설치.
 - **오프라인 설치판(`webview=offline` 수동 실행)은 평소 빌드에 포함하지 않는다.** 빌드할 때마다 **먼저 사용자에게 확인한 뒤** 실행한다(2026-10-23 사용자 지시). 기본 설치 파일 빌드(푸시 시 자동)는 그대로다.
+  - **예외 — 정식 판(2026-11-01 사용자 확정, release-phase2-spec 4절)**: `1.0.0` 이상이고 꼬리표(`-rc` 등)가 없는 판의 main 빌드는 기본판 + 오프라인판을 **자동으로 함께** 만들어 같은 릴리스에 올리고, 릴리스를 사전 릴리스가 아닌 **정식(Latest)** 으로 표시한다(`scripts/release-notes.mjs formal`이 판정). 0.x·-rc 판은 위 규칙 그대로.
 
 ## 7. 마일스톤 (project-plan.md)
 I-M0 설치 검증(◆G1) → I-M1 핵심 기록(◆G2 2주 실사용) → I-M2 집계·엑셀 → I-M3 시각화 → I-M4 AI 클립보드 다리 → I-M5 안정화·v1.0.0

@@ -61,3 +61,21 @@ describe("release-notes body", () => {
     expect(run(repo("0.2.16", { readme: README }), "body", "0.2.16").status).toBe(1);
   });
 });
+
+describe("정식 판(release-phase2-spec 4절)", () => {
+  it("1.0.0 이상·꼬리표 없음만 정식 — 워크플로가 이 값으로 정식 릴리스·오프라인판을 정한다", () => {
+    const formal = (v: string) => run(repo(v, {}), "formal", v).stdout;
+    expect(formal("0.4.0")).toBe("false");
+    expect(formal("1.0.0-rc.1")).toBe("false");
+    expect(formal("1.0.0")).toBe("true");
+    expect(formal("1.2.3")).toBe("true");
+  });
+  it("정식 판 본문은 '사전 릴리스' 표시 없이 오프라인판 파일 이름을 적는다", () => {
+    const readme = "## Version History\n### v1.0.0 (2026-11-02) — 가상 정식\n- 가상\n";
+    const out = run(repo("1.0.0", { notes: NOTES, readme }), "body", "1.0.0").stdout;
+    expect(out).not.toContain("사전 릴리스");
+    expect(out).toContain("WorkJourneyBoard_1.0.0_setup_offline.exe");
+    const pre = run(repo("0.2.16", { notes: NOTES, readme: README }), "body", "0.2.16").stdout;
+    expect(pre).toContain("(개발 중 사전 릴리스)");
+  });
+});

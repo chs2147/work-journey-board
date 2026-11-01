@@ -2,12 +2,12 @@
 // 규칙은 src/shared/theme.ts의 readStoredTheme + resolveTheme와 같다(tests/unit/theme.test.ts가 대조). 네트워크 없음.
 /* global window, document, localStorage */
 (function () {
-  var pref = "system";
+  var pref = "signature"; // 처음 설치 기본값(release-phase2-spec 1절)
   try {
     var v = localStorage.getItem("wjb.theme");
     if (v === "light" || v === "dark" || v === "system" || v === "signature") pref = v;
   } catch {
-    // 읽을 수 없으면 시스템 설정
+    // 읽을 수 없으면 기본값
   }
   var dark =
     pref === "dark" ||

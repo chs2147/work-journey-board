@@ -1,7 +1,13 @@
 // 설정 › 화면 › 테마(improve-1027v5-spec 4-1): 시스템 설정 / 라이트 / 다크 / 시그니처(design-renewal-v1) 미리보기 카드 — 고르면 바로 적용.
 import { useEffect, useState } from "react";
 import { STR } from "../../shared/strings";
-import { systemTheme, THEME_PREFS, type ResolvedTheme, type ThemePref } from "../../shared/theme";
+import {
+  DEFAULT_THEME,
+  systemTheme,
+  THEME_PREFS,
+  type ResolvedTheme,
+  type ThemePref,
+} from "../../shared/theme";
 import { setTheme } from "../common/appController";
 import { useAppStore } from "../common/appStore";
 import { Card } from "./SettingsCard";
@@ -80,7 +86,7 @@ export function ThemeSettings() {
                 onChange={() => void setTheme(pref)}
               />
               <b>{STR.settings.themeNames[pref]}</b>
-              {pref === "system" && <span className={styles.badge}>{STR.settings.themeDefault}</span>}
+              {pref === DEFAULT_THEME && <span className={styles.badge}>{STR.settings.themeDefault}</span>}
             </span>
             <span className={styles.rowDesc} id={`theme-desc-${pref}`}>
               {desc[pref]}

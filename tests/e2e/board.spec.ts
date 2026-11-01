@@ -389,7 +389,18 @@ test("입력칸 높이가 내용에 맞는다 — 웹 글꼴 로딩 후·포커�
         .filter((t) => t.value && Math.abs(t.offsetHeight - t.scrollHeight) > 1)
         .map((t) => t.value);
     });
-  expect(await page.evaluate(() => document.fonts.check('14px "Pretendard Variable"'))).toBe(true);
+  // 지금 테마의 본문 글꼴(처음 설치 기본 = 시그니처 → 고운돋움, 라이트·다크 → Pretendard)
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        document.fonts.check(
+          document.documentElement.dataset.theme === "signature"
+            ? '14px "Gowun Dodum"'
+            : '14px "Pretendard Variable"',
+        ),
+      ),
+    )
+    .toBe(true);
   expect(await mismatched()).toEqual([]);
   await page.keyboard.press("Escape");
   await page.keyboard.press("Control+ArrowRight"); // 금요일이 넓어지고 목요일이 좁아진다
