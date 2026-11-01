@@ -70,11 +70,11 @@ describe("정식 판(release-phase2-spec 4절)", () => {
     expect(formal("1.0.0")).toBe("true");
     expect(formal("1.2.3")).toBe("true");
   });
-  it("정식 판 본문은 '사전 릴리스' 표시 없이 오프라인판 파일 이름을 적는다", () => {
+  it("정식 판 본문은 '사전 릴리스' 표시가 없고, 오프라인판은 '있을 때만'(요청할 때만 만든다)", () => {
     const readme = "## Version History\n### v1.0.0 (2026-11-02) — 가상 정식\n- 가상\n";
     const out = run(repo("1.0.0", { notes: NOTES, readme }), "body", "1.0.0").stdout;
     expect(out).not.toContain("사전 릴리스");
-    expect(out).toContain("WorkJourneyBoard_1.0.0_setup_offline.exe");
+    expect(out).toContain("| `WorkJourneyBoard_1.0.0_setup_offline.exe` | (있을 때만)");
     const pre = run(repo("0.2.16", { notes: NOTES, readme: README }), "body", "0.2.16").stdout;
     expect(pre).toContain("(개발 중 사전 릴리스)");
   });

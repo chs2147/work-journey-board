@@ -34,7 +34,7 @@
 | 파일 | 용도 |
 |---|---|
 | `WorkJourneyBoard_<버전>_setup.exe` | **기본판**(약 10MB) — WebView2가 없으면 설치 중 자동으로 받음 |
-| `WorkJourneyBoard_<버전>_setup_offline.exe` | **오프라인 설치판**(약 220MB) — 인터넷이 막힌 PC용, WebView2 포함 |
+| `WorkJourneyBoard_<버전>_setup_offline.exe` | **오프라인 설치판**(약 220MB, 올라와 있는 판만) — 인터넷이 막힌 PC용, WebView2 포함 |
 
 - 관리자 권한 없이 **현재 사용자에게만** 설치됩니다. 처음 켜면 시그니처 테마(설정 › 화면 › 테마에서 라이트·다크·시스템 설정으로 바꿀 수 있음).
 - 새 판이 나오면 앱이 켤 때 알려 주고, 설정 › 업데이트에서 내려받아 설치합니다(SHA256 확인 · 설치 전 일지 자동 백업).
@@ -78,7 +78,7 @@ npm run lint && npm run format:check && npm run typecheck
 npm run tauri dev    # 실앱 모드(윈도우 / 리눅스는 webkit2gtk-4.1 필요)
 ```
 - 브라우저 모드 주소 옵션(E2E·시연): `?today=YYYY-MM-DD` 오늘 고정 · `?empty=1` 빈 일지 · `?fresh=1` 첫 실행 화면 · `?existing=/경로` 그 폴더에 샘플 일지 준비 · `?config=/경로` 설정 폴더 지정 · `?sample=year`(`year-img`) 가상 1년치 일지 · `?sample=showcase` README·소개 사이트 화면용 메모 보드 예시 · `?corrupt=1` 파손 일지
-- 윈도우 설치 파일: `main`에 반영되면 [Releases](https://github.com/chs2147/work-journey-board/releases)에 `v<버전>`으로 올라간다 — 0.x·`-rc`는 사전 릴리스(기본판만), 1.0.0 이상 정식 판은 정식 릴리스 + 오프라인 설치판 함께. 그 밖의 오프라인 설치판은 Actions → *Build Windows installer* → Run workflow → `offline`.
+- 윈도우 설치 파일: `main`에 반영되면 [Releases](https://github.com/chs2147/work-journey-board/releases)에 `v<버전>`으로 올라간다 — 0.x·`-rc`는 사전 릴리스, 1.0.0 이상 정식 판은 정식 릴리스(기본판). 오프라인 설치판은 요청할 때만 Actions → *Build Windows installer* → Run workflow(main) → `offline`으로 그 판 릴리스에 더한다.
 
 ## Version History
 ### v1.1.0 (2026-11-01) — 데일리 뷰·패널 폭·오픈소스 라이선스

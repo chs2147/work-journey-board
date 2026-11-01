@@ -66,9 +66,8 @@ function body(v) {
     "| 파일 | 용도 |",
     "|---|---|",
     `| \`WorkJourneyBoard_${v}_setup.exe\` | 기본 설치 파일(현재 사용자 전용, WebView2 없으면 자동 설치) |`,
-    formal
-      ? `| \`WorkJourneyBoard_${v}_setup_offline.exe\` | WebView2 오프라인 설치판(약 220MB) — 인터넷이 막힌 PC용 |`
-      : "| `…_setup_offline.exe` | (있을 때만) WebView2 오프라인 설치판 — 인터넷이 막힌 PC용 |",
+    // 오프라인판은 요청할 때만 수동 실행으로 같은 릴리스에 더한다(2026-11-01 사용자 지시) — 정식 판도 "있을 때만"
+    `| \`WorkJourneyBoard_${v}_setup_offline.exe\` | (있을 때만) WebView2 오프라인 설치판(약 220MB) — 인터넷이 막힌 PC용 |`,
     "| `SHA256SUMS*.txt` | 무결성 확인: `certutil -hashfile <파일> SHA256` |",
     "",
     "앱은 새 판 확인·내려받기(GitHub)만 인터넷을 쓰며, 기록·메모는 어디에도 보내지 않습니다.",
