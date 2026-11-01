@@ -1,6 +1,14 @@
 // 브라우저 모드·테스트용 가짜 파일 시스템. 실제 폴더 대신 메모리에 경로 → DB 바이트를 둔다.
 // 실앱(Tauri)과 같은 인터페이스(stat·백업 폴더 동작·DB 열기)를 흉내 내 첫 실행·저장 위치 변경 흐름을 리눅스에서 시험한다.
-import { isDeletableByApp, type BackupFs, type VerifyCopy } from "../data/backup";
+import {
+  BACKUP_DIR,
+  DATA_FILE,
+  isBeforeRestoreName,
+  isDeletableByApp,
+  isRestorableName,
+  type BackupFs,
+  type VerifyCopy,
+} from "../data/backup";
 import type { SqlDriver, SqlParam } from "../data/driver";
 import type { SqlJsDriver } from "../data/drivers/sqlJs";
 import type { PathInfo } from "./index";
@@ -19,6 +27,7 @@ export interface FakeFs {
   openDatabase(path: string): Promise<SqlDriver>;
   verifyCopy: VerifyCopy;
   backupFs: BackupFs;
+  restoreJournal(dataDir: string, backupName: string, beforeName: string): Promise<void>;
   /** 테스트 준비용: 일반 파일 하나 만들기 */
   writeFile(path: string, bytes?: Uint8Array): void;
   /** 테스트 확인용: 경로 목록 */
@@ -125,6 +134,24 @@ export function createFakeFs(open: OpenSqlJs): FakeFs {
       }
     },
     backupFs,
+    // 실앱 Rust restore_journal과 같은 규칙: 이름 검사 → 지금 일지를 backups\<before>로 옮김 → 백업을 새 일지로 복사(실패하면 되돌림)
+    async restoreJournal(dataDir, backupName, beforeName) {
+      if (!isRestorableName(backupName) || !isBeforeRestoreName(beforeName))
+        throw new Error(`허용되지 않은 복원: ${backupName} → ${beforeName}`);
+      const journal = join(dataDir, DATA_FILE);
+      const backup = join(dataDir, BACKUP_DIR, backupName);
+      const before = join(dataDir, BACKUP_DIR, beforeName);
+      if (live.has(norm(journal))) throw new Error("일지가 열려 있습니다");
+      const src = bytesOf(backup);
+      if (!src) throw new Error(`없는 백업: ${backupName}`);
+      if (exists(before)) throw new Error(`이미 있는 파일: ${beforeName}`);
+      const cur = bytesOf(journal);
+      if (cur) {
+        files.set(norm(before), cur);
+        files.delete(norm(journal));
+      }
+      files.set(norm(journal), src.slice());
+    },
     writeFile(path, bytes = new Uint8Array([1])) {
       ensureDirSync(parentOf(path));
       files.set(norm(path), bytes);

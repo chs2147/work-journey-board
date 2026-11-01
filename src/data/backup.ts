@@ -23,6 +23,16 @@ export const backupNames = {
   preUpdate: (now: Date) => `work-journey_${localStamp(now)}_pre-update.db`,
 };
 
+/** 복원할 수 있는 백업 이름(앱이 만드는 모든 백업 — 일일·월간·수동·마이그레이션·가져오기·업데이트 전·복원 전) */
+const RESTORABLE_RE =
+  /^work-journey_\d{4}-\d{2}(?:-\d{2})?(?:_\d{4})?(?:_(?:monthly|manual|pre-migration-v\d+|before-restore|pre-import|pre-update))?\.db$/;
+const BEFORE_RESTORE_RE = /^work-journey_\d{4}-\d{2}-\d{2}_\d{4}_before-restore\.db$/;
+
+/** 복원 대상으로 받을 수 있는 백업 이름인가(실앱 Rust restore_journal이 같은 규칙으로 한 번 더 검사) */
+export const isRestorableName = (name: string) => RESTORABLE_RE.test(name);
+/** 복원 직전 보존 사본 이름인가 */
+export const isBeforeRestoreName = (name: string) => BEFORE_RESTORE_RE.test(name);
+
 export const isDailyBackup = (name: string) => DAILY_RE.test(name);
 export const isMonthlyBackup = (name: string) => MONTHLY_RE.test(name);
 
@@ -119,6 +129,29 @@ export async function runAutoBackup(
   const deleted = planRotation(await fs.list(dir), keep);
   for (const name of deleted) await removeGuarded(fs, dir, name);
   return { daily, monthly, deleted };
+}
+
+/** 보조 위치에 남기는 일일 사본 수(optimize-1031-plan B6) */
+export const MIRROR_KEEP = 3;
+
+/**
+ * 보조 백업 위치(B6): 사용자가 고른 다른 폴더에 그날 일일 사본을 하나 더(같은 날이면 덮어씀), 최신 MIRROR_KEEP개만 남김.
+ * 지우는 것은 그 폴더의 일일 패턴 파일뿐(removeGuarded) — 사용자가 넣은 다른 파일은 그대로.
+ */
+export async function runMirrorBackup(
+  driver: SqlDriver,
+  fs: BackupFs,
+  mirrorDir: string,
+  now: Date,
+  verify?: VerifyCopy,
+): Promise<{ path: string; deleted: string[] }> {
+  const path = await writeBackup(driver, fs, mirrorDir, backupNames.daily(now), verify);
+  const deleted = planRotation(await fs.list(mirrorDir), {
+    daily: MIRROR_KEEP,
+    monthly: Number.MAX_SAFE_INTEGER,
+  });
+  for (const name of deleted) await removeGuarded(fs, mirrorDir, name);
+  return { path, deleted };
 }
 
 /** 수동 "지금 백업"(자동 삭제 대상 아님) */

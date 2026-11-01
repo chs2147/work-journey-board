@@ -51,7 +51,11 @@ pub async fn db_batch(
         for v in s.params.iter().cloned() {
             q = bind(q, v);
         }
-        changes += q.execute(&mut *tx).await.map_err(|e| e.to_string())?.rows_affected();
+        changes += q
+            .execute(&mut *tx)
+            .await
+            .map_err(|e| e.to_string())?
+            .rows_affected();
     }
     tx.commit().await.map_err(|e| e.to_string())?;
     Ok(changes)

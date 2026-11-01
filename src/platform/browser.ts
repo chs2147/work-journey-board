@@ -2,7 +2,7 @@ import wasmUrl from "sql.js/dist/sql-wasm.wasm?url";
 import sample from "../../fixtures/sample-weeks.json";
 import sampleLong from "../../fixtures/sample-long.json";
 import sampleInsights from "../../fixtures/sample-insights.json";
-import { DATA_FILE } from "../data/backup";
+import { BACKUP_DIR, DATA_FILE } from "../data/backup";
 import { prepareConnection } from "../data/driver";
 import { openSqlJs, sqlJsCalls } from "../data/drivers/sqlJs";
 import { migrate } from "../data/migrate";
@@ -20,6 +20,7 @@ import { baseName, dirOf, isOneDriveLike, type AppConfig, type Platform } from "
 //   ?sample=year        가상 1년치(업무 6개·항목 약 4,400개·52주 메모) — 성능 측정(optimize-1031-plan O1)
 //   ?sample=year-img    위 + 주마다 메모 이미지 2장(800×500 PNG)
 //   ?sample=insights    약 6개월·종료/재개·링크·연결 메모·연차 가상 샘플(M3-S1 인사이트, fixtures/sample-insights.json)
+//   ?corrupt=1          일지 파일을 깨진 바이트로(멀쩡한 일일 백업 1개는 남김) → "데이터 파일 문제" 화면·복원 시험
 //   ?fresh=1            설정 없음 → 첫 실행 화면
 //   ?existing=/경로     그 폴더에 샘플이 든 기존 일지를 미리 만들어 둠(첫 실행 "기존 일지 열기" 시험)
 //   ?config=/경로       설정의 저장 폴더를 그 경로로(없는 폴더면 "저장 폴더를 찾을 수 없음" 화면)
@@ -73,6 +74,13 @@ const ready = (async () => {
   } else if (params.get("fresh") !== "1") {
     await makeJournal(DEMO_DIR, params.get("empty") !== "1");
     config = { dataDir: DEMO_DIR };
+    if (params.get("corrupt") === "1") {
+      // 파손 흉내(optimize-1031-plan O5): 멀쩡한 일일 백업을 하나 남기고 일지 파일을 깨진 바이트로
+      const journal = fs.join(DEMO_DIR, DATA_FILE);
+      await fs.ensureDir(fs.join(DEMO_DIR, BACKUP_DIR));
+      await fs.copyNew(journal, fs.join(DEMO_DIR, BACKUP_DIR, "work-journey_2026-10-21.db"));
+      fs.writeFile(journal, new TextEncoder().encode("이것은 SQLite 파일이 아닙니다 ".repeat(200)));
+    }
   }
   // ?theme=dark — 이 PC 설정(config.json)에 테마가 적혀 있는 상태 흉내(improve-1027v5-spec 4-2)
   const theme = params.get("theme");
@@ -110,6 +118,7 @@ export const browserPlatform: Platform = {
   stat: (p) => fs.stat(p),
   ensureDir: (p) => fs.ensureDir(p),
   copyNew: (a, b) => fs.copyNew(a, b),
+  restoreJournal: (dir, name, before) => fs.restoreJournal(dir, name, before),
   openFolder: async () => undefined,
   async pickSaveFile(title, defaultPath) {
     // 실제 저장 대화상자 대신 경로 입력(E2E는 page.on("dialog")로 응답)

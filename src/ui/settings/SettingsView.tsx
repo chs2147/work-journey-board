@@ -12,8 +12,17 @@ import { openPeriod } from "../../domain/categories";
 import type { Recurrence } from "../../domain/recurrence";
 import type { Category } from "../../domain/types";
 import { DAY_LABELS, weekIdOf } from "../../domain/week";
-import { BACKUP_DIR } from "../../data/backup";
-import { classifyFolder, journalPath, lastBackupOf, manualBackup, type BackupInfo } from "../../data/session";
+import { BACKUP_DIR, MIRROR_KEEP, runMirrorBackup } from "../../data/backup";
+import {
+  backupFolderStats,
+  classifyFolder,
+  journalPath,
+  lastBackupOf,
+  manualBackup,
+  type BackupFolderStats,
+  type BackupInfo,
+} from "../../data/session";
+import { RestorePanel } from "../common/RestorePanel";
 import { SETTINGS_CATEGORIES, type Settings, type SettingsCategory } from "../../data/settings";
 import { formatBytes, STR } from "../../shared/strings";
 import { toast } from "../board/boardStore";
@@ -75,6 +84,9 @@ export function SettingsView() {
   const [cats, setCats] = useState<Map<string, Category>>(new Map());
   const [pending, setPending] = useState<Pending | null>(null);
   const [copyBackups, setCopyBackups] = useState(true);
+  const [backupStats, setBackupStats] = useState<BackupFolderStats | null>(null);
+  const [mirror, setMirror] = useState<string | null>(null);
+  const [restoreOpen, setRestoreOpen] = useState(false);
   const tabRefs = useRef<Partial<Record<SettingsCategory, HTMLButtonElement | null>>>({});
   const pendingRef = useRef(pending);
   useEffect(() => {
@@ -89,6 +101,8 @@ export function SettingsView() {
     setCat((c) => c ?? (hasUpdate(useUpdate.getState()) ? "update" : s.ui.settingsCategory));
     setSize((await platform.stat(journalPath(platform, ready.dataDir))).size);
     setLast(await lastBackupOf(platform, ready.dataDir));
+    setBackupStats(await backupFolderStats(platform, ready.dataDir));
+    setMirror((await platform.loadConfig())?.backupMirror ?? null);
     setImageUse(await ready.repo.noteAssetStats());
     setImports(await ready.repo.listImports());
     const { categories, periods } = await ready.repo.listCategories();
@@ -338,7 +352,100 @@ export function SettingsView() {
             {STR.settings.openBackups}
           </button>
         </Row>
+        <Row
+          label={STR.backupMore.periodicLabel}
+          desc={
+            <>
+              {settings && STR.backupMore.periodic(settings.backup.periodicHours)}
+              {backupStats && (
+                <span data-testid="backup-usage">
+                  {" · "}
+                  {STR.backupMore.usage(backupStats.count, formatBytes(backupStats.bytes))}
+                </span>
+              )}
+            </>
+          }
+        />
+        <Row
+          label={STR.backupMore.mirrorLabel}
+          desc={mirror ? STR.backupMore.mirrorOn(mirror, MIRROR_KEEP) : STR.backupMore.mirrorOff}
+          descTestId="mirror-desc"
+        >
+          {mirror && (
+            <button
+              type="button"
+              onClick={async () => {
+                await platform.saveConfig({ backupMirror: null });
+                setMirror(null);
+                toast(STR.backupMore.mirrorCleared);
+              }}
+            >
+              {STR.backupMore.mirrorOffButton}
+            </button>
+          )}
+          <button
+            type="button"
+            data-testid="mirror-pick"
+            onClick={async () => {
+              const picked = await platform.pickFolder(STR.backupMore.mirrorPickTitle);
+              if (!picked) return;
+              const norm = (x: string) => x.replace(/[\\/]+$/, "").toLowerCase();
+              const data = norm(ready.dataDir);
+              if (norm(picked) === data || norm(picked) === norm(platform.join(ready.dataDir, BACKUP_DIR)))
+                return toast(STR.backupMore.mirrorSame);
+              try {
+                await platform.ensureDir(picked);
+                await ready.repo.exclusive(() =>
+                  runMirrorBackup(
+                    ready.driver,
+                    platform.backupFs,
+                    picked,
+                    platform.now(),
+                    platform.verifyCopy,
+                  ),
+                );
+                await platform.saveConfig({ backupMirror: picked });
+                setMirror(picked);
+                toast(STR.backupMore.mirrorSet);
+              } catch (e) {
+                toast(STR.backupMore.mirrorFailed(e instanceof Error ? e.message : String(e)));
+              }
+            }}
+          >
+            {STR.backupMore.mirrorPick}
+          </button>
+        </Row>
+        <Row label={STR.restore.rowLabel} desc={STR.restore.rowDesc}>
+          <button type="button" data-testid="restore-open" onClick={() => setRestoreOpen(true)}>
+            {STR.restore.open}
+          </button>
+        </Row>
       </Card>
+      {restoreOpen && (
+        <div
+          className={styles.modalBack}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="restore-title"
+          onKeyDown={(e) => {
+            if (e.key === "Escape") {
+              e.stopPropagation();
+              setRestoreOpen(false);
+            }
+          }}
+        >
+          <div className={styles.modal}>
+            <h3 id="restore-title">{STR.restore.title}</h3>
+            <p className={styles.rowDesc}>{STR.restore.intro}</p>
+            <RestorePanel dataDir={ready.dataDir} />
+            <div className={styles.modalActions}>
+              <button type="button" autoFocus onClick={() => setRestoreOpen(false)}>
+                {STR.restore.cancel}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 용량(weekly-note-spec 5-3): 메모 이미지는 일지 파일 안에 있어 백업 사본마다 함께 들어간다 */}
       <Card id="s-usage" title={STR.settings.usageTitle} desc={STR.settings.usageDesc}>

@@ -52,7 +52,7 @@ import {
   type WeekId,
 } from "../domain/week";
 import { nextColorKey, type CategoryColorKey, CATEGORY_COLOR_KEYS } from "../shared/palette";
-import type { SqlDriver, SqlParam, SqlStatement } from "./driver";
+import { isCorruptError, type SqlDriver, type SqlParam, type SqlStatement } from "./driver";
 import { uuidv7 } from "./ids";
 import { DEFAULT_SETTINGS, mergeSettings, type Settings, type SettingsPatch } from "./settings";
 
@@ -300,6 +300,12 @@ const CACHE_RES = Object.fromEntries(
 export class JournalRepository {
   private readonly db: SqlDriver;
   private readonly cache = new Map<CacheKey, Promise<unknown>>();
+  /** 저장소를 거친 쓰기 횟수 — 마지막 백업 뒤로 바뀐 게 있는지(optimize-1031-plan B1·B3) */
+  private writes = 0;
+  /** 백업 중에는 쓰기를 기다리게 한다(B2 — 실앱은 연결 풀이라 백업 도중 쓰면 잠김 오류가 날 수 있음) */
+  private gate: Promise<void> = Promise.resolve();
+  /** 파일 파손으로 보이는 오류가 나면 부를 곳(B4) */
+  private onCorrupt: ((e: unknown) => void) | null = null;
 
   constructor(
     db: SqlDriver,
@@ -309,25 +315,60 @@ export class JournalRepository {
       for (const key of Object.keys(CACHE_RES) as CacheKey[])
         if (CACHE_RES[key].test(sql)) this.cache.delete(key);
     };
+    const watch = async <T>(work: () => Promise<T>): Promise<T> => {
+      try {
+        return await work();
+      } catch (e) {
+        if (isCorruptError(e)) this.onCorrupt?.(e);
+        throw e;
+      }
+    };
     this.db = {
       label: db.label,
-      select: (sql, params) => db.select(sql, params),
+      select: (sql, params) => watch(() => db.select(sql, params)),
       execute: async (sql, params) => {
+        await this.gate;
         try {
-          return await db.execute(sql, params);
+          return await watch(() => db.execute(sql, params));
         } finally {
+          this.writes++;
           touched(sql);
         }
       },
       batch: async (statements) => {
+        await this.gate;
         try {
-          return await db.batch(statements);
+          return await watch(() => db.batch(statements));
         } finally {
+          this.writes++;
           for (const st of statements) touched(st.sql);
         }
       },
       close: () => db.close(),
     };
+  }
+
+  /** 지금까지의 쓰기 횟수(백업 판단용) */
+  get writeCount(): number {
+    return this.writes;
+  }
+
+  /** 파일 파손으로 보이는 오류를 받을 곳 */
+  setCorruptHandler(fn: ((e: unknown) => void) | null) {
+    this.onCorrupt = fn;
+  }
+
+  /** 이 일이 끝날 때까지 저장소 쓰기를 기다리게 한다(백업 — 읽기는 그대로) */
+  async exclusive<T>(work: () => Promise<T>): Promise<T> {
+    const prev = this.gate;
+    let open!: () => void;
+    this.gate = new Promise<void>((resolve) => (open = resolve));
+    await prev;
+    try {
+      return await work();
+    } finally {
+      open();
+    }
   }
 
   /** 캐시에서 읽기 — 부르는 쪽이 고쳐도 캐시가 바뀌지 않게 사본을 준다 */

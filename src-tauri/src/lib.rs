@@ -30,7 +30,8 @@ pub fn run() {
         .manage(update::UpdateState::default())
         // 창 배경색은 설정 파일 값이 라이트라서, 다크 테마면 여기서 바꿔 밝은 번쩍임을 막는다(docs/splash-spec.md).
         .setup(|app| {
-            for (label, (r, g, b)) in [("splash", (0x23, 0x23, 0x22)), ("main", (0x1a, 0x1a, 0x19))] {
+            for (label, (r, g, b)) in [("splash", (0x23, 0x23, 0x22)), ("main", (0x1a, 0x1a, 0x19))]
+            {
                 if let Some(w) = app.get_webview_window(label) {
                     if matches!(w.theme(), Ok(tauri::Theme::Dark)) {
                         let _ = w.set_background_color(Some(tauri::window::Color(r, g, b, 0xff)));
@@ -52,6 +53,7 @@ pub fn run() {
             files::fs_remove_backup,
             files::fs_rename_backup,
             files::fs_copy_new,
+            files::restore_journal,
             files::export_write,
             files::open_folder,
             files::open_url,

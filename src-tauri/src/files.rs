@@ -18,7 +18,12 @@ fn err<E: std::fmt::Display>(e: E) -> String {
 
 /// `%LOCALAPPDATA%\WorkJourneyBoard\config.json` (Roaming이 아닌 Local — data-spec 3-4)
 fn config_path(app: &AppHandle) -> Result<PathBuf, String> {
-    Ok(app.path().local_data_dir().map_err(err)?.join(CONFIG_DIR).join(CONFIG_FILE))
+    Ok(app
+        .path()
+        .local_data_dir()
+        .map_err(err)?
+        .join(CONFIG_DIR)
+        .join(CONFIG_FILE))
 }
 
 #[tauri::command]
@@ -65,8 +70,16 @@ pub struct PathInfo {
 #[tauri::command]
 pub fn fs_stat(path: String) -> PathInfo {
     match fs::metadata(&path) {
-        Ok(m) => PathInfo { exists: true, is_dir: m.is_dir(), size: m.is_file().then(|| m.len()) },
-        Err(_) => PathInfo { exists: false, is_dir: false, size: None },
+        Ok(m) => PathInfo {
+            exists: true,
+            is_dir: m.is_dir(),
+            size: m.is_file().then(|| m.len()),
+        },
+        Err(_) => PathInfo {
+            exists: false,
+            is_dir: false,
+            size: None,
+        },
     }
 }
 
@@ -94,7 +107,10 @@ pub fn fs_ensure_dir(dir: String) -> Result<(), String> {
 }
 
 fn file_name(p: &str) -> String {
-    Path::new(p).file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default()
+    Path::new(p)
+        .file_name()
+        .map(|n| n.to_string_lossy().into_owned())
+        .unwrap_or_default()
 }
 
 fn is_digits(s: &str, n: usize) -> bool {
@@ -127,7 +143,11 @@ fn is_monthly(name: &str) -> bool {
 fn is_temp(name: &str) -> bool {
     name.strip_prefix("work-journey_")
         .and_then(|r| r.strip_suffix(".db.tmp"))
-        .map(|m| !m.is_empty() && m.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'_' || b == b'-'))
+        .map(|m| {
+            !m.is_empty()
+                && m.bytes()
+                    .all(|b| b.is_ascii_alphanumeric() || b == b'_' || b == b'-')
+        })
         .unwrap_or(false)
 }
 
@@ -159,16 +179,123 @@ pub fn fs_rename_backup(from: String, to: String) -> Result<(), String> {
 #[tauri::command]
 pub fn fs_copy_new(from: String, to: String) -> Result<(), String> {
     let mut src = fs::File::open(&from).map_err(err)?;
-    let mut dst = fs::OpenOptions::new().write(true).create_new(true).open(&to).map_err(err)?;
+    let mut dst = fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&to)
+        .map_err(err)?;
     std::io::copy(&mut src, &mut dst).map_err(err)?;
     dst.sync_all().map_err(err)
+}
+
+/// 복원할 수 있는 백업 이름(src/data/backup.ts isRestorableName과 같은 규칙):
+/// work-journey_YYYY-MM[-DD][_HHMM][_monthly|_manual|_pre-migration-vN|_before-restore|_pre-import|_pre-update].db
+fn is_restorable(name: &str) -> bool {
+    let Some(core) = name
+        .strip_prefix("work-journey_")
+        .and_then(|r| r.strip_suffix(".db"))
+    else {
+        return false;
+    };
+    let mut parts = core.split('_').peekable();
+    let date: Vec<&str> = parts.next().unwrap_or("").split('-').collect();
+    let date_ok = (date.len() == 2 || date.len() == 3)
+        && is_digits(date[0], 4)
+        && is_digits(date[1], 2)
+        && (date.len() == 2 || is_digits(date[2], 2));
+    if !date_ok {
+        return false;
+    }
+    if parts.peek().is_some_and(|p| is_digits(p, 4)) {
+        parts.next();
+    }
+    if let Some(tag) = parts.next() {
+        let tag_ok = matches!(
+            tag,
+            "monthly" | "manual" | "before-restore" | "pre-import" | "pre-update"
+        ) || tag
+            .strip_prefix("pre-migration-v")
+            .is_some_and(|n| !n.is_empty() && n.bytes().all(|b| b.is_ascii_digit()));
+        if !tag_ok {
+            return false;
+        }
+    }
+    parts.next().is_none()
+}
+
+/// 복원 직전 보존 사본 이름: work-journey_YYYY-MM-DD_HHMM_before-restore.db
+fn is_before_restore(name: &str) -> bool {
+    name.strip_prefix("work-journey_")
+        .and_then(|r| r.strip_suffix("_before-restore.db"))
+        .map(|m| {
+            let p: Vec<&str> = m.split('_').collect();
+            p.len() == 2 && is_daily(&format!("work-journey_{}.db", p[0])) && is_digits(p[1], 4)
+        })
+        .unwrap_or(false)
+}
+
+/// 백업에서 복원(optimize-1031-plan O5, data-spec 7-3): ① 지금 일지(있으면)를 backups\<before_name>으로 옮겨 보존
+/// ② backups\<backup_name>을 일지 이름으로 새 파일 복사(덮어쓰지 않음). ②가 실패하면 ①을 되돌린다. 일지는 닫혀 있어야 한다.
+/// 이름은 파일 이름만(경로 불가), 백업·보존 이름은 위 패턴만 — 사용자가 넣은 다른 파일은 건드리지 않는다.
+#[tauri::command]
+pub fn restore_journal(
+    data_dir: String,
+    backup_name: String,
+    before_name: String,
+) -> Result<(), String> {
+    if file_name(&backup_name) != backup_name
+        || file_name(&before_name) != before_name
+        || !is_restorable(&backup_name)
+        || !is_before_restore(&before_name)
+    {
+        return Err(format!("허용되지 않은 복원: {backup_name} → {before_name}"));
+    }
+    let dir = Path::new(&data_dir);
+    let journal = dir.join("work-journey.db");
+    let backup = dir.join("backups").join(&backup_name);
+    let before = dir.join("backups").join(&before_name);
+    if !backup.is_file() {
+        return Err(format!("없는 백업: {backup_name}"));
+    }
+    if before.exists() {
+        return Err(format!("이미 있는 파일: {before_name}"));
+    }
+    let moved = journal.exists();
+    if moved {
+        fs::rename(&journal, &before).map_err(err)?;
+    }
+    // 새로 만든 일지 파일만 실패 시 지운다(원래 있던 파일은 ①에서 옮겨 두었으니 되돌린다)
+    let mut created = false;
+    let copied = (|| -> std::io::Result<()> {
+        let mut src = fs::File::open(&backup)?;
+        let mut dst = fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&journal)?;
+        created = true;
+        std::io::copy(&mut src, &mut dst)?;
+        dst.sync_all()
+    })();
+    if let Err(e) = copied {
+        if created {
+            let _ = fs::remove_file(&journal);
+        }
+        if moved {
+            let _ = fs::rename(&before, &journal);
+        }
+        return Err(err(e));
+    }
+    Ok(())
 }
 
 /// 설정 파일에 적힌 저장 폴더(없거나 읽지 못하면 None)
 fn configured_data_dir(app: &AppHandle) -> Option<String> {
     let raw = fs::read_to_string(config_path(app).ok()?).ok()?;
     let v: serde_json::Value = serde_json::from_str(&raw).ok()?;
-    v.get("dataDir")?.as_str().filter(|s| !s.is_empty()).map(str::to_string)
+    v.get("dataDir")?
+        .as_str()
+        .filter(|s| !s.is_empty())
+        .map(str::to_string)
 }
 
 /// 경로 비교용: 구분자를 `\\`로 맞추고 끝 구분자를 떼고 소문자로(윈도우는 대소문자를 가리지 않음)
@@ -185,7 +312,10 @@ const EXPORT_EXTS: [&str; 3] = [".xlsx", ".png", ".webp"];
 fn export_path_allowed(path: &str, data_dir: Option<&str>) -> Result<(), String> {
     let p = norm(path);
     let (parent, name) = p.rsplit_once('\\').unwrap_or(("", p.as_str()));
-    if !EXPORT_EXTS.iter().any(|ext| name.ends_with(ext) && name.len() > ext.len()) {
+    if !EXPORT_EXTS
+        .iter()
+        .any(|ext| name.ends_with(ext) && name.len() > ext.len())
+    {
         return Err(format!(
             "엑셀(.xlsx) 또는 이미지(.png·.webp) 파일로만 저장할 수 있습니다: {name}"
         ));
@@ -204,7 +334,11 @@ fn export_path_allowed(path: &str, data_dir: Option<&str>) -> Result<(), String>
 pub fn export_write(app: AppHandle, path: String, bytes: Vec<u8>) -> Result<(), String> {
     export_path_allowed(&path, configured_data_dir(&app).as_deref())?;
     let target = PathBuf::from(&path);
-    let ext = target.extension().and_then(|e| e.to_str()).unwrap_or("out").to_owned();
+    let ext = target
+        .extension()
+        .and_then(|e| e.to_str())
+        .unwrap_or("out")
+        .to_owned();
     let tmp = target.with_extension(format!("{ext}.tmp"));
     let write = || -> std::io::Result<()> {
         let mut f = fs::File::create(&tmp)?;
@@ -214,7 +348,9 @@ pub fn export_write(app: AppHandle, path: String, bytes: Vec<u8>) -> Result<(), 
     };
     write().map_err(|e| {
         let _ = fs::remove_file(&tmp);
-        format!("파일을 저장하지 못했습니다(다른 프로그램에서 열려 있으면 닫고 다시 시도하세요): {e}")
+        format!(
+            "파일을 저장하지 못했습니다(다른 프로그램에서 열려 있으면 닫고 다시 시도하세요): {e}"
+        )
     })
 }
 
@@ -226,7 +362,10 @@ pub fn open_folder(app: AppHandle, path: String) -> Result<(), String> {
 /// 링크 열기(improve-1026-spec 9-2): http/https 주소만, 공백·제어 문자 없이, 2048자까지.
 /// 앱은 주소에 접속하지 않고 OS 기본 브라우저에 넘길 뿐이다(외부 통신 0, CLAUDE.md 4-1). TS `isOpenableUrl`과 같은 규칙.
 fn url_openable(url: &str) -> bool {
-    if url.is_empty() || url.len() > 2048 || url.chars().any(|c| c.is_whitespace() || c.is_control()) {
+    if url.is_empty()
+        || url.len() > 2048
+        || url.chars().any(|c| c.is_whitespace() || c.is_control())
+    {
         return false;
     }
     let lower = url.to_ascii_lowercase();
@@ -278,7 +417,10 @@ mod tests {
         ] {
             assert!(!url_openable(no), "{no}");
         }
-        assert!(!url_openable(&format!("https://a.example/{}", "x".repeat(2100))));
+        assert!(!url_openable(&format!(
+            "https://a.example/{}",
+            "x".repeat(2100)
+        )));
     }
 
     #[test]
@@ -315,7 +457,11 @@ mod tests {
         ] {
             assert!(export_path_allowed(no, Some(dir)).is_err(), "{no}");
         }
-        assert!(export_path_allowed("/home/u/WorkJourney/backups/a.xlsx", Some("/home/u/WorkJourney")).is_err());
+        assert!(export_path_allowed(
+            "/home/u/WorkJourney/backups/a.xlsx",
+            Some("/home/u/WorkJourney")
+        )
+        .is_err());
     }
 
     #[test]
@@ -340,5 +486,87 @@ mod tests {
         ] {
             assert!(!is_deletable(no), "{no}");
         }
+    }
+
+    #[test]
+    fn restorable_names_match_backup_ts() {
+        for ok in [
+            "work-journey_2026-10-23.db",
+            "work-journey_2026-10_monthly.db",
+            "work-journey_2026-10-23_0831_manual.db",
+            "work-journey_2026-10-23_0831_pre-migration-v7.db",
+            "work-journey_2026-10-23_0831_before-restore.db",
+            "work-journey_2026-10-23_0831_pre-import.db",
+            "work-journey_2026-10-23_0831_pre-update.db",
+        ] {
+            assert!(is_restorable(ok), "{ok}");
+        }
+        for no in [
+            "work-journey.db",
+            "work-journey_2026-10-23.db.tmp",
+            "work-journey_2026-10-23_0831_other.db",
+            "work-journey_2026-1-1.db",
+            "work-journey_2026-10-23_0831_manual_x.db",
+            "내 메모.txt",
+            "../work-journey_2026-10-23.db",
+        ] {
+            assert!(!is_restorable(no), "{no}");
+        }
+        assert!(is_before_restore(
+            "work-journey_2026-10-23_0831_before-restore.db"
+        ));
+        assert!(!is_before_restore(
+            "work-journey_2026-10-23_before-restore.db"
+        ));
+        assert!(!is_before_restore("work-journey_2026-10-23_0831_manual.db"));
+    }
+
+    #[test]
+    fn restore_keeps_current_and_copies_backup() {
+        let dir = std::env::temp_dir().join(format!("wjb-restore-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join("backups")).unwrap();
+        fs::write(dir.join("work-journey.db"), b"broken").unwrap();
+        fs::write(dir.join("backups/work-journey_2026-10-21.db"), b"good").unwrap();
+        fs::write(dir.join("backups/note.txt"), b"keep").unwrap();
+        let d = dir.to_string_lossy().into_owned();
+        // 경로가 섞인 이름·패턴 밖 이름은 거부
+        assert!(restore_journal(
+            d.clone(),
+            "../work-journey.db".into(),
+            "work-journey_2026-10-23_0831_before-restore.db".into()
+        )
+        .is_err());
+        assert!(restore_journal(
+            d.clone(),
+            "note.txt".into(),
+            "work-journey_2026-10-23_0831_before-restore.db".into()
+        )
+        .is_err());
+        restore_journal(
+            d.clone(),
+            "work-journey_2026-10-21.db".into(),
+            "work-journey_2026-10-23_0831_before-restore.db".into(),
+        )
+        .unwrap();
+        assert_eq!(fs::read(dir.join("work-journey.db")).unwrap(), b"good");
+        assert_eq!(
+            fs::read(dir.join("backups/work-journey_2026-10-23_0831_before-restore.db")).unwrap(),
+            b"broken"
+        );
+        assert_eq!(
+            fs::read(dir.join("backups/work-journey_2026-10-21.db")).unwrap(),
+            b"good"
+        );
+        assert_eq!(fs::read(dir.join("backups/note.txt")).unwrap(), b"keep");
+        // 같은 보존 이름이 이미 있으면 아무것도 바꾸지 않는다
+        assert!(restore_journal(
+            d,
+            "work-journey_2026-10-21.db".into(),
+            "work-journey_2026-10-23_0831_before-restore.db".into()
+        )
+        .is_err());
+        assert_eq!(fs::read(dir.join("work-journey.db")).unwrap(), b"good");
+        let _ = fs::remove_dir_all(&dir);
     }
 }

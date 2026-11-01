@@ -812,7 +812,7 @@ export const STR = {
     title: "데이터 파일에 문제가 있습니다",
     body: (path: string) => `파일 검사에 실패했습니다: ${path}`,
     guide:
-      "앱 안에서 백업 복원은 다음 버전에서 지원합니다. 지금은 앱을 닫고, 현재 파일을 다른 이름으로 보관한 뒤 backups 폴더의 최근 백업 파일을 복사해 work-journey.db로 이름을 바꾸세요.",
+      "아래에서 백업을 골라 복원할 수 있습니다. 지금 파일은 지우지 않고 backups 폴더에 '…_before-restore.db'로 보관합니다.",
     openBackups: "백업 폴더 열기",
     retry: "다시 시도",
   },
@@ -893,7 +893,7 @@ export const STR = {
       "테마는 이 PC에 저장됩니다(일지 파일과 따로). 다른 PC에서 같은 일지를 열면 그 PC의 테마를 따릅니다. 시작 창도 같은 테마로 뜹니다.",
     locationDesc: "일지 = 이 폴더의 파일 1개",
     folderLabel: "일지 폴더",
-    backupDesc: "하루 첫 실행·종료 때 자동",
+    backupDesc: "켤 때·닫을 때, 켜 둔 동안 2시간마다 자동",
     lastBackupLabel: "마지막 백업",
     policyLabel: "보관 규칙",
     usageTitle: "용량",
@@ -987,6 +987,63 @@ export const STR = {
   },
   exitBackupFailed: "종료 백업에 실패했습니다",
   startBackupFailed: (m: string) => `자동 백업 실패: ${m}`,
+  // 백업 보강(optimize-1031-plan B1·B5·B6)
+  backupMore: {
+    busy: "백업 중…",
+    periodicLabel: "자동 백업",
+    periodic: (h: number) =>
+      h > 0
+        ? `앱을 켤 때·닫을 때, 그리고 켜 둔 동안 바뀐 게 있으면 ${h}시간마다 그날 사본을 새로 씁니다`
+        : "앱을 켤 때·닫을 때 그날 사본을 새로 씁니다",
+    mirrorLabel: "보조 백업 위치",
+    mirrorOff:
+      "꺼짐 — 다른 드라이브·폴더에 그날 사본을 하나 더 남길 수 있습니다(저장 폴더를 통째로 잃을 때 대비)",
+    mirrorOn: (path: string, keep: number) => `${path} — 최근 ${keep}일치 사본`,
+    mirrorPick: "폴더 고르기…",
+    mirrorPickTitle: "보조 백업 폴더 고르기",
+    mirrorOffButton: "끄기",
+    mirrorSame: "저장 폴더나 그 안의 backups 폴더는 보조 위치로 고를 수 없습니다",
+    mirrorSet: "보조 백업 위치를 정했습니다 — 지금 사본을 하나 남겼습니다",
+    mirrorCleared: "보조 백업을 껐습니다(이미 남긴 사본은 그대로)",
+    mirrorFailed: (m: string) => `보조 위치 백업 실패: ${m}`,
+    usage: (n: number, size: string) => `백업 폴더 ${n}개 · ${size}`,
+  },
+  // 앱 안 복원(optimize-1031-plan O5, data-spec 7-3)
+  restore: {
+    title: "백업에서 복원",
+    open: "백업에서 복원…",
+    rowLabel: "복원",
+    rowDesc: "일지를 백업 사본의 상태로 되돌립니다. 지금 파일은 지우지 않고 보관합니다",
+    intro:
+      "고른 백업 사본으로 일지를 되돌립니다. 지금 파일은 지우지 않고 backups 폴더에 '…_before-restore.db'로 보관하며, 복원 직후 [되돌리기]로 돌아갈 수 있습니다.",
+    empty: "복원할 백업이 없습니다",
+    listLabel: "백업 목록",
+    checking: "사본 검사 중…",
+    bad: "이 사본은 검사에 실패했습니다 — 다른 사본을 고르세요",
+    newer: "더 새 판의 앱에서 만든 사본입니다 — 앱을 업데이트한 뒤 복원하세요",
+    summary: (cats: number, items: number, last: string | null) =>
+      `업무 ${cats}개 · 기록 ${items}줄 · 마지막 기록 ${last ?? "없음"}`,
+    confirm: "이 사본으로 복원",
+    cancel: "닫기",
+    kind: (name: string) =>
+      /_monthly\.db$/.test(name)
+        ? "월간"
+        : /_manual\.db$/.test(name)
+          ? "수동"
+          : /_pre-migration-v\d+\.db$/.test(name)
+            ? "구조 변경 전"
+            : /_pre-import\.db$/.test(name)
+              ? "가져오기 전"
+              : /_pre-update\.db$/.test(name)
+                ? "업데이트 전"
+                : /_before-restore\.db$/.test(name)
+                  ? "복원 전"
+                  : "일일",
+    done: (name: string) => `백업(${name})에서 복원했습니다 — 복원 전 파일은 backups 폴더에 보관했습니다`,
+    undo: "되돌리기",
+    failed: (m: string) => `복원하지 못했습니다: ${m}`,
+    notOpen: "열려 있는 일지가 없습니다",
+  },
   year: {
     title: (y: number, weeks: number) => `${y} (ISO ${weeks}주)`,
     prev: "이전 해",

@@ -26,13 +26,13 @@
   | `improve-1027v4-spec.md` | 2026-10-27 개선 v4(새 판 확인·설치 — 외부 통신 0 유지 A안 추천/인터넷 B안, 중요 업무 완료 뱃지·메모 상자 ✓, 완료 기록 영구 보관, 보고 있는 주의 완료만) 상세 설계 — 2026-10-27 확정(#1 = B안·실행 시 1번 + 설정 단추, 나머지 추천안), 구현 X1(`v0.2.18`, #2~#4)·X2(`v0.2.19`, #1) |
   | `improve-1027v5-spec.md` | 2026-10-27 디자인 개선 v5(설정 = 레일 맨 아래 ⚙ + 보드 자리 전체 화면·분류 5개, 눈에 띄는 저장됨 알약, 가져오기 단계 표시·진행 순서 상자·AI 지시문 코드 블록, 테마 시스템/라이트/다크) 상세 설계 — 2026-10-27 확정(추천안 + 가져오기 묶음 제목 글상자), 구현 Y1·Y2 함께 `v0.2.20` |
   | `renewal/` | T1 티저 사이트(`site/` → GitHub Pages, 2026-10-27 배포) · T2 디자인 리뉴얼 v1(`design-style-spec.md` 정본 — Warm Beige·고운돋움 시그니처 테마, `design-renewal-v1.md` 기록) — 구현 `v0.3.0` |
-  | `optimize-1031-plan.md` | 정식 릴리스 준비 1 — 최적화 점검(데이터 로딩·주 전환 조회, 백업·복구 빈틈, 1년치 일지 메모리 증가 측정: 원인 = 메모 이미지 `data:` 그리기) 개선 상세 계획 O1~O6 — 2026-11-01 추천안 확정(이미지 = canvas 표시 크기, 주기 백업 2시간, 복원 규칙 확장, 보조 백업 위치 기본 꺼짐, 메모리 검사 CI main만), 구현 진행 · `v0.3.0` 보존 브랜치 `pre-0.3.0` |
+  | `optimize-1031-plan.md` | 정식 릴리스 준비 1 — 최적화 점검(데이터 로딩·주 전환 조회, 백업·복구 빈틈, 1년치 일지 메모리 증가 측정: 원인 = 메모 이미지 `data:` 그리기) 개선 상세 계획 O1~O6 — 2026-11-01 추천안 확정(이미지 = canvas 표시 크기, 주기 백업 2시간, 복원 규칙 확장, 보조 백업 위치 기본 꺼짐, 메모리 검사 CI main만), O1~O6 구현(6절 기록) · `v0.3.0` 보존 브랜치 `pre-0.3.0` |
   | `brand-spec.md` | 앱 아이콘(노트·책갈피, 작은 판)·워드마크(그로테스크 + 손글씨 Journey, SVG 도형) — 생성 도구 `scripts/brand/` |
   | `wireframes/` | 주간 보드·첫 실행/연간 보기·인사이트·스플래시 와이어프레임(svg)·스플래시 창 화면(png) |
   | `samples/*.xlsx` | 엑셀 내보내기 양식 샘플 · 기존 일지 가져오기 양식 샘플(가상 데이터) |
   | `project-plan.md` | 마일스톤 I-M0~M5·관문 G1/G2 |
   | `i-m1-plan.md` · `i-m2-plan.md` · `i-m3-plan.md` | 마일스톤별 세션 계획(I-M1 완료, I-M2 주간 요약·엑셀, I-M3 기존 일지 가져오기 + 시각화) |
-  | `m1-check.md` · `g2-log.md` | 회사 PC 확인표(I-M1 v0.1.0 · I-M2 v0.2.0 7-2절 · 메모 7-3 · 가져오기 7-4 · 개선 U1 7-5 · U2 7-6 · U3 7-7 · U4 7-8 · V1 7-9 · V2 7-10 · V3 7-11 · M3-S1 7-12 · M3-S2 7-13 · 관계선 7-14 · 다중 연결 7-15 · 개선 v3 W1 7-16 · 스냅샷 7-17 · 완료 뱃지 7-18 · 새 판 설치 7-19 · 설정·테마 7-20 · 가져오기 다듬기 7-21 · 시그니처 테마 7-22) · ◆G2 실사용 마찰 기록 양식 |
+  | `m1-check.md` · `g2-log.md` | 회사 PC 확인표(I-M1 v0.1.0 · I-M2 v0.2.0 7-2절 · 메모 7-3 · 가져오기 7-4 · 개선 U1 7-5 · U2 7-6 · U3 7-7 · U4 7-8 · V1 7-9 · V2 7-10 · V3 7-11 · M3-S1 7-12 · M3-S2 7-13 · 관계선 7-14 · 다중 연결 7-15 · 개선 v3 W1 7-16 · 스냅샷 7-17 · 완료 뱃지 7-18 · 새 판 설치 7-19 · 설정·테마 7-20 · 가져오기 다듬기 7-21 · 시그니처 테마 7-22 · 최적화·복원 7-23) · ◆G2 실사용 마찰 기록 양식 |
 - **스펙과 다르게 구현해야 하면** 먼저 사용자에게 묻고, 확정되면 같은 작업 안에서 `docs/` 스펙도 함께 갱신한다(스펙이 정본).
 
 ## 2. 기술 스택
@@ -90,6 +90,8 @@ fixtures/     sample-*.json — 가상 업무 기록만
   - **주간 메모 이미지 저장(2026-10-25 사용자 확정, weekly-note-spec 11절 #3)**: 메모 이미지 상자의 [이미지로 저장…]도 같은 규칙으로 `.png`·`.webp`를 허용한다(저장 대화상자에서 고른 경로만, 일지 파일·`backups\` 거부, Rust 재검사). 메모 이미지 자체는 일지 파일 안(`note_asset`)에 저장하고 사용자 폴더에 따로 두지 않는다. 구현: `Platform.writeExport`(src/platform) + Rust `export_write`의 `EXPORT_EXTS`(v0.2.2).
   - **메모 보드 스냅샷(2026-10-27 사용자 확정, improve-1027v3-spec 1절)**: [PNG 그림으로 저장…]도 같은 길(`.png`·`.webp`, 새 Rust 명령 없음). 그림은 `src/export/noteSnapshot.ts`가 메모 문서로 직접 그린다(화면 캡처·외부 글꼴 없음). [그림으로 복사]는 `navigator.clipboard.write`(네트워크 없음)(v0.2.17).
 - **기존 일지 가져오기(v0.2.4, i-m3-plan 3-9)**: 가져올 파일·붙여넣은 글은 **읽기만**(웹 표준 파일 선택, 새 Rust 명령 없음). 쓰기 직전 `_pre-import` 자동 백업 → `JournalRepository.applyImport` 한 batch. 덮어쓰기는 일지 안의 행을 바꾸는 것(사용자 폴더 파일 삭제 아님)이며 되돌리기 자료(`import_batch.undo_json`)를 함께 남긴다.
+- **백업에서 복원(v0.4.0, 2026-11-01 사용자 승인, optimize-1031-plan O5)**: 일지 파일을 바꾸는 유일한 예외. 일지가 닫힌 상태에서 ① 지금 일지를 `backups\work-journey_<시각>_before-restore.db`로 **옮겨 보존** ② 고른 백업을 일지 이름으로 **새 파일 복사**(②가 실패하면 ① 되돌림). 지우는 파일은 없다. TS `restoreFromBackup`(session.ts, 이름 규칙 `backup.ts` `isRestorableName`·`isBeforeRestoreName`) + Rust `restore_journal`(files.rs, 이름·경로 재검사 + `cargo test`) — 두 곳의 규칙을 함께 바꾼다.
+- **보조 백업 위치(v0.4.0, optimize-1031-plan B6)**: 이 PC 설정 `config.json` `backupMirror`(기본 없음) 폴더에 일일 사본 쓰기·롤링(최근 3개) — 지우는 것은 그 폴더의 일일 패턴 파일뿐(같은 `removeGuarded`·Rust 가드). 저장 폴더·`backups\`는 고를 수 없다.
 - 여러 문장을 묶는 쓰기는 **`SqlDriver.batch`로만** 한다. `BEGIN`/`COMMIT`을 `execute`로 따로 보내지 않는다(실앱 연결 풀 문제, data-spec 8-1).
 - 스키마 변경 = 새 마이그레이션 파일(전진 전용) + **마이그레이션 직전 자동 백업** + fixture DB 왕복 테스트. 기존 마이그레이션 파일 수정 금지.
 - `PRAGMA journal_mode=DELETE` 유지(WAL 금지 — 데이터 = 파일 1개 원칙).
@@ -115,6 +117,7 @@ npm run tauri dev    # 실앱 모드(윈도우 로컬 전용)
 npm test             # Vitest
 npm run e2e          # Playwright(브라우저 모드) — Chromium + WebKit
 npm run e2e:chromium # WebKit을 받을 수 없는 클라우드 세션용(두 엔진은 CI에서)
+npm run perf:mem     # 주 전환 메모리·조회 수 측정(가상 1년치 일지 ?sample=year[-img], optimize-1031-plan O1) — CI는 main만
 npm run lint && npm run typecheck
 ```
 

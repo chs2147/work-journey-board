@@ -19,11 +19,14 @@ interface AppState {
   settingsOpen: boolean;
   /** 화면 테마(improve-1027v5-spec 4절) — 이 PC 설정 */
   theme: ThemePref;
+  /** 자동 백업이 뒤에서 도는 중(optimize-1031-plan B2) — 상태 줄에 작게 */
+  backingUp: boolean;
 }
 
 export const useAppStore = create<AppState>(() => ({
   platform: null,
   journal: { state: "loading" },
   settingsOpen: false,
+  backingUp: false,
   theme: "system",
 }));

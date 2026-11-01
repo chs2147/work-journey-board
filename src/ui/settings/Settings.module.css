@@ -685,3 +685,49 @@
   color: var(--text-1);
   cursor: pointer;
 }
+
+/* 백업에서 복원 대화상자(optimize-1031-plan O5) */
+.modalBack {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-4);
+  background: rgb(0 0 0 / 0.36);
+}
+
+.modal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  width: min(560px, 100%);
+  max-height: 90vh;
+  overflow: auto;
+  padding: var(--sp-5, 20px);
+  border-radius: var(--radius-lg, 12px);
+  background: var(--surface-card);
+  color: var(--text-1);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 0.24);
+}
+
+.modal h3 {
+  margin: 0;
+  font-size: var(--fs-lg, 16px);
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.modalActions > button {
+  padding: var(--sp-1) var(--sp-4);
+  border: 1px solid var(--btn-line);
+  border-radius: var(--radius-sm);
+  background: var(--btn-bg);
+  color: var(--text-1);
+  font: inherit;
+  cursor: pointer;
+}

@@ -3,6 +3,7 @@ import { classifyFolder } from "../../data/session";
 import { BACKUP_DIR } from "../../data/backup";
 import { STR } from "../../shared/strings";
 import { goFirstRun, openAt, openFolderAsJournal } from "../common/appController";
+import { RestorePanel } from "../common/RestorePanel";
 import { useAppStore } from "../common/appStore";
 import styles from "./FirstRun.module.css";
 
@@ -45,6 +46,7 @@ export function IntegrityProblem({ dataDir, path }: { dataDir: string; path: str
         <h1 className={styles.title}>{STR.integrity.title}</h1>
         <p className={styles.lead}>{STR.integrity.body(path)}</p>
         <p className={styles.small}>{STR.integrity.guide}</p>
+        <RestorePanel dataDir={dataDir} />
         <div className={styles.row}>
           <button
             type="button"

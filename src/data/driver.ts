@@ -29,3 +29,14 @@ export async function prepareConnection(driver: SqlDriver): Promise<void> {
   const [fk] = await driver.select<{ foreign_keys: number }>("PRAGMA foreign_keys");
   if (fk?.foreign_keys !== 1) throw new Error("외래 키 검사가 꺼져 있습니다");
 }
+
+/**
+ * 파일 파손·디스크 오류로 보이는 SQLite 오류인가(optimize-1031-plan B4) — 일반 저장 실패(잠김 등)와 구분해,
+ * 사용 중이면 쓰기를 멈추고 "데이터 파일 문제" 화면으로 보낸다.
+ */
+export function isCorruptError(e: unknown): boolean {
+  const msg = e instanceof Error ? e.message : String(e);
+  return /not a database|malformed|corrupt|disk image|disk I\/O error|SQLITE_(CORRUPT|NOTADB|IOERR)/i.test(
+    msg,
+  );
+}

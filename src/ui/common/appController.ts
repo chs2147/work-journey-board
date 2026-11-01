@@ -1,19 +1,22 @@
 // 앱 흐름(overview 10-8·10-10): 시작 → 첫 실행 / 저장 폴더 없음 / 파일 이상 / 보드, 종료 백업, 저장 위치 전환·옮기기.
-import { DEFAULT_SETTINGS } from "../../data/settings";
 import { JournalRepository } from "../../data/repository";
+import { runMirrorBackup } from "../../data/backup";
+import { integrityCheck } from "../../data/migrate";
 import {
   backupIfFirstToday,
   backupOnExit,
   copyJournalTo,
   FolderMissingError,
   IntegrityError,
+  journalPath,
   openJournalAt,
+  restoreFromBackup,
 } from "../../data/session";
 import type { SqlDriver } from "../../data/driver";
 import { loadPlatform, type Platform } from "../../platform";
 import { STR } from "../../shared/strings";
 import { applyTheme, readStoredTheme, storeTheme, type ThemePref } from "../../shared/theme";
-import { flushAll, focusStartCell, init as initBoard, reload, toast } from "../board/boardStore";
+import { flushAll, focusStartCell, init as initBoard, reload, toast, useBoard } from "../board/boardStore";
 import { flushDraft, initSummary } from "../summary/summaryStore";
 import { finishNote, flushNote, initNote } from "../note/noteStore";
 import { initInsights, useInsights } from "../insights/insightsStore";
@@ -49,44 +52,134 @@ async function flushPending() {
   await flushNote();
 }
 
-/** 앱 종료 직전: 대기 중인 저장을 끝내고 그날 일일 백업을 덮어쓴다. 실패해도 창은 닫힌다. */
-async function onExit() {
-  await flushPending().catch(() => undefined);
-  await finishNote().catch(() => undefined);
+// ── 자동 백업(data-spec 7-2, optimize-1031-plan B1~B3·B6·B7) ─────────────
+/** 주기 백업을 살펴보는 간격 */
+const PERIODIC_CHECK_MS = 5 * 60_000;
+/** 마지막 백업 때의 쓰기 횟수·시각 — 그 뒤로 바뀐 게 없으면 주기·종료 백업을 건너뛴다 */
+let lastBackup = { writes: -1, at: 0 };
+let periodicTimer: ReturnType<typeof setInterval> | null = null;
+let backupRunning = false;
+
+type BackupKind = "start" | "periodic" | "exit";
+
+/**
+ * 자동 백업 한 번: start = 그날 첫 실행이면, periodic·exit = 그날 일일 사본 덮어쓰기(+ 그 달 첫 월간·롤링).
+ * 도는 동안 저장소 쓰기는 기다린다(repo.exclusive). 보조 위치가 정해져 있으면 거기에도 하나 더(B6).
+ * 그 달 월간 사본을 만들었으면 일지 전체 검사(B7). exit에서는 알릴 화면이 없어 실패를 삼킨다.
+ */
+async function autoBackup(kind: BackupKind): Promise<void> {
   const j = get().journal;
-  if (j.state !== "ready") return;
+  if (j.state !== "ready" || backupRunning) return;
+  const p = platform();
+  backupRunning = true;
+  if (kind !== "exit") set({ backingUp: true });
   try {
     const s = await j.repo.getSettings();
-    await backupOnExit(platform(), j.driver, j.dataDir, platform().now(), {
-      daily: s.backup.dailyKeep,
-      monthly: s.backup.monthlyKeep,
-    });
-  } catch {
-    // 종료 중이라 알릴 화면이 없다. 다음 실행의 첫 백업이 다시 만든다.
+    const keep = { daily: s.backup.dailyKeep, monthly: s.backup.monthlyKeep };
+    const writes = j.repo.writeCount;
+    const now = p.now();
+    const result = await j.repo.exclusive(() =>
+      kind === "start"
+        ? backupIfFirstToday(p, j.driver, j.dataDir, now, keep)
+        : backupOnExit(p, j.driver, j.dataDir, now, keep),
+    );
+    lastBackup = { writes, at: now.getTime() };
+    const mirror = (await p.loadConfig())?.backupMirror;
+    if (mirror && result) {
+      try {
+        await j.repo.exclusive(() => runMirrorBackup(j.driver, p.backupFs, mirror, now, p.verifyCopy));
+      } catch (e) {
+        if (kind !== "exit") toast(STR.backupMore.mirrorFailed(errMsg(e)));
+      }
+    }
+    if (result?.monthly && kind !== "exit" && !(await integrityCheck(j.driver)))
+      onCorrupt(new Error("integrity_check"));
+  } catch (e) {
+    if (kind !== "exit") toast(STR.startBackupFailed(errMsg(e)));
+  } finally {
+    backupRunning = false;
+    set({ backingUp: false });
   }
 }
 
-/** 이미 연 드라이버로 보드를 띄운다(+ 그날 첫 실행 백업). */
+/** 주기 백업(B1): 마지막 백업 뒤 바뀐 게 있고 정한 시간이 지났으면, 저장이 끝난 틈에 */
+async function periodicTick() {
+  const j = get().journal;
+  if (j.state !== "ready") return;
+  const { periodicHours } = (await j.repo.getSettings()).backup;
+  if (periodicHours <= 0 || j.repo.writeCount === lastBackup.writes) return;
+  if (platform().now().getTime() - lastBackup.at < periodicHours * 3_600_000) return;
+  if (useBoard.getState().saving > 0) return; // 저장 중이면 다음 차례에
+  await autoBackup("periodic");
+}
+
+function stopPeriodic() {
+  if (periodicTimer) clearInterval(periodicTimer);
+  periodicTimer = null;
+}
+
+/** 쓰는 도중 파일 파손으로 보이는 오류(B4) — 더 쓰지 않고 "데이터 파일 문제" 화면으로(복원 안내) */
+function onCorrupt(e: unknown) {
+  const j = get().journal;
+  if (j.state !== "ready") return;
+  console.error("데이터 파일 문제", e);
+  stopPeriodic();
+  set({ journal: { state: "integrity", dataDir: j.dataDir, path: journalPath(platform(), j.dataDir) } });
+  void j.driver.close().catch(() => undefined);
+}
+
+/** 앱 종료 직전: 대기 중인 저장을 끝내고, 마지막 백업 뒤 바뀐 게 있으면 그날 일일 백업을 덮어쓴다(B3). 실패해도 창은 닫힌다. */
+async function onExit() {
+  await flushPending().catch(() => undefined);
+  await finishNote().catch(() => undefined);
+  stopPeriodic();
+  const j = get().journal;
+  if (j.state !== "ready") return;
+  if (j.repo.writeCount === lastBackup.writes) return;
+  await autoBackup("exit");
+}
+
+/** 이미 연 드라이버로 보드를 띄운다 — 그날 첫 실행 백업은 보드를 띄운 뒤 뒤에서(B2). */
 async function activate(driver: SqlDriver, dataDir: string) {
   const p = platform();
+  stopPeriodic();
   const repo = new JournalRepository(driver, () => p.now());
+  repo.setCorruptHandler(onCorrupt);
   const [row] = await driver.select<{ v: string }>("SELECT sqlite_version() AS v");
-  const settings = await repo.getSettings().catch(() => DEFAULT_SETTINGS);
-  p.splash?.status(STR.splash.backingUp);
-  try {
-    await backupIfFirstToday(p, driver, dataDir, p.now(), {
-      daily: settings.backup.dailyKeep,
-      monthly: settings.backup.monthlyKeep,
-    });
-  } catch (e) {
-    toast(STR.startBackupFailed(errMsg(e)));
-  }
   p.splash?.status(STR.splash.preparing);
   await initBoard(repo);
   await initSummary(repo);
   await initNote(repo);
   await initInsights(repo);
   set({ journal: { state: "ready", driver, repo, dataDir, sqliteVersion: row?.v ?? "?" } });
+  lastBackup = { writes: repo.writeCount, at: p.now().getTime() };
+  void autoBackup("start");
+  periodicTimer = setInterval(() => void periodicTick().catch(() => undefined), PERIODIC_CHECK_MS);
+}
+
+/** 백업에서 복원(O5): 지금 일지를 닫고(대기 저장 마무리) → 보존 사본을 남기고 백업을 일지로 → 다시 연다. 실패하면 오류 글 */
+export async function restoreBackup(name: string): Promise<string | null> {
+  const j = get().journal;
+  const dataDir = j.state === "ready" || j.state === "integrity" ? j.dataDir : null;
+  if (!dataDir) return STR.restore.notOpen;
+  const p = platform();
+  if (j.state === "ready") {
+    await flushPending().catch(() => undefined);
+    await finishNote().catch(() => undefined);
+    stopPeriodic();
+    await j.driver.close().catch(() => undefined);
+  }
+  let before: string;
+  try {
+    before = await restoreFromBackup(p, dataDir, name, p.now());
+  } catch (e) {
+    await openAt(dataDir);
+    return errMsg(e);
+  }
+  set({ settingsOpen: false });
+  if (await openAt(dataDir))
+    toast(STR.restore.done(name), { label: STR.restore.undo, run: () => void restoreBackup(before) });
+  return null;
 }
 
 function statusFor(e: unknown, dataDir: string): JournalStatus {

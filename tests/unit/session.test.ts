@@ -1,11 +1,16 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
-import { DATA_FILE } from "../../src/data/backup";
+import { DATA_FILE, isRestorableName, runMirrorBackup } from "../../src/data/backup";
+import { isCorruptError } from "../../src/data/driver";
 import { openSqlJs } from "../../src/data/drivers/sqlJs";
 import { JournalRepository } from "../../src/data/repository";
 import {
+  backupFolderStats,
   backupIfFirstToday,
   classifyFolder,
+  inspectBackup,
+  listRestorable,
+  restoreFromBackup,
   copyJournalTo,
   FolderMissingError,
   IntegrityError,
@@ -141,5 +146,100 @@ describe("최근 백업 표시", () => {
       "daily",
     );
     expect(latestBackup([])).toBeNull();
+  });
+});
+
+describe("백업 보강·복원(optimize-1031-plan O4·O5)", () => {
+  async function journalWithBackup() {
+    const fs = newFs();
+    await fs.ensureDir("/d/WJ");
+    const db = await openJournalAt(fs, "/d/WJ", now);
+    const repo = new JournalRepository(db, now);
+    await repo.createCategory("가상 업무", "2026-W43");
+    await backupIfFirstToday(fs, db, "/d/WJ", now(), keep);
+    return { fs, db, repo };
+  }
+
+  it("보조 위치: 그날 사본 + 최근 3일치만, 그 폴더의 다른 파일은 그대로", async () => {
+    const { fs, db } = await journalWithBackup();
+    await fs.ensureDir("/e/mirror");
+    fs.writeFile("/e/mirror/내 문서.txt");
+    for (const d of [18, 19, 20, 21, 22, 23])
+      await runMirrorBackup(db, fs.backupFs, "/e/mirror", new Date(2026, 9, d, 9), fs.verifyCopy);
+    expect(await fs.backupFs.list("/e/mirror")).toEqual([
+      "work-journey_2026-10-21.db",
+      "work-journey_2026-10-22.db",
+      "work-journey_2026-10-23.db",
+      "내 문서.txt",
+    ]);
+  });
+
+  it("복원: 사본 검사·요약 → 지금 파일은 _before-restore로 보존 → 백업 내용으로 다시 열림 → 되돌리기도 같은 길", async () => {
+    const { fs, db, repo } = await journalWithBackup();
+    await repo.createCategory("백업 뒤에 만든 업무", "2026-W43");
+    const list = await listRestorable(fs, "/d/WJ");
+    expect(list.map((b) => b.name)).toEqual([
+      "work-journey_2026-10-23.db",
+      "work-journey_2026-10_monthly.db",
+    ]);
+    expect(await inspectBackup(fs, "/d/WJ", "work-journey_2026-10-23.db")).toMatchObject({
+      ok: true,
+      newer: false,
+      categories: 1,
+    });
+    await db.close();
+    const before = await restoreFromBackup(fs, "/d/WJ", "work-journey_2026-10-23.db", now());
+    expect(before).toBe("work-journey_2026-10-23_0831_before-restore.db");
+    const reopened = new JournalRepository(await openJournalAt(fs, "/d/WJ", now), now);
+    expect((await reopened.listCategories()).categories.map((c) => c.name)).toEqual(["가상 업무"]);
+    expect(await fs.backupFs.list("/d/WJ/backups")).toContain(before);
+    expect(await inspectBackup(fs, "/d/WJ", before)).toMatchObject({ ok: true, categories: 2 });
+  });
+
+  it("복원 거부: 백업 이름이 아니거나 일지가 열려 있으면 아무것도 바꾸지 않는다 · 깨진 사본은 검사에서 걸러짐", async () => {
+    const { fs } = await journalWithBackup();
+    fs.writeFile("/d/WJ/backups/내 메모.db");
+    await expect(restoreFromBackup(fs, "/d/WJ", "내 메모.db", now())).rejects.toThrow();
+    await expect(restoreFromBackup(fs, "/d/WJ", "work-journey_2026-10-23.db", now())).rejects.toThrow(
+      "열려 있습니다",
+    );
+    fs.writeFile("/d/WJ/backups/work-journey_2026-10-01.db", new TextEncoder().encode("깨짐".repeat(50)));
+    expect((await inspectBackup(fs, "/d/WJ", "work-journey_2026-10-01.db")).ok).toBe(false);
+    expect(isRestorableName("work-journey_2026-10-23_0831_pre-update.db")).toBe(true);
+    expect(isRestorableName("work-journey.db")).toBe(false);
+  });
+
+  it("백업 폴더 용량: 종류별 개수·크기", async () => {
+    const { fs } = await journalWithBackup();
+    const stats = await backupFolderStats(fs, "/d/WJ");
+    expect(stats.count).toBe(2);
+    expect(stats.byKind.daily.count).toBe(1);
+    expect(stats.byKind.monthly.count).toBe(1);
+    expect(stats.bytes).toBeGreaterThan(0);
+  });
+
+  it("저장소: 쓰기 횟수, 백업 중(exclusive)에는 쓰기가 기다림, 파손 오류는 알림", async () => {
+    const { repo } = await journalWithBackup();
+    const w0 = repo.writeCount;
+    const order: string[] = [];
+    let release!: () => void;
+    const job = repo.exclusive(
+      () =>
+        new Promise<void>((r) => {
+          release = () => {
+            order.push("backup");
+            r();
+          };
+        }),
+    );
+    const write = repo.createCategory("기다린 업무", "2026-W43").then(() => order.push("write"));
+    await new Promise((r) => setTimeout(r, 20));
+    expect(order).toEqual([]);
+    release();
+    await Promise.all([job, write]);
+    expect(order).toEqual(["backup", "write"]);
+    expect(repo.writeCount).toBeGreaterThan(w0);
+    expect(isCorruptError(new Error("database disk image is malformed"))).toBe(true);
+    expect(isCorruptError(new Error("database is locked"))).toBe(false);
   });
 });

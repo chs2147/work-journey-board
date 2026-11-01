@@ -11,6 +11,8 @@ export interface AppConfig {
   dataDir: string;
   /** 화면 테마(improve-1027v5-spec 4-2) — 이 PC 취향이라 일지가 아니라 여기에. 없으면 시스템 설정 */
   theme?: ThemePref;
+  /** 보조 백업 위치(optimize-1031-plan B6) — 이 PC의 다른 폴더에 일일 사본을 하나 더. 없으면 끔 */
+  backupMirror?: string | null;
 }
 
 /** 내보내기 종류 — 저장 대화상자의 파일 형식 거르개와 허용 확장자 */
@@ -47,6 +49,8 @@ export interface Platform {
   ensureDir(path: string): Promise<void>;
   /** 새 파일로만 복사(대상이 있으면 실패) */
   copyNew(from: string, to: string): Promise<void>;
+  /** 백업에서 복원(optimize-1031-plan O5) — 지금 일지를 backups\\<beforeName>으로 옮기고 백업을 일지로 복사. Rust가 이름·위치 재검사 */
+  restoreJournal(dataDir: string, backupName: string, beforeName: string): Promise<void>;
   openFolder(path: string): Promise<void>;
   /** 내보내기 저장: 저장 대화상자(같은 이름이면 대화상자가 덮어쓰기를 묻는다)에서 고른 경로. 취소하면 null */
   pickSaveFile(title: string, defaultPath: string, kind?: ExportKind): Promise<string | null>;
@@ -118,7 +122,10 @@ export function parseConfig(raw: string | null): AppConfig | null {
   try {
     const c = JSON.parse(raw) as Partial<AppConfig>;
     if (typeof c.dataDir !== "string" || !c.dataDir) return null;
-    return isThemePref(c.theme) ? { dataDir: c.dataDir, theme: c.theme } : { dataDir: c.dataDir };
+    const out: AppConfig = { dataDir: c.dataDir };
+    if (isThemePref(c.theme)) out.theme = c.theme;
+    if (typeof c.backupMirror === "string" && c.backupMirror) out.backupMirror = c.backupMirror;
+    return out;
   } catch {
     return null;
   }

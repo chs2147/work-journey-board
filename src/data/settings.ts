@@ -2,7 +2,8 @@
 export interface Settings {
   /** 무기록 종료 제안 기준 주 수. 0 = 끔, 그 외 2~8 */
   nudgeWeeks: number;
-  backup: { dailyKeep: number; monthlyKeep: number };
+  /** periodicHours = 켜 둔 동안 바뀐 게 있으면 이 시간마다 그날 일일 사본을 덮어씀(optimize-1031-plan B1, 0 = 끔) */
+  backup: { dailyKeep: number; monthlyKeep: number; periodicHours: number };
   summary: { includeMemo: boolean };
   ai: {
     mode: "off" | "clipboard" | "api";
@@ -66,7 +67,7 @@ const OLD_DEFAULT_DOCK_HEIGHT = 280;
 
 export const DEFAULT_SETTINGS: Settings = {
   nudgeWeeks: 3,
-  backup: { dailyKeep: 14, monthlyKeep: 12 },
+  backup: { dailyKeep: 14, monthlyKeep: 12, periodicHours: 2 },
   summary: { includeMemo: true },
   ai: { mode: "clipboard", promptTemplate: null, api: { endpoint: null, model: null } },
   ui: {
@@ -129,6 +130,8 @@ export function mergeSettings(base: Settings, patch: unknown): Settings {
   if (!validNudgeWeeks(s.nudgeWeeks)) s.nudgeWeeks = DEFAULT_SETTINGS.nudgeWeeks;
   if (!(s.backup.dailyKeep >= 1)) s.backup.dailyKeep = DEFAULT_SETTINGS.backup.dailyKeep;
   if (!(s.backup.monthlyKeep >= 0)) s.backup.monthlyKeep = DEFAULT_SETTINGS.backup.monthlyKeep;
+  if (!(s.backup.periodicHours >= 0 && s.backup.periodicHours <= 24))
+    s.backup.periodicHours = DEFAULT_SETTINGS.backup.periodicHours;
   if (s.ai.mode === "api") s.ai.mode = "clipboard"; // v1에서는 API 모드 선택 불가(자리만)
   if (!(s.ui.noteZoom >= NOTE_ZOOM_MIN && s.ui.noteZoom <= NOTE_ZOOM_MAX)) s.ui.noteZoom = 1;
   if (typeof s.ui.noteMinimap !== "boolean") s.ui.noteMinimap = true;

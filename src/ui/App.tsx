@@ -33,6 +33,7 @@ let started = false;
 
 export function App() {
   const journal = useAppStore((s) => s.journal);
+  const backingUp = useAppStore((s) => s.backingUp);
   const exportOpen = useExport((s) => s.open);
   const importOpen = useImport((s) => s.open);
   const updateOpen = useUpdate((s) => s.dialogOpen);
@@ -63,6 +64,7 @@ export function App() {
       <main className={styles.main}>{screen(journal)}</main>
       <footer className={styles.status} data-testid="journal-status">
         {statusText(journal)}
+        {backingUp && <span data-testid="backup-busy"> · {STR.backupMore.busy}</span>}
       </footer>
       {exportOpen && journal.state === "ready" && <ExportDialog />}
       {importOpen && journal.state === "ready" && <ImportWizard />}

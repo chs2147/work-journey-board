@@ -81,6 +81,8 @@ export const tauriPlatform: Platform = {
   },
   ensureDir: (dir) => invoke("fs_ensure_dir", { dir }),
   copyNew: (from, to) => invoke("fs_copy_new", { from, to }),
+  restoreJournal: (dataDir, backupName, beforeName) =>
+    invoke("restore_journal", { dataDir, backupName, beforeName }),
   openFolder: (path) => invoke("open_folder", { path }),
   writeClipboard: (text) => writeText(text),
   async pickSaveFile(title, defaultPath, kind = "xlsx") {

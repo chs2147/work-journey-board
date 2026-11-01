@@ -12,8 +12,8 @@ import {
   type BackupFs,
   type VerifyCopy,
 } from "./backup";
-import { prepareConnection, type SqlDriver } from "./driver";
-import { migrate, quickCheck } from "./migrate";
+import { isCorruptError, prepareConnection, type SqlDriver } from "./driver";
+import { LATEST_SCHEMA_VERSION, migrate, quickCheck, readSchemaVersion } from "./migrate";
 
 export interface SessionFs {
   join(...parts: string[]): string;
@@ -23,6 +23,11 @@ export interface SessionFs {
   openDatabase(path: string): Promise<SqlDriver>;
   verifyCopy: VerifyCopy;
   backupFs: BackupFs;
+  /**
+   * 복원(optimize-1031-plan O5, data-spec 7-3): ① 지금 일지(있으면)를 `backups\<beforeName>`으로 옮겨 보존 →
+   * ② `backups\<backupName>`을 일지 이름으로 새 파일 복사. 일지가 닫혀 있어야 한다. 실앱은 Rust가 이름·위치를 한 번 더 검사.
+   */
+  restoreJournal(dataDir: string, backupName: string, beforeName: string): Promise<void>;
 }
 
 export class FolderMissingError extends Error {
@@ -51,8 +56,7 @@ export async function openJournalAt(fs: SessionFs, dataDir: string, now: () => D
       await prepareConnection(driver);
       healthy = await quickCheck(driver);
     } catch (e) {
-      if (/not a database|malformed|corrupt|disk image/i.test(e instanceof Error ? e.message : String(e)))
-        healthy = false;
+      if (isCorruptError(e)) healthy = false;
       else throw e;
     }
     if (!healthy) throw new IntegrityError(path);
@@ -172,6 +176,77 @@ export async function backupFolderStats(fs: SessionFs, dataDir: string): Promise
 
 export async function lastBackupOf(fs: SessionFs, dataDir: string): Promise<BackupInfo | null> {
   return latestBackup(await fs.backupFs.list(fs.join(dataDir, BACKUP_DIR)));
+}
+
+export interface RestorableBackup extends BackupInfo {
+  size: number | null;
+}
+
+/** 복원할 수 있는 백업(최근 순) — 임시 사본 제외 */
+export async function listRestorable(fs: SessionFs, dataDir: string): Promise<RestorableBackup[]> {
+  const dir = fs.join(dataDir, BACKUP_DIR);
+  if (!(await fs.stat(dir)).isDir) return [];
+  const out: RestorableBackup[] = [];
+  for (const name of await fs.backupFs.list(dir)) {
+    const info = latestBackup([name]);
+    if (info) out.push({ ...info, size: (await fs.stat(fs.join(dir, name))).size });
+  }
+  // 월간(`2026-10`)은 그 달 0일로 보고 시각 순으로
+  const key = (b: RestorableBackup) => `${b.when.length === 7 ? `${b.when}-00` : b.when} ${b.name}`;
+  return out.sort((a, b) => (key(a) < key(b) ? 1 : -1));
+}
+
+export interface BackupSummary {
+  ok: boolean;
+  /** 앱보다 새 판에서 만든 사본(열 수 없음) */
+  newer: boolean;
+  categories: number;
+  items: number;
+  lastDate: string | null;
+}
+
+/** 복원 전에 백업 사본을 따로 열어 검사하고 요약(업무 수·항목 수·마지막 기록일)을 만든다 — 사본은 고치지 않는다 */
+export async function inspectBackup(fs: SessionFs, dataDir: string, name: string): Promise<BackupSummary> {
+  const path = fs.join(dataDir, BACKUP_DIR, name);
+  const bad: BackupSummary = { ok: false, newer: false, categories: 0, items: 0, lastDate: null };
+  if (!(await fs.verifyCopy(path).catch(() => false))) return bad;
+  const d = await fs.openDatabase(path);
+  try {
+    const version = await readSchemaVersion(d);
+    if (version > LATEST_SCHEMA_VERSION) return { ...bad, newer: true };
+    const [c] = await d.select<{ n: number }>("SELECT COUNT(*) AS n FROM category");
+    const [i] = await d.select<{ n: number; last: string | null }>(
+      "SELECT COUNT(*) AS n, MAX(date) AS last FROM entry_item WHERE trim(text) <> ''",
+    );
+    return {
+      ok: true,
+      newer: false,
+      categories: Number(c?.n ?? 0),
+      items: Number(i?.n ?? 0),
+      lastDate: i?.last ?? null,
+    };
+  } catch {
+    return bad;
+  } finally {
+    await d.close().catch(() => undefined);
+  }
+}
+
+/** 복원 실행 — 열려 있던 일지는 부르는 쪽이 먼저 닫는다. 보존 사본 이름을 돌려준다(되돌리기용) */
+export async function restoreFromBackup(
+  fs: SessionFs,
+  dataDir: string,
+  name: string,
+  now: Date,
+): Promise<string> {
+  if (!latestBackup([name])) throw new Error(`백업 파일이 아닙니다: ${name}`);
+  // 같은 분에 다시 복원(되돌리기)해도 보존 사본 이름이 겹치지 않게 1분씩 뒤로
+  const taken = new Set(await fs.backupFs.list(fs.join(dataDir, BACKUP_DIR)));
+  let before = backupNames.beforeRestore(now);
+  for (let i = 1; taken.has(before) && i < 1440; i++)
+    before = backupNames.beforeRestore(new Date(now.getTime() + i * 60_000));
+  await fs.restoreJournal(dataDir, name, before);
+  return before;
 }
 
 export type FolderKind = "same" | "has-journal" | "empty";

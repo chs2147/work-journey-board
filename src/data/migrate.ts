@@ -95,3 +95,9 @@ export async function quickCheck(driver: SqlDriver): Promise<boolean> {
   const rows = await driver.select<{ quick_check: string }>("PRAGMA quick_check");
   return rows.length === 1 && rows[0]?.quick_check === "ok";
 }
+
+/** 전체 무결성 검사(optimize-1031-plan B7) — quick_check보다 느려서 월간 사본을 만들 때만 */
+export async function integrityCheck(driver: SqlDriver): Promise<boolean> {
+  const rows = await driver.select<{ integrity_check: string }>("PRAGMA integrity_check");
+  return rows.length === 1 && rows[0]?.integrity_check === "ok";
+}
