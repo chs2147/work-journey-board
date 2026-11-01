@@ -67,7 +67,7 @@ function body(v) {
     "|---|---|",
     `| \`WorkJourneyBoard_${v}_setup.exe\` | 기본 설치 파일(현재 사용자 전용, WebView2 없으면 자동 설치) |`,
     formal
-      ? `| \`WorkJourneyBoard_${v}_setup_offline.exe\` | WebView2 오프라인 설치판(약 140MB) — 인터넷이 막힌 PC용 |`
+      ? `| \`WorkJourneyBoard_${v}_setup_offline.exe\` | WebView2 오프라인 설치판(약 220MB) — 인터넷이 막힌 PC용 |`
       : "| `…_setup_offline.exe` | (있을 때만) WebView2 오프라인 설치판 — 인터넷이 막힌 PC용 |",
     "| `SHA256SUMS*.txt` | 무결성 확인: `certutil -hashfile <파일> SHA256` |",
     "",

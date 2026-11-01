@@ -3,7 +3,7 @@
 # - main 푸시: 빌드 + 릴리스 v<package.json 버전> 생성·갱신(태그는 워크플로가 생성, 본문 = docs/release-notes/v<버전>.md)
 #   · 0.x·-rc = 사전 릴리스, 기본판만
 #   · 정식 판(1.0.0 이상, 꼬리표 없음) = 정식 릴리스(Latest) + 기본판·오프라인판 함께(release-phase2-spec 4절, 2026-11-01 사용자 확정)
-# - 수동 실행: webview=offline 을 고르면 WebView2 오프라인 설치판(+약 130 MB)을 만든다(overview 13-4)
+# - 수동 실행: webview=offline 을 고르면 WebView2 오프라인 설치판(약 220 MB)을 만든다(overview 13-4)
 name: Build Windows installer
 
 on:
