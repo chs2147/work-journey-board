@@ -40,6 +40,11 @@ export interface SampleData {
     height: number;
     bytes: number;
   }[];
+  /** Cabinet 폴더·링크(features-1102-spec F5) — 가상 경로·주소만 */
+  cabinet?: {
+    items: { id: string; kind: "folder" | "link"; title: string; target: string }[];
+    links: { itemId: string; categoryId?: string; entryId?: string }[];
+  };
 }
 
 export async function seedSample(driver: SqlDriver, data: SampleData, now: Date = new Date()): Promise<void> {
@@ -107,6 +112,18 @@ export async function seedSample(driver: SqlDriver, data: SampleData, now: Date 
     stmts.push({
       sql: "INSERT INTO note_asset (id, week_id, mime, data, width, height, bytes, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
       params: [a.id, a.weekId, a.mime, a.data, a.width, a.height, a.bytes, ts],
+    });
+  }
+  (data.cabinet?.items ?? []).forEach((c, i) =>
+    stmts.push({
+      sql: "INSERT INTO cabinet_item (id, kind, title, target, sort_order, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      params: [c.id, c.kind, c.title, c.target, i + 1, ts, ts],
+    }),
+  );
+  for (const l of data.cabinet?.links ?? []) {
+    stmts.push({
+      sql: "INSERT INTO cabinet_link (id, item_id, category_id, entry_id, created_at) VALUES (?, ?, ?, ?, ?)",
+      params: [uuidv7(), l.itemId, l.categoryId ?? null, l.entryId ?? null, ts],
     });
   }
   await driver.batch(stmts);

@@ -27,3 +27,9 @@ serde_json = "1"
 # 이미 tauri 의존성 트리에 있는 판을 쓴다(기본 TLS = 윈도우 인증서 저장소 검증, 시스템 프록시 사용)
 reqwest = "0.13"
 sha2 = "0.10"
+
+# Cabinet 끌어 놓기 다리(cabinet.rs, features-1102-spec F5 A안) — 윈도우 WebView2에서 놓은 파일 경로 받기.
+# tauri(wry)가 이미 쓰는 판과 같게 둔다(새로 받는 코드 없음, 네트워크 없음)
+[target.'cfg(windows)'.dependencies]
+webview2-com = "0.39"
+windows = "0.62"

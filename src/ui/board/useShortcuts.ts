@@ -1,5 +1,6 @@
 // 전역 단축키(overview 10-2·10-3). 한국어 자판에서도 동작하도록 e.key 대신 e.code로 판별한다.
 import { useEffect } from "react";
+import { toggleCabinet } from "../cabinet/cabinetStore";
 import { addDays, weekDays } from "../../domain/week";
 import {
   focusStartCell,
@@ -39,6 +40,12 @@ export function useShortcuts() {
         e.preventDefault();
         if (settings) leaveSettings();
         else setSettingsOpen(true);
+        return;
+      }
+      // Cabinet(features-1102-spec F5): Alt+4 = 열기/닫기 — 어느 화면에서나(모달리스 창)
+      if (e.altKey && !mod && !e.shiftKey && e.code === "Digit4") {
+        e.preventDefault();
+        toggleCabinet();
         return;
       }
       if (settings) {

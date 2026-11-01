@@ -6429,6 +6429,8 @@ dependencies = [
  "tauri-plugin-single-instance",
  "tauri-plugin-sql",
  "tauri-plugin-window-state",
+ "webview2-com",
+ "windows",
 ]
 
 [[package]]

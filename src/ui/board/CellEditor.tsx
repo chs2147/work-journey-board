@@ -39,6 +39,8 @@ import { autoSize, isComposingKey, useRemeasure } from "./helpers";
 import { LinkedText } from "./LinkedText";
 import { IconDone, IconNote, IconTrash } from "../common/icons";
 import { startRowDrag, useLinkDrop, useLinkHover, useRowDrag } from "./rowDrag";
+import { useCabinet, openCabinet, openItem as openCabinetItem } from "../cabinet/cabinetStore";
+import { CabinetRailIcon } from "../cabinet/CabinetIcons";
 import styles from "./Board.module.css";
 
 export interface CellNav {
@@ -84,6 +86,19 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
     }
     return out;
   });
+  // Cabinet 연결(features-1102-spec F5) — 이 칸 항목에 연결된 폴더·링크 id(글자열로 골라 다시 그리기 줄임)
+  const cabKey = useCabinet((st) => {
+    const ids = new Set(items.map((x) => x.id));
+    return st.links
+      .filter((l) => l.entryId && ids.has(l.entryId))
+      .map((l) => `${l.entryId}:${l.itemId}`)
+      .join(",");
+  });
+  const cabOf: Record<string, string[]> = {};
+  for (const pair of cabKey.split(",")) {
+    const [eid, cid] = pair.split(":");
+    if (eid && cid) (cabOf[eid] ??= []).push(cid);
+  }
   const linkCount: Record<string, number> = {};
   for (const id of linkKey.split(",")) if (id) linkCount[id] = (linkCount[id] ?? 0) + 1;
   const linkTarget = useLinkDrop((st) => st.itemId);
@@ -288,6 +303,7 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
                 i >= delStart && i < delEnd ? styles.deleting : "",
                 dragFrom && i >= dragFrom.start && i < dragFrom.end ? styles.dragSource : "",
                 linkCount[it.id] ? styles.linked : "",
+                cabOf[it.id] ? styles.cab : "",
                 linkTarget === it.id || linkHover === it.id ? styles.linkTarget : "",
               ].join(" ")}
               data-item-index={i}
@@ -410,6 +426,25 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
                   onClick={() => addLinkedBox(it.id)}
                 >
                   <IconNote />
+                </button>
+              )}
+              {/* Cabinet 표시 — 하나면 그 폴더 창·링크, 여럿이면 Cabinet에서 */}
+              {cabOf[it.id] && (
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  className={styles.cabBadge}
+                  aria-label={STR.cabinet.entryIcon(cabOf[it.id]!.length)}
+                  title={STR.cabinet.entryIcon(cabOf[it.id]!.length)}
+                  data-testid="cabinet-badge"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => {
+                    const ids = cabOf[it.id]!;
+                    if (ids.length === 1) void openCabinetItem(ids[0]!);
+                    else void openCabinet({ itemId: ids[0] });
+                  }}
+                >
+                  <CabinetRailIcon />
                 </button>
               )}
               {/* 연결된 메모 배지 — 누르면 그 메모 상자로 */}

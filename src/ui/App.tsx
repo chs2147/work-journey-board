@@ -14,6 +14,9 @@ import { IntegrityProblem, MissingFolder } from "./first-run/StartScreens";
 import { ImportantPanel } from "./important/ImportantPanel";
 import { SearchBand, SearchPanel } from "./search/SearchViews";
 import { MarkdownExportDialog } from "./note/MarkdownExportDialog";
+import { CabinetPanel } from "./cabinet/CabinetPanel";
+import { FolderPanels } from "./cabinet/FolderPanels";
+import { useCabinet } from "./cabinet/cabinetStore";
 import { onSearchKey, useSearch } from "./search/searchStore";
 import { usePanelWidths } from "./common/panelWidths";
 import { ExportDialog } from "./export/ExportDialog";
@@ -109,6 +112,7 @@ function Workspace() {
     return () => window.removeEventListener("keydown", onSearchKey);
   }, []);
   const noteExpanded = useNote((s) => s.expanded);
+  const cabinetOpen = useCabinet((s) => s.open);
   // 인사이트(m3-s1-spec 1-2): 보드는 숨겨 둔 채 그대로 — 보던 주·뷰·커서·메모가 남는다
   const insightsOpen = useInsights((s) => s.open);
   // 설정(improve-1027v5-spec 1-2)도 인사이트처럼 보드 자리를 덮는다 — 보드·인사이트는 그대로 두고 숨김
@@ -157,6 +161,9 @@ function Workspace() {
         )}
       </div>
       <MarkdownExportDialog />
+      {/* Cabinet(F5): 모달리스 — 보드·인사이트·설정 어디서나 위에 떠 있다 */}
+      {cabinetOpen && <CabinetPanel />}
+      <FolderPanels />
       {searchPanelOpen && !insightsOpen && !settingsOpen ? (
         <SearchPanel overlay={summaryOverlay} />
       ) : (

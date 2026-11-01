@@ -70,8 +70,35 @@ async function makeJournal(dir: string, withSample: boolean) {
   await d.close();
 }
 
+/** Cabinet 흉내용 가상 작업 폴더(features-1102-spec F5) — 가상 이름·크기만 */
+export const DEMO_WORK = "/demo/업무";
+function seedWorkFolders() {
+  const t = (d: string) => new Date(`${d}:00`).getTime();
+  const f = (p: string, kb: number, when: string) =>
+    fs.writeFile(fs.join(DEMO_WORK, p), new Uint8Array(Math.round(kb * 1024)), t(when));
+  f("정산/설계/정산 배치 설계서 v2.docx", 210, "2026-10-21T16:12");
+  f("정산/설계/화면 흐름.pptx", 1840, "2026-10-20T11:03");
+  f("정산/테스트/2026-10 이관/샘플 데이터/accounts_sample.csv", 52, "2026-10-21T17:20");
+  f("정산/테스트/2026-10 이관/이관_스크립트_v3.sql", 18, "2026-10-22T10:05");
+  f("정산/테스트/2026-10 이관/검증표.xlsx", 64, "2026-10-22T09:41");
+  f("정산/테스트/2026-10 이관/이관 절차.docx", 210, "2026-10-20T16:12");
+  f("정산/테스트/2026-10 이관/흐름도.png", 92, "2026-10-20T11:03");
+  f("정산/테스트/2026-10 이관/.임시", 1, "2026-10-20T11:03");
+  f("정산/테스트/테스트 계획.xlsx", 40, "2026-10-14T09:00");
+  f("정산/회의록/2026-10-20 배치 협의.docx", 30, "2026-10-20T18:00");
+  f("보안점검/계정 점검표.xlsx", 88, "2026-10-19T15:30");
+}
+
+/** 브라우저 모드 Cabinet 호출 기록(E2E 확인용 — 실제로 열지 않음) */
+const cabinetCalls: string[] = [];
+let cabinetRoots: string[] = [];
+const underRoots = (path: string) =>
+  !path.split("/").includes("..") &&
+  cabinetRoots.some((r) => path === r || path.startsWith(`${r.replace(/\/+$/, "")}/`));
+
 const ready = (async () => {
   await fs.ensureDir(fs.join(ONEDRIVE_ROOTS[0]!, "문서"));
+  seedWorkFolders();
   const existing = params.get("existing");
   if (existing) await makeJournal(existing, true);
   if (params.get("config")) {
@@ -175,6 +202,44 @@ export const browserPlatform: Platform = {
     exitHandler = handler;
   },
 
+  async pickFolders(title) {
+    // 실제 폴더 대화상자 대신 경로 입력(여러 개는 ;로) — E2E는 page.on("dialog")로 응답
+    const p = window.prompt(title, `${DEMO_WORK}/정산/설계`);
+    if (!p?.trim()) return null;
+    return p
+      .split(";")
+      .map((x) => x.trim())
+      .filter(Boolean);
+  },
+  async cabinetSetRoots(roots) {
+    cabinetRoots = [...roots];
+  },
+  async cabinetList(path) {
+    if (!underRoots(path)) throw new Error("등록한 폴더 안의 경로만 열 수 있습니다");
+    return fs.listDir(path);
+  },
+  async cabinetOpen(path) {
+    if (!underRoots(path)) throw new Error("등록한 폴더 안의 경로만 열 수 있습니다");
+    cabinetCalls.push(`open ${path}`);
+  },
+  async cabinetReveal(path) {
+    if (!underRoots(path)) throw new Error("등록한 폴더 안의 경로만 열 수 있습니다");
+    cabinetCalls.push(`reveal ${path}`);
+  },
+  async droppedPaths(dropped) {
+    // 브라우저는 놓은 파일의 경로를 주지 않는다 — 가상 작업 폴더에서 같은 이름을 찾아 흉내(E2E·시연용)
+    const all = [
+      ...new Set([
+        ...fs.listAll().flatMap((p) => p.split("/").map((_, i, a) => a.slice(0, i + 1).join("/"))),
+      ]),
+    ];
+    const found = dropped.flatMap((f) => {
+      const hit = all.find((p) => p.startsWith(`${DEMO_WORK}/`) && baseName(p) === f.name);
+      return hit ? [{ path: hit, isDir: fs.isDir(hit) }] : [];
+    });
+    return found.length ? found : null;
+  },
+
   async updateCheck() {
     updateCalls.push("check");
     await sleep(50);
@@ -212,6 +277,7 @@ Object.assign(globalThis, {
     exportLog: () => [...exportLog],
     openedUrls: () => [...openedUrls],
     updateCalls: () => [...updateCalls],
+    cabinetCalls: () => [...cabinetCalls],
     /** DB 호출 수(조회·쓰기·batch) — 주 전환당 왕복 수 측정 */
     queries: () => sqlJsCalls.n,
     setToday(date: string) {

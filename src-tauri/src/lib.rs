@@ -1,5 +1,6 @@
 //! Work Journey Board 데스크톱 껍데기. 플러그인 등록·창 설정만 둔다 — 업무 로직은 웹 앱(src/) 쪽에(CLAUDE.md 4-5).
 
+mod cabinet;
 mod db_batch;
 mod files;
 mod splash;
@@ -28,6 +29,8 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         // 새 판 확인·설치(update.rs) — 확인한 판의 주소·해시를 들고 있는 곳
         .manage(update::UpdateState::default())
+        // Cabinet(F5) — 등록한 폴더 목록(읽기·열기 허용 범위)
+        .manage(cabinet::CabinetRoots::default())
         // 창 배경색은 설정 파일 값이 라이트라서, 다크 테마면 여기서 바꿔 밝은 번쩍임을 막는다(docs/splash-spec.md).
         .setup(|app| {
             for (label, (r, g, b)) in [("splash", (0x23, 0x23, 0x22)), ("main", (0x1a, 0x1a, 0x19))]
@@ -39,6 +42,11 @@ pub fn run() {
                 }
             }
             splash::arm_fallback(app.handle());
+            // Cabinet 끌어 놓기 다리(A안, 윈도우 WebView2만) — 메인 창
+            #[cfg(windows)]
+            if let Some(w) = app.get_webview_window("main") {
+                cabinet::install_drop_bridge(&w);
+            }
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -59,7 +67,11 @@ pub fn run() {
             files::open_url,
             update::update_check,
             update::update_download,
-            update::update_install
+            update::update_install,
+            cabinet::cabinet_set_roots,
+            cabinet::cabinet_list,
+            cabinet::cabinet_open,
+            cabinet::cabinet_reveal
         ])
         .run(tauri::generate_context!())
         .expect("Work Journey Board 실행 중 오류");

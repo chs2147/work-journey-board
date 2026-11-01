@@ -11,6 +11,7 @@ import {
 } from "../data/backup";
 import type { SqlDriver, SqlParam } from "../data/driver";
 import type { SqlJsDriver } from "../data/drivers/sqlJs";
+import type { FsEntry } from "../domain/cabinet";
 import type { PathInfo } from "./index";
 
 export type OpenSqlJs = (bytes?: Uint8Array, label?: string) => Promise<SqlJsDriver>;
@@ -28,8 +29,12 @@ export interface FakeFs {
   verifyCopy: VerifyCopy;
   backupFs: BackupFs;
   restoreJournal(dataDir: string, backupName: string, beforeName: string): Promise<void>;
-  /** 테스트 준비용: 일반 파일 하나 만들기 */
-  writeFile(path: string, bytes?: Uint8Array): void;
+  /** 테스트 준비용: 일반 파일 하나 만들기(수정 시각 ms는 선택) */
+  writeFile(path: string, bytes?: Uint8Array, modified?: number): void;
+  /** Cabinet 폴더 창 흉내(features-1102-spec F5): 폴더 안 이름·종류·크기·수정 시각 */
+  listDir(path: string): FsEntry[];
+  /** 그 경로가 폴더인가 */
+  isDir(path: string): boolean;
   /** 테스트 확인용: 경로 목록 */
   listAll(): string[];
 }
@@ -38,6 +43,7 @@ export function createFakeFs(open: OpenSqlJs): FakeFs {
   const dirs = new Set<string>(["/"]);
   const files = new Map<string, Uint8Array>();
   const live = new Map<string, SqlJsDriver>();
+  const mtimes = new Map<string, number>();
 
   const ensureDirSync = (dir: string) => {
     let d = norm(dir);
@@ -152,10 +158,34 @@ export function createFakeFs(open: OpenSqlJs): FakeFs {
       }
       files.set(norm(journal), src.slice());
     },
-    writeFile(path, bytes = new Uint8Array([1])) {
+    writeFile(path, bytes = new Uint8Array([1]), modified) {
       ensureDirSync(parentOf(path));
       files.set(norm(path), bytes);
+      if (modified != null) mtimes.set(norm(path), modified);
     },
+    listDir(path) {
+      const d = norm(path);
+      if (!dirs.has(d)) throw new Error(`폴더가 아닙니다: ${path}`);
+      const sub = [...dirs].filter((x) => x !== d && parentOf(x) === d);
+      const fl = [...new Set([...files.keys(), ...live.keys()])].filter((x) => parentOf(x) === d);
+      return [
+        ...sub.map((x) => ({
+          name: nameOf(x),
+          dir: true,
+          size: null,
+          modified: mtimes.get(x) ?? null,
+          hidden: nameOf(x).startsWith("."),
+        })),
+        ...fl.map((x) => ({
+          name: nameOf(x),
+          dir: false,
+          size: bytesOf(x)?.length ?? 0,
+          modified: mtimes.get(x) ?? null,
+          hidden: nameOf(x).startsWith("."),
+        })),
+      ];
+    },
+    isDir: (path) => dirs.has(norm(path)),
     listAll: () => [...new Set([...files.keys(), ...live.keys()])].sort(),
   };
 }

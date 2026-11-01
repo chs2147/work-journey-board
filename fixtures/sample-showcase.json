@@ -1,5 +1,5 @@
 {
-  "_note": "쇼케이스 샘플(README·소개 사이트 화면용) — sample-weeks + 2026-W43 주간 메모 문서(업무 연결 메모·이미지 메모·관계선). 모두 가상 기록.",
+  "_note": "쇼케이스 샘플(README·소개 사이트 화면용) — sample-weeks + 2026-W43 주간 메모 문서(업무 연결 메모·이미지 메모·관계선). 모두 가상 기록. Cabinet 폴더·링크도 가상 경로(/demo/업무)·example 주소만.",
   "categories": [
     {
       "id": "cat-settle",
@@ -522,5 +522,99 @@
       "height": 480,
       "bytes": 30696
     }
-  ]
+  ],
+  "cabinet": {
+    "items": [
+      {
+        "id": "cab-design",
+        "kind": "folder",
+        "title": "설계 문서",
+        "target": "/demo/업무/정산/설계"
+      },
+      {
+        "id": "cab-test",
+        "kind": "folder",
+        "title": "배치 테스트 자료",
+        "target": "/demo/업무/정산/테스트"
+      },
+      {
+        "id": "cab-wiki",
+        "kind": "link",
+        "title": "정산 배치 설계서 v2 (사내 위키)",
+        "target": "https://wiki.example.com/settlement/batch-design"
+      },
+      {
+        "id": "cab-monitor",
+        "kind": "link",
+        "title": "배치 모니터링 대시보드",
+        "target": "https://monitor.example.local/batch"
+      },
+      {
+        "id": "cab-minutes",
+        "kind": "folder",
+        "title": "회의록",
+        "target": "/demo/업무/정산/회의록"
+      },
+      {
+        "id": "cab-sec",
+        "kind": "folder",
+        "title": "계정 점검표",
+        "target": "/demo/업무/보안점검"
+      },
+      {
+        "id": "cab-guide",
+        "kind": "link",
+        "title": "보안 점검 가이드",
+        "target": "https://wiki.example.com/security/vendor-check"
+      },
+      {
+        "id": "cab-misc",
+        "kind": "link",
+        "title": "사내 포털",
+        "target": "https://portal.example.local/"
+      }
+    ],
+    "links": [
+      {
+        "itemId": "cab-design",
+        "categoryId": "cat-settle"
+      },
+      {
+        "itemId": "cab-design",
+        "entryId": "it-review"
+      },
+      {
+        "itemId": "cab-test",
+        "categoryId": "cat-settle"
+      },
+      {
+        "itemId": "cab-wiki",
+        "categoryId": "cat-settle"
+      },
+      {
+        "itemId": "cab-wiki",
+        "entryId": "it-review"
+      },
+      {
+        "itemId": "cab-monitor",
+        "categoryId": "cat-settle"
+      },
+      {
+        "itemId": "cab-minutes",
+        "categoryId": "cat-settle"
+      },
+      {
+        "itemId": "cab-sec",
+        "categoryId": "cat-sec"
+      },
+      {
+        "itemId": "cab-sec",
+        "entryId": "it-acct"
+      },
+      {
+        "itemId": "cab-guide",
+        "categoryId": "cat-sec"
+      }
+    ]
+  }
 }

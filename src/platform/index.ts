@@ -1,6 +1,7 @@
 import { isTauri } from "@tauri-apps/api/core";
 import type { BackupFs, VerifyCopy } from "../data/backup";
 import type { SqlDriver } from "../data/driver";
+import type { FsEntry } from "../domain/cabinet";
 import { STR } from "../shared/strings";
 import { isThemePref, type ThemePref } from "../shared/theme";
 
@@ -13,6 +14,39 @@ export interface AppConfig {
   theme?: ThemePref;
   /** 보조 백업 위치(optimize-1031-plan B6) — 이 PC의 다른 폴더에 일일 사본을 하나 더. 없으면 끔 */
   backupMirror?: string | null;
+  /** Cabinet(features-1102-spec F5): 열려 있던 Cabinet 창·폴더 창(하위 위치) — 다음에 켜면 그대로 다시 연다 */
+  cabinet?: CabinetConfig;
+}
+
+export interface CabinetConfig {
+  open: boolean;
+  windows: { id: string; sub: string }[];
+}
+
+/** Cabinet 폴더 창 하나(실앱 = 별도 OS 창) */
+export interface FolderWindowSpec {
+  id: string;
+  /** 등록 폴더(뿌리) */
+  root: string;
+  /** 지금 보는 하위 경로(뿌리 포함 전체 경로) */
+  sub: string;
+  title: string;
+  /** 연결 표시 글(업무·항목) */
+  links: string[];
+  theme: string;
+}
+
+export type FolderWindowEvent = { type: "nav"; id: string; sub: string } | { type: "closed"; id: string };
+
+/** 폴더 창을 별도 OS 창으로 다루기(실앱만) — 브라우저 모드는 앱 안 떠 있는 창으로 대신한다 */
+export interface FolderWindows {
+  open(spec: FolderWindowSpec): Promise<void>;
+  /** 앱을 닫을 때 — 폴더 창도 모두 닫는다 */
+  closeAll(): Promise<void>;
+  /** 메인 창: 폴더 창의 이동·닫힘 알림 받기 */
+  onEvent(cb: (e: FolderWindowEvent) => void): Promise<() => void>;
+  /** 폴더 창 쪽: 하위 위치가 바뀌었다고 메인 창에 알림 */
+  notifyNav(id: string, sub: string): Promise<void>;
 }
 
 /** 내보내기 종류 — 저장 대화상자의 파일 형식 거르개와 허용 확장자 */
@@ -82,6 +116,22 @@ export interface Platform {
   /** 시작 스플래시 창(실앱만, docs/splash-spec.md). 브라우저 모드에는 없다. */
   readonly splash?: SplashWindow;
 
+  // ── Cabinet(features-1102-spec F5) — 등록 폴더를 읽기·열기만(지우기·옮기기 없음), Rust cabinet.rs가 등록 폴더 안인지 재검사 ──
+  /** 폴더 여러 개 고르기. 취소하면 null */
+  pickFolders(title: string): Promise<string[] | null>;
+  /** 등록한 폴더 목록(읽기·열기 허용 범위)을 알린다 */
+  cabinetSetRoots(paths: string[]): Promise<void>;
+  /** 폴더 안 목록(이름·종류·크기·수정 시각만) */
+  cabinetList(path: string): Promise<FsEntry[]>;
+  /** 파일·폴더를 OS 기본 앱으로 열기 */
+  cabinetOpen(path: string): Promise<void>;
+  /** 탐색기에서 그 항목 보기 */
+  cabinetReveal(path: string): Promise<void>;
+  /** 끌어 놓은 파일·폴더의 경로와 폴더 여부(A안: WebView2 다리). 경로를 받을 수 없으면 null */
+  droppedPaths(files: File[]): Promise<{ path: string; isDir: boolean }[] | null>;
+  /** 폴더 창을 별도 OS 창으로(실앱만) */
+  readonly folderWindows?: FolderWindows;
+
   /**
    * 새 판 확인(improve-1027v4-spec 1절 B안) — GitHub Releases에 묻는다(앱에서 인터넷으로 나가는 유일한 곳, Rust update.rs).
    * 지금보다 높은 판이 없으면 null, 연결 실패는 오류.
@@ -130,6 +180,8 @@ export function parseConfig(raw: string | null): AppConfig | null {
     const out: AppConfig = { dataDir: c.dataDir };
     if (isThemePref(c.theme)) out.theme = c.theme;
     if (typeof c.backupMirror === "string" && c.backupMirror) out.backupMirror = c.backupMirror;
+    const cab = parseCabinetConfig(c.cabinet);
+    if (cab) out.cabinet = cab;
     return out;
   } catch {
     return null;
@@ -178,4 +230,23 @@ export function isOneDriveLike(path: string, roots: string[]): boolean {
     roots.some((r) => r && p.startsWith(r.replace(/\//g, "\\").toLowerCase())) ||
     /\\onedrive(\\|$| - )/.test(p)
   );
+}
+
+/** config.json `cabinet` 읽기 — 모르는 값은 버린다 */
+export function parseCabinetConfig(v: unknown): CabinetConfig | null {
+  if (!v || typeof v !== "object") return null;
+  const o = v as { open?: unknown; windows?: unknown };
+  const windows = Array.isArray(o.windows)
+    ? o.windows
+        .filter(
+          (w): w is { id: string; sub: string } =>
+            !!w &&
+            typeof w === "object" &&
+            typeof (w as { id?: unknown }).id === "string" &&
+            typeof (w as { sub?: unknown }).sub === "string",
+        )
+        .slice(0, 20)
+        .map((w) => ({ id: w.id, sub: w.sub }))
+    : [];
+  return { open: o.open === true, windows };
 }

@@ -8,6 +8,7 @@ import dayMark0005 from "./migrations/0005_day_mark.sql?raw";
 import tags0006 from "./migrations/0006_tags.sql?raw";
 import noteThumb0007 from "./migrations/0007_note_thumb.sql?raw";
 import dayMarkExt0008 from "./migrations/0008_day_mark_ext.sql?raw";
+import cabinet0009 from "./migrations/0009_cabinet.sql?raw";
 
 export interface Migration {
   version: number;
@@ -24,6 +25,7 @@ export const MIGRATIONS: Migration[] = [
   { version: 6, sql: tags0006 },
   { version: 7, sql: noteThumb0007 },
   { version: 8, sql: dayMarkExt0008 },
+  { version: 9, sql: cabinet0009 },
 ];
 
 export const LATEST_SCHEMA_VERSION = MIGRATIONS.at(-1)!.version;

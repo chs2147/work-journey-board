@@ -20,6 +20,7 @@ import { flushAll, focusStartCell, init as initBoard, reload, toast, useBoard } 
 import { flushDraft, initSummary } from "../summary/summaryStore";
 import { finishNote, flushNote, initNote } from "../note/noteStore";
 import { initInsights, useInsights } from "../insights/insightsStore";
+import { restoreCabinet, shutdownCabinet } from "../cabinet/cabinetStore";
 import { useAppStore, type JournalStatus } from "./appStore";
 
 const set = useAppStore.setState;
@@ -149,6 +150,8 @@ function onCorrupt(e: unknown) {
 
 /** 앱 종료 직전: 대기 중인 저장을 끝내고, 마지막 백업 뒤 바뀐 게 있으면 그날 일일 백업을 덮어쓴다(B3). 실패해도 창은 닫힌다. */
 async function onExit() {
+  // Cabinet: 열린 창 상태를 이 PC 설정에 남기고 폴더 창(별도 OS 창)을 닫는다(F5)
+  await shutdownCabinet().catch(() => undefined);
   await flushPending().catch(() => undefined);
   await finishNote().catch(() => undefined);
   stopPeriodic();
@@ -172,6 +175,7 @@ async function activate(driver: SqlDriver, dataDir: string) {
   await initInsights(repo);
   set({ journal: { state: "ready", driver, repo, dataDir, sqliteVersion: row?.v ?? "?" } });
   lastBackup = { writes: repo.writeCount, at: p.now().getTime() };
+  void restoreCabinet().catch(() => undefined);
   void waitInputIdle(START_BACKUP_MAX_WAIT_MS).then(() => autoBackup("start"));
   periodicTimer = setInterval(() => void periodicTick().catch(() => undefined), PERIODIC_CHECK_MS);
 }

@@ -207,7 +207,7 @@ describe("마이그레이션 (data-spec 7-5)", () => {
       db.execute("INSERT INTO day_mark (date, kind, updated_at) VALUES ('2026-10-29', 'holiday', 't')"),
     ).rejects.toThrow();
     const before = vi.fn().mockResolvedValue(undefined);
-    expect(await migrate(db, { beforeMigrate: before })).toBe(8);
+    expect(await migrate(db, { beforeMigrate: before, migrations: MIGRATIONS.slice(0, 8) })).toBe(8);
     expect(before).toHaveBeenCalledWith(7, 8);
     expect(await db.select("SELECT date, kind, label FROM day_mark ORDER BY date")).toEqual([
       { date: "2026-10-27", kind: "leave", label: null },
@@ -224,6 +224,52 @@ describe("마이그레이션 (data-spec 7-5)", () => {
         `INSERT INTO day_mark (date, kind, label, updated_at) VALUES ('2026-11-01', 'other', '${"가".repeat(41)}', 't')`,
       ),
     ).rejects.toThrow();
+    expect(await quickCheck(db)).toBe(true);
+  });
+
+  it("v8 → v9(Cabinet): 직전 백업, 폴더·링크 등록과 업무/항목 연결(둘 중 하나), 지우면 연결도 함께", async () => {
+    const db = await openSqlJsMemory();
+    await migrate(db, { migrations: MIGRATIONS.slice(0, 8) });
+    const before = vi.fn().mockResolvedValue(undefined);
+    expect(await migrate(db, { beforeMigrate: before })).toBe(9);
+    expect(before).toHaveBeenCalledWith(8, 9);
+    await db.execute(
+      "INSERT INTO category (id, name, color, sort_order, created_at, updated_at) VALUES ('c1', '업무', 'c1', 1, 't', 't')",
+    );
+    await db.execute(
+      "INSERT INTO entry_item (id, date, category_id, seq, text, created_at, updated_at) VALUES ('e1', '2026-10-21', 'c1', 1, '항목', 't', 't')",
+    );
+    await db.execute(
+      "INSERT INTO cabinet_item (id, kind, title, target, sort_order, created_at, updated_at) VALUES ('f', 'folder', '설계 문서', 'D:\\업무\\설계', 1, 't', 't'), ('l', 'link', '위키', 'https://wiki.example.com/a', 2, 't', 't')",
+    );
+    await expect(
+      db.execute(
+        "INSERT INTO cabinet_item (id, kind, title, target, sort_order, created_at, updated_at) VALUES ('x', 'file', 'a', 'b', 3, 't', 't')",
+      ),
+    ).rejects.toThrow();
+    await db.execute(
+      "INSERT INTO cabinet_link (id, item_id, category_id, entry_id, created_at) VALUES ('k1', 'f', 'c1', NULL, 't'), ('k2', 'f', NULL, 'e1', 't'), ('k3', 'l', 'c1', NULL, 't')",
+    );
+    // 둘 다 비었거나 둘 다 있으면 거부, 같은 연결 두 번 거부
+    await expect(
+      db.execute(
+        "INSERT INTO cabinet_link (id, item_id, category_id, entry_id, created_at) VALUES ('k4', 'f', NULL, NULL, 't')",
+      ),
+    ).rejects.toThrow();
+    await expect(
+      db.execute(
+        "INSERT INTO cabinet_link (id, item_id, category_id, entry_id, created_at) VALUES ('k5', 'f', 'c1', 'e1', 't')",
+      ),
+    ).rejects.toThrow();
+    await expect(
+      db.execute(
+        "INSERT INTO cabinet_link (id, item_id, category_id, entry_id, created_at) VALUES ('k6', 'f', 'c1', NULL, 't')",
+      ),
+    ).rejects.toThrow();
+    await db.execute("DELETE FROM entry_item WHERE id = 'e1'");
+    expect(await db.select("SELECT id FROM cabinet_link ORDER BY id")).toEqual([{ id: "k1" }, { id: "k3" }]);
+    await db.execute("DELETE FROM cabinet_item WHERE id = 'l'");
+    expect(await db.select("SELECT id FROM cabinet_link ORDER BY id")).toEqual([{ id: "k1" }]);
     expect(await quickCheck(db)).toBe(true);
   });
 });

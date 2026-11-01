@@ -1,6 +1,7 @@
 // 검색 상태(features-1102-spec F1): 검색어·결과·거르기·지금 결과. 결과가 있는 동안 "검색 결과 기준 보기"(띠)는
 // [검색 초기화] 전까지 유지 — 패널을 닫아도 남는다. 앱을 다시 켜면 처음부터.
 import { create } from "zustand";
+import type { CabinetHit } from "../../data/repository";
 import type { SearchHit } from "../../domain/search";
 import { searchTerms } from "../../domain/search";
 import { addDays, type DateStr } from "../../domain/week";
@@ -20,6 +21,8 @@ interface SearchState {
   ran: string;
   hits: SearchHit[];
   truncated: boolean;
+  /** Cabinet 제목·주소에서 찾은 것(features-1102-spec F5 #7) — 목록 맨 위 따로, F3 이동 대상 아님 */
+  cabinet: CabinetHit[];
   filter: SearchFilter;
   range: SearchRange;
   /** 지금 결과(보이는 목록 기준 위치) */
@@ -37,6 +40,7 @@ export const useSearch = create<SearchState>(() => ({
   ran: "",
   hits: [],
   truncated: false,
+  cabinet: [],
   filter: "all",
   range: "all",
   index: -1,
@@ -83,7 +87,7 @@ export async function runSearch(query = get().query) {
   const j = useAppStore.getState().journal;
   if (j.state !== "ready") return;
   if (!searchTerms(query).length) {
-    set({ hits: [], truncated: false, index: -1, ran: query.trim() });
+    set({ hits: [], cabinet: [], truncated: false, index: -1, ran: query.trim() });
     return;
   }
   const my = ++seq;
@@ -91,9 +95,19 @@ export async function runSearch(query = get().query) {
   try {
     const today = useBoard.getState().today;
     const { hits, truncated } = await j.repo.search(query, rangeFrom(get().range, today));
+    const cabinet = await j.repo.searchCabinet(query);
     if (my !== seq) return;
     if (useSummary.getState().open) setSummaryOpen(false);
-    set({ hits, truncated, ran: query.trim(), index: -1, active: true, panelOpen: true, busy: false });
+    set({
+      hits,
+      cabinet,
+      truncated,
+      ran: query.trim(),
+      index: -1,
+      active: true,
+      panelOpen: true,
+      busy: false,
+    });
   } catch (e) {
     set({ busy: false });
     reportError(e);
@@ -117,6 +131,7 @@ export function resetSearch() {
     query: "",
     ran: "",
     hits: [],
+    cabinet: [],
     truncated: false,
     index: -1,
     active: false,

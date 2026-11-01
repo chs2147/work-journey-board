@@ -31,7 +31,10 @@ export class SqlJsDriver implements SqlDriver {
 
   /** DB 전체를 바이트로(브라우저 모드의 가짜 파일 시스템용) */
   exportBytes(): Uint8Array {
-    return this.db.export();
+    const bytes = this.db.export();
+    // sql.js export()는 연결 설정(PRAGMA)을 기본값으로 되돌린다 — 외래 키 검사를 다시 켠다(실앱 sqlx는 늘 켜짐)
+    this.db.run("PRAGMA foreign_keys = ON");
+    return bytes;
   }
 
   async execute(sql: string, params: SqlParam[] = []) {

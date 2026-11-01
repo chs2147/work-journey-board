@@ -6,6 +6,8 @@ import { focusStartCell, setPanelOpen, useBoard } from "../board/boardStore";
 import { closeInsights, openInsights, useInsights } from "../insights/insightsStore";
 import { hasUpdate, useUpdate } from "../update/updateStore";
 import { setSettingsOpen } from "./appController";
+import { CabinetRailIcon } from "../cabinet/CabinetIcons";
+import { toggleCabinet, useCabinet } from "../cabinet/cabinetStore";
 import { useAppStore } from "./appStore";
 import styles from "./Rail.module.css";
 
@@ -76,6 +78,7 @@ export function Rail() {
   const panelOpen = useBoard((s) => s.panelOpen);
   const badge = importantBadge(important, today);
   const n = important.length;
+  const cabinetOpen = useCabinet((s) => s.open);
 
   return (
     <nav className={styles.rail} aria-label={STR.rail.label}>
@@ -132,6 +135,17 @@ export function Rail() {
           </span>
         )}
         {badge.late && <span className={styles.late} title={STR.rail.late} data-testid="important-late" />}
+      </button>
+      <button
+        type="button"
+        className={`${styles.btn} ${cabinetOpen ? styles.on : ""}`}
+        aria-label={STR.cabinet.rail}
+        aria-expanded={cabinetOpen}
+        title={STR.cabinet.rail}
+        data-testid="rail-cabinet"
+        onClick={toggleCabinet}
+      >
+        <CabinetRailIcon />
       </button>
       <span className={styles.fill} aria-hidden="true" />
       <span className={styles.sep} aria-hidden="true" />

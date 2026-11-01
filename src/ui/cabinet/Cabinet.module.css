@@ -1,0 +1,807 @@
+/* Cabinet(features-1102-spec F5) — 앱 안 모달리스 창(Cabinet)·폴더 창(브라우저 모드는 앱 안, 실앱은 별도 OS 창) */
+.win {
+  position: fixed;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  min-width: 520px;
+  min-height: 320px;
+  max-width: calc(100vw - 16px);
+  max-height: calc(100vh - 16px);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+  color: var(--text-1);
+  box-shadow: 0 16px 40px rgb(0 0 0 / 0.18);
+  resize: both;
+  overflow: hidden;
+}
+
+.winHead {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  height: 34px;
+  padding: 0 var(--sp-2) 0 var(--sp-4);
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-sub);
+  font-size: var(--fs-sm);
+  cursor: move;
+  user-select: none;
+  flex: 0 0 auto;
+}
+
+.winTitle {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.winTitle small {
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+}
+
+.iconBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-2);
+  font: inherit;
+  cursor: pointer;
+}
+
+.iconBtn:hover,
+.iconBtn:focus-visible {
+  background: var(--surface-focus);
+  color: var(--text-1);
+}
+
+.body {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* 왼쪽 업무 묶음 */
+.side {
+  flex: 0 0 210px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--sp-3) var(--sp-2);
+  border-right: 1px solid var(--line);
+  overflow-y: auto;
+}
+
+.sideLabel {
+  padding: var(--sp-2) var(--sp-3);
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+}
+
+.group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 30px;
+  padding: 0 var(--sp-3);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-1);
+  font: inherit;
+  font-size: var(--fs-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.group:hover {
+  background: var(--surface-sub);
+}
+
+.groupOn {
+  background: var(--surface-focus);
+  font-weight: var(--fw-bold);
+}
+
+.groupName {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.groupCount {
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.dot {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.drop {
+  margin: var(--sp-4) var(--sp-2) var(--sp-2);
+  padding: var(--sp-4) var(--sp-3);
+  border: 1.5px dashed var(--line-strong);
+  border-radius: var(--radius-md);
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+  line-height: 1.6;
+  text-align: center;
+  white-space: pre-line;
+}
+
+.dropOn {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* 오른쪽 목록 */
+.main {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  position: relative;
+}
+
+.mainOn {
+  outline: 2px dashed var(--accent);
+  outline-offset: -6px;
+  background: var(--accent-soft);
+}
+
+.mainHead {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--line);
+}
+
+.mainTitle {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-bold);
+}
+
+.chips {
+  display: flex;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 26px;
+  padding: 0 10px;
+  border: 1px solid var(--btn-line);
+  border-radius: 13px;
+  background: var(--btn-bg);
+  color: var(--text-2);
+  font: inherit;
+  font-size: var(--fs-xs);
+  cursor: pointer;
+}
+
+.chipOn {
+  border-color: transparent;
+  background: var(--primary-bg);
+  color: var(--primary-fg);
+}
+
+.list {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: 52px;
+  padding: var(--sp-2) var(--sp-4);
+  border-bottom: 1px solid var(--line);
+  cursor: default;
+  user-select: none;
+}
+
+.row:hover,
+.row:focus-within {
+  background: var(--surface-sub);
+}
+
+.row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.rowOpen {
+  background: var(--warn-soft);
+}
+
+.flash {
+  animation: flash 1.4s ease-out;
+}
+
+@keyframes flash {
+  0%,
+  40% {
+    background: var(--accent-soft);
+  }
+}
+
+.rowIcon {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-md);
+  background: var(--surface-sub);
+}
+
+.rowText {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.rowTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-md);
+}
+
+.rowTitle > span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.openTag {
+  flex: 0 0 auto;
+  color: var(--warn);
+  font-size: var(--fs-xs);
+}
+
+.rowSub {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+}
+
+.renameInput {
+  width: 100%;
+  height: 26px;
+  padding: 0 6px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background: var(--surface-card);
+  color: var(--text-1);
+  font: inherit;
+}
+
+.rowBtns {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 2px;
+  opacity: 0.55;
+}
+
+.row:hover .rowBtns,
+.row:focus-within .rowBtns {
+  opacity: 1;
+}
+
+.menu {
+  position: absolute;
+  z-index: 5;
+  min-width: 200px;
+  padding: 4px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.16);
+}
+
+.menu button {
+  display: block;
+  width: 100%;
+  height: 30px;
+  padding: 0 var(--sp-3);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-1);
+  font: inherit;
+  font-size: var(--fs-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.menu button:hover,
+.menu button:focus-visible {
+  background: var(--surface-focus);
+}
+
+.menu .danger {
+  color: var(--danger);
+}
+
+.empty {
+  padding: var(--sp-6) var(--sp-4);
+  color: var(--text-3);
+  font-size: var(--fs-sm);
+  text-align: center;
+}
+
+.foot {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border-top: 1px solid var(--line);
+}
+
+.footHint {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+  text-align: right;
+}
+
+.button,
+.primary {
+  height: 30px;
+  padding: 0 var(--sp-4);
+  border-radius: var(--radius-md);
+  font: inherit;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.button {
+  border: 1px solid var(--btn-line);
+  background: var(--btn-bg);
+  color: var(--text-1);
+}
+
+.primary {
+  border: 0;
+  background: var(--primary-bg);
+  color: var(--primary-fg);
+  font-weight: var(--fw-bold);
+}
+
+.primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 링크 등록·연결 창(Cabinet 안 작은 창) */
+.dialogBack {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: var(--sp-5);
+  background: rgb(0 0 0 / 0.08);
+}
+
+.dialog {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  width: min(440px, 100%);
+  max-height: 100%;
+  overflow-y: auto;
+  padding: var(--sp-5);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 0.2);
+}
+
+.dialogTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-lg);
+}
+
+.dialogTitle small {
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-regular);
+}
+
+.label {
+  margin-top: var(--sp-2);
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+}
+
+.input {
+  height: 32px;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--btn-line);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-1);
+  font: inherit;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+
+.linkChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.linkChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  height: 26px;
+  padding: 0 4px 0 10px;
+  border-radius: 13px;
+  background: var(--primary-bg);
+  color: var(--primary-fg);
+  font-size: var(--fs-xs);
+}
+
+.linkChip > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.linkChip button {
+  width: 20px;
+  height: 20px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.addChip {
+  height: 26px;
+  padding: 0 10px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 13px;
+  background: transparent;
+  color: var(--text-2);
+  font: inherit;
+  font-size: var(--fs-xs);
+  cursor: pointer;
+}
+
+.select {
+  height: 28px;
+  border: 1px solid var(--btn-line);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-1);
+  font: inherit;
+  font-size: var(--fs-xs);
+}
+
+.dialogFoot {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+
+.dialogFoot > span {
+  flex: 1 1 auto;
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+}
+
+.checkList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 220px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-sm);
+}
+
+.checkList label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+  padding: 0 var(--sp-2);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.checkList label:hover {
+  background: var(--surface-sub);
+}
+
+.checkList .sub {
+  padding-left: 24px;
+  color: var(--text-2);
+}
+
+/* 폴더 창 */
+.folder {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1 1 auto;
+  background: var(--surface-card);
+  color: var(--text-1);
+}
+
+.folderBar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--line);
+}
+
+.navBtn {
+  width: 34px;
+  height: 30px;
+  border: 1px solid var(--btn-line);
+  border-radius: var(--radius-md);
+  background: var(--btn-bg);
+  color: var(--text-1);
+  font: inherit;
+  cursor: pointer;
+}
+
+.navBtn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.crumbs {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: var(--fs-sm);
+}
+
+.crumb {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-2);
+  font: inherit;
+  padding: 2px 4px;
+  cursor: pointer;
+}
+
+.crumb:last-child {
+  color: var(--text-1);
+  font-weight: var(--fw-bold);
+}
+
+.crumb:hover {
+  background: var(--surface-sub);
+}
+
+.crumbSep {
+  color: var(--text-3);
+}
+
+.folderLinks {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: var(--sp-2) var(--sp-4);
+  border-bottom: 1px solid var(--line);
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.linkTag {
+  padding: 1px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+  color: var(--accent);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.table {
+  flex: 1 1 auto;
+  overflow: auto;
+}
+
+.table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+}
+
+.table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  height: 30px;
+  padding: 0 var(--sp-3);
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-card);
+  color: var(--text-3);
+  font-weight: var(--fw-regular);
+  text-align: left;
+}
+
+.table th button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  padding: 0;
+}
+
+.table td {
+  height: 32px;
+  padding: 0 var(--sp-3);
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.table tbody tr {
+  cursor: default;
+  user-select: none;
+}
+
+.table tbody tr:hover {
+  background: var(--surface-sub);
+}
+
+.table tbody tr[aria-selected="true"] {
+  background: var(--surface-focus);
+}
+
+.table tbody tr:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.nameCell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 420px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.numCol {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-2);
+}
+
+.dateCol {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-2);
+}
+
+.folderFoot {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-4);
+  border-top: 1px solid var(--line);
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+}
+
+.folderFoot > span {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.linkBtn {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* 실앱 폴더 창(OS 창 전체) */
+.osWin {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* 보드 항목 옆 Cabinet 표시 */
+.entryMark {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 4px;
+  padding: 0 3px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+  vertical-align: middle;
+  cursor: pointer;
+}
+
+.entryMark:hover {
+  background: var(--surface-sub);
+  color: var(--text-1);
+}

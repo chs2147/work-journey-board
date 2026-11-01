@@ -1,5 +1,6 @@
 // 검색 화면(features-1102-spec F1): 상단 검색 칸 · 오른쪽 결과 패널 · 보드 위 "결과 기준 보기" 띠 · 보드·메모 강조.
 import { Fragment, useEffect, useRef } from "react";
+import { openCabinet } from "../cabinet/cabinetStore";
 import { highlightRanges, searchTerms, type SearchHit } from "../../domain/search";
 import { dayIndex, DAY_LABELS, weekRange } from "../../domain/week";
 import { STR } from "../../shared/strings";
@@ -162,7 +163,31 @@ export function SearchPanel({ overlay }: { overlay: boolean }) {
       </div>
       <div className={styles.list} ref={listRef} data-testid="search-results">
         {!terms.length && <p className={styles.note}>{T.hint}</p>}
-        {terms.length > 0 && !s.busy && list.length === 0 && <p className={styles.note}>{T.empty}</p>}
+        {terms.length > 0 && !s.busy && list.length === 0 && !s.cabinet.length && (
+          <p className={styles.note}>{T.empty}</p>
+        )}
+        {s.filter === "all" && s.cabinet.length > 0 && (
+          <>
+            <div className={styles.week}>Cabinet</div>
+            {s.cabinet.map((c) => (
+              <button
+                key={c.id}
+                type="button"
+                className={styles.hit}
+                data-testid="search-cabinet-hit"
+                onClick={() => void openCabinet({ itemId: c.id })}
+              >
+                <span className={styles.meta}>
+                  <span className={`${styles.kind} ${styles.k_link}`}>{STR.cabinet.search[c.kind]}</span>
+                  <span className={styles.where}>{c.title}</span>
+                </span>
+                <span className={styles.text}>
+                  <Marked text={c.text} terms={terms} />
+                </span>
+              </button>
+            ))}
+          </>
+        )}
         {list.map((h, i) => {
           const head = i === 0 || list[i - 1]!.weekId !== h.weekId ? weekHead(h.weekId) : null;
           return (

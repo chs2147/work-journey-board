@@ -14,7 +14,26 @@ import { resolveHolidays } from "../domain/holidaysKr";
 import { normalizeTagName, tagNameProblem, type Tag } from "../domain/tags";
 import type { ExistingItem, ImportContext, ImportPlan } from "../domain/importer";
 import type { ActivityRow } from "../domain/insights";
-import { SEARCH_LIMIT, searchNote, searchTerms, sortHits, type SearchHit } from "../domain/search";
+import {
+  SEARCH_LIMIT,
+  matchesAll,
+  searchNote,
+  searchTerms,
+  snippet,
+  sortHits,
+  type SearchHit,
+} from "../domain/search";
+import {
+  CABINET_TARGET_MAX,
+  isFolderPathLike,
+  normalizeCabinetTitle,
+  normalizeFolderPath,
+  type CabinetItem,
+  type CabinetKind,
+  type CabinetLink,
+  type CabinetLinkDraft,
+} from "../domain/cabinet";
+import { isOpenableUrl } from "../domain/links";
 import {
   docFromDayMemos,
   emptyDoc,
@@ -312,6 +331,21 @@ type CacheKey = keyof typeof CACHE_TABLES;
 const CACHE_RES = Object.fromEntries(
   Object.entries(CACHE_TABLES).map(([k, tables]) => [k, new RegExp(`\\b(${tables.join("|")})\\b`, "i")]),
 ) as Record<CacheKey, RegExp>;
+
+/** Cabinet 등록 해제 되돌리기 자료 */
+export interface CabinetUndo {
+  item: CabinetItem;
+  links: CabinetLink[];
+}
+
+/** Cabinet 검색 결과(features-1102-spec F5 #7) */
+export interface CabinetHit {
+  id: string;
+  kind: CabinetKind;
+  title: string;
+  target: string;
+  text: string;
+}
 
 export class JournalRepository {
   private readonly db: SqlDriver;
@@ -1610,6 +1644,221 @@ export class JournalRepository {
     const memoHits = notes.flatMap((n) => searchNote(n.week_id as WeekId, parseNoteDoc(n.doc), terms));
     const all = sortHits([...itemHits, ...memoHits]);
     return { hits: all.slice(0, SEARCH_LIMIT), truncated: all.length > SEARCH_LIMIT };
+  }
+
+  /** Cabinet 검색(features-1102-spec F5 #7): 제목·주소/경로에 낱말이 모두 든 것 */
+  async searchCabinet(query: string): Promise<CabinetHit[]> {
+    const terms = searchTerms(query);
+    if (!terms.length) return [];
+    const { items } = await this.listCabinet();
+    return items
+      .filter((it) => matchesAll(`${it.title} ${it.target}`, terms))
+      .map((it) => ({
+        id: it.id,
+        kind: it.kind,
+        title: it.title,
+        target: it.target,
+        text: snippet(matchesAll(it.title, terms) ? it.title : it.target, terms),
+      }));
+  }
+
+  // ── Cabinet(features-1102-spec F5) ────────────────────
+  /** 등록한 폴더·링크와 연결(항목 연결은 그 항목의 날짜·글·업무 포함) */
+  async listCabinet(): Promise<{ items: CabinetItem[]; links: CabinetLink[] }> {
+    const items = await this.db.select<{
+      id: string;
+      kind: string;
+      title: string;
+      target: string;
+      sort_order: number;
+    }>("SELECT id, kind, title, target, sort_order FROM cabinet_item ORDER BY sort_order, created_at");
+    const links = await this.db.select<{
+      id: string;
+      item_id: string;
+      category_id: string | null;
+      entry_id: string | null;
+      e_date: string | null;
+      e_text: string | null;
+      e_cat: string | null;
+    }>(
+      `SELECT l.id, l.item_id, l.category_id, l.entry_id, e.date AS e_date, e.text AS e_text, e.category_id AS e_cat
+       FROM cabinet_link l LEFT JOIN entry_item e ON e.id = l.entry_id ORDER BY l.created_at, l.id`,
+    );
+    return {
+      items: items.map((r) => ({
+        id: r.id,
+        kind: r.kind as CabinetKind,
+        title: r.title,
+        target: r.target,
+        sortOrder: Number(r.sort_order),
+      })),
+      links: links.map((r) => ({
+        id: r.id,
+        itemId: r.item_id,
+        categoryId: r.category_id,
+        entryId: r.entry_id,
+        entry:
+          r.entry_id && r.e_date ? { date: r.e_date, text: r.e_text ?? "", categoryId: r.e_cat ?? "" } : null,
+      })),
+    };
+  }
+
+  /** 대상 검사·정리: 폴더 = 절대 경로(`..` 없음), 링크 = http/https */
+  private cabinetTarget(kind: CabinetKind, raw: string): string {
+    const t = kind === "folder" ? normalizeFolderPath(raw) : raw.trim();
+    if (t.length > CABINET_TARGET_MAX) throw new ValidationError("경로·주소가 너무 깁니다");
+    if (kind === "folder" ? !isFolderPathLike(t) : !isOpenableUrl(t))
+      throw new ValidationError(
+        kind === "folder" ? "폴더 경로가 아닙니다" : "http·https 주소만 등록할 수 있습니다",
+      );
+    return t;
+  }
+
+  private cabinetLinkStatements(itemId: string, links: CabinetLinkDraft[], ts: string): SqlStatement[] {
+    const seen = new Set<string>();
+    return links.flatMap((l) => {
+      const key = "categoryId" in l ? `c:${l.categoryId}` : `e:${l.entryId}`;
+      if (seen.has(key)) return [];
+      seen.add(key);
+      return [
+        {
+          sql: "INSERT INTO cabinet_link (id, item_id, category_id, entry_id, created_at) VALUES (?, ?, ?, ?, ?)",
+          params: [
+            uuidv7(),
+            itemId,
+            "categoryId" in l ? l.categoryId : null,
+            "entryId" in l ? l.entryId : null,
+            ts,
+          ],
+        },
+      ];
+    });
+  }
+
+  /**
+   * 폴더·링크 등록(여러 개 한 번에). 같은 종류·같은 대상(폴더는 대소문자 무시)이 이미 있으면 새로 만들지 않고
+   * 연결만 더한다. 돌려주는 값 = 등록(또는 이미 있던) 항목 id와 새로 만들었는지.
+   */
+  async addCabinetItems(
+    drafts: { kind: CabinetKind; title: string; target: string; links?: CabinetLinkDraft[] }[],
+  ): Promise<{ id: string; created: boolean }[]> {
+    const { items, links } = await this.listCabinet();
+    const ts = this.ts();
+    let order = Math.max(0, ...items.map((i) => i.sortOrder));
+    const same = (a: string, b: string, kind: CabinetKind) =>
+      kind === "folder" ? a.toLowerCase() === b.toLowerCase() : a === b;
+    const out: { id: string; created: boolean }[] = [];
+    const stmts: SqlStatement[] = [];
+    const made: CabinetItem[] = [];
+    for (const d of drafts) {
+      const target = this.cabinetTarget(d.kind, d.target);
+      const title = normalizeCabinetTitle(d.title);
+      if (!title) throw new ValidationError("제목을 적어 주세요");
+      const existing = [...items, ...made].find((i) => i.kind === d.kind && same(i.target, target, d.kind));
+      if (existing) {
+        const have = links.filter((l) => l.itemId === existing.id);
+        const extra = (d.links ?? []).filter((l) =>
+          "categoryId" in l
+            ? !have.some((h) => h.categoryId === l.categoryId)
+            : !have.some((h) => h.entryId === l.entryId),
+        );
+        stmts.push(...this.cabinetLinkStatements(existing.id, extra, ts));
+        out.push({ id: existing.id, created: false });
+        continue;
+      }
+      const id = uuidv7(this.clock().getTime());
+      order += 1;
+      made.push({ id, kind: d.kind, title, target, sortOrder: order });
+      stmts.push({
+        sql: "INSERT INTO cabinet_item (id, kind, title, target, sort_order, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        params: [id, d.kind, title, target, order, ts, ts],
+      });
+      stmts.push(...this.cabinetLinkStatements(id, d.links ?? [], ts));
+      out.push({ id, created: true });
+    }
+    if (stmts.length) await this.db.batch(stmts);
+    return out;
+  }
+
+  /** 제목·대상 고치기(F2 제목 고치기) */
+  async updateCabinetItem(id: string, patch: { title?: string; target?: string }): Promise<void> {
+    const [row] = await this.db.select<{ kind: string }>("SELECT kind FROM cabinet_item WHERE id = ?", [id]);
+    if (!row) return;
+    const sets: string[] = [];
+    const params: SqlParam[] = [];
+    if (patch.title !== undefined) {
+      const t = normalizeCabinetTitle(patch.title);
+      if (!t) throw new ValidationError("제목을 적어 주세요");
+      sets.push("title = ?");
+      params.push(t);
+    }
+    if (patch.target !== undefined) {
+      sets.push("target = ?");
+      params.push(this.cabinetTarget(row.kind as CabinetKind, patch.target));
+    }
+    if (!sets.length) return;
+    await this.db.execute(`UPDATE cabinet_item SET ${sets.join(", ")}, updated_at = ? WHERE id = ?`, [
+      ...params,
+      this.ts(),
+      id,
+    ]);
+  }
+
+  /** 연결 바꾸기(이 항목의 연결 전부를 주어진 것으로) */
+  async setCabinetLinks(itemId: string, links: CabinetLinkDraft[]): Promise<void> {
+    await this.db.batch([
+      { sql: "DELETE FROM cabinet_link WHERE item_id = ?", params: [itemId] },
+      ...this.cabinetLinkStatements(itemId, links, this.ts()),
+    ]);
+  }
+
+  /** 순서 바꾸기 */
+  async reorderCabinet(idsInOrder: string[]): Promise<void> {
+    const ts = this.ts();
+    await this.db.batch(
+      idsInOrder.map((id, i) => ({
+        sql: "UPDATE cabinet_item SET sort_order = ?, updated_at = ? WHERE id = ?",
+        params: [i + 1, ts, id],
+      })),
+    );
+  }
+
+  /** 등록 해제 — 일지 안의 줄만 지운다(사용자 폴더·파일은 건드리지 않음). 되돌리기 자료를 돌려준다 */
+  async removeCabinetItem(id: string): Promise<CabinetUndo | null> {
+    const { items, links } = await this.listCabinet();
+    const item = items.find((i) => i.id === id);
+    if (!item) return null;
+    const mine = links.filter((l) => l.itemId === id);
+    await this.db.execute("DELETE FROM cabinet_item WHERE id = ?", [id]);
+    return { item, links: mine };
+  }
+
+  async restoreCabinetItem(undo: CabinetUndo): Promise<void> {
+    const ts = this.ts();
+    const { item } = undo;
+    await this.db.batch([
+      {
+        sql: "INSERT INTO cabinet_item (id, kind, title, target, sort_order, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        params: [item.id, item.kind, item.title, item.target, item.sortOrder, ts, ts],
+      },
+      ...undo.links.map((l) => ({
+        // 그사이 지워진 업무·항목은 건너뛴다
+        sql: `INSERT INTO cabinet_link (id, item_id, category_id, entry_id, created_at)
+              SELECT ?, ?, ?, ?, ? WHERE (? IS NULL OR EXISTS (SELECT 1 FROM category WHERE id = ?))
+                AND (? IS NULL OR EXISTS (SELECT 1 FROM entry_item WHERE id = ?))`,
+        params: [
+          l.id,
+          item.id,
+          l.categoryId,
+          l.entryId,
+          ts,
+          l.categoryId,
+          l.categoryId,
+          l.entryId,
+          l.entryId,
+        ],
+      })),
+    ]);
   }
 
   async getWeekNotesBetween(fromWeek: WeekId, toWeek: WeekId): Promise<Record<WeekId, NoteDoc>> {

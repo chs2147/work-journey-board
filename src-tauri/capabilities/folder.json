@@ -1,0 +1,13 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "folder",
+  "description": "Cabinet 폴더 창 권한(features-1102-spec F5): 메인 창에 이동·닫힘 알리기, 경로 복사(클립보드 쓰기), 창 제목·상태. 폴더 목록·열기는 Rust cabinet_* 명령이 등록 폴더 안인지 검사. DB·네트워크 권한 없음",
+  "windows": ["folder-*"],
+  "permissions": [
+    "core:default",
+    "core:window:allow-set-title",
+    "core:window:allow-set-focus",
+    "clipboard-manager:allow-write-text",
+    "window-state:default"
+  ]
+}

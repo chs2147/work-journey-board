@@ -656,16 +656,52 @@
   background: transparent;
 }
 
+/* Cabinet(features-1102-spec F5): 폴더·링크가 연결된 항목은 오른쪽 끝에 🗂 표시 — 다른 단추·배지는 그만큼 왼쪽으로 비켜 선다 */
+.cab {
+  --cab-off: 22px;
+}
+
+.cab .itemInput,
+.cab .itemView {
+  padding-right: calc(2px + var(--cab-off));
+}
+
+.cabBadge {
+  position: absolute;
+  top: 3px;
+  right: 1px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: calc(var(--fs-md) * 1.45);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  cursor: pointer;
+}
+
+.cabBadge:hover {
+  background: var(--surface-sub);
+}
+
+.cabBadge svg {
+  width: 13px;
+  height: 13px;
+  color: var(--text-3);
+}
+
 /* 매주 반복(important-repeat-spec 3-4): 반복 중이면 글 끝에 ↻(자리를 늘 비워 둠), 아니면 마우스를 올릴 때만 ↻ */
 .repeating .itemInput {
-  padding-right: 18px;
+  padding-right: calc(18px + var(--cab-off, 0px));
 }
 
 .repeatOn,
 .repeatHover {
   position: absolute;
   top: 3px;
-  right: 1px;
+  right: calc(1px + var(--cab-off, 0px));
   width: 17px;
   height: calc(var(--fs-md) * 1.45);
   padding: 0;
@@ -680,7 +716,7 @@
 
 .repeatHover {
   /* 안 보일 때도 휴지통 왼쪽 자리에 둔다 — 올린 순간 자리가 바뀌면 누르는 곳이 휴지통과 겹친다 */
-  right: 20px;
+  right: calc(20px + var(--cab-off, 0px));
   opacity: 0;
   color: var(--text-3);
   background: var(--surface-card);
@@ -700,7 +736,7 @@
 .deleteRow {
   position: absolute;
   top: 3px;
-  right: 1px;
+  right: calc(1px + var(--cab-off, 0px));
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -728,7 +764,7 @@
 
 .item:hover > .repeatOn,
 .item:hover > .repeatHover {
-  right: 20px;
+  right: calc(20px + var(--cab-off, 0px));
 }
 
 .deleting {
@@ -869,11 +905,11 @@
 }
 
 .memoRow {
-  right: 39px;
+  right: calc(39px + var(--cab-off, 0px));
 }
 
 .memoRowSub {
-  right: 20px;
+  right: calc(20px + var(--cab-off, 0px));
 }
 
 .memoRow svg,
@@ -893,7 +929,7 @@
 }
 
 .memoBadge {
-  right: 1px;
+  right: calc(1px + var(--cab-off, 0px));
   gap: 1px;
   min-width: 26px;
   padding: 0 3px;
@@ -911,33 +947,33 @@
 
 /* 연결된 항목: 배지는 늘 오른쪽 끝에 고정(누를 수 있게), ↻·[메모]·휴지통은 배지 왼쪽으로 비켜 선다 */
 .linked > .repeatOn {
-  right: 30px;
+  right: calc(30px + var(--cab-off, 0px));
 }
 
 /* 숨은(투명) 단추도 눌림을 가로채므로 마우스를 올리기 전부터 배지 자리를 비운다 */
 .linked > .deleteRow {
-  right: 30px;
+  right: calc(30px + var(--cab-off, 0px));
 }
 
 .item.linked:hover > .repeatOn,
 .linked > .repeatHover,
 .item.linked:hover > .repeatHover,
 .itemSub.linked > .memoRowSub {
-  right: 49px;
+  right: calc(49px + var(--cab-off, 0px));
 }
 
 .item.linked > .memoRow {
-  right: 68px;
+  right: calc(68px + var(--cab-off, 0px));
 }
 
 .linked .itemInput,
 .linked .itemView {
-  padding-right: 30px;
+  padding-right: calc(30px + var(--cab-off, 0px));
 }
 
 .repeating.linked .itemInput,
 .repeating.linked .itemView {
-  padding-right: 48px;
+  padding-right: calc(48px + var(--cab-off, 0px));
 }
 
 .linkTarget {

@@ -202,6 +202,13 @@ CREATE TABLE app_meta (
 - 하루 종일 쉬는 날(연차·공휴일·기타 휴가)은 직전 기록일 찾기에서 건너뛰고, 무기록 판정의 "휴가 주"에 들어간다(반차는 근무일).
 - 직전 백업은 `_pre-migration-v8`.
 
+### 3-v. 스키마 v9 (2026-11-01, `0009_cabinet.sql`)
+- Cabinet(features-1102-spec F5): `cabinet_item(id, kind 'folder'|'link', title ≤200, target ≤2048, sort_order, created_at, updated_at)` — 폴더 = 절대 경로(드라이브·UNC, `..` 없음), 링크 = http/https(링크 열기 규칙과 같은 검사, 저장소에서 재검사).
+- `cabinet_link(id, item_id → cabinet_item CASCADE, category_id → category CASCADE, entry_id → entry_item CASCADE, created_at)` — `category_id`·`entry_id` 중 **하나만**(CHECK), 같은 연결 중복은 고유 색인 `ux_cabinet_link(item_id, ifnull(category_id,''), ifnull(entry_id,''))`로 막는다. 항목 연결은 그 항목의 업무 묶음에 보인다.
+- 등록 해제 = 일지 안 줄만 지움(사용자 폴더·파일은 건드리지 않음), 되돌리기 자료는 화면이 들고 있다가 다시 넣는다(그사이 지워진 업무·항목 연결은 건너뜀).
+- 열린 Cabinet 창·폴더 창(하위 위치)은 일지가 아니라 이 PC 설정 `config.json` `cabinet { open, windows[{id, sub}] }`(3-4절과 같은 파일).
+- 직전 백업은 `_pre-migration-v9`.
+
 ## 4. 카테고리 활성 계산
 
 ### 4-1. 주 W에 보일 카테고리
