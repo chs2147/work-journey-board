@@ -176,6 +176,8 @@ let unsubscribe: (() => void) | null = null;
 let focusSeq = 0;
 /** 마지막으로 글을 고친 상자(Alt+M으로 돌아갈 자리) */
 let lastEditedId: string | null = null;
+/** 이 주를 불러온 그때의 문서 — 그대로면(고친 적 없음) 떠날 때 이미지 정리를 건너뛴다(optimize-1031-plan O3) */
+let loadedDoc: NoteDoc | null = null;
 const undoStack: NoteDoc[] = [];
 const redoStack: NoteDoc[] = [];
 
@@ -216,6 +218,7 @@ async function loadWeek(weekId: WeekId, finish = true) {
     undoStack.length = 0;
     redoStack.length = 0;
     lastEditedId = null;
+    loadedDoc = doc;
     const assets = Object.fromEntries(rows.map(({ id, ...a }) => [id, a]));
     set({
       weekId,
@@ -270,7 +273,7 @@ export async function finishNote() {
   await flushNote();
   const r = repo;
   const { weekId, doc, legacy } = get();
-  if (!r || !weekId || legacy) return;
+  if (!r || !weekId || legacy || doc === loadedDoc) return;
   await r.pruneNoteAssets(weekId, noteAssetIds(doc)).catch(reportError);
 }
 
@@ -514,6 +517,7 @@ export async function addImages(files: Blob[], at: { x: number; y: number }) {
           asset,
           caption: "",
         };
+        loadedDoc = null; // 그림을 넣었으면 되돌려도 떠날 때 정리한다
         set({ assets: { ...get().assets, [asset]: metaOf(img) } });
         commit({ ...doc, boxes: [...doc.boxes, box] }, true);
         set({ selectedId: box.id, editingId: null });
@@ -562,6 +566,7 @@ export async function setLinkThumb(id: string, file: Blob) {
     const img = await prepareImage(file);
     const asset = await r.addNoteAsset(weekId, img, img.thumb);
     if (get().weekId !== weekId) return;
+    loadedDoc = null; // 그림을 넣었으면 되돌려도 떠날 때 정리한다
     set({ assets: { ...get().assets, [asset]: metaOf(img) } });
     commit(
       mapBox(id, (x) => (x.kind === "link" ? { ...x, asset } : x)),

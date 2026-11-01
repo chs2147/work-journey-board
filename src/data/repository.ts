@@ -282,11 +282,66 @@ const toItem = (r: ItemRow): EntryItem => ({
   recurrenceId: r.recurrence_id,
 });
 
+/**
+ * 거의 안 바뀌는 데이터의 메모리 캐시(optimize-1031-plan O3) — 주를 넘길 때마다 다시 읽지 않는다.
+ * 저장소를 거치는 쓰기 SQL에 그 표 이름이 나오면 비운다(업무를 지우면 태그 연결·반복 규칙도 함께 지워지므로 category는 셋 다).
+ */
+const CACHE_TABLES = {
+  settings: ["app_meta"],
+  categories: ["category", "category_period"],
+  tags: ["tag", "category_tag", "category"],
+  recurrences: ["recurrence", "recurrence_line", "category"],
+} as const;
+type CacheKey = keyof typeof CACHE_TABLES;
+const CACHE_RES = Object.fromEntries(
+  Object.entries(CACHE_TABLES).map(([k, tables]) => [k, new RegExp(`\\b(${tables.join("|")})\\b`, "i")]),
+) as Record<CacheKey, RegExp>;
+
 export class JournalRepository {
+  private readonly db: SqlDriver;
+  private readonly cache = new Map<CacheKey, Promise<unknown>>();
+
   constructor(
-    private readonly db: SqlDriver,
+    db: SqlDriver,
     private readonly clock: () => Date = () => new Date(),
-  ) {}
+  ) {
+    const touched = (sql: string) => {
+      for (const key of Object.keys(CACHE_RES) as CacheKey[])
+        if (CACHE_RES[key].test(sql)) this.cache.delete(key);
+    };
+    this.db = {
+      label: db.label,
+      select: (sql, params) => db.select(sql, params),
+      execute: async (sql, params) => {
+        try {
+          return await db.execute(sql, params);
+        } finally {
+          touched(sql);
+        }
+      },
+      batch: async (statements) => {
+        try {
+          return await db.batch(statements);
+        } finally {
+          for (const st of statements) touched(st.sql);
+        }
+      },
+      close: () => db.close(),
+    };
+  }
+
+  /** 캐시에서 읽기 — 부르는 쪽이 고쳐도 캐시가 바뀌지 않게 사본을 준다 */
+  private async cached<T>(key: CacheKey, load: () => Promise<T>): Promise<T> {
+    let hit = this.cache.get(key) as Promise<T> | undefined;
+    if (!hit) {
+      hit = load();
+      this.cache.set(key, hit);
+      hit.catch(() => {
+        if (this.cache.get(key) === hit) this.cache.delete(key);
+      });
+    }
+    return structuredClone(await hit);
+  }
 
   private ts() {
     return utcTimestamp(this.clock());
@@ -303,6 +358,10 @@ export class JournalRepository {
 
   // ── 설정 ─────────────────────────────────────────────
   async getSettings(): Promise<Settings> {
+    return this.cached("settings", () => this.readSettings());
+  }
+
+  private async readSettings(): Promise<Settings> {
     const [row] = await this.db.select<{ value: string }>(
       "SELECT value FROM app_meta WHERE key = 'settings'",
     );
@@ -326,6 +385,10 @@ export class JournalRepository {
 
   // ── 업무(카테고리) ──────────────────────────────────
   async listCategories(): Promise<{ categories: Category[]; periods: CategoryPeriod[] }> {
+    return this.cached("categories", () => this.readCategories());
+  }
+
+  private async readCategories(): Promise<{ categories: Category[]; periods: CategoryPeriod[] }> {
     const cats = await this.db.select<CategoryRow>(
       "SELECT id, name, color, sort_order, nudge_snoozed_until FROM category ORDER BY sort_order",
     );
@@ -448,7 +511,8 @@ export class JournalRepository {
   }
 
   // ── 주간 보드 ───────────────────────────────────────
-  async getWeek(weekId: WeekId): Promise<WeekView> {
+  /** 그 주 보기. note: false면 메모 문서를 읽지 않는다(보드 — 메모는 메모 도크가 따로 읽음, optimize-1031-plan O3) */
+  async getWeek(weekId: WeekId, opts: { note?: boolean } = {}): Promise<WeekView> {
     const { start, end } = weekRange(weekId);
     const { categories, periods } = await this.listCategories();
     const rows = await this.db.select<ItemRow>(
@@ -463,7 +527,7 @@ export class JournalRepository {
       days: weekDays(weekId),
       categories: visibleCategories(categories, periods, start, end, withItems),
       items,
-      note: (await this.getWeekNote(weekId)).doc,
+      note: opts.note === false ? emptyDoc() : (await this.getWeekNote(weekId)).doc,
       dayMarks: await this.getDayMarks(start, end),
     };
   }
@@ -495,21 +559,28 @@ export class JournalRepository {
 
   // ── 업무 태그(improve-1026-spec 4절) ─────────────────
   async listTags(): Promise<Tag[]> {
-    const rows = await this.db.select<{ id: string; name: string; sort_order: number }>(
-      "SELECT id, name, sort_order FROM tag ORDER BY sort_order, name",
-    );
-    return rows.map((r) => ({ id: r.id, name: r.name, sortOrder: Number(r.sort_order) }));
+    return (await this.cached("tags", () => this.readTags())).tags;
   }
 
   /** 업무별 태그 id(태그 순서대로). 태그가 없는 업무는 키가 없다 */
   async getCategoryTags(): Promise<Record<string, string[]>> {
+    return (await this.cached("tags", () => this.readTags())).byCategory;
+  }
+
+  private async readTags(): Promise<{ tags: Tag[]; byCategory: Record<string, string[]> }> {
+    const tagRows = await this.db.select<{ id: string; name: string; sort_order: number }>(
+      "SELECT id, name, sort_order FROM tag ORDER BY sort_order, name",
+    );
     const rows = await this.db.select<{ category_id: string; tag_id: string }>(
       `SELECT ct.category_id, ct.tag_id FROM category_tag ct JOIN tag t ON t.id = ct.tag_id
        ORDER BY t.sort_order, t.name`,
     );
-    const out: Record<string, string[]> = {};
-    for (const r of rows) (out[r.category_id] ??= []).push(r.tag_id);
-    return out;
+    const byCategory: Record<string, string[]> = {};
+    for (const r of rows) (byCategory[r.category_id] ??= []).push(r.tag_id);
+    return {
+      tags: tagRows.map((r) => ({ id: r.id, name: r.name, sortOrder: Number(r.sort_order) })),
+      byCategory,
+    };
   }
 
   private async checkTagName(raw: string, exceptId: string | null): Promise<string> {
@@ -1006,6 +1077,10 @@ export class JournalRepository {
 
   // ── 매주 반복(important-repeat-spec 3절) ───────────────
   async listRecurrences(): Promise<Recurrence[]> {
+    return this.cached("recurrences", () => this.readRecurrences());
+  }
+
+  private async readRecurrences(): Promise<Recurrence[]> {
     const rules = await this.db.select<RecurrenceRow>(
       "SELECT id, category_id, weekday, start_week, end_week, flag_on_create, created_at FROM recurrence ORDER BY weekday, created_at",
     );

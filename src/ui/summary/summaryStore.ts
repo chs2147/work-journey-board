@@ -51,7 +51,8 @@ let unsubscribe: (() => void) | null = null;
 export function boardSummaryInput(): SummaryInput | null {
   const { view, cells, weekId, dayMarks } = useBoard.getState();
   const note = useNote.getState();
-  if (!view || view.weekId !== weekId) return null;
+  // 보드는 메모를 읽지 않는다 — 메모 도크가 이 주를 다 불러온 뒤에만
+  if (!view || view.weekId !== weekId || note.weekId !== weekId) return null;
   return {
     weekId,
     categories: view.categories.map((v) => ({ id: v.category.id, name: v.category.name })),
@@ -59,7 +60,7 @@ export function boardSummaryInput(): SummaryInput | null {
       const { date, categoryId } = splitKey(key);
       return list.map((d) => ({ date, categoryId, depth: d.depth, text: d.text }));
     }),
-    memo: noteToText(note.weekId === weekId ? note.doc : view.note),
+    memo: noteToText(note.doc),
     dayMarks: Object.entries(dayMarks).map(([date, kind]) => ({ date, kind })),
   };
 }

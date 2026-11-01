@@ -255,6 +255,25 @@ describe("주간 메모 (weekly-note-spec 5절)", () => {
     await expect(repo.addNoteAsset("2026-W43", { ...png, width: 0 })).rejects.toBeInstanceOf(ValidationError);
   });
 
+  it("캐시(optimize-1031-plan O3): 업무·설정·태그·반복을 다시 읽지 않되, 그 표에 쓰면 바로 새 값 · 받은 값을 고쳐도 캐시는 그대로", async () => {
+    const { repo } = await freshRepo();
+    const c = await repo.createCategory("가상 업무 A", "2026-W43");
+    expect((await repo.listCategories()).categories.map((x) => x.name)).toEqual(["가상 업무 A"]);
+    await repo.renameCategory(c.id, "가상 업무 B");
+    expect((await repo.listCategories()).categories.map((x) => x.name)).toEqual(["가상 업무 B"]);
+    const got = await repo.listCategories();
+    got.categories[0]!.name = "바꿔 봄";
+    expect((await repo.listCategories()).categories[0]!.name).toBe("가상 업무 B");
+    await repo.updateSettings({ nudgeWeeks: 5 });
+    expect((await repo.getSettings()).nudgeWeeks).toBe(5);
+    const t = await repo.createTag("가상");
+    await repo.setCategoryTag(c.id, t.id, true);
+    expect(await repo.getCategoryTags()).toEqual({ [c.id]: [t.id] });
+    await repo.deleteCategoryIfEmpty(c.id); // 업무를 지우면 태그 연결도 사라진다(category → 태그 캐시도 비움)
+    expect(await repo.getCategoryTags()).toEqual({});
+    expect((await repo.listTags()).map((x) => x.name)).toEqual(["가상"]);
+  });
+
   it("메모 이미지 표시용 사본(optimize-1031-plan O2): 크기만 읽기·썸네일 우선·나중에 채우기(한 번만)·잘못된 썸네일 무시", async () => {
     const { repo } = await freshRepo();
     const png = { mime: "image/png" as const, data: "iVBORw0KGgo=", width: 1600, height: 900, bytes: 0 };

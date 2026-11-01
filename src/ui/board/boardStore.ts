@@ -371,8 +371,24 @@ export async function flushAll() {
 }
 
 // ── 주 불러오기·이동 ───────────────────────────────────
+/** 불러오기 차례 — Alt+← 연타처럼 앞선 불러오기가 끝나기 전에 다음 주로 가면 앞선 결과는 버리고 마지막 주만 그린다(optimize-1031-plan O3) */
+let loadSeq = 0;
+/** 불러오는 중인 주(연타 시 다음 이동의 기준) */
+let loading: { weekId: WeekId; focusDay: DateStr } | null = null;
+
 async function loadWeek(weekId: WeekId, focusDay: DateStr) {
   const r = requireRepo();
+  const seq = ++loadSeq;
+  loading = { weekId, focusDay };
+  const stale = () => seq !== loadSeq;
+  try {
+    await loadWeekNow(r, weekId, focusDay, stale);
+  } finally {
+    if (!stale()) loading = null;
+  }
+}
+
+async function loadWeekNow(r: JournalRepository, weekId: WeekId, focusDay: DateStr, stale: () => boolean) {
   await flushAll();
   const today = r.today();
   const current = weekIdOf(today);
@@ -385,7 +401,9 @@ async function loadWeek(weekId: WeekId, focusDay: DateStr) {
       reportError(e); // 다음에 그 주를 열 때 다시 시도
     }
   }
-  const view = await r.getWeek(weekId);
+  if (stale()) return;
+  // 메모 문서는 메모 도크(noteStore)가 따로 읽는다 — 보드는 읽지 않음
+  const view = await r.getWeek(weekId, { note: false });
   const rules: Recurrence[] = await r.listRecurrences();
   const previews: Record<string, RepeatPreview[]> = {};
   if (weekId > current) {
@@ -395,6 +413,7 @@ async function loadWeek(weekId: WeekId, focusDay: DateStr) {
   const settings = await r.getSettings();
   const nudges = weekId === weekIdOf(today) ? await r.getNudges(weekId) : [];
   const [tags, categoryTags] = await Promise.all([r.listTags(), r.getCategoryTags()]);
+  if (stale()) return;
   const cells: Record<string, ItemDraft[]> = {};
   persistedCells.clear();
   for (const vc of view.categories) {
@@ -431,6 +450,9 @@ async function loadWeek(weekId: WeekId, focusDay: DateStr) {
   await Promise.all([refreshImportant(), refreshPrevDates()]);
   if (created > 0) toast(STR.repeat.created(created));
 }
+
+/** 다음 이동의 기준 — 불러오는 중이면 그 주(연타해도 한 주씩 쌓이게) */
+const baseWeek = () => loading ?? get();
 
 /** 같은 요일을 유지하며 주를 옮긴다. 이번 주로 오면 오늘로. */
 function focusDayFor(weekId: WeekId, preferIndex: number, today: DateStr): DateStr {
@@ -625,19 +647,21 @@ export async function reload() {
 }
 
 export async function goWeek(delta: number) {
-  const { weekId, focusDay, today } = get();
+  const { weekId, focusDay } = baseWeek();
+  const { today } = get();
   const next = addWeeks(weekId, delta);
   await loadWeek(next, focusDayFor(next, dayIndex(focusDay), today));
 }
 
 export async function goToWeek(weekId: WeekId) {
-  const { focusDay, today } = get();
+  const { focusDay } = baseWeek();
+  const { today } = get();
   await loadWeek(weekId, focusDayFor(weekId, dayIndex(focusDay), today));
 }
 
 /** 오늘 뷰의 하루 이동(◀ ▶·Alt+←/→, spec 8-1). 주를 넘으면 그 주를 불러온다 */
 export async function goDay(delta: number) {
-  const { focusDay, weekId } = get();
+  const { focusDay, weekId } = baseWeek();
   const day = addDays(focusDay, delta);
   if (weekIdOf(day) !== weekId) await loadWeek(weekIdOf(day), day);
   else setFocusDay(day);
