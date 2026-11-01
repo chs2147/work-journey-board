@@ -4,7 +4,8 @@
 import { useEffect, useRef, useState, type PointerEvent } from "react";
 import { cellKey } from "../../data/repository";
 import { TODAY_SPLIT_MAX, TODAY_SPLIT_MIN, DEFAULT_SETTINGS } from "../../data/settings";
-import { DAY_MARK_KINDS, type DayMarkKind } from "../../domain/dayMark";
+import { markText } from "../../domain/dayMark";
+import { DayMarkOptions } from "../board/DayMarkOptions";
 import { chipsToShow } from "../../domain/tags";
 import { dayIndex, DAY_LABELS } from "../../domain/week";
 import { STR } from "../../shared/strings";
@@ -15,7 +16,6 @@ import {
   pullLabel,
   pullPrevious,
   pullPreviousDay,
-  setDayMark,
   shownCategories,
   useBoard,
 } from "../board/boardStore";
@@ -270,12 +270,13 @@ export function TodayView() {
   );
 }
 
-/** [근무 ▾] — 이 날 근무 상태(연차·반차, spec 1-1) */
+/** [근무 ▾] — 이 날 근무 상태(연차·반차·공휴일·기타 휴가, spec 1-1·features-1102-spec F2) */
 function DayMarkPicker({ day }: { day: string }) {
   const mark = useBoard((s) => s.dayMarks[day]) ?? null;
+  const info = useBoard((s) => s.dayMarkInfo[day]) ?? null;
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
-  const label = mark ? STR.dayMenu.badge[mark] : STR.dayMenu.kinds.work;
+  const label = mark ? markText(mark, info?.label) : STR.dayMenu.kinds.work;
 
   useEffect(() => {
     if (!open) return;
@@ -286,11 +287,6 @@ function DayMarkPicker({ day }: { day: string }) {
     document.addEventListener("mousedown", outside);
     return () => document.removeEventListener("mousedown", outside);
   }, [open]);
-
-  const choose = (k: DayMarkKind | null) => {
-    setOpen(false);
-    void setDayMark(day, k);
-  };
 
   return (
     <div className={styles.pickerWrap} ref={wrapRef}>
@@ -318,18 +314,7 @@ function DayMarkPicker({ day }: { day: string }) {
             }
           }}
         >
-          {([null, ...DAY_MARK_KINDS] as const).map((k) => (
-            <button
-              key={k ?? "work"}
-              type="button"
-              role="menuitemradio"
-              aria-checked={mark === k}
-              onClick={() => choose(k)}
-            >
-              <span className={`${styles.radio} ${mark === k ? styles.radioOn : ""}`} aria-hidden="true" />
-              {STR.dayMenu.kinds[k ?? "work"]}
-            </button>
-          ))}
+          <DayMarkOptions day={day} onDone={() => setOpen(false)} />
         </div>
       )}
     </div>

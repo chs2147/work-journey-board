@@ -9,7 +9,8 @@ import {
   type VisibleCategory,
 } from "../domain/categories";
 import type { SummaryInput } from "../domain/aggregate";
-import { isDayMarkKind, isLeaveWeek, type DayMarkKind } from "../domain/dayMark";
+import { isDayMarkKind, isLeaveWeek, isOffDay, LABEL_MAX, type DayMarkKind } from "../domain/dayMark";
+import { resolveHolidays } from "../domain/holidaysKr";
 import { normalizeTagName, tagNameProblem, type Tag } from "../domain/tags";
 import type { ExistingItem, ImportContext, ImportPlan } from "../domain/importer";
 import type { ActivityRow } from "../domain/insights";
@@ -69,6 +70,15 @@ export interface WeekView {
   note: NoteDoc;
   /** 연차·반차 표시(improve-1026-spec 1절) — 근무인 날은 없다 */
   dayMarks: Record<DateStr, DayMarkKind>;
+  /** 표시의 이름·출처(공휴일 이름·휴가 사유, 직접/회사 휴일/내장 공휴일) — features-1102-spec F2·F3 */
+  dayMarkInfo: Record<DateStr, DayMarkInfo>;
+}
+
+export interface DayMarkInfo {
+  kind: DayMarkKind;
+  label: string | null;
+  /** user = 직접 고름(일지 행) · company = 회사 휴일(설정) · builtin = 내장 대한민국 공휴일 */
+  source: "user" | "company" | "builtin";
 }
 
 /** 직전 기록 가져오기의 원본(improve-1026-spec 3절) */
@@ -81,7 +91,8 @@ export interface PreviousRecord {
 /** 직전 기록을 찾는 범위(일) — 4주 */
 export const PREVIOUS_LOOKBACK_DAYS = 28;
 /** 종일 연차인 날은 직전 기록일로 치지 않는다 */
-const NOT_LEAVE = "date NOT IN (SELECT date FROM day_mark WHERE kind = 'leave')";
+/** 하루 종일 쉬는 날(연차·공휴일·기타 휴가 직접 표시)은 직전 기록일 찾기에서 건너뛴다 */
+const NOT_LEAVE = "date NOT IN (SELECT date FROM day_mark WHERE kind IN ('leave', 'holiday', 'other'))";
 
 export const cellKey = (date: DateStr, categoryId: string) => `${date}|${categoryId}`;
 
@@ -192,7 +203,11 @@ export function summaryInputOf(view: WeekView): SummaryInput {
     categories: view.categories.map((v) => ({ id: v.category.id, name: v.category.name })),
     items: Object.values(view.items).flat(),
     memo: noteToText(view.note),
-    dayMarks: Object.entries(view.dayMarks).map(([date, kind]) => ({ date, kind })),
+    dayMarks: Object.entries(view.dayMarks).map(([date, kind]) => ({
+      date,
+      kind,
+      label: view.dayMarkInfo?.[date]?.label ?? null,
+    })),
   };
 }
 
@@ -570,32 +585,55 @@ export class JournalRepository {
       categories: visibleCategories(categories, periods, start, end, withItems),
       items,
       note: opts.note === false ? emptyDoc() : (await this.getWeekNote(weekId)).doc,
-      dayMarks: await this.getDayMarks(start, end),
+      ...(await this.dayMarkPair(start, end)),
     };
   }
 
+  private async dayMarkPair(start: DateStr, end: DateStr) {
+    const dayMarkInfo = await this.getDayMarkInfo(start, end);
+    const dayMarks = Object.fromEntries(Object.entries(dayMarkInfo).map(([d, m]) => [d, m.kind]));
+    return { dayMarks, dayMarkInfo };
+  }
+
   // ── 연차·반차 표시(improve-1026-spec 1절) ────────────
+  /** 기간의 표시(종류만) — 직접 표시 + 회사 휴일 + 내장 공휴일(F3) */
   async getDayMarks(from: DateStr, to: DateStr): Promise<Record<DateStr, DayMarkKind>> {
-    const rows = await this.db.select<{ date: string; kind: string }>(
-      "SELECT date, kind FROM day_mark WHERE date BETWEEN ? AND ? ORDER BY date",
+    return (await this.dayMarkPair(from, to)).dayMarks;
+  }
+
+  /** 기간의 표시(이름·출처 포함): 직접 표시 > 회사 휴일 > 내장 공휴일(설정에서 끈 날은 빠짐) */
+  async getDayMarkInfo(from: DateStr, to: DateStr): Promise<Record<DateStr, DayMarkInfo>> {
+    const rows = await this.db.select<{ date: string; kind: string; label: string | null }>(
+      "SELECT date, kind, label FROM day_mark WHERE date BETWEEN ? AND ? ORDER BY date",
       [from, to],
     );
-    const out: Record<DateStr, DayMarkKind> = {};
-    for (const r of rows) if (isDayMarkKind(r.kind)) out[r.date] = r.kind;
+    const out: Record<DateStr, DayMarkInfo> = {};
+    const { holiday } = await this.getSettings();
+    for (const [d, h] of Object.entries(resolveHolidays(from, to, holiday)))
+      out[d] = { kind: "holiday", label: h.name, source: h.source };
+    for (const r of rows)
+      if (isDayMarkKind(r.kind)) out[r.date] = { kind: r.kind, label: r.label, source: "user" };
     return out;
   }
 
-  /** 표시 바꾸기. null = 근무(행 삭제) */
-  async setDayMark(date: DateStr, kind: DayMarkKind | null): Promise<void> {
+  /**
+   * 표시 바꾸기. null = 근무(행 삭제). 공휴일·기타 휴가는 이름·사유(label).
+   * 내장 공휴일·회사 휴일인 날을 근무로 돌리면 그 날을 설정의 "끈 날짜"에 더한다(F3 — 회사가 쉬지 않는 날)
+   */
+  async setDayMark(date: DateStr, kind: DayMarkKind | null, label: string | null = null): Promise<void> {
     if (!DATE_RE.test(date)) throw new ValidationError(`날짜 형식 오류: ${date}`);
     if (kind === null) {
       await this.db.execute("DELETE FROM day_mark WHERE date = ?", [date]);
+      const { holiday } = await this.getSettings();
+      if (resolveHolidays(date, date, holiday)[date])
+        await this.updateSettings({ holiday: { off: [...holiday.off, date] } });
       return;
     }
     if (!isDayMarkKind(kind)) throw new ValidationError(`알 수 없는 표시: ${String(kind)}`);
+    const l = kind === "holiday" || kind === "other" ? label?.trim().slice(0, LABEL_MAX) || null : null;
     await this.db.execute(
-      "INSERT INTO day_mark (date, kind, updated_at) VALUES (?, ?, ?) ON CONFLICT(date) DO UPDATE SET kind = excluded.kind, updated_at = excluded.updated_at",
-      [date, kind, this.ts()],
+      "INSERT INTO day_mark (date, kind, label, updated_at) VALUES (?, ?, ?, ?) ON CONFLICT(date) DO UPDATE SET kind = excluded.kind, label = excluded.label, updated_at = excluded.updated_at",
+      [date, kind, l, this.ts()],
     );
   }
 
@@ -1415,7 +1453,7 @@ export class JournalRepository {
     const { categories, periods } = await this.listCategories();
     const leaveDates = new Set(
       Object.entries(await this.getDayMarks(from, to))
-        .filter(([, k]) => k === "leave")
+        .filter(([, k]) => isOffDay(k))
         .map(([d]) => d),
     );
     const leaveWeeks = new Set(

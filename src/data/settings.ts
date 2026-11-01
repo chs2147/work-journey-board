@@ -1,10 +1,13 @@
 // 앱 설정(app_meta.settings JSON, data-spec 3-4). 저장된 값이 일부 빠져 있어도 기본값과 합쳐 읽는다.
+import { COMPANY_DATE_RE, LABEL_MAX_HOLIDAY, type HolidaySettings } from "../domain/holidaysKr";
 export interface Settings {
   /** 무기록 종료 제안 기준 주 수. 0 = 끔, 그 외 2~8 */
   nudgeWeeks: number;
   /** periodicHours = 켜 둔 동안 바뀐 게 있으면 이 시간마다 그날 일일 사본을 덮어씀(optimize-1031-plan B1, 0 = 끔) */
   backup: { dailyKeep: number; monthlyKeep: number; periodicHours: number };
   summary: { includeMemo: boolean };
+  /** 달력·휴일(features-1102-spec F2·F3): 대한민국 공휴일 자동 표시·끈 날짜·회사 휴일·기타 휴가 사유 */
+  holiday: HolidaySettings;
   ai: {
     mode: "off" | "clipboard" | "api";
     promptTemplate: string | null;
@@ -51,7 +54,7 @@ export interface Settings {
 }
 
 /** 설정 화면 분류(improve-1027v5-spec 1-4) */
-export const SETTINGS_CATEGORIES = ["screen", "data", "import", "work", "update"] as const;
+export const SETTINGS_CATEGORIES = ["screen", "data", "import", "work", "calendar", "update"] as const;
 export type SettingsCategory = (typeof SETTINGS_CATEGORIES)[number];
 
 /** 메모 보드 배율 범위(improve-1026-spec 11-1) */
@@ -78,6 +81,12 @@ export const DEFAULT_SETTINGS: Settings = {
   nudgeWeeks: 3,
   backup: { dailyKeep: 14, monthlyKeep: 12, periodicHours: 2 },
   summary: { includeMemo: true },
+  holiday: {
+    krEnabled: true,
+    off: [],
+    company: [],
+    reasons: ["공가", "야유회", "경조사", "교육", "대체휴무"],
+  },
   ai: { mode: "clipboard", promptTemplate: null, api: { endpoint: null, model: null } },
   ui: {
     summaryPanelOpen: false,
@@ -143,6 +152,27 @@ export function mergeSettings(base: Settings, patch: unknown): Settings {
   if (!(s.backup.monthlyKeep >= 0)) s.backup.monthlyKeep = DEFAULT_SETTINGS.backup.monthlyKeep;
   if (!(s.backup.periodicHours >= 0 && s.backup.periodicHours <= 24))
     s.backup.periodicHours = DEFAULT_SETTINGS.backup.periodicHours;
+  const h = s.holiday;
+  if (typeof h.krEnabled !== "boolean") h.krEnabled = true;
+  const strs = (v: unknown, max: number) =>
+    Array.isArray(v)
+      ? [
+          ...new Set(
+            v
+              .filter((x): x is string => typeof x === "string")
+              .map((x) => x.trim())
+              .filter(Boolean),
+          ),
+        ].map((x) => x.slice(0, max))
+      : [];
+  h.off = strs(h.off, 10).filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d));
+  h.reasons = strs(h.reasons, LABEL_MAX_HOLIDAY);
+  h.company = (Array.isArray(h.company) ? h.company : [])
+    .filter(
+      (c): c is { date: string; name: string } =>
+        !!c && typeof c.date === "string" && COMPANY_DATE_RE.test(c.date) && typeof c.name === "string",
+    )
+    .map((c) => ({ date: c.date, name: c.name.trim().slice(0, LABEL_MAX_HOLIDAY) }));
   if (s.ai.mode === "api") s.ai.mode = "clipboard"; // v1에서는 API 모드 선택 불가(자리만)
   if (!(s.ui.noteZoom >= NOTE_ZOOM_MIN && s.ui.noteZoom <= NOTE_ZOOM_MAX)) s.ui.noteZoom = 1;
   if (typeof s.ui.noteMinimap !== "boolean") s.ui.noteMinimap = true;

@@ -34,6 +34,7 @@ import { hasUpdate, useUpdate } from "../update/updateStore";
 import styles from "./Settings.module.css";
 import { Card, Row } from "./SettingsCard";
 import { AboutCard, LicensesCard } from "./AboutCards";
+import { CalendarSettings } from "./CalendarSettings";
 import { DiagnosticsCard } from "./DiagnosticsCard";
 import { TagSettings } from "./TagSettings";
 import { ThemeSettings } from "./ThemeSettings";
@@ -56,6 +57,7 @@ const CAT_ICON: Record<SettingsCategory, string> = {
   data: "M3.5 4.5c0-1.1 2.5-2 5.5-2s5.5.9 5.5 2v9c0 1.1-2.5 2-5.5 2s-5.5-.9-5.5-2zM3.5 4.5c0 1.1 2.5 2 5.5 2s5.5-.9 5.5-2M3.5 9c0 1.1 2.5 2 5.5 2s5.5-.9 5.5-2",
   import: "M9 2.5v8.5M5.5 7.5 9 11l3.5-3.5M3 12.5v2.5h12v-2.5",
   work: "M3 4.5h12M3 9h12M3 13.5h7M12.5 13l1.5 1.5 2.5-2.5",
+  calendar: "M3 4.5h12v10.5h-12zM3 8h12M6 2.5v3M12 2.5v3M6 11h2M10 11h2",
   update: "M14.5 9a5.5 5.5 0 1 1-1.6-3.9M14.5 2.8v3.2h-3.2",
 };
 
@@ -672,7 +674,14 @@ export function SettingsView() {
     </>
   );
 
-  const content: Record<SettingsCategory, ReactNode> = { screen, data, import: importCat, work, update };
+  const content: Record<SettingsCategory, ReactNode> = {
+    screen,
+    data,
+    import: importCat,
+    work,
+    calendar: <CalendarSettings />,
+    update,
+  };
 
   return (
     <section className={styles.view} aria-label={STR.settings.title} data-testid="settings-view">

@@ -1,10 +1,11 @@
 // 요일 머리(overview 10-1): 날짜·[오늘] 배지·연차/반차 배지·⋯ 메뉴(근무 상태, 직전 기록 전체 가져오기) — improve-1026-spec 1·3·7절.
 // 오늘 머리는 포커스와 무관하게 늘 채운 파랑, 포커스 열은 위쪽 굵은 선으로 따로 보인다.
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { DAY_MARK_KINDS, type DayMarkKind } from "../../domain/dayMark";
+import { markShort, markText } from "../../domain/dayMark";
+import { DayMarkOptions } from "./DayMarkOptions";
 import { DAY_LABELS, type DateStr } from "../../domain/week";
 import { STR } from "../../shared/strings";
-import { previousDayFor, pullLabel, pullPreviousDay, setDayMark, setFocusDay, useBoard } from "./boardStore";
+import { previousDayFor, pullLabel, pullPreviousDay, setFocusDay, useBoard } from "./boardStore";
 import styles from "./Board.module.css";
 
 interface Props {
@@ -17,6 +18,7 @@ export function DayHeader({ day, index, narrow }: Props) {
   const focusDay = useBoard((s) => s.focusDay);
   const today = useBoard((s) => s.today);
   const mark = useBoard((s) => s.dayMarks[day]) ?? null;
+  const markInfo = useBoard((s) => s.dayMarkInfo[day]) ?? null;
   const [menuOpen, setMenuOpen] = useState(false);
   /** 메뉴를 열 때 찾은 직전 기록일 — undefined = 찾는 중 */
   const [prevDay, setPrevDay] = useState<DateStr | null | undefined>(undefined);
@@ -70,12 +72,6 @@ export function DayHeader({ day, index, narrow }: Props) {
     menu.querySelector<HTMLElement>('[aria-checked="true"]')?.focus();
   }, [menuOpen]);
 
-  const choose = (kind: DayMarkKind | null) => {
-    setMenuOpen(false);
-    buttonRef.current?.focus();
-    void setDayMark(day, kind);
-  };
-
   /** 메뉴 안 ↑/↓로 항목 사이 이동 */
   const onMenuKey = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
@@ -94,6 +90,8 @@ export function DayHeader({ day, index, narrow }: Props) {
         index >= 5 ? styles.colWeekend : "",
         isFocus ? styles.colFocus : "",
         mark === "leave" ? styles.colLeave : "",
+        mark === "holiday" ? styles.colHoliday : "",
+        mark === "other" ? styles.colOther : "",
         isToday ? styles.colToday : "",
         narrow ? styles.colNarrow : "",
         menuOpen ? styles.menuOpen : "",
@@ -113,10 +111,17 @@ export function DayHeader({ day, index, narrow }: Props) {
             {isToday && <span className={styles.todayBadge}>{STR.board.todaySuffix}</span>}
             {mark && (
               <span
-                className={`${styles.markBadge} ${mark === "leave" ? styles.markLeave : ""}`}
+                className={`${styles.markBadge} ${mark === "leave" ? styles.markLeave : ""} ${mark === "holiday" ? styles.markHoliday : ""} ${mark === "other" ? styles.markOther : ""}`}
                 data-testid="day-mark"
+                title={
+                  markInfo?.source === "builtin"
+                    ? STR.dayMenu.builtin(markInfo.label ?? "")
+                    : markInfo?.source === "company"
+                      ? STR.dayMenu.company(markInfo.label ?? "")
+                      : markText(mark, markInfo?.label)
+                }
               >
-                {STR.dayMenu.badge[mark]}
+                {markShort(mark, markInfo?.label)}
               </span>
             )}
           </>
@@ -143,19 +148,13 @@ export function DayHeader({ day, index, narrow }: Props) {
       {menuOpen && (
         <div ref={menuRef} className={styles.menu} role="menu" aria-label={dayName} onKeyDown={onMenuKey}>
           <div className={styles.menuLabel}>{STR.dayMenu.status}</div>
-          {([null, ...DAY_MARK_KINDS] as const).map((k) => (
-            <button
-              key={k ?? "work"}
-              type="button"
-              role="menuitemradio"
-              aria-checked={mark === k}
-              className={styles.menuRadio}
-              onClick={() => choose(k)}
-            >
-              <span className={`${styles.radio} ${mark === k ? styles.radioOn : ""}`} aria-hidden="true" />
-              {STR.dayMenu.kinds[k ?? "work"]}
-            </button>
-          ))}
+          <DayMarkOptions
+            day={day}
+            onDone={() => {
+              setMenuOpen(false);
+              buttonRef.current?.focus();
+            }}
+          />
           <div className={styles.menuSep} role="separator" />
           <button
             type="button"

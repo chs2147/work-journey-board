@@ -28,6 +28,7 @@ import {
 } from "../../data/repository";
 import type { CategoryColorKey } from "../../shared/palette";
 import { STR } from "../../shared/strings";
+import type { DayMarkInfo } from "../../data/repository";
 import { loadPanelWidths } from "../common/panelWidths";
 
 export const SAVE_DELAY_MS = 500;
@@ -91,6 +92,8 @@ export interface BoardState {
   previews: Record<string, RepeatPreview[]>;
   /** 이 주의 연차·반차 표시(improve-1026-spec 1절) */
   dayMarks: Record<DateStr, DayMarkKind>;
+  /** 표시 이름·출처(공휴일·휴가 사유·내장/회사 휴일) */
+  dayMarkInfo: Record<DateStr, DayMarkInfo>;
   /** 포커스 열 기준 업무별 직전 기록일(빈 칸의 가져오기 단추, spec 3-2) — 키: 업무 id */
   prevDates: Record<string, DateStr>;
   /** 모든 태그(순서대로)와 업무별 태그 id(improve-1026-spec 4절) */
@@ -156,6 +159,7 @@ export const useBoard = create<BoardState>(() => ({
   repeating: [],
   previews: {},
   dayMarks: {},
+  dayMarkInfo: {},
   prevDates: {},
   tags: [],
   categoryTags: {},
@@ -444,6 +448,7 @@ async function loadWeekNow(r: JournalRepository, weekId: WeekId, focusDay: DateS
     repeating: rules.filter((x) => x.endWeek === null).map((x) => x.id),
     previews,
     dayMarks: view.dayMarks,
+    dayMarkInfo: view.dayMarkInfo,
     tags,
     categoryTags,
     tagFilter: liveFilter(get().tagFilter, tags),
@@ -913,23 +918,44 @@ export async function keepCategory(id: string) {
 
 // ── 연차·반차 표시(improve-1026-spec 1절) ───────────────
 /** 표시 바꾸기(null = 근무). 보드 실행 취소에 들어간다 */
-export async function setDayMark(date: DateStr, kind: DayMarkKind | null) {
-  const before = get().dayMarks[date] ?? null;
-  if (before === kind) return;
-  const apply = async (k: DayMarkKind | null) => {
-    await track(() => requireRepo().setDayMark(date, k));
-    const { [date]: _old, ...rest } = get().dayMarks; // eslint-disable-line @typescript-eslint/no-unused-vars
-    set({ dayMarks: k ? { ...rest, [date]: k } : rest });
-    // 직전 기록일은 종일 연차를 건너뛰므로 다시 찾는다
+export async function setDayMark(date: DateStr, kind: DayMarkKind | null, label: string | null = null) {
+  const before = get().dayMarkInfo[date] ?? null;
+  if (before?.source === "user" && before.kind === kind && (before.label ?? null) === (label ?? null)) return;
+  if (!before && kind === null) return;
+  const apply = async (k: DayMarkKind | null, l: string | null, restoreBuiltin = false) => {
+    const r = requireRepo();
+    await track(async () => {
+      await r.setDayMark(date, k, l);
+      if (restoreBuiltin) {
+        // 내장 공휴일·회사 휴일로 되돌림(근무로 돌릴 때 더한 "끈 날짜"를 뺀다)
+        const s = await r.getSettings();
+        await r.updateSettings({ holiday: { off: s.holiday.off.filter((d) => d !== date) } });
+      }
+    });
+    const info = await r.getDayMarkInfo(date, date);
+    const { [date]: _a, ...marks } = get().dayMarks; // eslint-disable-line @typescript-eslint/no-unused-vars
+    const { [date]: _b, ...infos } = get().dayMarkInfo; // eslint-disable-line @typescript-eslint/no-unused-vars
+    const now = info[date];
+    set({
+      dayMarks: now ? { ...marks, [date]: now.kind } : marks,
+      dayMarkInfo: now ? { ...infos, [date]: now } : infos,
+    });
+    // 직전 기록일은 종일 쉬는 날을 건너뛰므로 다시 찾는다
     void refreshPrevDates();
   };
   try {
-    await apply(kind);
+    await apply(kind, label);
   } catch (e) {
     reportError(e);
     return;
   }
-  pushUndo({ undo: () => apply(before), redo: () => apply(kind) });
+  const back =
+    before === null
+      ? () => apply(null, null)
+      : before.source === "user"
+        ? () => apply(before.kind, before.label)
+        : () => apply(null, null, true);
+  pushUndo({ undo: back, redo: () => apply(kind, label) });
 }
 
 // ── 직전 기록 가져오기(improve-1026-spec 3절) ───────────

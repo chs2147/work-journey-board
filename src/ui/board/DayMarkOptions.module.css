@@ -1,0 +1,116 @@
+/* 이 날 근무 상태 고르기(features-1102-spec F2) */
+.wrap {
+  display: flex;
+  flex-direction: column;
+  min-width: 220px;
+}
+
+.source {
+  margin: 0 var(--sp-2) var(--sp-1);
+  padding: 4px var(--sp-2);
+  border-radius: var(--radius-sm);
+  background: var(--holiday-soft, #fbe7e2);
+  color: var(--holiday, #c0573f);
+  font-size: var(--fs-xs);
+}
+
+.radioItem {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 100%;
+  padding: 6px var(--sp-3);
+  border: 0;
+  background: transparent;
+  color: var(--text-1);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.radioItem:hover,
+.radioItem:focus-visible {
+  background: var(--surface-sub);
+  outline: none;
+}
+
+.radio {
+  flex: 0 0 auto;
+  width: 13px;
+  height: 13px;
+  border: 1.5px solid var(--text-3);
+  border-radius: 50%;
+}
+
+.radioOn {
+  border-color: var(--accent);
+  background: radial-gradient(circle, var(--accent) 0 3px, transparent 3.5px);
+}
+
+.extra {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 4px var(--sp-3) var(--sp-2) 30px;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.chip {
+  height: 24px;
+  padding: 0 9px;
+  border: 1px solid var(--btn-line);
+  border-radius: 999px;
+  background: var(--btn-bg);
+  color: var(--text-1);
+  font: inherit;
+  font-size: var(--fs-xs);
+  cursor: pointer;
+}
+
+.chipOn,
+.chip:focus-visible {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
+  outline: none;
+}
+
+.form {
+  display: flex;
+  gap: 4px;
+}
+
+.input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 26px;
+  padding: 0 8px;
+  border: 1px solid var(--btn-line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-card);
+  color: var(--text-1);
+  font: inherit;
+  font-size: var(--fs-sm);
+}
+
+.apply {
+  height: 26px;
+  padding: 0 10px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: var(--on-accent);
+  font: inherit;
+  font-size: var(--fs-xs);
+  cursor: pointer;
+}
+
+.hint {
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+}

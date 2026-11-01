@@ -832,3 +832,138 @@
   line-height: 1.55;
   white-space: pre-wrap;
 }
+
+/* 달력·휴일(features-1102-spec F2·F3) */
+.holYear {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-5);
+  border-top: 1px solid var(--line);
+}
+
+.holYear b {
+  min-width: 3em;
+  text-align: center;
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-regular);
+}
+
+.holTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+}
+
+.holTable th,
+.holTable td {
+  padding: 6px var(--sp-5);
+  border-top: 1px solid var(--line);
+  text-align: left;
+  font-weight: var(--fw-regular);
+}
+
+.holTable th {
+  background: var(--surface-sub);
+  color: var(--text-2);
+  font-size: var(--fs-xs);
+}
+
+.holShow {
+  text-align: right !important;
+}
+
+.holOff td {
+  color: var(--text-3);
+}
+
+.holList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.holList li {
+  display: grid;
+  grid-template-columns: 6.5em 1fr auto auto;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-5);
+  border-top: 1px solid var(--line);
+  font-size: var(--fs-sm);
+}
+
+.holDate {
+  font-variant-numeric: tabular-nums;
+}
+
+.holName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.holForm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-5) var(--sp-4);
+  border-top: 1px solid var(--line);
+}
+
+.holForm input[type="text"],
+.holForm input[type="date"] {
+  height: 28px;
+  min-width: 0;
+  padding: 0 8px;
+  border: 1px solid var(--btn-line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-card);
+  color: var(--text-1);
+  font: inherit;
+  font-size: var(--fs-sm);
+}
+
+.holCheck {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--fs-sm);
+}
+
+.holBad {
+  color: var(--danger);
+  font-size: var(--fs-xs);
+}
+
+.holChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: var(--sp-3) var(--sp-5);
+  border-top: 1px solid var(--line);
+}
+
+.holChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 26px;
+  padding: 0 4px 0 10px;
+  border-radius: 999px;
+  background: var(--surface-sub);
+  font-size: var(--fs-sm);
+}
+
+.holChip button {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-2);
+  cursor: pointer;
+}

@@ -71,8 +71,8 @@ describe("6주 가상 샘플 — 엑셀 통합", () => {
     ]);
     // 토·일 머리는 그 주에 기록이 있을 때만
     expect(b.map((x) => x.header.length)).toEqual([6, 7, 6, 6, 6, 7]);
-    expect(b[1]!.header.at(-1)).toBe("토 09/26");
-    expect(b[3]!.header.at(-1)).toBe("금 10/09");
+    expect(b[1]!.header.at(-1)).toBe("토 09/26 (추석 연휴)"); // 내장 공휴일(F3)도 날짜 머리에
+    expect(b[3]!.header.at(-1)).toBe("금 10/09 (한글날)");
     // 분기 결산 지원: W40(10/2 종료)까지만, 항목 없는 주의 업무는 블록에 없음
     expect(b.map((x) => x.categories.includes("분기 결산 지원"))).toEqual([
       true,

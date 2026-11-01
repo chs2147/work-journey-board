@@ -109,6 +109,8 @@ export function BoardView() {
                       day === focusDay ? styles.cellFocus : "",
                       day === today ? styles.cellToday : "",
                       dayMarks[day] === "leave" ? styles.cellLeave : "",
+                      dayMarks[day] === "holiday" ? styles.cellHoliday : "",
+                      dayMarks[day] === "other" ? styles.cellOther : "",
                       narrow ? styles.cellNarrow : "",
                       vc.state !== "active" ? styles.cellEnded : "",
                     ].join(" ")}

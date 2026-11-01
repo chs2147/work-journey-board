@@ -67,8 +67,10 @@
 }
 
 .dayName {
+  flex: 0 0 auto;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .colWeekend {
@@ -87,6 +89,17 @@
   background: var(--day-leave-bg);
 }
 
+/* 공휴일·기타 휴가 머리(features-1102-spec F2) */
+.colHoliday {
+  background: var(--holiday-soft);
+  box-shadow: inset 0 -2px 0 var(--holiday);
+}
+
+.colOther {
+  background: var(--other-off-soft);
+  box-shadow: inset 0 -2px 0 var(--other-off);
+}
+
 .colToday {
   background: var(--day-today-bg);
   color: var(--day-today-fg);
@@ -98,7 +111,11 @@
 
 .todayBadge,
 .markBadge {
-  flex: 0 0 auto;
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   padding: 0 var(--sp-2);
   border-radius: 999px;
   font-size: var(--fs-xs);
@@ -122,6 +139,24 @@
 .markLeave {
   border-color: transparent;
   background: var(--surface-card);
+}
+
+.markHoliday,
+.markOther {
+  padding: 0 5px;
+  font-size: 11px;
+}
+
+.markHoliday {
+  border-color: transparent;
+  background: var(--holiday);
+  color: var(--surface-card);
+}
+
+.markOther {
+  border-color: transparent;
+  background: var(--other-off);
+  color: var(--surface-card);
 }
 
 .colToday .markBadge {
@@ -453,6 +488,14 @@
 
 .cellLeave {
   background: var(--cell-leave-bg);
+}
+
+.cellHoliday {
+  background: color-mix(in srgb, var(--holiday-soft) 70%, transparent);
+}
+
+.cellOther {
+  background: color-mix(in srgb, var(--other-off-soft) 70%, transparent);
 }
 
 .cellNarrow {

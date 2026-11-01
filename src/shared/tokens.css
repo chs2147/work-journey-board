@@ -49,6 +49,11 @@
   /* 연차·반차(improve-1026-spec 1-1) — 업무 색·중요 표시와 겹치지 않는 주황. --leave는 --leave-soft·카드 바탕에서 4.5:1 이상 */
   --leave: #a8471a;
   --leave-soft: #fbeee6;
+  /* 공휴일·기타 휴가(features-1102-spec F2) — 글자는 옅은 바탕에서 4.5:1 이상 */
+  --holiday: #b03a2e;
+  --holiday-soft: #fbe7e2;
+  --other-off: #2f7468;
+  --other-off-soft: #e3f0ed;
   /* 중요 업무 날짜 띠(improve-1027v3-spec 6절): 옅은 바탕 + 왼쪽 막대 + 글자 — 글자는 띠 바탕에서 4.5:1 이상 */
   --band-late-bg: #fbe4e6;
   --band-late-bar: #b3261e;
@@ -166,6 +171,10 @@
   --today-mark: #ef7a4d;
   --leave: #f0a070;
   --leave-soft: #33241b;
+  --holiday: #f08b84;
+  --holiday-soft: #3d2120;
+  --other-off: #7cc7b8;
+  --other-off-soft: #1c302c;
   --band-late-bg: #42201f;
   --band-late-bar: #f08b84;
   --band-late-text: #f5b0aa;
@@ -248,6 +257,10 @@
   --today-mark: #d85a30;
   --leave: #8a4f24;
   --leave-soft: #f6eedc;
+  --holiday: #9e3b2c;
+  --holiday-soft: #f6e1da;
+  --other-off: #2f6b60;
+  --other-off-soft: #e2ece6;
   --band-late-bg: #f8ece6;
   --band-late-bar: #a94f42;
   --band-late-text: #8f3f34;

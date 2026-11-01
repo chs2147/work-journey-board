@@ -186,13 +186,43 @@ describe("마이그레이션 (data-spec 7-5)", () => {
       "INSERT INTO note_asset (id, week_id, mime, data, width, height, bytes, created_at) VALUES ('a', '2026-W44', 'image/png', 'AAAA', 10, 10, 3, 't')",
     );
     const before = vi.fn().mockResolvedValue(undefined);
-    expect(await migrate(db, { beforeMigrate: before })).toBe(7);
+    expect(await migrate(db, { beforeMigrate: before, migrations: MIGRATIONS.slice(0, 7) })).toBe(7);
     expect(before).toHaveBeenCalledWith(6, 7);
     expect(await db.select("SELECT data, thumb, thumb_mime FROM note_asset WHERE id = 'a'")).toEqual([
       { data: "AAAA", thumb: null, thumb_mime: null },
     ]);
     await expect(
       db.execute("UPDATE note_asset SET thumb = 'x', thumb_mime = 'image/gif' WHERE id = 'a'"),
+    ).rejects.toThrow();
+    expect(await quickCheck(db)).toBe(true);
+  });
+
+  it("v7 → v8(휴일 설정): 직전 백업, 연차·반차 행 그대로 + label 비어 있음, 공휴일·기타 휴가 저장·검사", async () => {
+    const db = await openSqlJsMemory();
+    await migrate(db, { migrations: MIGRATIONS.slice(0, 7) });
+    await db.execute(
+      "INSERT INTO day_mark (date, kind, updated_at) VALUES ('2026-10-27', 'leave', 't'), ('2026-10-28', 'half_am', 't')",
+    );
+    await expect(
+      db.execute("INSERT INTO day_mark (date, kind, updated_at) VALUES ('2026-10-29', 'holiday', 't')"),
+    ).rejects.toThrow();
+    const before = vi.fn().mockResolvedValue(undefined);
+    expect(await migrate(db, { beforeMigrate: before })).toBe(8);
+    expect(before).toHaveBeenCalledWith(7, 8);
+    expect(await db.select("SELECT date, kind, label FROM day_mark ORDER BY date")).toEqual([
+      { date: "2026-10-27", kind: "leave", label: null },
+      { date: "2026-10-28", kind: "half_am", label: null },
+    ]);
+    await db.execute(
+      "INSERT INTO day_mark (date, kind, label, updated_at) VALUES ('2026-10-29', 'holiday', '창립기념일', 't'), ('2026-10-30', 'other', '야유회', 't')",
+    );
+    await expect(
+      db.execute("INSERT INTO day_mark (date, kind, updated_at) VALUES ('2026-10-31', 'nap', 't')"),
+    ).rejects.toThrow();
+    await expect(
+      db.execute(
+        `INSERT INTO day_mark (date, kind, label, updated_at) VALUES ('2026-11-01', 'other', '${"가".repeat(41)}', 't')`,
+      ),
     ).rejects.toThrow();
     expect(await quickCheck(db)).toBe(true);
   });

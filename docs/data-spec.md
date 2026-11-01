@@ -196,6 +196,12 @@ CREATE TABLE app_meta (
 - 태그 필터는 설정 `ui.tagFilter`(태그 id 배열, `"__none__"` = 태그 없음, 3-4). 엑셀·가져오기 양식에는 태그를 넣지 않는다.
 - 직전 백업은 `_pre-migration-v6`.
 
+### 3-u. 스키마 v8 (2026-11-01, `0008_day_mark_ext.sql`)
+- 휴일 설정(features-1102-spec F2): `day_mark`를 새로 만들어 옮김 — `kind IN ('leave','half_am','half_pm','holiday','other')` + `label TEXT`(≤40자, 공휴일 이름·기타 휴가 사유). 기존 행은 그대로(label NULL).
+- 내장 대한민국 공휴일·회사 휴일(F3)은 **일지에 행을 쓰지 않는다** — `domain/holidaysKr.ts` 표 + 설정 `holiday`(krEnabled·off·company·reasons, 3-4)로 화면·집계에서 겹쳐 보인다. 우선순위: 직접 표시(행) > 회사 휴일 > 내장 공휴일, `off` 날짜는 빠짐. 내장·회사 휴일인 날을 근무로 돌리면 그 날을 `off`에 더한다.
+- 하루 종일 쉬는 날(연차·공휴일·기타 휴가)은 직전 기록일 찾기에서 건너뛰고, 무기록 판정의 "휴가 주"에 들어간다(반차는 근무일).
+- 직전 백업은 `_pre-migration-v8`.
+
 ## 4. 카테고리 활성 계산
 
 ### 4-1. 주 W에 보일 카테고리
