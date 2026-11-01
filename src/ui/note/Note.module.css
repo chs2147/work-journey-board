@@ -613,6 +613,7 @@
   display: block;
   width: 100%;
   height: auto;
+  background: var(--surface-sub);
   border-radius: calc(var(--radius-md) - 2px);
   cursor: grab;
   user-select: none;
@@ -706,7 +707,8 @@
   padding: var(--sp-4);
 }
 
-.previewBody > img {
+.previewBody > img,
+.previewBody > canvas {
   flex: 0 0 auto;
   max-width: none;
   background: #fff;

@@ -46,10 +46,9 @@ async function pasteImage(page: Page, selector: string, png: Buffer) {
 /** 이미지 상자의 저장 정보(브라우저 모드 저장소에서 읽음) */
 const assetInfo = (page: Page) =>
   page.evaluate(async () => {
-    const img = document.querySelector<HTMLImageElement>('[data-testid="note-image"] img');
-    return img
-      ? { w: img.naturalWidth, h: img.naturalHeight, mime: img.src.slice(5, img.src.indexOf(";")) }
-      : null;
+    // 메모 판은 <canvas>에 그린다(optimize-1031-plan O2) — 저장된 원본 크기·형식은 data-* 속성으로
+    const c = document.querySelector<HTMLCanvasElement>('[data-testid="note-image"] canvas');
+    return c ? { w: Number(c.dataset.width), h: Number(c.dataset.height), mime: c.dataset.mime ?? "" } : null;
   });
 
 async function goW44(page: Page) {
@@ -92,7 +91,7 @@ test("[이미지 넣기] → 큰 그림은 긴 변 1600px로 줄여 저장, 처�
   await page.keyboard.press("Alt+ArrowRight");
   await expect(images(page)).toHaveCount(1);
   await expect(images(page).locator("input")).toHaveValue("가상 응답 시간 그래프");
-  await expect(images(page).locator("img")).toHaveAttribute("alt", "이미지: 가상 응답 시간 그래프");
+  await expect(images(page).locator("canvas")).toHaveAttribute("aria-label", "이미지: 가상 응답 시간 그래프");
   await page.keyboard.press("Alt+KeyS");
   await expect(page.getByTestId("summary-auto")).toContainText("[메모]\n- (이미지) 가상 응답 시간 그래프");
 });
@@ -177,8 +176,7 @@ test("크기 손잡이(비율 유지, 최소 80) · 그림 끌어 옮기기 · �
     .setInputFiles({ name: "a.png", mimeType: "image/png", buffer: await makePng(page, 600, 300) });
   const box = images(page).first();
   await expect(box).toBeFocused();
-  const imgH = () =>
-    box.locator("img").evaluate((el) => (el as HTMLImageElement).getBoundingClientRect().height);
+  const imgH = () => box.locator("canvas").evaluate((el) => el.getBoundingClientRect().height);
   expect(Math.round(await imgH())).toBe(Math.round((470 * 300) / 600)); // 폭 480 - 테두리 2 - 안쪽 여백 8
   // 크기: 왼쪽으로 많이 → 최소 80
   const handle = box.getByRole("button", { name: "크기 조절(끌기, 비율 유지)" });
@@ -193,8 +191,8 @@ test("크기 손잡이(비율 유지, 최소 80) · 그림 끌어 옮기기 · �
   expect(await box.evaluate((el) => (el as HTMLElement).style.width)).toBe("480px");
   // 그림을 끌어 옮기기
   const left0 = await box.evaluate((el) => parseFloat((el as HTMLElement).style.left));
-  await box.locator("img").scrollIntoViewIfNeeded();
-  const ib = (await box.locator("img").boundingBox())!;
+  await box.locator("canvas").scrollIntoViewIfNeeded();
+  const ib = (await box.locator("canvas").boundingBox())!;
   await page.mouse.move(ib.x + 50, ib.y + 50);
   await page.mouse.down();
   await page.mouse.move(ib.x + 50 + 80, ib.y + 50, { steps: 4 });
@@ -202,7 +200,7 @@ test("크기 손잡이(비율 유지, 최소 80) · 그림 끌어 옮기기 · �
   expect((await box.evaluate((el) => parseFloat((el as HTMLElement).style.left))) - left0).toBe(80);
   await expect(page.getByTestId("note-image-preview")).toHaveCount(0); // 끌기는 크게 보기가 아니다
   // 선택된 그림을 한 번 더 누르면 크게 보기
-  await box.locator("img").click();
+  await box.locator("canvas").click();
   await expect(page.getByTestId("note-image-preview")).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(page.getByTestId("note-image-preview")).toHaveCount(0);
@@ -212,7 +210,7 @@ test("크기 손잡이(비율 유지, 최소 80) · 그림 끌어 옮기기 · �
   await expect(images(page)).toHaveCount(0);
   await page.getByRole("button", { name: "되돌리기" }).click();
   await expect(images(page)).toHaveCount(1);
-  await expect(images(page).locator("img")).toBeVisible();
+  await expect(images(page).locator("canvas")).toBeVisible();
 });
 
 test("⋯ → 이미지로 저장…: .webp/.png로 저장(형식 바꿈), 다른 확장자·backups 폴더는 거부", async ({

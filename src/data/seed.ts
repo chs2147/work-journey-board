@@ -30,6 +30,16 @@ export interface SampleData {
   dayMarks?: { date: string; kind: string }[];
   /** 주간 메모 문서(JSON) — 업무연계 메모 시험용 */
   weekNotes?: { weekId: string; doc: unknown }[];
+  /** 메모 이미지(base64) — 성능 측정용 1년치 샘플(optimize-1031-plan O1) */
+  assets?: {
+    id: string;
+    weekId: string;
+    mime: string;
+    data: string;
+    width: number;
+    height: number;
+    bytes: number;
+  }[];
 }
 
 export async function seedSample(driver: SqlDriver, data: SampleData, now: Date = new Date()): Promise<void> {
@@ -91,6 +101,12 @@ export async function seedSample(driver: SqlDriver, data: SampleData, now: Date 
     stmts.push({
       sql: "INSERT INTO week_note (week_id, doc, updated_at) VALUES (?, ?, ?)",
       params: [n.weekId, JSON.stringify(n.doc), ts],
+    });
+  }
+  for (const a of data.assets ?? []) {
+    stmts.push({
+      sql: "INSERT INTO note_asset (id, week_id, mime, data, width, height, bytes, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+      params: [a.id, a.weekId, a.mime, a.data, a.width, a.height, a.bytes, ts],
     });
   }
   await driver.batch(stmts);

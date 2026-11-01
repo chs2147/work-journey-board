@@ -9,7 +9,8 @@ import { useAppStore } from "../common/appStore";
 import { openLink } from "../common/openLink";
 import { reportError, toast } from "../board/boardStore";
 import { onSelectedBoxKey, startBoxDrag, useBoxFrame } from "./boxShared";
-import { ACCEPT_TYPES, dataUrl } from "./imageProcess";
+import { ACCEPT_TYPES } from "./imageProcess";
+import { NoteImageCanvas } from "./noteImage";
 import {
   bringToFront,
   clearLinkThumb,
@@ -18,6 +19,7 @@ import {
   selectBox,
   sendToBack,
   setLinkThumb,
+  noteRepo,
   updateLinkText,
   useNote,
 } from "./noteStore";
@@ -31,6 +33,7 @@ export function LinkBoxView({ box, selected }: { box: LinkBox; selected: boolean
   const wrapRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const thumb = useNote((s) => (box.asset ? s.assets[box.asset] : undefined));
+  const zoom = useNote((s) => s.zoom);
   const [menuOpen, setMenuOpen] = useState(false);
   const pulse = useNote((s) => s.pulseId === box.id);
   const [editing, setEditing] = useState(false);
@@ -168,11 +171,15 @@ export function LinkBoxView({ box, selected }: { box: LinkBox; selected: boolean
       />
       <div className={styles.linkMain}>
         {thumb ? (
-          <img
+          <NoteImageCanvas
             className={styles.linkThumb}
-            src={dataUrl(thumb.mime, thumb.data)}
-            alt={STR.links.thumbAlt(box.title)}
-            draggable={false}
+            repo={noteRepo()}
+            assetId={box.asset!}
+            label={STR.links.thumbAlt(box.title)}
+            width={thumb.width}
+            height={thumb.height}
+            shownWidth={44 * zoom}
+            cover
           />
         ) : (
           <span

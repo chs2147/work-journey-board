@@ -4,8 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import type { ImageBox } from "../../domain/note";
 import { STR } from "../../shared/strings";
 import { onSelectedBoxKey, startBoxDrag, useBoxFrame } from "./boxShared";
-import { dataUrl } from "./imageProcess";
+import { FullImageCanvas, NoteImageCanvas } from "./noteImage";
 import {
+  noteRepo,
   bringToFront,
   deleteBox,
   duplicateBox,
@@ -33,6 +34,7 @@ export function ImageBoxView({
   const wrapRef = useRef<HTMLDivElement>(null);
   const captionRef = useRef<HTMLInputElement>(null);
   const img = useNote((s) => s.assets[box.asset]);
+  const zoom = useNote((s) => s.zoom);
   const [menuOpen, setMenuOpen] = useState(false);
   const pulse = useNote((s) => s.pulseId === box.id);
   const edges = useEdgeCount(box.id);
@@ -123,13 +125,15 @@ export function ImageBoxView({
       )}
       {box.refs && <LinkStrip boxId={box.id} refs={box.refs} />}
       {img ? (
-        <img
+        <NoteImageCanvas
           className={styles.image}
-          src={dataUrl(img.mime, img.data)}
-          alt={STR.note.imageAlt(box.caption)}
+          repo={noteRepo()}
+          assetId={box.asset}
+          label={STR.note.imageAlt(box.caption)}
           width={img.width}
           height={img.height}
-          draggable={false}
+          shownWidth={box.w * zoom}
+          data-mime={img.mime}
           onPointerDown={(e) => {
             const wasSelected = selected;
             selectBox(box.id);
@@ -204,9 +208,10 @@ export function ImagePreview({ box, onClose }: { box: ImageBox; onClose(): void 
         </button>
       </div>
       <div className={styles.previewBody} onPointerDown={(e) => e.target === e.currentTarget && onClose()}>
-        <img
-          src={dataUrl(img.mime, img.data)}
-          alt={STR.note.imageAlt(box.caption)}
+        <FullImageCanvas
+          repo={noteRepo()}
+          assetId={box.asset}
+          label={STR.note.imageAlt(box.caption)}
           width={img.width}
           height={img.height}
         />

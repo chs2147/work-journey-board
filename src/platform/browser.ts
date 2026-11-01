@@ -4,11 +4,12 @@ import sampleLong from "../../fixtures/sample-long.json";
 import sampleInsights from "../../fixtures/sample-insights.json";
 import { DATA_FILE } from "../data/backup";
 import { prepareConnection } from "../data/driver";
-import { openSqlJs } from "../data/drivers/sqlJs";
+import { openSqlJs, sqlJsCalls } from "../data/drivers/sqlJs";
 import { migrate } from "../data/migrate";
 import { seedSample } from "../data/seed";
 import { isThemePref } from "../shared/theme";
 import { createFakeFs } from "./fakeFs";
+import { makeYearSample } from "./sampleYear";
 import { baseName, dirOf, isOneDriveLike, type AppConfig, type Platform } from "./index";
 
 // 브라우저 모드(개발·E2E): 메모리 위의 가짜 폴더 + sql.js. 새로고침하면 처음 상태로 돌아간다.
@@ -16,6 +17,8 @@ import { baseName, dirOf, isOneDriveLike, type AppConfig, type Platform } from "
 //   ?today=YYYY-MM-DD   오늘 날짜 고정
 //   ?empty=1            기본 일지를 샘플 없이 빈 상태로
 //   ?sample=long        6주 + 연도 경계 가상 샘플(I-M2 통합 검증, fixtures/sample-long.json)
+//   ?sample=year        가상 1년치(업무 6개·항목 약 4,400개·52주 메모) — 성능 측정(optimize-1031-plan O1)
+//   ?sample=year-img    위 + 주마다 메모 이미지 2장(800×500 PNG)
 //   ?sample=insights    약 6개월·종료/재개·링크·연결 메모·연차 가상 샘플(M3-S1 인사이트, fixtures/sample-insights.json)
 //   ?fresh=1            설정 없음 → 첫 실행 화면
 //   ?existing=/경로     그 폴더에 샘플이 든 기존 일지를 미리 만들어 둠(첫 실행 "기존 일지 열기" 시험)
@@ -48,7 +51,16 @@ async function makeJournal(dir: string, withSample: boolean) {
   await migrate(d);
   const which = params.get("sample");
   if (withSample)
-    await seedSample(d, which === "long" ? sampleLong : which === "insights" ? sampleInsights : sample);
+    await seedSample(
+      d,
+      which === "year" || which === "year-img"
+        ? await makeYearSample(which === "year-img")
+        : which === "long"
+          ? sampleLong
+          : which === "insights"
+            ? sampleInsights
+            : sample,
+    );
   await d.close();
 }
 
@@ -178,6 +190,8 @@ Object.assign(globalThis, {
     lastExport: () => lastExport,
     openedUrls: () => [...openedUrls],
     updateCalls: () => [...updateCalls],
+    /** DB 호출 수(조회·쓰기·batch) — 주 전환당 왕복 수 측정 */
+    queries: () => sqlJsCalls.n,
     setToday(date: string) {
       if (!isDate(date)) throw new Error(`날짜 형식이 아닙니다: ${date}`);
       fixedToday = date;

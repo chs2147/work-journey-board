@@ -48,6 +48,7 @@ import { STR } from "../../shared/strings";
 import { useAppStore } from "../common/appStore";
 import { baseName, dirOf, exportPathProblem } from "../../platform";
 import { exportImageBytes, ImageInputError, prepareImage } from "./imageProcess";
+import { clearImageCache } from "./imageCache";
 import {
   focusStartCell,
   reportError,
@@ -118,13 +119,23 @@ export interface NoteState {
   showEdges: boolean;
 }
 
+/** 이미지의 크기·형식만 — 그림 데이터는 들고 있지 않는다(그릴 때 noteImage.tsx가 한 장씩 읽음, optimize-1031-plan O2) */
 export interface NoteImage {
   mime: ImageMime;
-  data: string;
   width: number;
   height: number;
   bytes: number;
 }
+
+const metaOf = (img: NoteImage): NoteImage => ({
+  mime: img.mime,
+  width: img.width,
+  height: img.height,
+  bytes: img.bytes,
+});
+
+/** 메모 이미지를 그릴 컴포넌트가 쓰는 저장소 */
+export const noteRepo = () => repo;
 
 export const useNote = create<NoteState>(() => ({
   weekId: "",
@@ -195,8 +206,13 @@ async function loadWeek(weekId: WeekId, finish = true) {
   if (!repo || !weekId) return;
   if (finish) await finishNote();
   try {
-    const [{ doc, legacy }, rows] = await Promise.all([repo.getWeekNote(weekId), repo.getNoteAssets(weekId)]);
+    const [{ doc, legacy }, rows] = await Promise.all([
+      repo.getWeekNote(weekId),
+      repo.getNoteAssetMeta(weekId),
+    ]);
     if (useBoard.getState().weekId !== weekId) return;
+    // 다른 주로 옮길 때만 그림 해제(같은 주를 다시 읽을 때는 화면의 그림을 그대로 쓴다)
+    if (get().weekId !== weekId) clearImageCache();
     undoStack.length = 0;
     redoStack.length = 0;
     lastEditedId = null;
@@ -485,7 +501,7 @@ export async function addImages(files: Blob[], at: { x: number; y: number }) {
     for (const f of images) {
       try {
         const img = await prepareImage(f);
-        const asset = await r.addNoteAsset(weekId, img);
+        const asset = await r.addNoteAsset(weekId, img, img.thumb);
         if (get().weekId !== weekId) return;
         const doc = get().doc;
         const box: NoteBox = {
@@ -498,7 +514,7 @@ export async function addImages(files: Blob[], at: { x: number; y: number }) {
           asset,
           caption: "",
         };
-        set({ assets: { ...get().assets, [asset]: img } });
+        set({ assets: { ...get().assets, [asset]: metaOf(img) } });
         commit({ ...doc, boxes: [...doc.boxes, box] }, true);
         set({ selectedId: box.id, editingId: null });
         n++;
@@ -544,9 +560,9 @@ export async function setLinkThumb(id: string, file: Blob) {
   set({ busy: true });
   try {
     const img = await prepareImage(file);
-    const asset = await r.addNoteAsset(weekId, img);
+    const asset = await r.addNoteAsset(weekId, img, img.thumb);
     if (get().weekId !== weekId) return;
-    set({ assets: { ...get().assets, [asset]: img } });
+    set({ assets: { ...get().assets, [asset]: metaOf(img) } });
     commit(
       mapBox(id, (x) => (x.kind === "link" ? { ...x, asset } : x)),
       true,
@@ -630,9 +646,10 @@ export async function saveImage(id: string) {
   const j = useAppStore.getState().journal;
   const platform = useAppStore.getState().platform;
   if (!box || box.kind !== "image" || j.state !== "ready" || !platform) return;
-  const img = get().assets[box.asset];
-  if (!img) return toast(STR.note.imageMissing);
+  if (!get().assets[box.asset]) return toast(STR.note.imageMissing);
   try {
+    const img = await j.repo.getNoteAsset(box.asset);
+    if (!img) return toast(STR.note.imageMissing);
     const settings = await j.repo.getSettings();
     let dir = settings.ui.lastExportDir;
     if (!dir || !(await platform.stat(dir)).isDir) {

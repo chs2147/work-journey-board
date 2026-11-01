@@ -255,6 +255,33 @@ describe("주간 메모 (weekly-note-spec 5절)", () => {
     await expect(repo.addNoteAsset("2026-W43", { ...png, width: 0 })).rejects.toBeInstanceOf(ValidationError);
   });
 
+  it("메모 이미지 표시용 사본(optimize-1031-plan O2): 크기만 읽기·썸네일 우선·나중에 채우기(한 번만)·잘못된 썸네일 무시", async () => {
+    const { repo } = await freshRepo();
+    const png = { mime: "image/png" as const, data: "iVBORw0KGgo=", width: 1600, height: 900, bytes: 0 };
+    const withThumb = await repo.addNoteAsset("2026-W43", png, { mime: "image/webp", data: "UklGRg==" });
+    const plain = await repo.addNoteAsset("2026-W43", png);
+    const meta = await repo.getNoteAssetMeta("2026-W43");
+    expect(meta).toHaveLength(2);
+    expect(meta[0]).not.toHaveProperty("data"); // 그림 데이터는 싣지 않는다
+    expect(await repo.getNoteAssetView(withThumb)).toEqual({
+      mime: "image/webp",
+      data: "UklGRg==",
+      thumb: true,
+    });
+    expect(await repo.getNoteAssetView(plain)).toEqual({
+      mime: "image/png",
+      data: "iVBORw0KGgo=",
+      thumb: false,
+    });
+    await repo.setNoteAssetThumb(plain, { mime: "image/png", data: "AAAA" });
+    await repo.setNoteAssetThumb(plain, { mime: "image/png", data: "BBBB" }); // 이미 있으면 그대로
+    expect(await repo.getNoteAssetView(plain)).toEqual({ mime: "image/png", data: "AAAA", thumb: true });
+    expect((await repo.getNoteAsset(plain))?.data).toBe("iVBORw0KGgo="); // 원본은 그대로
+    const bad = await repo.addNoteAsset("2026-W43", png, { mime: "image/gif", data: "AAAA" });
+    expect((await repo.getNoteAssetView(bad))?.thumb).toBe(false);
+    expect(await repo.getNoteAssetView("none")).toBeNull();
+  });
+
   it("이미지만 있는 주도 메모가 있는 주(무기록 판정·연간 미니맵·첫 기록 주)", async () => {
     const { repo } = await freshRepo();
     const doc = {

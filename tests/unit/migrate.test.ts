@@ -149,7 +149,7 @@ describe("마이그레이션 (data-spec 7-5)", () => {
       "INSERT INTO category (id, name, color, sort_order, created_at, updated_at) VALUES ('c', '가상 업무', 'c1', 1, 't', 't')",
     );
     const before = vi.fn().mockResolvedValue(undefined);
-    expect(await migrate(db, { beforeMigrate: before })).toBe(6);
+    expect(await migrate(db, { beforeMigrate: before, migrations: MIGRATIONS.slice(0, 6) })).toBe(6);
     expect(before).toHaveBeenCalledWith(5, 6);
     await db.execute("INSERT INTO tag (id, name, sort_order, created_at) VALUES ('t', 'Dev', 1, 't')");
     await expect(
@@ -177,5 +177,23 @@ describe("마이그레이션 (data-spec 7-5)", () => {
       "CREATE TABLE a (x TEXT)",
       "CREATE INDEX i ON a(x)",
     ]);
+  });
+
+  it("v6 → v7(메모 이미지 썸네일 열): 직전 백업 호출, 기존 이미지는 그대로·썸네일 비어 있음", async () => {
+    const db = await openSqlJsMemory();
+    await migrate(db, { migrations: MIGRATIONS.slice(0, 6) });
+    await db.execute(
+      "INSERT INTO note_asset (id, week_id, mime, data, width, height, bytes, created_at) VALUES ('a', '2026-W44', 'image/png', 'AAAA', 10, 10, 3, 't')",
+    );
+    const before = vi.fn().mockResolvedValue(undefined);
+    expect(await migrate(db, { beforeMigrate: before })).toBe(7);
+    expect(before).toHaveBeenCalledWith(6, 7);
+    expect(await db.select("SELECT data, thumb, thumb_mime FROM note_asset WHERE id = 'a'")).toEqual([
+      { data: "AAAA", thumb: null, thumb_mime: null },
+    ]);
+    await expect(
+      db.execute("UPDATE note_asset SET thumb = 'x', thumb_mime = 'image/gif' WHERE id = 'a'"),
+    ).rejects.toThrow();
+    expect(await quickCheck(db)).toBe(true);
   });
 });

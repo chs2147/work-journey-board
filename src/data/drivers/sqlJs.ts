@@ -18,6 +18,9 @@ export async function openSqlJs(wasmUrl?: string, bytes?: Uint8Array, label?: st
   return new SqlJsDriver(new SQL.Database(bytes), label);
 }
 
+/** 브라우저 모드 조회·쓰기 호출 수(실앱의 IPC 왕복 수에 해당) — 성능 측정용(optimize-1031-plan O1) */
+export const sqlJsCalls = { n: 0 };
+
 export class SqlJsDriver implements SqlDriver {
   constructor(
     private readonly db: Database,
@@ -32,11 +35,13 @@ export class SqlJsDriver implements SqlDriver {
   }
 
   async execute(sql: string, params: SqlParam[] = []) {
+    sqlJsCalls.n++;
     this.run(sql, params);
     return { changes: this.db.getRowsModified() };
   }
 
   async select<T>(sql: string, params: SqlParam[] = []): Promise<T[]> {
+    sqlJsCalls.n++;
     const stmt = this.db.prepare(sql);
     try {
       stmt.bind(params);
@@ -49,6 +54,7 @@ export class SqlJsDriver implements SqlDriver {
   }
 
   async batch(statements: SqlStatement[]) {
+    sqlJsCalls.n++;
     let changes = 0;
     this.db.run("BEGIN");
     try {

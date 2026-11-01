@@ -641,3 +641,47 @@
   padding: var(--sp-2) var(--sp-5);
   border-top: 1px solid var(--line);
 }
+
+/* 진단 정보(optimize-1031-plan O1) */
+.diag > summary {
+  cursor: pointer;
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+}
+
+.diagList {
+  display: grid;
+  gap: var(--sp-1);
+  margin: var(--sp-3) 0;
+}
+
+.diagList > div {
+  display: flex;
+  gap: var(--sp-3);
+  font-size: var(--fs-sm);
+}
+
+.diagList dt {
+  flex: 0 0 140px;
+  color: var(--text-3);
+}
+
+.diagList dd {
+  margin: 0;
+  color: var(--text-1);
+  font-variant-numeric: tabular-nums;
+}
+
+.diagActions {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+.diagActions > button {
+  padding: var(--sp-1) var(--sp-3);
+  border: 1px solid var(--btn-line);
+  border-radius: var(--radius-sm);
+  background: var(--btn-bg);
+  color: var(--text-1);
+  cursor: pointer;
+}

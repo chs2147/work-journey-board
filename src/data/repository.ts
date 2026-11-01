@@ -160,6 +160,19 @@ export interface NoteAsset {
   bytes: number;
 }
 
+/** 메모 이미지의 크기·형식만(그림 데이터 없음) — 메모 판은 이것만 들고, 그림은 그릴 때 한 장씩 읽는다(optimize-1031-plan O2) */
+export type NoteAssetMeta = Omit<NoteAsset, "data">;
+
+/** 표시용 사본(메모 판에 그릴 것) — 썸네일이 있으면 썸네일, 없으면 원본 */
+export interface NoteAssetView {
+  mime: string;
+  data: string;
+  /** 썸네일이면 true */
+  thumb: boolean;
+}
+
+export const NOTE_THUMB_MIMES = ["image/webp", "image/png"] as const;
+
 /** 수정본 최대 길이(입력 실수로 거대한 글이 들어가는 것 방지) */
 export const SUMMARY_MAX = 20000;
 
@@ -636,7 +649,11 @@ export class JournalRepository {
   }
 
   /** 메모 이미지 넣기 — 문서보다 먼저 쓰고, 문서(자동 저장)가 이 id를 가리킨다 */
-  async addNoteAsset(weekId: WeekId, a: Omit<NoteAsset, "id">): Promise<string> {
+  async addNoteAsset(
+    weekId: WeekId,
+    a: Omit<NoteAsset, "id">,
+    thumb?: { mime: string; data: string } | null,
+  ): Promise<string> {
     if (!(IMAGE_MIMES as readonly string[]).includes(a.mime))
       throw new ValidationError("지원하지 않는 그림 형식입니다");
     if (!/^[A-Za-z0-9+/]+={0,2}$/.test(a.data)) throw new ValidationError("그림 데이터가 올바르지 않습니다");
@@ -646,18 +663,62 @@ export class JournalRepository {
     const [w, h] = [Math.round(a.width), Math.round(a.height)];
     if (!(w > 0 && h > 0)) throw new ValidationError("그림 크기가 올바르지 않습니다");
     const id = uuidv7(this.clock().getTime());
+    const t = thumb && this.checkThumb(thumb) ? thumb : null;
     await this.db.execute(
-      "INSERT INTO note_asset (id, week_id, mime, data, width, height, bytes, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-      [id, weekId, a.mime, a.data, w, h, bytes, this.ts()],
+      "INSERT INTO note_asset (id, week_id, mime, data, width, height, bytes, created_at, thumb, thumb_mime) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [id, weekId, a.mime, a.data, w, h, bytes, this.ts(), t?.data ?? null, t?.mime ?? null],
     );
     return id;
   }
 
+  private checkThumb(t: { mime: string; data: string }): boolean {
+    if (!(NOTE_THUMB_MIMES as readonly string[]).includes(t.mime)) return false;
+    return /^[A-Za-z0-9+/]+={0,2}$/.test(t.data) && t.data.length <= NOTE_ASSET_MAX_BYTES;
+  }
+
+  /** 그 주 이미지 원본 전부(스냅샷·엑셀 — 한 번 그리고 버리는 곳만). 메모 판은 getNoteAssetMeta + getNoteAssetView */
   async getNoteAssets(weekId: WeekId): Promise<NoteAsset[]> {
     return this.db.select<NoteAsset>(
       "SELECT id, mime, data, width, height, bytes FROM note_asset WHERE week_id = ?",
       [weekId],
     );
+  }
+
+  /** 그 주 이미지의 크기·형식만(그림 데이터 없음) */
+  async getNoteAssetMeta(weekId: WeekId): Promise<NoteAssetMeta[]> {
+    return this.db.select<NoteAssetMeta>(
+      "SELECT id, mime, width, height, bytes FROM note_asset WHERE week_id = ?",
+      [weekId],
+    );
+  }
+
+  /** 이미지 원본 1장([크게 보기]·[이미지로 저장…]) */
+  async getNoteAsset(id: string): Promise<NoteAsset | null> {
+    const [row] = await this.db.select<NoteAsset>(
+      "SELECT id, mime, data, width, height, bytes FROM note_asset WHERE id = ?",
+      [id],
+    );
+    return row ?? null;
+  }
+
+  /** 메모 판에 그릴 사본 1장 — 썸네일이 있으면 썸네일, 없으면 원본 */
+  async getNoteAssetView(id: string): Promise<NoteAssetView | null> {
+    const [row] = await this.db.select<{ mime: string; data: string; thumb: number }>(
+      `SELECT COALESCE(thumb_mime, mime) AS mime, COALESCE(thumb, data) AS data,
+              thumb IS NOT NULL AS thumb FROM note_asset WHERE id = ?`,
+      [id],
+    );
+    return row ? { mime: row.mime, data: row.data, thumb: Number(row.thumb) === 1 } : null;
+  }
+
+  /** 예전 이미지의 썸네일을 처음 볼 때 채운다(이미 있으면 그대로) */
+  async setNoteAssetThumb(id: string, thumb: { mime: string; data: string }): Promise<void> {
+    if (!this.checkThumb(thumb)) return;
+    await this.db.execute("UPDATE note_asset SET thumb = ?, thumb_mime = ? WHERE id = ? AND thumb IS NULL", [
+      thumb.data,
+      thumb.mime,
+      id,
+    ]);
   }
 
   /**

@@ -39,3 +39,26 @@ jobs:
           name: playwright-report
           path: test-results/
           retention-days: 7
+
+  # 주 전환 메모리 검사(optimize-1031-plan O1, 2026-11-01 사용자 확정: main만, 짧은 판)
+  perf:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run perf:mem
+        env:
+          PERF_ROUNDS: "3"
+          PERF_WEEKS: "20"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: perf-report
+          path: test-results/
+          retention-days: 14

@@ -141,6 +141,35 @@ export function latestBackup(names: string[]): BackupInfo | null {
   return top ? { name: top.name, when: top.when, kind: top.kind } : null;
 }
 
+export interface BackupFolderStats {
+  count: number;
+  bytes: number;
+  /** 종류별 개수·크기 */
+  byKind: Record<BackupInfo["kind"], { count: number; bytes: number }>;
+}
+
+/** 백업 폴더 용량(optimize-1031-plan B5·O1 진단) — `.db` 파일만 센다(임시 사본 제외) */
+export async function backupFolderStats(fs: SessionFs, dataDir: string): Promise<BackupFolderStats> {
+  const dir = fs.join(dataDir, BACKUP_DIR);
+  const empty = () => ({ count: 0, bytes: 0 });
+  const out: BackupFolderStats = {
+    count: 0,
+    bytes: 0,
+    byKind: { daily: empty(), monthly: empty(), manual: empty(), "pre-migration": empty(), other: empty() },
+  };
+  if (!(await fs.stat(dir)).isDir) return out;
+  for (const name of await fs.backupFs.list(dir)) {
+    if (!name.endsWith(".db")) continue;
+    const size = (await fs.stat(fs.join(dir, name))).size ?? 0;
+    const kind = latestBackup([name])?.kind ?? "other";
+    out.count++;
+    out.bytes += size;
+    out.byKind[kind].count++;
+    out.byKind[kind].bytes += size;
+  }
+  return out;
+}
+
 export async function lastBackupOf(fs: SessionFs, dataDir: string): Promise<BackupInfo | null> {
   return latestBackup(await fs.backupFs.list(fs.join(dataDir, BACKUP_DIR)));
 }

@@ -1,5 +1,6 @@
 // 메모 이미지 줄이기·바꾸기(weekly-note-spec 4-4): 화면의 canvas로 긴 변 1600px 안으로 줄이고 WebP(품질 0.82)로 저장.
-// 라이브러리·네트워크 없음. 표시는 data: 주소만 쓴다(실앱 CSP `img-src 'self' data:` — blob: 주소는 막힘).
+// 라이브러리·네트워크 없음. 메모 판 표시는 <canvas>에 직접 그린다(optimize-1031-plan O2 — data: 주소 <img>는 주를 오갈수록
+// 메모리가 쌓였다). 실앱 CSP `img-src 'self' data:`는 그대로(blob: 주소 안 씀).
 import { fitWithin, IMAGE_MAX_SOURCE_BYTES, type ImageMime } from "../../domain/note";
 import { STR } from "../../shared/strings";
 
@@ -16,7 +17,17 @@ export interface PreparedImage {
   width: number;
   height: number;
   bytes: number;
+  /** 메모 판 표시용 작은 사본(원본이 THUMB_EDGE보다 클 때만) */
+  thumb?: EncodedImage | null;
 }
+
+export interface EncodedImage {
+  mime: "image/webp" | "image/png";
+  data: string;
+}
+
+/** 표시용 사본의 긴 변(px) — 메모 판 상자 폭(최대 약 800px)에 맞춤 */
+export const THUMB_EDGE = 800;
 
 export const dataUrl = (mime: string, data: string) => `data:${mime};base64,${data}`;
 
@@ -73,7 +84,13 @@ export async function prepareImage(file: Blob): Promise<PreparedImage> {
     // 줄이지 않았고 원본이 더 작으면 원본 그대로(PNG·JPEG·WebP)
     const keep = !resized && file.type !== "image/bmp" && file.size <= out.size;
     const blob = keep ? file : out;
-    return { mime: blob.type as ImageMime, data: await blobToBase64(blob), ...size, bytes: blob.size };
+    return {
+      mime: blob.type as ImageMime,
+      data: await blobToBase64(blob),
+      ...size,
+      bytes: blob.size,
+      thumb: file.type === "image/gif" ? null : await makeThumb(bitmap),
+    };
   } finally {
     bitmap.close();
   }
@@ -94,4 +111,18 @@ export async function exportImageBytes(mime: string, data: string, as: "png" | "
   }
 }
 
-const base64Bytes = (data: string) => Uint8Array.from(atob(data), (c) => c.charCodeAt(0));
+export const base64Bytes = (data: string) => Uint8Array.from(atob(data), (c) => c.charCodeAt(0));
+
+/** 표시용 작은 사본 — 긴 변이 THUMB_EDGE 이하면 만들지 않는다(원본을 그대로 그림) */
+export async function makeThumb(source: ImageBitmap): Promise<EncodedImage | null> {
+  const long = Math.max(source.width, source.height);
+  if (long <= THUMB_EDGE) return null;
+  const k = THUMB_EDGE / long;
+  const blob = await encode(drawn(source, Math.round(source.width * k), Math.round(source.height * k)));
+  return { mime: blob.type === "image/webp" ? "image/webp" : "image/png", data: await blobToBase64(blob) };
+}
+
+/** base64 그림 → ImageBitmap(그린 뒤 close()로 바로 해제할 수 있다) */
+export function decodeImage(mime: string, data: string): Promise<ImageBitmap> {
+  return createImageBitmap(new Blob([base64Bytes(data)], { type: mime }));
+}

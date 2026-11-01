@@ -23,9 +23,10 @@ function baseInput(weekId: WeekId, now: Date) {
   };
 }
 
-/** 지금 보고 있는 주의 메모(대기 상자 빼고) */
-function currentInput(now: Date): SnapshotInput {
-  const { doc, assets, pendingId, weekId } = useNote.getState();
+/** 지금 보고 있는 주의 메모(대기 상자 빼고) — 이미지는 원본을 이때만 읽는다(스토어는 크기만 들고 있음) */
+async function currentInput(repo: JournalRepository, now: Date): Promise<SnapshotInput> {
+  const { doc, pendingId, weekId } = useNote.getState();
+  const assets = Object.fromEntries((await repo.getNoteAssets(weekId)).map(({ id, ...a }) => [id, a]));
   const { view, cells } = useBoard.getState();
   const categories = (view?.categories ?? []).map((c) => c.category);
   return {
@@ -92,7 +93,7 @@ export async function saveSnapshot() {
     const problem = exportPathProblem(path, j.dataDir, "image");
     if (problem) return toast(problem);
     const webp = path.toLowerCase().endsWith(".webp");
-    const { blob } = await renderNoteSnapshot(currentInput(platform.now()), {
+    const { blob } = await renderNoteSnapshot(await currentInput(j.repo, platform.now()), {
       scale: 2,
       type: webp ? "image/webp" : "image/png",
     });
@@ -107,9 +108,13 @@ export async function saveSnapshot() {
 /** [그림으로 복사] — 메일·문서에 붙여넣기 */
 export async function copySnapshot() {
   const platform = useAppStore.getState().platform;
+  const j = useAppStore.getState().journal;
+  if (j.state !== "ready") return;
   if (empty()) return toast(STR.note.snapshotEmpty);
   try {
-    const { blob } = await renderNoteSnapshot(currentInput(platform?.now() ?? new Date()), { scale: 2 });
+    const { blob } = await renderNoteSnapshot(await currentInput(j.repo, platform?.now() ?? new Date()), {
+      scale: 2,
+    });
     await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
     toast(STR.note.snapshotCopied);
   } catch {

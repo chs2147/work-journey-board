@@ -151,9 +151,11 @@ test("보드·주간 메모 편집기(서식 전부)·엑셀 내보내기 — CS
   await page
     .getByTestId("note-image-input")
     .setInputFiles({ name: "virtual.png", mimeType: "image/png", buffer: Buffer.from(b64, "base64") });
-  const img = page.getByTestId("note-image").locator("img");
-  await expect(img).toHaveAttribute("src", /^data:image\/(webp|png);base64,/);
-  await expect.poll(() => img.evaluate((el) => (el as HTMLImageElement).naturalWidth)).toBe(1600);
+  // 메모 판은 <canvas>에 그린다(optimize-1031-plan O2) — CSP 아래에서도 그림이 그려지는지
+  const img = page.getByTestId("note-image").locator("canvas");
+  await expect(img).toHaveAttribute("data-mime", /^image\/(webp|png)$/);
+  await expect(img).toHaveAttribute("data-width", "1600");
+  await expect(img).toHaveAttribute("data-ready", "true");
 
   // 기존 일지 가져오기(M3-S0): 양식 엑셀 만들기(ExcelJS) + 표 붙여넣기 → 미리보기 → 가져오기
   await page.keyboard.press("Escape");
