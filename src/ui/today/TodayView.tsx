@@ -4,7 +4,7 @@
 import { useEffect, useRef, useState, type PointerEvent } from "react";
 import { cellKey } from "../../data/repository";
 import { TODAY_SPLIT_MAX, TODAY_SPLIT_MIN, DEFAULT_SETTINGS } from "../../data/settings";
-import { DAY_MARK_KINDS, DAY_MARK_LABEL, type DayMarkKind } from "../../domain/dayMark";
+import { DAY_MARK_KINDS, type DayMarkKind } from "../../domain/dayMark";
 import { chipsToShow } from "../../domain/tags";
 import { dayIndex, DAY_LABELS } from "../../domain/week";
 import { STR } from "../../shared/strings";
@@ -12,7 +12,6 @@ import {
   goDay,
   goToday,
   enterCell,
-  setFocusDay,
   pullLabel,
   pullPrevious,
   pullPreviousDay,
@@ -153,12 +152,38 @@ export function TodayView() {
       )}
 
       <div className={noteExpanded ? styles.hidden : styles.right}>
-        <DayStrip />
         <div className={styles.head}>
-          <h2 className={styles.date} data-testid="today-date">
-            {dateLabel}
-          </h2>
-          {day === today && <span className={styles.todayBadge}>{STR.board.todaySuffix}</span>}
+          {/* 날짜 이동(improve-1101 #4 → 2026-11-01 다듬기): 지금 날짜 하나만 ‹ 날짜 › [오늘] 한 줄 */}
+          <div className={styles.dayNav} role="group" aria-label={STR.today.stripAria} data-testid="day-nav">
+            <button
+              type="button"
+              className={styles.navArrow}
+              title={STR.today.prevDay}
+              aria-label={STR.today.prevDay}
+              onClick={() => void goDay(-1)}
+            >
+              ‹
+            </button>
+            <h2 className={styles.date} data-testid="today-date">
+              {dateLabel}
+            </h2>
+            <button
+              type="button"
+              className={styles.navArrow}
+              title={STR.today.nextDay}
+              aria-label={STR.today.nextDay}
+              onClick={() => void goDay(1)}
+            >
+              ›
+            </button>
+          </div>
+          {day === today ? (
+            <span className={styles.todayBadge}>{STR.board.todaySuffix}</span>
+          ) : (
+            <button type="button" className={styles.textButton} onClick={() => void goToday()}>
+              {STR.topBar.today}
+            </button>
+          )}
           <DayMarkPicker day={day} />
           <span className={styles.spacer} />
           {pullAllDate && (
@@ -308,68 +333,5 @@ function DayMarkPicker({ day }: { day: string }) {
         </div>
       )}
     </div>
-  );
-}
-
-/** 날짜 이동 띠(improve-1101 #4): ‹ 월~일 › — 한 칸씩 이동(주를 넘으면 그 주를 불러옴), 날짜를 누르면 그 날로 */
-function DayStrip() {
-  const view = useBoard((s) => s.view);
-  const day = useBoard((s) => s.focusDay);
-  const today = useBoard((s) => s.today);
-  const cells = useBoard((s) => s.cells);
-  if (!view) return null;
-  const has = (d: string) =>
-    view.categories.some((c) => (cells[cellKey(d, c.category.id)] ?? []).some((it) => it.text.trim() !== ""));
-  return (
-    <nav className={styles.strip} aria-label={STR.today.stripAria} data-testid="day-strip">
-      <button
-        type="button"
-        className={styles.stripArrow}
-        title={STR.today.prevDay}
-        aria-label={STR.today.prevDay}
-        onClick={() => void goDay(-1)}
-      >
-        ‹
-      </button>
-      <ol className={styles.stripDays}>
-        {view.days.map((d) => {
-          const [, m, dd] = d.split("-");
-          const wd = DAY_LABELS[dayIndex(d)];
-          const mark = view.dayMarks[d];
-          return (
-            <li key={d}>
-              <button
-                type="button"
-                className={`${styles.stripDay} ${d === day ? styles.stripOn : ""} ${d === today ? styles.stripToday : ""} ${dayIndex(d) >= 5 ? styles.stripWeekend : ""}`}
-                aria-current={d === day ? "date" : undefined}
-                onClick={() => setFocusDay(d)}
-              >
-                <span className={styles.stripWd}>{wd}</span>
-                <span className={styles.stripDate}>
-                  {Number(m)}/{Number(dd)}
-                </span>
-                <span className={styles.stripMeta}>
-                  {mark ? DAY_MARK_LABEL[mark] : has(d) ? <i className={styles.stripDot} /> : null}
-                </span>
-              </button>
-            </li>
-          );
-        })}
-      </ol>
-      <button
-        type="button"
-        className={styles.stripArrow}
-        title={STR.today.nextDay}
-        aria-label={STR.today.nextDay}
-        onClick={() => void goDay(1)}
-      >
-        ›
-      </button>
-      {day !== today && (
-        <button type="button" className={styles.stripTodayBtn} onClick={() => void goToday()}>
-          {STR.topBar.today}
-        </button>
-      )}
-    </nav>
   );
 }

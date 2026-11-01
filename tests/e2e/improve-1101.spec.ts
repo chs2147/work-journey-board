@@ -77,30 +77,29 @@ test("#2 패널 폭: 중요 업무·주간 요약 가장자리 끌기·키보드
   expect(Math.round((await sp.boundingBox())!.width)).toBe(440);
 });
 
-test("#3·#4 데일리 뷰: 이름·날짜 띠(누르기·하루씩·주 넘김·기록 점·오늘)·메모 크게 보기(Esc로 돌아옴)", async ({
+test("#3·#4 데일리 뷰: 이름·날짜 이동(‹ 날짜 › 한 줄·하루씩·주 넘김·[오늘])·메모 크게 보기(Esc로 돌아옴)", async ({
   page,
 }) => {
   await open(page);
   await expect(page.getByTestId("view-today")).toHaveAttribute("title", "데일리 뷰 · 10/22(목) (Alt+V)");
   await page.getByTestId("view-today").click();
-  await expect(page.getByTestId("today-date")).toHaveText("10/22(목)");
-  const strip = page.getByTestId("day-strip");
-  await expect(strip.locator("li")).toHaveCount(7);
-  await expect(strip.locator('[aria-current="date"]')).toContainText("10/22");
-  // 기록이 있는 날(월)엔 점, 일요일(기록 없음)엔 없음
-  await expect(strip.locator("li").nth(0).locator("i")).toHaveCount(1);
-  await expect(strip.locator("li").nth(6).locator("i")).toHaveCount(0);
-  await strip.locator("li").nth(1).getByRole("button").click();
-  await expect(page.getByTestId("today-date")).toHaveText("10/20(화)");
-  await expect(strip.getByRole("button", { name: "오늘" })).toBeVisible();
-  await strip.getByRole("button", { name: "이전 날 (Alt+←)" }).click();
-  await expect(page.getByTestId("today-date")).toHaveText("10/19(월)");
-  await strip.getByRole("button", { name: "이전 날 (Alt+←)" }).click();
-  await expect(page.getByTestId("today-date")).toHaveText("10/18(일)");
-  await expect(strip.locator('[aria-current="date"]')).toContainText("10/18");
-  await strip.getByRole("button", { name: "오늘" }).click();
-  await expect(page.getByTestId("today-date")).toHaveText("10/22(목)");
-  await expect(strip.getByRole("button", { name: "오늘" })).toHaveCount(0);
+  const date = page.getByTestId("today-date");
+  await expect(date).toHaveText("10/22(목)");
+  const strip = page.getByTestId("day-nav");
+  // 날짜 하나·요일까지 한 줄(줄바꿈 없음)
+  const box = (await date.boundingBox())!;
+  expect(box.height).toBeLessThan(36); // 두 줄이면 50px 넘음
+  const head = strip.locator("xpath=..");
+  await expect(head.getByRole("button", { name: "오늘", exact: true })).toHaveCount(0); // 오늘이면 [오늘] 표시만
+  await strip.getByRole("button", { name: "다음 날 (Alt+→)" }).click();
+  await expect(date).toHaveText("10/23(금)");
+  await expect(head.getByRole("button", { name: "오늘", exact: true })).toBeVisible();
+  for (const want of ["10/22(목)", "10/21(수)", "10/20(화)", "10/19(월)", "10/18(일)"]) {
+    await strip.getByRole("button", { name: "이전 날 (Alt+←)" }).click();
+    await expect(date).toHaveText(want);
+  }
+  await head.getByRole("button", { name: "오늘", exact: true }).click();
+  await expect(date).toHaveText("10/22(목)");
 
   // 메모 크게 보기 → 카드·날짜 띠 숨김, Esc로 돌아옴
   const dock = page.getByTestId("note-dock");
