@@ -1,41 +1,69 @@
-# Work Journey Board
+<div align="center">
 
-요일 단위 주간 보드에 업무별로 개조식 기록을 남기면 **주간 요약 · 진행 경과 시각화 · 엑셀 보고서**가 자동으로 만들어지는 개인 업무 일지.
-회사 윈도우 PC 단독 사용, **외부 통신 0**(예외: 새 판 확인·내려받기만 GitHub — v0.2.19부터, 기록·메모는 보내지 않음), 데이터는 사용자가 고른 폴더의 SQLite 파일 1개.
+<img src="docs/brand/icon.svg" alt="" width="88" height="88">
 
-> 본질: **입력은 최대한 가볍게, 산출물은 자동으로.**
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/brand/wordmark-dark.svg">
+  <img src="docs/brand/wordmark-light.svg" alt="Work Journey Board" height="34">
+</picture>
 
-## 상태
-- 상세설계 D1~D5 완료(2026-10-22) — 설계 저장소 [my-discussions](https://github.com/chs2147/my-discussions)에서 이 저장소로 이관. **이후 정본은 이 저장소.**
-- **I-M0 완료 · ◆G1 GO**(2026-10-23): 회사 PC에서 관리자 권한 없이 설치·실행, WebView2 있음, 사용자 폴더 SQLite 전 항목 통과 → Tauri 구조 확정 ([docs/overview.md 13절](docs/overview.md))
-- **I-M1 핵심 기록 진행 중** — [docs/i-m1-plan.md](docs/i-m1-plan.md): S1~S4 완료(회사 PC에서 기록 가능), 글꼴·시작 스플래시 추가(v0.0.5~v0.0.8). 다음: 사용 개선사항 반영 → S5 검증 → `v0.1.0` → ◆G2 2주 실사용
-- 일지가 망가졌거나 예전 상태로 되돌려야 할 때: [docs/restore-guide.md](docs/restore-guide.md)
+**오늘 한 일을, 한 줄씩.** 주간 요약 · 진행 경과 · 엑셀 보고서는 자동으로.
+
+[최신 판 내려받기](https://github.com/chs2147/work-journey-board/releases/latest) · [소개 사이트](https://chs2147.github.io/work-journey-board/) · [Version History](#version-history)
+
+</div>
+
+![주간 보드 — 시그니처 테마(가상 기록)](docs/screenshots/board-signature.png)
+
+<p align="center"><sub>주간 보드 · 시그니처 테마 · 화면 속 기록은 모두 가상 예시</sub></p>
+
+## 핵심 기능
+- **매일 2분, 키보드만으로** — 요일 × 업무 칸에 개조식 기록(Enter 다음 줄 · Tab 세부 항목 · ↓ 다음 업무), 오늘 열 강조, 직전 기록 가져오기, 중요 표시·매주 반복·연차, 주간 메모 보드
+- **쓰기만 하면 주간 보고** — 업무별·요일별 자동 집계, 수정본, 사내 AI 도구용 다듬기 지시문, 엑셀 2시트 · 메모 보드 그림
+- **지나온 일이 한눈에** — 업무별 경과 타임라인·경과 지도, 활동 히트맵, 연간 보기
+
+| 주간 요약 | 인사이트 |
+|---|---|
+| ![주간 요약 — 자동 집계](docs/screenshots/summary-signature.png) | ![인사이트 — 경과 타임라인](docs/screenshots/insights-signature.png) |
+
+## 설치
+[Releases](https://github.com/chs2147/work-journey-board/releases/latest)에서 내려받습니다(Windows 10·11).
+
+| 파일 | 용도 |
+|---|---|
+| `WorkJourneyBoard_<버전>_setup.exe` | **기본판**(약 10MB) — WebView2가 없으면 설치 중 자동으로 받음 |
+| `WorkJourneyBoard_<버전>_setup_offline.exe` | **오프라인 설치판**(약 140MB) — 인터넷이 막힌 PC용, WebView2 포함 |
+
+- 관리자 권한 없이 **현재 사용자에게만** 설치됩니다. 처음 켜면 시그니처 테마(설정 › 화면 › 테마에서 라이트·다크·시스템 설정으로 바꿀 수 있음).
+- 새 판이 나오면 앱이 켤 때 알려 주고, 설정 › 업데이트에서 내려받아 설치합니다(SHA256 확인 · 설치 전 일지 자동 백업).
+
+## 기록과 개인정보
+- 기록은 **사용자가 고른 폴더의 SQLite 파일 1개**에만 저장합니다. **외부 통신 0** — 새 판 확인·내려받기만 이 저장소의 GitHub Releases에 묻고, 기록·메모는 어디에도 보내지 않습니다.
+- 자동 백업: 매일·매월 · 켜 둔 동안 2시간마다 · 보조 백업 위치(선택). 문제가 생기면 **앱 안에서 백업으로 복원**(지금 파일은 `_before-restore`로 보관, 되돌리기 가능) — 앱을 열 수 없을 때의 수동 절차는 [docs/restore-guide.md](docs/restore-guide.md).
 
 ## 문서
 | 문서 | 내용 |
 |---|---|
-| [docs/overview.md](docs/overview.md) | 요구사항(R1~R10) · 설계 결정 이력 · **화면 구성(10절)** · 상세 설계 요약(11절) · **인계 명세(12절)** |
+| [docs/overview.md](docs/overview.md) | 요구사항 · 설계 결정 이력 · **화면 구성(10절)** · 단축키(10-3절) · 인계 명세(12절) |
 | [docs/data-spec.md](docs/data-spec.md) | ISO 주차 · 스키마 SQL · 카테고리 활성/무기록 규칙 · 삭제 · 백업 · 저장소 인터페이스 |
-| [docs/output-spec.md](docs/output-spec.md) | 주간 자동 집계 · 엑셀 2시트 양식 · 내보내기 UX · AI 클립보드 지시문 |
+| [docs/output-spec.md](docs/output-spec.md) | 주간 자동 집계 · 엑셀 2시트 양식 · 내보내기 · AI 클립보드 지시문 |
 | [docs/viz-spec.md](docs/viz-spec.md) | 경과 타임라인 · 활동 히트맵 · 기간 막대 · 주별 비중 · 업무 색 팔레트 |
-| [docs/m0-install-check.md](docs/m0-install-check.md) | I-M0 회사 PC 설치 검증 절차 · ◆G1 판정 기준 |
-| [docs/splash-spec.md](docs/splash-spec.md) | 시작 스플래시 창(메인보다 작은 창·최소 2.5초) 구현 스펙 · 시안 3종(B 확정) |
-| [docs/important-repeat-spec.md](docs/important-repeat-spec.md) | 중요 표시·중요 업무 목록·매주 반복·왼쪽 메뉴 상세 설계(구현 전) |
-| [docs/brand-spec.md](docs/brand-spec.md) | 앱 아이콘·워드마크(타이틀) 규칙 · 만드는 방법 |
-| [docs/restore-guide.md](docs/restore-guide.md) | 백업에서 일지 복원하기(수동 절차 — 앱 안 복원은 M5) |
-| [docs/i-m1-plan.md](docs/i-m1-plan.md) | I-M1 핵심 기록 구현 계획(세션 S1~S5) |
-| [docs/project-plan.md](docs/project-plan.md) | 작업 패키지 · 관문(G1/G2) · 마일스톤 I-M0~M5 · 세션 시작 프롬프트 |
-| [docs/wireframes/](docs/wireframes/) | 주간 보드 · 첫 실행/연간 보기 · 인사이트 · 스플래시 와이어프레임·화면 |
-| [docs/samples/](docs/samples/) | 엑셀 내보내기 샘플(가상 데이터) |
+| [docs/brand-spec.md](docs/brand-spec.md) | 앱 아이콘 · 워드마크 규칙 · 만드는 방법 |
+| [docs/release-phase2-spec.md](docs/release-phase2-spec.md) | 정식 릴리스 준비 — 시그니처 기본값 · 설치 프로그램 그림 · 정식 판/오프라인판 배포 · 만든 이 표시 |
+| [docs/optimize-1031-plan.md](docs/optimize-1031-plan.md) | 최적화 · 백업 보강 · 앱 안 복원(v0.4.0) |
+| [docs/restore-guide.md](docs/restore-guide.md) | 앱을 열 수 없을 때 백업에서 수동으로 복원하기 |
+| [docs/project-plan.md](docs/project-plan.md) | 마일스톤 I-M0~M5 · 관문 G1/G2 |
+| [docs/m1-check.md](docs/m1-check.md) | 회사 PC 확인표(판마다) |
+| 기능별 상세 설계 | [스플래시](docs/splash-spec.md) · [중요·반복](docs/important-repeat-spec.md) · [주간 메모](docs/weekly-note-spec.md) · [관계선](docs/note-relation-spec.md) · [다중 연결](docs/multi-link-spec.md) · [인사이트 S1](docs/m3-s1-spec.md) · [S2](docs/m3-s2-spec.md) · 개선 [1026](docs/improve-1026-spec.md) · [1026v2](docs/improve-1026v2-spec.md) · [1027v3](docs/improve-1027v3-spec.md) · [1027v4](docs/improve-1027v4-spec.md) · [1027v5](docs/improve-1027v5-spec.md) · [디자인 리뉴얼](docs/renewal/) |
+| [docs/wireframes/](docs/wireframes/) · [docs/samples/](docs/samples/) | 와이어프레임 · 엑셀 샘플(가상 데이터) |
 | [CLAUDE.md](CLAUDE.md) | 구현 규칙(외부 통신 0 · 실데이터 금지 · 데이터 파일 안전 · 기술 스택) |
 
-![주간 보드 와이어프레임](docs/wireframes/wireframe-weekly-board.svg)
-
-## 기술 스택 (확정)
+## 기술 스택
 Tauri v2(NSIS per-user) · React 18 + Vite + TypeScript · SQLite(실앱 tauri-plugin-sql / 개발·테스트 sql.js) · ExcelJS · SVG + d3-scale · date-fns · Vitest + Playwright · GitHub Actions(ubuntu CI + windows-latest 설치 파일 빌드)
 
 ## 사용한 글꼴
-- [Pretendard](https://github.com/orioncactus/pretendard) — SIL Open Font License 1.1, 공식 배포 파일을 수정 없이 포함 ([라이선스 전문](public/licenses/Pretendard-OFL-1.1.txt))
+- [Pretendard](https://github.com/orioncactus/pretendard) — 라이트·다크 테마 본문. SIL Open Font License 1.1, 공식 배포 파일을 수정 없이 포함 ([라이선스 전문](public/licenses/Pretendard-OFL-1.1.txt))
+- [고운돋움](https://github.com/yangheeryu/Gowun-Dodum) — 시그니처 테마 본문. SIL Open Font License 1.1 ([라이선스 전문](public/licenses/GowunDodum-OFL-1.1.txt))
 
 ## 개발
 ```bash
@@ -43,11 +71,12 @@ npm ci
 npm run dev          # 브라우저 모드(sql.js 메모리) — http://localhost:1420
 npm test             # 단위 테스트(Vitest)
 npm run e2e          # E2E(Playwright, 브라우저 모드)
+npm run perf:mem     # 주 전환 메모리·조회 수 측정(가상 1년치 일지)
 npm run lint && npm run format:check && npm run typecheck
 npm run tauri dev    # 실앱 모드(윈도우 / 리눅스는 webkit2gtk-4.1 필요)
 ```
-- 브라우저 모드 주소 옵션(E2E·시연): `?today=YYYY-MM-DD` 오늘 고정 · `?empty=1` 빈 일지 · `?fresh=1` 첫 실행 화면 · `?existing=/경로` 그 폴더에 샘플 일지 준비 · `?config=/경로` 설정 폴더 지정(없는 폴더면 "저장 폴더를 찾을 수 없음")
-- 윈도우 설치 파일: `main`에 반영되면 [Releases](https://github.com/chs2147/work-journey-board/releases)에 `v<버전>` 사전 릴리스로 올라간다. WebView2 오프라인 설치판은 Actions → *Build Windows installer* → Run workflow → `offline`.
+- 브라우저 모드 주소 옵션(E2E·시연): `?today=YYYY-MM-DD` 오늘 고정 · `?empty=1` 빈 일지 · `?fresh=1` 첫 실행 화면 · `?existing=/경로` 그 폴더에 샘플 일지 준비 · `?config=/경로` 설정 폴더 지정 · `?sample=year`(`year-img`) 가상 1년치 일지 · `?corrupt=1` 파손 일지
+- 윈도우 설치 파일: `main`에 반영되면 [Releases](https://github.com/chs2147/work-journey-board/releases)에 `v<버전>`으로 올라간다 — 0.x·`-rc`는 사전 릴리스(기본판만), 1.0.0 이상 정식 판은 정식 릴리스 + 오프라인 설치판 함께. 그 밖의 오프라인 설치판은 Actions → *Build Windows installer* → Run workflow → `offline`.
 
 ## Version History
 ### v0.4.0 (2026-11-01) — 최적화·백업 보강·앱 안 복원
@@ -270,3 +299,20 @@ npm run tauri dev    # 실앱 모드(윈도우 / 리눅스는 webkit2gtk-4.1 필
 - SQL 드라이버 인터페이스 + sql.js(브라우저 모드)·tauri-plugin-sql(실앱) 드라이버
 - Tauri v2 껍데기: 단일 인스턴스·창 상태 기억, 외부 통신 차단 CSP, NSIS 현재 사용자 설치, WebView2 embedBootstrapper
 - CI(lint·포맷·타입·단위·E2E)와 윈도우 설치 파일 빌드·사전 릴리스 워크플로(오프라인 설치판 선택 가능)
+
+---
+
+<div align="center">
+
+<sub>Made by</sub>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/brand/m1-en-reverse.svg">
+  <img src="docs/brand/m1-en-color.svg" alt="sanbonjini" height="40">
+</picture>
+
+Copyright 2026 sanbonjini · [브랜드 사이트](https://sanbonjini.vercel.app)
+
+<sub>sanbonjini 로고는 브랜드 자산 사용 정책을 따르며 이 저장소의 코드 라이선스와 별개입니다.</sub>
+
+</div>

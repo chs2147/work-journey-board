@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Work Journey Board">
+  <!-- 앱 아이콘(48px 이상): 책갈피가 꽂힌 노트에 개조식 세 줄. 업무 색 점 = palette c1·c2·c3, 책갈피 = 오늘 강조색 -->
+  <rect width="64" height="64" rx="14" fill="#185fa5"/>
+  <rect x="13" y="9" width="38" height="46" rx="5" fill="#ffffff"/>
+  <path d="M13 14a5 5 0 0 1 5-5h1v46h-1a5 5 0 0 1-5-5z" fill="#cfe3f8"/>
+  <path d="M40 9h8v17l-4-3.4-4 3.4z" fill="#f4874f"/>
+  <circle cx="25.5" cy="31" r="2.8" fill="#2a78d6"/>
+  <rect x="30.5" y="29.3" width="14.5" height="3.4" rx="1.7" fill="#c4c2b8"/>
+  <circle cx="25.5" cy="39.5" r="2.8" fill="#eb6834"/>
+  <rect x="30.5" y="37.8" width="11.5" height="3.4" rx="1.7" fill="#c4c2b8"/>
+  <circle cx="25.5" cy="48" r="2.8" fill="#1baf7a"/>
+  <rect x="30.5" y="46.3" width="13.5" height="3.4" rx="1.7" fill="#c4c2b8"/>
+</svg>

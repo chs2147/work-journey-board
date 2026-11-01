@@ -1,6 +1,6 @@
 # 정식 릴리스 준비 2 — 브랜드 적용·기본 테마·설치 프로그램·정식 배포·티저 사이트 (상세 설계)
 
-> 작성: 2026-11-01 · 기준: `v0.4.0` · 상태: **설계·시안 검토 대기**(브랜드 키트 v2.0.0 반영, 시안 https://claude.ai/artifact/W8eTUjqjkTUGq36fj4ALAu)
+> 작성: 2026-11-01 · 기준: `v0.4.0` · 상태: **2026-11-01 추천안 확정·구현 완료(10절)** — 1.0.0 정식 릴리스 판올림 대기(브랜드 키트 v2.0.0 반영, 시안 https://claude.ai/artifact/W8eTUjqjkTUGq36fj4ALAu)
 > 요청(2026-11-01 사용자): 브랜드 로고 가이드 사이트(https://sanbonjini.vercel.app/) 학습 후 스플래시·티저 사이트·앱 업데이트/정보 메뉴 등에 적용 · README 정리(시그니처 모드 스크린샷·브랜드) · 시그니처 모드를 처음 설치 기본값으로 · 설정 테마 순서(시그니처·라이트·다크·시스템) · 설치 프로그램 스플래시 · 오프라인판 배포 · 티저 사이트 정식판 콘텐츠·영문 로고·Copyright · 핵심 기능 소개 3개
 
 ## 0. 브랜드 기준 — sanbonjini 브랜드 키트 v2.0.0(2026-11-01 사용자 첨부)
@@ -98,7 +98,7 @@
 | S2 | B1~B5 시안 검토(캔버스) → 확정 |
 | S3 | P2-3 설치 그림 + 브랜드 적용 구현 |
 | S4 | README·티저 사이트(F1~F3 + 정식 판 문구) |
-| S5 | `1.0.0-rc` 회사 PC 확인(설치 화면·오프라인판·첫 실행 시그니처) → `1.0.0` 정식 릴리스(정식 표시 + 오프라인판) |
+| S5 | 작업 브랜치 빌드(Actions 산출물)로 회사 PC 확인(m1-check 7-24) → `1.0.0` 정식 릴리스(정식 표시 + 오프라인판) — `-rc` 판은 NSIS 판 번호 제약 우려로 쓰지 않음(2026-11-01) |
 
 ## 9. 먼저 정할 것
 
@@ -109,3 +109,16 @@
 | 3 | 오프라인판 | 정식 판마다 자동 동시 배포 / 정식 판도 수동 | **정식 판 자동** |
 | 4 | 기존 사용자 테마 | 그대로(시스템) / 업데이트 때 한 번 시그니처로 | **그대로** |
 | 5 | 티저 핵심 기능 3개 | F1·F2·F3(위) / 메모 보드·백업 복원 등으로 교체 | **F1·F2·F3** |
+
+## 10. 구현 기록 (2026-11-01, 9절 추천안 5건 확정)
+
+| 항목 | 구현 |
+|---|---|
+| P2-1·P2-2 | `theme.ts` `DEFAULT_THEME = "signature"`·`THEME_PREFS` 시그니처→라이트→다크→시스템, `theme-early.js` 기본 시그니처. 기존 일지(설정에 테마 없음)는 `readStoredTheme("system")` → 그대로 시스템(#4). 첫 일지를 만들 때 테마를 설정에 저장. 설정 카드 "기본" 표시 |
+| P2-4 | `release-notes.mjs` `isFormal`(1.0.0 이상·꼬리표 없음)·`formal` 명령, 릴리스 본문 정식 판 문구·오프라인 파일명. `build-windows.yml` `plan` 작업 → 정식 판 main 빌드는 기본판 + 오프라인판(`max-parallel: 1`), `prerelease: false`·`make_latest: true` |
+| B1·B2 | 공식 M1 SVG 사본(`src/shared/brand/sanbonjini/`, `manifest.json` SHA-256 대조 단위 테스트) — 스플래시 아래(판 번호 옆, 다크는 리버스), 설정 › 업데이트·정보 "만든 이" 줄(`MakerRow.tsx`, 브랜드 사이트 = `Platform.openUrl`) |
+| P2-3·B3 | A안: `scripts/brand/render_installer.mjs`(Playwright) → `pack_installer.py` → `src-tauri/installer/sidebar.bmp`(164×314)·`header.bmp`(150×57), `tauri.conf.json` nsis `sidebarImage`·`headerImage`·`installerIcon` |
+| P2-5·B5 | README 정식 판 구성(아이콘·워드마크 `<picture>`·시그니처 스크린샷·핵심 기능·설치·기록과 개인정보·문서·글꼴·개발·Version History·Made by M1 `<picture>` + Copyright) — `docs/brand/` 사본 |
+| P2-6·B4 | 티저 `site/`: 기능 3개(F1~F3, `site/shots/*.webp` 가상 기록 화면), 기본판·오프라인판 내려받기(`releases/latest`), 만든 이 H1 56px·바닥 M1 + Copyright |
+| 테스트 | 단위: 테마 기본값·순서, 정식 판 판정·본문, 브랜드 자산 해시 · E2E `brand.spec.ts`: 첫 설치 시그니처 / 기존 일지 유지 / 설정 순서·만든 이 줄·브랜드 사이트 열기 · 보드 입력칸 높이 검사를 테마 글꼴 기준으로 |
+
