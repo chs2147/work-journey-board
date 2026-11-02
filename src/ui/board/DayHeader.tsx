@@ -1,6 +1,7 @@
 // 요일 머리(overview 10-1): 날짜·[오늘] 배지·연차/반차 배지·⋯ 메뉴(근무 상태, 직전 기록 전체 가져오기) — improve-1026-spec 1·3·7절.
 // 오늘 머리는 포커스와 무관하게 늘 채운 파랑, 포커스 열은 위쪽 굵은 선으로 따로 보인다.
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { ColResizer } from "./ColResizer";
 import { markShort, markText } from "../../domain/dayMark";
 import { DayMarkOptions } from "./DayMarkOptions";
 import { DAY_LABELS, type DateStr } from "../../domain/week";
@@ -99,6 +100,7 @@ export function DayHeader({ day, index, narrow }: Props) {
       data-testid={`day-${day}`}
       data-mark={mark ?? undefined}
     >
+      <ColResizer col={index} label={DAY_LABELS[index]!} />
       <button type="button" className={styles.dayLabel} onClick={() => setFocusDay(day)}>
         {narrow ? (
           <>

@@ -15,6 +15,7 @@ import {
   parseConfig,
   type PathInfo,
   type CabinetFocus,
+  type DroppedPath,
   type CabinetWindowBridge,
   type FolderWindowEvent,
   type FolderWindows,
@@ -175,7 +176,7 @@ const cabinetWindow: CabinetWindowBridge = {
 };
 
 /** 끌어 놓은 File → WebView2가 아는 경로(cabinet.rs 다리). 다리가 없거나 1.5초 안에 답이 없으면 null */
-async function droppedPaths(files: File[]): Promise<{ path: string; isDir: boolean }[] | null> {
+async function droppedPaths(files: File[]): Promise<DroppedPath[] | null> {
   const wv = (
     globalThis as {
       chrome?: { webview?: { postMessageWithAdditionalObjects?: (m: string, o: File[]) => void } };
@@ -205,8 +206,8 @@ async function droppedPaths(files: File[]): Promise<{ path: string; isDir: boole
   if (!paths?.length) return null;
   return Promise.all(
     paths.map(async (path) => {
-      const r = await invoke<{ is_dir: boolean }>("fs_stat", { path });
-      return { path, isDir: r.is_dir };
+      const r = await invoke<{ exists: boolean; is_dir: boolean }>("fs_stat", { path });
+      return { path, isDir: r.is_dir, exists: r.exists };
     }),
   );
 }
@@ -312,6 +313,7 @@ export const tauriPlatform: Platform = {
   cabinetOpen: (path) => invoke("cabinet_open", { path }),
   cabinetReveal: (path) => invoke("cabinet_reveal", { path }),
   droppedPaths,
+  resolveShortcut: (path) => invoke<string | null>("cabinet_resolve_shortcut", { path }),
   folderWindows,
   cabinetWindow,
 

@@ -133,7 +133,7 @@ test("폴더 끌어 놓기(파일은 거부) → F2 제목 고치기 → 연결 
   await open(page);
   await page.getByTestId("rail-cabinet").click();
   await drop(page, "cabinet-drop", {}, ["검증표.xlsx"]);
-  await expect(page.getByText("폴더만 등록할 수 있습니다 (파일은 등록하지 않음)")).toBeVisible();
+  await expect(page.getByText("‘검증표.xlsx’은(는) 파일이라 등록하지 않습니다 (폴더만)")).toBeVisible();
   await drop(page, "cabinet-drop", {}, ["2026-10 이관"]);
   await expect(page.getByText("Cabinet에 1개 등록했습니다")).toBeVisible();
   const row = page.getByTestId("cabinet-row").filter({ hasText: "2026-10 이관" });

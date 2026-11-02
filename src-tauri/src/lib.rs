@@ -75,7 +75,8 @@ pub fn run() {
             cabinet::cabinet_list,
             cabinet::cabinet_open,
             cabinet::cabinet_reveal,
-            cabinet::cabinet_drop_bridge
+            cabinet::cabinet_drop_bridge,
+            cabinet::cabinet_resolve_shortcut
         ])
         .run(tauri::generate_context!())
         .expect("Work Journey Board 실행 중 오류");

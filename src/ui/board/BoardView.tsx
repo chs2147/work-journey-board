@@ -1,5 +1,7 @@
 // 주간 보드: 포커스 열 격자(overview 10-1). 행 = 업무, 열 = 월~일, 아래 = 업무 추가. 메모는 보드 아래 메모 도크(weekly-note-spec).
 import { useLayoutEffect, useRef, useState, type CSSProperties } from "react";
+import { ColResizer } from "./ColResizer";
+import { useColWidths } from "./colWidths";
 import { cellKey } from "../../data/repository";
 import { DAY_LABELS, type DateStr } from "../../domain/week";
 import { STR } from "../../shared/strings";
@@ -13,6 +15,8 @@ import { AddCategoryRow } from "./AddCategoryRow";
 import styles from "./Board.module.css";
 
 const LABEL_WIDTH = "184px";
+/** 열 폭을 직접 정했을 때 자동 열의 최소 폭(improve-1102v7 K1) */
+const AUTO_MIN = "140px";
 const NARROW = "44px";
 
 export function BoardView() {
@@ -26,6 +30,7 @@ export function BoardView() {
   const categoryTags = useBoard((s) => s.categoryTags);
   const tagFilter = useBoard((s) => s.tagFilter);
   const [dragId, setDragId] = useState<string | null>(null);
+  const colW = useColWidths();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // 주가 바뀌면 맨 위로
@@ -40,12 +45,20 @@ export function BoardView() {
   const hasRecords = (day: DateStr) =>
     cats.some((c) => (cells[cellKey(day, c.category.id)] ?? []).some((i) => i.text.trim()));
 
+  // 사용자가 정한 폭(improve-1102v7 K1)이 있으면 그 px, 없으면 지금 규칙
+  // 정한 폭이 하나라도 있으면 나머지 자동 열은 최소 폭을 지켜(글자가 세로로 쪼개지지 않게) 보드를 가로로 넘긴다
+  const anyFixed = colW.days.some((w) => w !== null);
+  const autoMin = anyFixed ? AUTO_MIN : "0";
   const widths = view.days.map((day, i) => {
-    if (day === focusDay) return "minmax(0, 2fr)";
+    const fixed = colW.days[i];
+    if (fixed) return `${fixed}px`;
+    if (day === focusDay) return `minmax(${autoMin}, 2fr)`;
     if (i >= 5 && !hasRecords(day)) return NARROW;
-    return "minmax(0, 1fr)";
+    return `minmax(${autoMin}, 1fr)`;
   });
-  const gridStyle = { gridTemplateColumns: [LABEL_WIDTH, ...widths].join(" ") } as CSSProperties;
+  const gridStyle = {
+    gridTemplateColumns: [colW.label ? `${colW.label}px` : LABEL_WIDTH, ...widths].join(" "),
+  } as CSSProperties;
 
   const navFor = (row: number, day: DateStr): CellNav => ({
     up() {
@@ -70,7 +83,10 @@ export function BoardView() {
       <TagFilterBanner />
       <div className={styles.scroll} ref={scrollRef} data-drag-scroll>
         <div className={styles.grid} style={gridStyle} data-testid="board-grid">
-          <div className={`${styles.colHeader} ${styles.corner}`}>{STR.board.categoryHeader}</div>
+          <div className={`${styles.colHeader} ${styles.corner}`}>
+            {STR.board.categoryHeader}
+            <ColResizer col="label" label={STR.board.categoryHeader} />
+          </div>
           {view.days.map((day, i) => (
             <DayHeader key={day} day={day} index={i} narrow={widths[i] === NARROW} />
           ))}

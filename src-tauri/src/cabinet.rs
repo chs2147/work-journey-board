@@ -155,6 +155,43 @@ pub fn cabinet_drop_bridge(window: tauri::WebviewWindow, state: State<DropBridge
     let _ = window;
 }
 
+/// 끌어 놓은 윈도우 바로 가기(`.lnk`)가 가리키는 경로(improve-1102v7 K2) — 바로 가기의 대상 경로만 읽는다.
+/// 등록할지는 웹 화면이 그 경로가 폴더인지 확인해 정한다. 윈도우가 아니거나 읽지 못하면 None
+#[tauri::command]
+pub fn cabinet_resolve_shortcut(path: String) -> Option<String> {
+    if !path.to_ascii_lowercase().ends_with(".lnk") {
+        return None;
+    }
+    resolve_lnk(&path)
+}
+
+#[cfg(windows)]
+fn resolve_lnk(path: &str) -> Option<String> {
+    use windows::core::{Interface, HSTRING};
+    use windows::Win32::System::Com::{
+        CoCreateInstance, CoInitializeEx, IPersistFile, CLSCTX_INPROC_SERVER, COINIT_MULTITHREADED,
+        STGM_READ,
+    };
+    use windows::Win32::UI::Shell::{IShellLinkW, ShellLink};
+    unsafe {
+        // 이미 초기화된 스레드면 실패해도 그대로 쓴다
+        let _ = CoInitializeEx(None, COINIT_MULTITHREADED);
+        let link: IShellLinkW = CoCreateInstance(&ShellLink, None, CLSCTX_INPROC_SERVER).ok()?;
+        let file: IPersistFile = link.cast().ok()?;
+        file.Load(&HSTRING::from(path), STGM_READ).ok()?;
+        let mut buf = [0u16; 2048];
+        link.GetPath(&mut buf, std::ptr::null_mut(), 0).ok()?;
+        let end = buf.iter().position(|&c| c == 0).unwrap_or(buf.len());
+        let s = String::from_utf16_lossy(&buf[..end]);
+        (!s.is_empty()).then_some(s)
+    }
+}
+
+#[cfg(not(windows))]
+fn resolve_lnk(_path: &str) -> Option<String> {
+    None
+}
+
 /// 웹 화면이 끌어 놓은 파일을 넘길 때 쓰는 약속 글(src/platform/tauri.ts와 같아야 한다)
 pub const DROP_MESSAGE: &str = "wjb-cabinet-drop";
 /// 받은 경로를 웹 화면에 돌려주는 이벤트
@@ -228,6 +265,12 @@ mod tests {
         fs::create_dir_all(d.join("a").join("b")).unwrap();
         fs::write(d.join("a").join("note.txt"), b"x").unwrap();
         d
+    }
+
+    #[test]
+    fn shortcut_only_lnk() {
+        assert_eq!(cabinet_resolve_shortcut("/tmp/a.txt".into()), None);
+        assert_eq!(cabinet_resolve_shortcut("/tmp/없음.lnk".into()), None);
     }
 
     #[test]

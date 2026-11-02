@@ -49,6 +49,9 @@ export function normalizeFolderPath(raw: string): string {
     .trim()
     .replace(/^"(.*)"$/s, "$1")
     .trim();
+  // 윈도우 긴 경로 접두어(improve-1102v7 K2): \\?\UNC\server\share → \\server\share, \\?\C:\… → C:\…
+  if (/^\\\\\?\\UNC\\/i.test(p)) p = `\\\\${p.slice(8)}`;
+  else if (/^\\\\\?\\[A-Za-z]:/.test(p)) p = p.slice(4);
   if (/^[A-Za-z]:[\\/]?$/.test(p)) return `${p.slice(0, 2)}\\`;
   p = p.replace(/[\\/]+$/, "");
   return p;

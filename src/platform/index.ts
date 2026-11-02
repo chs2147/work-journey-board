@@ -38,6 +38,13 @@ export interface FolderWindowSpec {
 
 export type FolderWindowEvent = { type: "nav"; id: string; sub: string } | { type: "closed"; id: string };
 
+/** 끌어 놓은 것의 경로 — exists = 그 경로를 찾았는가 */
+export interface DroppedPath {
+  path: string;
+  isDir: boolean;
+  exists: boolean;
+}
+
 /** Cabinet을 열 때 고를 업무·강조할 항목 */
 export interface CabinetFocus {
   categoryId?: string;
@@ -151,7 +158,9 @@ export interface Platform {
   /** 탐색기에서 그 항목 보기 */
   cabinetReveal(path: string): Promise<void>;
   /** 끌어 놓은 파일·폴더의 경로와 폴더 여부(A안: WebView2 다리). 경로를 받을 수 없으면 null */
-  droppedPaths(files: File[]): Promise<{ path: string; isDir: boolean }[] | null>;
+  droppedPaths(files: File[]): Promise<DroppedPath[] | null>;
+  /** 윈도우 바로 가기(.lnk)가 가리키는 경로(improve-1102v7 K2). 바로 가기가 아니거나 못 읽으면 null */
+  resolveShortcut(path: string): Promise<string | null>;
   /** 폴더 창을 별도 OS 창으로(실앱만) */
   readonly folderWindows?: FolderWindows;
   /** Cabinet 창을 별도 OS 창으로(실앱만) — 없으면 앱 안 떠 있는 창 */

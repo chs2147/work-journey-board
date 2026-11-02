@@ -263,3 +263,30 @@ describe("domain/cabinet — 2026-11-02 개선", () => {
     );
   });
 });
+
+describe("2026-11-02 개선 v7", () => {
+  it("긴 경로 접두어(\\\\?\\·\\\\?\\UNC\\)를 보통 경로로", async () => {
+    const { normalizeFolderPath, isFolderPathLike } = await import("../../src/domain/cabinet");
+    expect(normalizeFolderPath("\\\\?\\C:\\업무\\정산\\")).toBe("C:\\업무\\정산");
+    expect(normalizeFolderPath("\\\\?\\UNC\\fileserver\\팀\\회의록")).toBe("\\\\fileserver\\팀\\회의록");
+    expect(isFolderPathLike("\\\\?\\D:\\긴 경로\\폴더")).toBe(true);
+  });
+
+  it("주간 뷰 열 폭 설정: 범위 밖·모르는 값은 자동(null), 요일 7칸", async () => {
+    const { validBoardColW, mergeSettings, DEFAULT_SETTINGS } = await import("../../src/data/settings");
+    expect(validBoardColW({ label: 250.4, days: [300, 10, "x", null, 950, 120] })).toEqual({
+      label: 250,
+      days: [300, null, null, null, null, 120, null],
+    });
+    expect(validBoardColW(undefined)).toEqual({
+      label: null,
+      days: [null, null, null, null, null, null, null],
+    });
+    expect(
+      mergeSettings(DEFAULT_SETTINGS, { ui: { boardColW: { label: 50, days: [200] } } }).ui.boardColW,
+    ).toEqual({
+      label: null,
+      days: [200, null, null, null, null, null, null],
+    });
+  });
+});

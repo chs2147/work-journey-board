@@ -22,6 +22,7 @@ import {
 } from "../../domain/cabinet";
 import { shortDateLabel } from "../../domain/week";
 import type { Category } from "../../domain/types";
+import { baseName } from "../../platform";
 import type { CabinetConfig, CabinetFocus, CabinetWindowBridge, FolderWindowSpec } from "../../platform";
 import type { JournalRepository } from "../../data/repository";
 import { resolveTheme } from "../../shared/theme";
@@ -62,6 +63,9 @@ export interface CabinetState {
   folders: { id: string; sub: string }[];
   /** 잠깐 강조(검색 결과에서 왔을 때) */
   flash: string | null;
+  /** 찾을 수 없는 등록 폴더(improve-1102v7 K4) — 이 창에서 확인한 결과 */
+  missing: string[];
+  checking: boolean;
 }
 
 export interface WeekEntry {
@@ -86,6 +90,8 @@ export const useCabinet = create<CabinetState>(() => ({
   linksFor: null,
   folders: [],
   flash: null,
+  missing: [],
+  checking: false,
 }));
 
 const app = () => useAppStore.getState();
@@ -293,6 +299,8 @@ async function addFolderPaths(paths: string[], links = defaultLinks()) {
   const r = repo();
   if (!r) return;
   const ok = paths.filter(isFolderPathLike);
+  const bad = paths.filter((x) => !isFolderPathLike(x));
+  if (bad.length) toast(STR.cabinet.dropWhy.badPath(bad.join(", ")));
   if (!ok.length) return;
   try {
     const res = await r.addCabinetItems(
@@ -337,15 +345,31 @@ export async function handleDrop(dt: DataTransfer) {
   const others = files.filter((f) => !isUrlShortcutName(f.name));
   let link = parseLinkTransfer(transferOf(dt));
   if (others.length) {
+    // 폴더만 등록 — 바로 가기(.lnk)는 가리키는 폴더로, 아니면 무엇이 왜 안 되는지 이름과 함께(improve-1102v7 K2)
     const p = app().platform;
     const got = (await p?.droppedPaths(others).catch(() => null)) ?? null;
-    const dirs = (got ?? []).filter((g) => g.isDir).map((g) => g.path);
+    const dirs: string[] = [];
+    const problems: string[] = [];
+    const W = STR.cabinet.dropWhy;
+    for (const g of got ?? []) {
+      const name = baseName(g.path);
+      if (g.isDir) dirs.push(g.path);
+      else if (/\.lnk$/i.test(g.path)) {
+        const target = await p?.resolveShortcut(g.path).catch(() => null);
+        const st = target ? await p?.stat(target).catch(() => null) : null;
+        if (target && st?.isDir) dirs.push(target);
+        else problems.push(W.lnk(name));
+      } else if (!g.exists) problems.push(W.missing(name));
+      else if (/\.(zip|7z|rar|alz|egg)$/i.test(g.path)) problems.push(W.zip(name));
+      else problems.push(W.file(name));
+    }
     if (dirs.length) {
       await addFolderPaths(dirs);
-      if (dirs.length < (got?.length ?? 0)) toast(STR.cabinet.onlyFolders);
+      if (problems.length) toast(problems.join(" · "));
       return;
     }
-    if (!link && !urlFiles.length) return toast(got ? STR.cabinet.onlyFolders : STR.cabinet.noPath);
+    if (!link && !urlFiles.length)
+      return toast(got ? problems.join(" · ") || STR.cabinet.onlyFolders : STR.cabinet.noPath);
   }
   if (urlFiles.length) {
     const f = urlFiles[0]!;
@@ -513,10 +537,61 @@ export function linkLabels(
     .filter(Boolean);
 }
 
+/**
+ * 등록 폴더가 아직 있는지 확인(improve-1102v7 K4) — 이름 바꾸기·이동·삭제로 사라진 폴더를 표시.
+ * manual = [폴더 확인] 단추(결과를 알림), 아니면 열 때·창으로 돌아올 때 조용히
+ */
+export async function checkFolders(manual = false) {
+  const p = app().platform;
+  if (!p || useCabinet.getState().checking) return;
+  const folders = useCabinet.getState().items.filter((i) => i.kind === "folder");
+  useCabinet.setState({ checking: true });
+  try {
+    const res = await Promise.all(
+      folders.map(async (f) => {
+        const st = await p.stat(f.target).catch(() => null);
+        return st?.exists && st.isDir ? null : f.id;
+      }),
+    );
+    const missing = res.filter((x): x is string => !!x);
+    const prev = useCabinet.getState().missing;
+    if (missing.join() !== prev.join()) useCabinet.setState({ missing });
+    if (manual)
+      toast(
+        missing.length
+          ? STR.cabinet.check.someMissing(folders.length, missing.length)
+          : STR.cabinet.check.allOk(folders.length),
+      );
+  } finally {
+    useCabinet.setState({ checking: false });
+  }
+}
+
+/** 경로 다시 지정 — 폴더를 골라 그 항목의 경로만 바꾼다(제목·연결은 그대로) */
+export async function relocateItem(id: string) {
+  const p = app().platform;
+  const r = repo();
+  const it = useCabinet.getState().items.find((i) => i.id === id);
+  if (!p || !r || it?.kind !== "folder") return;
+  const picked = await p.pickFolder(STR.cabinet.check.relocateTitle(it.title));
+  if (!picked) return;
+  try {
+    await r.updateCabinetItem(id, { target: picked });
+    await loadCabinet();
+    useCabinet.setState((st) => ({ missing: st.missing.filter((x) => x !== id) }));
+    toast(STR.cabinet.check.relocated(it.title));
+    void checkFolders();
+  } catch (e) {
+    reportError(e);
+  }
+}
+
 /** 항목 열기: 폴더 = 폴더 창, 링크 = 기본 브라우저 */
 export async function openItem(id: string) {
   const it = useCabinet.getState().items.find((i) => i.id === id);
   if (!it) return;
+  if (it.kind === "folder" && useCabinet.getState().missing.includes(id))
+    return toast(STR.cabinet.check.cannotOpen(it.title));
   if (it.kind === "link") return openLink(it.target);
   return openFolder(id);
 }

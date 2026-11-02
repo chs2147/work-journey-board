@@ -19,6 +19,9 @@ import {
   startLinking,
   undoNote,
   useNote,
+  clearMulti,
+  moveBoxesLive,
+  toggleMulti,
 } from "./noteStore";
 import styles from "./Note.module.css";
 
@@ -53,6 +56,14 @@ export function startBoxDrag(
   if (e.button !== 0) return;
   e.preventDefault();
   e.stopPropagation();
+  // Shift+누르기 = 함께 고르기에 더하기/빼기(improve-1102v7 K7)
+  if (kind === "move" && e.shiftKey) {
+    toggleMulti(box.id);
+    return;
+  }
+  const multi = useNote.getState().multi;
+  if (kind === "move" && multi.length > 1 && multi.includes(box.id)) return startGroupDrag(e, multi, onClick);
+  if (multi.length) clearMulti();
   const el = e.currentTarget;
   el.setPointerCapture(e.pointerId);
   const before = beginGesture();
@@ -122,6 +133,51 @@ export function startBoxDrag(
     cleanup();
     useLinkDrop.setState({ itemId: null, linked: false });
     cancelGesture(before);
+  };
+  el.addEventListener("pointermove", move);
+  el.addEventListener("pointerup", up);
+  el.addEventListener("pointercancel", up);
+  window.addEventListener("keydown", key, true);
+}
+
+/** 함께 고른 상자들을 한꺼번에 끌기(improve-1102v7 K7) — 되돌리기 한 번, 항목 연결 끌기는 하지 않는다 */
+function startGroupDrag(e: PointerEvent<HTMLElement>, ids: string[], onClick?: () => void) {
+  const el = e.currentTarget;
+  el.setPointerCapture(e.pointerId);
+  const before = beginGesture();
+  const zoom = useNote.getState().zoom;
+  const origins = useNote
+    .getState()
+    .doc.boxes.filter((b) => ids.includes(b.id))
+    .map((b) => ({ id: b.id, x: b.x, y: b.y }));
+  const [sx, sy] = [e.clientX, e.clientY];
+  let moved = false;
+  const move = (ev: globalThis.PointerEvent) => {
+    if (!moved && Math.hypot(ev.clientX - sx, ev.clientY - sy) < DRAG_SLOP) return;
+    moved = true;
+    moveBoxesLive(origins, (ev.clientX - sx) / zoom, (ev.clientY - sy) / zoom);
+  };
+  const key = (ev: globalThis.KeyboardEvent) => {
+    if (ev.key !== "Escape") return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    done();
+    cancelGesture(before);
+  };
+  const done = () => {
+    el.removeEventListener("pointermove", move);
+    el.removeEventListener("pointerup", up);
+    el.removeEventListener("pointercancel", up);
+    window.removeEventListener("keydown", key, true);
+    if (el.hasPointerCapture(e.pointerId)) el.releasePointerCapture(e.pointerId);
+  };
+  const up = () => {
+    done();
+    endGesture(before);
+    if (!moved) {
+      clearMulti();
+      onClick?.();
+    }
   };
   el.addEventListener("pointermove", move);
   el.addEventListener("pointerup", up);

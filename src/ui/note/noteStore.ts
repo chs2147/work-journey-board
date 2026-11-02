@@ -68,6 +68,8 @@ export interface NoteState {
   editingId: string | null;
   /** 선택된 상자(Esc로 편집을 끝낸 상태 — 방향키 이동·Delete) */
   selectedId: string | null;
+  /** 사각형으로 함께 고른 상자들(improve-1102v7 K7) — 끌기·방향키·Delete가 함께 */
+  multi: string[];
   /**
    * 빈 곳 클릭으로 연 "대기" 상자(improve-1026-spec 2절) — 커서 자리만 보이고 첫 글자를 칠 때 상자가 된다.
    * 문서에는 들어 있지만 메모 기록·저장에는 없다(빈 텍스트 상자는 저장하지 않는다)
@@ -143,6 +145,7 @@ export const useNote = create<NoteState>(() => ({
   legacy: false,
   editingId: null,
   selectedId: null,
+  multi: [],
   pendingId: null,
   focusRequest: null,
   dockHeight: 280,
@@ -618,7 +621,64 @@ export function endEditing(id: string, select = false) {
 }
 
 export function selectBox(id: string | null) {
-  set({ selectedId: id, editingId: id ? null : get().editingId, edgeId: null, edgeLabelOpen: false });
+  set({
+    selectedId: id,
+    editingId: id ? null : get().editingId,
+    edgeId: null,
+    edgeLabelOpen: false,
+    multi: [],
+  });
+}
+
+// ── 여러 상자 함께(improve-1102v7 K7) ──────────────────
+export function setMulti(ids: string[]) {
+  const cur = get().multi;
+  if (ids.length === cur.length && ids.every((x, i) => x === cur[i])) return;
+  set({ multi: ids, selectedId: null, edgeId: null, edgeLabelOpen: false });
+}
+export function clearMulti() {
+  if (get().multi.length) set({ multi: [] });
+}
+/** Shift+누르기: 함께 고르기에 더하기/빼기(이미 하나 골라 둔 상자가 있으면 그것부터) */
+export function toggleMulti(id: string) {
+  const { multi, selectedId } = get();
+  const base = multi.length ? multi : selectedId && selectedId !== id ? [selectedId] : [];
+  setMulti(base.includes(id) ? base.filter((x) => x !== id) : [...base, id]);
+}
+const mapMany = (ids: string[], f: (b: NoteBox) => NoteBox): NoteDoc => {
+  const doc = get().doc;
+  const set_ = new Set(ids);
+  return { ...doc, boxes: doc.boxes.map((b) => (set_.has(b.id) ? f(b) : b)) };
+};
+/** 함께 끄는 동안 — 시작 자리에서 dx·dy만큼 */
+export function moveBoxesLive(origins: { id: string; x: number; y: number }[], dx: number, dy: number) {
+  const at = new Map(origins.map((o) => [o.id, o]));
+  set({
+    doc: mapMany(
+      origins.map((o) => o.id),
+      (b) => {
+        const o = at.get(b.id)!;
+        return { ...b, x: Math.max(0, snap(o.x + dx)), y: Math.max(0, snap(o.y + dy)) };
+      },
+    ),
+  });
+}
+/** 방향키로 함께 조금씩(되돌리기 한 번) */
+export function nudgeBoxes(ids: string[], dx: number, dy: number) {
+  if (!ids.length) return;
+  commit(
+    mapMany(ids, (b) => ({ ...b, x: Math.max(0, snap(b.x + dx)), y: Math.max(0, snap(b.y + dy)) })),
+    true,
+  );
+}
+/** 함께 지우기 — 관계선도 함께, 되돌리기 한 번 */
+export function deleteBoxes(ids: string[]) {
+  const doc = get().doc;
+  const set_ = new Set(ids.filter((id) => doc.boxes.some((b) => b.id === id)));
+  if (!set_.size) return;
+  commit(withoutBoxes(doc, set_), true);
+  set({ editingId: null, selectedId: null, multi: [], ...EDGE_RESET });
+  toast(STR.note.deletedMany(set_.size), { label: STR.toast.undo, run: () => undoNote() });
 }
 
 /** 끌기·크기 조절 같은 연속 동작: 시작할 때 문서를 기억해 두고, 끝날 때 바뀌었으면 한 번만 기록 */

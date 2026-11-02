@@ -1,5 +1,6 @@
 // 메모 판(weekly-note-spec 4절, 시안 A): 점 격자 위 자유 배치 텍스트 상자. 빈 곳 클릭 = 새 상자, 위 막대 끌기 = 이동,
 // 오른쪽 손잡이 = 폭, Esc = 선택(방향키·Delete), 편집 중에는 서식 막대. 편집기(TipTap)는 이 조각과 함께 처음 열 때만 불러온다.
+import { createPortal } from "react-dom";
 import { EditorContent, useEditor, useEditorState, type Editor } from "@tiptap/react";
 import {
   useEffect,
@@ -63,6 +64,12 @@ import {
   setEditing,
   updateContent,
   useNote,
+  clearMulti,
+  deleteBoxes,
+  redoNote,
+  undoNote,
+  nudgeBoxes,
+  setMulti,
 } from "./noteStore";
 import "./prosemirror.css";
 import styles from "./Note.module.css";
@@ -101,6 +108,50 @@ export default function NoteCanvas() {
   /** Space를 누르고 있어 끌면 판이 움직이는 상태 / 지금 끌어 옮기는 중 */
   const [panReady, setPanReady] = useState(false);
   const [panning, setPanning] = useState(false);
+  const [marquee, setMarquee] = useState<{ x0: number; y0: number; x1: number; y1: number } | null>(null);
+  const multi = useNote((s) => s.multi);
+  // 함께 고른 상자 표시(data-multi) — 상자 종류마다 따로 그리지 않고 한 곳에서
+  useEffect(() => {
+    const root = canvasRef.current;
+    if (!root) return;
+    for (const el of root.querySelectorAll<HTMLElement>("[data-box-id]")) {
+      if (multi.includes(el.dataset.boxId!)) el.dataset.multi = "1";
+      else delete el.dataset.multi;
+    }
+  });
+  // 주를 넘기거나 상자가 지워지면 고른 것에서 뺀다
+  const boxIds = useNote((s) => s.doc.boxes.map((b) => b.id).join(","));
+  useEffect(() => {
+    const ids = new Set(boxIds.split(","));
+    const cur = useNote.getState().multi;
+    if (cur.some((x) => !ids.has(x))) setMulti(cur.filter((x) => ids.has(x)));
+  }, [boxIds]);
+  // 함께 고른 동안: 방향키(8px, Shift 32px)·Delete·Esc
+  useEffect(() => {
+    if (!multi.length) return;
+    const onKey = (e: globalThis.KeyboardEvent) => {
+      if (e.isComposing || isEditable(document.activeElement)) return;
+      const ids = useNote.getState().multi;
+      const step = e.shiftKey ? 32 : 8;
+      const d = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[
+        e.key
+      ];
+      const mod = e.ctrlKey || e.metaKey;
+      if (mod && !e.altKey && e.code === "KeyZ") {
+        if (e.shiftKey) redoNote();
+        else undoNote();
+      } else if (mod && !e.altKey && e.code === "KeyY") redoNote();
+      else if (mod) return;
+      else if (d) nudgeBoxes(ids, d[0]!, d[1]!);
+      else if (e.key === "Delete" || e.key === "Backspace") deleteBoxes(ids);
+      else if (e.key === "Escape") clearMulti();
+      else return;
+      e.preventDefault();
+      e.stopPropagation();
+    };
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, [multi.length]);
   const spaceDown = useRef(false);
   const hover = useRef(false);
   const prevZoom = useRef(zoom);
@@ -292,13 +343,60 @@ export default function NoteCanvas() {
     else cancelLinking();
   };
 
+  /**
+   * 빈 곳: 살짝 누르기 = 그 자리에 새 상자(지금처럼), 끌기 = 선택 사각형으로 여러 상자 고르기(improve-1102v7 K7)
+   */
   const onCanvasPointerDown = (e: PointerEvent<HTMLDivElement>) => {
     if (e.target !== e.currentTarget || e.button !== 0) return;
     e.preventDefault();
     if (useNote.getState().edgeId) selectEdge(null);
-    const rect = e.currentTarget.getBoundingClientRect();
-    if (editingId) endEditing(editingId);
-    addBox((e.clientX - rect.left) / zoom, (e.clientY - rect.top) / zoom);
+    const canvas = e.currentTarget;
+    const [sx, sy] = [e.clientX, e.clientY];
+    let dragging = false;
+    canvas.setPointerCapture(e.pointerId);
+    const hits = (x1: number, y1: number) => {
+      const [l, r, t, b] = [Math.min(sx, x1), Math.max(sx, x1), Math.min(sy, y1), Math.max(sy, y1)];
+      return [
+        ...canvas.querySelectorAll<HTMLElement>(
+          '[data-box-id][data-testid="note-box"], [data-box-id][data-testid="note-image"], [data-box-id][data-testid="note-link"]',
+        ),
+      ]
+        .filter((el) => {
+          const rc = el.getBoundingClientRect();
+          return rc.right > l && rc.left < r && rc.bottom > t && rc.top < b;
+        })
+        .map((el) => el.dataset.boxId!);
+    };
+    const move = (ev: globalThis.PointerEvent) => {
+      if (!dragging && Math.hypot(ev.clientX - sx, ev.clientY - sy) < 5) return;
+      if (!dragging) {
+        dragging = true;
+        if (editingId) endEditing(editingId);
+        selectBox(null);
+      }
+      setMarquee({ x0: sx, y0: sy, x1: ev.clientX, y1: ev.clientY });
+      setMulti(hits(ev.clientX, ev.clientY));
+    };
+    const up = (ev: globalThis.PointerEvent) => {
+      canvas.removeEventListener("pointermove", move);
+      canvas.removeEventListener("pointerup", up);
+      canvas.removeEventListener("pointercancel", up);
+      if (canvas.hasPointerCapture(e.pointerId)) canvas.releasePointerCapture(e.pointerId);
+      setMarquee(null);
+      if (dragging) {
+        setMulti(hits(ev.clientX, ev.clientY));
+        // 방향키·Delete가 보드 칸이 아니라 고른 상자로 가게
+        (document.activeElement as HTMLElement | null)?.blur?.();
+        return;
+      }
+      clearMulti();
+      const rect = canvas.getBoundingClientRect();
+      if (editingId) endEditing(editingId);
+      addBox((sx - rect.left) / zoom, (sy - rect.top) / zoom);
+    };
+    canvas.addEventListener("pointermove", move);
+    canvas.addEventListener("pointerup", up);
+    canvas.addEventListener("pointercancel", up);
   };
 
   const hasFiles = (e: DragEvent) => [...e.dataTransfer.types].includes("Files");
@@ -322,6 +420,25 @@ export default function NoteCanvas() {
 
   return (
     <div className={styles.canvasWrap}>
+      {marquee &&
+        createPortal(
+          <div
+            className={styles.marquee}
+            data-testid="note-marquee"
+            style={{
+              left: Math.min(marquee.x0, marquee.x1),
+              top: Math.min(marquee.y0, marquee.y1),
+              width: Math.abs(marquee.x1 - marquee.x0),
+              height: Math.abs(marquee.y1 - marquee.y0),
+            }}
+          />,
+          document.body,
+        )}
+      {multi.length > 1 && !marquee && (
+        <div className={styles.multiHint} role="status" data-testid="note-multi-hint">
+          {STR.note.multiHint(multi.length)}
+        </div>
+      )}
       <div
         ref={scrollRef}
         className={[styles.canvasScroll, panReady ? styles.panReady : "", panning ? styles.panning : ""].join(

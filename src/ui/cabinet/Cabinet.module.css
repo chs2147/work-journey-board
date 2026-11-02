@@ -76,6 +76,7 @@
 /* 왼쪽 업무 묶음 */
 .side {
   flex: 0 0 210px;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -886,4 +887,49 @@
 .catBadge svg {
   width: 13px;
   height: 13px;
+}
+
+/* 2026-11-02 개선 v7 */
+/* 업무 목록 ↔ 목록 사이 폭 손잡이(K6) — 구분선 자리 */
+.sideResizer {
+  flex: 0 0 6px;
+  margin-left: -6px;
+  position: relative;
+  z-index: 1;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.sideResizer:hover,
+.sideResizer:focus-visible {
+  outline: none;
+  background: linear-gradient(
+    to right,
+    transparent 2px,
+    var(--accent) 2px,
+    var(--accent) 4px,
+    transparent 4px
+  );
+}
+
+/* 찾을 수 없는 등록 폴더(K4) */
+.missingTag {
+  flex: 0 0 auto;
+  padding: 0 6px;
+  border-radius: var(--radius-sm);
+  background: var(--warn-soft);
+  color: var(--warn);
+  font-size: var(--fs-xs);
+}
+
+/* 폴더 창 새로 고침 단추(K5) */
+.refreshBtn {
+  width: 34px;
+  height: 30px;
+  border: 1px solid var(--btn-line);
+  border-radius: var(--radius-md);
+  background: var(--btn-bg);
+  color: var(--text-1);
+  font: inherit;
+  cursor: pointer;
 }

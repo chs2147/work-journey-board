@@ -87,7 +87,14 @@ function seedWorkFolders() {
   f("정산/테스트/테스트 계획.xlsx", 40, "2026-10-14T09:00");
   f("정산/회의록/2026-10-20 배치 협의.docx", 30, "2026-10-20T18:00");
   f("보안점검/계정 점검표.xlsx", 88, "2026-10-19T15:30");
+  f("정산/백업본.zip", 512, "2026-10-18T10:00");
+  fs.writeFile("/demo/바탕 화면/정산 회의록 바로 가기.lnk", new Uint8Array(1), t("2026-10-18T10:00"));
 }
+
+/** 가상 바로 가기(.lnk) → 가리키는 폴더(improve-1102v7 K2 흉내) */
+const DEMO_SHORTCUTS: Record<string, string> = {
+  "/demo/바탕 화면/정산 회의록 바로 가기.lnk": "/demo/업무/정산/회의록",
+};
 
 /** 브라우저 모드 Cabinet 호출 기록(E2E 확인용 — 실제로 열지 않음) */
 const cabinetCalls: string[] = [];
@@ -226,6 +233,10 @@ export const browserPlatform: Platform = {
     if (!underRoots(path)) throw new Error("등록한 폴더 안의 경로만 열 수 있습니다");
     cabinetCalls.push(`reveal ${path}`);
   },
+  async resolveShortcut(path) {
+    // 가상 바로 가기(E2E): 바탕 화면의 "*.lnk" → 가상 작업 폴더
+    return DEMO_SHORTCUTS[path] ?? null;
+  },
   async droppedPaths(dropped) {
     // 브라우저는 놓은 파일의 경로를 주지 않는다 — 가상 작업 폴더에서 같은 이름을 찾아 흉내(E2E·시연용)
     const all = [
@@ -234,8 +245,10 @@ export const browserPlatform: Platform = {
       ]),
     ];
     const found = dropped.flatMap((f) => {
-      const hit = all.find((p) => p.startsWith(`${DEMO_WORK}/`) && baseName(p) === f.name);
-      return hit ? [{ path: hit, isDir: fs.isDir(hit) }] : [];
+      const hit = all.find(
+        (p) => (p.startsWith(`${DEMO_WORK}/`) || p.startsWith("/demo/바탕 화면/")) && baseName(p) === f.name,
+      );
+      return hit ? [{ path: hit, isDir: fs.isDir(hit), exists: true }] : [];
     });
     return found.length ? found : null;
   },
@@ -278,6 +291,9 @@ Object.assign(globalThis, {
     openedUrls: () => [...openedUrls],
     updateCalls: () => [...updateCalls],
     cabinetCalls: () => [...cabinetCalls],
+    /** 탐색기에서 바꾼 흉내(improve-1102v7 K4·K5) */
+    movePath: (from: string, to: string) => fs.movePath(from, to),
+    writeFile: (path: string) => fs.writeFile(path, new Uint8Array(2048), Date.now()),
     /** DB 호출 수(조회·쓰기·batch) — 주 전환당 왕복 수 측정 */
     queries: () => sqlJsCalls.n,
     setToday(date: string) {

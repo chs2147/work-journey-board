@@ -788,32 +788,47 @@
    놓을 칸은 파란 테두리, 놓을 틈에 파란 가로선(높이 0 — 줄이 밀리지 않게), 커서 옆에 항목 그림자 */
 .grip {
   position: absolute;
-  left: -13px;
-  top: 3px;
-  width: 12px;
-  height: calc(var(--fs-md) * 1.45);
+  left: -19px;
+  top: 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: calc(var(--fs-md) * 1.45 + 2px);
   padding: 0;
   border: 0;
+  border-radius: var(--radius-sm);
   background: none;
-  color: var(--text-3);
-  font-size: 11px;
-  letter-spacing: -2px;
-  line-height: calc(var(--fs-md) * 1.45);
+  color: var(--text-2);
+  font-size: 15px;
+  font-weight: var(--fw-bold);
+  letter-spacing: -3px;
+  line-height: 1;
   opacity: 0;
   cursor: grab;
   touch-action: none;
 }
 
+/* 잡을 수 있는 자리를 손잡이보다 넓게(improve-1102v7 K8) */
+.grip::before {
+  content: "";
+  position: absolute;
+  inset: -3px -2px;
+}
+
 .itemSub > .grip {
-  left: -27px;
+  left: -33px;
 }
 
 .item:hover > .grip,
 .itemSub:hover > .grip {
-  opacity: 1;
+  opacity: 0.9;
 }
 
-.grip:hover {
+.grip:hover,
+.grip:focus-visible {
+  opacity: 1;
+  background: var(--surface-sub);
   color: var(--accent);
 }
 
@@ -1365,4 +1380,40 @@
 
 .linkOpen:hover {
   background: var(--accent-soft);
+}
+
+/* 열 폭 손잡이(improve-1102v7 K1) — 열 머리 오른쪽 끝 */
+.colResizer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 5;
+  width: 8px;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.colResizer::after {
+  content: "";
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  right: 0;
+  width: 2px;
+  border-radius: 1px;
+  background: transparent;
+}
+
+.colResizer:hover::after,
+.colResizer:focus-visible::after {
+  background: var(--accent);
+}
+
+.colResizer:focus-visible {
+  outline: none;
+}
+
+.colResizerCustom::after {
+  background: var(--line-strong);
 }

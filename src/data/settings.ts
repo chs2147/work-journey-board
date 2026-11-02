@@ -36,6 +36,8 @@ export interface Settings {
     /** 왼쪽 중요 업무·오른쪽 주간 요약 패널 폭(px, improve-1101 #2) — 가장자리를 끌어 조절, 두 번 누르면 기본 */
     importantPanelW: number;
     summaryPanelW: number;
+    /** 주간 뷰 열 폭(improve-1102v7 K1) — label = 업무 열, days = 월~일 자리(null = 자동) */
+    boardColW: BoardColW;
     /** 보드 태그 필터(improve-1026-spec 6절) — 태그 id들(OR), "__none__" = 태그 없음. 빈 배열 = 전체. 다시 켜도 유지 */
     tagFilter: string[];
     /** 인사이트에서 마지막으로 본 업무(m3-s1-spec 1-2) — 레일로 열면 그 업무 */
@@ -52,6 +54,16 @@ export interface Settings {
     settingsCategory: SettingsCategory;
   };
 }
+
+export interface BoardColW {
+  label: number | null;
+  days: (number | null)[];
+}
+/** 주간 뷰 열 폭 범위(improve-1102v7 K1) */
+export const BOARD_COL_W = {
+  label: { def: 184, min: 120, max: 400 },
+  day: { min: 80, max: 900 },
+} as const;
 
 /** 설정 화면 분류(improve-1027v5-spec 1-4) */
 export const SETTINGS_CATEGORIES = ["screen", "data", "import", "work", "calendar", "update"] as const;
@@ -102,6 +114,7 @@ export const DEFAULT_SETTINGS: Settings = {
     todaySplit: 0.42,
     importantPanelW: 264,
     summaryPanelW: 360,
+    boardColW: { label: null, days: [null, null, null, null, null, null, null] },
     insightCategory: null,
     insightMapOpen: true,
     insightTab: "timeline",
@@ -186,6 +199,7 @@ export function mergeSettings(base: Settings, patch: unknown): Settings {
     const v = s.ui[k];
     if (!(typeof v === "number" && v >= spec.min && v <= spec.max)) s.ui[k] = spec.def;
   }
+  s.ui.boardColW = validBoardColW(s.ui.boardColW);
   if (!Array.isArray(s.ui.tagFilter) || !s.ui.tagFilter.every((x) => typeof x === "string"))
     s.ui.tagFilter = [];
   if (s.ui.insightCategory !== null && typeof s.ui.insightCategory !== "string") s.ui.insightCategory = null;
@@ -197,4 +211,16 @@ export function mergeSettings(base: Settings, patch: unknown): Settings {
     s.ui.settingsCategory = "screen";
   if (!(s.ui.noteDockHeight >= NOTE_DOCK_MIN)) s.ui.noteDockHeight = DEFAULT_SETTINGS.ui.noteDockHeight;
   return s;
+}
+
+/** 열 폭 설정 검사 — 범위 밖·모르는 값은 자동(null) */
+export function validBoardColW(v: unknown): BoardColW {
+  const o = (v && typeof v === "object" ? v : {}) as { label?: unknown; days?: unknown };
+  const num = (x: unknown, min: number, max: number) =>
+    typeof x === "number" && Number.isFinite(x) && x >= min && x <= max ? Math.round(x) : null;
+  const days = Array.isArray(o.days) ? o.days : [];
+  return {
+    label: num(o.label, BOARD_COL_W.label.min, BOARD_COL_W.label.max),
+    days: Array.from({ length: 7 }, (_, i) => num(days[i], BOARD_COL_W.day.min, BOARD_COL_W.day.max)),
+  };
 }

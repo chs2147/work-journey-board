@@ -1,7 +1,7 @@
 // Cabinet 폴더 창 내용(features-1102-spec F5, 시안 f5): 경로 이동(←·↑·하위 폴더 두 번 누르기·경로 띠), 목록(이름·수정한 날짜·크기·종류 아이콘, 정렬),
 // [탐색기에서 열기] [경로 복사], 파일 두 번 누르기 = OS 기본 앱. 읽기·열기만 — 지우기·이름 바꾸기·옮기기 없음.
 // 실앱은 별도 OS 창(FolderWindowApp), 브라우저 모드는 앱 안 떠 있는 창(FolderPanels)이 이 화면을 쓴다.
-import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import {
   fileKind,
   formatModified,
@@ -17,6 +17,9 @@ import type { Platform } from "../../platform";
 import { STR } from "../../shared/strings";
 import { FileKindIcon, FolderIcon } from "./CabinetIcons";
 import styles from "./Cabinet.module.css";
+
+/** 열려 있는 폴더 창 자동 새로 고침 간격(improve-1102v7 K5) */
+const REFRESH_MS = 3000;
 
 /** 실행 파일 — 열기 전에 묻는다(탐색기처럼 바로 실행하지 않게) */
 const RUNNABLE = /\.(exe|bat|cmd|com|msi|ps1|vbs|vbe|js|jse|wsf|scr|lnk|reg|hta)$/i;
@@ -42,30 +45,59 @@ export function FolderView({ platform, root, sub, title, links, onNav, notify }:
   const [sel, setSel] = useState<string | null>(null);
   const tableRef = useRef<HTMLTableSectionElement>(null);
 
+  // 새로 고침(improve-1102v7 K5): [새로 고침]·F5, 그리고 열려 있는 동안 3초마다·창으로 돌아올 때 자동.
+  // 바뀐 게 있을 때만 다시 그린다(고른 줄 유지)
+  const [tick, setTick] = useState(0);
+  const sigRef = useRef("");
   useEffect(() => {
     let alive = true;
     platform.cabinetList(path).then(
       (list) => {
         if (!alive) return;
+        const sig = JSON.stringify(list.map((e) => [e.name, e.dir, e.size, e.modified, e.hidden]).sort());
+        if (sig === sigRef.current) return;
+        sigRef.current = sig;
         setError(null);
         setEntries(list);
       },
       (e: unknown) => {
         if (!alive) return;
-        setError(String(e instanceof Error ? e.message : e));
+        const msg = String(e instanceof Error ? e.message : e);
+        sigRef.current = `!${msg}`;
+        setError(msg);
         setEntries([]);
       },
     );
     return () => {
       alive = false;
     };
-  }, [path, platform]);
+  }, [path, platform, tick]);
+  useEffect(() => {
+    const again = () => setTick((n) => n + 1);
+    const timer = setInterval(() => {
+      if (document.visibilityState === "visible") again();
+    }, REFRESH_MS);
+    window.addEventListener("focus", again);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "F5") {
+        e.preventDefault();
+        again();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener("focus", again);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, []);
 
   const go = (p: string, push = true) => {
     if (p === path) return;
     if (push) setHistory((h) => [...h, path].slice(-50));
     setEntries(null);
     setError(null);
+    sigRef.current = "";
     setPath(p);
     setSel(null);
     onNav(p);
@@ -97,7 +129,7 @@ export function FolderView({ platform, root, sub, title, links, onNav, notify }:
     }
   };
 
-  const onRowKey = (ev: KeyboardEvent<HTMLTableRowElement>, e: FsEntry, i: number) => {
+  const onRowKey = (ev: ReactKeyboardEvent<HTMLTableRowElement>, e: FsEntry, i: number) => {
     if (ev.key === "Enter") {
       ev.preventDefault();
       void activate(e);
@@ -150,6 +182,19 @@ export function FolderView({ platform, root, sub, title, links, onNav, notify }:
           onClick={up}
         >
           ↑
+        </button>
+        <button
+          type="button"
+          className={styles.refreshBtn}
+          aria-label={STR.cabinet.folder.refresh}
+          title={`${STR.cabinet.folder.refresh} (F5)`}
+          data-testid="folder-refresh"
+          onClick={() => {
+            sigRef.current = "";
+            setTick((n) => n + 1);
+          }}
+        >
+          ⟳
         </button>
         <nav className={styles.crumbs} aria-label={STR.cabinet.folder.root} data-testid="folder-crumbs">
           <button type="button" className={styles.crumb} title={root} onClick={() => go(root)}>

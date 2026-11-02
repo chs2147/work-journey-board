@@ -35,6 +35,8 @@ export interface FakeFs {
   listDir(path: string): FsEntry[];
   /** 그 경로가 폴더인가 */
   isDir(path: string): boolean;
+  /** 테스트용: 폴더·파일 이름 바꾸기·옮기기(탐색기에서 바꾼 흉내, improve-1102v7 K4·K5) */
+  movePath(from: string, to: string): void;
   /** 테스트 확인용: 경로 목록 */
   listAll(): string[];
 }
@@ -186,6 +188,27 @@ export function createFakeFs(open: OpenSqlJs): FakeFs {
       ];
     },
     isDir: (path) => dirs.has(norm(path)),
+    movePath(from, to) {
+      const [f, t] = [norm(from), norm(to)];
+      const re = (p: string) => (p === f ? t : p.startsWith(`${f}/`) ? t + p.slice(f.length) : null);
+      for (const d of [...dirs]) {
+        const n = re(d);
+        if (n) {
+          dirs.delete(d);
+          dirs.add(n);
+        }
+      }
+      for (const [k, v] of [...files]) {
+        const n = re(k);
+        if (n) {
+          files.delete(k);
+          files.set(n, v);
+          const m = mtimes.get(k);
+          if (m != null) mtimes.set(n, m);
+        }
+      }
+      ensureDirSync(parentOf(t));
+    },
     listAll: () => [...new Set([...files.keys(), ...live.keys()])].sort(),
   };
 }

@@ -20,6 +20,8 @@ import { FolderIcon, LinkIcon } from "./CabinetIcons";
 import {
   acceptsDrop,
   addItemToCategory,
+  checkFolders,
+  relocateItem,
   closeCabinet,
   closeLinkDialog,
   copyTarget,
@@ -108,6 +110,20 @@ export function CabinetPanel({ standalone = false }: { standalone?: boolean }) {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
   const panelRef = useRef<HTMLDivElement>(null);
+  const [sideW, setSideW] = useState(readSideW);
+  // 등록 폴더 확인(improve-1102v7 K4): 열 때·폴더 목록이 바뀔 때·창으로 돌아올 때 조용히
+  const folderKey = s.items
+    .filter((i) => i.kind === "folder")
+    .map((i) => `${i.id}=${i.target}`)
+    .join("|");
+  useEffect(() => {
+    void checkFolders();
+  }, [folderKey]);
+  useEffect(() => {
+    const onFocus = () => void checkFolders();
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, []);
 
   const dragProps = {
     onDragOver: (e: DragEvent) => {
@@ -160,7 +176,7 @@ export function CabinetPanel({ standalone = false }: { standalone?: boolean }) {
         </div>
       )}
       <div className={styles.body}>
-        <nav className={styles.side} aria-label={STR.cabinet.groups}>
+        <nav className={styles.side} style={{ flexBasis: sideW }} aria-label={STR.cabinet.groups}>
           <div className={styles.sideLabel}>{STR.cabinet.groups}</div>
           {groups.map((g) => (
             <button
@@ -210,6 +226,7 @@ export function CabinetPanel({ standalone = false }: { standalone?: boolean }) {
             {dropOn ? STR.cabinet.dropActive : STR.cabinet.dropHint}
           </div>
         </nav>
+        <SideResizer width={sideW} onChange={setSideW} />
         <section className={`${styles.main} ${dropOn ? styles.mainOn : ""}`}>
           <div className={styles.mainHead}>
             <span className={styles.mainTitle} data-testid="cabinet-group-title">
@@ -261,6 +278,16 @@ export function CabinetPanel({ standalone = false }: { standalone?: boolean }) {
             >
               {STR.cabinet.addLink}
             </button>
+            <button
+              type="button"
+              className={styles.button}
+              title={STR.cabinet.check.title}
+              data-testid="cabinet-check"
+              disabled={s.checking}
+              onClick={() => void checkFolders(true)}
+            >
+              ⟳ {s.checking ? STR.cabinet.check.busy : STR.cabinet.check.button}
+            </button>
             <span className={styles.footHint}>{STR.cabinet.footHint}</span>
           </div>
           {s.linkDialog && <LinkDialog />}
@@ -297,6 +324,7 @@ interface RowDrag {
 function CabinetRow({ item, drag }: { item: CabinetItem; drag: RowDrag }) {
   const renaming = useCabinet((s) => s.renaming === item.id);
   const isOpen = useCabinet((s) => s.folders.some((f) => f.id === item.id));
+  const missing = useCabinet((s) => s.missing.includes(item.id));
   const flash = useCabinet((s) => s.flash === item.id);
   const labels = useCabinet((s) => linkLabels(item.id, s).join(" · "));
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
@@ -382,11 +410,35 @@ function CabinetRow({ item, drag }: { item: CabinetItem; drag: RowDrag }) {
           <div className={styles.rowTitle}>
             <span data-testid="cabinet-row-title">{item.title}</span>
             {isOpen && <span className={styles.openTag}>{STR.cabinet.opened}</span>}
+            {missing && (
+              <span
+                className={styles.missingTag}
+                title={STR.cabinet.check.missingTitle}
+                data-testid="cabinet-missing"
+              >
+                ⚠ {STR.cabinet.check.missingTag}
+              </span>
+            )}
           </div>
         )}
         <div className={styles.rowSub}>{sub}</div>
       </div>
       <div className={styles.rowBtns}>
+        {item.kind === "folder" && !missing && (
+          <button
+            type="button"
+            className={styles.iconBtn}
+            aria-label={STR.cabinet.revealRow}
+            title={STR.cabinet.revealRow}
+            data-testid="cabinet-row-reveal"
+            onClick={(e) => {
+              e.stopPropagation();
+              void revealItem(item.id);
+            }}
+          >
+            <ExplorerIcon />
+          </button>
+        )}
         <button
           type="button"
           className={styles.iconBtn}
@@ -523,6 +575,16 @@ function RowMenu({
       {item.kind === "folder" && (
         <button type="button" role="menuitem" onClick={run(() => void revealItem(item.id))}>
           {STR.cabinet.menu.reveal}
+        </button>
+      )}
+      {item.kind === "folder" && (
+        <button
+          type="button"
+          role="menuitem"
+          data-testid="cabinet-menu-relocate"
+          onClick={run(() => void relocateItem(item.id))}
+        >
+          {STR.cabinet.check.relocate}
         </button>
       )}
       <button
@@ -874,3 +936,86 @@ function LinksDialog({ itemId }: { itemId: string }) {
     </div>
   );
 }
+
+/** 업무 목록 폭(improve-1102v7 K6) — 이 PC의 화면 취향이라 localStorage */
+const SIDE_KEY = "wjb.cabinetSideW";
+const SIDE_W = { def: 210, min: 160, max: 420 };
+const clampSide = (v: number) => Math.round(Math.min(SIDE_W.max, Math.max(SIDE_W.min, v)));
+function readSideW(): number {
+  try {
+    const v = Number(localStorage.getItem(SIDE_KEY));
+    return v ? clampSide(v) : SIDE_W.def;
+  } catch {
+    return SIDE_W.def;
+  }
+}
+function saveSideW(v: number) {
+  try {
+    localStorage.setItem(SIDE_KEY, String(v));
+  } catch {
+    // 기억하지 못해도 이번 창에서는 그대로
+  }
+}
+
+function SideResizer({ width, onChange }: { width: number; onChange: (w: number) => void }) {
+  return (
+    <div
+      role="separator"
+      aria-orientation="vertical"
+      aria-label={STR.cabinet.sideResize}
+      aria-valuenow={width}
+      aria-valuemin={SIDE_W.min}
+      aria-valuemax={SIDE_W.max}
+      title={STR.cabinet.sideResize}
+      tabIndex={0}
+      className={styles.sideResizer}
+      data-testid="cabinet-side-resizer"
+      onPointerDown={(e) => {
+        if (e.button !== 0) return;
+        e.preventDefault();
+        const el = e.currentTarget;
+        el.setPointerCapture(e.pointerId);
+        const x0 = e.clientX;
+        let w = width;
+        const move = (ev: globalThis.PointerEvent) => {
+          w = clampSide(width + ev.clientX - x0);
+          onChange(w);
+        };
+        const up = () => {
+          el.removeEventListener("pointermove", move);
+          el.removeEventListener("pointerup", up);
+          saveSideW(w);
+        };
+        el.addEventListener("pointermove", move);
+        el.addEventListener("pointerup", up);
+      }}
+      onDoubleClick={() => {
+        onChange(SIDE_W.def);
+        saveSideW(SIDE_W.def);
+      }}
+      onKeyDown={(e) => {
+        if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+        e.preventDefault();
+        const w = clampSide(width + (e.key === "ArrowLeft" ? -16 : 16));
+        onChange(w);
+        saveSideW(w);
+      }}
+    />
+  );
+}
+
+/** 탐색기에서 열기(폴더 + 화살표) */
+const ExplorerIcon = () => (
+  <svg
+    width="15"
+    height="15"
+    viewBox="0 0 16 16"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.4"
+    aria-hidden="true"
+  >
+    <path d="M1.8 4.2c0-.6.4-1 1-1h3l1.2 1.3h5.2c.6 0 1 .4 1 1V12c0 .6-.4 1-1 1H2.8c-.6 0-1-.4-1-1z" />
+    <path d="M6.5 10.5l3-3M7.3 7.5h2.2v2.2" strokeLinecap="round" />
+  </svg>
+);
