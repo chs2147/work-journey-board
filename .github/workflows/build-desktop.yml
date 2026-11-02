@@ -152,18 +152,6 @@ jobs:
       - name: Rust tests (file guards · update · cabinet — macOS)
         run: cargo test --release --lib --manifest-path src-tauri/Cargo.toml
 
-      - name: Check bundle (universal · version · signature)
-        shell: bash
-        run: |
-          find src-tauri/target/universal-apple-darwin/release/bundle -maxdepth 2 | head -20
-          app=$(find src-tauri/target/universal-apple-darwin/release/bundle -maxdepth 2 -name "*.app" | head -1)
-          test -n "$app" || { echo "앱 번들을 찾지 못했습니다"; exit 1; }
-          echo "앱: $app"
-          for b in "$app"/Contents/MacOS/*; do echo "$b: $(lipo -archs "$b")"; lipo -archs "$b" | grep -q "x86_64 arm64\|arm64 x86_64"; done
-          /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$app/Contents/Info.plist"
-          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$app/Contents/Info.plist")" = "${{ needs.plan.outputs.version }}"
-          codesign --verify --deep --strict "$app" && codesign -dv "$app" 2>&1 | grep -E "Signature|Identifier"
-
       - name: Collect DMG
         shell: bash
         run: |
@@ -173,6 +161,24 @@ jobs:
           mkdir -p out && cp "$dmg" "out/WorkJourneyBoard_${v}_mac.dmg"
           hdiutil verify "out/WorkJourneyBoard_${v}_mac.dmg"
           ls -l out
+
+      # 배포되는 DMG 안의 앱을 검사한다(Tauri는 DMG를 만든 뒤 bundle/macos의 .app을 남기지 않는다)
+      - name: Check app in DMG (universal · version · signature · Applications link)
+        shell: bash
+        run: |
+          v="${{ needs.plan.outputs.version }}"
+          mnt=$(mktemp -d)
+          hdiutil attach -nobrowse -readonly -mountpoint "$mnt" "out/WorkJourneyBoard_${v}_mac.dmg"
+          trap 'hdiutil detach -force "$mnt"' EXIT
+          ls -la "$mnt"
+          test -L "$mnt/Applications"
+          app=$(find "$mnt" -maxdepth 1 -name "*.app" | head -1)
+          test -n "$app" || { echo "DMG 안에 앱이 없습니다"; exit 1; }
+          for b in "$app"/Contents/MacOS/*; do echo "$b: $(lipo -archs "$b")"; lipo -archs "$b" | grep -q "x86_64 arm64\|arm64 x86_64"; done
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$app/Contents/Info.plist")" = "$v"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleDevelopmentRegion" "$app/Contents/Info.plist"
+          /usr/libexec/PlistBuddy -c "Print :LSMinimumSystemVersion" "$app/Contents/Info.plist"
+          codesign --verify --deep --strict "$app" && codesign -dv "$app" 2>&1 | grep -E "Signature|Identifier"
 
       - uses: actions/upload-artifact@v4
         with:
