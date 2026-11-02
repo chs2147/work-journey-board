@@ -138,6 +138,23 @@ export function buildHtml(src = SRC) {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>빠른 이용 가이드 · Work Journey Board</title>
 <link rel="icon" href="../icon.svg">
+<link rel="canonical" href="https://chs2147.github.io/work-journey-board/guide/">
+<link rel="apple-touch-icon" href="https://chs2147.github.io/work-journey-board/apple-touch-icon.png">
+<!-- 링크 공유 미리보기(Open Graph·트위터 카드) — 그림은 scripts/site/og.mjs가 만든다 -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Work Journey Board">
+<meta property="og:locale" content="ko_KR">
+<meta property="og:url" content="https://chs2147.github.io/work-journey-board/guide/">
+<meta property="og:title" content="빠른 이용 가이드 · Work Journey Board">
+<meta property="og:description" content="설치부터 매일 2분 기록, 주간 보고, 메모 보드, Cabinet, 백업까지 — 장면별 사용법(HTML·PDF).">
+<meta property="og:image" content="https://chs2147.github.io/work-journey-board/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Work Journey Board 빠른 이용 가이드">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="빠른 이용 가이드 · Work Journey Board">
+<meta name="twitter:description" content="설치부터 매일 2분 기록, 주간 보고, 메모 보드, Cabinet, 백업까지 — 장면별 사용법(HTML·PDF).">
+<meta name="twitter:image" content="https://chs2147.github.io/work-journey-board/og-image.png">
 <style>
 @font-face{font-family:Gowun;src:url("../gowun-dodum.woff2") format("woff2");font-display:swap}
 :root{--ink:#393832;--soft:#71695f;--paper:#fbf8f2;--cream:#f5f0e7;--line:#e8e0d4;--clay:#a45e43}
