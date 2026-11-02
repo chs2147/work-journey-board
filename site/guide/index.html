@@ -51,6 +51,7 @@ header.top nav a{color:var(--soft);text-decoration:none}
 .scene h2{font-size:26px;letter-spacing:-.03em;margin:0 0 16px;display:flex;flex-direction:column;gap:2px}
 .scene h2 .no{font-size:12px;letter-spacing:.12em;color:var(--clay)}
 .scene p.lead{margin:12px 0 4px}
+.scene h3{font-size:17px;margin:22px 0 6px;padding:2px 0 2px 10px;border-left:4px solid var(--clay);color:var(--clay)}
 ol.steps{counter-reset:s;list-style:none;padding:0;margin:12px 0}
 ol.steps li{counter-increment:s;position:relative;padding:6px 0 6px 40px}
 ol.steps li::before{content:counter(s);position:absolute;left:0;top:8px;width:26px;height:26px;border-radius:50%;background:var(--clay);color:#fff;font-size:13px;line-height:26px;text-align:center}
@@ -71,6 +72,7 @@ footer{padding:32px 0 48px;color:#9c8f81;font-size:12px}
   header.top nav,.dl{display:none}
   .scene{break-before:page;border:0;padding-top:0}
   figure,table,ol.steps li{break-inside:avoid}
+  .scene h3{break-after:avoid}
   a{text-decoration:none;color:var(--ink)}
 }
 </style>
@@ -91,9 +93,14 @@ footer{padding:32px 0 48px;color:#9c8f81;font-size:12px}
 <section class="scene" id="s1">
 <h2><span class="no">장면 1</span>처음 설치와 저장 폴더</h2>
 <p class="lead"><strong>언제 쓰나요</strong> — 회사 PC·맥에 처음 설치할 때, 또는 PC를 바꿔 일지를 옮길 때.</p>
-<ol class="steps"><li><a href="https://github.com/chs2147/work-journey-board/releases/latest" target="_blank" rel="noopener">최신 판 내려받기 ↗</a>에서 설치 파일을 받습니다.</li></ol>
-<p>   - <strong>Windows</strong> — <code>WorkJourneyBoard_&lt;판&gt;_setup.exe</code>를 실행합니다. 관리자 권한 없이 내 계정에만 설치됩니다.    - <strong>macOS</strong> — <code>WorkJourneyBoard_&lt;판&gt;_mac.dmg</code>를 열고 앱을 <strong>응용 프로그램</strong> 폴더로 끌어 놓습니다. 처음 열면 &quot;'Work Journey Board'을(를) 열지 않음&quot; 창이 뜹니다(애플 개발자 서명이 없는 앱이라 macOS가 막는 것 — 창에는 [휴지통으로 이동]·[완료]만 있음). <strong>[완료]</strong>를 누른 뒤 <strong>시스템 설정 › 개인정보 보호 및 보안</strong>을 열고 맨 아래 <strong>보안</strong> 칸의 &quot;'Work Journey Board'이(가) 차단되었습니다&quot; 옆 <strong>[그래도 열기]</strong> → 암호(또는 Touch ID) → 앱을 다시 열고 한 번 더 뜨는 창에서 <strong>[그래도 열기]</strong>. 처음 한 번만 하면 됩니다(앱 안에서 받은 새 판은 다시 묻지 않음).</p>
-<ol class="steps"><li>처음 켜면 <strong>저장 폴더</strong>를 고릅니다. 추천 위치는 홈 폴더의 <code>WorkJourney</code>(Windows <code>C:\Users\&lt;사용자&gt;\WorkJourney</code> · macOS <code>~/WorkJourney</code>)입니다 — OneDrive·iCloud 같은 동기화 폴더는 안내가 뜹니다.</li><li>기존 일지가 있으면 <strong>기존 일지 열기</strong>로 그 폴더를 고릅니다(<code>work-journey.db</code> 파일 하나가 일지 전체).</li><li>보드가 뜨면 <code>+ 업무 추가</code>에 지금 하고 있는 업무 이름을 적고 <code>Enter</code>.</li></ol>
+<h3>설치 — Windows</h3>
+<ul><li><a href="https://github.com/chs2147/work-journey-board/releases/latest" target="_blank" rel="noopener">최신 판 내려받기 ↗</a>에서 <code>WorkJourneyBoard_&lt;판&gt;_setup.exe</code>를 받아 실행합니다.</li><li>관리자 권한 없이 내 계정에만 설치됩니다.</li></ul>
+<h3>설치 — macOS</h3>
+<ul><li><a href="https://github.com/chs2147/work-journey-board/releases/latest" target="_blank" rel="noopener">최신 판 내려받기 ↗</a>에서 <code>WorkJourneyBoard_&lt;판&gt;_mac.dmg</code>를 받아 엽니다.</li><li>앱 아이콘을 <strong>응용 프로그램</strong> 폴더로 끌어 놓습니다.</li><li>처음 열면 &quot;'Work Journey Board'을(를) 열지 않음&quot; 창이 뜹니다 — 애플 개발자 서명이 없는 앱이라 macOS가 막는 것으로, 창에는 [휴지통으로 이동]·[완료]만 있습니다. 아래 순서로 <strong>처음 한 번만</strong> 허용합니다.</li></ul>
+<ol class="steps"><li>창에서 <strong>[완료]</strong>를 누릅니다.</li><li><strong>시스템 설정 › 개인정보 보호 및 보안</strong>을 열고 맨 아래 <strong>보안</strong> 칸으로 내립니다.</li><li>&quot;'Work Journey Board'이(가) 차단되었습니다&quot; 옆 <strong>[그래도 열기]</strong> → 암호(또는 Touch ID).</li><li>앱을 다시 열고, 한 번 더 뜨는 창에서 <strong>[그래도 열기]</strong>를 누릅니다.</li></ol>
+<ul><li>앱 안에서 받은 새 판은 다시 묻지 않습니다.</li></ul>
+<h3>처음 켤 때</h3>
+<ol class="steps"><li><strong>저장 폴더</strong>를 고릅니다. 추천 위치는 홈 폴더의 <code>WorkJourney</code>(Windows <code>C:\Users\&lt;사용자&gt;\WorkJourney</code> · macOS <code>~/WorkJourney</code>)입니다 — OneDrive·iCloud 같은 동기화 폴더는 안내가 뜹니다.</li><li>기존 일지가 있으면 <strong>기존 일지 열기</strong>로 그 폴더를 고릅니다(<code>work-journey.db</code> 파일 하나가 일지 전체).</li><li>보드가 뜨면 <code>+ 업무 추가</code>에 지금 하고 있는 업무 이름을 적고 <code>Enter</code>.</li></ol>
 <figure><img src="shots/01-setup.png" alt="첫 실행 — 저장 폴더 고르기"><figcaption>첫 실행 — 저장 폴더 고르기</figcaption></figure>
 <p class="lead"><strong>팁</strong></p>
 <ul><li>일지는 고른 폴더의 SQLite 파일 하나뿐이고, 앱은 기록을 어디에도 보내지 않습니다.</li><li>Windows와 macOS는 같은 판·같은 기능입니다. 맥에서는 단축키의 <code>Ctrl</code>이 <code>⌘</code>, <code>Alt</code>가 <code>⌥</code>, &quot;탐색기&quot;가 Finder입니다. → <a href="#s90">부록</a></li><li>저장 위치는 나중에 설정 › 데이터·백업 › 저장 위치에서 옮길 수 있습니다. → <a href="#s12">12. 백업과 복원</a></li></ul>

@@ -51,6 +51,10 @@ export function mdToHtml(md) {
         `<figure><img src="${esc(img[2])}" alt="${esc(img[1])}"><figcaption>${esc(img[1])}</figcaption></figure>`,
       );
       i++;
+    } else if (/^### /.test(l)) {
+      // 장면 안 소제목(예: 설치 — Windows / macOS) — 굵기가 하나뿐인 글꼴에서도 눈에 띄게 색 띠로
+      out.push(`<h3>${inline(l.slice(4))}</h3>`);
+      i++;
     } else if (/^\d+\. /.test(l)) {
       const items = [];
       while (i < lines.length && /^\d+\. /.test(lines[i])) items.push(lines[i++].replace(/^\d+\. /, ""));
@@ -183,6 +187,7 @@ header.top nav a{color:var(--soft);text-decoration:none}
 .scene h2{font-size:26px;letter-spacing:-.03em;margin:0 0 16px;display:flex;flex-direction:column;gap:2px}
 .scene h2 .no{font-size:12px;letter-spacing:.12em;color:var(--clay)}
 .scene p.lead{margin:12px 0 4px}
+.scene h3{font-size:17px;margin:22px 0 6px;padding:2px 0 2px 10px;border-left:4px solid var(--clay);color:var(--clay)}
 ol.steps{counter-reset:s;list-style:none;padding:0;margin:12px 0}
 ol.steps li{counter-increment:s;position:relative;padding:6px 0 6px 40px}
 ol.steps li::before{content:counter(s);position:absolute;left:0;top:8px;width:26px;height:26px;border-radius:50%;background:var(--clay);color:#fff;font-size:13px;line-height:26px;text-align:center}
@@ -203,6 +208,7 @@ footer{padding:32px 0 48px;color:#9c8f81;font-size:12px}
   header.top nav,.dl{display:none}
   .scene{break-before:page;border:0;padding-top:0}
   figure,table,ol.steps li{break-inside:avoid}
+  .scene h3{break-after:avoid}
   a{text-decoration:none;color:var(--ink)}
 }
 </style>
