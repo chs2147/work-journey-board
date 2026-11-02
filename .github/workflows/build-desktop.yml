@@ -155,7 +155,10 @@ jobs:
       - name: Check bundle (universal · version · signature)
         shell: bash
         run: |
-          app="src-tauri/target/universal-apple-darwin/release/bundle/macos/Work Journey Board.app"
+          find src-tauri/target/universal-apple-darwin/release/bundle -maxdepth 2 | head -20
+          app=$(find src-tauri/target/universal-apple-darwin/release/bundle -maxdepth 2 -name "*.app" | head -1)
+          test -n "$app" || { echo "앱 번들을 찾지 못했습니다"; exit 1; }
+          echo "앱: $app"
           for b in "$app"/Contents/MacOS/*; do echo "$b: $(lipo -archs "$b")"; lipo -archs "$b" | grep -q "x86_64 arm64\|arm64 x86_64"; done
           /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$app/Contents/Info.plist"
           test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$app/Contents/Info.plist")" = "${{ needs.plan.outputs.version }}"
