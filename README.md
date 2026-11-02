@@ -35,14 +35,17 @@
 | ![주간 요약 — 자동 집계](docs/screenshots/summary-signature.png) | ![인사이트 — 경과 타임라인](docs/screenshots/insights-signature.png) |
 
 ## 설치
-[Releases](https://github.com/chs2147/work-journey-board/releases/latest)에서 내려받습니다(Windows 10·11).
+[Releases](https://github.com/chs2147/work-journey-board/releases/latest)에서 내려받습니다 — **Windows 10·11 · macOS 13 이상**(1.6.0부터, 같은 판·같은 기능).
 
 | 파일 | 용도 |
 |---|---|
-| `WorkJourneyBoard_<버전>_setup.exe` | **기본판**(약 10MB) — WebView2가 없으면 설치 중 자동으로 받음 |
-| `WorkJourneyBoard_<버전>_setup_offline.exe` | **오프라인 설치판**(약 220MB, 올라와 있는 판만) — 인터넷이 막힌 PC용, WebView2 포함 |
+| `WorkJourneyBoard_<버전>_setup.exe` | **Windows 기본판**(약 10MB) — WebView2가 없으면 설치 중 자동으로 받음 |
+| `WorkJourneyBoard_<버전>_setup_offline.exe` | **Windows 오프라인 설치판**(약 220MB, 올라와 있는 판만) — 인터넷이 막힌 PC용, WebView2 포함 |
+| `WorkJourneyBoard_<버전>_mac.dmg` | **macOS**(인텔·애플 실리콘 공용) — 열어서 앱을 응용 프로그램 폴더로 끌어 놓기 |
 
-- 관리자 권한 없이 **현재 사용자에게만** 설치됩니다. 처음 켜면 시그니처 테마(설정 › 화면 › 테마에서 라이트·다크·시스템 설정으로 바꿀 수 있음).
+- Windows: 관리자 권한 없이 **현재 사용자에게만** 설치됩니다.
+- macOS: 처음 열 때 "확인되지 않은 개발자" 안내가 나오면 **시스템 설정 › 개인정보 보호 및 보안 › 그래도 열기**를 한 번 누릅니다(앱 안에서 받은 새 판은 다시 묻지 않음). 단축키는 `Ctrl` 대신 `⌘`, `Alt` 대신 `⌥`.
+- 처음 켜면 시그니처 테마(설정 › 화면 › 테마에서 라이트·다크·시스템 설정으로 바꿀 수 있음).
 - 새 판이 나오면 앱이 켤 때 알려 주고, 설정 › 업데이트에서 내려받아 설치합니다(SHA256 확인 · 설치 전 일지 자동 백업).
 
 ## 기록과 개인정보
@@ -67,7 +70,7 @@
 | [CLAUDE.md](CLAUDE.md) | 구현 규칙(외부 통신 0 · 실데이터 금지 · 데이터 파일 안전 · 기술 스택) |
 
 ## 기술 스택
-Tauri v2(NSIS per-user) · React 18 + Vite + TypeScript · SQLite(실앱 tauri-plugin-sql / 개발·테스트 sql.js) · ExcelJS · SVG + d3-scale · date-fns · Vitest + Playwright · GitHub Actions(ubuntu CI + windows-latest 설치 파일 빌드)
+Tauri v2(NSIS per-user) · React 18 + Vite + TypeScript · SQLite(실앱 tauri-plugin-sql / 개발·테스트 sql.js) · ExcelJS · SVG + d3-scale · date-fns · Vitest + Playwright · GitHub Actions(ubuntu CI·macos Rust 검사 + windows-latest NSIS·macos-latest 유니버설 DMG 빌드)
 
 ## 사용한 글꼴
 - [Pretendard](https://github.com/orioncactus/pretendard) — 라이트·다크 테마 본문. SIL Open Font License 1.1, 공식 배포 파일을 수정 없이 포함 ([라이선스 전문](public/licenses/Pretendard-OFL-1.1.txt))
@@ -81,12 +84,18 @@ npm test             # 단위 테스트(Vitest)
 npm run e2e          # E2E(Playwright, 브라우저 모드)
 npm run perf:mem     # 주 전환 메모리·조회 수 측정(가상 1년치 일지)
 npm run lint && npm run format:check && npm run typecheck
-npm run tauri dev    # 실앱 모드(윈도우 / 리눅스는 webkit2gtk-4.1 필요)
+npm run tauri dev    # 실앱 모드(윈도우·맥 / 리눅스는 webkit2gtk-4.1 필요)
 ```
 - 브라우저 모드 주소 옵션(E2E·시연): `?today=YYYY-MM-DD` 오늘 고정 · `?empty=1` 빈 일지 · `?fresh=1` 첫 실행 화면 · `?existing=/경로` 그 폴더에 샘플 일지 준비 · `?config=/경로` 설정 폴더 지정 · `?sample=year`(`year-img`) 가상 1년치 일지 · `?sample=showcase` README·소개 사이트 화면용 메모 보드 예시 · `?corrupt=1` 파손 일지
-- 윈도우 설치 파일: `main`에 반영되면 [Releases](https://github.com/chs2147/work-journey-board/releases)에 `v<버전>`으로 올라간다 — 0.x·`-rc`는 사전 릴리스, 1.0.0 이상 정식 판은 정식 릴리스(기본판). 오프라인 설치판은 요청할 때만 Actions → *Build Windows installer* → Run workflow(main) → `offline`으로 그 판 릴리스에 더한다.
+- 설치 파일: `main`에 반영되면 *Build desktop installers*가 윈도우(NSIS)·맥(유니버설 DMG)을 나란히 만들고, **둘 다 성공해야** [Releases](https://github.com/chs2147/work-journey-board/releases)에 `v<버전>`으로 함께 올린다 — 0.x·`-rc`는 사전 릴리스, 1.0.0 이상 정식 판은 정식 릴리스. 윈도우 오프라인 설치판은 요청할 때만 Actions → *Build desktop installers* → Run workflow(main) → `offline`으로 그 판 릴리스에 더한다. 하나의 원본으로 두 플랫폼을 같은 판으로 운영한다([docs/macos-spec.md](docs/macos-spec.md)).
 
 ## Version History
+### v1.6.0 (2026-11-02) — macOS 판(윈도우와 같은 판·같은 기능)
+- **macOS 앱**(13 이상, 인텔·애플 실리콘 공용 DMG) — 하나의 원본으로 윈도우·맥을 같은 판으로 함께 릴리스(둘 다 빌드되어야 릴리스)
+- 맥: 한국어 메뉴 막대·`⌘Q` 안전 종료, 화면 안내 맥 표기(`⌘`·`⌥`·Finder), Cabinet Finder 끌어 놓기·가상본·숨김 파일, 앱 안 새 판 설치(DMG → 앱 교체), iCloud·Google Drive·Dropbox 동기화 폴더 안내
+- 메모 [그림으로 복사]를 누른 즉시 클립보드 항목 생성(맥 WebKit 대응), 진단 정보 OS 줄
+- 소개 사이트 내려받기 단추 Windows·macOS, 이용 가이드 01·부록
+
 ### v1.5.0 (2026-11-02) — 열 폭 조절·Cabinet 다듬기 2·메모 여러 상자 함께 옮기기
 - 주간 뷰 업무·요일 열 폭 조절, 끌기 손잡이 또렷하게
 - 메모 보드 선택 사각형으로 여러 상자 함께 옮기기·지우기

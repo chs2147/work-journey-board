@@ -5,7 +5,7 @@
 
 ## 1. 프로젝트 개요
 - **Work Journey Board** — 요일 단위 주간 보드에 사용자 정의 업무별로 개조식 기록 → 주간 요약·정성적 경과 시각화·엑셀이 자동으로 나오는 개인 업무 일지.
-- 대상: **회사 윈도우 PC 단독**, per-user 설치, **외부 통신 0**, 데이터 = 사용자가 고른 폴더의 SQLite 파일 1개.
+- 대상: **회사 윈도우 PC** + **macOS**(1.6.0~, macos-spec — 하나의 원본·같은 판·같은 기능), per-user 설치(맥 = DMG로 응용 프로그램 폴더), **외부 통신 0**, 데이터 = 사용자가 고른 폴더의 SQLite 파일 1개.
 - 스펙 원본(이 저장소 `docs/`):
   | 문서 | 내용 |
   |---|---|
@@ -32,20 +32,20 @@
   | `features-1102-spec.md` | 신규 기능 6건(F1 검색 · F2 휴일 설정 · F3 국내 공휴일 자동(앱 안 표, 통신 없음 추천) · F4 메모 보드 마크다운 내보내기 · F5 Cabinet 폴더 탐색기 · F6 빠른 이용 가이드 HTML·PDF) 항목별 상세 설계·시안(`docs/mockups/1102/`) — F1 구현 `v1.2.0` · F2~F6 구현 `v1.3.0`(F5 끌어 놓기 A안 회사 PC 확인 대기, F6 이용 가이드 `docs/guide/` → `site/guide/`) |
   | `improve-1102-spec.md` | 2026-11-02 개선(Cabinet 별도 창·전체/진행 중 업무 목록·줄 끌어 업무 연결·순서·크롬 주소 아이콘 놓기·탐색기 폴더 안으로·업무 이름 옆 🗄, 스플래시 `버전 X.Y.Z`) — 추천안 자동 승인·구현 `v1.4.0` · 시안 `docs/mockups/1102b/` |
   | `improve-1102v7-spec.md` | 2026-11-02 개선 v7(주간 뷰 열 폭·Cabinet 폴더 놓기 이유·바로 가기·줄 탐색기 단추·폴더 확인·경로 다시 지정·폴더 창 새로 고침·업무 목록 폭·메모 사각형 다중 선택·끌기 손잡이) — 추천안 자동 승인·구현 `v1.5.0` · 시안 `docs/mockups/1102v7/` |
-  | `macos-spec.md` | macOS 판 배포 상세 설계(하나의 원본·같은 판 — 윈도우 전용 코드 점검 W1~W15, 앱 메뉴·안전 종료, 문구·단축키 중립 표기, 동기화 폴더 감지, Cabinet 끌어 놓기, DMG 업데이트 교체, 워크플로 재구성, 위험 R1~R14, 실행 계획 M0~M4) — 2026-11-02 **검토 대기**(결정 D1~D8) |
+  | `macos-spec.md` | macOS 판 배포 상세 설계(하나의 원본·같은 판 — 윈도우 전용 코드 점검 W1~W15, 앱 메뉴·안전 종료, 문구 맥 표기 변환, 동기화 폴더 감지, Cabinet 끌어 놓기, DMG 업데이트 교체, 워크플로 재구성, 위험 R1~R14, 실행 계획 M0~M4) — 2026-11-02 추천안 승인(D1~D8, 실기 = MacBook Pro M4 Pro)·구현 `v1.6.0`(9절 기록) |
   | `guide/` | **빠른 이용 가이드 원본**(장면별 `NN-이름.md` 12 + 부록 · `map.md` 기능 ↔ 장면 대응표·기준 판·갱신일) → `node scripts/guide/guide.mjs build`·`pdf`·`shots`가 소개 사이트 `site/guide/`(HTML·PDF·스크린샷) 생성, CI `guide.mjs check` |
   | `brand-spec.md` | 앱 아이콘(노트·책갈피, 작은 판)·워드마크(그로테스크 + 손글씨 Journey, SVG 도형) — 생성 도구 `scripts/brand/` |
   | `wireframes/` | 주간 보드·첫 실행/연간 보기·인사이트·스플래시 와이어프레임(svg)·스플래시 창 화면(png) |
   | `samples/*.xlsx` | 엑셀 내보내기 양식 샘플 · 기존 일지 가져오기 양식 샘플(가상 데이터) |
   | `project-plan.md` | 마일스톤 I-M0~M5·관문 G1/G2 |
   | `i-m1-plan.md` · `i-m2-plan.md` · `i-m3-plan.md` | 마일스톤별 세션 계획(I-M1 완료, I-M2 주간 요약·엑셀, I-M3 기존 일지 가져오기 + 시각화) |
-  | `m1-check.md` · `g2-log.md` | 회사 PC 확인표(I-M1 v0.1.0 · I-M2 v0.2.0 7-2절 · 메모 7-3 · 가져오기 7-4 · 개선 U1 7-5 · U2 7-6 · U3 7-7 · U4 7-8 · V1 7-9 · V2 7-10 · V3 7-11 · M3-S1 7-12 · M3-S2 7-13 · 관계선 7-14 · 다중 연결 7-15 · 개선 v3 W1 7-16 · 스냅샷 7-17 · 완료 뱃지 7-18 · 새 판 설치 7-19 · 설정·테마 7-20 · 가져오기 다듬기 7-21 · 시그니처 테마 7-22 · 최적화·복원 7-23 · 정식 릴리스 준비 7-24 · 릴리스 후 개선 7-25 · 검색 7-26 · 휴일 7-27 · 마크다운 7-28 · Cabinet 7-29 · Cabinet 다듬기 7-30 · v7 개선 7-31) · ◆G2 실사용 마찰 기록 양식 |
+  | `m1-check.md` · `g2-log.md` | 회사 PC 확인표(I-M1 v0.1.0 · I-M2 v0.2.0 7-2절 · 메모 7-3 · 가져오기 7-4 · 개선 U1 7-5 · U2 7-6 · U3 7-7 · U4 7-8 · V1 7-9 · V2 7-10 · V3 7-11 · M3-S1 7-12 · M3-S2 7-13 · 관계선 7-14 · 다중 연결 7-15 · 개선 v3 W1 7-16 · 스냅샷 7-17 · 완료 뱃지 7-18 · 새 판 설치 7-19 · 설정·테마 7-20 · 가져오기 다듬기 7-21 · 시그니처 테마 7-22 · 최적화·복원 7-23 · 정식 릴리스 준비 7-24 · 릴리스 후 개선 7-25 · 검색 7-26 · 휴일 7-27 · 마크다운 7-28 · Cabinet 7-29 · Cabinet 다듬기 7-30 · v7 개선 7-31 · macOS 첫 판 7-32) · ◆G2 실사용 마찰 기록 양식 |
 - **스펙과 다르게 구현해야 하면** 먼저 사용자에게 묻고, 확정되면 같은 작업 안에서 `docs/` 스펙도 함께 갱신한다(스펙이 정본).
 
 ## 2. 기술 스택
 | 영역 | 선택 |
 |---|---|
-| 껍데기 | **Tauri v2**, NSIS **per-user**(`bundle.windows.nsis.installMode = "currentUser"`), WebView2 `embedBootstrapper`(예비: `offlineInstaller` 수동 빌드) |
+| 껍데기 | **Tauri v2**, 윈도우 = NSIS **per-user**(`bundle.windows.nsis.installMode = "currentUser"`), WebView2 `embedBootstrapper`(예비: `offlineInstaller` 수동 빌드) · 맥 = 유니버설 DMG(`tauri.macos.conf.json`, 애드혹 서명, macOS 13+, `Info.plist` 한국어·폴더 접근 이유) |
 | 화면 | React 18 + Vite + TypeScript(strict) |
 | 상태 | Zustand(화면 상태) — 영속 데이터는 항상 저장소 경유 |
 | 스타일 | CSS Modules + `src/shared/tokens.css` 디자인 토큰(라이트/다크) |
@@ -56,7 +56,7 @@
 | Tauri 플러그인 | sql · dialog(폴더 선택·저장) · fs(저장 폴더 범위만) · clipboard-manager · single-instance · opener(폴더 열기) · window-state |
 | 테스트 | Vitest(+Testing Library), Playwright(브라우저 모드 E2E·스크린샷 — Chromium 기준 + WebKit 보험) |
 | 품질 | ESLint + Prettier, `tsc --noEmit` |
-| CI | GitHub Actions: `ci.yml`(ubuntu: lint·typecheck·test·e2e) / `build-windows.yml`(windows-latest, main 빌드 → `v<버전>` 릴리스 생성·갱신 — 0.x는 사전 릴리스, 1.0.0 이상 정식 판은 정식 릴리스(기본판만), 오프라인 설치판은 요청할 때만 수동 실행) |
+| CI | GitHub Actions: `ci.yml`(ubuntu: lint·typecheck·test·e2e + macos: Rust `cargo test`) / `build-desktop.yml`(windows-latest NSIS · macos-latest 유니버설 DMG 나란히 → main은 **둘 다 성공해야** `v<버전>` 릴리스 한 번에 생성·갱신, `SHA256SUMS.txt` 합침 — 0.x는 사전 릴리스, 1.0.0 이상 정식 판은 정식 릴리스, 윈도우 오프라인 설치판은 요청할 때만 수동 실행) |
 
 ## 3. 디렉토리 구조
 ```
@@ -80,7 +80,7 @@ fixtures/     sample-*.json — 가상 업무 기록만
 - 앱 코드에서 외부 호스트로 가는 `fetch`·XHR·WebSocket·이미지/폰트 CDN 로드를 **넣지 않는다**. 본문 글꼴은 **Pretendard Variable**(SIL OFL 1.1) — npm `pretendard`(버전 고정)의 공식 woff2를 **수정 없이** 번들한다(`src/shared/fonts.css`, 라이선스 `public/licenses/`). OFL 예약 글꼴 이름 조항 때문에 글자 잘라내기 등 파일 수정 금지. 기본 글자 크기 14px(`--fs-md`). **시그니처 테마만** 고운돋움 Regular(SIL OFL 1.1, `src/shared/fonts/GowunDodum-Regular.woff2` 한글 전체 · 라이선스 `public/licenses/GowunDodum-OFL-1.1.txt`, 굵기 400 하나 → `--fw-bold: 400` + `font-synthesis: none`) — 라이트·다크는 Pretendard(design-renewal-v1 3절 A안, 2026-10-28 사용자 확정).
 - Tauri CSP: `default-src 'self'; connect-src ipc: http://ipc.localhost; img-src 'self' data:; style-src 'self' 'unsafe-inline'`. 외부 도메인을 CSP에 추가하는 변경은 **사용자 승인 필수**.
 - 자동 업데이트 플러그인(tauri updater)·텔레메트리·오류 리포팅 SDK·분석 도구 금지.
-- **새 판 확인·설치 예외(v0.2.19, 2026-10-27 사용자 승인, improve-1027v4-spec 1절 B안)**: 인터넷에 나가는 곳은 Rust `src-tauri/src/update.rs` **하나** — GitHub Releases(이 저장소)의 판 목록·설치 파일·`SHA256SUMS.txt`만, **앱을 켤 때 1번 + 설정 [업데이트 확인]** 때만. 받은 설치 파일은 SHA256 확인 → 일지 자동 백업(`_pre-update`) → 실행. 웹 화면 CSP(`connect-src`)는 그대로, 기록·메모 등 사용자 데이터는 보내지 않는다. 주소·시점을 넓히려면 사용자 승인.
+- **새 판 확인·설치 예외(v0.2.19, 2026-10-27 사용자 승인, improve-1027v4-spec 1절 B안)**: 인터넷에 나가는 곳은 Rust `src-tauri/src/update.rs` **하나** — GitHub Releases(이 저장소)의 판 목록·설치 파일·`SHA256SUMS.txt`만, **앱을 켤 때 1번 + 설정 [업데이트 확인]** 때만. 받은 설치 파일은 SHA256 확인 → 일지 자동 백업(`_pre-update`) → 실행(맥은 DMG를 열어 앱 번들 교체 — 4-3 앱 번들 예외, 1.6.0). 웹 화면 CSP(`connect-src`)는 그대로, 기록·메모 등 사용자 데이터는 보내지 않는다. 주소·시점을 넓히려면 사용자 승인.
 - **링크 열기(v0.2.8, 2026-10-26 사용자 확정, improve-1026-spec 9·13절)**: 기록·메모 속 http/https 주소는 `Ctrl+클릭`·↗로 **OS 기본 브라우저에 넘길 뿐** 앱은 접속하지 않는다 — `Platform.openUrl` → Rust `open_url`(files.rs, http/https만 재검사 + cargo test). 링크 카드는 사용자가 쓴 제목·메모만(사이트 미리보기 B안은 하지 않음). 이 규칙을 넓히려면 사용자 승인.
 - 새 의존성 추가 시 런타임 네트워크 호출 여부를 확인하고 PR/커밋 설명에 적는다.
 - **홍보 문구(2026-11-02 사용자 지시)**: README·소개 사이트·공유 미리보기 그림·릴리스 소개 등에서 기능·특징을 강조할 때 "외부 통신 0"을 **내세우지 않는다**(구현 규칙은 그대로 지킨다). 개인정보 안내에서 사실을 짧게 적는 것은 괜찮다.
@@ -99,6 +99,8 @@ fixtures/     sample-*.json — 가상 업무 기록만
   - **메모 보드 스냅샷(2026-10-27 사용자 확정, improve-1027v3-spec 1절)**: [PNG 그림으로 저장…]도 같은 길(`.png`·`.webp`, 새 Rust 명령 없음). 그림은 `src/export/noteSnapshot.ts`가 메모 문서로 직접 그린다(화면 캡처·외부 글꼴 없음). [그림으로 복사]는 `navigator.clipboard.write`(네트워크 없음)(v0.2.17).
   - **메모 보드 마크다운(2026-11-01 사용자 승인, features-1102-spec F4)**: [마크다운으로 내보내기…]는 저장 대화상자에서 고른 경로에 `.md` 하나 + 같은 이름 `<문서 이름>_images` 폴더(없으면 한 단계만 만듦) 안 원본 이미지(`.png`·`.webp`·`.jpg`·`.jpeg`·`.gif` — 이 폴더 안에서만)를 쓴다. 일지 파일·`backups\` 거부, Rust `export_write`의 `EXPORT_EXTS`·`MD_IMAGE_EXTS` 재검사 + `cargo test`. 변환은 `src/export/noteMarkdown.ts`(순수 함수·골든 테스트).
 - **Cabinet 폴더 읽기·열기(2026-11-01 사용자 승인, features-1102-spec F5)**: 사용자가 등록한 작업 폴더(일지 `cabinet_item`)와 그 하위만 **목록 읽기(이름·종류·크기·수정 시각)·OS 기본 앱으로 열기·탐색기에서 보기**. 파일 내용을 읽지 않고(끌어 놓은 `.lnk` 바로 가기는 대상 경로만 읽음 — `cabinet_resolve_shortcut`), **지우기·이름 바꾸기·옮기기·복사 없음**. Rust `src-tauri/src/cabinet.rs`가 메인 창이 알려 준 등록 폴더 목록으로 매번 재검사(상대 경로·`..` 거부 → 정규화 후 접두어 비교, `cargo test`). 폴더 창·Cabinet 창은 별도 OS 창(`folder-*`·`cabinet`, `capabilities/folder.json`·`cabinet.json` — DB·네트워크 권한 없음, Cabinet 창의 등록·고치기는 메인 창 저장소에 허용 목록 메서드로만 부탁). 끌어 놓은 폴더 경로는 메인 창·Cabinet 창 WebView2 `postMessageWithAdditionalObjects` 다리(A안, 창마다 한 번)로만 받는다. 링크 항목은 링크 열기 규칙(4-1) 그대로 — 제목은 끌어 놓을 때 브라우저가 준 것만, 앱이 사이트에 접속해 읽지 않음. 범위를 넓히려면 사용자 승인.
+- **맥 앱 번들 교체(v1.6.0, 2026-11-02 사용자 승인, macos-spec 3-5 D7)**: 맥 업데이트는 받은 DMG를 읽기 전용으로 열어 지금 실행 중인 `…/X.app`을 바꾼다 — 옆에 `X.app.new`로 복사 → 지금 것을 `X.app.old`로 → `.new`를 원래 이름으로 → `.old` 지움. 지울 수 있는 것은 **지금 번들 바로 옆의 `X.app.new`·`X.app.old` 둘뿐**(Rust `update.rs` `removable_leftover` + `cargo test`), 앱 이동 보호(임시 위치)·디스크 이미지 안 실행은 거부, 쓸 권한이 없으면 DMG를 Finder로 열어 주고 사용자가 직접 바꾼다. 사용자 폴더·일지는 건드리지 않는다.
+- **Cabinet 맥 끌어 놓기(v1.6.0, macos-spec 3-4)**: 맥(WKWebView)은 놓은 File에 경로가 없어, 놓은 직후 끌기 붙임판(`NSPasteboardNameDrag`)의 **파일 경로만** 읽는다(`cabinet_drag_paths` — 놓은 이름과 같은 것만, Finder 가상본은 대상 경로로). 파일 내용은 읽지 않는다. Tauri 기본 끌어 놓기(`dragDropEnabled`)는 맥에서 화면 안 끌기까지 막아 쓰지 않는다.
 - **기존 일지 가져오기(v0.2.4, i-m3-plan 3-9)**: 가져올 파일·붙여넣은 글은 **읽기만**(웹 표준 파일 선택, 새 Rust 명령 없음). 쓰기 직전 `_pre-import` 자동 백업 → `JournalRepository.applyImport` 한 batch. 덮어쓰기는 일지 안의 행을 바꾸는 것(사용자 폴더 파일 삭제 아님)이며 되돌리기 자료(`import_batch.undo_json`)를 함께 남긴다.
 - **백업에서 복원(v0.4.0, 2026-11-01 사용자 승인, optimize-1031-plan O5)**: 일지 파일을 바꾸는 유일한 예외. 일지가 닫힌 상태에서 ① 지금 일지를 `backups\work-journey_<시각>_before-restore.db`로 **옮겨 보존** ② 고른 백업을 일지 이름으로 **새 파일 복사**(②가 실패하면 ① 되돌림). 지우는 파일은 없다. TS `restoreFromBackup`(session.ts, 이름 규칙 `backup.ts` `isRestorableName`·`isBeforeRestoreName`) + Rust `restore_journal`(files.rs, 이름·경로 재검사 + `cargo test`) — 두 곳의 규칙을 함께 바꾼다.
 - **보조 백업 위치(v0.4.0, optimize-1031-plan B6)**: 이 PC 설정 `config.json` `backupMirror`(기본 없음) 폴더에 일일 사본 쓰기·롤링(최근 3개) — 지우는 것은 그 폴더의 일일 패턴 파일뿐(같은 `removeGuarded`·Rust 가드). 저장 폴더·`backups\`는 고를 수 없다.
@@ -114,7 +116,8 @@ fixtures/     sample-*.json — 가상 업무 기록만
 ### 4-5. 얇은 Tauri 껍데기
 - 기능의 80~90%는 **브라우저 모드(`npm run dev`, sql.js + 샘플 시드)** 에서 개발·테스트한다(클라우드 리눅스 세션 전제).
 - 플랫폼 차이는 `src/platform/`의 인터페이스 뒤로만. Rust 코드는 플러그인 등록·설정 위주, 커맨드가 필요하면 최소한으로.
-- **윈도우에서만 확인 가능한 항목**(마일스톤마다 회사 PC에서 확인): 설치·실행, 폴더 선택 대화상자, OneDrive 경로 감지, 파일 저장·백업, WebView2 화면, 엑셀 열기.
+- **하나의 원본, 두 플랫폼(macos-spec, 2026-11-02 사용자 지시)**: 기능은 한 번 구현해 윈도우·맥이 같은 판·같은 기능으로 나간다(플랫폼별 브랜치·판 번호 없음). 윈도우·맥 차이는 **네 곳에만** 둔다 — ① `src/platform/`(TS) ② `src-tauri/src/`의 `#[cfg(windows)]`·`#[cfg(target_os = "macos")]` ③ `tauri.macos.conf.json`·`Info.plist` ④ 문구 표기 `src/shared/platformText.ts`(문구는 `strings.ts` 한 벌 = 윈도우 표기, 맥에서 `⌘`·`⌥`·Finder로 자동 변환 — 단위 테스트가 변환 뒤 윈도우 표기가 남지 않는지 본다). 화면 코드에서 OS로 동작을 가르지 않는다(예외: 맥 ⌥ 단축키 조합 판정 `ui/board/helpers.ts` 한 곳). 브라우저 모드 `?os=mac` = 맥 표기.
+- **실기 확인 항목**(마일스톤마다): 윈도우 = 회사 PC(설치·실행, 폴더 선택 대화상자, OneDrive 경로 감지, 파일 저장·백업, WebView2 화면, 엑셀 열기) · 맥 = 사용자 MacBook Pro M4 Pro(설치·첫 실행 안내, 한글 입력·⌥ 단축키, Cabinet 끌어 놓기, 메뉴·⌘Q 종료, DMG 업데이트) — `m1-check.md` 7-32.
 
 ### 4-6. 입력 UX 우선
 - 매일 기록이 **2분 이내**여야 한다(◆G2). 키보드만으로 오늘 칸 기록이 끝나야 하며, 입력 지연·포커스 이탈·저장 실패는 최우선 버그.
@@ -123,7 +126,7 @@ fixtures/     sample-*.json — 가상 업무 기록만
 ## 5. 명령
 ```bash
 npm run dev          # 브라우저 모드(sql.js, 가상 샘플 시드) — 클라우드 세션 기본
-npm run tauri dev    # 실앱 모드(윈도우 로컬 전용)
+npm run tauri dev    # 실앱 모드(윈도우·맥 로컬 전용)
 npm test             # Vitest
 npm run e2e          # Playwright(브라우저 모드) — Chromium + WebKit
 npm run e2e:chromium # WebKit을 받을 수 없는 클라우드 세션용(두 엔진은 CI에서)

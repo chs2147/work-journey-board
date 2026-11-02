@@ -84,17 +84,19 @@ footer{padding:32px 0 48px;color:#9c8f81;font-size:12px}
 <div class="hero">
 <h1>빠른 이용 가이드</h1>
 <p>자주 쓰는 장면별로 — 언제 쓰나요 → 순서 → 화면 → 팁.</p>
-<p class="meta">v1.5.0 기준 · 갱신 2026-11-02 · 화면은 가상 샘플입니다</p>
+<p class="meta">v1.6.0 기준 · 갱신 2026-11-02 · 화면은 가상 샘플입니다</p>
 <a class="dl" href="./work-journey-board-guide.pdf">PDF로 내려받기</a>
 </div>
 <nav class="toc" id="toc" aria-label="목차"><h2>목차</h2><ol><li><a href="#s1"><span class="no">1</span>처음 설치와 저장 폴더</a></li><li><a href="#s2"><span class="no">2</span>매일 2분 기록(키보드)</a></li><li><a href="#s3"><span class="no">3</span>직전 기록 가져오기·매주 반복</a></li><li><a href="#s4"><span class="no">4</span>중요 업무 챙기기</a></li><li><a href="#s5"><span class="no">5</span>메모 보드로 맥락 남기기</a></li><li><a href="#s6"><span class="no">6</span>금요일 주간 보고 만들기</a></li><li><a href="#s7"><span class="no">7</span>엑셀·마크다운 내보내기</a></li><li><a href="#s8"><span class="no">8</span>지난 일 돌아보기(인사이트)</a></li><li><a href="#s9"><span class="no">9</span>검색</a></li><li><a href="#s10"><span class="no">10</span>휴일·휴가</a></li><li><a href="#s11"><span class="no">11</span>Cabinet — 자주 쓰는 폴더·링크</a></li><li><a href="#s12"><span class="no">12</span>백업과 복원</a></li><li><a href="#s90"><span class="no"></span>부록 — 단축키·자주 묻는 질문</a></li></ol></nav>
 <section class="scene" id="s1">
 <h2><span class="no">장면 1</span>처음 설치와 저장 폴더</h2>
-<p class="lead"><strong>언제 쓰나요</strong> — 회사 PC에 처음 설치할 때, 또는 PC를 바꿔 일지를 옮길 때.</p>
-<ol class="steps"><li><a href="https://github.com/chs2147/work-journey-board/releases/latest" target="_blank" rel="noopener">최신 판 내려받기 ↗</a>에서 <code>WorkJourneyBoard_&lt;판&gt;_setup.exe</code>를 받아 실행합니다. 관리자 권한 없이 내 계정에만 설치됩니다.</li><li>처음 켜면 <strong>저장 폴더</strong>를 고릅니다. 추천 위치는 <code>C:\Users\&lt;사용자&gt;\WorkJourney</code>입니다 — OneDrive 동기화 폴더는 안내가 뜹니다.</li><li>기존 일지가 있으면 <strong>기존 일지 열기</strong>로 그 폴더를 고릅니다(<code>work-journey.db</code> 파일 하나가 일지 전체).</li><li>보드가 뜨면 <code>+ 업무 추가</code>에 지금 하고 있는 업무 이름을 적고 <code>Enter</code>.</li></ol>
+<p class="lead"><strong>언제 쓰나요</strong> — 회사 PC·맥에 처음 설치할 때, 또는 PC를 바꿔 일지를 옮길 때.</p>
+<ol class="steps"><li><a href="https://github.com/chs2147/work-journey-board/releases/latest" target="_blank" rel="noopener">최신 판 내려받기 ↗</a>에서 설치 파일을 받습니다.</li></ol>
+<p>   - <strong>Windows</strong> — <code>WorkJourneyBoard_&lt;판&gt;_setup.exe</code>를 실행합니다. 관리자 권한 없이 내 계정에만 설치됩니다.    - <strong>macOS</strong> — <code>WorkJourneyBoard_&lt;판&gt;_mac.dmg</code>를 열고 앱을 <strong>응용 프로그램</strong> 폴더로 끌어 놓습니다. 처음 열 때 &quot;확인되지 않은 개발자&quot; 안내가 나오면 <strong>시스템 설정 › 개인정보 보호 및 보안 › 그래도 열기</strong>를 한 번 누릅니다.</p>
+<ol class="steps"><li>처음 켜면 <strong>저장 폴더</strong>를 고릅니다. 추천 위치는 홈 폴더의 <code>WorkJourney</code>(Windows <code>C:\Users\&lt;사용자&gt;\WorkJourney</code> · macOS <code>~/WorkJourney</code>)입니다 — OneDrive·iCloud 같은 동기화 폴더는 안내가 뜹니다.</li><li>기존 일지가 있으면 <strong>기존 일지 열기</strong>로 그 폴더를 고릅니다(<code>work-journey.db</code> 파일 하나가 일지 전체).</li><li>보드가 뜨면 <code>+ 업무 추가</code>에 지금 하고 있는 업무 이름을 적고 <code>Enter</code>.</li></ol>
 <figure><img src="shots/01-setup.png" alt="첫 실행 — 저장 폴더 고르기"><figcaption>첫 실행 — 저장 폴더 고르기</figcaption></figure>
 <p class="lead"><strong>팁</strong></p>
-<ul><li>일지는 고른 폴더의 SQLite 파일 하나뿐이고, 앱은 기록을 어디에도 보내지 않습니다.</li><li>저장 위치는 나중에 설정 › 데이터·백업 › 저장 위치에서 옮길 수 있습니다. → <a href="#s12">12. 백업과 복원</a></li></ul>
+<ul><li>일지는 고른 폴더의 SQLite 파일 하나뿐이고, 앱은 기록을 어디에도 보내지 않습니다.</li><li>Windows와 macOS는 같은 판·같은 기능입니다. 맥에서는 단축키의 <code>Ctrl</code>이 <code>⌘</code>, <code>Alt</code>가 <code>⌥</code>, &quot;탐색기&quot;가 Finder입니다. → <a href="#s90">부록</a></li><li>저장 위치는 나중에 설정 › 데이터·백업 › 저장 위치에서 옮길 수 있습니다. → <a href="#s12">12. 백업과 복원</a></li></ul>
 </section>
 <section class="scene" id="s2">
 <h2><span class="no">장면 2</span>매일 2분 기록(키보드)</h2>
@@ -186,12 +188,13 @@ footer{padding:32px 0 48px;color:#9c8f81;font-size:12px}
 </section>
 <section class="scene" id="s90">
 <h2><span class="no">부록</span>부록 — 단축키·자주 묻는 질문</h2>
+<p>&gt; 아래 표는 Windows 표기입니다. <strong>macOS</strong>에서는 <code>Ctrl</code> → <code>⌘</code>, <code>Alt</code> → <code>⌥</code>, <code>Shift</code> → <code>⇧</code>, <code>Delete</code> → <code>fn+⌫</code>(⌦)로 읽습니다 — 예: <code>Ctrl+Shift+F</code> = <code>⇧⌘F</code>, <code>Alt+1</code> = <code>⌥1</code>. 앱 화면의 안내 글은 맥에서 맥 표기로 보입니다.</p>
 <p><strong>화면 이동</strong></p>
 <table><thead><tr><th>키</th><th>동작</th></tr></thead><tbody><tr><td><code>Alt+1</code> / <code>Alt+2</code> / <code>Alt+3</code> / <code>Alt+4</code></td><td>보드 / 중요 업무 패널 / 인사이트 / Cabinet(별도 창 열기·닫기)</td></tr><tr><td><code>Ctrl+,</code></td><td>설정</td></tr><tr><td><code>Alt+←</code> / <code>Alt+→</code> · <code>Alt+V</code></td><td>앞·뒤 주(데일리 뷰는 하루) · 주간 ↔ 데일리 뷰</td></tr><tr><td><code>Ctrl+Shift+F</code> · <code>F3</code></td><td>검색 · 다음 결과</td></tr><tr><td><code>Alt+E</code></td><td>엑셀 내보내기</td></tr></tbody></table>
 <p><strong>칸 입력</strong></p>
 <table><thead><tr><th>키</th><th>동작</th></tr></thead><tbody><tr><td><code>Enter</code> / <code>Shift+Enter</code></td><td>새 항목 / 항목 안 줄바꿈</td></tr><tr><td><code>Tab</code> / <code>Shift+Tab</code></td><td>세부 ↔ 본 항목</td></tr><tr><td><code>Alt+↑</code> / <code>Alt+↓</code></td><td>항목 순서</td></tr><tr><td><code>Alt+I</code> · <code>Alt+R</code></td><td>중요 표시 · 매주 반복</td></tr><tr><td><code>Alt+P</code> · <code>Alt+Shift+P</code></td><td>직전 기록 가져오기(이 칸 · 모든 업무)</td></tr><tr><td><code>Alt+Delete</code> · <code>Ctrl+Z</code></td><td>항목 지우기 · 되돌리기</td></tr></tbody></table>
 <p><strong>자주 묻는 질문</strong></p>
-<ul><li><strong>인터넷이 없어도 되나요?</strong> — 네. 새 판 확인(켤 때 1번)만 GitHub에 묻고, 기록·메모는 어디에도 보내지 않습니다.</li><li><strong>기록은 어디에 있나요?</strong> — 처음 고른 저장 폴더의 <code>work-journey.db</code> 한 파일입니다.</li><li><strong>새 판은 어떻게 받나요?</strong> — 켤 때 새 판이 있으면 위쪽 띠가 알려 줍니다. 설정 › 업데이트·정보에서도 확인·설치합니다(설치 전 자동 백업).</li></ul>
+<ul><li><strong>인터넷이 없어도 되나요?</strong> — 네. 새 판 확인(켤 때 1번)만 GitHub에 묻고, 기록·메모는 어디에도 보내지 않습니다.</li><li><strong>기록은 어디에 있나요?</strong> — 처음 고른 저장 폴더의 <code>work-journey.db</code> 한 파일입니다.</li><li><strong>윈도우에서 쓰던 일지를 맥으로 옮길 수 있나요?</strong> — 네. <code>work-journey.db</code> 파일을 맥으로 복사하고 처음 켤 때 <strong>기존 일지 열기</strong>로 그 폴더를 고릅니다(파일 형식이 같습니다). Cabinet에 등록한 윈도우 폴더 경로는 맥에 없으니 &quot;폴더 없음&quot; 표시에서 <strong>경로 다시 지정</strong>을 씁니다.</li><li><strong>새 판은 어떻게 받나요?</strong> — 켤 때 새 판이 있으면 위쪽 띠가 알려 줍니다. 설정 › 업데이트·정보에서도 확인·설치합니다(설치 전 자동 백업).</li></ul>
 </section>
 </main>
 <footer class="wrap">Work Journey Board · Copyright 2026 sanbonjini · <a href="https://chs2147.github.io/work-journey-board/">소개 사이트</a></footer>
