@@ -33,3 +33,4 @@ python3 scripts/brand/pack_installer.py /tmp/inst      # → src-tauri/installer
 
 - 왼쪽 그림 = 앱 아이콘 + 워드마크(시그니처 본문색) + 한 줄 소개 + 업무 색 세 줄 + 만든 이 sanbonjini M1(공식 SVG, 높이 40px).
 - `tauri.conf.json` `bundle.windows.nsis.sidebarImage`·`headerImage`·`installerIcon`이 이 파일을 쓴다.
+- macOS DMG 창 배경 660×400(macos-spec 3-6): 같은 명령이 `dmg-background.png`도 그린다 → `cp /tmp/inst/dmg-background.png src-tauri/installer/`. `tauri.macos.conf.json` `bundle.macOS.dmg.background`가 쓴다(앱 아이콘 (180,200) → 응용 프로그램 폴더 (480,200)).

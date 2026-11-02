@@ -60,7 +60,7 @@ fn parse_version(s: &str) -> Option<(u64, u64, u64)> {
     Some(v)
 }
 
-/// 설치 파일 이름(build-windows.yml과 같은 규칙)
+/// 설치 파일 이름(build-desktop.yml과 같은 규칙)
 fn installer_name(version: &str) -> String {
     format!("WorkJourneyBoard_{version}_setup.exe")
 }

@@ -1,4 +1,5 @@
 # 웹 앱 검사(리눅스): lint · 포맷 · 타입 · 단위 테스트 · E2E(브라우저 모드, Chromium + WebKit)
+# + 맥 Rust 검사(macos-spec 4-1): 맥 분기 코드가 컴파일되고 cargo test를 통과하는지
 name: CI
 
 on:
@@ -41,6 +42,19 @@ jobs:
           name: playwright-report
           path: test-results/
           retention-days: 7
+
+  # 맥 Rust 껍데기 검사(macos-spec 4-1) — #[cfg(target_os = "macos")] 코드·파일 가드·업데이트 교체 가드
+  rust-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "src-tauri -> target"
+      # tauri 빌드 스크립트가 frontendDist(../dist)를 요구한다 — 검사에는 빈 폴더면 된다
+      - run: mkdir -p dist && echo '<!doctype html>' > dist/index.html
+      - run: cargo test --lib --manifest-path src-tauri/Cargo.toml
 
   # 주 전환 메모리 검사(optimize-1031-plan O1, 2026-11-01 사용자 확정: main만, 짧은 판)
   perf:

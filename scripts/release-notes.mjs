@@ -1,6 +1,6 @@
 // 릴리스 노트(improve-1027v3-spec 5절, 공통 규칙 3-6).
 //   node scripts/release-notes.mjs check                  현재 package.json 버전의 노트·README 제목이 있는지(ci.yml)
-//   node scripts/release-notes.mjs body <버전> --out <파일>  GitHub 릴리스 본문 = 노트 + 설치 파일 표(build-windows.yml)
+//   node scripts/release-notes.mjs body <버전> --out <파일>  GitHub 릴리스 본문 = 노트 + 설치 파일 표(build-desktop.yml)
 // --root <폴더>로 저장소 위치를 바꿀 수 있다(테스트용). 외부 통신 없음.
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -9,6 +9,8 @@ import { join } from "node:path";
 const FIRST = "0.2.16";
 /** 이 판부터 노트에 '## 가이드' 절(바뀐 이용 가이드 장면 또는 "변경 없음")이 있어야 한다(features-1102-spec F6) */
 const FIRST_GUIDE = "1.3.0";
+/** 이 판부터 macOS 설치 파일을 같은 릴리스에 함께 올린다(macos-spec 4-2) */
+const FIRST_MAC = "1.6.0";
 
 const args = process.argv.slice(2);
 const opt = (name) => {
@@ -74,7 +76,14 @@ function body(v) {
     `| \`WorkJourneyBoard_${v}_setup.exe\` | 기본 설치 파일(현재 사용자 전용, WebView2 없으면 자동 설치) |`,
     // 오프라인판은 요청할 때만 수동 실행으로 같은 릴리스에 더한다(2026-11-01 사용자 지시) — 정식 판도 "있을 때만"
     `| \`WorkJourneyBoard_${v}_setup_offline.exe\` | (있을 때만) WebView2 오프라인 설치판(약 220MB) — 인터넷이 막힌 PC용 |`,
-    "| `SHA256SUMS*.txt` | 무결성 확인: `certutil -hashfile <파일> SHA256` |",
+    ...(cmp(v, FIRST_MAC) >= 0
+      ? [
+          `| \`WorkJourneyBoard_${v}_mac.dmg\` | macOS 13 이상(인텔·애플 실리콘 공용) — 열어서 앱을 응용 프로그램 폴더로 끌어 놓기 |`,
+        ]
+      : []),
+    cmp(v, FIRST_MAC) >= 0
+      ? "| `SHA256SUMS*.txt` | 무결성 확인: 윈도우 `certutil -hashfile <파일> SHA256` · 맥 `shasum -a 256 <파일>` |"
+      : "| `SHA256SUMS*.txt` | 무결성 확인: `certutil -hashfile <파일> SHA256` |",
     "",
     "앱은 새 판 확인·내려받기(GitHub)만 인터넷을 쓰며, 기록·메모는 어디에도 보내지 않습니다.",
     "",

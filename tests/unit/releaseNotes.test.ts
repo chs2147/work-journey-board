@@ -86,4 +86,13 @@ describe("정식 판(release-phase2-spec 4절)", () => {
     const pre = run(repo("0.2.16", { notes: NOTES, readme: README }), "body", "0.2.16").stdout;
     expect(pre).toContain("(개발 중 사전 릴리스)");
   });
+  it("1.6.0부터 맥 설치 파일(DMG) 줄을 함께 적는다(macos-spec 4-2), 그 전 판은 없음", () => {
+    const readme = "## Version History\n### v1.6.0 (2026-11-02) — 가상\n### v1.5.0 (2026-11-02) — 가상\n";
+    const notes = `${NOTES}\n## 가이드\n- 변경 없음\n`;
+    const mac = run(repo("1.6.0", { notes, readme }), "body", "1.6.0").stdout;
+    expect(mac).toContain("| `WorkJourneyBoard_1.6.0_mac.dmg` | macOS 13 이상");
+    expect(mac).toContain("shasum -a 256");
+    const old = run(repo("1.5.0", { notes, readme }), "body", "1.5.0").stdout;
+    expect(old).not.toContain("_mac.dmg");
+  });
 });

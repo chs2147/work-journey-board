@@ -1,6 +1,6 @@
-// 설치 프로그램(NSIS) 그림 렌더 — 디자인 시점 도구(앱 실행·빌드와 무관, release-phase2-spec 3절 A안·5절 B3).
+// 설치 프로그램 그림 렌더(NSIS 시작·머리 그림 + macOS DMG 창 배경, macos-spec 3-6) — 디자인 시점 도구(앱 실행·빌드와 무관, release-phase2-spec 3절 A안·5절 B3).
 // 시작·끝 화면 왼쪽 그림 164×314 + 중간 화면 머리 그림 150×57을 PNG로 그린다. 이어서 pack_installer.py가 BMP(24비트)로 바꿔
-// src-tauri/installer/에 둔다. 만든 이 = sanbonjini M1 공식 SVG(높이 40px — 브랜드 최소, 보호 여백 6px 이상).
+// src-tauri/installer/에 둔다(dmg-background.png는 PNG 그대로 복사). 만든 이 = sanbonjini M1 공식 SVG(높이 40px — 브랜드 최소, 보호 여백 6px 이상).
 // 실행: node scripts/brand/render_installer.mjs <출력 폴더>   (Playwright Chromium, PW_CHROMIUM_PATH로 경로 지정 가능)
 import { chromium } from "@playwright/test";
 import { mkdirSync, readFileSync } from "node:fs";
@@ -48,11 +48,29 @@ const header = page(
 </div>`,
 );
 
+// macOS DMG 창 배경 660×400(macos-spec 3-6). 앱 아이콘 중심 (180,200) → 응용 프로그램 폴더 (480,200)로 끌어 놓기.
+// Finder가 아이콘 아래(약 y 270~285)에 이름을 쓰므로 안내 글은 그 아래에 둔다
+const dmg = page(
+  660,
+  400,
+  `<div style="position:relative;width:660px;height:400px;background:#f5efe6">
+  <div style="position:absolute;left:0;right:0;top:34px;display:flex;justify-content:center">${wordmark.replace("<svg ", '<svg width="210" ')}</div>
+  <svg style="position:absolute;left:262px;top:178px" width="136" height="44" viewBox="0 0 136 44">
+    <path d="M4 22 H118" stroke="#b8ab98" stroke-width="5" stroke-linecap="round" stroke-dasharray="2 12"/>
+    <path d="M110 8 L130 22 L110 36" fill="none" stroke="#8c7e6c" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+  <div style="position:absolute;left:0;right:0;top:308px;text-align:center;font-size:15px;color:#423c34">앱을 응용 프로그램 폴더로 끌어 놓으면 설치됩니다</div>
+  <div style="position:absolute;left:0;right:0;top:334px;text-align:center;font-size:12px;color:#6b6054">처음 열 때 막히면: 시스템 설정 › 개인정보 보호 및 보안 › 그래도 열기</div>
+  <div style="position:absolute;right:16px;bottom:10px;height:26px">${m1.replace("<svg ", '<svg height="26" ').replace(/ width="\d+"/, "")}</div>
+</div>`,
+);
+
 const browser = await chromium.launch({ executablePath: process.env.PW_CHROMIUM_PATH || undefined });
 const tab = await browser.newPage();
 for (const [name, html, w, h] of [
   ["sidebar", sidebar, 164, 314],
   ["header", header, 150, 57],
+  ["dmg-background", dmg, 660, 400],
 ]) {
   await tab.setViewportSize({ width: w, height: h });
   await tab.setContent(html);
@@ -60,4 +78,4 @@ for (const [name, html, w, h] of [
   await tab.screenshot({ path: join(out, `${name}.png`), clip: { x: 0, y: 0, width: w, height: h } });
 }
 await browser.close();
-console.log(`rendered sidebar.png·header.png → ${out}`);
+console.log(`rendered sidebar.png·header.png·dmg-background.png → ${out}`);
