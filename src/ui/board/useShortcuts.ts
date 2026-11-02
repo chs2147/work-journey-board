@@ -22,13 +22,14 @@ import { focusNote, leaveNote } from "../note/noteStore";
 import { closeInsights, focusedCategory, openInsights, useInsights } from "../insights/insightsStore";
 import { leaveSettings, setSettingsOpen } from "../common/appController";
 import { useAppStore } from "../common/appStore";
+import { isComposingEvent } from "./helpers";
 
 const isTyping = (el: Element | null) => el instanceof HTMLTextAreaElement || el instanceof HTMLInputElement;
 
 export function useShortcuts() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.isComposing || e.keyCode === 229) return;
+      if (isComposingEvent(e)) return;
       const { ready, yearOpen, focusDay, weekId, panelOpen, viewMode } = useBoard.getState();
       if (!ready) return;
       const mod = e.ctrlKey || e.metaKey;

@@ -1,4 +1,7 @@
 // UI 문자열의 단일 출처. 화면 컴포넌트에 한국어 문구를 직접 쓰지 않는다(공통 규칙 4절).
+// 문구는 한 벌(윈도우 표기: Ctrl+…·탐색기)로 쓰고, 맥에서는 읽힐 때 맥 표기(⌘…·Finder)로 바꾼다(macos-spec 3-2, platformText.ts).
+import { localizeTree } from "./platformText";
+
 /** 용량 표시(1024 단위): 900 B · 12.3 KB · 4.5 MB · 1.2 GB */
 export function formatBytes(n: number): string {
   if (n < 1024) return `${n} B`;
@@ -12,7 +15,8 @@ export function formatBytes(n: number): string {
   return `${v.toFixed(1)} ${units[i]}`;
 }
 
-export const STR = {
+/** 윈도우 표기 원본(테스트가 맥 표기 변환을 검사할 때 쓴다) — 화면은 STR을 쓴다 */
+export const STR_BASE = {
   appName: "Work Journey Board",
   topBar: {
     prevWeek: "이전 주 (Alt+←)",
@@ -1330,3 +1334,5 @@ export const STR = {
     close: "닫기",
   },
 } as const;
+
+export const STR: typeof STR_BASE = localizeTree(STR_BASE);

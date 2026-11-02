@@ -16,6 +16,7 @@ import {
 import type { Platform } from "../../platform";
 import { STR } from "../../shared/strings";
 import { FileKindIcon, FolderIcon } from "./CabinetIcons";
+import { osText } from "../../shared/platformText";
 import styles from "./Cabinet.module.css";
 
 /** 열려 있는 폴더 창 자동 새로 고침 간격(improve-1102v7 K5) */
@@ -165,7 +166,7 @@ export function FolderView({ platform, root, sub, title, links, onNav, notify }:
           type="button"
           className={styles.navBtn}
           aria-label={STR.cabinet.folder.back}
-          title={`${STR.cabinet.folder.back} (Alt+←)`}
+          title={`${STR.cabinet.folder.back} (${osText("Alt+←")})`}
           disabled={!history.length}
           data-testid="folder-back"
           onClick={back}

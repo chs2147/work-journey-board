@@ -1,9 +1,37 @@
 // 보드 화면 공용 함수·훅(컴포넌트 파일과 분리 — React Fast Refresh 규칙).
 import { useEffect, type RefObject } from "react";
+import { isMac } from "../../shared/os";
 
 /** 한글 IME 조합 중 키 입력인가. 조합 중의 Enter·Tab은 글자 확정용이므로 처리하지 않는다. */
-export function isComposingKey(e: { nativeEvent: { isComposing?: boolean }; keyCode: number }): boolean {
+export function isComposingKey(e: {
+  nativeEvent: { isComposing?: boolean };
+  keyCode: number;
+  altKey?: boolean;
+  ctrlKey?: boolean;
+  metaKey?: boolean;
+  code?: string;
+}): boolean {
+  if (isMacOptionShortcut(e)) return false;
   return Boolean(e.nativeEvent.isComposing) || e.keyCode === 229;
+}
+
+/** 전역 키 처리기용(DOM KeyboardEvent) — 같은 규칙 */
+export function isComposingEvent(e: KeyboardEvent): boolean {
+  if (isMacOptionShortcut(e)) return false;
+  return e.isComposing || e.keyCode === 229;
+}
+
+/**
+ * 맥 ⌥+글자·숫자·화살표 단축키(macos-spec 3-2·R2): ⌥E·⌥I·⌥U·⌥N 등은 맥에서 "조합 대기 글쇠"라 keyCode 229로 온다 —
+ * 조합으로 보지 않고 단축키로 받는다(처리기가 preventDefault로 특수 글자 입력을 막는다). 윈도우는 그대로
+ */
+function isMacOptionShortcut(e: {
+  altKey?: boolean;
+  ctrlKey?: boolean;
+  metaKey?: boolean;
+  code?: string;
+}): boolean {
+  return isMac && Boolean(e.altKey) && !e.ctrlKey && !e.metaKey && /^(Key|Digit|Arrow)/.test(e.code ?? "");
 }
 
 /** 기록 일수 → 순차 색 단계 0~4 (연간 미니맵) */

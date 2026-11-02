@@ -24,9 +24,10 @@ import {
   type UpdateInfo,
 } from "./index";
 import { SPLASH_STATUS_EVENT } from "./splashEvents";
+import { OS } from "../shared/os";
 
-// 실앱(윈도우). 파일 동작은 src-tauri/src/files.rs의 얇은 명령을 쓴다(삭제·이름 바꾸기는 Rust에서도 패턴 검사).
-const SEP = navigator.userAgent.includes("Windows") ? "\\" : "/";
+// 실앱(윈도우·맥, macos-spec). 파일 동작은 src-tauri/src/files.rs의 얇은 명령을 쓴다(삭제·이름 바꾸기는 Rust에서도 패턴 검사).
+const SEP = OS === "windows" ? "\\" : "/";
 const join = (...parts: string[]) =>
   parts
     .filter(Boolean)

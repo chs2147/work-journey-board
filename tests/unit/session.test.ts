@@ -82,6 +82,15 @@ describe("저장 폴더 분류·OneDrive (overview 10-10)", () => {
     expect(isOneDriveLike("D:\\work_logs", roots)).toBe(false);
     expect(isOneDriveLike("D:\\OneDriveBackup", [])).toBe(false);
   });
+
+  it("맥 동기화 폴더(macos-spec 3-3): CloudStorage(OneDrive·Google Drive)·iCloud Drive·Dropbox", () => {
+    expect(isOneDriveLike("/Users/me/Library/CloudStorage/OneDrive-Company/WJ", [])).toBe(true);
+    expect(isOneDriveLike("/Users/me/Library/CloudStorage/GoogleDrive-me@x.com/내 드라이브", [])).toBe(true);
+    expect(isOneDriveLike("/Users/me/Library/Mobile Documents/com~apple~CloudDocs/WJ", [])).toBe(true);
+    expect(isOneDriveLike("/Users/me/Dropbox/WJ", [])).toBe(true);
+    expect(isOneDriveLike("/Users/me/WorkJourney", [])).toBe(false);
+    expect(isOneDriveLike("/Users/me/Documents/DropboxNotes", [])).toBe(false);
+  });
 });
 
 describe("저장 위치 옮기기 (overview 10-10)", () => {

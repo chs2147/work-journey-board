@@ -112,9 +112,11 @@ export async function copySnapshot() {
   if (j.state !== "ready") return;
   if (empty()) return toast(STR.note.snapshotEmpty);
   try {
-    const { blob } = await renderNoteSnapshot(await currentInput(j.repo, platform?.now() ?? new Date()), {
-      scale: 2,
-    });
+    // ClipboardItem은 누른 즉시(사용자 동작 안에서) 만들고 그림은 Promise로 넘긴다 — 맥 WKWebView(WebKit)는
+    // 그림을 다 그린 뒤 만들면 거부한다(macos-spec W12). WebView2(Chromium)도 같은 형태를 받는다
+    const blob = currentInput(j.repo, platform?.now() ?? new Date())
+      .then((input) => renderNoteSnapshot(input, { scale: 2 }))
+      .then((r) => r.blob);
     await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
     toast(STR.note.snapshotCopied);
   } catch {

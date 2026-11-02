@@ -257,12 +257,17 @@ export function exportPathProblem(path: string, dataDir: string, kind: ExportKin
   return null;
 }
 
-/** OneDrive 판정 공통 규칙 */
+/**
+ * 동기화 폴더 판정 공통 규칙(OneDrive — 맥은 iCloud·Google Drive·Dropbox도, macos-spec 3-3).
+ * 동기화가 SQLite 파일을 반쯤 쓴 채 올리거나 충돌 사본을 만들 수 있어 같은 경고를 낸다
+ */
 export function isOneDriveLike(path: string, roots: string[]): boolean {
   const p = path.replace(/\//g, "\\").toLowerCase();
   return (
     roots.some((r) => r && p.startsWith(r.replace(/\//g, "\\").toLowerCase())) ||
-    /\\onedrive(\\|$| - )/.test(p)
+    /\\onedrive(\\|$| - )/.test(p) ||
+    // 맥: ~/Library/CloudStorage/(OneDrive-…·GoogleDrive-…·Dropbox…) · ~/Library/Mobile Documents/(iCloud Drive) · ~/Dropbox
+    /^\\users\\[^\\]+\\(library\\cloudstorage|library\\mobile documents|dropbox)(\\|$)/.test(p)
   );
 }
 
