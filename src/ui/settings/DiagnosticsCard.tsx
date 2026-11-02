@@ -7,6 +7,7 @@ import { toast } from "../board/boardStore";
 import { useAppStore } from "../common/appStore";
 import styles from "./Settings.module.css";
 import { Card } from "./SettingsCard";
+import { OS } from "../../shared/os";
 
 /** Chromium 계열(WebView2 포함)만 있는 비표준 값 */
 function jsHeapMb(): number | null {
@@ -32,6 +33,14 @@ export function DiagnosticsCard() {
     const heap = jsHeapMb();
     setRows([
       [D.version, `${__APP_VERSION__} · SQLite ${journal.sqliteVersion}`],
+      // macos-spec 4-3: 어느 OS의 판인지(문제를 알릴 때 윈도우·맥 구분)
+      [
+        D.os,
+        D.osValue(
+          OS === "macos" ? "macOS" : "Windows",
+          navigator.userAgent.replace(/^.*?\(([^)]*)\).*$/, "$1"),
+        ),
+      ],
       [D.memory, heap === null ? D.unknown : `${heap} MB`],
       [D.journal, file.size === null ? D.unknown : formatBytes(file.size)],
       [D.images, D.imageValue(images.count, formatBytes(images.bytes))],

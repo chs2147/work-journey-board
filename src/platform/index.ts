@@ -142,6 +142,8 @@ export interface Platform {
 
   /** 창을 닫기 직전에 실행(저장·종료 백업). 끝나면 창이 닫힌다. */
   onExit(handler: () => Promise<void>): void;
+  /** 맥 메뉴 막대 항목(macos-spec 3-1) — 실앱 맥만 이벤트가 온다(윈도우·브라우저 모드에는 메뉴가 없다) */
+  onMenuAction?(handler: (id: string) => void): void;
 
   /** 시작 스플래시 창(실앱만, docs/splash-spec.md). 브라우저 모드에는 없다. */
   readonly splash?: SplashWindow;

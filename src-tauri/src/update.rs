@@ -7,7 +7,7 @@ use serde::Serialize;
 use sha2::{Digest, Sha256};
 use std::fs;
 use std::io::Write;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 use std::time::Duration;
 use tauri::{AppHandle, Emitter, Manager, State};
@@ -60,9 +60,17 @@ fn parse_version(s: &str) -> Option<(u64, u64, u64)> {
     Some(v)
 }
 
-/// 설치 파일 이름(build-desktop.yml과 같은 규칙)
+/// 설치 파일 이름(build-desktop.yml과 같은 규칙) — 윈도우 NSIS exe, 맥 유니버설 DMG(macos-spec 3-5)
+fn installer_name_for(os: &str, version: &str) -> String {
+    if os == "macos" {
+        format!("WorkJourneyBoard_{version}_mac.dmg")
+    } else {
+        format!("WorkJourneyBoard_{version}_setup.exe")
+    }
+}
+
 fn installer_name(version: &str) -> String {
-    format!("WorkJourneyBoard_{version}_setup.exe")
+    installer_name_for(std::env::consts::OS, version)
 }
 
 #[derive(Debug, PartialEq)]
@@ -75,7 +83,7 @@ struct Candidate {
 }
 
 /// 판 목록 JSON에서 지금보다 높은 판 중 가장 높은 것(초안 제외, 설치 파일이 있는 것만)
-fn pick_release(json: &serde_json::Value, current: &str) -> Option<Candidate> {
+fn pick_release(json: &serde_json::Value, current: &str, os: &str) -> Option<Candidate> {
     let cur = parse_version(current)?;
     let mut best: Option<((u64, u64, u64), Candidate)> = None;
     for r in json.as_array()? {
@@ -94,7 +102,7 @@ fn pick_release(json: &serde_json::Value, current: &str) -> Option<Candidate> {
         let version = format!("{}.{}.{}", v.0, v.1, v.2);
         let assets = r["assets"].as_array().cloned().unwrap_or_default();
         let find = |name: &str| assets.iter().find(|a| a["name"].as_str() == Some(name));
-        let Some(exe) = find(&installer_name(&version)) else {
+        let Some(exe) = find(&installer_name_for(os, &version)) else {
             continue;
         };
         let Some(exe_url) = exe["browser_download_url"].as_str() else {
@@ -179,7 +187,7 @@ pub async fn update_check(
     let json: serde_json::Value = serde_json::from_slice(&res.bytes().await.map_err(net_err)?)
         .map_err(|e| format!("판 목록을 읽지 못했습니다: {e}"))?;
     let current = app.package_info().version.to_string();
-    let Some(c) = pick_release(&json, &current) else {
+    let Some(c) = pick_release(&json, &current, std::env::consts::OS) else {
         *state.0.lock().unwrap() = None;
         return Ok(None);
     };
@@ -240,7 +248,9 @@ pub async fn update_download(app: AppHandle, state: State<'_, UpdateState>) -> R
         for e in list.flatten() {
             let name = e.file_name().to_string_lossy().to_string();
             if name.starts_with("WorkJourneyBoard_")
-                && (name.ends_with("_setup.exe") || name.ends_with(".part"))
+                && (name.ends_with("_setup.exe")
+                    || name.ends_with("_mac.dmg")
+                    || name.ends_with(".part"))
             {
                 let _ = fs::remove_file(e.path());
             }
@@ -335,10 +345,175 @@ pub fn update_install(app: AppHandle, state: State<'_, UpdateState>) -> Result<(
         app.exit(0);
         Ok(())
     }
-    #[cfg(not(windows))]
+    #[cfg(target_os = "macos")]
+    {
+        mac::install(&path, &pending.version)?;
+        app.exit(0);
+        Ok(())
+    }
+    #[cfg(not(any(windows, target_os = "macos")))]
     {
         let _ = app;
-        Err("윈도우에서만 설치할 수 있습니다".into())
+        Err("윈도우·맥에서만 설치할 수 있습니다".into())
+    }
+}
+
+/// 맥 앱 번들 교체 경로(macos-spec 3-5, 2026-11-02 사용자 승인 D7 — CLAUDE.md 4-3 앱 번들 예외).
+/// 실행 파일(`…/X.app/Contents/MacOS/bin`) → (지금 번들, 새 판을 복사해 둘 `X.app.new`, 옛 판을 잠시 둘 `X.app.old`).
+/// 앱 이동 보호(임시 위치)·디스크 이미지 안에서 실행 중이면 교체하지 않는다.
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+fn bundle_paths(exe: &Path) -> Result<(PathBuf, PathBuf, PathBuf), String> {
+    let bundle = exe
+        .parent()
+        .and_then(Path::parent)
+        .and_then(Path::parent)
+        .filter(|b| {
+            exe.parent().and_then(Path::file_name) == Some("MacOS".as_ref())
+                && b.extension() == Some("app".as_ref())
+        })
+        .ok_or("앱 위치를 확인하지 못했습니다")?
+        .to_path_buf();
+    let text = bundle.to_string_lossy();
+    if text.contains("/AppTranslocation/") || text.starts_with("/Volumes/") {
+        return Err(
+            "앱을 응용 프로그램 폴더로 옮긴 뒤 다시 실행해야 업데이트할 수 있습니다(디스크 이미지·임시 위치에서 실행 중)"
+                .into(),
+        );
+    }
+    let name = bundle
+        .file_name()
+        .ok_or("앱 위치를 확인하지 못했습니다")?
+        .to_string_lossy()
+        .into_owned();
+    let staged = bundle.with_file_name(format!("{name}.new"));
+    let old = bundle.with_file_name(format!("{name}.old"));
+    Ok((bundle, staged, old))
+}
+
+/// 지울 수 있는 것은 지금 번들 바로 옆의 `X.app.new`·`X.app.old` 둘뿐(이중 가드 — 경로 계산과 따로 다시 본다)
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+fn removable_leftover(bundle: &Path, target: &Path) -> bool {
+    let (Some(dir), Some(name)) = (bundle.parent(), bundle.file_name()) else {
+        return false;
+    };
+    let name = name.to_string_lossy();
+    name.ends_with(".app")
+        && target.parent() == Some(dir)
+        && [format!("{name}.new"), format!("{name}.old")]
+            .iter()
+            .any(|n| target.file_name() == Some(n.as_ref()))
+}
+
+#[cfg(target_os = "macos")]
+mod mac {
+    use super::{bundle_paths, removable_leftover};
+    use std::fs;
+    use std::path::{Path, PathBuf};
+    use std::process::Command;
+
+    fn run(cmd: &mut Command, what: &str) -> Result<String, String> {
+        let out = cmd.output().map_err(|e| format!("{what} 실행 실패: {e}"))?;
+        if !out.status.success() {
+            return Err(format!(
+                "{what} 실패: {}",
+                String::from_utf8_lossy(&out.stderr).trim()
+            ));
+        }
+        Ok(String::from_utf8_lossy(&out.stdout).into_owned())
+    }
+
+    fn remove_leftover(bundle: &Path, target: &Path) {
+        if target.exists() && removable_leftover(bundle, target) {
+            let _ = fs::remove_dir_all(target);
+        }
+    }
+
+    /// 받은 DMG를 열어(읽기 전용, Finder에 안 보이게) 앱을 꺼내 지금 번들과 바꾼다. 끝나면 앱이 꺼진 뒤 새 판을 연다.
+    /// 응용 프로그램 폴더에 쓸 권한이 없으면 DMG를 Finder로 열어 주고 직접 바꾸도록 안내한다(D7 B 길).
+    pub fn install(dmg: &PathBuf, version: &str) -> Result<(), String> {
+        let exe =
+            std::env::current_exe().map_err(|e| format!("앱 위치를 확인하지 못했습니다: {e}"))?;
+        let (bundle, staged, old) = bundle_paths(&exe)?;
+        let mount = dmg.with_extension("mnt");
+        let _ = Command::new("hdiutil")
+            .args(["detach", "-force"])
+            .arg(&mount)
+            .output();
+        let _ = fs::create_dir_all(&mount);
+        run(
+            Command::new("hdiutil")
+                .args([
+                    "attach",
+                    "-nobrowse",
+                    "-readonly",
+                    "-noautoopen",
+                    "-mountpoint",
+                ])
+                .arg(&mount)
+                .arg(dmg),
+            "디스크 이미지 열기",
+        )?;
+        let result = (|| -> Result<(), String> {
+            let src = fs::read_dir(&mount)
+                .map_err(|e| format!("디스크 이미지를 읽지 못했습니다: {e}"))?
+                .flatten()
+                .map(|e| e.path())
+                .find(|p| p.extension() == Some("app".as_ref()))
+                .ok_or("디스크 이미지에 앱이 없습니다")?;
+            let plist = src.join("Contents/Info.plist");
+            let got = run(
+                Command::new("/usr/libexec/PlistBuddy")
+                    .args(["-c", "Print :CFBundleShortVersionString"])
+                    .arg(&plist),
+                "판 번호 확인",
+            )?;
+            if got.trim() != version {
+                return Err(format!(
+                    "디스크 이미지의 판({})이 받은 판({version})과 다릅니다",
+                    got.trim()
+                ));
+            }
+            remove_leftover(&bundle, &staged);
+            if let Err(e) = run(Command::new("ditto").arg(&src).arg(&staged), "새 판 복사") {
+                remove_leftover(&bundle, &staged);
+                // 권한이 없으면 사용자가 직접 끌어 놓아 바꾸도록 DMG를 Finder로 연다
+                let _ = Command::new("open").arg(dmg).spawn();
+                return Err(format!(
+                    "응용 프로그램 폴더에 쓸 수 없어 설치 파일을 열었습니다 — 앱을 끝낸 뒤 새 판을 응용 프로그램 폴더로 끌어 놓아 바꿔 주세요 ({e})"
+                ));
+            }
+            Ok(())
+        })();
+        let _ = Command::new("hdiutil")
+            .args(["detach", "-force"])
+            .arg(&mount)
+            .output();
+        let _ = fs::remove_dir(&mount);
+        result?;
+        // 바꿔치기: 지금 → .old, .new → 지금. 둘째가 실패하면 되돌린다
+        remove_leftover(&bundle, &old);
+        fs::rename(&bundle, &old).map_err(|e| {
+            remove_leftover(&bundle, &staged);
+            format!("지금 앱을 옮기지 못했습니다: {e}")
+        })?;
+        if let Err(e) = fs::rename(&staged, &bundle) {
+            let _ = fs::rename(&old, &bundle);
+            remove_leftover(&bundle, &staged);
+            return Err(format!("새 판으로 바꾸지 못했습니다: {e}"));
+        }
+        remove_leftover(&bundle, &old);
+        // 이 앱이 끝난 뒤 새 판을 연다(지금 열면 단일 실행 규칙에 걸려 바로 꺼진다)
+        Command::new("/bin/sh")
+            .args([
+                "-c",
+                "while kill -0 \"$1\" 2>/dev/null; do sleep 0.2; done; open \"$2\"",
+                "sh",
+            ])
+            .arg(std::process::id().to_string())
+            .arg(&bundle)
+            .spawn()
+            .map_err(|e| format!("새 판을 다시 열지 못했습니다(직접 열어 주세요): {e}"))?;
+        Ok(())
     }
 }
 
@@ -384,17 +559,94 @@ mod tests {
             release("v0.2.18", false, &["WorkJourneyBoard_0.2.18_setup.exe"]),
             release("v0.2.10", false, &["WorkJourneyBoard_0.2.10_setup.exe"]),
         ]);
-        let c = pick_release(&list, "0.2.18").unwrap();
+        let c = pick_release(&list, "0.2.18", "windows").unwrap();
         assert_eq!(c.version, "0.2.19");
         assert!(c
             .exe_url
             .ends_with("/v0.2.19/WorkJourneyBoard_0.2.19_setup.exe"));
         assert!(c.sums_url.unwrap().ends_with("/SHA256SUMS.txt"));
         assert_eq!(c.notes, "v0.2.19 노트");
-        assert_eq!(pick_release(&list, "0.2.19"), None);
+        assert_eq!(pick_release(&list, "0.2.19", "windows"), None);
         assert_eq!(
-            pick_release(&json!({"message": "rate limit"}), "0.2.18"),
+            pick_release(&json!({"message": "rate limit"}), "0.2.18", "windows"),
             None
+        );
+    }
+
+    /// 맥 번들 교체 경로·가드(macos-spec 3-5): 지울 수 있는 것은 번들 옆 .new·.old뿐, 임시 위치·DMG 안 실행은 거부
+    #[test]
+    fn mac_bundle_swap_guard() {
+        let exe =
+            Path::new("/Applications/Work Journey Board.app/Contents/MacOS/work-journey-board");
+        let (bundle, staged, old) = bundle_paths(exe).unwrap();
+        assert_eq!(bundle, Path::new("/Applications/Work Journey Board.app"));
+        assert_eq!(
+            staged,
+            Path::new("/Applications/Work Journey Board.app.new")
+        );
+        assert_eq!(old, Path::new("/Applications/Work Journey Board.app.old"));
+        assert!(removable_leftover(&bundle, &staged));
+        assert!(removable_leftover(&bundle, &old));
+        for bad in [
+            "/Applications/Work Journey Board.app",
+            "/Applications",
+            "/Applications/Other.app.old",
+            "/Users/me/Work Journey Board.app.old",
+            "/Applications/Work Journey Board.app.old/Contents",
+            "/Applications/Work Journey Board.app.bak",
+        ] {
+            assert!(!removable_leftover(&bundle, Path::new(bad)), "{bad}");
+        }
+        // 사용자 홈의 응용 프로그램 폴더도 된다
+        assert!(bundle_paths(Path::new(
+            "/Users/me/Applications/Work Journey Board.app/Contents/MacOS/x"
+        ))
+        .is_ok());
+        for bad in [
+            "/private/var/folders/x/T/AppTranslocation/ABC/d/Work Journey Board.app/Contents/MacOS/x",
+            "/Volumes/Work Journey Board/Work Journey Board.app/Contents/MacOS/x",
+            "/usr/local/bin/work-journey-board",
+            "/Applications/Work Journey Board/Contents/MacOS/x",
+        ] {
+            assert!(bundle_paths(Path::new(bad)).is_err(), "{bad}");
+        }
+    }
+
+    /// 한 릴리스에 윈도우·맥 설치 파일이 함께 있다(macos-spec 4-1) — 각자 자기 파일만 고른다.
+    /// 1.5.0 이하 윈도우 판은 맥 파일이 더해져도 그대로 exe를 찾는다
+    #[test]
+    fn picks_installer_for_each_os() {
+        let list = json!([release(
+            "v1.6.0",
+            false,
+            &[
+                "WorkJourneyBoard_1.6.0_setup.exe",
+                "WorkJourneyBoard_1.6.0_mac.dmg",
+                "SHA256SUMS.txt"
+            ]
+        )]);
+        let win = pick_release(&list, "1.5.0", "windows").unwrap();
+        assert!(win.exe_url.ends_with("/WorkJourneyBoard_1.6.0_setup.exe"));
+        let mac = pick_release(&list, "1.5.0", "macos").unwrap();
+        assert!(mac.exe_url.ends_with("/WorkJourneyBoard_1.6.0_mac.dmg"));
+        // 맥 파일이 없는 옛 릴리스(1.5.0)는 맥에 새 판으로 보이지 않는다
+        let old = json!([release(
+            "v1.5.0",
+            false,
+            &["WorkJourneyBoard_1.5.0_setup.exe"]
+        )]);
+        assert_eq!(pick_release(&old, "1.4.0", "macos"), None);
+        // 두 파일이 든 SHA256SUMS.txt에서 각자 해시를 찾는다
+        let (a, b) = ("a".repeat(64), "b".repeat(64));
+        let sums =
+            format!("{a}  WorkJourneyBoard_1.6.0_setup.exe\n{b}  WorkJourneyBoard_1.6.0_mac.dmg\n");
+        assert_eq!(
+            parse_sums(&sums, &installer_name_for("macos", "1.6.0")),
+            Some(b.clone())
+        );
+        assert_eq!(
+            parse_sums(&sums, &installer_name_for("windows", "1.6.0")),
+            Some(a)
         );
     }
 

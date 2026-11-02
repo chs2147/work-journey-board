@@ -3,6 +3,8 @@
 mod cabinet;
 mod db_batch;
 mod files;
+#[cfg(target_os = "macos")]
+mod menu;
 mod splash;
 mod update;
 
@@ -10,7 +12,13 @@ use tauri::Manager;
 use tauri_plugin_window_state::StateFlags;
 
 pub fn run() {
-    tauri::Builder::default()
+    let builder = tauri::Builder::default();
+    // 맥 메뉴 막대(macos-spec 3-1): 한국어 앱·편집·보기·윈도우·도움말, ⌘Q = 안전 종료
+    #[cfg(target_os = "macos")]
+    let builder = builder
+        .menu(|app| menu::build(app))
+        .on_menu_event(|app, e| menu::on_event(app, e.id().as_ref()));
+    builder
         // 단일 인스턴스: 두 번째 실행은 기존 창을 앞으로 가져오고 끝낸다(DB 쓰기 주체 1개, data-spec 3-1).
         // 다른 플러그인보다 먼저 등록해야 한다.
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
@@ -76,7 +84,8 @@ pub fn run() {
             cabinet::cabinet_open,
             cabinet::cabinet_reveal,
             cabinet::cabinet_drop_bridge,
-            cabinet::cabinet_resolve_shortcut
+            cabinet::cabinet_resolve_shortcut,
+            cabinet::cabinet_drag_paths
         ])
         .run(tauri::generate_context!())
         .expect("Work Journey Board 실행 중 오류");

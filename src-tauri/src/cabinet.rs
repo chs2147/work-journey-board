@@ -65,7 +65,15 @@ fn is_hidden(m: &fs::Metadata, name: &str) -> bool {
     m.file_attributes() & (HIDDEN | SYSTEM) != 0 || name.starts_with('.')
 }
 
-#[cfg(not(windows))]
+/// 맥: 점 이름 + Finder 숨김 플래그(UF_HIDDEN, macos-spec 3-4)
+#[cfg(target_os = "macos")]
+fn is_hidden(m: &fs::Metadata, name: &str) -> bool {
+    use std::os::macos::fs::MetadataExt;
+    const UF_HIDDEN: u32 = 0x8000;
+    m.st_flags() & UF_HIDDEN != 0 || name.starts_with('.')
+}
+
+#[cfg(not(any(windows, target_os = "macos")))]
 fn is_hidden(_m: &fs::Metadata, name: &str) -> bool {
     name.starts_with('.')
 }
@@ -192,6 +200,75 @@ fn resolve_lnk(_path: &str) -> Option<String> {
     None
 }
 
+/// 맥(macos-spec 3-4): 방금 놓은 파일·폴더의 경로 — 끌기 붙임판(NSPasteboardNameDrag)에 남은 파일 경로만 읽는다(파일 내용은 읽지 않음).
+/// 웹 화면(WKWebView)은 놓은 File 객체에 경로를 주지 않으므로, 놓기 처리기가 이름 목록을 넘기면 같은 이름의 경로만 돌려준다
+/// (오래된 끌기 정보를 잘못 쓰지 않게). 이름이 비었으면 붙임판의 경로 전부. Finder 가상본은 가리키는 대상 경로로 푼다.
+/// 맥이 아니면 빈 목록(윈도우는 WebView2 다리 `install_drop_bridge`)
+#[tauri::command]
+pub fn cabinet_drag_paths(names: Vec<String>) -> Vec<String> {
+    #[cfg(target_os = "macos")]
+    {
+        pick_by_names(mac_drag::paths(), &names)
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = names;
+        vec![]
+    }
+}
+
+/// 붙임판 경로 중 놓은 파일 이름과 같은 것만(이름이 비었으면 전부), 200개까지
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+fn pick_by_names(paths: Vec<String>, names: &[String]) -> Vec<String> {
+    paths
+        .into_iter()
+        .filter(|p| {
+            names.is_empty()
+                || Path::new(p)
+                    .file_name()
+                    .is_some_and(|n| names.iter().any(|x| n.to_string_lossy() == *x))
+        })
+        .take(200)
+        .collect()
+}
+
+#[cfg(target_os = "macos")]
+#[allow(deprecated)] // NSFilenamesPboardType — wry(tauri)와 같은 방식으로 파일 경로 목록을 읽는다
+mod mac_drag {
+    use objc2_app_kit::{NSFilenamesPboardType, NSPasteboard, NSPasteboardNameDrag};
+    use objc2_foundation::{NSArray, NSString, NSURLBookmarkResolutionOptions, NSURL};
+
+    /// Finder 가상본이면 대상 경로, 아니면 그대로
+    fn resolve_alias(path: String) -> String {
+        let url = NSURL::fileURLWithPath(&NSString::from_str(&path));
+        match NSURL::URLByResolvingAliasFileAtURL_options_error(
+            &url,
+            NSURLBookmarkResolutionOptions::WithoutUI
+                | NSURLBookmarkResolutionOptions::WithoutMounting,
+        ) {
+            Ok(r) => r.path().map(|p| p.to_string()).unwrap_or(path),
+            Err(_) => path,
+        }
+    }
+
+    pub fn paths() -> Vec<String> {
+        #[allow(unused_unsafe)]
+        unsafe {
+            let pb = NSPasteboard::pasteboardWithName(NSPasteboardNameDrag);
+            let Some(list) = pb.propertyListForType(NSFilenamesPboardType) else {
+                return vec![];
+            };
+            let Ok(list) = list.downcast::<NSArray>() else {
+                return vec![];
+            };
+            list.iter()
+                .filter_map(|o| o.downcast::<NSString>().ok())
+                .map(|s| resolve_alias(s.to_string()))
+                .collect()
+        }
+    }
+}
+
 /// 웹 화면이 끌어 놓은 파일을 넘길 때 쓰는 약속 글(src/platform/tauri.ts와 같아야 한다)
 pub const DROP_MESSAGE: &str = "wjb-cabinet-drop";
 /// 받은 경로를 웹 화면에 돌려주는 이벤트
@@ -253,6 +330,28 @@ pub fn install_drop_bridge(window: &tauri::WebviewWindow) {
         let mut token = 0i64;
         let _ = core.add_WebMessageReceived(&handler, &mut token);
     });
+}
+
+#[cfg(test)]
+mod drag_tests {
+    use super::pick_by_names;
+
+    #[test]
+    fn drag_paths_only_dropped_names() {
+        let paths = vec![
+            "/Users/me/업무/보고서".to_string(),
+            "/Users/me/업무/자료".to_string(),
+            "/Volumes/공유/프로젝트 A".to_string(),
+        ];
+        assert_eq!(
+            pick_by_names(paths.clone(), &["자료".into(), "프로젝트 A".into()]),
+            vec!["/Users/me/업무/자료", "/Volumes/공유/프로젝트 A"]
+        );
+        // 지난 끌기 정보(이름이 다름)는 쓰지 않는다
+        assert!(pick_by_names(paths.clone(), &["다른 폴더".into()]).is_empty());
+        // 이름을 모르면(폴더만 놓아 File 목록이 빈 경우) 전부
+        assert_eq!(pick_by_names(paths, &[]).len(), 3);
+    }
 }
 
 #[cfg(test)]

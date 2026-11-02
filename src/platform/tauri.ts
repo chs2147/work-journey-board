@@ -176,8 +176,24 @@ const cabinetWindow: CabinetWindowBridge = {
   installDropBridge: () => invoke("cabinet_drop_bridge"),
 };
 
-/** 끌어 놓은 File → WebView2가 아는 경로(cabinet.rs 다리). 다리가 없거나 1.5초 안에 답이 없으면 null */
+/** 경로들 → 있는지·폴더인지 */
+const statPaths = (paths: string[]): Promise<DroppedPath[]> =>
+  Promise.all(
+    paths.map(async (path) => {
+      const r = await invoke<{ exists: boolean; is_dir: boolean }>("fs_stat", { path });
+      return { path, isDir: r.is_dir, exists: r.exists };
+    }),
+  );
+
+/**
+ * 끌어 놓은 File → 경로. 윈도우 = WebView2가 아는 경로(cabinet.rs 다리, 1.5초 안에 답이 없으면 null),
+ * 맥 = 놓은 직후 끌기 붙임판의 파일 경로(cabinet_drag_paths, 같은 이름만 — macos-spec 3-4). 폴더만 놓아 File 목록이 비어도 맥은 경로를 찾는다
+ */
 async function droppedPaths(files: File[]): Promise<DroppedPath[] | null> {
+  if (OS === "macos") {
+    const paths = await invoke<string[]>("cabinet_drag_paths", { names: files.map((f) => f.name) });
+    return paths.length ? statPaths(paths) : null;
+  }
   const wv = (
     globalThis as {
       chrome?: { webview?: { postMessageWithAdditionalObjects?: (m: string, o: File[]) => void } };
@@ -205,12 +221,7 @@ async function droppedPaths(files: File[]): Promise<DroppedPath[] | null> {
     setTimeout(() => finish(null), 1500);
   });
   if (!paths?.length) return null;
-  return Promise.all(
-    paths.map(async (path) => {
-      const r = await invoke<{ exists: boolean; is_dir: boolean }>("fs_stat", { path });
-      return { path, isDir: r.is_dir, exists: r.exists };
-    }),
-  );
+  return statPaths(paths);
 }
 
 const backupFs: BackupFs = {
@@ -303,6 +314,11 @@ export const tauriPlatform: Platform = {
   },
 
   splash,
+
+  onMenuAction(handler) {
+    // src-tauri/src/menu.rs MENU_EVENT와 같은 이름
+    void listen<string>("menu-action", (e) => handler(e.payload));
+  },
 
   async pickFolders(title) {
     const picked = await open({ directory: true, multiple: true, title });

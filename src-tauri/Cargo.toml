@@ -34,3 +34,9 @@ sha2 = "0.10"
 webview2-com = "0.39"
 # 바로 가기(.lnk) 대상 경로 읽기(cabinet.rs, improve-1102v7 K2) — 같은 판, 필요한 기능만
 windows = { version = "0.62", features = ["Win32_Foundation", "Win32_System_Com", "Win32_UI_Shell", "Win32_Storage_FileSystem"] }
+
+# 맥(macos-spec 3-4): Cabinet 끌어 놓기 — 놓은 직후 끌기 붙임판(NSPasteboardNameDrag)에서 파일 경로만 읽고, Finder 가상본은 대상 경로로 푼다.
+# tauri(wry·tao)가 이미 쓰는 판과 같게, 필요한 기능만(새로 받는 코드 없음, 네트워크 없음)
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2-foundation = { version = "0.3", default-features = false, features = ["std", "NSArray", "NSEnumerator", "NSString", "NSURL", "NSError"] }
+objc2-app-kit = { version = "0.3", default-features = false, features = ["std", "NSPasteboard"] }

@@ -344,7 +344,9 @@ export async function handleDrop(dt: DataTransfer) {
   const urlFiles = files.filter((f) => isUrlShortcutName(f.name));
   const others = files.filter((f) => !isUrlShortcutName(f.name));
   let link = parseLinkTransfer(transferOf(dt));
-  if (others.length) {
+  // 맥 WebKit은 폴더만 놓으면 File 목록이 빌 수 있다 — "Files"가 있으면 경로를 물어본다(macos-spec 3-4)
+  const filesOnly = !files.length && [...dt.types].includes("Files") && !link;
+  if (others.length || filesOnly) {
     // 폴더만 등록 — 바로 가기(.lnk)는 가리키는 폴더로, 아니면 무엇이 왜 안 되는지 이름과 함께(improve-1102v7 K2)
     const p = app().platform;
     const got = (await p?.droppedPaths(others).catch(() => null)) ?? null;

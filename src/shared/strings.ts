@@ -1241,6 +1241,8 @@ export const STR_BASE = {
       copy: "복사",
       copied: "진단 정보를 복사했습니다",
       version: "버전",
+      os: "OS",
+      osValue: (os: string, ua: string) => `${os} · ${ua}`,
       memory: "화면 메모리(JS)",
       journal: "일지 파일",
       images: "메모 이미지",

@@ -34,6 +34,7 @@ import { useNote } from "./note/noteStore";
 import { finishSplash } from "./splash";
 import { checkOnStart, useUpdate } from "./update/updateStore";
 import { UpdateBanner, UpdateDialog } from "./update/UpdateViews";
+import { runMenuAction } from "./common/menuActions";
 import styles from "./App.module.css";
 
 let started = false;
@@ -51,6 +52,12 @@ export function App() {
     started = true;
     start().catch((e) => useAppStore.setState({ journal: { state: "error", message: String(e) } }));
   }, []);
+
+  // 맥 메뉴 막대 항목 → 단축키와 같은 동작(macos-spec 3-1)
+  const platform = useAppStore((s) => s.platform);
+  useEffect(() => {
+    platform?.onMenuAction?.((id) => runMenuAction(id, platform));
+  }, [platform]);
 
   // 시작 화면(보드·첫 실행·오류 등)이 정해지면 스플래시 창에서 메인 창으로 넘어간다.
   useEffect(() => {
