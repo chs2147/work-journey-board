@@ -81,6 +81,11 @@ npm run tauri dev    # 실앱 모드(윈도우 / 리눅스는 webkit2gtk-4.1 필
 - 윈도우 설치 파일: `main`에 반영되면 [Releases](https://github.com/chs2147/work-journey-board/releases)에 `v<버전>`으로 올라간다 — 0.x·`-rc`는 사전 릴리스, 1.0.0 이상 정식 판은 정식 릴리스(기본판). 오프라인 설치판은 요청할 때만 Actions → *Build Windows installer* → Run workflow(main) → `offline`으로 그 판 릴리스에 더한다.
 
 ## Version History
+### v1.5.0 (2026-11-02) — 열 폭 조절·Cabinet 다듬기 2·메모 여러 상자 함께 옮기기
+- 주간 뷰 업무·요일 열 폭 조절, 끌기 손잡이 또렷하게
+- 메모 보드 선택 사각형으로 여러 상자 함께 옮기기·지우기
+- Cabinet 폴더 확인·경로 다시 지정·폴더 창 새로 고침·탐색기 단추·목록 폭 조절, 바로 가기·긴 경로 폴더 끌어 놓기
+
 ### v1.4.0 (2026-11-01) — Cabinet 다듬기·스플래시 버전 표시
 - Cabinet 별도 창(앱 밖), 업무별 목록에 전체·진행 중 업무(0개 포함), 줄 끌어 순서·업무 연결
 - 크롬 주소 아이콘 끌어 놓기로 링크 등록, 탐색기에서 열기 = 그 폴더 안으로
