@@ -18,13 +18,44 @@ const SITE_URL = "https://chs2147.github.io/work-journey-board/";
 const esc = (s) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
-/** 글 안 서식: `코드` · **굵게** · [글](주소) */
+// 단축키 맥 표기(macos-spec 3-2) — 앱의 src/shared/platformText.ts `macText`와 같은 규칙(단위 테스트가 둘이 같은지 본다).
+// 가이드는 한 벌로 쓰고(윈도우 표기), 단축키 옆에 맥 표기를 괄호로 덧붙인다: `Ctrl+Shift+F` (`⇧⌘F`)
+const MOD_SYMBOL = { Ctrl: "⌘", Alt: "⌥", Shift: "⇧" };
+const MOD_ORDER = ["⌃", "⌥", "⇧", "⌘"];
+const KEY_SYMBOL = { Enter: "↩", Delete: "⌦", Backspace: "⌫", Tab: "⇥" };
+const COMBO =
+  /\b((?:(?:Ctrl|Alt|Shift)\+)+)(F\d{1,2}(?!\d)|Enter|Delete|Backspace|Tab|Esc|[←→↑↓](?:\/[←→↑↓])?|[A-Z0-9](?![A-Za-z0-9])|[-=,.[\]/]|[가-힣]+)/g;
+
+/** 단축키 글(윈도우 표기) → 맥 표기. 단축키가 없으면 그대로 */
+export function macKeys(s) {
+  return s
+    .replace(/Win\+Shift\+S/g, "⇧⌘4")
+    .replace(COMBO, (_, mods, key) => {
+      const syms = mods
+        .split("+")
+        .filter(Boolean)
+        .map((m) => MOD_SYMBOL[m] ?? m);
+      const ordered = MOD_ORDER.filter((x) => syms.includes(x)).join("");
+      return /^[가-힣]/.test(key) ? `${ordered}+${key}` : ordered + (KEY_SYMBOL[key] ?? key);
+    })
+    .replace(/(^|[\s(·])Delete(?=$|[\s)·])/g, "$1⌫");
+}
+
+/** 코드 조각 하나: 단축키면 맥 표기를 괄호로 덧붙인다 */
+function codeSpan(raw) {
+  const mac = macKeys(raw);
+  const win = `<code>${esc(raw)}</code>`;
+  return mac === raw ? win : `${win}<span class="mac"> (<code>${esc(mac)}</code>)</span>`;
+}
+
+/** 글 안 서식: `코드`(단축키는 맥 표기 덧붙임) · **굵게** · [글](주소) · 탐색기(Finder) */
 function inline(text) {
   const parts = text.split(/(`[^`]+`)/g);
+  const hasFinder = text.includes("Finder");
   return parts
     .map((p) => {
-      if (p.startsWith("`") && p.endsWith("`") && p.length > 1) return `<code>${esc(p.slice(1, -1))}</code>`;
-      return esc(p)
+      if (p.startsWith("`") && p.endsWith("`") && p.length > 1) return codeSpan(p.slice(1, -1));
+      return (hasFinder ? esc(p) : esc(p).replace(/탐색기/g, "탐색기(Finder)"))
         .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
         .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_, t, href) => {
           const ext = /^https?:/.test(href);
@@ -193,6 +224,8 @@ ol.steps li{counter-increment:s;position:relative;padding:6px 0 6px 40px}
 ol.steps li::before{content:counter(s);position:absolute;left:0;top:8px;width:26px;height:26px;border-radius:50%;background:var(--clay);color:#fff;font-size:13px;line-height:26px;text-align:center}
 ul{padding-left:22px}
 code{font-family:Consolas,"Malgun Gothic",monospace;font-size:.88em;background:#efe8dc;border-radius:4px;padding:1px 5px}
+.mac{color:var(--soft);white-space:nowrap}
+.mac code{font-family:-apple-system,"Apple SD Gothic Neo","Segoe UI Symbol","Noto Sans Symbols 2","Noto Sans Symbols",system-ui,sans-serif;font-size:1em;letter-spacing:.04em}
 figure{margin:18px 0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}
 figure img{display:block;width:100%;height:auto}
 figcaption{font-size:13px;color:var(--soft);padding:8px 14px;border-top:1px solid var(--line);background:var(--cream)}

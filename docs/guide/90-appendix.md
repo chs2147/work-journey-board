@@ -1,6 +1,6 @@
 # 부록 — 단축키·자주 묻는 질문
 
-> 아래 표는 Windows 표기입니다. **macOS**에서는 `Ctrl` → `⌘`, `Alt` → `⌥`, `Shift` → `⇧`, `Delete` → `fn+⌫`(⌦)로 읽습니다 — 예: `Ctrl+Shift+F` = `⇧⌘F`, `Alt+1` = `⌥1`. 앱 화면의 안내 글은 맥에서 맥 표기로 보입니다.
+> 단축키는 Windows 표기 옆 괄호에 **macOS 표기**를 함께 적었습니다 — 예: `Ctrl+Shift+F` = 맥 `⇧⌘F`(`⌘` Command · `⌥` Option · `⇧` Shift · `⌦` fn+delete · `↩` return). 앱 화면의 안내 글은 맥에서 맥 표기로 보입니다.
 
 **화면 이동**
 
