@@ -1,16 +1,6 @@
 (() => {
   const root = document.documentElement;
 
-  // 방문자 OS에 맞는 내려받기 단추를 앞(강조)으로 — 브라우저 안에서만 판정(어디에도 보내지 않음)
-  if (/Macintosh|Mac OS X/.test(navigator.userAgent)) {
-    const win = document.querySelector('.hero-actions [data-os="windows"]');
-    const mac = document.querySelector('.hero-actions [data-os="mac"]');
-    if (win && mac) {
-      win.classList.replace('button-primary', 'button-quiet');
-      mac.classList.replace('button-quiet', 'button-primary');
-      win.before(mac);
-    }
-  }
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
   const selectors = [
     '.intro-inner', '.section-heading > *', '.write-text', '.write-sheet',
