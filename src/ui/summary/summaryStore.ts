@@ -79,6 +79,15 @@ export async function currentBasisHash(): Promise<string | null> {
   return input ? sha256Hex(basisText(input)) : null;
 }
 
+/** 일지를 닫기 직전: flushDraft 뒤에 부른다 — 예약 저장·주 따라가기를 끊는다(v1.8.1) */
+export function detachSummary() {
+  clearDraftTimer();
+  unsubscribe?.();
+  unsubscribe = null;
+  repo = null;
+  set({ weekId: "", saved: null, draft: null, compareOpen: false });
+}
+
 export async function initSummary(r: JournalRepository) {
   repo = r;
   const settings = await r.getSettings();
@@ -159,6 +168,7 @@ export async function makeEdited() {
 export function editDraft(text: string) {
   set({ draft: text });
   clearDraftTimer();
+  if (!repo) return; // 일지를 바꾸는 중
   draftTimer = setTimeout(() => void flushDraft(), SAVE_DELAY_MS);
 }
 

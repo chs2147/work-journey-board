@@ -360,6 +360,7 @@ export async function moveRowsTo(fromKey: string, fromIndex: number, toKey: stri
 }
 
 function schedule(key: string, run: () => Promise<unknown>) {
+  if (!repo) return; // 일지를 바꾸는 중(연결 끊김) — 다음 일지에 이전 칸을 쓰지 않는다(v1.8.1)
   const t = timers.get(key);
   if (t) clearTimeout(t);
   timers.set(
@@ -468,6 +469,22 @@ const baseWeek = () => loading ?? get();
 function focusDayFor(weekId: WeekId, preferIndex: number, today: DateStr): DateStr {
   if (weekId === weekIdOf(today)) return today;
   return weekDays(weekId)[preferIndex]!;
+}
+
+/**
+ * 일지를 닫기 직전(공간 전환·복원·다시 열기): flushAll 뒤에 부른다. 남은 예약 저장을 버리고 연결을 끊어
+ * 이전 일지의 칸이 다음 일지에 저장되지 않게 한다(v1.8.1 — 칸 키의 업무 id는 일지마다 다르다).
+ */
+export function detachBoard() {
+  for (const t of timers.values()) clearTimeout(t);
+  timers.clear();
+  persistedCells.clear();
+  loadSeq++; // 진행 중인 주 불러오기 결과는 버린다
+  loading = null;
+  repo = null;
+  undoStack.length = 0;
+  redoStack.length = 0;
+  syncUndoFlags();
 }
 
 export async function init(r: JournalRepository) {
