@@ -10,6 +10,8 @@ import { CabinetRailIcon } from "../cabinet/CabinetIcons";
 import { toggleCabinet, useCabinet } from "../cabinet/cabinetStore";
 import { useAppStore } from "./appStore";
 import styles from "./Rail.module.css";
+import { WorkspaceRailButton } from "./WorkspaceSwitcher";
+import { sameDir } from "../../domain/workspace";
 
 const BoardIcon = () => (
   <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
@@ -79,9 +81,21 @@ export function Rail() {
   const badge = importantBadge(important, today);
   const n = important.length;
   const cabinetOpen = useCabinet((s) => s.open);
+  // 공간이 2개 이상이면 레일 왼쪽에 지금 공간 색 띠(multi-board-spec 3-1)
+  const band = useAppStore((s) => {
+    const j = s.journal;
+    if (s.workspaces.length < 2 || j.state !== "ready") return null;
+    return s.workspaces.find((e) => sameDir(e.dir, j.dataDir))?.color ?? null;
+  });
 
   return (
-    <nav className={styles.rail} aria-label={STR.rail.label}>
+    <nav
+      className={`${styles.rail} ${band ? styles.band : ""}`}
+      style={band ? ({ "--ws-band": `var(--cat-${band})` } as React.CSSProperties) : undefined}
+      aria-label={STR.rail.label}
+    >
+      <WorkspaceRailButton />
+      <span className={styles.sep} aria-hidden="true" />
       <button
         type="button"
         className={`${styles.btn} ${boardOn ? styles.on : ""}`}

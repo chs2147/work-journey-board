@@ -16,11 +16,44 @@ import type { SqlDriver } from "../../data/driver";
 import { loadPlatform, type Platform } from "../../platform";
 import { STR } from "../../shared/strings";
 import { applyTheme, readStoredTheme, storeTheme, type ThemePref } from "../../shared/theme";
-import { flushAll, focusStartCell, init as initBoard, reload, toast, useBoard } from "../board/boardStore";
+import {
+  addCategory,
+  flushAll,
+  focusStartCell,
+  init as initBoard,
+  reload,
+  setAddOpen,
+  setViewMode,
+  toast,
+  useBoard,
+} from "../board/boardStore";
 import { flushDraft, initSummary } from "../summary/summaryStore";
 import { finishNote, flushNote, initNote } from "../note/noteStore";
 import { initInsights, useInsights } from "../insights/insightsStore";
-import { restoreCabinet, shutdownCabinet } from "../cabinet/cabinetStore";
+import { restoreCabinet, shutdownCabinet, suspendCabinet } from "../cabinet/cabinetStore";
+import { closeInsights } from "../insights/insightsStore";
+import { today as todayOf } from "../../domain/week";
+import {
+  FIRST_WORKSPACE,
+  QUIET_PURPOSES,
+  baseName,
+  canRemove,
+  cleanName,
+  moveEntry,
+  nextWorkspaceColor,
+  readEntries,
+  reconcile,
+  removeEntry,
+  sameDir,
+  upsertEntry,
+  type WorkspaceEntry,
+  type WorkspaceIcon,
+  type WorkspaceMeta,
+  type WorkspacePurpose,
+} from "../../domain/workspace";
+import type { CategoryColorKey } from "../../shared/palette";
+import type { SettingsCategory } from "../../data/settings";
+import { classifyFolder } from "../../data/session";
 import { useAppStore, type JournalStatus } from "./appStore";
 
 const set = useAppStore.setState;
@@ -43,6 +76,7 @@ export async function start() {
   // 처음 설치(설정 없음) = 시그니처, 이미 쓰던 사용자가 테마를 고른 적 없으면 = 시스템 설정 그대로(release-phase2-spec 1절)
   adoptTheme(config ? (config.theme ?? readStoredTheme("system")) : readStoredTheme());
   if (!config) return set({ journal: { state: "first-run" } });
+  set({ workspaces: readEntries(config) });
   p.splash?.status(STR.splash.opening);
   await openAt(config.dataDir);
 }
@@ -107,7 +141,8 @@ async function autoBackup(kind: BackupKind): Promise<void> {
     const mirror = (await p.loadConfig())?.backupMirror;
     if (mirror && result) {
       try {
-        await j.repo.exclusive(() => runMirrorBackup(j.driver, p.backupFs, mirror, now, p.verifyCopy));
+        const dir = mirrorDirFor(mirror);
+        await j.repo.exclusive(() => runMirrorBackup(j.driver, p.backupFs, dir, now, p.verifyCopy));
       } catch (e) {
         if (kind !== "exit") toast(STR.backupMore.mirrorFailed(errMsg(e)));
       }
@@ -173,6 +208,7 @@ async function activate(driver: SqlDriver, dataDir: string) {
   await initSummary(repo);
   await initNote(repo);
   await initInsights(repo);
+  await syncWorkspace(repo, dataDir);
   set({ journal: { state: "ready", driver, repo, dataDir, sqliteVersion: row?.v ?? "?" } });
   lastBackup = { writes: repo.writeCount, at: p.now().getTime() };
   void restoreCabinet().catch(() => undefined);
@@ -248,6 +284,18 @@ export function setSettingsOpen(open: boolean) {
   if (was && !open) void reload();
 }
 
+/** 설정을 그 분류로 연다(워크스페이스 목록의 [관리…] 등) */
+export async function openSettingsAt(cat: SettingsCategory) {
+  const j = get().journal;
+  if (j.state !== "ready") return;
+  await j.repo.updateSettings({ ui: { settingsCategory: cat } }).catch(() => undefined);
+  if (get().settingsOpen) {
+    set({ settingsOpen: false });
+    await new Promise((r) => setTimeout(r, 0)); // 설정 화면을 새로 띄워 그 분류부터
+  }
+  setSettingsOpen(true);
+}
+
 /** 설정에서 나가기(Esc·[← 보드로]·Ctrl+,) — 들어오기 전 화면(보드 또는 인사이트)으로 */
 export function leaveSettings() {
   setSettingsOpen(false);
@@ -286,7 +334,9 @@ export async function switchTo(dataDir: string): Promise<string | null> {
   } catch (e) {
     return errMsg(e);
   }
+  const cab = await suspendCabinet();
   await closeCurrent();
+  await rememberCabinet(cab, dataDir);
   await p.saveConfig({ dataDir });
   await activate(next, dataDir);
   return null;
@@ -305,8 +355,251 @@ export async function moveTo(dataDir: string, copyBackups: boolean): Promise<str
   } catch (e) {
     return errMsg(e);
   }
+  // 목록의 그 줄도 새 위치로(이름·색·아이콘은 그대로)
+  const old = get().workspaces;
+  await saveEntries(old.map((e) => (sameDir(e.dir, j.dataDir) ? { ...e, dir: dataDir } : e)));
   await p.saveConfig({ dataDir });
   await j.driver.close().catch(() => undefined);
   await activate(next, dataDir);
   return null;
+}
+
+// ── 워크스페이스(multi-board-spec) ─────────────────────────────────────
+/** 목록 저장: 화면 상태 + 이 PC 설정(config.json workspaces) */
+async function saveEntries(list: WorkspaceEntry[]) {
+  set({ workspaces: list });
+  await platform().saveConfig({ workspaces: list });
+}
+
+/** 보조 백업 위치 안 이 공간의 자리(spec 6절): 처음부터 쓰던 공간은 바로 아래, 새로 만든 공간은 `<보조 위치>/<폴더 이름>` */
+export function mirrorDirFor(mirror: string): string {
+  const sub = currentWorkspace()?.mirrorSub;
+  return sub ? platform().join(mirror, sub) : mirror;
+}
+
+/** 보조 백업 위치로 고를 수 없는 폴더인가 — 어느 공간의 저장 폴더·backups 폴더든(spec 6절) */
+export function isWorkspaceFolder(path: string): boolean {
+  const p = platform();
+  return get().workspaces.some((e) => sameDir(path, e.dir) || sameDir(path, p.join(e.dir, "backups")));
+}
+
+/** 내보내기 파일 이름에 넣을 공간 이름 — 공간이 2개 이상일 때만(D8) */
+export function workspaceLabel(): string | undefined {
+  return get().workspaces.length > 1 ? currentWorkspace()?.name : undefined;
+}
+
+/** 지금 연 공간의 목록 줄 */
+export function currentWorkspace(): WorkspaceEntry | null {
+  const j = get().journal;
+  if (j.state !== "ready") return null;
+  return get().workspaces.find((e) => sameDir(e.dir, j.dataDir)) ?? null;
+}
+
+/** 창 제목: 공간이 2개 이상이면 `Work Journey Board — 개인`(spec 3-1) */
+function applyWindowTitle(list: WorkspaceEntry[], name: string) {
+  const title = list.length > 1 ? STR.workspace.windowTitle(STR.appName, name) : STR.appName;
+  void platform()
+    .setWindowTitle?.(title)
+    .catch(() => undefined);
+}
+
+/**
+ * 공간을 열 때: 일지의 이름·색·아이콘과 이 PC 목록 사본을 맞춘다(새것이 이김). 목록에 없던 폴더면 줄을 더한다.
+ * 첫 일지(목록이 비어 있음)는 "회사 · 파랑 · 서류 가방"(지금까지 직장용으로 쓰던 일지).
+ */
+async function syncWorkspace(repo: JournalRepository, dataDir: string) {
+  const list = get().workspaces;
+  const found = list.find((e) => sameDir(e.dir, dataDir));
+  const entry: WorkspaceEntry = found ?? {
+    ...(list.length === 0
+      ? FIRST_WORKSPACE
+      : { name: baseName(dataDir), color: nextWorkspaceColor(list), icon: FIRST_WORKSPACE.icon }),
+    updatedAt: 0,
+    dir: dataDir,
+  };
+  const journalMeta = (await repo.getSettings()).workspace;
+  const { meta, writeJournal } = reconcile(journalMeta, entry);
+  if (writeJournal) await repo.updateSettings({ workspace: meta }).catch(() => undefined);
+  const next = upsertEntry(list, { ...entry, ...meta, lastOpened: todayOf(platform().now()) });
+  await saveEntries(next);
+  applyWindowTitle(next, meta.name);
+}
+
+/** 떠나는 공간의 Cabinet 창 상태를 그 공간 몫으로 보관하고, 들어갈 공간의 것을 config.cabinet에 끼운다 */
+async function rememberCabinet(leaving: { dir: string; cab: CabinetCfg } | CabinetCfg, nextDir: string) {
+  const p = platform();
+  const cfg = await p.loadConfig();
+  const by = { ...(cfg?.cabinetBy ?? {}) };
+  const j = get().journal;
+  if ("cab" in leaving) by[leaving.dir] = leaving.cab;
+  else if (j.state === "ready" || j.state === "integrity") by[j.dataDir] = leaving;
+  const key = Object.keys(by).find((k) => sameDir(k, nextDir));
+  await p.saveConfig({ cabinetBy: by, cabinet: (key && by[key]) || { open: false, windows: [] } });
+}
+type CabinetCfg = { open: boolean; windows: { id: string; sub: string }[] };
+
+/**
+ * 공간 전환(spec 3절): 지금 공간 저장·종료 백업·Cabinet 보관 → 다음 공간을 먼저 열어 보고 → 성공하면 바꾼다.
+ * 다음 공간을 열 수 없으면 지금 공간을 그대로 두고 오류 글을 돌려준다(R2).
+ */
+export async function switchWorkspace(dir: string, opts: { quiet?: boolean } = {}): Promise<string | null> {
+  const j = get().journal;
+  const target = get().workspaces.find((e) => sameDir(e.dir, dir));
+  set({ switcherOpen: false });
+  if (j.state === "ready" && sameDir(j.dataDir, dir)) return null;
+  const p = platform();
+  const name = target?.name ?? baseName(dir);
+  // 전환해도 보던 보기(주간/오늘)는 그대로(spec 3절) — 날짜는 다음 공간을 열면 오늘로
+  const view = j.state === "ready" ? useBoard.getState().viewMode : null;
+  let next: SqlDriver;
+  if (j.state === "ready") {
+    await flushPending();
+    await finishNote().catch(() => undefined);
+  }
+  try {
+    next = await openJournalAt(p, dir, () => p.now());
+  } catch (e) {
+    const m = STR.workspace.openFailed(name, errMsg(e));
+    toast(m);
+    return m;
+  }
+  if (j.state === "ready") {
+    stopPeriodic();
+    if (j.repo.writeCount !== lastBackup.writes) await autoBackup("exit");
+    const cab = await suspendCabinet();
+    await j.driver.close().catch(() => undefined);
+    await rememberCabinet({ dir: j.dataDir, cab }, dir);
+  } else await rememberCabinet({ open: false, windows: [] }, dir);
+  await p.saveConfig({ dataDir: dir });
+  set({ settingsOpen: false });
+  closeInsights();
+  await activate(next, dir);
+  if (view) setViewMode(view);
+  if (!opts.quiet) toast(STR.workspace.switched(currentWorkspace()?.name ?? name));
+  focusStartCell();
+  return null;
+}
+
+/** n번째 공간으로(Ctrl+Alt+n) */
+export function switchWorkspaceAt(n: number) {
+  const e = get().workspaces[n - 1];
+  if (e) void switchWorkspace(e.dir);
+}
+
+/** 지금 공간의 이름·색·아이콘 바꾸기(다른 공간은 이 PC 사본만 — 그 공간을 열 때 일지에 반영, reconcile) */
+export async function updateWorkspaceMeta(
+  dir: string,
+  patch: Partial<Pick<WorkspaceMeta, "name" | "color" | "icon">>,
+): Promise<void> {
+  const list = get().workspaces;
+  const e = list.find((x) => sameDir(x.dir, dir));
+  if (!e) return;
+  const name = patch.name !== undefined ? cleanName(patch.name) || e.name : e.name;
+  const meta: WorkspaceMeta = {
+    name,
+    color: patch.color ?? e.color,
+    icon: patch.icon ?? e.icon,
+    updatedAt: platform().now().getTime(),
+  };
+  const j = get().journal;
+  if (j.state === "ready" && sameDir(j.dataDir, dir)) await j.repo.updateSettings({ workspace: meta });
+  const next = upsertEntry(list, { ...e, ...meta });
+  await saveEntries(next);
+  const cur = currentWorkspace();
+  if (cur) applyWindowTitle(next, cur.name);
+}
+
+export async function reorderWorkspaces(from: number, to: number) {
+  await saveEntries(moveEntry(get().workspaces, from, to));
+}
+
+/** 목록에서 빼기(D10) — 파일은 지우지 않는다 */
+export async function removeWorkspace(dir: string): Promise<boolean> {
+  const j = get().journal;
+  const list = get().workspaces;
+  if (!canRemove(list, dir, j.state === "ready" ? j.dataDir : null)) return false;
+  const next = removeEntry(list, dir);
+  await saveEntries(next);
+  const cur = currentWorkspace();
+  if (cur) applyWindowTitle(next, cur.name);
+  return true;
+}
+
+export interface NewWorkspace {
+  name: string;
+  color: CategoryColorKey;
+  icon: WorkspaceIcon;
+  purpose: WorkspacePurpose;
+  dir: string;
+  categories: string[];
+  copy: { holiday: boolean; tags: boolean; nudge: boolean };
+}
+
+/**
+ * 새 워크스페이스(spec 4절): 지금 공간에서 가져올 설정을 먼저 읽고 → 새 폴더에 일지를 만들어 그 공간으로 전환 →
+ * 이름·색·아이콘·설정·첫 업무를 채운다. 고른 폴더에 이미 일지가 있으면 그 일지를 목록에 더해 연다(설정 복사·첫 업무 없음).
+ */
+export async function createWorkspace(w: NewWorkspace): Promise<string | null> {
+  const p = platform();
+  const name = cleanName(w.name);
+  if (!name) return STR.workspace.nameRequired;
+  if (get().workspaces.some((e) => sameDir(e.dir, w.dir))) return STR.workspace.folderTaken;
+  const existing = (await classifyFolder(p, null, w.dir).catch(() => "empty")) === "has-journal";
+  // 지금 공간에서 가져올 것
+  const j = get().journal;
+  const from = j.state === "ready" ? await j.repo.getSettings() : null;
+  const tags = j.state === "ready" && w.copy.tags ? (await j.repo.listTags()).map((t) => t.name) : [];
+  try {
+    await p.ensureDir(w.dir);
+  } catch (e) {
+    return errMsg(e);
+  }
+  const meta: WorkspaceMeta = { name, color: w.color, icon: w.icon, updatedAt: p.now().getTime() };
+  // 이미 있던 일지면 그 일지에 적힌 이름이 이긴다(사본은 시각 0) — 없으면 고른 이름
+  const mirrorSub = existing ? undefined : baseName(w.dir);
+  const entry = {
+    ...meta,
+    ...(existing ? { updatedAt: 0 } : {}),
+    dir: w.dir,
+    ...(mirrorSub ? { mirrorSub } : {}),
+  };
+  await saveEntries(upsertEntry(get().workspaces, entry));
+  const err = await switchWorkspace(w.dir, { quiet: true });
+  if (err) {
+    await saveEntries(removeEntry(get().workspaces, w.dir));
+    return err;
+  }
+  const now = get().journal;
+  if (now.state !== "ready") return STR.restore.notOpen;
+  if (existing) {
+    set({ creatingWorkspace: false });
+    toast(STR.workspace.added(currentWorkspace()?.name ?? name));
+    return null;
+  }
+  await now.repo.updateSettings({
+    workspace: meta,
+    ...(w.copy.holiday && from ? { holiday: from.holiday } : {}),
+    ...(w.copy.nudge && from
+      ? { nudgeWeeks: from.nudgeWeeks }
+      : QUIET_PURPOSES.includes(w.purpose)
+        ? { nudgeWeeks: 0 }
+        : {}),
+  });
+  for (const t of tags) await now.repo.createTag(t).catch(() => undefined);
+  for (const c of w.categories.map(cleanName).filter(Boolean)) await addCategory(c);
+  await reload();
+  if (w.categories.length) setAddOpen(false);
+  focusStartCell();
+  set({ creatingWorkspace: false });
+  toast(STR.workspace.created(name));
+  return null;
+}
+
+/** 다른 PC에서 가져온 폴더·예전 폴더를 공간으로 추가(일지가 있어야 함)하고 연다 */
+export async function addExistingWorkspace(dir: string): Promise<string | null> {
+  const p = platform();
+  if (get().workspaces.some((e) => sameDir(e.dir, dir))) return switchWorkspace(dir);
+  if ((await classifyFolder(p, null, dir).catch(() => "empty")) !== "has-journal")
+    return STR.workspace.addExistingNoJournal;
+  return switchWorkspace(dir);
 }

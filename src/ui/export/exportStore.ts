@@ -10,6 +10,7 @@ import { baseName, dirOf, exportPathProblem } from "../../platform";
 import { STR } from "../../shared/strings";
 import { flushAll, reportError, toast, useBoard } from "../board/boardStore";
 import { useAppStore } from "../common/appStore";
+import { workspaceLabel } from "../common/appController";
 import { flushDraft } from "../summary/summaryStore";
 import { flushNote } from "../note/noteStore";
 import { memoWeeks, weekSnapshotInput } from "../note/snapshot";
@@ -99,7 +100,7 @@ export async function runExport(c: ExportChoice): Promise<string | null> {
     }
     const path = await platform.pickSaveFile(
       STR.export.saveTitle,
-      platform.join(dir, exportFileName(from, to, c.kind === "all")),
+      platform.join(dir, exportFileName(from, to, c.kind === "all", workspaceLabel())),
     );
     if (!path) return null;
     const problem = exportPathProblem(path, dataDir);

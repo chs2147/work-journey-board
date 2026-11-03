@@ -6,6 +6,7 @@ import { useShortcuts } from "./board/useShortcuts";
 import { start } from "./common/appController";
 import { useAppStore, type JournalStatus } from "./common/appStore";
 import { Toasts } from "./common/Toasts";
+import { NewWorkspaceDialog } from "./common/NewWorkspaceDialog";
 import { Rail } from "./common/Rail";
 import { TopBar } from "./common/TopBar";
 import { useMediaQuery, useWindowWidth } from "./common/useMediaQuery";
@@ -45,6 +46,7 @@ export function App() {
   const exportOpen = useExport((s) => s.open);
   const importOpen = useImport((s) => s.open);
   const updateOpen = useUpdate((s) => s.dialogOpen);
+  const creatingWorkspace = useAppStore((s) => s.creatingWorkspace);
   useShortcuts();
 
   useEffect(() => {
@@ -83,6 +85,7 @@ export function App() {
       {exportOpen && journal.state === "ready" && <ExportDialog />}
       {importOpen && journal.state === "ready" && <ImportWizard />}
       {updateOpen && journal.state === "ready" && <UpdateDialog />}
+      {creatingWorkspace && journal.state === "ready" && <NewWorkspaceDialog />}
       <Toasts />
     </div>
   );

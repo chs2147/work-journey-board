@@ -1,0 +1,107 @@
+/* 워크스페이스 단추·목록(multi-board-spec 3절 A안) */
+.wrap {
+  position: relative;
+}
+
+.railBtn {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-lg);
+  background: none;
+  cursor: pointer;
+}
+
+.railBtn:hover,
+.railOn {
+  background: var(--surface-sub);
+}
+
+.railBtn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.menu {
+  position: absolute;
+  left: 46px;
+  top: 0;
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  width: 300px;
+  padding: 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-pop, 0 8px 24px rgb(0 0 0 / 0.18));
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 7px 9px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-1);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.item:hover,
+.item:focus-visible {
+  outline: none;
+  background: var(--accent-soft);
+}
+
+.current {
+  background: var(--surface-sub);
+}
+
+.text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.name {
+  font-weight: var(--fw-bold);
+}
+
+.check {
+  color: var(--accent);
+}
+
+.path {
+  overflow: hidden;
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kbd {
+  flex: none;
+  color: var(--text-3);
+  font: inherit;
+  font-size: var(--fs-xs);
+}
+
+.action {
+  color: var(--accent);
+  font-weight: var(--fw-bold);
+}
+
+.sep {
+  height: 1px;
+  margin: 4px 2px;
+  background: var(--line);
+}

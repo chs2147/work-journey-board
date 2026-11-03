@@ -25,6 +25,7 @@ import { baseName, dirOf, isOneDriveLike, type AppConfig, type Platform } from "
 //   ?fresh=1            설정 없음 → 첫 실행 화면
 //   ?existing=/경로     그 폴더에 샘플이 든 기존 일지를 미리 만들어 둠(첫 실행 "기존 일지 열기" 시험)
 //   ?config=/경로       설정의 저장 폴더를 그 경로로(없는 폴더면 "저장 폴더를 찾을 수 없음" 화면)
+//   ?ws=2               워크스페이스 2개(회사 = 기본 샘플, 개인 = /demo/WorkJourney-개인 빈 일지) — multi-board-spec
 //   ?update=0.9.0       새 판 확인이 이 판을 돌려준다(가짜 — 인터넷에 묻지 않음) · ?update=fail = 연결 실패 · ?update=bad = SHA 불일치
 const params = new URLSearchParams(globalThis.location?.search ?? "");
 const isDate = (s: string | null) => /^\d{4}-\d{2}-\d{2}$/.test(s ?? "");
@@ -32,6 +33,7 @@ let fixedToday = isDate(params.get("today")) ? params.get("today")! : null;
 
 export const DEMO_HOME = "/demo";
 export const DEMO_DIR = "/demo/WorkJourney";
+export const DEMO_DIR_2 = "/demo/WorkJourney-개인";
 const ONEDRIVE_ROOTS = ["/demo/OneDrive - Company"];
 
 const fs = createFakeFs((bytes, label) => openSqlJs(wasmUrl, bytes, label));
@@ -121,6 +123,13 @@ const ready = (async () => {
       fs.writeFile(journal, new TextEncoder().encode("이것은 SQLite 파일이 아닙니다 ".repeat(200)));
     }
   }
+  if (config && params.get("ws") === "2") {
+    await makeJournal(DEMO_DIR_2, false);
+    config.workspaces = [
+      { dir: DEMO_DIR, name: "회사", color: "c1", icon: "briefcase", updatedAt: 0 },
+      { dir: DEMO_DIR_2, name: "개인", color: "c3", icon: "notebook", updatedAt: 1 },
+    ];
+  }
   // ?theme=dark — 이 PC 설정(config.json)에 테마가 적혀 있는 상태 흉내(improve-1027v5-spec 4-2)
   const theme = params.get("theme");
   if (config && isThemePref(theme)) config.theme = theme;
@@ -144,6 +153,9 @@ export const browserPlatform: Platform = {
     config = { ...(config ?? { dataDir: "" }), ...patch };
   },
   setWindowTheme: async () => undefined,
+  async setWindowTitle(title) {
+    document.title = title;
+  },
 
   suggestedDataDir: async () => DEMO_DIR,
   async pickFolder(title) {

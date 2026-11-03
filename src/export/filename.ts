@@ -10,8 +10,14 @@ export function rangeLabel(from: WeekId, to: WeekId): string {
 }
 
 /** `업무일지_2026-W43.xlsx` · `업무일지_2026-W40~W43.xlsx` · `업무일지_2025-W50~2026-W03.xlsx` · `업무일지_전체_2026-W38~W43.xlsx` */
-export function exportFileName(from: WeekId, to: WeekId, all = false): string {
-  return `업무일지_${all ? "전체_" : ""}${rangeLabel(from, to)}.xlsx`;
+export function exportFileName(from: WeekId, to: WeekId, all = false, workspace?: string): string {
+  return `업무일지_${workspacePart(workspace)}${all ? "전체_" : ""}${rangeLabel(from, to)}.xlsx`;
+}
+
+/** 워크스페이스가 2개 이상일 때 파일 이름에 넣는 공간 이름(multi-board-spec D8) — 파일 이름에 못 쓰는 글자는 뺀다 */
+export function workspacePart(name?: string): string {
+  const clean = (name ?? "").replace(/[\\/:*?"<>|]/g, "").trim();
+  return clean ? `${clean}_` : "";
 }
 
 /** 문서 속성 제목: `업무일지 2026-W42~W43` */

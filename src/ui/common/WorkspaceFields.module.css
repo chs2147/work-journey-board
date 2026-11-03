@@ -1,0 +1,99 @@
+.look {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.nameRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.field {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.label {
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+}
+
+.input {
+  padding: 7px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-1);
+  font: inherit;
+}
+
+.input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 0;
+}
+
+.colors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.colors .color {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.colors .colorOn {
+  box-shadow:
+    0 0 0 2px var(--surface-card),
+    0 0 0 4px var(--text-1);
+}
+
+.colors .color:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.icons {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 34px);
+  gap: 6px;
+  max-width: 420px;
+}
+
+.icons .icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 28%;
+  background: var(--surface-card);
+  color: var(--text-2);
+  cursor: pointer;
+}
+
+.icons .icon:hover {
+  border-color: var(--accent);
+  color: var(--text-1);
+}
+
+.icons .iconOn {
+  border-color: transparent;
+}
+
+.icons .icon:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}

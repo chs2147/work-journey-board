@@ -33,7 +33,7 @@ test("레일 ⚙ → 보드 자리에 설정 화면 · 상단 바는 [← 주간
   // 처음 열면 화면 분류, 탭에 포커스
   await expect(page.locator("#settings-tab-screen")).toBeFocused();
   await expect(page.getByTestId("settings-cat-screen")).toContainText("테마");
-  // ↓ ↓ → 가져오기, End → 업데이트·정보, Home → 화면
+  // ↓ ↓ → 가져오기, End → 업데이트·정보, Home → 워크스페이스(맨 앞, multi-board-spec 5절)
   await page.keyboard.press("ArrowDown");
   await page.keyboard.press("ArrowDown");
   await expect(page.locator("#settings-tab-import")).toHaveAttribute("aria-selected", "true");
@@ -41,6 +41,8 @@ test("레일 ⚙ → 보드 자리에 설정 화면 · 상단 바는 [← 주간
   await page.keyboard.press("End");
   await expect(page.getByTestId("update-settings")).toBeVisible();
   await page.keyboard.press("Home");
+  await expect(page.getByTestId("workspace-settings")).toBeVisible();
+  await page.keyboard.press("ArrowDown");
   await expect(page.getByTestId("theme-settings")).toBeVisible();
 
   await page.keyboard.press("Escape");

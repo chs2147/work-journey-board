@@ -3,6 +3,7 @@ import type { BackupFs, VerifyCopy } from "../data/backup";
 import type { SqlDriver } from "../data/driver";
 import type { FsEntry } from "../domain/cabinet";
 import { STR } from "../shared/strings";
+import type { WorkspaceEntry } from "../domain/workspace";
 import { isThemePref, type ThemePref } from "../shared/theme";
 
 // 플랫폼 차이는 이 인터페이스 뒤로만(CLAUDE.md 4-5). 실앱 = Tauri(윈도우), 브라우저 모드 = 개발·테스트용 가짜 폴더.
@@ -16,6 +17,10 @@ export interface AppConfig {
   backupMirror?: string | null;
   /** Cabinet(features-1102-spec F5): 열려 있던 Cabinet 창·폴더 창(하위 위치) — 다음에 켜면 그대로 다시 연다 */
   cabinet?: CabinetConfig;
+  /** 워크스페이스 목록(multi-board-spec 7절) — 없으면 dataDir 하나. dataDir = 지금 연 공간(예전 판과 호환되는 자리) */
+  workspaces?: WorkspaceEntry[];
+  /** 공간마다 Cabinet 창 상태(전환할 때 cabinet과 바꿔 낀다) — 키 = 공간 폴더 */
+  cabinetBy?: Record<string, CabinetConfig>;
 }
 
 export interface CabinetConfig {
@@ -105,6 +110,8 @@ export interface Platform {
   loadConfig(): Promise<AppConfig | null>;
   /** 주어진 값만 바꾸고 나머지(다른 키 포함)는 그대로 둔다 — 저장 위치를 옮겨도 테마가 남게 */
   saveConfig(patch: Partial<AppConfig>): Promise<void>;
+  /** 창 제목(작업 표시줄·Dock) — 워크스페이스 이름을 붙인다(multi-board-spec 3-1) */
+  setWindowTitle?(title: string): Promise<void>;
   /** 창 제목 표시줄 테마(system = 윈도우 설정 따름). 브라우저 모드는 할 일 없음 */
   setWindowTheme(pref: ThemePref): Promise<void>;
 

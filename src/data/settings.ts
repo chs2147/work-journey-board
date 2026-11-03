@@ -1,6 +1,9 @@
 // 앱 설정(app_meta.settings JSON, data-spec 3-4). 저장된 값이 일부 빠져 있어도 기본값과 합쳐 읽는다.
 import { COMPANY_DATE_RE, LABEL_MAX_HOLIDAY, type HolidaySettings } from "../domain/holidaysKr";
+import { parseMeta, type WorkspaceMeta } from "../domain/workspace";
 export interface Settings {
+  /** 이 일지(워크스페이스)의 이름·색·아이콘(multi-board-spec 7절) — 없으면 이 PC 목록의 사본으로 채운다 */
+  workspace: WorkspaceMeta | null;
   /** 무기록 종료 제안 기준 주 수. 0 = 끔, 그 외 2~8 */
   nudgeWeeks: number;
   /** periodicHours = 켜 둔 동안 바뀐 게 있으면 이 시간마다 그날 일일 사본을 덮어씀(optimize-1031-plan B1, 0 = 끔) */
@@ -66,7 +69,15 @@ export const BOARD_COL_W = {
 } as const;
 
 /** 설정 화면 분류(improve-1027v5-spec 1-4) */
-export const SETTINGS_CATEGORIES = ["screen", "data", "import", "work", "calendar", "update"] as const;
+export const SETTINGS_CATEGORIES = [
+  "workspace",
+  "screen",
+  "data",
+  "import",
+  "work",
+  "calendar",
+  "update",
+] as const;
 export type SettingsCategory = (typeof SETTINGS_CATEGORIES)[number];
 
 /** 메모 보드 배율 범위(improve-1026-spec 11-1) */
@@ -90,6 +101,7 @@ export const NOTE_DOCK_AUTO_MIN = 160;
 const OLD_DEFAULT_DOCK_HEIGHT = 280;
 
 export const DEFAULT_SETTINGS: Settings = {
+  workspace: null,
   nudgeWeeks: 3,
   backup: { dailyKeep: 14, monthlyKeep: 12, periodicHours: 2 },
   summary: { includeMemo: true },
@@ -160,6 +172,7 @@ export function mergeSettings(base: Settings, patch: unknown): Settings {
     patch.ui.noteDockHeight !== OLD_DEFAULT_DOCK_HEIGHT
   )
     s.ui.noteDockAuto = false;
+  s.workspace = parseMeta(s.workspace);
   if (!validNudgeWeeks(s.nudgeWeeks)) s.nudgeWeeks = DEFAULT_SETTINGS.nudgeWeeks;
   if (!(s.backup.dailyKeep >= 1)) s.backup.dailyKeep = DEFAULT_SETTINGS.backup.dailyKeep;
   if (!(s.backup.monthlyKeep >= 0)) s.backup.monthlyKeep = DEFAULT_SETTINGS.backup.monthlyKeep;

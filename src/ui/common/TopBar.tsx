@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { leaveSettings } from "./appController";
 import { useAppStore } from "./appStore";
 import { BrandLockup } from "./Brand";
+import { sameDir } from "../../domain/workspace";
 import { IconDayView, IconWeekView } from "./icons";
 import { TagFilterMenu } from "./TagFilterMenu";
 import { SearchBox } from "../search/SearchViews";
@@ -48,6 +49,7 @@ export function TopBar() {
       {/* 1줄: 앱 타이틀만 */}
       <div className={styles.brandRow}>
         <BrandLockup size="bar" />
+        <WorkspaceName />
       </div>
       {/* 2줄: 연도·주차 이동 · 저장 상태 · 설정 */}
       <div className={styles.bar}>
@@ -256,3 +258,17 @@ const IconAlert = () => (
     <path d="M7 3.8v3.8M7 9.6v.3" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
   </svg>
 );
+
+/** 상단 1줄 앱 이름 옆 지금 공간 이름(multi-board-spec 3-1) — 공간이 2개 이상일 때만 */
+function WorkspaceName() {
+  const list = useAppStore((s) => s.workspaces);
+  const dir = useAppStore((s) => (s.journal.state === "ready" ? s.journal.dataDir : null));
+  const cur = list.find((e) => dir && sameDir(e.dir, dir));
+  if (!cur || list.length < 2) return null;
+  return (
+    <span className={styles.workspaceName} data-testid="workspace-name">
+      <span className={styles.workspaceDot} style={{ background: `var(--cat-${cur.color})` }} />
+      {cur.name}
+    </span>
+  );
+}

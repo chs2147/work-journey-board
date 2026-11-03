@@ -293,3 +293,19 @@
   color: var(--text-2);
   font-size: var(--fs-xs);
 }
+
+/* 지금 워크스페이스 이름(multi-board-spec 3-1) */
+.workspaceName {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: var(--sp-3);
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+}
+
+.workspaceDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}

@@ -26,7 +26,14 @@ import { RestorePanel } from "../common/RestorePanel";
 import { SETTINGS_CATEGORIES, type Settings, type SettingsCategory } from "../../data/settings";
 import { formatBytes, STR } from "../../shared/strings";
 import { toast } from "../board/boardStore";
-import { leaveSettings, moveTo, setSettingsOpen, switchTo } from "../common/appController";
+import {
+  isWorkspaceFolder,
+  leaveSettings,
+  mirrorDirFor,
+  moveTo,
+  setSettingsOpen,
+  switchTo,
+} from "../common/appController";
 import { openImport, undoImportBatch } from "../import/importStore";
 import type { ImportBatchInfo } from "../../data/repository";
 import { useAppStore } from "../common/appStore";
@@ -38,6 +45,7 @@ import { CalendarSettings } from "./CalendarSettings";
 import { DiagnosticsCard } from "./DiagnosticsCard";
 import { TagSettings } from "./TagSettings";
 import { ThemeSettings } from "./ThemeSettings";
+import { WorkspaceSettings } from "./WorkspaceSettings";
 import { UpdateSettings } from "../update/UpdateViews";
 
 type Pending =
@@ -53,6 +61,7 @@ const NUDGE_OPTIONS = [0, 2, 3, 4, 5, 6, 7, 8];
 
 /** 분류 아이콘(18px 선 그림) */
 const CAT_ICON: Record<SettingsCategory, string> = {
+  workspace: "M2.5 3h5.5v5.5H2.5zM10 3h5.5v5.5H10zM2.5 10.5h5.5V16H2.5zM12.75 10.5v5.5M10 13.25h5.5",
   screen: "M2.5 3.5h13v9h-13zM6.5 15.5h5M9 12.5v3",
   data: "M3.5 4.5c0-1.1 2.5-2 5.5-2s5.5.9 5.5 2v9c0 1.1-2.5 2-5.5 2s-5.5-.9-5.5-2zM3.5 4.5c0 1.1 2.5 2 5.5 2s5.5-.9 5.5-2M3.5 9c0 1.1 2.5 2 5.5 2s5.5-.9 5.5-2",
   import: "M9 2.5v8.5M5.5 7.5 9 11l3.5-3.5M3 12.5v2.5h12v-2.5",
@@ -394,7 +403,11 @@ export function SettingsView() {
               if (!picked) return;
               const norm = (x: string) => x.replace(/[\\/]+$/, "").toLowerCase();
               const data = norm(ready.dataDir);
-              if (norm(picked) === data || norm(picked) === norm(platform.join(ready.dataDir, BACKUP_DIR)))
+              if (
+                norm(picked) === data ||
+                norm(picked) === norm(platform.join(ready.dataDir, BACKUP_DIR)) ||
+                isWorkspaceFolder(picked)
+              )
                 return toast(STR.backupMore.mirrorSame);
               try {
                 await platform.ensureDir(picked);
@@ -402,7 +415,7 @@ export function SettingsView() {
                   runMirrorBackup(
                     ready.driver,
                     platform.backupFs,
-                    picked,
+                    mirrorDirFor(picked),
                     platform.now(),
                     platform.verifyCopy,
                   ),
@@ -675,6 +688,7 @@ export function SettingsView() {
   );
 
   const content: Record<SettingsCategory, ReactNode> = {
+    workspace: <WorkspaceSettings />,
     screen,
     data,
     import: importCat,

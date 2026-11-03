@@ -967,3 +967,107 @@
   color: var(--text-2);
   cursor: pointer;
 }
+
+/* 설정 > 워크스페이스(multi-board-spec 5절) */
+.wsList {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0 var(--sp-5);
+  list-style: none;
+}
+
+.wsRow {
+  padding: var(--sp-3) 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.wsMain {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.wsOrder {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.card .wsArrow {
+  height: 16px;
+  padding: 0 5px;
+  font-size: 9px;
+  line-height: 1;
+}
+
+.wsText {
+  display: flex;
+  flex: 1 1 220px;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.wsName {
+  font-weight: var(--fw-bold);
+}
+
+.wsTag {
+  margin-left: 6px;
+  padding: 0 7px;
+  border-radius: 8px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: var(--fs-xs);
+  font-weight: normal;
+}
+
+.wsDir {
+  overflow: hidden;
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wsMeta {
+  min-width: 90px;
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+}
+
+.wsActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.wsEdit,
+.wsConfirm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin-top: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface-sub);
+}
+
+.wsConfirm p {
+  margin: 0;
+  font-size: var(--fs-sm);
+}
+
+.wsConfirmButtons,
+.wsButtons {
+  display: flex;
+  gap: var(--sp-3);
+  justify-content: flex-end;
+}
+
+.wsButtons {
+  justify-content: flex-start;
+  padding: var(--sp-4) var(--sp-5) var(--sp-5);
+}

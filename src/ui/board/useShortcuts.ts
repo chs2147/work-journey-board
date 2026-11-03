@@ -20,7 +20,7 @@ import { toggleExport, useExport } from "../export/exportStore";
 import { toggleSummary } from "../summary/summaryStore";
 import { focusNote, leaveNote } from "../note/noteStore";
 import { closeInsights, focusedCategory, openInsights, useInsights } from "../insights/insightsStore";
-import { leaveSettings, setSettingsOpen } from "../common/appController";
+import { leaveSettings, setSettingsOpen, switchWorkspaceAt } from "../common/appController";
 import { useAppStore } from "../common/appStore";
 import { isComposingEvent } from "./helpers";
 
@@ -41,6 +41,14 @@ export function useShortcuts() {
         e.preventDefault();
         if (settings) leaveSettings();
         else setSettingsOpen(true);
+        return;
+      }
+      // 워크스페이스(multi-board-spec D4): Ctrl+Alt+1~9 = n번째 공간, Ctrl+Alt+0 = 목록 — 어느 화면에서나
+      if (mod && e.altKey && !e.shiftKey && /^(Digit|Numpad)[0-9]$/.test(e.code)) {
+        e.preventDefault();
+        const n = Number(e.code.slice(-1));
+        if (n === 0) useAppStore.setState((st) => ({ switcherOpen: !st.switcherOpen }));
+        else switchWorkspaceAt(n);
         return;
       }
       // Cabinet(features-1102-spec F5): Alt+4 = 열기/닫기 — 어느 화면에서나(모달리스 창)

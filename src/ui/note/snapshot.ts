@@ -1,5 +1,7 @@
 // 메모 보드 스냅샷 동작(improve-1027v3-spec 1절): 지금 주 → PNG 저장(저장 대화상자, 내보내기와 같은 규칙) · 클립보드 복사,
 // 다른 주(엑셀) → 저장소에서 읽어 그린다. 파일 쓰기는 Platform만(CLAUDE.md 4-3), 외부 통신 없음.
+import { workspacePart } from "../../export/filename";
+import { workspaceLabel } from "../common/appController";
 import type { JournalRepository } from "../../data/repository";
 import { localDate } from "../../domain/localTime";
 import { weekList } from "../../data/repository";
@@ -86,7 +88,7 @@ export async function saveSnapshot() {
     const weekId = useNote.getState().weekId;
     const path = await platform.pickSaveFile(
       STR.note.snapshotTitle,
-      platform.join(dir, STR.note.snapshotFileName(weekId)),
+      platform.join(dir, STR.note.snapshotFileName(workspacePart(workspaceLabel()) + weekId)),
       "image",
     );
     if (!path) return;

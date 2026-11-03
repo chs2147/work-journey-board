@@ -363,6 +363,10 @@ async function shots(base = "http://localhost:1420") {
         await p.locator("#settings-tab-data").click();
       },
     },
+    "13-workspace": {
+      url: `${show}&ws=2`,
+      run: (p) => p.getByTestId("workspace-button").click(),
+    },
   };
   for (const [name, st] of Object.entries(steps)) {
     const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1 });

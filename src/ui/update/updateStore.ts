@@ -2,7 +2,8 @@
 // 확인 → (새 판) 띠·레일 점 → [자세히·설치] 창 → 입력 저장 → 내려받기(진행) → SHA256 확인 → 일지 자동 백업 → 설치·다시 시작.
 // 인터넷은 Platform.update*(Rust update.rs)만 쓴다. 웹 화면은 주소를 모른다.
 import { create } from "zustand";
-import { preUpdateBackup } from "../../data/session";
+import { preUpdateBackup, preUpdateBackupClosed } from "../../data/session";
+import { sameDir } from "../../domain/workspace";
 import type { UpdateInfo } from "../../platform";
 import { STR } from "../../shared/strings";
 import { flushAll, toast } from "../board/boardStore";
@@ -104,6 +105,10 @@ export async function installUpdate() {
     );
     set({ phase: "installing", progress: 1 });
     await preUpdateBackup(platform, j.driver, j.dataDir, platform.now());
+    // 이 PC에 등록된 다른 워크스페이스도 한 부씩(D7) — 한 곳이 실패해도(폴더 없음 등) 업데이트는 막지 않는다
+    for (const w of app.workspaces)
+      if (!sameDir(w.dir, j.dataDir))
+        await preUpdateBackupClosed(platform, w.dir, platform.now()).catch(() => false);
     await platform.updateInstall();
     // 실앱은 여기서 닫힌다. 브라우저 모드는 설치하지 않는다
     if (platform.kind === "browser") toast(STR.update.browserOnly);

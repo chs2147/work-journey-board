@@ -1,5 +1,7 @@
 // 메모 보드 마크다운 내보내기(features-1102-spec F4): 범위의 주간 메모를 모아 마크다운 + 이미지 목록을 만들고,
 // 저장 대화상자에서 고른 .md와 옆 `<이름>_images` 폴더에 쓴다(Platform.writeExport — Rust가 확장자·폴더 재검사). 네트워크 없음.
+import { workspacePart } from "../../export/filename";
+import { workspaceLabel } from "../common/appController";
 import { create } from "zustand";
 import type { JournalRepository } from "../../data/repository";
 import { emptyDoc, type NoteDoc } from "../../domain/note";
@@ -130,7 +132,7 @@ export async function saveMarkdown() {
     }
     const path = await platform.pickSaveFile(
       STR.mdExport.saveTitle,
-      platform.join(dir, STR.mdExport.fileName(fileLabel(weeks))),
+      platform.join(dir, STR.mdExport.fileName(workspacePart(workspaceLabel()) + fileLabel(weeks))),
       "markdown",
     );
     if (!path) return;

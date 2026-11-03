@@ -11,6 +11,12 @@
   border-right: 1px solid var(--line);
 }
 
+/* 지금 워크스페이스 색 띠(multi-board-spec 3-1) */
+.band {
+  position: relative;
+  box-shadow: inset 3px 0 0 var(--ws-band);
+}
+
 .btn {
   position: relative;
   display: grid;

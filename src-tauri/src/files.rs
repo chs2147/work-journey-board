@@ -288,14 +288,49 @@ pub fn restore_journal(
     Ok(())
 }
 
-/// 설정 파일에 적힌 저장 폴더(없거나 읽지 못하면 None)
-fn configured_data_dir(app: &AppHandle) -> Option<String> {
-    let raw = fs::read_to_string(config_path(app).ok()?).ok()?;
-    let v: serde_json::Value = serde_json::from_str(&raw).ok()?;
-    v.get("dataDir")?
-        .as_str()
-        .filter(|s| !s.is_empty())
-        .map(str::to_string)
+/// 설정 파일에 적힌 저장 폴더들 — 지금 연 공간(`dataDir`) + 워크스페이스 목록(`workspaces[].dir`, multi-board-spec 8절).
+/// 없거나 읽지 못하면 빈 목록
+fn configured_data_dirs(app: &AppHandle) -> Vec<String> {
+    let Some(raw) = config_path(app)
+        .ok()
+        .and_then(|p| fs::read_to_string(p).ok())
+    else {
+        return vec![];
+    };
+    data_dirs_of(&raw)
+}
+
+/// config.json 글 → 저장 폴더들(빈 값·같은 폴더는 한 번만)
+fn data_dirs_of(raw: &str) -> Vec<String> {
+    let Ok(v) = serde_json::from_str::<serde_json::Value>(raw) else {
+        return vec![];
+    };
+    let mut out: Vec<String> = vec![];
+    let mut push = |s: Option<&str>| {
+        if let Some(s) = s.filter(|s| !s.is_empty()) {
+            if !out.iter().any(|o| norm(o) == norm(s)) {
+                out.push(s.to_string());
+            }
+        }
+    };
+    push(v.get("dataDir").and_then(|d| d.as_str()));
+    if let Some(list) = v.get("workspaces").and_then(|w| w.as_array()) {
+        for w in list {
+            push(w.get("dir").and_then(|d| d.as_str()));
+        }
+    }
+    out
+}
+
+/// 등록된 모든 공간 폴더에 대해 내보내기 규칙 검사(어느 공간의 `backups`에도 쓰지 않는다)
+fn export_path_allowed_all(path: &str, dirs: &[String]) -> Result<(), String> {
+    if dirs.is_empty() {
+        return export_path_allowed(path, None);
+    }
+    for d in dirs {
+        export_path_allowed(path, Some(d))?;
+    }
+    Ok(())
 }
 
 /// 경로 비교용: 구분자를 `\\`로 맞추고 끝 구분자를 떼고 소문자로(윈도우는 대소문자를 가리지 않음)
@@ -343,7 +378,7 @@ fn export_path_allowed(path: &str, data_dir: Option<&str>) -> Result<(), String>
 /// 덮어쓰기를 확인한 것이다. 임시 파일에 다 쓴 뒤 바꿔치기(쓰는 도중 꺼져도 반쪽 파일이 남지 않게).
 #[tauri::command]
 pub fn export_write(app: AppHandle, path: String, bytes: Vec<u8>) -> Result<(), String> {
-    export_path_allowed(&path, configured_data_dir(&app).as_deref())?;
+    export_path_allowed_all(&path, &configured_data_dirs(&app))?;
     let target = PathBuf::from(&path);
     // 마크다운 이미지 폴더(`…_images`)는 없으면 한 단계만 만든다(그 위 폴더는 사용자가 고른 곳이라 이미 있다)
     if let Some(dir) = target.parent() {
@@ -605,5 +640,19 @@ mod tests {
         .is_err());
         assert_eq!(fs::read(dir.join("work-journey.db")).unwrap(), b"good");
         let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn export_checks_every_workspace_backups() {
+        let raw = r#"{"dataDir":"C:\\U\\WorkJourney","workspaces":[{"dir":"C:\\U\\WorkJourney"},{"dir":"D:\\개인\\WorkJourney-개인"},{"dir":""}]}"#;
+        let dirs = data_dirs_of(raw);
+        assert_eq!(dirs.len(), 2);
+        assert!(
+            export_path_allowed_all("D:\\개인\\WorkJourney-개인\\backups\\a.xlsx", &dirs).is_err()
+        );
+        assert!(export_path_allowed_all("C:\\U\\WorkJourney\\backups\\a.xlsx", &dirs).is_err());
+        assert!(export_path_allowed_all("D:\\개인\\보고\\a.xlsx", &dirs).is_ok());
+        assert!(data_dirs_of("깨진 글").is_empty());
+        assert!(export_path_allowed_all("D:\\a.db", &[]).is_err());
     }
 }

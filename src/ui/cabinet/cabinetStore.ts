@@ -692,6 +692,25 @@ export async function shutdownCabinet() {
   await p?.folderWindows?.closeAll().catch(() => undefined);
 }
 
+/**
+ * 워크스페이스 전환(multi-board-spec 6절): 지금 공간의 창 상태를 돌려주고 Cabinet 창·폴더 창을 닫는다.
+ * 다음 공간의 창 상태는 전환 뒤 restoreCabinet이 config.cabinet으로 다시 연다.
+ */
+export async function suspendCabinet(): Promise<CabinetConfig> {
+  if (saveTimer) clearTimeout(saveTimer);
+  const p = app().platform;
+  const { open, folders } = useCabinet.getState();
+  exiting = true;
+  try {
+    await p?.folderWindows?.closeAll().catch(() => undefined);
+    if (open) await p?.cabinetWindow?.close().catch(() => undefined);
+  } finally {
+    exiting = false;
+  }
+  useCabinet.setState({ open: false, folders: [] });
+  return { open, windows: folders };
+}
+
 /** 업무 → 연결된 Cabinet 항목 수(보드 업무 머리 메뉴), 항목 → 연결된 폴더·링크(보드 🗂 표시) */
 export function entryLinks(
   entryId: string,

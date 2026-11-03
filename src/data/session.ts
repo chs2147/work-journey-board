@@ -109,6 +109,23 @@ export function preUpdateBackup(fs: SessionFs, driver: SqlDriver, dataDir: strin
   return runPreUpdateBackup(driver, fs.backupFs, dataDir, now, fs.verifyCopy);
 }
 
+/**
+ * 닫혀 있는 다른 워크스페이스 일지도 업데이트 전에 한 부(multi-board-spec D7). 일지 파일이 없으면 건너뛴다(false).
+ * 그 일지를 잠깐 열어(마이그레이션 없이) 그 폴더의 backups에 `_pre-update` 사본을 쓰고 닫는다.
+ */
+export async function preUpdateBackupClosed(fs: SessionFs, dataDir: string, now: Date): Promise<boolean> {
+  const path = journalPath(fs, dataDir);
+  if (!(await fs.stat(path)).exists) return false;
+  const d = await fs.openDatabase(path);
+  try {
+    await prepareConnection(d);
+    await runPreUpdateBackup(d, fs.backupFs, dataDir, now, fs.verifyCopy);
+  } finally {
+    await d.close().catch(() => undefined);
+  }
+  return true;
+}
+
 export interface BackupInfo {
   name: string;
   /** `2026-10-23` 또는 `2026-10-23 08:31` */

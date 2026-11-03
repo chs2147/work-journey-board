@@ -243,6 +243,9 @@ export const tauriPlatform: Platform = {
     const raw = await invoke<string | null>("config_read");
     await invoke("config_write", { json: mergeConfigJson(raw, patch) });
   },
+  async setWindowTitle(title) {
+    await getCurrentWindow().setTitle(title);
+  },
   async setWindowTheme(pref) {
     // 시그니처는 밝은 바탕이라 창 제목 표시줄은 라이트
     await getCurrentWindow().setTheme(pref === "system" ? null : pref === "dark" ? "dark" : "light");
