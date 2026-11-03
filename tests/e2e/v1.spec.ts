@@ -89,9 +89,7 @@ test("Alt+Delete: 세부 항목은 그 항목만 지우고 커서는 위 항목 
   await expect.poll(() => values(page)).toEqual([FIRST, "배포 리허설 결과 정리", "롤백 소요 시간 기록"]);
 });
 
-test("빈 항목에는 ⋮⋮ 손잡이가 없고, 글을 쓰면 생긴다 · 빈 항목 Backspace 삭제는 그대로", async ({
-  page,
-}) => {
+test("빈 항목에는 ⋮⋮ 손잡이가 없고, 글을 쓰면 생긴다 · 빈 항목 Backspace 삭제는 그대로", async ({ page }) => {
   const add = page.getByRole("button", { name: "+ 기록 추가" }).first();
   const id = await page
     .locator('[data-testid^="cell-"]')

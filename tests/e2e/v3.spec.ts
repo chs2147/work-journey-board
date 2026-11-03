@@ -47,7 +47,10 @@ test("행의 [메모] → 연결된 글 상자(본문 비움, 띠에 업무명·
 }) => {
   await firstRow(page).hover();
   await firstRow(page).getByTestId("drag-row").click();
-  await page.getByTestId("item-menu").getByRole("menuitem", { name: /연결된 메모 만들기/ }).click();
+  await page
+    .getByTestId("item-menu")
+    .getByRole("menuitem", { name: /연결된 메모 만들기/ })
+    .click();
   const ghost = page.getByTestId("note-ghost");
   await expect(ghost.getByTestId("link-strip")).toContainText(SETTLE);
   await expect(ghost.getByTestId("link-strip")).toContainText("10/22 (목)");
@@ -95,7 +98,10 @@ test("아무것도 안 치고 떠나면 연결 상자도 사라진다(빈 상자
   const before = await page.locator("[data-box-id]").count();
   await firstRow(page).hover();
   await firstRow(page).getByTestId("drag-row").click();
-  await page.getByTestId("item-menu").getByRole("menuitem", { name: /연결된 메모 만들기/ }).click();
+  await page
+    .getByTestId("item-menu")
+    .getByRole("menuitem", { name: /연결된 메모 만들기/ })
+    .click();
   await expect(page.getByTestId("note-ghost")).toHaveCount(1);
   await page.keyboard.press("Escape");
   await expect(page.getByTestId("note-ghost")).toHaveCount(0);
@@ -108,7 +114,10 @@ test("연결 해제(끊긴 사슬) → 띠·배지 사라짐, 되돌리기 · �
 }) => {
   await firstRow(page).hover();
   await firstRow(page).getByTestId("drag-row").click();
-  await page.getByTestId("item-menu").getByRole("menuitem", { name: /연결된 메모 만들기/ }).click();
+  await page
+    .getByTestId("item-menu")
+    .getByRole("menuitem", { name: /연결된 메모 만들기/ })
+    .click();
   await typeInNewBox(page, "연결 해제 확인용");
   await page.keyboard.press("Escape");
   await saved(page);
@@ -193,7 +202,10 @@ test("오늘 뷰: 카드 항목의 [메모] → 왼쪽 메모에 연결 상자",
   const row = cell(page, SETTLE, TODAY).locator("[data-item-index]").first();
   await row.hover();
   await row.getByTestId("drag-row").click();
-  await page.getByTestId("item-menu").getByRole("menuitem", { name: /연결된 메모 만들기/ }).click();
+  await page
+    .getByTestId("item-menu")
+    .getByRole("menuitem", { name: /연결된 메모 만들기/ })
+    .click();
   await expect(page.getByTestId("note-ghost").getByTestId("link-strip")).toContainText(SETTLE);
   await typeInNewBox(page, "오늘 뷰 연결 메모");
   await page.keyboard.press("Escape");

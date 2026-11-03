@@ -12,7 +12,9 @@ async function openBoard(page: Page) {
   await expect(page.locator(":focus")).toHaveValue(FIRST);
 }
 
-test("⋮⋮ 누르기 = 항목 메뉴(메모·반복·시각·옮기기·삭제), 글 오른쪽에는 겹치는 단추 없음", async ({ page }) => {
+test("⋮⋮ 누르기 = 항목 메뉴(메모·반복·시각·옮기기·삭제), 글 오른쪽에는 겹치는 단추 없음", async ({
+  page,
+}) => {
   await openBoard(page);
   const row = cell(page, SETTLE, TODAY).locator("[data-item-index='0']");
   await row.hover();
@@ -42,7 +44,8 @@ test("시작 시각: 시 00~23 24칸을 한 번에", async ({ page }) => {
   await cell(page, SETTLE, TODAY).locator("textarea").first().focus();
   await page.keyboard.press("Alt+KeyO");
   const pop = page.getByTestId("start-time-popover");
-  for (const h of ["00", "06", "18", "23"]) await expect(pop.getByRole("button", { name: h, exact: true })).toBeVisible();
+  for (const h of ["00", "06", "18", "23"])
+    await expect(pop.getByRole("button", { name: h, exact: true })).toBeVisible();
   await expect(pop.getByRole("button", { name: /더 보기/ })).toHaveCount(0);
 });
 
@@ -56,5 +59,6 @@ test("중요 업무 패널: 오늘 묶음만 다른 바탕", async ({ page }) =>
   const bg = await today.evaluate((e) => getComputedStyle(e).backgroundColor);
   expect(bg).not.toBe("rgba(0, 0, 0, 0)");
   const late = page.getByTestId("important-group-late");
-  if (await late.count()) expect(await late.evaluate((e) => getComputedStyle(e).backgroundColor)).not.toBe(bg);
+  if (await late.count())
+    expect(await late.evaluate((e) => getComputedStyle(e).backgroundColor)).not.toBe(bg);
 });

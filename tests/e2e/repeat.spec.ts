@@ -58,7 +58,10 @@ test("마우스로 ↻ 켜기 → 설정 > 반복 항목에 보이고, 중지하
   const item = cell(page, SEC, "2026-10-21").locator('[class*="item_"]').first();
   await item.hover();
   await item.getByTestId("drag-row").click();
-  await page.getByTestId("item-menu").getByRole("menuitem", { name: /매주 반복 켜기/ }).click();
+  await page
+    .getByTestId("item-menu")
+    .getByRole("menuitem", { name: /매주 반복 켜기/ })
+    .click();
   await expect(page.getByText("다음 주부터 수요일에 들어옵니다", { exact: false })).toBeVisible();
 
   await openSettings(page, "work");
