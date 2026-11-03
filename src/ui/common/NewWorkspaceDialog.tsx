@@ -36,7 +36,12 @@ export function NewWorkspaceDialog() {
   const [otherDir, setOtherDir] = useState<string | null>(null);
   // 실제로 새 일지 파일을 만들 폴더 — 고른 폴더에 이미 일지가 있거나 목록에 있는 공간 폴더면 그 안(추천 폴더면 옆)에
   // 새 폴더를 정한다. 새 워크스페이스는 늘 새 일지 파일(기존 일지를 열거나 덮어쓰지 않음, rc.1 사용자 지적)
-  const [target, setTarget] = useState<{ dir: string; moved: boolean; oneDrive: boolean } | null>(null);
+  const [target, setTarget] = useState<{
+    key: string;
+    dir: string;
+    moved: boolean;
+    oneDrive: boolean;
+  } | null>(null);
   const [cats, setCats] = useState<string[]>(PURPOSE_PRESET.life.categories);
   const [copy, setCopy] = useState({ holiday: true, tags: false, nudge: false });
   const [busy, setBusy] = useState(false);
@@ -55,11 +60,12 @@ export function NewWorkspaceDialog() {
     [currentDir, list, name, label],
   );
   const base = otherDir ?? suggested;
+  // 이 키로 계산한 결과만 쓴다(고른 폴더·이름이 바뀌면 다시 계산될 때까지 [다음]을 막음)
+  const targetKey = `${base}|${name}|${label}`;
 
   useEffect(() => {
     if (step < 2) return;
     let alive = true;
-    setTarget(null);
     void (async () => {
       const usable = async (d: string) =>
         !list.some((e) => sameDir(e.dir, d)) &&
@@ -72,13 +78,14 @@ export function NewWorkspaceDialog() {
         for (let n = 2; !(await usable(dir)) && n < 100; n++) dir = `${root}-${n}`;
       }
       const oneDrive = await platform.isOneDrivePath(dir).catch(() => false);
-      if (alive) setTarget({ dir, moved: !sameDir(dir, base), oneDrive });
+      if (alive) setTarget({ key: targetKey, dir, moved: !sameDir(dir, base), oneDrive });
     })();
     return () => {
       alive = false;
     };
-  }, [platform, base, otherDir, step, list, name, label]);
-  const dir = target?.dir ?? null;
+  }, [platform, base, otherDir, step, list, name, label, targetKey]);
+  const current = target?.key === targetKey ? target : null;
+  const dir = current?.dir ?? null;
 
   const choosePurpose = (p: WorkspacePurpose) => {
     setPurpose(p);
@@ -186,8 +193,8 @@ export function NewWorkspaceDialog() {
               {STR.workspace.fileWillBe}{" "}
               <code className={styles.path}>{dir ? platform.join(dir, "work-journey.db") : "…"}</code>
             </p>
-            {target?.moved && <p className={styles.warn}>{STR.workspace.folderMoved}</p>}
-            {target?.oneDrive && <p className={styles.warn}>{STR.workspace.folderOneDrive}</p>}
+            {current?.moved && <p className={styles.warn}>{STR.workspace.folderMoved}</p>}
+            {current?.oneDrive && <p className={styles.warn}>{STR.workspace.folderOneDrive}</p>}
           </div>
         )}
 
