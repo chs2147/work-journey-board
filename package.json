@@ -1,7 +1,7 @@
 {
   "name": "work-journey-board",
   "private": true,
-  "version": "1.8.1-rc.1",
+  "version": "1.8.1",
   "type": "module",
   "scripts": {
     "dev": "vite",

@@ -91,7 +91,7 @@ npm run tauri dev    # 실앱 모드(윈도우·맥 / 리눅스는 webkit2gtk-4.
 - 설치 파일: `main`에 반영되면 *Build desktop installers*가 윈도우(NSIS)·맥(유니버설 DMG)을 나란히 만들고, **둘 다 성공해야** [Releases](https://github.com/chs2147/work-journey-board/releases)에 `v<버전>`으로 함께 올린다 — 0.x·`-rc`는 사전 릴리스, 1.0.0 이상 정식 판은 정식 릴리스. 윈도우 오프라인 설치판은 요청할 때만 Actions → *Build desktop installers* → Run workflow(main) → `offline`으로 그 판 릴리스에 더한다. 하나의 원본으로 두 플랫폼을 같은 판으로 운영한다([docs/macos-spec.md](docs/macos-spec.md)).
 
 ## Version History
-### v1.8.1-rc.1 (2026-11-04) — 검증용: 워크스페이스 전환 무결성 긴급 수정
+### v1.8.1 (2026-11-04) — 워크스페이스 전환 무결성 긴급 수정
 - 워크스페이스를 바꾸면 메모 이미지가 지워지던 결함(1.8.0) 수정 — 메모 저장·이미지 정리는 늘 그 메모를 읽어 온 공간의 일지에만
 - 전환·저장 위치 바꾸기·옮기기·복원 때 남은 예약 저장·실행 취소 기록·그림 캐시를 다음 일지로 넘기지 않음
 - 데이터 형식·외부 통신 변화 없음
