@@ -9,7 +9,7 @@ test("스플래시 창: 이름·소개·버전·시작 문구, 오늘 요일 강
   await expect(page.getByRole("heading", { name: "Work Journey Board" })).toBeVisible();
   await expect(page.getByText("오늘 한 일을, 한 줄씩")).toBeVisible();
   await expect(page.getByRole("status")).toHaveText("시작하는 중…");
-  await expect(page.locator(".title-row .ver")).toHaveText(/^버전 \d+\.\d+\.\d+$/);
+  await expect(page.locator(".title-row .ver")).toHaveText(/^버전 \d+\.\d+\.\d+(-[0-9A-Za-z.]+)?$/);
   await expect(page.locator(".day.today")).toHaveText(/목/);
   const size = await page.evaluate(() => ({
     w: document.documentElement.scrollWidth,
