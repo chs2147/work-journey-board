@@ -21,6 +21,9 @@ import { openInsights } from "../insights/insightsStore";
 import { isComposingKey } from "./helpers";
 import styles from "./Board.module.css";
 
+/** 메뉴를 연 직후 이만큼은 스크롤로 닫지 않는다(포커스 때문에 생긴 스크롤) */
+const SCROLL_GRACE_MS = 300;
+
 interface Props {
   vc: VisibleCategory;
   index: number;
@@ -84,7 +87,11 @@ export function CategoryHeader({
     };
     const esc = (e: KeyboardEvent) => e.key === "Escape" && setMenuOpen(false);
     // 메뉴는 화면 기준(fixed)으로 떠 있으므로 보드가 스크롤되거나 창 크기가 바뀌면 닫는다
+    // 단, 막 연 직후의 스크롤은 무시 — 보드 아래 경계에 걸친 ⋯를 누르면 브라우저가 포커스를 보이게 하려고
+    // 보드를 살짝 스크롤하는데(그 스크롤 이벤트는 메뉴가 열린 뒤 도착), 그걸로 방금 연 메뉴가 닫히지 않게(v1.7.1)
+    const openedAt = performance.now();
     const dismiss = (e: Event) => {
+      if (e.type === "scroll" && performance.now() - openedAt < SCROLL_GRACE_MS) return;
       if (!menuRef.current?.contains(e.target as Node)) setMenuOpen(false);
     };
     document.addEventListener("mousedown", close);
