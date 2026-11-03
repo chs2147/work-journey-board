@@ -149,7 +149,7 @@ test.describe("T1 시작 시각", () => {
     await page.getByRole("menuitem", { name: /시작 시각/ }).click();
     const pop = page.getByTestId("start-time-popover");
     await pop.getByRole("button", { name: "10", exact: true }).click();
-    await pop.getByRole("button", { name: ":45" }).click();
+    await pop.getByRole("button", { name: ":45", exact: true }).click();
     await pop.getByRole("button", { name: "10:45 시작" }).click();
     await expect(row.getByTestId("start-time-chip")).toHaveText("⏰ 10:45");
     // 분은 15분 단위만 — ↑ 한 번 = 11:00
