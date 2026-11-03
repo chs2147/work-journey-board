@@ -372,3 +372,9 @@ section:first-child > .group {
   font-size: var(--fs-xs);
   cursor: pointer;
 }
+
+/* 시작 시각(improve-1103v8-spec T1) */
+.time {
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}

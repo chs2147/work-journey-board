@@ -90,6 +90,12 @@ npm run tauri dev    # 실앱 모드(윈도우·맥 / 리눅스는 webkit2gtk-4.
 - 설치 파일: `main`에 반영되면 *Build desktop installers*가 윈도우(NSIS)·맥(유니버설 DMG)을 나란히 만들고, **둘 다 성공해야** [Releases](https://github.com/chs2147/work-journey-board/releases)에 `v<버전>`으로 함께 올린다 — 0.x·`-rc`는 사전 릴리스, 1.0.0 이상 정식 판은 정식 릴리스. 윈도우 오프라인 설치판은 요청할 때만 Actions → *Build desktop installers* → Run workflow(main) → `offline`으로 그 판 릴리스에 더한다. 하나의 원본으로 두 플랫폼을 같은 판으로 운영한다([docs/macos-spec.md](docs/macos-spec.md)).
 
 ## Version History
+### v1.7.0 (2026-11-03) — 시작 시각 · 다른 날로 옮기기
+- **시작 시각**(`Alt+O`, 15분 단위, `⏰ 10:00`) — 중요 업무 패널 시각·정렬, 엑셀 원장 `시작 시각` 열 · 구조 v10
+- **다른 날로 옮기기**(`Alt+D`) — 다음 주·이전 주·내일·달력, 세부 항목 함께, ★ 패널 날짜·메모 연결 띠 따라감, 실행 취소
+- 항목 ⋯(커서 있는 항목)·오른쪽 클릭 메뉴 · 메모 상자 ⋯ 단추 또렷하게
+- 첫 실행에서 업무가 추가되지 않던 것, 맥 한글 `Enter` 한 번으로 업무 추가
+
 ### v1.6.0 (2026-11-02) — macOS 판(윈도우와 같은 판·같은 기능)
 - **macOS 앱**(13 이상, 인텔·애플 실리콘 공용 DMG) — 하나의 원본으로 윈도우·맥을 같은 판으로 함께 릴리스(둘 다 빌드되어야 릴리스)
 - 맥: 한국어 메뉴 막대·`⌘Q` 안전 종료, 화면 안내 맥 표기(`⌘`·`⌥`·Finder), Cabinet Finder 끌어 놓기·가상본·숨김 파일, 앱 안 새 판 설치(DMG → 앱 교체), iCloud·Google Drive·Dropbox 동기화 폴더 안내

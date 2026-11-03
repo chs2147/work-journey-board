@@ -2,6 +2,7 @@
 import { localDate } from "./localTime";
 import type { ImportantItem } from "./types";
 import { shortDateLabel, weekIdOf, type DateStr } from "./week";
+import { compareByTime } from "./startTime";
 
 /** 처리 완료한 중요 항목(완료 기록이 있고 다시 중요로 켜지 않은 것) — improve-1027v4-spec 2절 */
 export const isDone = (it: { flagged?: boolean; flagDoneAt?: string | null }) =>
@@ -58,6 +59,7 @@ export function groupImportant(items: ImportantItem[], today: DateStr): Importan
       a.categoryOrder - b.categoryOrder ||
       a.categoryId.localeCompare(b.categoryId) ||
       a.date.localeCompare(b.date) ||
+      compareByTime(a.startTime, b.startTime) ||
       a.seq - b.seq,
   );
   return ORDER.map((key) => {

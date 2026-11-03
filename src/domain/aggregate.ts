@@ -11,6 +11,8 @@ export interface SummaryItem {
   text: string;
   /** 중요 표시(처리 전) — 자동 집계·주간보고에는 쓰지 않고 엑셀 원장 `중요` 열에만(i-m2-plan 6절 #4) */
   flagged?: boolean;
+  /** 시작 시각 — 자동 집계에는 쓰지 않고 엑셀 원장 `시작 시각` 열에만(improve-1103v8-spec 1-4) */
+  startTime?: string | null;
 }
 
 export interface SummaryInput {

@@ -19,11 +19,13 @@ import {
   editCell,
   leaveCell,
   materializePreview,
+  moveItemToDate,
   newDraft,
   pullLabel,
   pullPrevious,
   setFocus,
   setFocusDay,
+  setStartTime,
   splitKey,
   toggleFlag,
   toast,
@@ -33,6 +35,8 @@ import {
 } from "./boardStore";
 import { doneDate, isDone } from "../../domain/important";
 import { DonePopover } from "./DonePopover";
+import { ItemMoreMenu, MoveDatePopover, StartTimePopover } from "./ItemActions";
+import { defaultStartTime } from "../../domain/startTime";
 import { addLinkedBox, pasteImagesFromBoard, revealBox, useNote } from "../note/noteStore";
 import { linkedBoxes } from "../../domain/note";
 import { autoSize, isComposingKey, useRemeasure } from "./helpers";
@@ -72,6 +76,19 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
   const [deleteHover, setDeleteHover] = useState<number | null>(null);
   /** 완료 뱃지 창이 열린 항목(improve-1027v4-spec 2-1) */
   const [doneOpen, setDoneOpen] = useState<number | null>(null);
+  /** 항목 ⋯ 메뉴·시작 시각 창·다른 날로 옮기기 창(improve-1103v8-spec 5절) */
+  const [tool, setTool] = useState<{ i: number; kind: "menu" | "time" | "move" } | null>(null);
+  const today = useBoard((s) => s.today);
+  const closeTool = (i: number) => {
+    setTool(null);
+    refs.current[i]?.focus();
+  };
+  const subsOf = (i: number) => {
+    if (items[i]?.depth !== 0) return 0;
+    let n = 0;
+    for (let j = i + 1; j < items.length && items[j]!.depth === 1; j++) if (items[j]!.text.trim()) n++;
+    return n;
+  };
   const [delStart, delEnd] = deleteHover === null ? [-1, -1] : deleteRange(items, deleteHover);
   // 행 끌어서 옮기기(improve-1026v2-spec 3절): 원래 자리는 흐리게, 놓을 칸은 테두리, 놓을 틈에 파란 선
   const drag = useRowDrag((s) => s.drag);
@@ -166,6 +183,12 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
     if (e.key === "Delete" && e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
       e.preventDefault();
       void deleteItemAt(cellKey, i, true);
+      return;
+    }
+    // 시작 시각(improve-1103v8-spec T1) · 다른 날로 옮기기(T4)
+    if ((e.code === "KeyO" || e.code === "KeyD") && e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+      e.preventDefault();
+      if (item.text.trim()) setTool({ i, kind: e.code === "KeyO" ? "time" : "move" });
       return;
     }
     // 매주 반복 켜기/끄기(spec 3-1) — 세부 항목에서 눌러도 본 항목 묶음에 적용
@@ -305,8 +328,16 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
                 linkCount[it.id] ? styles.linked : "",
                 cabOf[it.id] ? styles.cab : "",
                 linkTarget === it.id || linkHover === it.id ? styles.linkTarget : "",
+                it.startTime ? styles.hasTime : "",
               ].join(" ")}
               data-item-index={i}
+              onContextMenu={(e) => {
+                // 오른쪽 클릭 = 항목 ⋯ 메뉴(improve-1103v8-spec 5절) — 글을 고른 채면 기본 메뉴(복사 등)
+                if (!it.text.trim() || window.getSelection()?.toString()) return;
+                e.preventDefault();
+                refs.current[i]?.focus();
+                setTool({ i, kind: "menu" });
+              }}
               data-item-id={it.text.trim() ? it.id : undefined}
               data-flagged={it.flagged ? "true" : undefined}
               data-repeating={isRepeating ? "true" : undefined}
@@ -366,6 +397,21 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
                   onPointerDown={(e) => startRowDrag(e, cellKey, i)}
                 >
                   ⋮⋮
+                </button>
+              )}
+              {/* 시작 시각 꼬리표(T1) — 글 첫 줄 앞, 누르면 시각 고르기 */}
+              {it.startTime && it.text.trim() && (
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  className={styles.timeChip}
+                  title={STR.startTime.chipTitle(it.startTime)}
+                  aria-label={STR.startTime.chipTitle(it.startTime)}
+                  data-testid="start-time-chip"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => setTool({ i, kind: "time" })}
+                >
+                  {STR.startTime.chip(it.startTime)}
                 </button>
               )}
               {viewing ? (
@@ -474,6 +520,54 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
                 >
                   {linkAlready ? STR.linked.dropLinked : STR.linked.dropAdd}
                 </span>
+              )}
+              {/* 항목 ⋯ 메뉴(5절): 시작 시각… · 다른 날로 옮기기… */}
+              {it.text.trim() && (
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  className={it.depth === 0 ? styles.itemMore : styles.itemMoreSub}
+                  aria-label={STR.itemTools.more}
+                  title={STR.itemTools.more}
+                  aria-haspopup="menu"
+                  aria-expanded={tool?.i === i && tool.kind === "menu"}
+                  data-testid="item-more"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => setTool(tool?.i === i && tool.kind === "menu" ? null : { i, kind: "menu" })}
+                >
+                  ⋯
+                </button>
+              )}
+              {tool?.i === i && tool.kind === "menu" && (
+                <ItemMoreMenu
+                  onTime={() => setTool({ i, kind: "time" })}
+                  onMove={() => setTool({ i, kind: "move" })}
+                  onClose={() => closeTool(i)}
+                />
+              )}
+              {tool?.i === i && tool.kind === "time" && (
+                <StartTimePopover
+                  date={splitKey(cellKey).date}
+                  initial={it.startTime ?? defaultStartTime(splitKey(cellKey).date === today, new Date())}
+                  hasValue={!!it.startTime}
+                  onSave={(t) => {
+                    closeTool(i);
+                    void setStartTime(cellKey, i, t);
+                  }}
+                  onClose={() => closeTool(i)}
+                />
+              )}
+              {tool?.i === i && tool.kind === "move" && (
+                <MoveDatePopover
+                  from={splitKey(cellKey).date}
+                  today={today}
+                  subs={subsOf(i)}
+                  onMove={(d) => {
+                    setTool(null);
+                    void moveItemToDate(cellKey, i, d);
+                  }}
+                  onClose={() => closeTool(i)}
+                />
               )}
               {(it.text.trim() || items.length > 1) && (
                 <button

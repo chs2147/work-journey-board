@@ -17,6 +17,49 @@ export function formatBytes(n: number): string {
 
 /** 윈도우 표기 원본(테스트가 맥 표기 변환을 검사할 때 쓴다) — 화면은 STR을 쓴다 */
 export const STR_BASE = {
+  /** 항목 도구 ⋯ 메뉴(improve-1103v8-spec 5절) */
+  itemTools: {
+    more: "항목 메뉴",
+    time: "시작 시각…",
+    timeKey: "Alt+O",
+    move: "다른 날로 옮기기…",
+    moveKey: "Alt+D",
+  },
+  /** 시작 시각(improve-1103v8-spec T1) — 그날 시작하는 시각, 15분 단위 */
+  startTime: {
+    chip: (t: string) => `⏰ ${t}`,
+    chipTitle: (t: string) => `${t} 시작 — 눌러서 바꾸기 (Alt+O)`,
+    title: (day: string) => `시작 시각 — ${day}`,
+    hour: "시",
+    minute: "분 (15분 단위)",
+    moreHours: "다른 시간 더 보기",
+    fewerHours: "자주 쓰는 시간만",
+    clear: "지우기",
+    cancel: "취소",
+    ok: (t: string) => `${t} 시작`,
+    help: "↑↓ 15분씩 · 숫자로 바로(1430) · Enter 확인 · Delete 지우기 · Esc 취소",
+    excelHeader: "시작 시각",
+  },
+  /** 다른 날로 옮기기(improve-1103v8-spec T4) */
+  moveDate: {
+    title: (subs: number) => (subs ? `다른 날로 옮기기 — 세부 항목 ${subs}개 함께` : "다른 날로 옮기기"),
+    nextWeek: (d: string) => `다음 주 같은 요일 · ${d}`,
+    prevWeek: (d: string) => `이전 주 같은 요일 · ${d}`,
+    tomorrow: (d: string) => `내일 · ${d}`,
+    pick: "날짜 고르기",
+    month: (y: number, m: number) => `${y}년 ${m}월`,
+    prevMonth: "이전 달",
+    nextMonth: "다음 달",
+    where: (d: string) => `${d} · 같은 업무 칸 맨 아래`,
+    go: "옮기기",
+    cancel: "취소",
+    same: "지금 있는 날입니다",
+    help: "방향키 날짜 · PageUp/PageDown 달 · Enter 옮기기 · Esc 취소",
+    done: (what: string, d: string) => `${what}를 ${d}로 옮겼습니다`,
+    what: (flagged: boolean, subs: number) =>
+      `${flagged ? "★ " : ""}항목 1개${subs ? `·세부 ${subs}개` : ""}`,
+    goThere: "그 날로 가기",
+  },
   appName: "Work Journey Board",
   topBar: {
     prevWeek: "이전 주 (Alt+←)",

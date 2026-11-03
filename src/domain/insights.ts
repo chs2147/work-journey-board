@@ -114,6 +114,8 @@ export interface TimelineItem {
   doneAt: string | null;
   /** 매주 반복으로 들어온 항목 */
   repeat: boolean;
+  /** 시작 시각(improve-1103v8-spec 1-4) */
+  startTime: string | null;
   /** 이 항목에 연결된 메모 글(읽는 순서) */
   memos: string[];
 }
@@ -240,6 +242,7 @@ export function buildTimeline(input: TimelineInput): TimelineRow[] {
           flagged: it.flagged === true,
           doneAt: it.flagged !== true && it.flagDoneAt ? it.flagDoneAt : null,
           repeat: !!it.recurrenceId,
+          startTime: it.startTime ?? null,
           memos: memoFor(w, it.id),
         })),
       });

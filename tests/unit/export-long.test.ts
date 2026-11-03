@@ -114,7 +114,7 @@ describe("6주 가상 샘플 — 엑셀 통합", () => {
     expect(rows.find((r) => String(r[6]).startsWith("회의 결과 정리"))![6]).toBe(
       "회의 결과 정리\n다음 회의: 화면 흐름 확정",
     );
-    expect(ws.autoFilter).toBe(`A1:H${rows.length + 1}`);
+    expect(ws.autoFilter).toBe(`A1:I${rows.length + 1}`);
     // 자동 집계(패널)와 엑셀이 같은 업무 고르기 규칙: 주간보고 블록 업무 = 자동 집계 본문 업무
     const w38 = buildWeeklySummary(weeks[0]!.input, { includeMemo: true });
     expect(w38.match(/^■ (.+)$/gm)!.map((l) => l.slice(2))).toEqual(

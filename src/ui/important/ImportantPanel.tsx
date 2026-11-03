@@ -159,9 +159,17 @@ export function ImportantPanel({ overlay }: { overlay: boolean }) {
                           {it.parentText && <span className={styles.parent}>{it.parentText} ›</span>}
                           <span className={styles.text}>{it.text}</span>
                           {/* 업무명은 머리에 있으니 빼고, 날짜는 "오늘" 묶음이면 생략(8절) */}
-                          {g.key !== "today" && (
+                          {(g.key !== "today" || it.startTime) && (
                             <span className={styles.meta}>
-                              <span>{shortDateLabel(it.date)}</span>
+                              <span>
+                                {g.key !== "today" && shortDateLabel(it.date)}
+                                {it.startTime && (
+                                  <span className={styles.time} data-testid="important-time">
+                                    {g.key !== "today" && " "}
+                                    {STR.startTime.chip(it.startTime)}
+                                  </span>
+                                )}
+                              </span>
                               {g.key === "late" && (
                                 <span className={styles.lateTag}>{STR.important.lateTag}</span>
                               )}

@@ -11,6 +11,7 @@ import {
 import type { SummaryInput } from "../domain/aggregate";
 import { isDayMarkKind, isLeaveWeek, isOffDay, LABEL_MAX, type DayMarkKind } from "../domain/dayMark";
 import { resolveHolidays } from "../domain/holidaysKr";
+import { isStartTime } from "../domain/startTime";
 import { normalizeTagName, tagNameProblem, type Tag } from "../domain/tags";
 import type { ExistingItem, ImportContext, ImportPlan } from "../domain/importer";
 import type { ActivityRow } from "../domain/insights";
@@ -167,6 +168,8 @@ interface ItemSnapshot {
   flagged: number;
   flag_done_at: string | null;
   recurrence_id: string | null;
+  /** v10부터(그 전 되돌리기 자료에는 없음) */
+  start_time?: string | null;
   created_at: string;
   updated_at: string;
   import_id: string | null;
@@ -255,6 +258,7 @@ interface ItemRow {
   flagged: number;
   flag_done_at: string | null;
   recurrence_id: string | null;
+  start_time: string | null;
 }
 interface ImportantRow extends ItemRow {
   category_name: string;
@@ -290,7 +294,8 @@ export interface RepeatPreview {
   date: DateStr;
 }
 
-const ITEM_COLUMNS = "id, date, category_id, seq, depth, text, flagged, flag_done_at, recurrence_id";
+const ITEM_COLUMNS =
+  "id, date, category_id, seq, depth, text, flagged, flag_done_at, recurrence_id, start_time";
 
 const toCategory = (r: CategoryRow): Category => ({
   id: r.id,
@@ -315,6 +320,7 @@ const toItem = (r: ItemRow): EntryItem => ({
   flagged: Number(r.flagged) === 1,
   flagDoneAt: r.flag_done_at,
   recurrenceId: r.recurrence_id,
+  startTime: r.start_time ?? null,
 });
 
 /**
@@ -1081,6 +1087,7 @@ export class JournalRepository {
       flagged: d.flagged === true,
       flagDoneAt: d.flagged ? null : (d.flagDoneAt ?? null),
       recurrenceId: d.recurrenceId ?? null,
+      startTime: isStartTime(d.startTime) ? d.startTime : null,
     }));
     const ids = items.map((i) => i.id);
     const ts = this.ts();
@@ -1093,12 +1100,13 @@ export class JournalRepository {
       },
       ...items.map((it) => ({
         sql: `INSERT INTO entry_item (id, date, category_id, seq, depth, text, flagged, flag_done_at, recurrence_id,
-                                      created_at, updated_at)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                      start_time, created_at, updated_at)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
               ON CONFLICT(id) DO UPDATE SET
                 date = excluded.date, category_id = excluded.category_id, seq = excluded.seq,
                 depth = excluded.depth, text = excluded.text, flagged = excluded.flagged,
                 flag_done_at = excluded.flag_done_at, recurrence_id = excluded.recurrence_id,
+                start_time = excluded.start_time,
                 updated_at = CASE WHEN entry_item.text <> excluded.text OR entry_item.depth <> excluded.depth
                                     OR entry_item.seq <> excluded.seq OR entry_item.date <> excluded.date
                                     OR entry_item.category_id <> excluded.category_id
@@ -1114,6 +1122,7 @@ export class JournalRepository {
           it.flagged ? 1 : 0,
           it.flagDoneAt ?? null,
           it.recurrenceId ?? null,
+          it.startTime ?? null,
           ts,
           ts,
         ],
@@ -1126,7 +1135,7 @@ export class JournalRepository {
   private async importantRows(where: string, params: SqlParam[]): Promise<ImportantItem[]> {
     const rows = await this.db.select<ImportantRow>(
       `SELECT e.id, e.date, e.category_id, e.seq, e.depth, e.text, e.flagged, e.flag_done_at, e.recurrence_id,
-              c.name AS category_name, c.color AS category_color, c.sort_order AS category_order,
+              e.start_time, c.name AS category_name, c.color AS category_color, c.sort_order AS category_order,
               CASE WHEN e.depth = 1 THEN (
                 SELECT p.text FROM entry_item p
                 WHERE p.date = e.date AND p.category_id = e.category_id AND p.depth = 0 AND p.seq < e.seq
@@ -1150,7 +1159,37 @@ export class JournalRepository {
       text: r.text,
       parentText: r.parent_text,
       flagDoneAt: r.flag_done_at,
+      startTime: r.start_time ?? null,
     }));
+  }
+
+  /**
+   * id로 항목 찾기(주와 상관없이) — 메모 상자 연결 띠가 다른 주로 옮긴 항목을 보여 줄 때(improve-1103v8-spec D5).
+   * 없는 id는 빠진다
+   */
+  async getItemsByIds(
+    ids: string[],
+  ): Promise<(EntryItem & { categoryName: string; categoryColor: string })[]> {
+    const out: (EntryItem & { categoryName: string; categoryColor: string })[] = [];
+    for (let i = 0; i < ids.length; i += 500) {
+      const part = ids.slice(i, i + 500);
+      if (!part.length) continue;
+      const rows = await this.db.select<ItemRow & { category_name: string; category_color: string }>(
+        `SELECT e.id, e.date, e.category_id, e.seq, e.depth, e.text, e.flagged, e.flag_done_at, e.recurrence_id,
+                e.start_time, c.name AS category_name, c.color AS category_color
+         FROM entry_item e JOIN category c ON c.id = e.category_id
+         WHERE e.id IN (${part.map(() => "?").join(", ")})`,
+        part,
+      );
+      out.push(
+        ...rows.map((r) => ({
+          ...toItem(r),
+          categoryName: r.category_name,
+          categoryColor: r.category_color,
+        })),
+      );
+    }
+    return out;
   }
 
   /** 아직 처리하지 않은 중요 항목 전부(모든 주). 묶음·정렬은 domain/important.ts */
@@ -1538,7 +1577,7 @@ export class JournalRepository {
   /** 한 업무의 기록(날짜 → 칸 안 순서). 경과 타임라인 본문 */
   async getCategoryEntries(categoryId: string, from: DateStr, to: DateStr): Promise<EntryItem[]> {
     const rows = await this.db.select<ItemRow>(
-      `SELECT id, date, category_id, seq, depth, text, flagged, flag_done_at, recurrence_id FROM entry_item
+      `SELECT ${ITEM_COLUMNS} FROM entry_item
        WHERE category_id = ? AND date BETWEEN ? AND ? ORDER BY date, seq`,
       [categoryId, from, to],
     );
@@ -1979,7 +2018,7 @@ export class JournalRepository {
       const ids = plan.deleteItemIds.slice(i, i + 500);
       undo.deletedItems.push(
         ...(await this.db.select<ItemSnapshot>(
-          `SELECT id, date, category_id, seq, depth, text, flagged, flag_done_at, recurrence_id, created_at, updated_at, import_id
+          `SELECT id, date, category_id, seq, depth, text, flagged, flag_done_at, recurrence_id, start_time, created_at, updated_at, import_id
            FROM entry_item WHERE id IN (${ids.map(() => "?").join(", ")})`,
           ids,
         )),
@@ -2086,8 +2125,8 @@ export class JournalRepository {
     for (const it of undo.deletedItems)
       stmts.push({
         sql: `INSERT OR IGNORE INTO entry_item (id, date, category_id, seq, depth, text, flagged, flag_done_at, recurrence_id,
-                                                created_at, updated_at, import_id)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                                                start_time, created_at, updated_at, import_id)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         params: [
           it.id,
           it.date,
@@ -2098,6 +2137,7 @@ export class JournalRepository {
           it.flagged,
           it.flag_done_at,
           it.recurrence_id,
+          it.start_time ?? null,
           it.created_at,
           it.updated_at,
           it.import_id,

@@ -242,6 +242,11 @@ export function Timeline({ rows, today, categoryId, query, search, currentMatch,
               <IconDone size={14} />
             </span>
           )}
+          {it.startTime && (
+            <span className={styles.timeMark} data-testid="timeline-time">
+              {it.startTime}
+            </span>
+          )}
           <ItemText text={it.text} query={query} />
           {it.repeat && (
             <span className={styles.repeatMark} aria-label={STR.insights.repeat} title={STR.insights.repeat}>

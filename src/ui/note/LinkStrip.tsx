@@ -2,7 +2,7 @@
 // `● 업무명 · 10/22 (목) · 항목 글` + ✂(그 연결만 해제). 줄 순서는 보드 순서(업무 → 날짜 → 칸 안), 지워진 항목은 맨 아래.
 // 글은 저장하지 않고 늘 지금 보드의 항목에서 만든다 — 항목을 고치거나 옮기면 바로 따라 바뀐다.
 // 5개 이상이면 4줄 + "연결 N개 더 보기". 띠 높이는 상자의 CSS 변수 --strip-h로 알려 ⋯ 단추가 띠 아래에 오게 한다.
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { BoxRef } from "../../domain/note";
 import { shortDateLabel } from "../../domain/week";
 import { STR } from "../../shared/strings";
@@ -11,6 +11,7 @@ import { useLinkHover } from "../board/rowDrag";
 import { allImportantDone, doneDate } from "../../domain/important";
 import { IconDone, IconUnlink } from "../common/icons";
 import { unlinkBox } from "./noteStore";
+import { useAppStore } from "../common/appStore";
 import styles from "./Note.module.css";
 
 /** 이만큼부터 접는다(처음 FOLD_SHOW줄만) */
@@ -70,7 +71,52 @@ function useLinkedLines(refs: BoxRef[]): LinkedLine[] {
         ),
     );
   });
-  return useMemo(() => JSON.parse(json) as LinkedLine[], [json]);
+  const lines = useMemo(() => JSON.parse(json) as LinkedLine[], [json]);
+  // 보고 있는 주에 없는 항목 — 다른 날로 옮긴 항목이면 저장소에서 찾아 그 날짜로 보인다(improve-1103v8-spec D5)
+  const missing = lines.filter((l) => !l.found).map((l) => l.item);
+  const missingKey = missing.join("|");
+  const journal = useAppStore((s) => s.journal);
+  // 저장이 끝난 뒤에 찾는다 — 옮긴 직후(저장 전)에 찾으면 옛 날짜가 남는다
+  const idle = useBoard((s) => s.saving === 0);
+  const [elsewhere, setElsewhere] = useState<Record<string, NonNullable<LinkedLine["found"]>>>({});
+  useEffect(() => {
+    if (!missingKey || journal.state !== "ready" || !idle) return;
+    let alive = true;
+    void journal.repo
+      .getItemsByIds(missingKey.split("|"))
+      .then((rows) => {
+        if (!alive) return;
+        const map: Record<string, NonNullable<LinkedLine["found"]>> = {};
+        for (const r of rows) {
+          if (!r.text.trim()) continue;
+          map[r.id] = {
+            id: r.id,
+            text: r.text,
+            date: r.date,
+            categoryId: r.categoryId,
+            catName: r.categoryName,
+            color: r.categoryColor,
+            order: `9999|${r.date}|${String(r.seq).padStart(4, "0")}`,
+            flagged: !!r.flagged,
+            doneAt: !r.flagged && r.flagDoneAt ? r.flagDoneAt : null,
+          };
+        }
+        setElsewhere(map);
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [missingKey, journal, idle]);
+  return useMemo(
+    () =>
+      lines
+        .map((l) => (l.found ? l : { ...l, found: elsewhere[l.item] ?? null }))
+        .sort((a, b) =>
+          !a.found || !b.found ? Number(!a.found) - Number(!b.found) : a.found.order < b.found.order ? -1 : 1,
+        ),
+    [lines, elsewhere],
+  );
 }
 
 export function LinkStrip({ boxId, refs }: { boxId: string; refs: BoxRef[] }) {

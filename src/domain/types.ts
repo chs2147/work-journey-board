@@ -29,6 +29,8 @@ export interface ItemMarks {
   flagDoneAt?: string | null;
   /** 매주 반복 규칙 id */
   recurrenceId?: string | null;
+  /** 그날 시작 시각 'HH:MM'(15분 단위, improve-1103v8-spec T1) — 없으면 null */
+  startTime?: string | null;
 }
 
 export interface EntryItem extends ItemMarks {
@@ -65,4 +67,6 @@ export interface ImportantItem {
   /** 세부 항목이면 그 본 항목 글 */
   parentText: string | null;
   flagDoneAt: string | null;
+  /** 시작 시각(improve-1103v8-spec T1) */
+  startTime?: string | null;
 }

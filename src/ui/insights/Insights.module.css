@@ -1255,3 +1255,11 @@
 .tipGo {
   color: var(--tip-go);
 }
+
+/* 시작 시각(improve-1103v8-spec 1-4) */
+.timeMark {
+  margin-right: 6px;
+  color: var(--accent);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+}

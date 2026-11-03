@@ -231,7 +231,7 @@ describe("마이그레이션 (data-spec 7-5)", () => {
     const db = await openSqlJsMemory();
     await migrate(db, { migrations: MIGRATIONS.slice(0, 8) });
     const before = vi.fn().mockResolvedValue(undefined);
-    expect(await migrate(db, { beforeMigrate: before })).toBe(9);
+    expect(await migrate(db, { beforeMigrate: before, migrations: MIGRATIONS.slice(0, 9) })).toBe(9);
     expect(before).toHaveBeenCalledWith(8, 9);
     await db.execute(
       "INSERT INTO category (id, name, color, sort_order, created_at, updated_at) VALUES ('c1', '업무', 'c1', 1, 't', 't')",
@@ -270,6 +270,27 @@ describe("마이그레이션 (data-spec 7-5)", () => {
     expect(await db.select("SELECT id FROM cabinet_link ORDER BY id")).toEqual([{ id: "k1" }, { id: "k3" }]);
     await db.execute("DELETE FROM cabinet_item WHERE id = 'l'");
     expect(await db.select("SELECT id FROM cabinet_link ORDER BY id")).toEqual([{ id: "k1" }]);
+    expect(await quickCheck(db)).toBe(true);
+  });
+  it("v9 → v10(시작 시각): 직전 백업, 기존 항목은 시각 없음, 15분 단위 'HH:MM'만 저장", async () => {
+    const db = await openSqlJsMemory();
+    await migrate(db, { migrations: MIGRATIONS.slice(0, 9) });
+    await db.execute(
+      "INSERT INTO category (id, name, color, sort_order, created_at, updated_at) VALUES ('c1', '업무', 'c1', 1, 't', 't')",
+    );
+    await db.execute(
+      "INSERT INTO entry_item (id, date, category_id, seq, text, created_at, updated_at) VALUES ('e1', '2026-10-21', 'c1', 1, '회의', 't', 't')",
+    );
+    const before = vi.fn().mockResolvedValue(undefined);
+    expect(await migrate(db, { beforeMigrate: before })).toBe(10);
+    expect(before).toHaveBeenCalledWith(9, 10);
+    expect(await db.select("SELECT start_time FROM entry_item")).toEqual([{ start_time: null }]);
+    for (const ok of ["10:00", "00:00", "23:45", "09:15"])
+      await db.execute("UPDATE entry_item SET start_time = ? WHERE id = 'e1'", [ok]);
+    for (const bad of ["10:10", "24:00", "9:00", "10:00:00", "aa:bb", "29:15"])
+      await expect(
+        db.execute("UPDATE entry_item SET start_time = ? WHERE id = 'e1'", [bad]),
+      ).rejects.toThrow();
     expect(await quickCheck(db)).toBe(true);
   });
 });

@@ -13,6 +13,7 @@ import {
   addWeeks,
   DAY_LABELS,
   dayIndex,
+  shortDateLabel,
   weekDays,
   weekIdOf,
   type DateStr,
@@ -123,7 +124,8 @@ const sameItems = (a: ItemDraft[], b: ItemDraft[]) =>
       x.id === b[i]!.id &&
       x.depth === b[i]!.depth &&
       x.text === b[i]!.text &&
-      Boolean(x.flagged) === Boolean(b[i]!.flagged),
+      Boolean(x.flagged) === Boolean(b[i]!.flagged) &&
+      (x.startTime ?? null) === (b[i]!.startTime ?? null),
   );
 
 export const splitKey = (key: string) => {
@@ -432,6 +434,7 @@ async function loadWeekNow(r: JournalRepository, weekId: WeekId, focusDay: DateS
         flagged: i.flagged,
         flagDoneAt: i.flagDoneAt,
         recurrenceId: i.recurrenceId,
+        startTime: i.startTime ?? null,
       }));
       cells[key] = drafts;
       persistedCells.set(key, drafts);
@@ -502,6 +505,75 @@ export async function toggleFlag(key: string, index: number) {
   const t = timers.get(key);
   if (t) clearTimeout(t);
   await persistCell(key);
+}
+
+/** 시작 시각 정하기·지우기(improve-1103v8-spec T1) — 칸 저장과 같은 길(실행 취소 1단계) */
+export async function setStartTime(key: string, index: number, time: string | null) {
+  const items = get().cells[key];
+  const item = items?.[index];
+  if (!items || !item || !item.text.trim()) return;
+  if ((item.startTime ?? null) === time) return;
+  const next = items.map((it, i) => (i === index ? { ...it, startTime: time } : it));
+  set((s) => ({ cells: { ...s.cells, [key]: next } }));
+  const t = timers.get(key);
+  if (t) clearTimeout(t);
+  await persistCell(key);
+}
+
+/**
+ * 다른 날로 옮기기(improve-1103v8-spec T4): 항목(본 항목이면 세부 항목까지)을 같은 업무의 date 칸 맨 아래로.
+ * 다른 주의 칸은 저장소에서 읽어 붙이고, 두 칸을 한 batch(받는 칸 먼저) → 실행 취소 1단계.
+ * 항목 id가 그대로라 ★·처리 완료·시작 시각·매주 반복·Cabinet·메모 연결이 따라간다.
+ */
+export async function moveItemToDate(fromKey: string, index: number, date: DateStr) {
+  await flushAll();
+  const src = get().cells[fromKey] ?? [];
+  const item = src[index];
+  if (!item || !item.text.trim()) return;
+  const { date: fromDate, categoryId } = splitKey(fromKey);
+  if (date === fromDate) return;
+  const toKey = cellKey(date, categoryId);
+  let dst = get().cells[toKey];
+  let dstSaved = persistedCells.get(toKey);
+  if (!dst) {
+    const rows = await requireRepo().getCategoryEntries(categoryId, date, date);
+    dst = rows.map((i) => ({
+      id: i.id,
+      depth: i.depth,
+      text: i.text,
+      flagged: i.flagged,
+      flagDoneAt: i.flagDoneAt,
+      recurrenceId: i.recurrenceId,
+      startTime: i.startTime ?? null,
+    }));
+    dstSaved = dst;
+  }
+  const r = moveRows(src, index, normalizeCell(dst), Number.MAX_SAFE_INTEGER);
+  if (!r) return;
+  // 세부 항목 하나만 옮기면 옮긴 날에서 본 항목(남의 본 항목 밑으로 들어가지 않게)
+  if (item.depth === 1) r.dst = r.dst.map((x) => (x.id === item.id ? { ...x, depth: 0 as const } : x));
+  const before: [string, ItemDraft[]][] = [
+    [fromKey, persistedCells.get(fromKey) ?? []],
+    [toKey, dstSaved ?? []],
+  ];
+  const after: [string, ItemDraft[]][] = [
+    [toKey, r.dst],
+    [fromKey, r.src],
+  ];
+  try {
+    await applyCells(after);
+  } catch (e) {
+    reportError(e);
+    return;
+  }
+  pushUndo({ undo: () => applyCells(before), redo: () => applyCells(after) });
+  void refreshImportant();
+  const subs = r.moved.length - 1;
+  const movedId = r.moved[0]!.id;
+  toast(STR.moveDate.done(STR.moveDate.what(Boolean(item.flagged), subs), shortDateLabel(date)), [
+    { label: STR.moveDate.goThere, run: () => void revealItem({ id: movedId, date, categoryId }) },
+    { label: STR.toast.undo, run: () => void undo() },
+  ]);
 }
 
 /** 화면에 있는 같은 항목의 표시를 저장본과 맞춘다(목록에서 처리·되돌리기 후). */
