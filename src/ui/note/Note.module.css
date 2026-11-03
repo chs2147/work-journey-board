@@ -415,21 +415,38 @@
   background: var(--accent);
 }
 
+/* ⋯ 단추(improve-1103v8-spec T3): 그림·글 위에서도 보이게 흰 바탕·테두리·그림자 — 윈도우·맥 같은 모양 */
 .menuButton {
   position: absolute;
-  right: 2px;
-  top: 2px;
-  width: 22px;
-  height: 20px;
+  right: 4px;
+  top: 4px;
+  width: 28px;
+  height: 24px;
   padding: 0;
-  border: 0;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--text-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 18%);
+  color: var(--text-1);
   font: inherit;
+  font-size: 16px;
+  font-weight: 700;
   line-height: 1;
+  letter-spacing: 0.02em;
   cursor: pointer;
   opacity: 0;
+}
+
+.menuButton:hover,
+.menuButton[aria-expanded="true"] {
+  border-color: var(--line-strong);
+  background: var(--surface-card);
+}
+
+/* 이미지 상자는 그림 안쪽으로(가장자리와 겹쳐 보이지 않게) */
+.imageBox > .menuButton {
+  right: 10px;
+  top: 10px;
 }
 
 .box:hover .menuButton,
@@ -442,7 +459,7 @@
 .menu {
   position: absolute;
   right: 0;
-  top: 24px;
+  top: 32px;
   z-index: 50;
   display: flex;
   flex-direction: column;
@@ -1120,7 +1137,11 @@ button.stripText:hover {
 }
 
 .hasStrip > .menu {
-  top: calc(var(--strip-h, 26px) + 26px);
+  top: calc(var(--strip-h, 26px) + 32px);
+}
+
+.imageBox.hasStrip > .menuButton {
+  top: calc(var(--strip-h, 26px) + 10px);
 }
 
 /* 보드 배지로 찾아온 상자를 잠깐 강조 */

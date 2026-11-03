@@ -15,6 +15,44 @@ export function isComposingKey(e: {
   return Boolean(e.nativeEvent.isComposing) || e.keyCode === 229;
 }
 
+const enterTimers = new WeakMap<HTMLInputElement, ReturnType<typeof setTimeout>>();
+
+/**
+ * 한 줄 이름 입력란(첫 실행 업무 이름 · [+ 업무 추가])의 Enter = 추가(improve-1103v8-spec T2).
+ * 한글 조합을 확정한 Enter도 추가로 본다 — 맥 WebKit은 그 Enter를 조합 중 키(229)로만 보내 한 번 더 눌러야 했다.
+ * 조합 중 Enter는 확정 직후(30ms) 한 번 추가하고, 윈도우처럼 확정 뒤 Enter가 한 번 더 오면 그쪽으로 한 번만.
+ * Enter였으면 true(처리함). 칸 편집기(개조식)는 쓰지 않는다 — 매일 기록 동작 그대로.
+ */
+export function handleEnterCommit(
+  e: {
+    key: string;
+    keyCode: number;
+    nativeEvent: { isComposing?: boolean };
+    currentTarget: HTMLInputElement;
+    preventDefault(): void;
+  },
+  commit: (el: HTMLInputElement) => void,
+): boolean {
+  if (e.key !== "Enter") return false;
+  const el = e.currentTarget;
+  const t = enterTimers.get(el);
+  if (t) clearTimeout(t);
+  enterTimers.delete(el);
+  if (Boolean(e.nativeEvent.isComposing) || e.keyCode === 229) {
+    enterTimers.set(
+      el,
+      setTimeout(() => {
+        enterTimers.delete(el);
+        commit(el);
+      }, 30),
+    );
+    return true;
+  }
+  e.preventDefault();
+  commit(el);
+  return true;
+}
+
 /** 전역 키 처리기용(DOM KeyboardEvent) — 같은 규칙 */
 export function isComposingEvent(e: KeyboardEvent): boolean {
   if (isMacOptionShortcut(e)) return false;

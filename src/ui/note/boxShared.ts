@@ -197,6 +197,10 @@ export function onSelectedBoxKey(e: KeyboardEvent<HTMLDivElement>, id: string, o
   } else if (mod && !e.altKey && e.code === "KeyY") {
     e.preventDefault();
     redoNote();
+  } else if (e.key === "ContextMenu" || (e.shiftKey && e.key === "F10")) {
+    // ⋯ 메뉴 열기(improve-1103v8-spec T3) — 상자 안 ⋯ 단추를 누른 것과 같다
+    e.preventDefault();
+    e.currentTarget.querySelector<HTMLButtonElement>(":scope > button[aria-expanded]")?.click();
   } else if (e.code === "KeyL" && !mod && !e.altKey) {
     // 관계선(note-relation-spec 2-2·4절): L = 잇기 시작, Shift+L = 이 상자의 선 차례로
     e.preventDefault();

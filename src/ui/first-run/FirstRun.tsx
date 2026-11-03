@@ -1,10 +1,10 @@
 // 첫 실행 3단계(overview 10-8, 와이어프레임 wireframe-first-run.svg): 시작 → 저장 폴더(OneDrive 경고) → 첫 업무.
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { classifyFolder } from "../../data/session";
 import { CATEGORY_COLOR_KEYS } from "../../shared/palette";
 import { STR } from "../../shared/strings";
 import { addCategory, goToday } from "../board/boardStore";
-import { isComposingKey } from "../board/helpers";
+import { handleEnterCommit } from "../board/helpers";
 import { openFolderAsJournal } from "../common/appController";
 import { BrandLockup } from "../common/Brand";
 import { useAppStore } from "../common/appStore";
@@ -22,6 +22,8 @@ export function FirstRun() {
   const [notice, setNotice] = useState<string | null>(null);
   const [names, setNames] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
+  const nameRef = useRef<HTMLInputElement>(null);
+  const clean = (v: string) => v.trim().replace(/\s+/g, " ");
 
   useEffect(() => {
     void platform.suggestedDataDir().then((p) => {
@@ -50,7 +52,10 @@ export function FirstRun() {
     if (!(await openFolderAsJournal(p))) setBusy(false);
   };
 
-  const finish = async (withNames: string[]) => {
+  const finish = async (chosen: string[]) => {
+    // 입력란에 쓰고 Enter 없이 [보드 열기]를 눌러도 그 이름까지(improve-1103v8-spec T2)
+    const pending = nameRef.current ? clean(nameRef.current.value) : "";
+    const withNames = pending && !chosen.includes(pending) ? [...chosen, pending] : chosen;
     setBusy(true);
     if (!(await openFolderAsJournal(dir))) return setBusy(false);
     for (const n of withNames) await addCategory(n);
@@ -178,16 +183,26 @@ export function FirstRun() {
             aria-label={STR.firstRun.categoryPlaceholder}
             maxLength={40}
             autoFocus
-            onKeyDown={(e) => {
-              if (isComposingKey(e) || e.key !== "Enter") return;
-              const v = e.currentTarget.value.trim().replace(/\s+/g, " ");
-              if (v && !names.includes(v)) setNames([...names, v]);
-              e.currentTarget.value = "";
-            }}
+            ref={nameRef}
+            onKeyDown={(e) =>
+              void handleEnterCommit(e, (el) => {
+                const v = clean(el.value);
+                if (v) setNames((list) => (list.includes(v) ? list : [...list, v]));
+                el.value = "";
+              })
+            }
           />
           <p className={styles.small}>{STR.firstRun.colorAuto}</p>
           <div className={styles.footer}>
-            <button type="button" className={styles.link} disabled={busy} onClick={() => void finish([])}>
+            <button
+              type="button"
+              className={styles.link}
+              disabled={busy}
+              onClick={() => {
+                if (nameRef.current) nameRef.current.value = "";
+                void finish([]);
+              }}
+            >
               {STR.firstRun.skip}
             </button>
             <button
