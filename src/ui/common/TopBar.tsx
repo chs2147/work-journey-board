@@ -1,6 +1,15 @@
 import { DAY_LABELS, dayIndex, weekTitle } from "../../domain/week";
 import { STR } from "../../shared/strings";
-import { goDay, goToday, goWeek, retryFailed, setViewMode, setYearOpen, useBoard } from "../board/boardStore";
+import {
+  focusStartCell,
+  goDay,
+  goToday,
+  goWeek,
+  retryFailed,
+  setViewMode,
+  setYearOpen,
+  useBoard,
+} from "../board/boardStore";
 import { YearMinimap } from "../board/YearMinimap";
 import { toggleExport } from "../export/exportStore";
 import { toggleSummary, useSummary } from "../summary/summaryStore";
@@ -13,6 +22,7 @@ import { IconDayView, IconWeekView } from "./icons";
 import { TagFilterMenu } from "./TagFilterMenu";
 import { SearchBox } from "../search/SearchViews";
 import { useInsights } from "../insights/insightsStore";
+import { closeUniverse, useUniverse } from "../universe/universeStore";
 import styles from "./TopBar.module.css";
 
 export function TopBar() {
@@ -40,7 +50,9 @@ export function TopBar() {
   const insightsOpen = useInsights((s) => s.open);
   // 인사이트 모드(m3-s1-spec 1-3): 주 단위 기능(주 이동·오늘·연간·보기·주간 요약·내보내기)은 감추고 태그 필터는 남긴다
   const insights = insightsOpen && !settings;
-  const week = !insights && !settings;
+  // Universe(universe-spec 4절): 인사이트처럼 보드 자리를 덮는다 — 주 단위 기능은 감춘다
+  const universe = useUniverse((s) => s.open) && !settings;
+  const week = !insights && !settings && !universe;
   const showSaving = useSavingVisible(saving > 0);
   const savedAt = useBoard((s) => s.savedAt);
 
@@ -71,6 +83,23 @@ export function TopBar() {
           <div className={styles.insightTitle} data-testid="insights-title">
             <b>{STR.insights.title}</b>
             <span>{STR.insights.subtitle}</span>
+          </div>
+        )}
+        {ready && journalReady && universe && (
+          <div className={styles.insightTitle} data-testid="universe-title">
+            <button
+              type="button"
+              className={styles.textButton}
+              data-testid="universe-back"
+              onClick={() => {
+                closeUniverse();
+                focusStartCell();
+              }}
+            >
+              {STR.universe.back}
+            </button>
+            <b>{STR.universe.title}</b>
+            <span>{STR.universe.subtitle}</span>
           </div>
         )}
         {ready && journalReady && week && (

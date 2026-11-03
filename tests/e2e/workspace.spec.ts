@@ -48,20 +48,21 @@ test("목록 팝업·단축키로 전환: 기록이 공간마다 따로, 창 제
     "data-icon",
     "notebook",
   );
-  await expect(headers(page)).toHaveCount(0); // 개인 공간은 빈 일지
+  await expect(headers(page)).toHaveCount(2); // 개인 공간 = 작은 가상 샘플(건강·운동, 공부)
   await expect(page.getByRole("status").filter({ hasText: "개인 워크스페이스" })).toBeVisible();
 
   // 개인 공간에 업무 하나 → 회사로 갔다 와도 섞이지 않는다
-  await page.getByPlaceholder("업무 이름 입력 후 Enter (Esc 닫기)").fill("운동");
+  await page.getByRole("button", { name: "+ 업무 추가" }).click();
+  await page.getByPlaceholder("업무 이름 입력 후 Enter (Esc 닫기)").fill("산책");
   await page.keyboard.press("Enter");
-  await expect(headers(page)).toHaveCount(1);
+  await expect(headers(page)).toHaveCount(3);
   await page.keyboard.press("Control+Alt+Digit1");
   await expect(page).toHaveTitle("Work Journey Board — 회사");
   await expect(headers(page)).toHaveCount(companyCats);
-  await expect(headers(page).filter({ hasText: "운동" })).toHaveCount(0);
+  await expect(headers(page).filter({ hasText: "산책" })).toHaveCount(0);
   await page.keyboard.press("Control+Alt+Digit2");
   await expect(page).toHaveTitle("Work Journey Board — 개인");
-  await expect(headers(page).filter({ hasText: "운동" })).toHaveCount(1);
+  await expect(headers(page).filter({ hasText: "산책" })).toHaveCount(1);
   // Ctrl+Alt+0 = 목록, Esc 닫기
   await page.keyboard.press("Control+Alt+Digit0");
   await expect(page.getByTestId("workspace-menu")).toBeVisible();

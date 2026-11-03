@@ -91,6 +91,9 @@ npm run tauri dev    # 실앱 모드(윈도우·맥 / 리눅스는 webkit2gtk-4.
 - 설치 파일: `main`에 반영되면 *Build desktop installers*가 윈도우(NSIS)·맥(유니버설 DMG)을 나란히 만들고, **둘 다 성공해야** [Releases](https://github.com/chs2147/work-journey-board/releases)에 `v<버전>`으로 함께 올린다 — 0.x·`-rc`는 사전 릴리스, 1.0.0 이상 정식 판은 정식 릴리스. 윈도우 오프라인 설치판은 요청할 때만 Actions → *Build desktop installers* → Run workflow(main) → `offline`으로 그 판 릴리스에 더한다. 하나의 원본으로 두 플랫폼을 같은 판으로 운영한다([docs/macos-spec.md](docs/macos-spec.md)).
 
 ## Version History
+### v1.9.0-rc.1 (2026-11-03) — Universe 지도 보기(검증용)
+- **Universe**(`Alt+5`) — 업무·항목·태그·메모 상자·Cabinet 연결망: 초점·은하·목록 보기, 시간 막대(년→월→주→일), 원문·연결 이유, [원본 열기], 다른 워크스페이스 읽기 전용 함께 보기
+
 ### v1.8.0 (2026-11-03) — 워크스페이스(회사·개인 기록을 따로)
 - **워크스페이스** — 회사·개인처럼 기록을 따로 두는 공간(공간마다 폴더·일지 파일 1개), 레일 맨 위 공간 단추(모노그램 아이콘 28개·색)·`Ctrl+Alt+1~9`·`0`
 - 새 워크스페이스 4단계(이름·색·아이콘·용도 → 위치 → 첫 업무 → 설정 복사) — 늘 새 일지 파일 · 설정 › 워크스페이스(이름·색·아이콘·순서·기존 폴더 추가·목록에서 빼기)

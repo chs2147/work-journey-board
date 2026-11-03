@@ -1,0 +1,460 @@
+/* Universe(universe-spec 4절) — 테마 토큰만 쓴다(시그니처·라이트·다크 자동) */
+.view {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-page);
+}
+
+.toolbar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4) 0;
+}
+
+.seg {
+  display: inline-flex;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.seg button {
+  padding: 4px 12px;
+  border: 0;
+  background: var(--surface-card);
+  color: var(--text-1);
+  font: inherit;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
+.seg button + button {
+  border-left: 1px solid var(--line);
+}
+
+.segOn,
+.seg .segOn {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 236px minmax(0, 1fr) 340px;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+}
+
+@media (max-width: 1279px) {
+  .body {
+    grid-template-columns: 200px minmax(0, 1fr) 300px;
+  }
+}
+
+.filters,
+.detail,
+.center {
+  min-height: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+}
+
+.filters,
+.detail {
+  overflow: auto;
+  padding: var(--sp-4);
+}
+
+.center {
+  position: relative;
+  overflow: hidden;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: var(--sp-4);
+}
+
+.label {
+  color: var(--text-2);
+  font-size: var(--fs-xs);
+  margin-bottom: 2px;
+}
+
+.input {
+  padding: 5px 9px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-1);
+  font: inherit;
+  font-size: var(--fs-sm);
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
+.dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.glyph {
+  flex: none;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.chip {
+  padding: 1px 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  background: var(--surface-card);
+  color: var(--text-2);
+  font: inherit;
+  font-size: var(--fs-xs);
+  cursor: pointer;
+}
+
+.chipOn {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
+.muted {
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+}
+
+.notice {
+  padding: 3px 9px;
+  border-radius: var(--radius-md);
+  background: var(--surface-sub);
+  color: var(--text-2);
+  font-size: var(--fs-xs);
+}
+
+.warn {
+  color: var(--warn, var(--text-2));
+}
+
+.empty {
+  margin: 0;
+  padding: var(--sp-6);
+  color: var(--text-2);
+  text-align: center;
+}
+
+.map,
+.list {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.mapInfo {
+  flex: none;
+  padding: var(--sp-3) var(--sp-4) 0;
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+}
+
+.stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.svg,
+.canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+  touch-action: none;
+}
+
+.svg:active,
+.canvas:active {
+  cursor: grabbing;
+}
+
+.node {
+  cursor: pointer;
+}
+
+.node:hover .label2 {
+  fill: var(--accent);
+}
+
+.label2,
+.labelFar {
+  font-size: 12px;
+  fill: var(--text-1);
+  paint-order: stroke;
+  stroke: var(--surface-card);
+  stroke-width: 3px;
+}
+
+.labelFar {
+  font-size: 10.5px;
+  fill: var(--text-3);
+}
+
+.zoom {
+  position: absolute;
+  right: var(--sp-3);
+  bottom: var(--sp-3);
+  display: flex;
+  gap: 4px;
+}
+
+.zoom button,
+.actions button,
+.tbHead button {
+  min-width: 30px;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-1);
+  font: inherit;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
+.list {
+  overflow: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+}
+
+.table th {
+  position: sticky;
+  top: 0;
+  padding: 6px 10px;
+  background: var(--surface-card);
+  color: var(--text-3);
+  font-weight: normal;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+
+.table td {
+  padding: 5px 10px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+
+.table tr {
+  cursor: pointer;
+}
+
+.table tr:hover,
+.table tr:focus-visible {
+  outline: none;
+  background: var(--surface-sub);
+}
+
+.rowOn {
+  background: var(--accent-soft);
+}
+
+.cellText {
+  max-width: 420px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0 8px;
+  border-radius: 8px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: var(--fs-xs);
+}
+
+.title {
+  margin: 6px 0 4px;
+  font-size: var(--fs-lg, 16px);
+  font-weight: var(--fw-bold);
+  overflow-wrap: anywhere;
+}
+
+.meta {
+  color: var(--text-2);
+  font-size: var(--fs-xs);
+}
+
+.orig {
+  margin: var(--sp-3) 0 4px;
+  padding: var(--sp-3);
+  border-radius: var(--radius-md);
+  background: var(--surface-sub);
+  font-size: var(--fs-sm);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.why {
+  margin: 0 0 var(--sp-3);
+  padding: 0;
+  list-style: none;
+}
+
+.whyBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 5px 0;
+  border: 0;
+  border-top: 1px solid var(--line);
+  background: none;
+  color: var(--text-1);
+  font: inherit;
+  font-size: var(--fs-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.whyBtn:hover {
+  color: var(--accent);
+}
+
+.whyKind {
+  flex: none;
+  min-width: 78px;
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.actions .primary {
+  border-color: var(--primary-line, var(--accent));
+  background: var(--primary-bg, var(--accent));
+  color: var(--primary-fg, #fff);
+}
+
+.timebar {
+  flex: 0 0 auto;
+  margin: 0 var(--sp-4) var(--sp-3);
+  padding: var(--sp-2) var(--sp-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+}
+
+.tbHead {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-sm);
+}
+
+.tbHead .seg button {
+  height: auto;
+  border: 0;
+  border-radius: 0;
+}
+
+.tbBars {
+  display: flex;
+  gap: 4px;
+  height: 58px;
+  margin-top: var(--sp-2);
+}
+
+.tbBucket {
+  position: relative;
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 0 0 16px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: none;
+  cursor: pointer;
+}
+
+.tbBucket:hover {
+  border-color: var(--line-strong);
+}
+
+.tbActive {
+  background: var(--surface-sub);
+}
+
+.tbBar {
+  display: block;
+  min-height: 2px;
+  margin: 0 18%;
+  border-radius: 2px 2px 0 0;
+  background: var(--line-strong);
+}
+
+.tbActive .tbBar {
+  background: var(--accent);
+}
+
+.tbLabel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  color: var(--text-3);
+  font-size: 11px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.table td:first-child,
+.table td:nth-child(3) {
+  white-space: nowrap;
+}

@@ -1,0 +1,49 @@
+{
+  "categories": [
+    {
+      "id": "p-health",
+      "name": "건강·운동",
+      "color": "c3",
+      "sortOrder": 1,
+      "startDate": "2026-10-01"
+    },
+    {
+      "id": "p-study",
+      "name": "공부",
+      "color": "c4",
+      "sortOrder": 2,
+      "startDate": "2026-10-01"
+    }
+  ],
+  "items": [
+    {
+      "date": "2026-10-20",
+      "categoryId": "p-health",
+      "seq": 1,
+      "depth": 0,
+      "text": "아침 달리기 5km"
+    },
+    {
+      "date": "2026-10-21",
+      "categoryId": "p-study",
+      "seq": 1,
+      "depth": 0,
+      "text": "데이터베이스 강의 3장 정리"
+    },
+    {
+      "date": "2026-10-21",
+      "categoryId": "p-study",
+      "seq": 2,
+      "depth": 1,
+      "text": "인덱스 설계 예제 따라 하기"
+    },
+    {
+      "date": "2026-10-22",
+      "categoryId": "p-health",
+      "seq": 1,
+      "depth": 0,
+      "text": "저녁 스트레칭 20분"
+    }
+  ],
+  "memos": []
+}

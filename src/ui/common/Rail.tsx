@@ -11,6 +11,8 @@ import { toggleCabinet, useCabinet } from "../cabinet/cabinetStore";
 import { useAppStore } from "./appStore";
 import styles from "./Rail.module.css";
 import { WorkspaceRailButton } from "./WorkspaceSwitcher";
+import { closeUniverse, openUniverse, useUniverse } from "../universe/universeStore";
+import { osText } from "../../shared/platformText";
 import { sameDir } from "../../domain/workspace";
 
 const BoardIcon = () => (
@@ -51,6 +53,26 @@ const InsightsIcon = () => (
   </svg>
 );
 
+/** Universe: 가운데 별 + 이어진 별 넷(연결망) */
+const UniverseIcon = () => (
+  <svg
+    width="19"
+    height="19"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.7"
+    aria-hidden="true"
+  >
+    <circle cx="12" cy="12" r="2.6" />
+    <circle cx="5" cy="6" r="1.8" />
+    <circle cx="19" cy="7" r="1.8" />
+    <circle cx="17" cy="18.5" r="1.8" />
+    <circle cx="6" cy="17" r="1.8" />
+    <path d="M10 10.5 6.4 7.2M14.3 10.9l3.2-2.6M13.8 14.1l2.2 3M10 13.6 7.3 16" />
+  </svg>
+);
+
 /** 설정: 톱니(바깥 원 + 살 8개 + 가운데 원) */
 const GearIcon = () => (
   <svg
@@ -73,8 +95,9 @@ export function Rail() {
   const settingsOpen = useAppStore((s) => s.settingsOpen);
   const updateDot = useUpdate(hasUpdate);
   // 설정이 열려 있으면 그 화면이 "지금 보기"(보드·인사이트는 숨겨 둔 채)
-  const insightsOpen = useInsights((s) => s.open) && !settingsOpen;
-  const boardOn = !insightsOpen && !settingsOpen;
+  const universeOpen = useUniverse((s) => s.open) && !settingsOpen;
+  const insightsOpen = useInsights((s) => s.open) && !settingsOpen && !universeOpen;
+  const boardOn = !insightsOpen && !settingsOpen && !universeOpen;
   const important = useBoard((s) => s.important);
   const today = useBoard((s) => s.today);
   const panelOpen = useBoard((s) => s.panelOpen);
@@ -106,6 +129,7 @@ export function Rail() {
         onClick={() => {
           setSettingsOpen(false);
           closeInsights();
+          closeUniverse();
           focusStartCell();
         }}
       >
@@ -120,10 +144,22 @@ export function Rail() {
         data-testid="rail-insights"
         onClick={() => {
           setSettingsOpen(false);
+          closeUniverse();
           void openInsights();
         }}
       >
         <InsightsIcon />
+      </button>
+      <button
+        type="button"
+        className={`${styles.btn} ${universeOpen ? styles.on : ""}`}
+        aria-current={universeOpen ? "page" : undefined}
+        aria-label={STR.universe.rail}
+        title={osText(STR.universe.rail)}
+        data-testid="rail-universe"
+        onClick={() => void openUniverse()}
+      >
+        <UniverseIcon />
       </button>
       <span className={styles.sep} aria-hidden="true" />
       <button

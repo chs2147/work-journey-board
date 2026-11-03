@@ -1,4 +1,5 @@
 // 영속 데이터 접근의 유일한 경로(CLAUDE.md 4-3). UI는 이 클래스만 쓰고 SQL을 직접 실행하지 않는다.
+import type { UniverseSnapshot } from "../domain/universe";
 import {
   archiveEndDate,
   groupPeriods,
@@ -1898,6 +1899,73 @@ export class JournalRepository {
         ],
       })),
     ]);
+  }
+
+  /**
+   * Universe(universe-spec 8-2): 이 일지의 업무·태그·항목·메모 상자·Cabinet을 한 번에 읽는다 — 읽기만(쓰지 않음).
+   * 메모 그림 데이터는 읽지 않고(문서 JSON의 설명만), 예전 요일 메모만 있는 주는 고정 id로 읽기 전용 표현.
+   */
+  async getUniverseSnapshot(ws: UniverseSnapshot["ws"]): Promise<UniverseSnapshot> {
+    const { categories, periods } = await this.readCategories();
+    const open = new Set(periods.filter((p) => p.endDate === null).map((p) => p.categoryId));
+    const { tags, byCategory } = await this.readTags();
+    const entries = await this.db.select<{
+      id: string;
+      date: string;
+      category_id: string;
+      depth: number;
+      seq: number;
+      text: string;
+      flagged: number;
+    }>(
+      "SELECT id, date, category_id, depth, seq, text, flagged FROM entry_item ORDER BY date, category_id, seq",
+    );
+    const noteRows = await this.db.select<{ week_id: string; doc: string }>(
+      "SELECT week_id, doc FROM week_note",
+    );
+    const notes: UniverseSnapshot["notes"] = noteRows.map((r) => ({
+      weekId: r.week_id as WeekId,
+      doc: parseNoteDoc(r.doc),
+    }));
+    const have = new Set(notes.map((n) => n.weekId));
+    const memos = await this.db.select<{ date: string; text: string }>("SELECT date, text FROM day_memo");
+    const legacy = new Map<WeekId, Record<DateStr, string>>();
+    for (const m of memos) {
+      const w = weekIdOf(m.date as DateStr);
+      if (have.has(w)) continue;
+      legacy.set(w, { ...(legacy.get(w) ?? {}), [m.date]: m.text });
+    }
+    for (const [w, byDay] of legacy) {
+      let n = 0;
+      const doc = docFromDayMemos(w, byDay, () => `legacy-${w}-${n++}`);
+      if (doc.boxes.length) notes.push({ weekId: w, doc });
+    }
+    const cab = await this.listCabinet();
+    return {
+      ws,
+      categories: categories.map((c) => ({
+        id: c.id,
+        name: c.name,
+        color: c.color,
+        ended: !open.has(c.id),
+        tagIds: byCategory[c.id] ?? [],
+      })),
+      tags: tags.map((t) => ({ id: t.id, name: t.name })),
+      entries: entries.map((e) => ({
+        id: e.id,
+        date: e.date as DateStr,
+        categoryId: e.category_id,
+        depth: (Number(e.depth) > 0 ? 1 : 0) as 0 | 1,
+        seq: Number(e.seq),
+        text: e.text,
+        flagged: Number(e.flagged) === 1,
+      })),
+      notes,
+      cabinet: {
+        items: cab.items.map((i) => ({ id: i.id, kind: i.kind, title: i.title, target: i.target })),
+        links: cab.links.map((l) => ({ itemId: l.itemId, categoryId: l.categoryId, entryId: l.entryId })),
+      },
+    };
   }
 
   async getWeekNotesBetween(fromWeek: WeekId, toWeek: WeekId): Promise<Record<WeekId, NoteDoc>> {

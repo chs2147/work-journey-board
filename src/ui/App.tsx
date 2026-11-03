@@ -31,6 +31,8 @@ import { NoteDock } from "./note/NoteDock";
 import { TodayView } from "./today/TodayView";
 import { InsightsView } from "./insights/InsightsView";
 import { useInsights } from "./insights/insightsStore";
+import { UniverseView } from "./universe/UniverseView";
+import { useUniverse } from "./universe/universeStore";
 import { useNote } from "./note/noteStore";
 import { finishSplash } from "./splash";
 import { checkOnStart, useUpdate } from "./update/updateStore";
@@ -127,7 +129,10 @@ function Workspace() {
   const cabinetOsWindow = useAppStore((s) => !!s.platform?.cabinetWindow);
   const cabinetInApp = cabinetOpen && !cabinetOsWindow;
   // 인사이트(m3-s1-spec 1-2): 보드는 숨겨 둔 채 그대로 — 보던 주·뷰·커서·메모가 남는다
-  const insightsOpen = useInsights((s) => s.open);
+  const insightsOpen0 = useInsights((s) => s.open);
+  // Universe(universe-spec 4절): 인사이트처럼 보드 자리를 덮는다 — 둘은 함께 열리지 않는다
+  const universeOpen = useUniverse((s) => s.open);
+  const insightsOpen = insightsOpen0 || universeOpen;
   // 설정(improve-1027v5-spec 1-2)도 인사이트처럼 보드 자리를 덮는다 — 보드·인사이트는 그대로 두고 숨김
   const settingsOpen = useAppStore((s) => s.settingsOpen);
   // 메모 도크가 자동 높이면 보드는 필요한 만큼만(남는 공간은 메모) — 접혀 있으면 보드가 다 쓴다
@@ -143,7 +148,8 @@ function Workspace() {
     <div className={styles.workspace}>
       <Rail />
       {panelOpen && !settingsOpen && <ImportantPanel overlay={narrow} />}
-      {insightsOpen && !settingsOpen && <InsightsView />}
+      {insightsOpen0 && !universeOpen && !settingsOpen && <InsightsView />}
+      {universeOpen && !settingsOpen && <UniverseView />}
       {settingsOpen && <SettingsView />}
       <div
         className={insightsOpen || settingsOpen ? styles.hidden : styles.boardArea}

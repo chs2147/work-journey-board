@@ -22,6 +22,12 @@ import { focusNote, leaveNote } from "../note/noteStore";
 import { closeInsights, focusedCategory, openInsights, useInsights } from "../insights/insightsStore";
 import { leaveSettings, setSettingsOpen, switchWorkspaceAt } from "../common/appController";
 import { useAppStore } from "../common/appStore";
+import { closeUniverse, openUniverse, useUniverse } from "../universe/universeStore";
+
+/** 커서가 있는 보드 항목의 id(Universe 가운데) */
+function focusedItemId(): string | undefined {
+  return (document.activeElement as Element | null)?.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
+}
 import { isComposingEvent } from "./helpers";
 
 const isTyping = (el: Element | null) => el instanceof HTMLTextAreaElement || el instanceof HTMLInputElement;
@@ -57,12 +63,23 @@ export function useShortcuts() {
         toggleCabinet();
         return;
       }
+      // Universe(universe-spec D8): Alt+5 = 열기(커서가 있는 항목이 가운데)/보드로 — 어느 화면에서나
+      if (e.altKey && !mod && !e.shiftKey && e.code === "Digit5") {
+        e.preventDefault();
+        if (useUniverse.getState().open && !settings) {
+          closeUniverse();
+          focusStartCell();
+        } else void openUniverse(focusedItemId());
+        return;
+      }
+      const universe = useUniverse.getState().open;
       if (settings) {
         if (e.altKey && !mod && !e.shiftKey && ["Digit1", "Digit2", "Digit3"].includes(e.code)) {
           e.preventDefault();
           setSettingsOpen(false);
           if (e.code === "Digit1") {
             closeInsights();
+            closeUniverse();
             focusStartCell();
           } else if (e.code === "Digit2") setPanelOpen(true, true);
           else if (!insights) void openInsights(focusedCategory());
@@ -73,10 +90,25 @@ export function useShortcuts() {
       // 인사이트(m3-s1-spec 10절): Alt+3 = 열기(칸의 업무)/보드로, Alt+1 = 보드로. 보이는 동안 보드 단축키는 쉰다
       if (e.altKey && !mod && !e.shiftKey && e.code === "Digit3") {
         e.preventDefault();
-        if (insights) {
+        if (insights && !universe) {
           closeInsights();
           focusStartCell();
-        } else void openInsights(focusedCategory());
+        } else {
+          closeUniverse();
+          void openInsights(focusedCategory());
+        }
+        return;
+      }
+      // Universe가 보이는 동안: Alt+1 = 보드로, Alt+2 = 중요 업무 패널, 보드 단축키는 쉰다
+      if (universe) {
+        if (e.altKey && !mod && !e.shiftKey && e.code === "Digit1") {
+          e.preventDefault();
+          closeUniverse();
+          focusStartCell();
+        } else if (e.altKey && !mod && !e.shiftKey && e.code === "Digit2") {
+          e.preventDefault();
+          setPanelOpen(!panelOpen, !panelOpen);
+        }
         return;
       }
       if (insights) {

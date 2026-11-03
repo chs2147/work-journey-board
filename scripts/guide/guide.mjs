@@ -367,6 +367,13 @@ async function shots(base = "http://localhost:1420") {
       url: `${show}&ws=2`,
       run: (p) => p.getByTestId("workspace-button").click(),
     },
+    "14-universe": {
+      url: show,
+      run: async (p) => {
+        await p.keyboard.press("Alt+5");
+        await p.waitForTimeout(600);
+      },
+    },
   };
   for (const [name, st] of Object.entries(steps)) {
     const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1 });

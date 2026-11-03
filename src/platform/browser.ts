@@ -50,13 +50,14 @@ const updateCalls: string[] = [];
 const fakeUpdate = params.get("update");
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-async function makeJournal(dir: string, withSample: boolean) {
+async function makeJournal(dir: string, withSample: boolean | SampleData) {
   await fs.ensureDir(dir);
   const d = await fs.openDatabase(fs.join(dir, DATA_FILE));
   await prepareConnection(d);
   await migrate(d);
   const which = params.get("sample");
-  if (withSample)
+  if (typeof withSample === "object") await seedSample(d, withSample);
+  else if (withSample)
     await seedSample(
       d,
       which === "year" || which === "year-img"
@@ -124,7 +125,11 @@ const ready = (async () => {
     }
   }
   if (config && params.get("ws") === "2") {
-    await makeJournal(DEMO_DIR_2, false);
+    // 개인 공간 = 작은 가상 샘플(Universe 여러 공간 함께 보기 시험용)
+    await makeJournal(
+      DEMO_DIR_2,
+      (await import("../../fixtures/sample-personal.json")).default as SampleData,
+    );
     config.workspaces = [
       { dir: DEMO_DIR, name: "회사", color: "c1", icon: "briefcase", updatedAt: 0 },
       { dir: DEMO_DIR_2, name: "개인", color: "c3", icon: "notebook", updatedAt: 1 },
