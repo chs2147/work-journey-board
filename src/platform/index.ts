@@ -225,10 +225,37 @@ export function parseConfig(raw: string | null): AppConfig | null {
     if (typeof c.backupMirror === "string" && c.backupMirror) out.backupMirror = c.backupMirror;
     const cab = parseCabinetConfig(c.cabinet);
     if (cab) out.cabinet = cab;
+    // 워크스페이스 목록(multi-board-spec 7절) — 버리면 다음 실행에 지금 연 공간 하나만 남는다(1.8.0-rc.1 버그).
+    // 줄마다의 검사는 readEntries가 한다
+    if (Array.isArray(c.workspaces)) out.workspaces = c.workspaces;
+    if (c.cabinetBy && typeof c.cabinetBy === "object" && !Array.isArray(c.cabinetBy)) {
+      const by: Record<string, CabinetConfig> = {};
+      for (const [k, v] of Object.entries(c.cabinetBy)) {
+        const one = parseCabinetConfig(v);
+        if (one) by[k] = one;
+      }
+      out.cabinetBy = by;
+    }
     return out;
   } catch {
     return null;
   }
+}
+
+/**
+ * 비동기 일을 하나씩 차례로(설정 파일 읽기→합치기→쓰기가 겹치면 먼저 쓴 값이 지워진다 — 워크스페이스 목록과
+ * Cabinet 창 상태가 동시에 저장될 때). 앞 일이 실패해도 다음 일은 한다.
+ */
+export function serialize<A extends unknown[], R>(fn: (...a: A) => Promise<R>): (...a: A) => Promise<R> {
+  let last: Promise<unknown> = Promise.resolve();
+  return (...a: A) => {
+    const run = last.then(
+      () => fn(...a),
+      () => fn(...a),
+    );
+    last = run.catch(() => undefined);
+    return run;
+  };
 }
 
 /** 지금 config.json 글에 바꿀 값만 합친 새 글 — 다른 키는 그대로 둔다(improve-1027v5-spec 4-2) */

@@ -536,15 +536,17 @@ export interface NewWorkspace {
 }
 
 /**
- * 새 워크스페이스(spec 4절): 지금 공간에서 가져올 설정을 먼저 읽고 → 새 폴더에 일지를 만들어 그 공간으로 전환 →
- * 이름·색·아이콘·설정·첫 업무를 채운다. 고른 폴더에 이미 일지가 있으면 그 일지를 목록에 더해 연다(설정 복사·첫 업무 없음).
+ * 새 워크스페이스(spec 4절): 지금 공간에서 가져올 설정을 먼저 읽고 → 새 폴더에 **새 일지 파일**을 만들어 그 공간으로 전환 →
+ * 이름·색·아이콘·설정·첫 업무를 채운다. 이미 일지가 있는 폴더는 거부한다(기존 일지 추가는 addExistingWorkspace만).
  */
 export async function createWorkspace(w: NewWorkspace): Promise<string | null> {
   const p = platform();
   const name = cleanName(w.name);
   if (!name) return STR.workspace.nameRequired;
   if (get().workspaces.some((e) => sameDir(e.dir, w.dir))) return STR.workspace.folderTaken;
-  const existing = (await classifyFolder(p, null, w.dir).catch(() => "empty")) === "has-journal";
+  // 새 워크스페이스 = 늘 새 일지 파일. 이미 일지가 있는 폴더(확인할 수 없으면 그것도)면 만들지 않는다 — 기존 일지를 열거나 덮지 않게
+  if ((await classifyFolder(p, null, w.dir).catch(() => "has-journal")) === "has-journal")
+    return STR.workspace.folderRefuse;
   // 지금 공간에서 가져올 것
   const j = get().journal;
   const from = j.state === "ready" ? await j.repo.getSettings() : null;
@@ -555,14 +557,7 @@ export async function createWorkspace(w: NewWorkspace): Promise<string | null> {
     return errMsg(e);
   }
   const meta: WorkspaceMeta = { name, color: w.color, icon: w.icon, updatedAt: p.now().getTime() };
-  // 이미 있던 일지면 그 일지에 적힌 이름이 이긴다(사본은 시각 0) — 없으면 고른 이름
-  const mirrorSub = existing ? undefined : baseName(w.dir);
-  const entry = {
-    ...meta,
-    ...(existing ? { updatedAt: 0 } : {}),
-    dir: w.dir,
-    ...(mirrorSub ? { mirrorSub } : {}),
-  };
+  const entry = { ...meta, dir: w.dir, mirrorSub: baseName(w.dir) };
   await saveEntries(upsertEntry(get().workspaces, entry));
   const err = await switchWorkspace(w.dir, { quiet: true });
   if (err) {
@@ -571,11 +566,6 @@ export async function createWorkspace(w: NewWorkspace): Promise<string | null> {
   }
   const now = get().journal;
   if (now.state !== "ready") return STR.restore.notOpen;
-  if (existing) {
-    set({ creatingWorkspace: false });
-    toast(STR.workspace.added(currentWorkspace()?.name ?? name));
-    return null;
-  }
   await now.repo.updateSettings({
     workspace: meta,
     ...(w.copy.holiday && from ? { holiday: from.holiday } : {}),

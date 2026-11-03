@@ -166,3 +166,34 @@ test("이름을 바꾼 공간은 다음에 열 때 그 일지에도 반영된다
   await rows.nth(1).getByTestId("ws-open").click();
   await expect(page).toHaveTitle("Work Journey Board — 가족");
 });
+
+test("새 워크스페이스는 늘 새 DB 파일: 지금 공간 폴더를 골라도 그 안에 새 폴더·새 일지를 만들고 기존 일지는 그대로", async ({
+  page,
+}) => {
+  await open(page);
+  const before = await headers(page).count();
+  await page.getByTestId("workspace-button").click();
+  await page.getByTestId("workspace-new").click();
+  const dlg = page.getByTestId("new-workspace");
+  await dlg.getByTestId("ws-name").fill("개인");
+  await dlg.getByTestId("ws-next").click();
+  page.once("dialog", (d) => void d.accept("/demo/WorkJourney")); // 지금 공간(회사) 폴더를 그대로 고름
+  await dlg.getByText("다른 폴더 고르기…").click();
+  await expect(dlg.getByTestId("ws-file")).toContainText(
+    "/demo/WorkJourney/WorkJourney-개인/work-journey.db",
+  );
+  await expect(dlg).toContainText("그 안에 새 폴더를 만들어 새 일지 파일을 둡니다");
+  await dlg.getByTestId("ws-next").click();
+  await dlg.getByTestId("ws-next").click();
+  await dlg.getByTestId("ws-finish").click();
+  await expect(page).toHaveTitle("Work Journey Board — 개인");
+  const files = await page.evaluate(() =>
+    (globalThis as unknown as { __wjb: { files(): string[] } }).__wjb.files(),
+  );
+  expect(files).toContain("/demo/WorkJourney/work-journey.db");
+  expect(files).toContain("/demo/WorkJourney/WorkJourney-개인/work-journey.db");
+  // 회사로 돌아가면 기록이 그대로
+  await page.keyboard.press("Control+Alt+Digit1");
+  await expect(page).toHaveTitle("Work Journey Board — 회사");
+  await expect(headers(page)).toHaveCount(before);
+});

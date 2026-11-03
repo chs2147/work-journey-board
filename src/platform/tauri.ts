@@ -12,6 +12,8 @@ import type { FsEntry } from "../domain/cabinet";
 import {
   isOneDriveLike,
   mergeConfigJson,
+  serialize,
+  type AppConfig,
   parseConfig,
   type PathInfo,
   type CabinetFocus,
@@ -239,10 +241,10 @@ export const tauriPlatform: Platform = {
   async loadConfig() {
     return parseConfig(await invoke<string | null>("config_read"));
   },
-  async saveConfig(patch) {
+  saveConfig: serialize(async (patch: Partial<AppConfig>) => {
     const raw = await invoke<string | null>("config_read");
     await invoke("config_write", { json: mergeConfigJson(raw, patch) });
-  },
+  }),
   async setWindowTitle(title) {
     await getCurrentWindow().setTitle(title);
   },

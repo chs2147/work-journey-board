@@ -10,7 +10,7 @@ import { seedSample, type SampleData } from "../data/seed";
 import { isThemePref } from "../shared/theme";
 import { createFakeFs } from "./fakeFs";
 import { makeYearSample } from "./sampleYear";
-import { baseName, dirOf, isOneDriveLike, type AppConfig, type Platform } from "./index";
+import { baseName, dirOf, isOneDriveLike, parseConfig, type AppConfig, type Platform } from "./index";
 
 // 브라우저 모드(개발·E2E): 메모리 위의 가짜 폴더 + sql.js. 새로고침하면 처음 상태로 돌아간다.
 // 주소 옵션
@@ -146,7 +146,8 @@ export const browserPlatform: Platform = {
 
   async loadConfig() {
     await ready;
-    return config?.dataDir ? { ...config } : null;
+    // 실앱과 같은 길(글 → parseConfig)로 읽는다 — 실앱에서만 키가 빠지는 버그를 e2e가 잡게(1.8.0-rc.1)
+    return config?.dataDir ? parseConfig(JSON.stringify(config)) : null;
   },
   async saveConfig(patch) {
     // 실앱처럼 합쳐 쓴다(저장 폴더가 없는 상태에서 테마만 오면 테마만 남는 것까지는 흉내 내지 않음)

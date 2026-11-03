@@ -5,6 +5,7 @@ import {
   PURPOSE_PRESET,
   QUIET_PURPOSES,
   cleanName,
+  folderSafe,
   nextWorkspaceColor,
   sameDir,
   suggestDir,
@@ -33,10 +34,9 @@ export function NewWorkspaceDialog() {
   const [icon, setIcon] = useState<WorkspaceIcon>(PURPOSE_PRESET.life.icon);
   const [iconTouched, setIconTouched] = useState(false);
   const [otherDir, setOtherDir] = useState<string | null>(null);
-  const [folderInfo, setFolderInfo] = useState<{ oneDrive: boolean; journal: boolean }>({
-    oneDrive: false,
-    journal: false,
-  });
+  // 실제로 새 일지 파일을 만들 폴더 — 고른 폴더에 이미 일지가 있거나 목록에 있는 공간 폴더면 그 안(추천 폴더면 옆)에
+  // 새 폴더를 정한다. 새 워크스페이스는 늘 새 일지 파일(기존 일지를 열거나 덮어쓰지 않음, rc.1 사용자 지적)
+  const [target, setTarget] = useState<{ dir: string; moved: boolean; oneDrive: boolean } | null>(null);
   const [cats, setCats] = useState<string[]>(PURPOSE_PRESET.life.categories);
   const [copy, setCopy] = useState({ holiday: true, tags: false, nudge: false });
   const [busy, setBusy] = useState(false);
@@ -54,21 +54,31 @@ export function NewWorkspaceDialog() {
       ),
     [currentDir, list, name, label],
   );
-  const dir = otherDir ?? suggested;
-  const taken = list.some((e) => sameDir(e.dir, dir));
+  const base = otherDir ?? suggested;
 
   useEffect(() => {
-    if (step !== 2) return;
+    if (step < 2) return;
     let alive = true;
+    setTarget(null);
     void (async () => {
+      const usable = async (d: string) =>
+        !list.some((e) => sameDir(e.dir, d)) &&
+        (await classifyFolder(platform, null, d).catch(() => "has-journal")) !== "has-journal";
+      let dir = base;
+      if (!(await usable(dir))) {
+        const root =
+          otherDir !== null ? platform.join(base, `WorkJourney-${folderSafe(name) || label}`) : base;
+        dir = root;
+        for (let n = 2; !(await usable(dir)) && n < 100; n++) dir = `${root}-${n}`;
+      }
       const oneDrive = await platform.isOneDrivePath(dir).catch(() => false);
-      const journal = (await classifyFolder(platform, null, dir).catch(() => "empty")) === "has-journal";
-      if (alive) setFolderInfo({ oneDrive, journal });
+      if (alive) setTarget({ dir, moved: !sameDir(dir, base), oneDrive });
     })();
     return () => {
       alive = false;
     };
-  }, [platform, dir, step]);
+  }, [platform, base, otherDir, step, list, name, label]);
+  const dir = target?.dir ?? null;
 
   const choosePurpose = (p: WorkspacePurpose) => {
     setPurpose(p);
@@ -86,6 +96,7 @@ export function NewWorkspaceDialog() {
     const categories = pending && !cats.includes(pending) ? [...cats, pending] : cats;
     setBusy(true);
     setError(null);
+    if (!dir) return;
     const err = await createWorkspace({ name, color, icon, purpose, dir, categories, copy });
     if (err) {
       setError(err);
@@ -171,9 +182,12 @@ export function NewWorkspaceDialog() {
               </span>
             </label>
             <p className={styles.note}>{STR.workspace.folderNote}</p>
-            {taken && <p className={styles.warn}>{STR.workspace.folderTaken}</p>}
-            {!taken && folderInfo.journal && <p className={styles.ok}>{STR.workspace.folderHasJournal}</p>}
-            {folderInfo.oneDrive && <p className={styles.warn}>{STR.workspace.folderOneDrive}</p>}
+            <p className={styles.ok} data-testid="ws-file">
+              {STR.workspace.fileWillBe}{" "}
+              <code className={styles.path}>{dir ? platform.join(dir, "work-journey.db") : "…"}</code>
+            </p>
+            {target?.moved && <p className={styles.warn}>{STR.workspace.folderMoved}</p>}
+            {target?.oneDrive && <p className={styles.warn}>{STR.workspace.folderOneDrive}</p>}
           </div>
         )}
 
@@ -264,11 +278,11 @@ export function NewWorkspaceDialog() {
           >
             {step === 1 ? STR.workspace.cancel : STR.workspace.back}
           </button>
-          {step < 4 && !(step === 2 && folderInfo.journal && !taken) ? (
+          {step < 4 ? (
             <button
               type="button"
               className={styles.primary}
-              disabled={(step === 1 && !nameOk) || (step === 2 && taken)}
+              disabled={(step === 1 && !nameOk) || (step === 2 && !dir)}
               data-testid="ws-next"
               onClick={() => setStep((step + 1) as Step)}
             >
@@ -278,7 +292,7 @@ export function NewWorkspaceDialog() {
             <button
               type="button"
               className={styles.primary}
-              disabled={busy || taken || !nameOk}
+              disabled={busy || !dir || !nameOk}
               data-testid="ws-finish"
               onClick={() => void finish()}
             >

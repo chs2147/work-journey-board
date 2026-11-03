@@ -141,3 +141,43 @@ describe("내보내기 파일 이름(D8)", () => {
     expect(workspacePart(undefined)).toBe("");
   });
 });
+
+describe("1.8.0-rc.1 버그: 다시 켜면 워크스페이스 목록이 사라짐", () => {
+  it("parseConfig(실앱이 config.json을 읽는 길)가 workspaces·cabinetBy를 버리지 않는다", async () => {
+    const { parseConfig, mergeConfigJson } = await import("../../src/platform");
+    const raw = mergeConfigJson(null, {
+      dataDir: "C:\\U\\WorkJourney-개인",
+      workspaces: [W("C:\\U\\WorkJourney"), W("C:\\U\\WorkJourney-개인", { name: "개인", color: "c3" })],
+      cabinetBy: { "C:\\U\\WorkJourney": { open: true, windows: [{ id: "a", sub: "C:\\x" }] } },
+    });
+    const cfg = parseConfig(raw)!;
+    // 다시 켠 뒤 목록 = 두 공간 그대로(지금 연 공간 하나로 줄지 않음)
+    expect(readEntries(cfg).map((e) => e.name)).toEqual(["회사", "개인"]);
+    expect(cfg.cabinetBy?.["C:\\U\\WorkJourney"]?.open).toBe(true);
+  });
+
+  it("설정 저장을 하나씩 차례로 — 동시에 저장해도 먼저 쓴 값(목록)이 지워지지 않는다", async () => {
+    const { serialize, mergeConfigJson } = await import("../../src/platform");
+    let file: string | null = '{"dataDir":"A"}';
+    const tick = () => new Promise((r) => setTimeout(r, 5));
+    const save = serialize(async (patch: Record<string, unknown>) => {
+      const raw = file;
+      await tick(); // 읽기와 쓰기 사이에 다른 저장이 끼어들 틈
+      file = mergeConfigJson(raw, patch);
+    });
+    await Promise.all([
+      save({ workspaces: [W("A"), W("B")] }),
+      save({ cabinet: { open: false, windows: [] } }),
+    ]);
+    const out = JSON.parse(file!);
+    expect(out.workspaces).toHaveLength(2);
+    expect(out.cabinet).toEqual({ open: false, windows: [] });
+    // 앞 일이 실패해도 다음 저장은 한다
+    const bad = serialize(async (x: number) => {
+      if (x === 1) throw new Error("x");
+      return x;
+    });
+    await expect(bad(1)).rejects.toThrow();
+    await expect(bad(2)).resolves.toBe(2);
+  });
+});
