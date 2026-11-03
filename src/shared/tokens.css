@@ -63,6 +63,8 @@
   --band-late-bar: #b3261e;
   --band-late-text: #9a2019;
   --band-today-bg: #e6f1fb;
+  /* 중요 업무 패널 "오늘" 묶음 바탕(improve-1103v9-spec N3) — 보드 오늘 강조색 계열 */
+  --today-area: #fff3ea;
   --band-today-bar: #185fa5;
   --band-today-text: #124a80;
   --band-week-bg: #e3f1ea;
@@ -186,6 +188,7 @@
   --band-late-bar: #f08b84;
   --band-late-text: #f5b0aa;
   --band-today-bg: #1d2a38;
+  --today-area: #33241c;
   --band-today-bar: #6da7ec;
   --band-today-text: #a3c8f3;
   --band-week-bg: #1f3329;
@@ -275,6 +278,7 @@
   --band-late-bar: #a94f42;
   --band-late-text: #8f3f34;
   --band-today-bg: #e8d9c3;
+  --today-area: #f7e6d6;
   --band-today-bar: #856748;
   --band-today-text: #5f4b36;
   --band-week-bg: #eef1e7;

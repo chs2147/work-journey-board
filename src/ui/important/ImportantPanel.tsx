@@ -114,7 +114,12 @@ export function ImportantPanel({ overlay }: { overlay: boolean }) {
           )
         ) : (
           groups.map((g) => (
-            <section key={g.key} aria-label={STR.important.groups[g.key]}>
+            <section
+              key={g.key}
+              aria-label={STR.important.groups[g.key]}
+              className={g.key === "today" ? styles.todayArea : undefined}
+              data-testid={`important-group-${g.key}`}
+            >
               <h3 className={`${styles.group} ${styles[`group_${g.key}`] ?? ""}`} data-group={g.key}>
                 <span>
                   {STR.important.groups[g.key]}

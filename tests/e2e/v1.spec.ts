@@ -34,7 +34,7 @@ test.beforeEach(async ({ page }) => {
   await expect(page.locator(":focus")).toHaveValue(FIRST);
 });
 
-test("행 삭제 단추: 본 항목에 올리면 묶음이 붉게 미리 보이고, 누르면 세부 항목까지 지운 뒤 토스트 되돌리기", async ({
+test("항목 메뉴 [삭제]: ⋮⋮를 눌러 연 메뉴의 삭제에 올리면 묶음이 붉게 미리 보이고, 누르면 세부 항목까지 지운 뒤 토스트 되돌리기", async ({
   page,
 }) => {
   await typeGroup(page);
@@ -45,9 +45,10 @@ test("행 삭제 단추: 본 항목에 올리면 묶음이 붉게 미리 보이�
     .filter({ has: page.locator("textarea") })
     .nth(1);
   await parent.hover();
-  const del = parent.getByTestId("delete-row");
-  await expect(del).toHaveAttribute("aria-label", "이 항목과 세부 항목 2개 삭제 (Alt+Delete)");
-  await expect(del).toHaveAttribute("tabindex", "-1"); // Tab 순서에서 빠짐(2분 기록 흐름)
+  const grip = parent.getByTestId("drag-row");
+  await expect(grip).toHaveAttribute("tabindex", "-1"); // Tab 순서에서 빠짐(2분 기록 흐름)
+  await grip.click();
+  const del = page.getByTestId("item-menu").getByRole("menuitem", { name: /세부 항목 2개와 함께 삭제/ });
   await del.hover();
   await expect(c.locator('[class*="deleting"]')).toHaveCount(3);
   await del.click();
@@ -88,7 +89,7 @@ test("Alt+Delete: 세부 항목은 그 항목만 지우고 커서는 위 항목 
   await expect.poll(() => values(page)).toEqual([FIRST, "배포 리허설 결과 정리", "롤백 소요 시간 기록"]);
 });
 
-test("빈 칸의 유일한 빈 항목에는 삭제 단추가 없고, 글을 쓰면 생긴다 · 빈 항목 Backspace 삭제는 그대로", async ({
+test("빈 항목에는 ⋮⋮ 손잡이가 없고, 글을 쓰면 생긴다 · 빈 항목 Backspace 삭제는 그대로", async ({
   page,
 }) => {
   const add = page.getByRole("button", { name: "+ 기록 추가" }).first();
@@ -101,11 +102,10 @@ test("빈 칸의 유일한 빈 항목에는 삭제 단추가 없고, 글을 쓰�
   await add.click();
   const row = empty.locator('[class*="item_"]').first();
   await row.hover();
-  await expect(row.getByTestId("delete-row")).toHaveCount(0);
+  await expect(row.getByTestId("drag-row")).toHaveCount(0);
   await page.keyboard.type("가");
-  await expect(row.getByTestId("delete-row")).toHaveCount(1);
+  await expect(row.getByTestId("drag-row")).toHaveCount(1);
   await page.keyboard.press("Enter");
-  await expect(empty.getByTestId("delete-row")).toHaveCount(2); // 빈 항목도 다른 항목과 함께면 지울 수 있다
   await page.keyboard.press("Backspace");
   await expect(empty.locator("textarea")).toHaveCount(1);
   await expect(page.locator(":focus")).toHaveValue("가");

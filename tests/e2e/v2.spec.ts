@@ -68,6 +68,7 @@ test("칸 안: 본 항목은 세부 항목과 함께 맨 위로, ⋮⋮는 Tab �
   await expect
     .poll(() => values(c))
     .toEqual(["배포 리허설 결과 정리", "롤백 소요 시간 기록", FIRST, "지표 정의서 공유"]);
+  await expect(page.getByTestId("item-menu")).toHaveCount(0); // 끌면 메뉴는 열리지 않음(v9 N1)
   await saved(page);
   await page.keyboard.press("Control+KeyZ");
   await expect

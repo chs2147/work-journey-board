@@ -34,6 +34,7 @@ function usePopover(onClose: () => void) {
 }
 
 function Pop({
+  align = "right",
   label,
   className,
   testId,
@@ -46,6 +47,8 @@ function Pop({
   testId: string;
   onClose(): void;
   onKeyDown?(e: ReactKeyboardEvent<HTMLDivElement>): void;
+  /** 항목 줄의 어느 쪽에 맞출지 — 손잡이 메뉴는 왼쪽(improve-1103v9-spec N1 C안) */
+  align?: "left" | "right";
   children: ReactNode;
 }) {
   const ref = usePopover(onClose);
@@ -59,9 +62,10 @@ function Pop({
     const h = el.offsetHeight;
     const below = r.bottom + 4;
     const top = below + h > window.innerHeight - 8 ? Math.max(8, r.top - h - 4) : below;
-    const left = Math.max(8, Math.min(r.right - w, window.innerWidth - w - 8));
+    const want = align === "left" ? r.left - 22 : r.right - w;
+    const left = Math.max(8, Math.min(want, window.innerWidth - w - 8));
     Object.assign(el.style, { position: "fixed", top: `${top}px`, left: `${left}px`, right: "auto" });
-  }, [ref]);
+  }, [ref, align]);
   useEffect(() => {
     ref.current?.querySelector<HTMLElement>("[data-autofocus]")?.focus();
   }, [ref]);
@@ -91,34 +95,69 @@ function Pop({
   );
 }
 
-/** ⋯ 메뉴: 시작 시각… / 다른 날로 옮기기… */
-export function ItemMoreMenu({
-  onTime,
-  onMove,
-  onClose,
-}: {
-  onTime(): void;
-  onMove(): void;
-  onClose(): void;
-}) {
-  const T = STR.itemTools;
+/** 항목 메뉴 한 줄 */
+export interface ItemMenuEntry {
+  key: string;
+  label: string;
+  icon: ReactNode;
+  shortcut?: string;
+  danger?: boolean;
+  /** 위에 구분선 */
+  separator?: boolean;
+  onSelect(): void;
+  onHover?(on: boolean): void;
+}
+
+/**
+ * 항목 메뉴(improve-1103v9-spec N1 C안): ⋮⋮ 손잡이를 누르거나 항목을 오른쪽 클릭하면 열린다.
+ * 연결 메모 만들기 · 매주 반복 · 시작 시각… · 다른 날로 옮기기… · 삭제 — 모두 한곳. ↑↓로 고르고 Enter
+ */
+export function ItemMenu({ entries, onClose }: { entries: ItemMenuEntry[]; onClose(): void }) {
   return (
-    <Pop label={T.more} className={styles.itemMenu} testId="item-menu" onClose={onClose}>
+    <Pop
+      label={STR.itemTools.more}
+      className={styles.itemMenu}
+      testId="item-menu"
+      align="left"
+      onClose={onClose}
+      onKeyDown={(e) => {
+        if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+        e.preventDefault();
+        const items = [...e.currentTarget.querySelectorAll<HTMLButtonElement>("[role=menuitem]")];
+        const at = items.indexOf(document.activeElement as HTMLButtonElement);
+        const next = (at + (e.key === "ArrowDown" ? 1 : -1) + items.length) % items.length;
+        items[next]?.focus();
+      }}
+    >
       <div role="menu">
-        <button type="button" role="menuitem" data-autofocus onClick={onTime}>
-          <span>⏰ {T.time}</span>
-          <kbd>{osText(T.timeKey)}</kbd>
-        </button>
-        <button type="button" role="menuitem" onClick={onMove}>
-          <span>📅 {T.move}</span>
-          <kbd>{osText(T.moveKey)}</kbd>
-        </button>
+        {entries.map((m, i) => (
+          <div key={m.key} className={m.separator ? styles.itemMenuSep : undefined}>
+            <button
+              type="button"
+              role="menuitem"
+              className={m.danger ? styles.itemMenuDanger : undefined}
+              data-autofocus={i === 0 ? true : undefined}
+              onClick={m.onSelect}
+              onMouseEnter={() => m.onHover?.(true)}
+              onMouseLeave={() => m.onHover?.(false)}
+              onFocus={() => m.onHover?.(true)}
+              onBlur={() => m.onHover?.(false)}
+            >
+              <span className={styles.itemMenuLabel}>
+                <span className={styles.itemMenuIcon} aria-hidden="true">
+                  {m.icon}
+                </span>
+                {m.label}
+              </span>
+              {m.shortcut && <kbd>{osText(m.shortcut)}</kbd>}
+            </button>
+          </div>
+        ))}
       </div>
     </Pop>
   );
 }
 
-const COMMON_HOURS = Array.from({ length: 12 }, (_, i) => String(i + 8).padStart(2, "0"));
 const ALL_HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0"));
 
 /** 시작 시각 창(T1): 시 · 분(15분) · [지우기] [취소] [HH:MM 시작] */
@@ -137,7 +176,6 @@ export function StartTimePopover({
 }) {
   const S = STR.startTime;
   const [t, setT] = useState(initial);
-  const [all, setAll] = useState(() => !COMMON_HOURS.includes(initial.slice(0, 2)));
   const typed = useRef("");
   const hh = t.slice(0, 2);
   const mm = t.slice(3, 5);
@@ -150,9 +188,7 @@ export function StartTimePopover({
       onKeyDown={(e) => {
         if (e.key === "ArrowUp" || e.key === "ArrowDown") {
           e.preventDefault();
-          const next = stepTime(t, e.key === "ArrowUp" ? 1 : -1);
-          setT(next);
-          if (!COMMON_HOURS.includes(next.slice(0, 2))) setAll(true);
+          setT(stepTime(t, e.key === "ArrowUp" ? 1 : -1));
         } else if (e.key === "Enter") {
           e.preventDefault();
           onSave(t);
@@ -164,17 +200,14 @@ export function StartTimePopover({
           e.preventDefault();
           typed.current = (typed.current + e.key).slice(-4);
           const parsed = parseTimeInput(typed.current);
-          if (parsed) {
-            setT(parsed);
-            if (!COMMON_HOURS.includes(parsed.slice(0, 2))) setAll(true);
-          }
+          if (parsed) setT(parsed);
         }
       }}
     >
       <strong className={styles.popTitle}>{S.title(shortDateLabel(date))}</strong>
       <span className={styles.popLabel}>{S.hour}</span>
       <div className={styles.hourGrid} role="group" aria-label={S.hour}>
-        {(all ? ALL_HOURS : COMMON_HOURS).map((h) => (
+        {ALL_HOURS.map((h) => (
           <button
             key={h}
             type="button"
@@ -186,9 +219,6 @@ export function StartTimePopover({
           </button>
         ))}
       </div>
-      <button type="button" className={styles.popLink} onClick={() => setAll(!all)}>
-        {all ? S.fewerHours : S.moreHours}
-      </button>
       <span className={styles.popLabel}>{S.minute}</span>
       <div className={styles.minuteGrid} role="group" aria-label={S.minute}>
         {QUARTERS.map((q) => (

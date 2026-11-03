@@ -24,6 +24,11 @@ export const STR_BASE = {
     timeKey: "Alt+O",
     move: "다른 날로 옮기기…",
     moveKey: "Alt+D",
+    repeatOn: "매주 반복 켜기",
+    repeatOff: "매주 반복 끄기",
+    delete: "삭제",
+    deleteGroup: (subs: number) => `세부 항목 ${subs}개와 함께 삭제`,
+    gripTitle: "끌어서 옮기기 · 눌러서 항목 메뉴 (오른쪽 클릭도 됨)",
   },
   /** 시작 시각(improve-1103v8-spec T1) — 그날 시작하는 시각, 15분 단위 */
   startTime: {

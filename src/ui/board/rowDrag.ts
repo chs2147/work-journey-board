@@ -68,7 +68,13 @@ function autoScroll(from: Element, y: number) {
 }
 
 /** ⋮⋮의 onPointerDown */
-export function startRowDrag(e: ReactPointerEvent<HTMLElement>, fromKey: string, fromIndex: number) {
+export function startRowDrag(
+  e: ReactPointerEvent<HTMLElement>,
+  fromKey: string,
+  fromIndex: number,
+  /** 끌지 않고 놓았을 때(누르기만) — 항목 메뉴 열기(improve-1103v9-spec N1 C안) */
+  onTap?: () => void,
+) {
   if (e.button !== 0) return;
   e.preventDefault();
   const grip = e.currentTarget;
@@ -180,7 +186,10 @@ export function startRowDrag(e: ReactPointerEvent<HTMLElement>, fromKey: string,
       void moveRowsTo(fromKey, fromIndex, drag.overKey, drag.gap);
   };
   const up = (ev: PointerEvent) => {
-    if (ev.pointerId === pointerId) finish(active);
+    if (ev.pointerId !== pointerId) return;
+    const tapped = !active;
+    finish(active);
+    if (tapped) onTap?.();
   };
   const cancel = () => finish(false);
   const key = (ev: KeyboardEvent) => {

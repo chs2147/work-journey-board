@@ -35,13 +35,13 @@ import {
 } from "./boardStore";
 import { doneDate, isDone } from "../../domain/important";
 import { DonePopover } from "./DonePopover";
-import { ItemMoreMenu, MoveDatePopover, StartTimePopover } from "./ItemActions";
+import { ItemMenu, MoveDatePopover, StartTimePopover } from "./ItemActions";
 import { defaultStartTime } from "../../domain/startTime";
 import { addLinkedBox, pasteImagesFromBoard, revealBox, useNote } from "../note/noteStore";
 import { linkedBoxes } from "../../domain/note";
 import { autoSize, isComposingKey, useRemeasure } from "./helpers";
 import { LinkedText } from "./LinkedText";
-import { IconDone, IconNote, IconTrash } from "../common/icons";
+import { IconClock, IconDone, IconMoveDate, IconNote, IconRepeat, IconTrash } from "../common/icons";
 import { startRowDrag, useLinkDrop, useLinkHover, useRowDrag } from "./rowDrag";
 import { useCabinet, openCabinet, openItem as openCabinetItem } from "../cabinet/cabinetStore";
 import { CabinetRailIcon } from "../cabinet/CabinetIcons";
@@ -392,11 +392,19 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
                   tabIndex={-1}
                   className={styles.grip}
                   aria-label={STR.board.dragRow}
-                  title={STR.board.dragRow}
+                  title={STR.itemTools.gripTitle}
                   data-testid="drag-row"
-                  onPointerDown={(e) => startRowDrag(e, cellKey, i)}
+                  aria-haspopup="menu"
+                  aria-expanded={tool?.i === i && tool.kind === "menu"}
+                  onPointerDown={(e) =>
+                    // 끌면 옮기기, 누르기만 하면 항목 메뉴(improve-1103v9-spec N1 C안)
+                    startRowDrag(e, cellKey, i, () => {
+                      refs.current[i]?.focus();
+                      setTool({ i, kind: "menu" });
+                    })
+                  }
                 >
-                  ⋮⋮
+                  <GripDots />
                 </button>
               )}
               {/* 시작 시각 꼬리표(T1) — 글 첫 줄 앞, 누르면 시각 고르기 */}
@@ -440,38 +448,19 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
                   onPaste={(e) => onPaste(e, i)}
                 />
               )}
-              {/* 매주 반복: 반복 중이면 ↻를 늘 보이고(누르면 끔), 아니면 마우스를 올릴 때만 ↻(누르면 켬) */}
-              {it.depth === 0 && it.text.trim() && (
+              {/* 매주 반복 중이면 ↻를 상태로 보인다(누르면 끔). 켜기는 항목 메뉴·Alt+R(improve-1103v9-spec N1) */}
+              {isRepeating && it.text.trim() && (
                 <button
                   type="button"
                   tabIndex={-1}
-                  className={isRepeating ? styles.repeatOn : styles.repeatHover}
-                  aria-label={isRepeating ? STR.repeat.toggleOff : STR.repeat.toggleOn}
-                  aria-pressed={isRepeating}
-                  title={
-                    isRepeating
-                      ? `${STR.repeat.badge(DAY_LABELS[dayIndex(splitKey(cellKey).date)]!)} · ${STR.repeat.toggleOff}`
-                      : STR.repeat.toggleOn
-                  }
+                  className={styles.repeatOn}
+                  aria-label={STR.repeat.toggleOff}
+                  aria-pressed
+                  title={`${STR.repeat.badge(DAY_LABELS[dayIndex(splitKey(cellKey).date)]!)} · ${STR.repeat.toggleOff}`}
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => void toggleRepeat(cellKey, i)}
                 >
                   ↻
-                </button>
-              )}
-              {/* [메모] = 이 항목과 연결된 메모 만들기(4절) */}
-              {it.text.trim() && (
-                <button
-                  type="button"
-                  tabIndex={-1}
-                  className={it.depth === 0 ? styles.memoRow : styles.memoRowSub}
-                  aria-label={STR.linked.create}
-                  title={STR.linked.create}
-                  data-testid="memo-row"
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => addLinkedBox(it.id)}
-                >
-                  <IconNote />
                 </button>
               )}
               {/* Cabinet 표시 — 하나면 그 폴더 창·링크, 여럿이면 Cabinet에서 */}
@@ -521,28 +510,65 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
                   {linkAlready ? STR.linked.dropLinked : STR.linked.dropAdd}
                 </span>
               )}
-              {/* 항목 ⋯ 메뉴(5절): 시작 시각… · 다른 날로 옮기기… */}
-              {it.text.trim() && (
-                <button
-                  type="button"
-                  tabIndex={-1}
-                  className={it.depth === 0 ? styles.itemMore : styles.itemMoreSub}
-                  aria-label={STR.itemTools.more}
-                  title={STR.itemTools.more}
-                  aria-haspopup="menu"
-                  aria-expanded={tool?.i === i && tool.kind === "menu"}
-                  data-testid="item-more"
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => setTool(tool?.i === i && tool.kind === "menu" ? null : { i, kind: "menu" })}
-                >
-                  ⋯
-                </button>
-              )}
               {tool?.i === i && tool.kind === "menu" && (
-                <ItemMoreMenu
-                  onTime={() => setTool({ i, kind: "time" })}
-                  onMove={() => setTool({ i, kind: "move" })}
-                  onClose={() => closeTool(i)}
+                <ItemMenu
+                  onClose={() => {
+                    setDeleteHover(null);
+                    closeTool(i);
+                  }}
+                  entries={[
+                    {
+                      key: "memo",
+                      icon: <IconNote />,
+                      label: STR.linked.create,
+                      onSelect: () => {
+                        setTool(null);
+                        addLinkedBox(it.id);
+                      },
+                    },
+                    ...(it.depth === 0
+                      ? [
+                          {
+                            key: "repeat",
+                            icon: <IconRepeat />,
+                            label: isRepeating ? STR.itemTools.repeatOff : STR.itemTools.repeatOn,
+                            shortcut: "Alt+R",
+                            onSelect: () => {
+                              closeTool(i);
+                              void toggleRepeat(cellKey, i);
+                            },
+                          },
+                        ]
+                      : []),
+                    {
+                      key: "time",
+                      icon: <IconClock />,
+                      label: STR.itemTools.time,
+                      shortcut: STR.itemTools.timeKey,
+                      onSelect: () => setTool({ i, kind: "time" }),
+                    },
+                    {
+                      key: "move",
+                      icon: <IconMoveDate />,
+                      label: STR.itemTools.move,
+                      shortcut: STR.itemTools.moveKey,
+                      onSelect: () => setTool({ i, kind: "move" }),
+                    },
+                    {
+                      key: "delete",
+                      icon: <IconTrash />,
+                      label: deleteMenuLabel(items, i),
+                      shortcut: "Alt+Delete",
+                      danger: true,
+                      separator: true,
+                      onHover: (on) => setDeleteHover(on ? i : null),
+                      onSelect: () => {
+                        setDeleteHover(null);
+                        setTool(null);
+                        void deleteItemAt(cellKey, i, true);
+                      },
+                    },
+                  ]}
                 />
               )}
               {tool?.i === i && tool.kind === "time" && (
@@ -568,25 +594,6 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
                   }}
                   onClose={() => closeTool(i)}
                 />
-              )}
-              {(it.text.trim() || items.length > 1) && (
-                <button
-                  type="button"
-                  tabIndex={-1}
-                  className={styles.deleteRow}
-                  aria-label={deleteLabel(items, i)}
-                  title={deleteLabel(items, i)}
-                  data-testid="delete-row"
-                  onMouseDown={(e) => e.preventDefault()}
-                  onMouseEnter={() => setDeleteHover(i)}
-                  onMouseLeave={() => setDeleteHover(null)}
-                  onClick={() => {
-                    setDeleteHover(null);
-                    void deleteItemAt(cellKey, i);
-                  }}
-                >
-                  <IconTrash />
-                </button>
               )}
             </div>
           </Fragment>
@@ -631,8 +638,19 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
 }
 
 /** 본 항목에 세부 항목이 딸려 있으면 함께 지워진다는 것을 이름에 */
-function deleteLabel(items: ItemDraft[], i: number) {
+function deleteMenuLabel(items: ItemDraft[], i: number) {
   const [start, end] = deleteRange(items, i);
   const subs = end - start - 1;
-  return items[i]?.depth === 0 && subs > 0 ? STR.board.deleteGroup(subs) : STR.board.deleteRow;
+  return items[i]?.depth === 0 && subs > 0 ? STR.itemTools.deleteGroup(subs) : STR.itemTools.delete;
+}
+
+/** ⋮⋮ 손잡이 — 점 6개(2×3), 노션처럼 또렷하게(improve-1103v9-spec N1) */
+function GripDots() {
+  return (
+    <svg width="10" height="16" viewBox="0 0 10 16" aria-hidden="true">
+      {[2.5, 7.5].flatMap((x) =>
+        [3, 8, 13].map((y) => <circle key={`${x}-${y}`} cx={x} cy={y} r="1.6" fill="currentColor" />),
+      )}
+    </svg>
+  );
 }

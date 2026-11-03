@@ -378,3 +378,12 @@ section:first-child > .group {
   color: var(--accent);
   font-variant-numeric: tabular-nums;
 }
+
+/* "오늘" 묶음 전체(머리 + 목록)를 다른 바탕으로(improve-1103v9-spec N3) — 지난 날짜·이번 주와 한눈에 구분 */
+.todayArea {
+  margin: var(--sp-2) calc(-1 * var(--sp-2));
+  padding: 1px var(--sp-2) var(--sp-2);
+  border-left: 3px solid var(--today-mark);
+  border-radius: var(--radius-md);
+  background: var(--today-area);
+}

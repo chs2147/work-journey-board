@@ -57,7 +57,8 @@ test("세부 항목에서 켜도 본 항목 묶음째 반복된다", async ({ pa
 test("마우스로 ↻ 켜기 → 설정 > 반복 항목에 보이고, 중지하면 다음 주 '예정'이 사라진다", async ({ page }) => {
   const item = cell(page, SEC, "2026-10-21").locator('[class*="item_"]').first();
   await item.hover();
-  await item.getByRole("button", { name: "매주 반복 (Alt+R)" }).click();
+  await item.getByTestId("drag-row").click();
+  await page.getByTestId("item-menu").getByRole("menuitem", { name: /매주 반복 켜기/ }).click();
   await expect(page.getByText("다음 주부터 수요일에 들어옵니다", { exact: false })).toBeVisible();
 
   await openSettings(page, "work");

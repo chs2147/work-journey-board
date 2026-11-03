@@ -511,7 +511,8 @@
   display: flex;
   flex-direction: column;
   min-height: 100%;
-  padding: var(--sp-2) var(--sp-2) var(--sp-3);
+  /* 왼쪽 18px = ⋮⋮ 손잡이 자리(improve-1103v9-spec N1) — 옆 칸 글을 덮지 않게 */
+  padding: var(--sp-2) var(--sp-2) var(--sp-3) 18px;
   cursor: text;
 }
 
@@ -697,8 +698,7 @@
   padding-right: calc(18px + var(--cab-off, 0px));
 }
 
-.repeatOn,
-.repeatHover {
+.repeatOn {
   position: absolute;
   top: 3px;
   right: calc(1px + var(--cab-off, 0px));
@@ -714,59 +714,7 @@
   cursor: pointer;
 }
 
-.repeatHover {
-  /* 안 보일 때도 휴지통 왼쪽 자리에 둔다 — 올린 순간 자리가 바뀌면 누르는 곳이 휴지통과 겹친다 */
-  right: calc(20px + var(--cab-off, 0px));
-  opacity: 0;
-  color: var(--text-3);
-  background: var(--surface-card);
-  box-shadow: 0 0 0 1px var(--line);
-}
-
-.item:hover .repeatHover {
-  opacity: 1;
-}
-
-.repeatHover:hover {
-  color: var(--accent);
-}
-
-/* 행 삭제(improve-1026v2-spec 1·2절): 마우스를 올린 항목 끝에 휴지통, ↻는 그 왼쪽으로 비켜 선다.
-   휴지통에 올리면 지워질 묶음(본 항목 + 세부 항목)을 옅은 빨강 + 취소선으로 미리 보인다 */
-.deleteRow {
-  position: absolute;
-  top: 3px;
-  right: calc(1px + var(--cab-off, 0px));
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 17px;
-  height: calc(var(--fs-md) * 1.45);
-  padding: 0;
-  border: 0;
-  border-radius: var(--radius-sm);
-  opacity: 0;
-  color: var(--danger);
-  background: var(--surface-card);
-  box-shadow: 0 0 0 1px var(--line);
-  cursor: pointer;
-}
-
-.deleteRow svg {
-  width: 13px;
-  height: 13px;
-}
-
-.item:hover > .deleteRow,
-.itemSub:hover > .deleteRow {
-  opacity: 1;
-}
-
-.item:hover > .repeatOn,
-.item:hover > .repeatHover {
-  right: calc(20px + var(--cab-off, 0px));
-}
-
+/* 삭제 미리 보기(improve-1026v2-spec 1·2절 → v9: 항목 메뉴 [삭제]에 올리면): 지워질 묶음을 옅은 빨강 + 취소선 */
 .deleting {
   border-radius: var(--radius-sm);
   background: var(--danger-soft);
@@ -786,24 +734,21 @@
 
 /* 행 끌어서 옮기기(improve-1026v2-spec 3절): 마우스를 올린 항목 왼쪽 여백에 ⋮⋮(Tab 순서 밖). 원래 자리는 흐리게,
    놓을 칸은 파란 테두리, 놓을 틈에 파란 가로선(높이 0 — 줄이 밀리지 않게), 커서 옆에 항목 그림자 */
+/* ⋮⋮ 손잡이(improve-1103v9-spec N1 C안): 끌면 옮기기, 누르면 항목 메뉴 — 노션처럼 크고 또렷하게(점 6개 아이콘) */
 .grip {
   position: absolute;
-  left: -19px;
-  top: 2px;
+  left: -18px;
+  top: 1px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 18px;
-  height: calc(var(--fs-md) * 1.45 + 2px);
+  height: 24px;
   padding: 0;
   border: 0;
   border-radius: var(--radius-sm);
   background: none;
   color: var(--text-2);
-  font-size: 15px;
-  font-weight: var(--fw-bold);
-  letter-spacing: -3px;
-  line-height: 1;
   opacity: 0;
   cursor: grab;
   touch-action: none;
@@ -817,18 +762,25 @@
 }
 
 .itemSub > .grip {
-  left: -33px;
+  left: -32px;
 }
 
 .item:hover > .grip,
-.itemSub:hover > .grip {
-  opacity: 0.9;
+.itemSub:hover > .grip,
+.item:focus-within > .grip,
+.itemSub:focus-within > .grip,
+.grip[aria-expanded="true"] {
+  opacity: 1;
+  background: var(--surface-card);
+  box-shadow: 0 0 0 1px var(--line-strong);
 }
 
 .grip:hover,
-.grip:focus-visible {
+.grip:focus-visible,
+.grip[aria-expanded="true"] {
   opacity: 1;
-  background: var(--surface-sub);
+  background: var(--accent-soft);
+  box-shadow: 0 0 0 1px var(--accent);
   color: var(--accent);
 }
 
@@ -893,10 +845,8 @@
   color: var(--text-2);
 }
 
-/* 업무연계 메모(improve-1026v2-spec 4·6-2절): 마우스를 올린 항목에 [메모](휴지통·↻ 왼쪽), 연결된 메모가 있으면 끝에 배지.
+/* 업무연계 메모(improve-1026v2-spec 4·6-2절, v9부터 만들기는 항목 메뉴): 연결된 메모가 있으면 끝에 배지.
    메모 상자를 항목 위로 끌어 오면 그 행이 파란 테두리 + "여기에 연결" */
-.memoRow,
-.memoRowSub,
 .memoBadge {
   position: absolute;
   top: 3px;
@@ -908,39 +858,6 @@
   border: 0;
   border-radius: var(--radius-sm);
   cursor: pointer;
-}
-
-.memoRow,
-.memoRowSub {
-  width: 17px;
-  opacity: 0;
-  color: var(--text-3);
-  background: var(--surface-card);
-  box-shadow: 0 0 0 1px var(--line);
-}
-
-.memoRow {
-  right: calc(39px + var(--cab-off, 0px));
-}
-
-.memoRowSub {
-  right: calc(20px + var(--cab-off, 0px));
-}
-
-.memoRow svg,
-.memoRowSub svg {
-  width: 13px;
-  height: 13px;
-}
-
-.item:hover > .memoRow,
-.itemSub:hover > .memoRowSub {
-  opacity: 1;
-}
-
-.memoRow:hover,
-.memoRowSub:hover {
-  color: var(--accent);
 }
 
 .memoBadge {
@@ -960,25 +877,9 @@
   height: 12px;
 }
 
-/* 연결된 항목: 배지는 늘 오른쪽 끝에 고정(누를 수 있게), ↻·[메모]·휴지통은 배지 왼쪽으로 비켜 선다 */
+/* 연결된 항목: 배지는 늘 오른쪽 끝에 고정(누를 수 있게), ↻는 배지 왼쪽으로 비켜 선다 */
 .linked > .repeatOn {
   right: calc(30px + var(--cab-off, 0px));
-}
-
-/* 숨은(투명) 단추도 눌림을 가로채므로 마우스를 올리기 전부터 배지 자리를 비운다 */
-.linked > .deleteRow {
-  right: calc(30px + var(--cab-off, 0px));
-}
-
-.item.linked:hover > .repeatOn,
-.linked > .repeatHover,
-.item.linked:hover > .repeatHover,
-.itemSub.linked > .memoRowSub {
-  right: calc(49px + var(--cab-off, 0px));
-}
-
-.item.linked > .memoRow {
-  right: calc(68px + var(--cab-off, 0px));
 }
 
 .linked .itemInput,
@@ -1452,52 +1353,6 @@
   text-indent: 64px;
 }
 
-/* 항목 ⋯(메모 단추 왼쪽) */
-.itemMore,
-.itemMoreSub {
-  position: absolute;
-  top: 3px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 17px;
-  height: calc(var(--fs-md) * 1.45);
-  padding: 0;
-  border: 0;
-  border-radius: var(--radius-sm);
-  background: var(--surface-card);
-  box-shadow: 0 0 0 1px var(--line);
-  color: var(--text-2);
-  font: inherit;
-  font-weight: 700;
-  line-height: 1;
-  opacity: 0;
-  cursor: pointer;
-}
-
-.itemMore {
-  right: calc(58px + var(--cab-off, 0px));
-}
-
-.itemMoreSub {
-  right: calc(39px + var(--cab-off, 0px));
-}
-
-/* 커서가 있는 항목에서만(마우스만 올렸을 때는 숨김) — 좁은 칸에서 글 가운데를 누르면 ⋯가 눌리지 않게.
-   마우스로는 항목에서 오른쪽 클릭으로 같은 메뉴 */
-.itemMore,
-.itemMoreSub {
-  pointer-events: none;
-}
-
-.item:focus-within > .itemMore,
-.itemSub:focus-within > .itemMoreSub,
-.itemMore[aria-expanded="true"],
-.itemMoreSub[aria-expanded="true"] {
-  opacity: 1;
-  pointer-events: auto;
-}
-
 .itemMenu,
 .timePop,
 .movePop {
@@ -1750,4 +1605,41 @@
 .calSel:hover {
   background: var(--accent);
   color: var(--on-accent);
+}
+
+.itemMenu [role="menu"] > div {
+  display: contents;
+}
+
+.itemMenuSep > button {
+  width: 100%;
+}
+
+.itemMenuSep {
+  display: block !important;
+  margin-top: 3px;
+  padding-top: 3px;
+  border-top: 1px solid var(--line);
+}
+
+.itemMenuLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.itemMenuIcon {
+  display: inline-flex;
+  justify-content: center;
+  width: 16px;
+}
+
+.itemMenuIcon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.itemMenuDanger,
+.itemMenuDanger kbd {
+  color: var(--danger) !important;
 }

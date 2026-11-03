@@ -182,3 +182,27 @@ export const IconUnlink = () => (
     <path d="M6.5 9.5l3-3M4.6 8.4l-1 1a2.5 2.5 0 0 0 3.5 3.5l1-1M11.4 7.6l1-1a2.5 2.5 0 0 0-3.5-3.5l-1 1M2.5 2.5l11 11" />
   </Svg>
 );
+
+/** 항목 메뉴: 매주 반복(improve-1103v9-spec N1) */
+export const IconRepeat = () => (
+  <Svg>
+    <path d="M12.5 6.5A4.75 4.75 0 0 0 3.6 5.2M3.5 9.5a4.75 4.75 0 0 0 8.9 1.3" />
+    <path d="M3.25 2.75v2.75H6M12.75 13.25V10.5H10" />
+  </Svg>
+);
+
+/** 항목 메뉴: 시작 시각 */
+export const IconClock = () => (
+  <Svg>
+    <circle cx="8" cy="8" r="5.75" />
+    <path d="M8 5v3.25l2.25 1.5" />
+  </Svg>
+);
+
+/** 항목 메뉴: 다른 날로 옮기기 */
+export const IconMoveDate = () => (
+  <Svg>
+    <rect x="1.75" y="2.75" width="12.5" height="11.5" rx="1.75" />
+    <path d="M1.75 6.25h12.5M6 10.25h4.25M8.75 8.5l1.75 1.75L8.75 12" />
+  </Svg>
+);

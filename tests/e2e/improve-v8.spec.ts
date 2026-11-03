@@ -138,11 +138,12 @@ test.describe("T1 시작 시각", () => {
     await expect(page.getByTestId("important-panel").getByTestId("important-time")).toHaveText("⏰ 14:30");
   });
 
-  test("⋯ 메뉴 → 시작 시각… → 시·분 단추로 고르기 · 꼬리표 눌러 지우기 · Ctrl+Z", async ({ page }) => {
+  test("항목 메뉴 → 시작 시각… → 시·분 단추로 고르기 · 꼬리표 눌러 지우기 · Ctrl+Z", async ({ page }) => {
     await openBoard(page);
     const row = cell(page, SETTLE, TODAY).locator("[data-item-index='0']");
-    // 커서가 있는 항목에서만 ⋯ — 마우스만 올리면 숨김(좁은 칸에서 글을 누르는 데 방해되지 않게)
-    await row.getByTestId("item-more").click(); // 시작할 때 커서가 이 항목에 있다
+    await row.hover();
+    await row.getByTestId("drag-row").click(); // ⋮⋮ 누르기 = 항목 메뉴(improve-1103v9-spec N1 C안)
+    await expect(page.getByTestId("item-menu")).toBeVisible();
     await page.keyboard.press("Escape");
     await expect(page.getByTestId("item-menu")).toHaveCount(0);
     await row.locator("textarea").click({ button: "right" }); // 오른쪽 클릭으로도 같은 메뉴
