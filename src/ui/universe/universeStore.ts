@@ -22,7 +22,7 @@ import { goToWeek, reportError, revealItem, setTagFilter, useBoard } from "../bo
 import { openCabinet } from "../cabinet/cabinetStore";
 import { closeInsights, openInsights } from "../insights/insightsStore";
 import { revealBox, useNote } from "../note/noteStore";
-import { setSettingsOpen, switchWorkspace } from "../common/appController";
+import { onDetach, setSettingsOpen, switchWorkspace } from "../common/appController";
 import { useAppStore } from "../common/appStore";
 
 export type UMode = "focus" | "galaxy";
@@ -63,6 +63,16 @@ export const useUniverse = create<UniverseState>(() => ({
 
 const set = useUniverse.setState;
 const get = useUniverse.getState;
+
+/** 불러오기 차례 — 일지가 바뀌거나 다시 열면 앞선 불러오기 결과는 버린다(CLAUDE.md 4-7) */
+let loadSeq = 0;
+
+/** 일지를 닫기 직전(공간 전환·복원 등): 진행 중인 불러오기를 버리고 지도·선택을 비운다 */
+function detachUniverse() {
+  loadSeq++;
+  set({ graphs: {}, seed: null, selected: null, open: false, loading: false });
+}
+onDetach(detachUniverse);
 
 function currentDir(): string | null {
   const j = useAppStore.getState().journal;
@@ -144,14 +154,18 @@ export async function openUniverse(seedRef?: string) {
   if (useAppStore.getState().settingsOpen) setSettingsOpen(false);
   closeInsights();
   set({ open: true, loading: true, notices: [] });
+  const seq = ++loadSeq;
+  const stale = () => seq !== loadSeq || !sameDir(currentDir() ?? "", dir);
   try {
     const cur = await loadCurrent();
+    if (stale()) return;
     if (!cur) return;
     const graphs: Record<string, UGraph> = { [dir]: cur };
     const notices: string[] = [];
     const wsOn = get().wsOn.filter((d) => !sameDir(d, dir) && entryOf(d));
     for (const d of wsOn) {
       const r = await loadOther(d);
+      if (stale()) return;
       if (r.graph) graphs[d] = r.graph;
       if (r.notice) notices.push(r.notice);
     }
@@ -197,7 +211,9 @@ export async function toggleWorkspace(dir: string) {
     return;
   }
   set({ loading: true });
+  const seq = loadSeq;
   const r = await loadOther(dir);
+  if (seq !== loadSeq) return; // 그 사이 일지가 바뀜
   set((s) => ({
     loading: false,
     wsOn: r.graph ? [...s.wsOn, dir] : s.wsOn,

@@ -20,6 +20,7 @@ import {
   addCategory,
   flushAll,
   focusStartCell,
+  detachBoard,
   init as initBoard,
   reload,
   setAddOpen,
@@ -27,9 +28,9 @@ import {
   toast,
   useBoard,
 } from "../board/boardStore";
-import { flushDraft, initSummary } from "../summary/summaryStore";
-import { finishNote, flushNote, initNote } from "../note/noteStore";
-import { initInsights, useInsights } from "../insights/insightsStore";
+import { detachSummary, flushDraft, initSummary } from "../summary/summaryStore";
+import { detachNote, finishNote, flushNote, initNote } from "../note/noteStore";
+import { detachInsights, initInsights, useInsights } from "../insights/insightsStore";
 import { restoreCabinet, shutdownCabinet, suspendCabinet } from "../cabinet/cabinetStore";
 import { closeInsights } from "../insights/insightsStore";
 import { today as todayOf } from "../../domain/week";
@@ -168,6 +169,24 @@ async function periodicTick() {
   await autoBackup("periodic");
 }
 
+/**
+ * 지금 일지와 화면 저장소의 연결을 모두 끊는다 — 일지를 닫기 직전(공간 전환·복원·파손)과 새 일지를 띄우기 직전.
+ * 대기 저장은 부르는 쪽이 먼저 끝낸다(flushPending·finishNote). 끊은 뒤에는 어떤 쓰기도 이전·다음 일지에 가지 않는다(v1.8.1).
+ */
+function detachAll() {
+  detachBoard();
+  detachSummary();
+  detachNote();
+  detachInsights();
+  for (const f of extraDetach) f();
+}
+
+/** appController를 가져다 쓰는 저장소(Universe 등)가 자기 detach를 등록하는 곳 — 서로 가져오기 고리 없이 detachAll에 들어간다(CLAUDE.md 4-7) */
+const extraDetach: (() => void)[] = [];
+export function onDetach(f: () => void) {
+  if (!extraDetach.includes(f)) extraDetach.push(f);
+}
+
 function stopPeriodic() {
   if (periodicTimer) clearInterval(periodicTimer);
   periodicTimer = null;
@@ -179,6 +198,7 @@ function onCorrupt(e: unknown) {
   if (j.state !== "ready") return;
   console.error("데이터 파일 문제", e);
   stopPeriodic();
+  detachAll();
   set({ journal: { state: "integrity", dataDir: j.dataDir, path: journalPath(platform(), j.dataDir) } });
   void j.driver.close().catch(() => undefined);
 }
@@ -200,6 +220,7 @@ async function onExit() {
 async function activate(driver: SqlDriver, dataDir: string) {
   const p = platform();
   stopPeriodic();
+  detachAll(); // 이전 일지의 문서·예약 저장·그림이 새 일지에 섞이지 않게(v1.8.1)
   const repo = new JournalRepository(driver, () => p.now());
   repo.setCorruptHandler(onCorrupt);
   const [row] = await driver.select<{ v: string }>("SELECT sqlite_version() AS v");
@@ -226,6 +247,7 @@ export async function restoreBackup(name: string): Promise<string | null> {
     await flushPending().catch(() => undefined);
     await finishNote().catch(() => undefined);
     stopPeriodic();
+    detachAll();
     await j.driver.close().catch(() => undefined);
   }
   let before: string;
@@ -321,6 +343,9 @@ export async function setTheme(pref: ThemePref) {
 async function closeCurrent() {
   const j = get().journal;
   await flushPending();
+  await finishNote().catch(() => undefined);
+  stopPeriodic();
+  detachAll();
   if (j.state === "ready") await j.driver.close().catch(() => undefined);
 }
 
@@ -348,6 +373,7 @@ export async function moveTo(dataDir: string, copyBackups: boolean): Promise<str
   if (j.state !== "ready") return "일지가 열려 있지 않습니다";
   const p = platform();
   await flushPending();
+  await finishNote().catch(() => undefined);
   let next: SqlDriver;
   try {
     await copyJournalTo(p, j.driver, j.dataDir, dataDir, copyBackups, p.now());
@@ -359,6 +385,8 @@ export async function moveTo(dataDir: string, copyBackups: boolean): Promise<str
   const old = get().workspaces;
   await saveEntries(old.map((e) => (sameDir(e.dir, j.dataDir) ? { ...e, dir: dataDir } : e)));
   await p.saveConfig({ dataDir });
+  stopPeriodic();
+  detachAll();
   await j.driver.close().catch(() => undefined);
   await activate(next, dataDir);
   return null;
@@ -465,8 +493,12 @@ export async function switchWorkspace(dir: string, opts: { quiet?: boolean } = {
   }
   if (j.state === "ready") {
     stopPeriodic();
+    // 다음 공간을 여는 동안 친 글까지 지금 공간에 저장하고 정리한 뒤 백업 → 연결 끊기 → 닫기(v1.8.1)
+    await flushPending().catch(() => undefined);
+    await finishNote().catch(() => undefined);
     if (j.repo.writeCount !== lastBackup.writes) await autoBackup("exit");
     const cab = await suspendCabinet();
+    detachAll();
     await j.driver.close().catch(() => undefined);
     await rememberCabinet({ dir: j.dataDir, cab }, dir);
   } else await rememberCabinet({ open: false, windows: [] }, dir);
@@ -593,3 +625,14 @@ export async function addExistingWorkspace(dir: string): Promise<string | null> 
     return STR.workspace.addExistingNoJournal;
   return switchWorkspace(dir);
 }
+
+// 점검 훅(읽기만): 지금 연 공간 일지의 메모 이미지 수 — 공간 전환 무결성 E2E가 화면과 따로 저장소를 확인한다(v1.8.1)
+if (typeof window !== "undefined")
+  Object.assign(globalThis, {
+    __wjbApp: {
+      async assetCount() {
+        const j = get().journal;
+        return j.state === "ready" ? (await j.repo.noteAssetStats()).count : -1;
+      },
+    },
+  });

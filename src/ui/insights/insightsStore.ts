@@ -117,6 +117,15 @@ let jumpSeq = 0;
 let loadSeq = 0;
 let heatSeq = 0;
 
+/** 일지를 닫기 직전: 진행 중인 조회 결과는 버리고 연결을 끊는다(v1.8.1) */
+export function detachInsights() {
+  repo = null;
+  jumpSeq++;
+  loadSeq++;
+  heatSeq++;
+  set({ open: false, data: null, heat: null });
+}
+
 export async function initInsights(r: JournalRepository) {
   repo = r;
   const s = await r.getSettings();

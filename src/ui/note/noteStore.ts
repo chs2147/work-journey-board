@@ -181,6 +181,11 @@ let focusSeq = 0;
 let lastEditedId: string | null = null;
 /** 이 주를 불러온 그때의 문서 — 그대로면(고친 적 없음) 떠날 때 이미지 정리를 건너뛴다(optimize-1031-plan O3) */
 let loadedDoc: NoteDoc | null = null;
+/**
+ * 지금 화면의 메모 문서를 읽어 온 일지(워크스페이스). 저장·이미지 정리는 **늘 이 일지에만** 한다 —
+ * 1.8.0 결함: 공간을 바꾼 직후 "이전 공간의 문서"로 "새 공간의 이미지"를 정리해 그림이 지워졌다(v1.8.1).
+ */
+let docRepo: JournalRepository | null = null;
 const undoStack: NoteDoc[] = [];
 const redoStack: NoteDoc[] = [];
 
@@ -189,7 +194,41 @@ const EDGE_RESET = { edgeId: null, edgeOrigin: null, edgeLabelOpen: false, edgeH
 
 const syncUndo = () => set({ canUndo: undoStack.length > 0, canRedo: redoStack.length > 0 });
 
+/**
+ * 일지를 닫기 직전(공간 전환·복원·다시 열기): 저장·정리를 끝낸 뒤 부른다. 이 일지와의 연결을 모두 끊어
+ * 다음 일지에 이전 문서·예약 저장·그림이 섞이지 않게 한다(v1.8.1).
+ */
+export function detachNote() {
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = null;
+  unsubscribe?.();
+  unsubscribe = null;
+  repo = null;
+  docRepo = null;
+  loadedDoc = null;
+  lastEditedId = null;
+  undoStack.length = 0;
+  redoStack.length = 0;
+  clearImageCache();
+  set({
+    weekId: "",
+    doc: emptyDoc(),
+    legacy: false,
+    assets: {},
+    editingId: null,
+    selectedId: null,
+    multi: [],
+    pendingId: null,
+    focusRequest: null,
+    pickerId: null,
+    busy: false,
+    ...EDGE_RESET,
+  });
+  syncUndo();
+}
+
 export async function initNote(r: JournalRepository) {
+  if (repo !== r) detachNote(); // 다른 일지로 바뀌었으면 이전 연결부터 끊는다
   repo = r;
   const s = await r.getSettings();
   set({
@@ -208,16 +247,15 @@ export async function initNote(r: JournalRepository) {
 }
 
 async function loadWeek(weekId: WeekId, finish = true) {
-  if (!repo || !weekId) return;
+  const r = repo;
+  if (!r || !weekId) return;
   if (finish) await finishNote();
   try {
-    const [{ doc, legacy }, rows] = await Promise.all([
-      repo.getWeekNote(weekId),
-      repo.getNoteAssetMeta(weekId),
-    ]);
-    if (useBoard.getState().weekId !== weekId) return;
-    // 다른 주로 옮길 때만 그림 해제(같은 주를 다시 읽을 때는 화면의 그림을 그대로 쓴다)
-    if (get().weekId !== weekId) clearImageCache();
+    const [{ doc, legacy }, rows] = await Promise.all([r.getWeekNote(weekId), r.getNoteAssetMeta(weekId)]);
+    if (repo !== r || useBoard.getState().weekId !== weekId) return; // 그 사이 다른 일지·다른 주로
+    // 다른 주·다른 일지로 옮길 때만 그림 해제(같은 일지의 같은 주를 다시 읽을 때는 화면의 그림을 그대로 쓴다)
+    if (get().weekId !== weekId || docRepo !== r) clearImageCache();
+    docRepo = r;
     undoStack.length = 0;
     redoStack.length = 0;
     lastEditedId = null;
@@ -243,6 +281,7 @@ async function loadWeek(weekId: WeekId, finish = true) {
 
 // ── 저장 ──────────────────────────────────────────────
 function scheduleSave() {
+  if (!docRepo) return; // 일지를 바꾸는 중(연결 끊김) — 다음 일지에 이전 문서를 쓰지 않는다
   if (saveTimer) clearTimeout(saveTimer);
   saveTimer = setTimeout(() => void flushNote(true), SAVE_DELAY_MS);
 }
@@ -252,7 +291,7 @@ export async function flushNote(force = false) {
   if (!saveTimer && !force) return;
   if (saveTimer) clearTimeout(saveTimer);
   saveTimer = null;
-  const r = repo;
+  const r = docRepo;
   const { weekId, doc } = get();
   if (!r || !weekId) return;
   try {
@@ -274,10 +313,11 @@ export async function reloadNote() {
  */
 export async function finishNote() {
   await flushNote();
-  const r = repo;
+  const r = docRepo; // 문서를 읽어 온 그 일지에만(다른 공간의 이미지를 이 문서 기준으로 지우지 않게)
   const { weekId, doc, legacy } = get();
   if (!r || !weekId || legacy || doc === loadedDoc) return;
   await r.pruneNoteAssets(weekId, noteAssetIds(doc)).catch(reportError);
+  if (docRepo === r && get().doc === doc) loadedDoc = doc; // 정리를 마친 문서 — 다시 불러도 또 정리하지 않는다
 }
 
 /** 메모 기록에 넣을 문서 — 대기 상자는 기록에 남기지 않는다 */
@@ -494,7 +534,7 @@ export function pastePlace(): { x: number; y: number } {
 
 /** 그림 파일들을 이미지 상자로(겹치지 않게 24px씩 비켜). 실패한 파일은 토스트로 알린다 */
 export async function addImages(files: Blob[], at: { x: number; y: number }) {
-  const r = repo;
+  const r = docRepo;
   const images = files.filter((f) => f.type.startsWith("image/"));
   if (!r || !images.length) return;
   const weekId = get().weekId;
@@ -508,7 +548,7 @@ export async function addImages(files: Blob[], at: { x: number; y: number }) {
       try {
         const img = await prepareImage(f);
         const asset = await r.addNoteAsset(weekId, img, img.thumb);
-        if (get().weekId !== weekId) return;
+        if (docRepo !== r || get().weekId !== weekId) return;
         const doc = get().doc;
         const box: NoteBox = {
           id: uuidv7(),
@@ -561,14 +601,14 @@ export function updateLinkText(id: string, title: string, note: string) {
 
 /** 카드 썸네일 = 사용자가 고른 그림(이미지 상자와 같은 줄이기·저장) */
 export async function setLinkThumb(id: string, file: Blob) {
-  const r = repo;
+  const r = docRepo;
   if (!r) return;
   const weekId = get().weekId;
   set({ busy: true });
   try {
     const img = await prepareImage(file);
     const asset = await r.addNoteAsset(weekId, img, img.thumb);
-    if (get().weekId !== weekId) return;
+    if (docRepo !== r || get().weekId !== weekId) return;
     loadedDoc = null; // 그림을 넣었으면 되돌려도 떠날 때 정리한다
     set({ assets: { ...get().assets, [asset]: metaOf(img) } });
     commit(
