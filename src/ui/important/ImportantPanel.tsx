@@ -134,66 +134,63 @@ export function ImportantPanel({ overlay }: { overlay: boolean }) {
                 </span>
                 <span>{g.items.length}</span>
               </h3>
-              {g.key === "due" && (
-                <ul className={styles.rows}>
-                  {g.items.map((it) => {
-                    const v = dueView(today, it.dueDate!);
-                    const due = shortDateLabel(it.dueDate!);
-                    return (
-                      <li key={it.id} className={styles.row} data-testid="important-due-row">
-                        <button
-                          type="button"
-                          className={styles.check}
-                          aria-label={STR.important.complete(it.text)}
-                          title={STR.important.completeTitle}
-                          onClick={() => void completeImportant(it.id)}
+              {/* 마감일이 있는 업무(improve-1104v10-spec 10절 v10-b): 마감일로 묶고 줄에는 항목명만 */}
+              {g.key === "due" &&
+                dueDays(g.items).map(([d, list]) => {
+                  const v = dueView(today, d);
+                  return (
+                    <div
+                      key={d}
+                      role="group"
+                      aria-label={`${v.short} ${shortDateLabel(d)}`}
+                      data-testid="important-due-day"
+                    >
+                      <h4 className={styles.dueDay}>
+                        <span
+                          className={`${styles.dueBadge} ${styles[`due_${v.kind}`] ?? ""}`}
+                          data-testid="important-due-badge"
+                          data-due-kind={v.kind}
                         >
-                          ✓
-                        </button>
-                        <button
-                          type="button"
-                          className={styles.main}
-                          data-row
-                          data-testid="important-row"
-                          onClick={() => void revealItem(it)}
-                          onKeyDown={(e) => onRowKey(e, it)}
-                        >
-                          <span className={styles.dueLine}>
-                            {it.parentText && <span className={styles.parent}>{it.parentText} ›</span>}
-                            <span className={styles.text}>{it.text}</span>
-                            <span
-                              className={`${styles.dueBadge} ${styles[`due_${v.kind}`] ?? ""}`}
-                              data-testid="important-due-badge"
-                              data-due-kind={v.kind}
+                          {v.short}
+                        </span>
+                        <span>{shortDateLabel(d)}</span>
+                        <span className={styles.dueCount}>{list.length}</span>
+                      </h4>
+                      <ul className={styles.rows}>
+                        {list.map((it) => (
+                          <li key={it.id} className={styles.row} data-testid="important-due-row">
+                            <button
+                              type="button"
+                              className={styles.check}
+                              aria-label={STR.important.complete(it.text)}
+                              title={STR.important.completeTitle}
+                              onClick={() => void completeImportant(it.id)}
                             >
-                              {v.short}
-                            </span>
-                          </span>
-                          <span className={styles.meta}>
-                            <span>
-                              <span
-                                className={styles.dot}
-                                style={{ background: `var(--cat-${it.categoryColor})` }}
-                              />{" "}
-                              {STR.dueDate.panelMeta(
-                                it.categoryName,
-                                due,
-                                it.date === it.dueDate ? null : shortDateLabel(it.date),
-                              )}
-                              {it.startTime && (
-                                <span className={styles.time} data-testid="important-time">
-                                  {" "}
-                                  {STR.startTime.chip(it.startTime)}
-                                </span>
-                              )}
-                            </span>
-                          </span>
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
+                              ✓
+                            </button>
+                            <button
+                              type="button"
+                              className={styles.main}
+                              data-row
+                              data-testid="important-row"
+                              title={STR.dueDate.rowTitle(it.categoryName, shortDateLabel(it.date))}
+                              onClick={() => void revealItem(it)}
+                              onKeyDown={(e) => onRowKey(e, it)}
+                            >
+                              <span className={styles.dueLine}>
+                                <span
+                                  className={styles.dot}
+                                  style={{ background: `var(--cat-${it.categoryColor})` }}
+                                />
+                                <span className={styles.dueText}>{it.text}</span>
+                              </span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  );
+                })}
               {g.categories.map((c) => (
                 <div key={c.id} role="group" aria-label={c.name} data-testid="important-category">
                   <h4 className={styles.cat}>
@@ -296,4 +293,15 @@ export function ImportantPanel({ overlay }: { overlay: boolean }) {
       </details>
     </aside>
   );
+}
+
+/** 이미 마감 임박순인 목록을 같은 마감일끼리 묶는다(순서 유지) */
+function dueDays(items: ImportantItem[]): [string, ImportantItem[]][] {
+  const out: [string, ImportantItem[]][] = [];
+  for (const it of items) {
+    const last = out[out.length - 1];
+    if (last && last[0] === it.dueDate) last[1].push(it);
+    else out.push([it.dueDate!, [it]]);
+  }
+  return out;
 }

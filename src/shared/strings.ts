@@ -72,9 +72,9 @@ export const STR_BASE = {
     save: (md: string) => `${md} 저장`,
     flagNote: "마감일을 정하면 ★ 중요 표시도 함께 켜집니다.",
     help: "←→↑↓ 날짜 이동 · Enter 저장 · Delete 지우기 · Esc 취소 · 숫자로 바로(1026)",
-    panelMeta: (cat: string, due: string, rec: string | null) =>
-      rec ? `${cat} · 마감 ${due} · 기록 ${rec}` : `${cat} · 마감 ${due}`,
     excelHeader: "마감일",
+    /** 마감 묶음 줄 툴팁 — 줄에는 항목명만 보이므로 업무·기록 날짜는 여기에 */
+    rowTitle: (cat: string, rec: string) => `${cat} · 기록 ${rec}`,
     searchTag: (md: string) => `⏳ ${md}`,
   },
   /** 다른 날로 옮기기(improve-1103v8-spec T4) */

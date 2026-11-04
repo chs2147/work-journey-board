@@ -407,8 +407,36 @@ section:first-child > .group {
   gap: 6px;
 }
 
-.dueLine .text {
+.dueDay {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: var(--sp-2) 0 2px;
+  padding-top: var(--sp-2);
+  border-top: 1px dashed color-mix(in srgb, var(--due-stripe) 35%, transparent);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  color: var(--text-1);
+}
+
+.dueCount {
+  margin-left: auto;
+  color: var(--text-3);
+  font-weight: normal;
+}
+
+.dueLine .dot {
+  flex: none;
+  align-self: center;
+}
+
+.dueText {
   flex: 1;
+  min-width: 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
 
 .dueBadge {

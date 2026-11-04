@@ -50,8 +50,11 @@ test("Alt+U → 숫자 1026 → Enter: 꼬리표 D-4, ★ 함께 켜지고 패�
   const dueRows = dueGroup(page).getByTestId("important-due-row");
   await expect(dueRows).toHaveCount(1);
   await expect(dueRows.first()).toContainText(FIRST);
-  await expect(dueRows.first().getByTestId("important-due-badge")).toHaveText("D-4");
-  await expect(dueRows.first()).toContainText("마감 10/26 (월) · 기록 10/22 (목)");
+  await expect(dueGroup(page).getByTestId("important-due-badge")).toHaveText(["D-4"]);
+  // 마감일 머리줄 + 줄에는 항목명만(업무 이름은 툴팁)
+  await expect(dueGroup(page).getByTestId("important-due-day")).toContainText("10/26 (월)");
+  await expect(dueRows.first()).toHaveText(`✓${FIRST}`);
+  await expect(dueRows.first().getByTestId("important-row")).toHaveAttribute("title", /· 기록 10\/22 \(목\)/);
   // 날짜 묶음에는 다시 나오지 않는다(D5)
   await expect(panel(page).getByTestId("important-row").filter({ hasText: FIRST })).toHaveCount(1);
 });
@@ -91,8 +94,8 @@ test("메뉴 · 빠른 단추 · 꼬리표 누르기: 마감 임박순 정렬, �
   const dueRows = dueGroup(page).getByTestId("important-due-row");
   await expect(dueRows).toHaveCount(2);
   await expect(dueRows.first()).toContainText(FIRST);
-  await expect(dueRows.first().getByTestId("important-due-badge")).toHaveText("2일 지남");
-  await expect(dueRows.nth(1).getByTestId("important-due-badge")).toHaveText("오늘 마감");
+  // 마감일마다 묶음: 지남 → 오늘 마감
+  await expect(dueGroup(page).getByTestId("important-due-badge")).toHaveText(["2일 지남", "오늘 마감"]);
   await expect(page.getByTestId("important-late")).toHaveCount(1);
   // 1번 마감 지우기 → 마감 묶음에서 빠지고 ★는 그대로(이번 주 묶음으로)
   await row1.getByTestId("due-chip").click();
