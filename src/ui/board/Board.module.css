@@ -648,7 +648,7 @@
 
 /* 중요 항목: 옅은 형광펜 띠 + 왼쪽 선 */
 .flagged {
-  border-radius: var(--radius-sm);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
   background: var(--mark);
   box-shadow: inset 3px 0 0 var(--mark-line);
 }

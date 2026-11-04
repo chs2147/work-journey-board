@@ -384,7 +384,7 @@ section:first-child > .group {
   margin: var(--sp-2) calc(-1 * var(--sp-2));
   padding: 1px var(--sp-2) var(--sp-2);
   border-left: 3px solid var(--today-mark);
-  border-radius: var(--radius-md);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
   background: var(--today-area);
 }
 
@@ -393,7 +393,7 @@ section:first-child > .group {
   margin: var(--sp-2) calc(-1 * var(--sp-2));
   padding: 1px var(--sp-2) var(--sp-2);
   border-left: 4px solid var(--due-stripe);
-  border-radius: var(--radius-md);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
   background: color-mix(in srgb, var(--due-soon-bg) 55%, var(--surface-card));
 }
 
