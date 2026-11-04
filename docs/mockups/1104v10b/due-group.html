@@ -1,0 +1,35 @@
+<!doctype html><html lang="ko"><meta charset="utf-8"><style>
+body{margin:0;background:#efe8dc;font:14px/1.45 "Pretendard",system-ui,sans-serif;color:#3b3127;display:flex;gap:28px;padding:24px}
+.col{width:330px}.cap{font-weight:700;margin:0 0 8px}.cap small{font-weight:400;color:#8a7d6e}
+.panel{background:#fbf7f0;border:1px solid #ddd2c2;border-radius:10px;padding:10px 12px}
+.ph{display:flex;justify-content:space-between;font-weight:700;margin-bottom:8px}.ph b{background:#a98a6a;color:#fff;border-radius:9px;padding:0 7px;font-size:12px}
+.area{border-left:4px solid #d8682a;border-radius:8px;background:#fbeee0;padding:6px 8px 8px}
+.gt{display:flex;justify-content:space-between;color:#9a3f0e;font-weight:700;font-size:13px;margin:2px 0 6px}
+.row{display:flex;gap:8px;padding:5px 2px;align-items:flex-start}.ck{width:14px;height:14px;border:1.5px solid #b9a993;border-radius:3px;margin-top:3px;flex:none;background:#fff}
+.meta{font-size:12px;color:#8a7d6e}.par{font-size:12px;color:#8a7d6e}
+.bd{font-size:11px;border-radius:5px;padding:0 6px;font-weight:700;white-space:nowrap}
+.late{background:#f6d2d2;color:#9b1c1c}.today{background:#ffd9c2;color:#a33a00}.soon{background:#fbe9d6;color:#9a4b00}.later{background:#ece5da;color:#6f6456}
+.dh{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;margin:8px 0 2px;padding-top:6px;border-top:1px dashed #e3cdb4}
+.dh:first-of-type{border-top:0;margin-top:0;padding-top:0}
+.dot{width:8px;height:8px;border-radius:50%;flex:none;margin-top:6px}
+.txt{flex:1}.n{margin-left:auto;color:#8a7d6e;font-weight:400}
+.note{font-size:12px;color:#6f6456;margin-top:10px;line-height:1.6}
+</style>
+<div class="col"><p class="cap">지금 <small>(v1.13.0)</small></p><div class="panel"><div class="ph">★ 중요 업무 <b>4</b></div><div class="area">
+<div class="gt">⏳ 마감일이 있는 업무<span>4</span></div>
+<div class="row"><span class="ck"></span><div><span class="par">가상 협력사 점검 ›</span> 계정 관리 미흡 2… <span class="bd late">2일 지남</span><div class="meta">가상 보안 점검 · 마감 10/20 (화) · 기록 10/21 (수)</div></div></div>
+<div class="row"><span class="ck"></span><div>주간 보고 초안 <span class="bd today">오늘 마감</span><div class="meta">가상 운영 · 마감 10/22 (목)</div></div></div>
+<div class="row"><span class="ck"></span><div>개발계 1차 배포 일정 확정 <span class="bd soon">D-4</span><div class="meta">가상 정산 시스템 · 마감 10/26 (월) · 기록 10/23 (금)</div></div></div>
+<div class="row"><span class="ck"></span><div>테스트 시나리오 검토 <span class="bd soon">D-4</span><div class="meta">가상 정산 시스템 · 마감 10/26 (월) · 기록 10/22 (목)</div></div></div>
+</div></div><p class="note">· 세부 항목은 본 항목 글(›)이 먼저, 아래 줄에 업무 이름·날짜까지 — 한 항목이 2~3줄<br>· 같은 마감일도 줄마다 배지 반복</p></div>
+
+<div class="col"><p class="cap">개선 시안 <small>— 항목명만 · 마감일로 묶기</small></p><div class="panel"><div class="ph">★ 중요 업무 <b>4</b></div><div class="area">
+<div class="gt">⏳ 마감일이 있는 업무<span>4</span></div>
+<div class="dh"><span class="bd late">2일 지남</span>10/20 (화)<span class="n">1</span></div>
+<div class="row"><span class="ck"></span><span class="dot" style="background:#e0662f" title="가상 보안 점검"></span><span class="txt">계정 관리 미흡 2건 발견</span></div>
+<div class="dh"><span class="bd today">오늘 마감</span>10/22 (목)<span class="n">1</span></div>
+<div class="row"><span class="ck"></span><span class="dot" style="background:#3a8f5c"></span><span class="txt">주간 보고 초안</span></div>
+<div class="dh"><span class="bd soon">D-4</span>10/26 (월)<span class="n">2</span></div>
+<div class="row"><span class="ck"></span><span class="dot" style="background:#2f6fd8"></span><span class="txt">개발계 1차 배포 일정 확정</span></div>
+<div class="row"><span class="ck"></span><span class="dot" style="background:#2f6fd8"></span><span class="txt">테스트 시나리오 검토</span></div>
+</div></div><p class="note">· 마감일마다 작은 머리줄(남은 날 배지 + 날짜 + 개수), 임박순<br>· 줄에는 <b>항목명 한 줄만</b>(길면 두 줄까지) — 본 항목 글·업무 이름·기록 날짜는 빼고<br>· 업무는 앞의 색 점으로만(마우스를 올리면 업무 이름·기록 날짜)<br>· 누르면 그 칸으로 이동 · ✓ 처리 완료는 그대로</p></div>
