@@ -607,7 +607,11 @@ export class JournalRepository {
   }
 
   /** 새 업무. 보고 있는 주의 월요일부터 보인다(data-spec 4-3). */
-  async createCategory(name: string, viewedWeek: WeekId): Promise<Category> {
+  async createCategory(
+    name: string,
+    viewedWeek: WeekId,
+    onboarding?: { tagIds: string[]; newTags: string[]; signal?: AbortSignal },
+  ): Promise<Category> {
     const n = normalizeCategoryName(name);
     if (!n) throw new ValidationError("업무 이름은 1~40자여야 합니다");
     const [stat] = await this.db.select<{ n: number; maxOrder: number | null }>(
@@ -621,6 +625,44 @@ export class JournalRepository {
       nudgeSnoozedUntil: null,
     };
     const ts = this.ts();
+    const extra: SqlStatement[] = [];
+    if (onboarding) {
+      const { categories } = await this.listCategories();
+      if (categories.some((c) => c.name.toLocaleLowerCase() === n.toLocaleLowerCase()))
+        throw new ValidationError("이미 있는 업무 이름입니다");
+      const tags = await this.listTags();
+      const selected = new Set(onboarding.tagIds);
+      if ([...selected].some((id) => !tags.some((t) => t.id === id)))
+        throw new ValidationError("태그 목록이 바뀌었습니다. 다시 선택해 주세요");
+      let order = Math.max(0, ...tags.map((t) => t.sortOrder));
+      const names = [...tags];
+      for (const raw of onboarding.newTags) {
+        const tagName = normalizeTagName(raw);
+        const existing = names.find((t) => t.name.toLowerCase() === tagName.toLowerCase());
+        if (existing) {
+          selected.add(existing.id);
+          continue;
+        }
+        const problem = tagNameProblem(
+          tagName,
+          names.map((t) => t.name),
+        );
+        if (problem) throw new ValidationError(problem);
+        const tag = { id: uuidv7(), name: tagName, sortOrder: ++order };
+        names.push(tag);
+        selected.add(tag.id);
+        extra.push({
+          sql: "INSERT INTO tag (id, name, sort_order, created_at) VALUES (?, ?, ?, ?)",
+          params: [tag.id, tag.name, tag.sortOrder, ts],
+        });
+      }
+      for (const id of selected)
+        extra.push({
+          sql: "INSERT INTO category_tag (category_id, tag_id) VALUES (?, ?)",
+          params: [category.id, id],
+        });
+      onboarding.signal?.throwIfAborted();
+    }
     await this.db.batch([
       {
         sql: "INSERT INTO category (id, name, color, sort_order, nudge_snoozed_until, created_at, updated_at) VALUES (?, ?, ?, ?, NULL, ?, ?)",
@@ -630,6 +672,7 @@ export class JournalRepository {
         sql: "INSERT INTO category_period (id, category_id, start_date, end_date) VALUES (?, ?, ?, NULL)",
         params: [uuidv7(), category.id, weekStart(viewedWeek)],
       },
+      ...extra,
     ]);
     return category;
   }

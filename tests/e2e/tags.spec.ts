@@ -115,7 +115,7 @@ test("태그 필터: 하나라도 포함(OR)·안내 띠·태그 없음·다른 
   await expect(page.getByTestId("week-title")).toContainText("2026-W43");
 
   // 거른 보기에서 새 업무 → 고른 태그가 달려 바로 보인다
-  await page.getByRole("button", { name: "+ 업무 추가" }).click();
+  await page.getByTestId("category-add").click();
   await page.keyboard.type("가상 신규 과제");
   await page.keyboard.press("Enter");
   await expect(chips(page, "가상 신규 과제")).toHaveText(["#프로젝트A", "#개발", "+ 태그"]);

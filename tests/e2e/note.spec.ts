@@ -252,12 +252,19 @@ test("보드 우선 자동 높이: 작은 화면에서도 업무 행이 다 보�
   expect((await box()).height).toBeGreaterThanOrEqual(160);
   // 큰 화면: 보드 아래 빈 띠 없이 메모가 남는 공간을 다 쓴다
   await page.setViewportSize({ width: 1440, height: 900 });
-  const addRow = (await page
-    .getByRole("textbox", { name: "+ 업무 추가" })
-    .or(page.getByText("+ 업무 추가"))
-    .first()
-    .boundingBox())!;
-  expect((await box()).y - (addRow.y + addRow.height)).toBeLessThan(24);
+  // 열 폭 변경 뒤 textarea/ResizeObserver 높이 갱신까지 기다려 같은 프레임의 경계를 비교한다.
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const row = [...document.querySelectorAll('[data-testid="category-header"]')]
+          .at(-1)!
+          .getBoundingClientRect();
+        return Math.abs(
+          document.querySelector('[data-testid="note-dock"]')!.getBoundingClientRect().top - row.bottom,
+        );
+      }),
+    )
+    .toBeLessThanOrEqual(1);
   // 아주 작은 화면: 보드가 줄어들며 스크롤되고 메모는 최소 160
   await page.setViewportSize({ width: 1280, height: 560 });
   await expect.poll(async () => Math.round((await box()).height)).toBe(160);

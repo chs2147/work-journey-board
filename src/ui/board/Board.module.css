@@ -648,7 +648,7 @@
 
 /* 중요 항목: 옅은 형광펜 띠 + 왼쪽 선 */
 .flagged {
-  border-radius: var(--radius-sm);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
   background: var(--mark);
   box-shadow: inset 3px 0 0 var(--mark-line);
 }
@@ -1065,36 +1065,6 @@
 .pullButton:hover {
   border-color: var(--accent);
   color: var(--accent);
-}
-
-/* ── 업무 추가·메모 행 ── */
-.addRow {
-  grid-column: 1 / -1;
-  display: flex;
-  align-items: center;
-  min-height: 38px;
-  padding: 0 var(--sp-3);
-  border-bottom: 1px solid var(--line);
-  background: var(--surface-page);
-}
-
-.addButton {
-  flex: 0 0 auto;
-  border: 0;
-  background: none;
-  color: var(--text-2);
-  font: inherit;
-  cursor: pointer;
-}
-
-.addInput {
-  width: 360px;
-  padding: var(--sp-1) var(--sp-3);
-  font: inherit;
-  border: 1px solid var(--accent);
-  border-radius: var(--radius-sm);
-  background: var(--surface-card);
-  color: var(--text-1);
 }
 
 .empty {

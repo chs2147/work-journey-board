@@ -132,7 +132,7 @@ export function ImportantPanel({ overlay }: { overlay: boolean }) {
                     </span>
                   )}
                 </span>
-                <span>{g.items.length}</span>
+                {g.key !== "due" && <span>{g.items.length}</span>}
               </h3>
               {/* 마감일이 있는 업무(improve-1104v10-spec 10절 v10-b): 마감일로 묶고 줄에는 항목명만 */}
               {g.key === "due" &&
@@ -154,7 +154,6 @@ export function ImportantPanel({ overlay }: { overlay: boolean }) {
                           {v.short}
                         </span>
                         <span>{shortDateLabel(d)}</span>
-                        <span className={styles.dueCount}>{list.length}</span>
                       </h4>
                       <ul className={styles.rows}>
                         {list.map((it) => (

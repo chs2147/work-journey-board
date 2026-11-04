@@ -92,6 +92,12 @@ npm run tauri dev    # 실앱 모드(윈도우·맥 / 리눅스는 webkit2gtk-4.
 - 설치 파일: `main`에 반영되면 *Build desktop installers*가 윈도우(NSIS)·맥(유니버설 DMG)을 나란히 만들고, **둘 다 성공해야** [Releases](https://github.com/chs2147/work-journey-board/releases)에 `v<버전>`으로 함께 올린다 — 0.x·`-rc`는 사전 릴리스, 1.0.0 이상 정식 판은 정식 릴리스. 윈도우 오프라인 설치판은 요청할 때만 Actions → *Build desktop installers* → Run workflow(main) → `offline`으로 그 판 릴리스에 더한다. 하나의 원본으로 두 플랫폼을 같은 판으로 운영한다([docs/macos-spec.md](docs/macos-spec.md)).
 
 ## Version History
+### v1.14.0 (2026-11-04) — 직선 색상 띠와 업무·메모 입력 개선
+- 앱 전체 세로 색상 띠의 끝을 직선으로 통일하고, 마감일 묶음의 개수를 제거·남은 날을 임박도별 컬러칩으로 표시
+- 상단 **업무 추가·주간 요약·내보내기** 아이콘 버튼, 업무명·기존/신규 태그를 함께 입력하는 업무 추가 팝업
+- 메모 글자색 팔레트, Markdown 파일을 텍스트 메모로 드롭(URL 링크 유지·이미지/base64 제외)
+- 첫 업무 생성 후 입력 포커스와 미니맵 조작 후 Space 패닝 회귀 수정, 이용 가이드 HTML·PDF 갱신
+
 ### v1.13.1 (2026-11-04) — 마감일이 있는 업무 보기 다듬기
 - 중요 업무 패널 "마감일이 있는 업무"를 **마감일로 묶고**(머리줄 = 남은 날·날짜·개수) 줄에는 **항목명만** — 업무는 색 점, 업무 이름·기록 날짜는 마우스를 올리면
 

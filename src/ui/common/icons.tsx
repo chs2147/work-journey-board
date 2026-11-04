@@ -206,3 +206,21 @@ export const IconMoveDate = () => (
     <path d="M1.75 6.25h12.5M6 10.25h4.25M8.75 8.5l1.75 1.75L8.75 12" />
   </Svg>
 );
+
+export const IconCategoryAdd = () => (
+  <Svg>
+    <rect x="2" y="2" width="12" height="12" rx="2" />
+    <path d="M8 5v6M5 8h6" />
+  </Svg>
+);
+export const IconSummaryDoc = () => (
+  <Svg>
+    <path d="M3 1.75h8l2 2V14H3Z" />
+    <path d="M5.5 5h5M5.5 8h5M5.5 11h3" />
+  </Svg>
+);
+export const IconExportFile = () => (
+  <Svg>
+    <path d="M8 1.5v8M5 6.5l3 3 3-3M2 10v4h12v-4" />
+  </Svg>
+);

@@ -52,8 +52,8 @@ test("목록 팝업·단축키로 전환: 기록이 공간마다 따로, 창 제
   await expect(page.getByRole("status").filter({ hasText: "개인 워크스페이스" })).toBeVisible();
 
   // 개인 공간에 업무 하나 → 회사로 갔다 와도 섞이지 않는다
-  await page.getByRole("button", { name: "+ 업무 추가" }).click();
-  await page.getByPlaceholder("업무 이름 입력 후 Enter (Esc 닫기)").fill("산책");
+  await page.getByTestId("category-add").click();
+  await page.getByRole("textbox", { name: "업무 이름", exact: true }).fill("산책");
   await page.keyboard.press("Enter");
   await expect(headers(page)).toHaveCount(3);
   await page.keyboard.press("Control+Alt+Digit1");

@@ -215,6 +215,7 @@ export function TodayView() {
                 className={`${styles.card} ${vc.state !== "active" ? styles.cardEnded : ""}`}
                 style={{ borderLeftColor: `var(--cat-${vc.category.color})` }}
                 data-testid={`today-card-${vc.category.name}`}
+                data-category-id={vc.category.id}
               >
                 <header className={styles.cardHead}>
                   <span className={styles.cardName}>{vc.category.name}</span>

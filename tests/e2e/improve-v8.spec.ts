@@ -65,9 +65,9 @@ test.describe("T2 첫 실행 업무 추가", () => {
     await input.fill("가 업무");
     await page.getByRole("button", { name: "보드 열기 →" }).click();
     await expect(headers(page)).toHaveCount(1);
-    await page.getByRole("button", { name: "+ 업무 추가" }).click();
-    await page.getByRole("textbox", { name: "+ 업무 추가" }).fill("마 업무");
-    await composingEnter(page, "+ 업무 추가");
+    await page.getByTestId("category-add").click();
+    await page.getByRole("textbox", { name: "업무 이름", exact: true }).fill("마 업무");
+    await composingEnter(page, "업무 이름");
     await expect(headers(page)).toHaveCount(2);
   });
 });
