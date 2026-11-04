@@ -209,6 +209,15 @@ CREATE TABLE app_meta (
 - 열린 Cabinet 창·폴더 창(하위 위치)은 일지가 아니라 이 PC 설정 `config.json` `cabinet { open, windows[{id, sub}] }`(3-4절과 같은 파일).
 - 직전 백업은 `_pre-migration-v9`.
 
+### 3-t. 스키마 v11 (2026-11-04, `0011_universe_relation.sql`)
+- Universe 직접 연결(universe-spec 5-1·8-1, UV2): `universe_relation(id, from_kind, from_id, from_week, to_kind, to_id, to_week, relation_type, note ≤200, created_at, updated_at, deleted_at, revision)`.
+  - 끝점 종류 = `category`·`tag`·`entry`·`note`·`cabinet`(공간 노드 제외, CHECK). 메모 상자는 상자 id가 주 문서 안에서만 고유라 `*_week`(주)를 함께.
+  - 종류 = `related`(방향 없음)·`follow-up`·`supports`·`contradicts`·`supersedes`(방향 = from → to). 자기 연결은 CHECK로 거부.
+  - 같은 끝·종류·방향 중복(관련은 거꾸로도 같은 것)과 끝점 존재(메모 상자는 그 주 문서 안)는 저장소(`addRelation`·`updateRelation`·`restoreRelation`)가 검사 — 다형 끝점이라 DB FK를 걸지 않는다.
+  - 끊기 = `deleted_at`(소프트 삭제, 되돌리기). 원본이 지워져도 행은 남고 그리지 않는다.
+  - 기존 메모 연결(`refs`)·관계선(`edges`)·Cabinet 연결은 복사하지 않는다(읽을 때 투영).
+- 직전 백업은 `_pre-migration-v11`. 구조 v10 판은 v11 일지를 열지 못한다(새 판 안내) — Universe의 다른 공간 읽기도 구조 판이 같을 때만.
+
 ## 4. 카테고리 활성 계산
 
 ### 4-1. 주 W에 보일 카테고리

@@ -91,6 +91,10 @@ npm run tauri dev    # 실앱 모드(윈도우·맥 / 리눅스는 webkit2gtk-4.
 - 설치 파일: `main`에 반영되면 *Build desktop installers*가 윈도우(NSIS)·맥(유니버설 DMG)을 나란히 만들고, **둘 다 성공해야** [Releases](https://github.com/chs2147/work-journey-board/releases)에 `v<버전>`으로 함께 올린다 — 0.x·`-rc`는 사전 릴리스, 1.0.0 이상 정식 판은 정식 릴리스. 윈도우 오프라인 설치판은 요청할 때만 Actions → *Build desktop installers* → Run workflow(main) → `offline`으로 그 판 릴리스에 더한다. 하나의 원본으로 두 플랫폼을 같은 판으로 운영한다([docs/macos-spec.md](docs/macos-spec.md)).
 
 ## Version History
+### v1.10.0-rc.1 (2026-11-04) — Universe 지도 보기 + 직접 연결(검증용)
+- **직접 연결** — Universe 상세 [연결하기]로 주를 넘어 잇기(관련·후속·근거·반대 근거·대체), 굵은 선·화살표·문구, 고치기·끊기, Universe 안 `Ctrl+Z`/`Ctrl+Y` · 구조 v11(직전 자동 백업)
+- UV1 지도 보기(`1.9.0-rc.2`)를 포함
+
 ### v1.9.0-rc.2 (2026-11-04) — Universe 지도 보기(검증용)
 - **Universe**(`Alt+5`) — 업무·항목·태그·메모 상자·Cabinet 연결망: 초점·은하·목록 보기, 시간 막대(년→월→주→일), 원문·연결 이유, [원본 열기], 다른 워크스페이스 읽기 전용 함께 보기
 - v1.8.1 워크스페이스 전환 무결성 수정을 합침(rc.1 → rc.2)

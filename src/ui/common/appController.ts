@@ -634,5 +634,10 @@ if (typeof window !== "undefined")
         const j = get().journal;
         return j.state === "ready" ? (await j.repo.noteAssetStats()).count : -1;
       },
+      /** 지금 연 공간 일지의 직접 연결 수(UV2) */
+      async relationCount() {
+        const j = get().journal;
+        return j.state === "ready" ? (await j.repo.listRelations()).length : -1;
+      },
     },
   });

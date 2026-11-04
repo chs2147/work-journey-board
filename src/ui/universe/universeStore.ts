@@ -1,7 +1,7 @@
 // Universe 화면 상태(universe-spec 4절, UV1 — 읽기만). 그래프는 열 때 일지에서 다시 만든다(파생 자료 — 저장하지 않음).
 // 다른 워크스페이스는 읽기 전용으로 잠깐 열어 읽고 바로 닫는다(구조 판이 다르면 빼고 안내, spec 7절).
 import { create } from "zustand";
-import { JournalRepository } from "../../data/repository";
+import { JournalRepository, RelationError } from "../../data/repository";
 import { journalPath } from "../../data/session";
 import { LATEST_SCHEMA_VERSION, readSchemaVersion } from "../../data/migrate";
 import {
@@ -9,8 +9,10 @@ import {
   buildGraph,
   levelRange,
   mergeGraphs,
+  endOf,
   nid,
   type TimeLevel,
+  type URelationType,
   type UFilter,
   type UGraph,
   type UNode,
@@ -18,7 +20,7 @@ import {
 import { sameDir, type WorkspaceEntry } from "../../domain/workspace";
 import { today as todayOf, type DateStr } from "../../domain/week";
 import { STR } from "../../shared/strings";
-import { goToWeek, reportError, revealItem, setTagFilter, useBoard } from "../board/boardStore";
+import { goToWeek, reportError, revealItem, setTagFilter, toast, useBoard } from "../board/boardStore";
 import { openCabinet } from "../cabinet/cabinetStore";
 import { closeInsights, openInsights } from "../insights/insightsStore";
 import { revealBox, useNote } from "../note/noteStore";
@@ -43,6 +45,12 @@ interface UniverseState {
   selected: string | null;
   filter: UFilter;
   time: { level: TimeLevel; anchor: DateStr; active: boolean };
+  /** 직접 연결 대화상자(UV2) — edit = 고치기 */
+  linkDialog: null | {
+    fromId: string;
+    edit?: { relId: string; toId: string; type: URelationType; note: string };
+  };
+  canUndoRel: boolean;
 }
 
 const today = () => todayOf(useAppStore.getState().platform?.now() ?? new Date());
@@ -59,6 +67,8 @@ export const useUniverse = create<UniverseState>(() => ({
   selected: null,
   filter: DEFAULT_FILTER,
   time: { level: "year", anchor: todayOf(new Date()), active: false },
+  linkDialog: null,
+  canUndoRel: false,
 }));
 
 const set = useUniverse.setState;
@@ -70,8 +80,142 @@ let loadSeq = 0;
 /** 일지를 닫기 직전(공간 전환·복원 등): 진행 중인 불러오기를 버리고 지도·선택을 비운다 */
 function detachUniverse() {
   loadSeq++;
-  set({ graphs: {}, seed: null, selected: null, open: false, loading: false });
+  relUndo.length = 0;
+  relRedo.length = 0;
+  set({
+    graphs: {},
+    seed: null,
+    selected: null,
+    open: false,
+    loading: false,
+    linkDialog: null,
+    canUndoRel: false,
+  });
 }
+
+// ── 직접 연결(UV2, spec 5-1) — 쓰기는 지금 공간 일지에만, await 뒤에는 같은 일지인지 확인(CLAUDE.md 4-7) ──
+interface RelStep {
+  repo: JournalRepository;
+  undo(): Promise<unknown>;
+  redo(): Promise<unknown>;
+}
+const relUndo: RelStep[] = [];
+const relRedo: RelStep[] = [];
+const syncRelUndo = () => set({ canUndoRel: relUndo.length > 0 });
+
+/** 지금 연 일지(저장소·폴더) */
+function currentJournal(): { repo: JournalRepository; dir: string } | null {
+  const j = useAppStore.getState().journal;
+  return j.state === "ready" ? { repo: j.repo, dir: j.dataDir } : null;
+}
+
+/** 이 일지 그래프만 다시 읽기(쓰기 뒤) — 그사이 일지가 바뀌었으면 버린다 */
+async function refreshCurrent(repo: JournalRepository) {
+  const seq = loadSeq;
+  const g = await loadCurrent();
+  const j = currentJournal();
+  if (!g || !j || j.repo !== repo || seq !== loadSeq) return;
+  set((s) => ({ graphs: { ...s.graphs, [j.dir]: g } }));
+}
+
+const relMessage = (e: unknown) =>
+  e instanceof RelationError
+    ? STR.universe.rel.problem[e.problem]
+    : e instanceof Error
+      ? e.message
+      : String(e);
+
+/** 쓰기 한 번: 지금 일지 저장소로 실행 → 일지가 그대로면 다시 그림·실행 취소 쌓기. 실패하면 오류 글 */
+async function relWrite(
+  run: (repo: JournalRepository) => Promise<Omit<RelStep, "repo"> | null>,
+  message: string,
+): Promise<string | null> {
+  const j = currentJournal();
+  if (!j) return STR.universe.rel.problem.missing;
+  let step: Omit<RelStep, "repo"> | null;
+  try {
+    step = await run(j.repo);
+  } catch (e) {
+    return relMessage(e);
+  }
+  if (currentJournal()?.repo !== j.repo) return null; // 그사이 공간이 바뀜 — 화면에 반영하지 않는다
+  if (step) {
+    relUndo.push({ repo: j.repo, ...step });
+    relRedo.length = 0;
+    syncRelUndo();
+  }
+  await refreshCurrent(j.repo);
+  toast(message, { label: STR.universe.rel.undo, run: () => void undoRelation() });
+  return null;
+}
+
+/** 지금 공간 노드만 이을 수 있다 */
+function ownEnd(n: UNode | undefined) {
+  const cur = currentDir();
+  if (!n || !cur || !sameDir(n.ws, cur)) return null;
+  return endOf(n);
+}
+
+export function openLinkDialog(fromId: string, edit?: NonNullable<UniverseState["linkDialog"]>["edit"]) {
+  set({ linkDialog: { fromId, ...(edit ? { edit } : {}) } });
+}
+export function closeLinkDialog() {
+  set({ linkDialog: null });
+}
+
+const nodeById = (id: string) => combined().nodes.find((n) => n.id === id);
+
+/** 새 직접 연결 저장 — 성공하면 null, 아니면 화면에 보일 까닭 */
+export async function addRelation(fromId: string, toId: string, type: URelationType, note: string) {
+  const from = ownEnd(nodeById(fromId));
+  const to = ownEnd(nodeById(toId));
+  if (!from || !to) return STR.universe.rel.otherSpaceOnly;
+  return relWrite(async (repo) => {
+    const r = await repo.addRelation({ from, to, type, note });
+    return { undo: () => repo.deleteRelation(r.id), redo: () => repo.restoreRelation(r.id) };
+  }, STR.universe.rel.saved);
+}
+
+/** 종류·설명·방향 고치기 */
+export async function updateRelation(
+  relId: string,
+  patch: { type?: URelationType; note?: string; swap?: boolean },
+) {
+  return relWrite(async (repo) => {
+    const before = await repo.updateRelation(relId, patch);
+    return {
+      undo: () => repo.updateRelation(relId, { type: before.type, note: before.note, swap: patch.swap }),
+      redo: () => repo.updateRelation(relId, patch),
+    };
+  }, STR.universe.rel.updated);
+}
+
+/** 끊기(원문은 그대로, 되돌리기 가능) */
+export async function removeRelation(relId: string) {
+  return relWrite(async (repo) => {
+    await repo.deleteRelation(relId);
+    return { undo: () => repo.restoreRelation(relId), redo: () => repo.deleteRelation(relId) };
+  }, STR.universe.rel.removed);
+}
+
+async function stepRelation(from: RelStep[], to: RelStep[], pick: (s: RelStep) => Promise<unknown>) {
+  const step = from.pop();
+  syncRelUndo();
+  if (!step) return toast(STR.universe.rel.nothingToUndo);
+  if (currentJournal()?.repo !== step.repo) return; // 다른 일지의 작업은 버린다
+  try {
+    await pick(step);
+  } catch (e) {
+    return toast(relMessage(e));
+  }
+  to.push(step);
+  syncRelUndo();
+  await refreshCurrent(step.repo);
+  toast(STR.universe.rel.undone);
+}
+/** Universe 안 Ctrl+Z / Ctrl+Y — 직접 연결 작업만 */
+export const undoRelation = () => stepRelation(relUndo, relRedo, (s) => s.undo());
+export const redoRelation = () => stepRelation(relRedo, relUndo, (s) => s.redo());
 onDetach(detachUniverse);
 
 function currentDir(): string | null {

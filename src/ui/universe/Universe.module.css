@@ -458,3 +458,139 @@
 .table td:nth-child(3) {
   white-space: nowrap;
 }
+
+/* ── 직접 연결(UV2) ── */
+.whyRel {
+  flex: none;
+  min-width: 78px;
+  color: var(--accent);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+}
+
+.relRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 0 0 6px 84px;
+  font-size: var(--fs-xs);
+}
+
+.relPhrase {
+  flex: 1 1 140px;
+  color: var(--text-2);
+}
+
+.relActs {
+  display: flex;
+  gap: 4px;
+}
+
+.relActs button {
+  height: 24px;
+  padding: 0 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-1);
+  font: inherit;
+  cursor: pointer;
+}
+
+.dialogBack {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: grid;
+  place-items: center;
+  background: rgb(0 0 0 / 28%);
+}
+
+.dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: min(520px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+  overflow: auto;
+  padding: var(--sp-4);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg, 10px);
+  background: var(--surface-card);
+  box-shadow: 0 12px 40px rgb(0 0 0 / 22%);
+}
+
+.dialog h3 {
+  margin: 0 0 4px;
+  font-size: var(--fs-lg, 16px);
+}
+
+.relEnd {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken, var(--surface-2, transparent));
+}
+
+.relList {
+  max-height: 200px;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  list-style: none;
+}
+
+.relList button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 6px 8px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: none;
+  color: var(--text-1);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.relList button:hover,
+.relList .relPicked {
+  background: var(--accent-soft, rgb(0 0 0 / 6%));
+  color: var(--accent);
+}
+
+.relTypes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+
+.relTypes label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.relNote {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-1);
+  font: inherit;
+  resize: vertical;
+}
+
+.dialog .actions {
+  justify-content: flex-end;
+  margin-top: 6px;
+}

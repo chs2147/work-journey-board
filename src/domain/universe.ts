@@ -5,7 +5,69 @@ import { boxName, boxText, readingOrder, type NoteDoc } from "./note";
 import { addDays, parseDate, weekIdOf, weekStart, type DateStr, type WeekId } from "./week";
 
 export type UNodeKind = "workspace" | "category" | "tag" | "entry" | "note" | "cabinet";
-export type UEdgeSource = "membership" | "tag" | "note-ref" | "note-edge" | "cabinet-link";
+export type UEdgeSource = "membership" | "tag" | "note-ref" | "note-edge" | "cabinet-link" | "relation";
+
+// ── 직접 연결(UV2, universe-spec 5-1) ─────────────────────────────────────
+/** 관련(무방향) · 후속 · 근거 · 반대 근거 · 대체(방향 = from → to) */
+export type URelationType = "related" | "follow-up" | "supports" | "contradicts" | "supersedes";
+export const RELATION_TYPES: URelationType[] = [
+  "related",
+  "follow-up",
+  "supports",
+  "contradicts",
+  "supersedes",
+];
+export const isDirected = (t: URelationType) => t !== "related";
+/** 끝점이 될 수 있는 종류(공간 노드 제외) */
+export type URelationKind = Exclude<UNodeKind, "workspace">;
+export const RELATION_KINDS: URelationKind[] = ["category", "tag", "entry", "note", "cabinet"];
+export const RELATION_NOTE_MAX = 200;
+/** 끝점 = 종류 + 원본 id(메모 상자는 주도 — 상자 id는 주 문서 안에서만 고유) */
+export interface URelationEnd {
+  kind: URelationKind;
+  id: string;
+  week?: WeekId | null;
+}
+export interface URelation {
+  id: string;
+  from: URelationEnd;
+  to: URelationEnd;
+  type: URelationType;
+  note: string;
+}
+export const endKey = (e: URelationEnd) => [e.kind, e.week ?? "", e.id].join("/");
+export const sameEnd = (a: URelationEnd, b: URelationEnd) => endKey(a) === endKey(b);
+/** 노드 → 끝점(공간 노드는 끝점이 될 수 없음) */
+export function endOf(n: UNode): URelationEnd | null {
+  if (n.kind === "workspace") return null;
+  return n.kind === "note"
+    ? { kind: "note", id: n.refId, week: n.weekId ?? null }
+    : { kind: n.kind, id: n.refId };
+}
+/** 끝점 → 그 공간의 노드 id */
+export const endNodeId = (ws: string, e: URelationEnd) =>
+  e.kind === "note" ? nid(ws, "note", e.week ?? "", e.id) : nid(ws, e.kind, e.id);
+
+export type RelationProblem = "self" | "duplicate" | "kind" | "type" | "note";
+/** 새 연결(또는 고친 연결)을 저장해도 되는지 — 자기 연결·같은 끝·종류·방향 중복(관련은 방향 없음) 금지 */
+export function relationProblem(
+  existing: URelation[],
+  draft: Omit<URelation, "id">,
+  selfId?: string,
+): RelationProblem | null {
+  if (!RELATION_KINDS.includes(draft.from.kind) || !RELATION_KINDS.includes(draft.to.kind)) return "kind";
+  if (!RELATION_TYPES.includes(draft.type)) return "type";
+  if (sameEnd(draft.from, draft.to)) return "self";
+  if ([...draft.note].length > RELATION_NOTE_MAX) return "note";
+  const dup = existing.some(
+    (r) =>
+      r.id !== selfId &&
+      r.type === draft.type &&
+      ((sameEnd(r.from, draft.from) && sameEnd(r.to, draft.to)) ||
+        (!isDirected(draft.type) && sameEnd(r.from, draft.to) && sameEnd(r.to, draft.from))),
+  );
+  return dup ? "duplicate" : null;
+}
 
 export interface UNode {
   /** `<공간 키>/<종류>/<원본 id>` — 메모 상자는 `<공간>/note/<주>/<상자 id>` */
@@ -38,6 +100,8 @@ export interface UEdge {
   dir?: "one" | "both" | "none";
   dash?: boolean;
   label?: string;
+  /** 직접 연결(source = relation): 저장된 관계 id·종류·설명 */
+  rel?: { id: string; type: URelationType; note: string };
 }
 
 export interface UGraph {
@@ -64,6 +128,8 @@ export interface UniverseSnapshot {
     items: { id: string; kind: "folder" | "link"; title: string; target: string }[];
     links: { itemId: string; categoryId: string | null; entryId: string | null }[];
   };
+  /** 직접 연결(UV2) — 끊은 것은 빼고 */
+  relations?: URelation[];
 }
 
 export const nid = (ws: string, kind: UNodeKind, ...ids: string[]) => [ws, kind, ...ids].join("/");
@@ -232,6 +298,22 @@ export function buildGraph(s: UniverseSnapshot): UGraph {
         source: "cabinet-link",
       });
   }
+  // 직접 연결: 두 끝이 이 일지에 있을 때만 그린다(원본이 지워진 연결은 행은 남고 그리지 않음)
+  const have = new Set(nodes.map((n) => n.id));
+  for (const r of s.relations ?? []) {
+    const from = endNodeId(ws, r.from);
+    const to = endNodeId(ws, r.to);
+    if (!have.has(from) || !have.has(to)) continue;
+    edges.push({
+      id: [ws, "relation", r.id].join("/"),
+      from,
+      to,
+      source: "relation",
+      dir: isDirected(r.type) ? "one" : "none",
+      ...(r.note ? { label: r.note } : {}),
+      rel: { id: r.id, type: r.type, note: r.note },
+    });
+  }
   return { nodes, edges };
 }
 
@@ -255,7 +337,14 @@ export interface UFilter {
 }
 
 export const ALL_KINDS: UNodeKind[] = ["workspace", "category", "tag", "entry", "note", "cabinet"];
-export const ALL_SOURCES: UEdgeSource[] = ["membership", "tag", "note-ref", "note-edge", "cabinet-link"];
+export const ALL_SOURCES: UEdgeSource[] = [
+  "membership",
+  "tag",
+  "note-ref",
+  "note-edge",
+  "cabinet-link",
+  "relation",
+];
 export const DEFAULT_FILTER: UFilter = {
   query: "",
   categoryIds: [],
@@ -369,6 +458,9 @@ export function neighborhood(g: UGraph, seed: string, maxDepth: 1 | 2 = 2): Focu
         // 씨앗 옆 업무에서 가까운 기록만 데려오는 것은 의도한 모습 — "잘림"은 씨앗이 업무일 때만
         if (d === 1 && entries.length > limit) truncated = true;
         const keepEntries = new Set(near.slice(0, limit).map((n) => n.id));
+        // 사용자가 직접 이은 끝은 날짜가 멀어도 늘 데려온다(UV2)
+        for (const e of adj.get(id) ?? [])
+          if (e.source === "relation") keepEntries.add(e.from === id ? e.to : e.from);
         // 세부 항목은 그 본 항목을 거쳐서만, 허브의 다른 허브(태그·공간)는 씨앗이 허브일 때만
         around = around.filter((x) => {
           const k = byId.get(x)!;
@@ -392,7 +484,11 @@ export function neighborhood(g: UGraph, seed: string, maxDepth: 1 | 2 = 2): Focu
   let edges = g.edges.filter((e) => depth.has(e.from) && depth.has(e.to));
   if (edges.length > FOCUS_EDGE_LIMIT) {
     truncated = true;
-    edges = edges.slice(0, FOCUS_EDGE_LIMIT);
+    // 직접 연결은 잘리지 않게 앞으로
+    edges = [
+      ...edges.filter((e) => e.source === "relation"),
+      ...edges.filter((e) => e.source !== "relation"),
+    ].slice(0, FOCUS_EDGE_LIMIT);
   }
   return { nodes, edges, seed, depth, truncated };
 }

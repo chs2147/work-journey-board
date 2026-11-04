@@ -372,6 +372,15 @@ async function shots(base = "http://localhost:1420") {
       run: async (p) => {
         await p.keyboard.press("Alt+5");
         await p.waitForTimeout(600);
+        // 직접 연결 하나(가상 기록끼리) — 굵은 화살표와 "왜 이어졌나" 문구가 보이게(UV2)
+        await p.getByTestId("u-connect").click();
+        await p.getByTestId("u-link-search").fill("배치 현행");
+        await p.getByTestId("u-link-candidate").first().click();
+        await p.getByTestId("u-link-type-follow-up").check();
+        await p.getByTestId("u-link-save").click();
+        await p.waitForTimeout(400);
+        await p.mouse.move(0, 0);
+        await p.waitForTimeout(4500); // 저장 알림이 사라진 뒤
       },
     },
   };

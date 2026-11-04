@@ -282,7 +282,7 @@ describe("마이그레이션 (data-spec 7-5)", () => {
       "INSERT INTO entry_item (id, date, category_id, seq, text, created_at, updated_at) VALUES ('e1', '2026-10-21', 'c1', 1, '회의', 't', 't')",
     );
     const before = vi.fn().mockResolvedValue(undefined);
-    expect(await migrate(db, { beforeMigrate: before })).toBe(10);
+    expect(await migrate(db, { beforeMigrate: before, migrations: MIGRATIONS.slice(0, 10) })).toBe(10);
     expect(before).toHaveBeenCalledWith(9, 10);
     expect(await db.select("SELECT start_time FROM entry_item")).toEqual([{ start_time: null }]);
     for (const ok of ["10:00", "00:00", "23:45", "09:15"])

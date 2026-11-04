@@ -128,3 +128,78 @@ test("여러 워크스페이스: 다른 공간을 켜면 읽기 전용으로 함
   await expect(page).toHaveTitle("Work Journey Board — 개인");
   await expect(page.locator(":focus")).toHaveValue("아침 달리기 5km");
 });
+
+// ── UV2 직접 연결(universe-spec 5-1) ──
+async function connect(page: Page, query: string, type: string, note = "") {
+  await page.getByTestId("u-connect").click();
+  const dlg = page.getByTestId("u-link-dialog");
+  await expect(dlg).toBeVisible();
+  await expect(dlg.getByTestId("u-link-search")).toBeFocused();
+  await dlg.getByTestId("u-link-search").fill(query);
+  await dlg.getByTestId("u-link-candidate").first().click();
+  await dlg.getByTestId(`u-link-type-${type}`).check();
+  if (note) await dlg.getByTestId("u-link-note").fill(note);
+  await dlg.getByTestId("u-link-save").click();
+}
+
+test("직접 연결: [연결하기] → 대상 찾기·종류·설명 → 굵은 화살표와 문구, 같은 연결은 거부, Ctrl+Z/Ctrl+Y", async ({
+  page,
+}) => {
+  await open(page);
+  await page.keyboard.press("Alt+Digit5");
+  await connect(page, "배치 현행", "follow-up", "가상: 다음 작업");
+  await expect(page.getByTestId("u-link-dialog")).toHaveCount(0);
+  const phrase = page.getByTestId("u-rel-phrase");
+  await expect(phrase).toHaveCount(1);
+  await expect(phrase).toContainText(`「${FIRST.slice(0, 23)}`);
+  await expect(phrase).toContainText("다음에");
+  await expect(phrase).toContainText("가상: 다음 작업");
+  await expect(page.getByTestId("u-rel-line")).toHaveAttribute("data-rel", "follow-up");
+  await expect(page.getByRole("status").filter({ hasText: "직접 연결을 저장했습니다" })).toBeVisible();
+
+  // 같은 끝·종류·방향은 한 번만
+  await connect(page, "배치 현행", "follow-up");
+  await expect(page.getByTestId("u-link-error")).toHaveText("같은 종류·방향의 연결이 이미 있습니다");
+  await page.keyboard.press("Escape");
+  await expect(page.getByTestId("u-link-dialog")).toHaveCount(0);
+
+  // 실행 취소·다시 하기(Universe 안 = 직접 연결 작업만)
+  await page.getByTestId("universe-map").click({ position: { x: 10, y: 10 } });
+  await page.keyboard.press("Control+KeyZ");
+  await expect(page.getByTestId("u-rel-line")).toHaveCount(0);
+  await page.keyboard.press("Control+KeyY");
+  await expect(page.getByTestId("u-rel-line")).toHaveCount(1);
+  expect(
+    await page.evaluate(() =>
+      (globalThis as never as { __wjbApp: { relationCount(): Promise<number> } }).__wjbApp.relationCount(),
+    ),
+  ).toBe(1);
+});
+
+test("직접 연결 고치기(종류·방향·설명)·끊기 — 다시 열어도 그대로, 끊어도 원문은 그대로", async ({ page }) => {
+  await open(page);
+  await page.keyboard.press("Alt+Digit5");
+  await connect(page, "배치 현행", "related");
+  await expect(page.getByTestId("u-rel-phrase")).toContainText("관련");
+  await page.getByTestId("u-rel-edit").click();
+  const dlg = page.getByTestId("u-link-dialog");
+  await expect(dlg.getByTestId("u-link-chosen")).toContainText("배치 현행");
+  await dlg.getByTestId("u-link-type-supports").check();
+  await dlg.getByLabel("방향 바꾸기").check();
+  await dlg.getByTestId("u-link-note").fill("가상 근거");
+  await dlg.getByTestId("u-link-save").click();
+  const phrase = page.getByTestId("u-rel-phrase");
+  await expect(phrase).toContainText("배치 현행");
+  await expect(phrase).toContainText(`의 근거 — 가상 근거`);
+  await expect(phrase).toHaveText(/^「정산 배치 현행/); // 방향을 바꿔 대상이 앞
+
+  // 보드로 갔다가 다시 열어도 그대로
+  await page.keyboard.press("Alt+Digit5");
+  await expect(page.getByTestId("universe-view")).toHaveCount(0);
+  await page.keyboard.press("Alt+Digit5");
+  await expect(page.getByTestId("u-rel-phrase")).toContainText("가상 근거");
+
+  await page.getByTestId("u-rel-remove").click();
+  await expect(page.getByTestId("u-rel-phrase")).toHaveCount(0);
+  await expect(page.getByTestId("u-original")).toContainText(FIRST);
+});

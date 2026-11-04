@@ -11,6 +11,9 @@ import {
   layoutGalaxy,
   levelLabel,
   neighborhood,
+  RELATION_NOTE_MAX,
+  RELATION_TYPES,
+  isDirected,
   shiftAnchor,
   timeBuckets,
   type TimeLevel,
@@ -18,15 +21,22 @@ import {
   type UGraph,
   type UNode,
   type UNodeKind,
+  type URelationType,
 } from "../../domain/universe";
 import { sameDir } from "../../domain/workspace";
 import { shortDateLabel } from "../../domain/week";
 import { STR } from "../../shared/strings";
 import { useAppStore } from "../common/appStore";
+import { toast } from "../board/boardStore";
 import { WorkspaceMark } from "../common/workspaceIcons";
 import {
+  addRelation,
   clearTime,
+  closeLinkDialog,
   combined,
+  openLinkDialog,
+  removeRelation,
+  updateRelation,
   drillTime,
   effectiveFilter,
   focusOn,
@@ -107,6 +117,7 @@ export function UniverseView() {
         <DetailPanel node={selected} all={all} />
       </div>
       <TimeBar all={all} />
+      {s.linkDialog && <LinkDialog all={all} />}
     </section>
   );
 }
@@ -267,7 +278,18 @@ function edgeStyle(e: UEdge): { stroke: string; width: number; dash?: string; op
       return { stroke: "var(--accent)", width: 1.6, dash: e.dash ? "5 4" : undefined, opacity: 0.9 };
     case "cabinet-link":
       return { stroke: "var(--text-3)", width: 1.2, dash: "2 3", opacity: 0.9 };
+    case "relation":
+      return { stroke: "var(--accent)", width: 2.8, opacity: 1 };
   }
+}
+
+/** 화살표가 별에 가리지 않게 끝을 별 둘레에서 멈춘다 */
+function trimEnd(a: { x: number; y: number }, b: { x: number; y: number }, by: number) {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const d = Math.hypot(dx, dy);
+  if (d <= by * 2) return b;
+  return { x: b.x - (dx / d) * by, y: b.y - (dy / d) * by };
 }
 
 // ── 지도 크기 = 실제 자리 크기(글자가 줄어 보이지 않게) ─────────────────
@@ -331,24 +353,47 @@ function FocusMap({ all, shown }: { all: UGraph; shown: UGraph }) {
               <marker id="u-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
                 <path d="M0 0L8 4 0 8z" fill="var(--accent)" />
               </marker>
+              <marker
+                id="u-arrow-rel"
+                markerWidth="5"
+                markerHeight="5"
+                refX="4.2"
+                refY="2.5"
+                orient="auto"
+                markerUnits="strokeWidth"
+              >
+                <path d="M0 0L5 2.5 0 5z" fill="var(--accent)" />
+              </marker>
             </defs>
             {focus.edges.map((e) => {
               const a = pos.get(e.from);
               const b = pos.get(e.to);
               if (!a || !b) return null;
               const st = edgeStyle(e);
+              const rel = e.source === "relation";
+              const end = rel && e.dir === "one" ? trimEnd(a, b, 16) : b;
               return (
                 <line
                   key={e.id}
                   x1={a.x}
                   y1={a.y}
-                  x2={b.x}
-                  y2={b.y}
+                  x2={end.x}
+                  y2={end.y}
                   stroke={st.stroke}
                   strokeWidth={st.width}
                   strokeDasharray={st.dash}
                   opacity={st.opacity}
-                  markerEnd={e.source === "note-edge" && e.dir !== "none" ? "url(#u-arrow)" : undefined}
+                  data-testid={rel ? "u-rel-line" : undefined}
+                  data-rel={rel ? e.rel?.type : undefined}
+                  markerEnd={
+                    rel
+                      ? e.dir === "one"
+                        ? "url(#u-arrow-rel)"
+                        : undefined
+                      : e.source === "note-edge" && e.dir !== "none"
+                        ? "url(#u-arrow)"
+                        : undefined
+                  }
                 />
               );
             })}
@@ -498,10 +543,12 @@ function GalaxyMap({ graph, selected }: { graph: UGraph; selected: string | null
       const a = pos.get(e.from);
       const b = pos.get(e.to);
       if (!a || !b) continue;
-      const strong = e.source === "note-edge" || e.source === "note-ref" || e.source === "cabinet-link";
+      const rel = e.source === "relation";
+      const strong =
+        rel || e.source === "note-edge" || e.source === "note-ref" || e.source === "cabinet-link";
       ctx.strokeStyle = strong ? v("--accent") : v("--line-strong");
-      ctx.globalAlpha = strong ? 0.55 : 0.35;
-      ctx.lineWidth = strong ? 1.1 : 0.6;
+      ctx.globalAlpha = rel ? 0.95 : strong ? 0.55 : 0.35;
+      ctx.lineWidth = rel ? 2.4 : strong ? 1.1 : 0.6;
       ctx.setLineDash(e.source === "tag" || e.source === "note-ref" ? [3, 3] : []);
       ctx.beginPath();
       ctx.moveTo(tx(a.x), ty(a.y));
@@ -770,6 +817,11 @@ function DetailPanel({ node, all }: { node: UNode | null; all: UGraph }) {
   const cur = useAppStore((s) => (s.journal.state === "ready" ? s.journal.dataDir : null));
   const spaces = useAppStore((s) => s.workspaces);
   const conns = useMemo(() => (node ? connectionsOf(all, node.id) : []), [all, node]);
+  // 직접 연결을 맨 위에(사용자가 만든 의미 관계가 주인공, spec 10 R7)
+  const sortedConns = useMemo(
+    () => [...conns.filter((c) => c.edge.rel), ...conns.filter((c) => !c.edge.rel)],
+    [conns],
+  );
   if (!node)
     return (
       <aside className={styles.detail} data-testid="universe-detail">
@@ -816,19 +868,56 @@ function DetailPanel({ node, all }: { node: UNode | null; all: UGraph }) {
       )}
       <div className={styles.label}>{STR.universe.why(conns.length)}</div>
       <ul className={styles.why} data-testid="u-connections">
-        {conns.slice(0, 40).map(({ edge, other: o }) => (
-          <li key={edge.id}>
+        {sortedConns.slice(0, 40).map(({ edge, other: o, out }) => (
+          <li key={edge.id} data-testid={edge.rel ? "u-rel-row" : undefined}>
             <button
               type="button"
               className={styles.whyBtn}
               onClick={() => select(o.id)}
               onDoubleClick={() => focusOn(o.id)}
             >
-              <span className={styles.whyKind}>{edge.label ?? STR.universe.whyText[edge.source]}</span>
+              <span className={edge.rel ? styles.whyRel : styles.whyKind}>
+                {edge.rel
+                  ? STR.universe.rel.typeName[edge.rel.type]
+                  : (edge.label ?? STR.universe.whyText[edge.source])}
+              </span>
               <KindGlyph kind={o.kind} color={o.color ? `var(--cat-${o.color})` : undefined} />
               <span>{o.title}</span>
               {o.date && <span className={styles.muted}>{shortDateLabel(o.date)}</span>}
             </button>
+            {edge.rel && (
+              <div className={styles.relRow}>
+                <span className={styles.relPhrase} data-testid="u-rel-phrase">
+                  {relPhrase(edge.rel.type, out ? node.title : o.title, out ? o.title : node.title)}
+                  {edge.rel.note && ` — ${edge.rel.note}`}
+                </span>
+                {!other && (
+                  <span className={styles.relActs}>
+                    <button
+                      type="button"
+                      data-testid="u-rel-edit"
+                      onClick={() =>
+                        openLinkDialog(out ? node.id : o.id, {
+                          relId: edge.rel!.id,
+                          toId: out ? o.id : node.id,
+                          type: edge.rel!.type,
+                          note: edge.rel!.note,
+                        })
+                      }
+                    >
+                      {STR.universe.rel.edit}
+                    </button>
+                    <button
+                      type="button"
+                      data-testid="u-rel-remove"
+                      onClick={() => void removeRelation(edge.rel!.id).then((m) => m && toastMsg(m))}
+                    >
+                      {STR.universe.rel.remove}
+                    </button>
+                  </span>
+                )}
+              </div>
+            )}
           </li>
         ))}
       </ul>
@@ -846,8 +935,203 @@ function DetailPanel({ node, all }: { node: UNode | null; all: UGraph }) {
         <button type="button" data-testid="u-focus" onClick={() => focusOn(node.id)}>
           {STR.universe.focusHere}
         </button>
+        {!other && node.kind !== "workspace" && (
+          <button
+            type="button"
+            data-testid="u-connect"
+            title={STR.universe.rel.connectHint}
+            onClick={() => openLinkDialog(node.id)}
+          >
+            {STR.universe.rel.connect}
+          </button>
+        )}
       </div>
     </aside>
+  );
+}
+
+const relPhrase = (t: URelationType, a: string, b: string) => {
+  const cut = (x: string) => (x.length > 24 ? `${x.slice(0, 23)}…` : x);
+  return STR.universe.rel.phrase[t](`「${cut(a)}」`, `「${cut(b)}」`);
+};
+const toastMsg = (m: string) => toast(m);
+
+// ── 직접 연결 대화상자(UV2, spec 5-1) — 대상 찾기(검색·최근·같은 업무) → 종류 → 설명 → 저장 ──
+function LinkDialog({ all }: { all: UGraph }) {
+  const dlg = useUniverse((s) => s.linkDialog)!;
+  const byId = useMemo(() => new Map(all.nodes.map((n) => [n.id, n])), [all]);
+  const from = byId.get(dlg.fromId);
+  const edit = dlg.edit;
+  const [q, setQ] = useState("");
+  const [toId, setToId] = useState<string | null>(edit?.toId ?? null);
+  const [type, setType] = useState<URelationType>(edit?.type ?? "related");
+  const [note, setNote] = useState(edit?.note ?? "");
+  const [swap, setSwap] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const searchRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (!edit) searchRef.current?.focus();
+  }, [edit]);
+  // Esc = 닫기 — 저장 중 단추가 잠겨 포커스가 대화상자 밖으로 나가도 닫히게 창에서 받는다
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      e.preventDefault();
+      e.stopPropagation();
+      closeLinkDialog();
+    };
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, []);
+  const candidates = useMemo(() => {
+    if (!from) return [];
+    const own = all.nodes.filter((n) => n.ws === from.ws && n.kind !== "workspace" && n.id !== from.id);
+    const words = q.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    if (q.trim().length >= 2)
+      return own
+        .filter((n) => words.every((w) => `${n.title} ${n.text}`.toLowerCase().includes(w)))
+        .slice(0, 40);
+    // 같은 업무의 가까운 기록 + 최근 기록(spec 5-1)
+    const entries = own
+      .filter((n) => n.kind === "entry")
+      .sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""));
+    const same = from.categoryId ? entries.filter((n) => n.categoryId === from.categoryId).slice(0, 12) : [];
+    const recent = entries.filter((n) => !same.includes(n)).slice(0, 12);
+    return [...same, ...recent];
+  }, [all, from, q]);
+  if (!from) return null;
+  const to = toId ? byId.get(toId) : undefined;
+  const [a, b] = swap ? [to, from] : [from, to];
+  const save = async () => {
+    if (!to) return;
+    setBusy(true);
+    const err = edit
+      ? await updateRelation(edit.relId, { type, note, swap })
+      : await addRelation(a!.id, b!.id, type, note);
+    setBusy(false);
+    if (err) setError(err);
+    else closeLinkDialog();
+  };
+  return (
+    <div
+      className={styles.dialogBack}
+      onPointerDown={(e) => e.target === e.currentTarget && closeLinkDialog()}
+    >
+      <div
+        className={styles.dialog}
+        role="dialog"
+        aria-modal="true"
+        aria-label={edit ? STR.universe.rel.editTitle : STR.universe.rel.dialogTitle}
+        data-testid="u-link-dialog"
+      >
+        <h3>{edit ? STR.universe.rel.editTitle : STR.universe.rel.dialogTitle}</h3>
+        <div className={styles.label}>{STR.universe.rel.from}</div>
+        <div className={styles.relEnd}>
+          <KindGlyph kind={from.kind} color={from.color ? `var(--cat-${from.color})` : undefined} />
+          <span>{from.title}</span>
+        </div>
+        <div className={styles.label}>{STR.universe.rel.target}</div>
+        {edit ? (
+          <div className={styles.relEnd} data-testid="u-link-chosen">
+            {to && <KindGlyph kind={to.kind} color={to.color ? `var(--cat-${to.color})` : undefined} />}
+            <span>{to?.title}</span>
+          </div>
+        ) : (
+          <>
+            <input
+              ref={searchRef}
+              type="search"
+              className={styles.input}
+              placeholder={STR.universe.rel.targetSearch}
+              aria-label={STR.universe.rel.targetSearch}
+              data-testid="u-link-search"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+            />
+            <div className={styles.muted}>
+              {q.trim().length >= 2
+                ? STR.universe.rel.targetFound(candidates.length)
+                : `${STR.universe.rel.targetSameCat} · ${STR.universe.rel.targetRecent}`}
+            </div>
+            <ul className={styles.relList} role="listbox" aria-label={STR.universe.rel.target}>
+              {candidates.length === 0 && <li className={styles.muted}>{STR.universe.rel.targetNone}</li>}
+              {candidates.map((n) => (
+                <li key={n.id}>
+                  <button
+                    type="button"
+                    role="option"
+                    aria-selected={toId === n.id}
+                    className={toId === n.id ? styles.relPicked : ""}
+                    data-testid="u-link-candidate"
+                    onClick={() => setToId(n.id)}
+                  >
+                    <KindGlyph kind={n.kind} color={n.color ? `var(--cat-${n.color})` : undefined} />
+                    <span>{n.title}</span>
+                    {n.date && <span className={styles.muted}>{shortDateLabel(n.date)}</span>}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+        <div className={styles.label}>{STR.universe.rel.type}</div>
+        <div className={styles.relTypes} role="radiogroup" aria-label={STR.universe.rel.type}>
+          {RELATION_TYPES.map((t) => (
+            <label key={t} title={STR.universe.rel.typeHint[t]}>
+              <input
+                type="radio"
+                name="u-rel-type"
+                value={t}
+                checked={type === t}
+                data-testid={`u-link-type-${t}`}
+                onChange={() => setType(t)}
+              />
+              {STR.universe.rel.typeName[t]}
+            </label>
+          ))}
+        </div>
+        <p className={styles.muted} data-testid="u-link-preview">
+          {a && b ? relPhrase(type, a.title, b.title) : STR.universe.rel.typeHint[type]}
+        </p>
+        {edit && isDirected(type) && (
+          <label className={styles.check}>
+            <input type="checkbox" checked={swap} onChange={(e) => setSwap(e.target.checked)} />
+            {STR.universe.rel.swap}
+          </label>
+        )}
+        <div className={styles.label}>{STR.universe.rel.note}</div>
+        <textarea
+          className={styles.relNote}
+          maxLength={RELATION_NOTE_MAX}
+          rows={2}
+          placeholder={STR.universe.rel.notePlaceholder}
+          data-testid="u-link-note"
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+        />
+        <div className={styles.muted}>{STR.universe.rel.noteCount([...note].length)}</div>
+        {error && (
+          <p className={styles.notice} role="alert" data-testid="u-link-error">
+            {error}
+          </p>
+        )}
+        <div className={styles.actions}>
+          <button
+            type="button"
+            className={styles.primary}
+            data-testid="u-link-save"
+            disabled={!to || busy}
+            onClick={() => void save()}
+          >
+            {STR.universe.rel.save}
+          </button>
+          <button type="button" onClick={closeLinkDialog}>
+            {STR.universe.rel.cancel}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 

@@ -154,3 +154,34 @@ test("Universe: 다른 공간을 읽기 전용으로 켜고 [그 공간에서 �
     expect(await storedAssets(page)).toBe(stored1);
   }
 });
+
+test("Universe 직접 연결은 만든 공간 일지에만: 공간을 오가도 그 공간에 그대로, 다른 공간에는 없음(CLAUDE.md 4-7)", async ({
+  page,
+}) => {
+  const count = () =>
+    page.evaluate(() =>
+      (globalThis as unknown as { __wjbApp: { relationCount(): Promise<number> } }).__wjbApp.relationCount(),
+    );
+  await page.keyboard.press("Alt+Digit5");
+  await page.getByTestId("u-view-list").click();
+  await page
+    .getByTestId("universe-list")
+    .getByTestId("u-row")
+    .filter({ has: page.locator("td", { hasText: /^\s*업무 항목$/ }) })
+    .first()
+    .click();
+  await page.getByTestId("u-connect").click();
+  await page.getByTestId("u-link-candidate").first().click();
+  await page.getByTestId("u-link-save").click();
+  await expect(page.getByTestId("u-rel-row")).toHaveCount(1);
+  expect(await count()).toBe(1);
+  for (let round = 0; round < 3; round++) {
+    await switchTo(page, 2, "개인");
+    expect(await count()).toBe(0);
+    await switchTo(page, 1, "회사");
+    expect(await count()).toBe(1);
+  }
+  await page.keyboard.press("Alt+Digit5");
+  await page.getByTestId("u-view-map").click();
+  await expect(page.getByTestId("u-rel-line")).toHaveCount(1);
+});

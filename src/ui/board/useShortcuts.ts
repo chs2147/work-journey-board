@@ -22,7 +22,13 @@ import { focusNote, leaveNote } from "../note/noteStore";
 import { closeInsights, focusedCategory, openInsights, useInsights } from "../insights/insightsStore";
 import { leaveSettings, setSettingsOpen, switchWorkspaceAt } from "../common/appController";
 import { useAppStore } from "../common/appStore";
-import { closeUniverse, openUniverse, useUniverse } from "../universe/universeStore";
+import {
+  closeUniverse,
+  openUniverse,
+  redoRelation,
+  undoRelation,
+  useUniverse,
+} from "../universe/universeStore";
 
 /** 커서가 있는 보드 항목의 id(Universe 가운데) */
 function focusedItemId(): string | undefined {
@@ -108,6 +114,16 @@ export function useShortcuts() {
         } else if (e.altKey && !mod && !e.shiftKey && e.code === "Digit2") {
           e.preventDefault();
           setPanelOpen(!panelOpen, !panelOpen);
+        } else if (
+          mod &&
+          !e.altKey &&
+          !useUniverse.getState().linkDialog &&
+          !isTyping(document.activeElement) &&
+          (e.code === "KeyZ" || (e.code === "KeyY" && !e.shiftKey))
+        ) {
+          // Universe 안의 실행 취소 = 직접 연결 작업만(UV2) — 보드 기록은 건드리지 않는다
+          e.preventDefault();
+          void (e.code === "KeyZ" && !e.shiftKey ? undoRelation() : redoRelation());
         }
         return;
       }

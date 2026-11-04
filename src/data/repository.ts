@@ -1,5 +1,13 @@
 // 영속 데이터 접근의 유일한 경로(CLAUDE.md 4-3). UI는 이 클래스만 쓰고 SQL을 직접 실행하지 않는다.
-import type { UniverseSnapshot } from "../domain/universe";
+import {
+  relationProblem,
+  type RelationProblem,
+  type URelation,
+  type URelationEnd,
+  type URelationKind,
+  type URelationType,
+  type UniverseSnapshot,
+} from "../domain/universe";
 import {
   archiveEndDate,
   groupPeriods,
@@ -80,6 +88,36 @@ import { uuidv7 } from "./ids";
 import { DEFAULT_SETTINGS, mergeSettings, type Settings, type SettingsPatch } from "./settings";
 
 export class ValidationError extends Error {}
+
+/** 직접 연결을 저장할 수 없는 까닭(UV2) — 화면이 문구로 바꾼다 */
+export class RelationError extends ValidationError {
+  constructor(readonly problem: RelationProblem | "missing") {
+    super(`직접 연결을 저장할 수 없습니다(${problem})`);
+  }
+}
+
+type RelationRow = {
+  id: string;
+  from_kind: string;
+  from_id: string;
+  from_week: string | null;
+  to_kind: string;
+  to_id: string;
+  to_week: string | null;
+  relation_type: string;
+  note: string;
+};
+const relationOf = (r: RelationRow): URelation => ({
+  id: r.id,
+  from: {
+    kind: r.from_kind as URelationKind,
+    id: r.from_id,
+    ...(r.from_week ? { week: r.from_week as WeekId } : {}),
+  },
+  to: { kind: r.to_kind as URelationKind, id: r.to_id, ...(r.to_week ? { week: r.to_week as WeekId } : {}) },
+  type: r.relation_type as URelationType,
+  note: r.note,
+});
 
 export interface WeekView {
   weekId: WeekId;
@@ -1905,6 +1943,136 @@ export class JournalRepository {
    * Universe(universe-spec 8-2): 이 일지의 업무·태그·항목·메모 상자·Cabinet을 한 번에 읽는다 — 읽기만(쓰지 않음).
    * 메모 그림 데이터는 읽지 않고(문서 JSON의 설명만), 예전 요일 메모만 있는 주는 고정 id로 읽기 전용 표현.
    */
+  // ── Universe 직접 연결(UV2, universe-spec 5-1·8-1) ─────────────────────────
+  /** 끊지 않은 직접 연결 전체 */
+  async listRelations(): Promise<URelation[]> {
+    const rows = await this.db.select<RelationRow>(
+      "SELECT id, from_kind, from_id, from_week, to_kind, to_id, to_week, relation_type, note FROM universe_relation WHERE deleted_at IS NULL ORDER BY created_at, id",
+    );
+    return rows.map(relationOf);
+  }
+
+  /** 끝점이 이 일지에 지금 있는가(메모 상자는 그 주 문서 안에) */
+  private async relationEndExists(e: URelationEnd): Promise<boolean> {
+    const one = async (sql: string, p: SqlParam[]) => (await this.db.select(sql, p)).length > 0;
+    switch (e.kind) {
+      case "category":
+        return one("SELECT 1 FROM category WHERE id = ?", [e.id]);
+      case "tag":
+        return one("SELECT 1 FROM tag WHERE id = ?", [e.id]);
+      case "entry":
+        return one("SELECT 1 FROM entry_item WHERE id = ?", [e.id]);
+      case "cabinet":
+        return one("SELECT 1 FROM cabinet_item WHERE id = ?", [e.id]);
+      case "note": {
+        if (!e.week) return false;
+        const [row] = await this.db.select<{ doc: string }>("SELECT doc FROM week_note WHERE week_id = ?", [
+          e.week,
+        ]);
+        return !!row && parseNoteDoc(row.doc).boxes.some((b) => b.id === e.id);
+      }
+      default:
+        return false;
+    }
+  }
+
+  /** 직접 연결 만들기 — 자기 연결·같은 끝·종류·방향 중복 금지, 두 끝이 이 일지에 있어야 한다 */
+  async addRelation(d: Omit<URelation, "id">): Promise<URelation> {
+    const note = d.note.trim();
+    const draft = { ...d, note };
+    const problem = relationProblem(await this.listRelations(), draft);
+    if (problem) throw new RelationError(problem);
+    if (!(await this.relationEndExists(d.from)) || !(await this.relationEndExists(d.to)))
+      throw new RelationError("missing");
+    const id = uuidv7(this.clock().getTime());
+    const ts = this.ts();
+    await this.db.batch([
+      {
+        sql: `INSERT INTO universe_relation (id, from_kind, from_id, from_week, to_kind, to_id, to_week, relation_type, note, created_at, updated_at)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        params: [
+          id,
+          d.from.kind,
+          d.from.id,
+          d.from.week ?? null,
+          d.to.kind,
+          d.to.id,
+          d.to.week ?? null,
+          d.type,
+          note,
+          ts,
+          ts,
+        ],
+      },
+    ]);
+    return { id, ...draft };
+  }
+
+  /** 종류·설명·방향(끝 바꾸기) 고치기 — 고치기 전 값을 돌려준다(실행 취소) */
+  async updateRelation(
+    id: string,
+    patch: { type?: URelationType; note?: string; swap?: boolean },
+  ): Promise<URelation> {
+    const all = await this.listRelations();
+    const before = all.find((r) => r.id === id);
+    if (!before) throw new RelationError("missing");
+    const next: URelation = {
+      ...before,
+      ...(patch.type ? { type: patch.type } : {}),
+      ...(patch.note !== undefined ? { note: patch.note.trim() } : {}),
+      ...(patch.swap ? { from: before.to, to: before.from } : {}),
+    };
+    const problem = relationProblem(all, next, id);
+    if (problem) throw new RelationError(problem);
+    await this.db.batch([
+      {
+        sql: `UPDATE universe_relation SET from_kind = ?, from_id = ?, from_week = ?, to_kind = ?, to_id = ?, to_week = ?,
+                relation_type = ?, note = ?, updated_at = ?, revision = revision + 1 WHERE id = ? AND deleted_at IS NULL`,
+        params: [
+          next.from.kind,
+          next.from.id,
+          next.from.week ?? null,
+          next.to.kind,
+          next.to.id,
+          next.to.week ?? null,
+          next.type,
+          next.note,
+          this.ts(),
+          id,
+        ],
+      },
+    ]);
+    return before;
+  }
+
+  /** 끊기(소프트 삭제 — 되돌리기 가능, 원문은 그대로) */
+  async deleteRelation(id: string): Promise<void> {
+    await this.db.batch([
+      {
+        sql: "UPDATE universe_relation SET deleted_at = ?, updated_at = ?, revision = revision + 1 WHERE id = ? AND deleted_at IS NULL",
+        params: [this.ts(), this.ts(), id],
+      },
+    ]);
+  }
+
+  /** 끊은 연결 되살리기(실행 취소) — 그사이 같은 연결을 다시 만들었으면 중복이라 되살리지 않는다 */
+  async restoreRelation(id: string): Promise<boolean> {
+    const [row] = await this.db.select<RelationRow & { deleted_at: string | null }>(
+      "SELECT id, from_kind, from_id, from_week, to_kind, to_id, to_week, relation_type, note, deleted_at FROM universe_relation WHERE id = ?",
+      [id],
+    );
+    if (!row || !row.deleted_at) return false;
+    const r = relationOf(row);
+    if (relationProblem(await this.listRelations(), r, id)) return false;
+    await this.db.batch([
+      {
+        sql: "UPDATE universe_relation SET deleted_at = NULL, updated_at = ?, revision = revision + 1 WHERE id = ?",
+        params: [this.ts(), id],
+      },
+    ]);
+    return true;
+  }
+
   async getUniverseSnapshot(ws: UniverseSnapshot["ws"]): Promise<UniverseSnapshot> {
     const { categories, periods } = await this.readCategories();
     const open = new Set(periods.filter((p) => p.endDate === null).map((p) => p.categoryId));
@@ -1965,6 +2133,7 @@ export class JournalRepository {
         items: cab.items.map((i) => ({ id: i.id, kind: i.kind, title: i.title, target: i.target })),
         links: cab.links.map((l) => ({ itemId: l.itemId, categoryId: l.categoryId, entryId: l.entryId })),
       },
+      relations: await this.listRelations(),
     };
   }
 
