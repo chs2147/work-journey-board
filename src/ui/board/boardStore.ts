@@ -821,9 +821,13 @@ export function focusStartCell() {
   const first = cats.find((c) => c.state === "active") ?? cats[0];
   if (!first) {
     set({ focus: null });
-    requestAnimationFrame(() =>
-      document.querySelector<HTMLButtonElement>('[data-testid="category-add"]')?.focus(),
-    );
+    const source = repo;
+    const generation = loadSeq;
+    requestAnimationFrame(() => {
+      // 첫 실행에서 업무를 만든 뒤 보드 입력칸에 준 포커스를 이전 빈 보드 요청이 빼앗지 않게 한다.
+      if (repo !== source || loadSeq !== generation || shownCategories(get()).length || get().addOpen) return;
+      document.querySelector<HTMLButtonElement>('[data-testid="category-add"]')?.focus();
+    });
     return;
   }
   const key = cellKey(focusDay, first.category.id);

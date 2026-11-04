@@ -446,6 +446,7 @@ export default function NoteCanvas() {
           " ",
         )}
         data-testid="note-scroll"
+        tabIndex={-1}
         data-note-view
         onPointerDownCapture={onPanPointerDown}
         // 가운데 단추의 자동 스크롤(브라우저 기본)을 막는다

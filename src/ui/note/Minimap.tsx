@@ -82,6 +82,8 @@ export function Minimap({ scrollRef, doc, size, view, zoom }: Props) {
           if (e.button !== 0) return;
           e.preventDefault();
           e.currentTarget.setPointerCapture(e.pointerId);
+          // 미니맵으로 판을 조작하면 이전 보드 입력칸의 포커스를 넘겨 Space+패닝을 사용할 수 있게 한다.
+          scrollRef.current?.focus({ preventScroll: true });
           moveTo(e);
         }}
         onPointerMove={(e) => e.buttons === 1 && moveTo(e)}
