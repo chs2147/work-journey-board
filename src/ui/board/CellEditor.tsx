@@ -25,6 +25,7 @@ import {
   pullPrevious,
   setFocus,
   setFocusDay,
+  setDueDate,
   setStartTime,
   splitKey,
   toggleFlag,
@@ -35,7 +36,8 @@ import {
 } from "./boardStore";
 import { doneDate, isDone } from "../../domain/important";
 import { DonePopover } from "./DonePopover";
-import { ItemMenu, MoveDatePopover, StartTimePopover } from "./ItemActions";
+import { DueDatePopover, ItemMenu, MoveDatePopover, StartTimePopover } from "./ItemActions";
+import { dueView } from "./dueView";
 import { defaultStartTime } from "../../domain/startTime";
 import { addLinkedBox, pasteImagesFromBoard, revealBox, useNote } from "../note/noteStore";
 import { linkedBoxes } from "../../domain/note";
@@ -78,7 +80,7 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
   /** 완료 뱃지 창이 열린 항목(improve-1027v4-spec 2-1) */
   const [doneOpen, setDoneOpen] = useState<number | null>(null);
   /** 항목 ⋯ 메뉴·시작 시각 창·다른 날로 옮기기 창(improve-1103v8-spec 5절) */
-  const [tool, setTool] = useState<{ i: number; kind: "menu" | "time" | "move" } | null>(null);
+  const [tool, setTool] = useState<{ i: number; kind: "menu" | "time" | "move" | "due" } | null>(null);
   const today = useBoard((s) => s.today);
   const closeTool = (i: number) => {
     setTool(null);
@@ -198,10 +200,17 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
       void deleteItemAt(cellKey, i, true);
       return;
     }
-    // 시작 시각(improve-1103v8-spec T1) · 다른 날로 옮기기(T4)
-    if ((e.code === "KeyO" || e.code === "KeyD") && e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+    // 시작 시각(improve-1103v8-spec T1) · 다른 날로 옮기기(T4) · 마감일(improve-1104v10-spec)
+    if (
+      (e.code === "KeyO" || e.code === "KeyD" || e.code === "KeyU") &&
+      e.altKey &&
+      !e.ctrlKey &&
+      !e.metaKey &&
+      !e.shiftKey
+    ) {
       e.preventDefault();
-      if (item.text.trim()) setTool({ i, kind: e.code === "KeyO" ? "time" : "move" });
+      if (item.text.trim())
+        setTool({ i, kind: e.code === "KeyO" ? "time" : e.code === "KeyU" ? "due" : "move" });
       return;
     }
     // 매주 반복 켜기/끄기(spec 3-1) — 세부 항목에서 눌러도 본 항목 묶음에 적용
@@ -343,6 +352,7 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
                 cardsOf[it.id] ? styles.carded : "",
                 linkTarget === it.id || linkHover === it.id ? styles.linkTarget : "",
                 it.startTime ? styles.hasTime : "",
+                it.dueDate && it.text.trim() ? styles.hasDue : "",
               ].join(" ")}
               data-item-index={i}
               onContextMenu={(e) => {
@@ -435,6 +445,10 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
                 >
                   {STR.startTime.chip(it.startTime)}
                 </button>
+              )}
+              {/* 마감일 꼬리표(improve-1104v10-spec 2-1) — 글 끝(아래 오른쪽), 누르면 마감일 고르기 */}
+              {it.dueDate && it.text.trim() && (
+                <DueChip today={today} due={it.dueDate} onOpen={() => setTool({ i, kind: "due" })} />
               )}
               {viewing ? (
                 <LinkedText
@@ -586,6 +600,13 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
                       onSelect: () => setTool({ i, kind: "time" }),
                     },
                     {
+                      key: "due",
+                      icon: <span aria-hidden="true">⏳</span>,
+                      label: STR.itemTools.due,
+                      shortcut: STR.itemTools.dueKey,
+                      onSelect: () => setTool({ i, kind: "due" }),
+                    },
+                    {
                       key: "move",
                       icon: <IconMoveDate />,
                       label: STR.itemTools.move,
@@ -617,6 +638,19 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
                   onSave={(t) => {
                     closeTool(i);
                     void setStartTime(cellKey, i, t);
+                  }}
+                  onClose={() => closeTool(i)}
+                />
+              )}
+              {tool?.i === i && tool.kind === "due" && (
+                <DueDatePopover
+                  text={it.text}
+                  today={today}
+                  initial={it.dueDate ?? null}
+                  hasValue={!!it.dueDate}
+                  onSave={(d) => {
+                    closeTool(i);
+                    void setDueDate(cellKey, i, d);
                   }}
                   onClose={() => closeTool(i)}
                 />
@@ -690,5 +724,28 @@ function GripDots() {
         [3, 8, 13].map((y) => <circle key={`${x}-${y}`} cx={x} cy={y} r="1.6" fill="currentColor" />),
       )}
     </svg>
+  );
+}
+
+/** 마감일 꼬리표 — 남은 날·색은 오늘 기준(지남·오늘·7일 안·그 뒤) */
+function DueChip({ today, due, onOpen }: { today: string; due: string; onOpen(): void }) {
+  const v = dueView(today, due);
+  const md = due.slice(5).replace("-", "/");
+  return (
+    <button
+      type="button"
+      tabIndex={-1}
+      className={`${styles.dueChip} ${styles[`due_${v.kind}`] ?? ""}`}
+      title={STR.dueDate.chipTitle(md)}
+      aria-label={`${v.chip} — ${STR.dueDate.chipTitle(md)}`}
+      data-testid="due-chip"
+      data-due-kind={v.kind}
+      onMouseDown={(e) => e.preventDefault()}
+      onClick={onOpen}
+    >
+      {/* 좁은 칸에서는 날짜 쪽만 줄여(…) 남은 날·지남 글은 늘 보인다 */}
+      <span className={styles.dueHead}>{v.chip.slice(0, v.chip.length - v.short.length)}</span>
+      <span>{v.short}</span>
+    </button>
   );
 }

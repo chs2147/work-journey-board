@@ -227,6 +227,12 @@ CREATE TABLE app_meta (
 - 작성 중 임시본 = `app_meta` 키 `card_draft`(새 카드만, 0.8초 뒤 저장). 지우기 = `deleted_at`(되돌리기).
 - 직전 백업은 `_pre-migration-v12`.
 
+### 3-r. 스키마 v13 (2026-11-04, `0013_due_date.sql`)
+- 업무 항목 마감일(improve-1104v10-spec 4절): `entry_item.due_date TEXT NULL` — `YYYY-MM-DD`(CHECK GLOB) + 부분 색인 `ix_entry_item_due (due_date) WHERE due_date IS NOT NULL`.
+- 쓰기는 칸 저장(`saveCells`) 한 길 — `isDueDate`가 아니면 NULL로 저장(2/30 같은 날도 거부). 마감일을 정하는 화면 동작이 같은 저장에서 `flagged = 1`도 켠다(지울 때 ★는 그대로).
+- 기존 일지 가져오기 덮어쓰기·되돌리기 자료(`import_batch.undo_json`)는 `due_date`를 보존한다(v10 `start_time`과 같은 처리).
+- 직전 백업은 `_pre-migration-v13`.
+
 ## 4. 카테고리 활성 계산
 
 ### 4-1. 주 W에 보일 카테고리

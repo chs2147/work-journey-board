@@ -387,3 +387,55 @@ section:first-child > .group {
   border-radius: var(--radius-md);
   background: var(--today-area);
 }
+
+/* 마감일이 있는 업무(improve-1104v10-spec 2-4): 맨 위 묶음 — 연한 살구 + 왼쪽 주황 띠, 줄 오른쪽 남은 날 배지 */
+.dueArea {
+  margin: var(--sp-2) calc(-1 * var(--sp-2));
+  padding: 1px var(--sp-2) var(--sp-2);
+  border-left: 4px solid var(--due-stripe);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--due-soon-bg) 55%, var(--surface-card));
+}
+
+.group_due {
+  color: var(--due-today);
+}
+
+.dueLine {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.dueLine .text {
+  flex: 1;
+}
+
+.dueBadge {
+  flex: none;
+  padding: 0 6px;
+  border-radius: 5px;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  white-space: nowrap;
+}
+
+.due_late {
+  background: var(--due-late-bg);
+  color: var(--due-late);
+}
+
+.due_today {
+  background: var(--due-today-bg);
+  color: var(--due-today);
+}
+
+.due_soon {
+  background: var(--due-soon-bg);
+  color: var(--due-soon);
+}
+
+.due_later {
+  background: var(--surface-sub);
+  color: var(--text-2);
+}

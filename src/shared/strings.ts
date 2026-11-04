@@ -24,6 +24,8 @@ export const STR_BASE = {
     timeKey: "Alt+O",
     move: "다른 날로 옮기기…",
     moveKey: "Alt+D",
+    due: "마감일…",
+    dueKey: "Alt+U",
     repeatOn: "매주 반복 켜기",
     repeatOff: "매주 반복 끄기",
     delete: "삭제",
@@ -44,6 +46,36 @@ export const STR_BASE = {
     ok: (t: string) => `${t} 시작`,
     help: "↑↓ 15분씩 · 숫자로 바로(1430) · Enter 확인 · Delete 지우기 · Esc 취소",
     excelHeader: "시작 시각",
+  },
+  /** 마감일(improve-1104v10-spec) */
+  dueDate: {
+    /** 꼬리표·패널 배지 글 — 날짜는 "10/26(월)" 꼴 */
+    late: (n: number) => `${n}일 지남`,
+    today: "오늘 마감",
+    left: (n: number) => `D-${n}`,
+    chip: (md: string, rest: string) => `⏳ ${md} ${rest}`,
+    chipLate: (md: string, n: number) => `⏳ ${md} · ${n}일 지남`,
+    chipToday: "⏳ 오늘 마감",
+    chipTitle: (md: string) => `마감 ${md} — 눌러서 바꾸기 (Alt+U)`,
+    title: (text: string) => `마감일 — ${text}`,
+    quick: {
+      today: "오늘",
+      tomorrow: "내일",
+      thisFri: "이번 주 금",
+      nextMon: "다음 주 월",
+      nextFri: "다음 주 금",
+      twoWeeks: "+2주",
+    },
+    pick: "달력",
+    clear: "지우기",
+    cancel: "취소",
+    save: (md: string) => `${md} 저장`,
+    flagNote: "마감일을 정하면 ★ 중요 표시도 함께 켜집니다.",
+    help: "←→↑↓ 날짜 이동 · Enter 저장 · Delete 지우기 · Esc 취소 · 숫자로 바로(1026)",
+    panelMeta: (cat: string, due: string, rec: string | null) =>
+      rec ? `${cat} · 마감 ${due} · 기록 ${rec}` : `${cat} · 마감 ${due}`,
+    excelHeader: "마감일",
+    searchTag: (md: string) => `⏳ ${md}`,
   },
   /** 다른 날로 옮기기(improve-1103v8-spec T4) */
   moveDate: {
@@ -641,7 +673,13 @@ export const STR_BASE = {
   important: {
     title: "중요 업무",
     close: "중요 업무 닫기 (Alt+2)",
-    groups: { late: "지난 날짜", today: "오늘", thisWeek: "이번 주", later: "다음 주 이후" },
+    groups: {
+      due: "⏳ 마감일이 있는 업무",
+      late: "지난 날짜",
+      today: "오늘",
+      thisWeek: "이번 주",
+      later: "다음 주 이후",
+    },
     lateTag: "지남",
     ended: "종료됨",
     dateLabel: (md: string, day: string) => `${md} (${day})`,
@@ -1617,6 +1655,7 @@ export const STR_BASE = {
     noSelection: "지도에서 별을 고르면 원문과 연결 이유가 여기에 보입니다.",
     subItem: "세부 항목",
     flagged: "★ 중요",
+    due: (d: string) => `⏳ 마감 ${d}`,
     ended: "종료된 업무",
     imageNote: "그림 메모(설명만 표시)",
     linkNote: "링크 카드",

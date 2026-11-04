@@ -125,7 +125,8 @@ const sameItems = (a: ItemDraft[], b: ItemDraft[]) =>
       x.depth === b[i]!.depth &&
       x.text === b[i]!.text &&
       Boolean(x.flagged) === Boolean(b[i]!.flagged) &&
-      (x.startTime ?? null) === (b[i]!.startTime ?? null),
+      (x.startTime ?? null) === (b[i]!.startTime ?? null) &&
+      (x.dueDate ?? null) === (b[i]!.dueDate ?? null),
   );
 
 export const splitKey = (key: string) => {
@@ -436,6 +437,7 @@ async function loadWeekNow(r: JournalRepository, weekId: WeekId, focusDay: DateS
         flagDoneAt: i.flagDoneAt,
         recurrenceId: i.recurrenceId,
         startTime: i.startTime ?? null,
+        dueDate: i.dueDate ?? null,
       }));
       cells[key] = drafts;
       persistedCells.set(key, drafts);
@@ -538,6 +540,27 @@ export async function setStartTime(key: string, index: number, time: string | nu
 }
 
 /**
+ * 마감일 정하기·지우기(improve-1104v10-spec D1) — 정하면 ★ 중요 표시도 함께 켠다(지워도 ★는 그대로).
+ * 칸 저장과 같은 길(실행 취소 1단계)
+ */
+export async function setDueDate(key: string, index: number, date: string | null) {
+  const items = get().cells[key];
+  const item = items?.[index];
+  if (!items || !item || !item.text.trim()) return;
+  if ((item.dueDate ?? null) === date) return;
+  const next = items.map((it, i) =>
+    i === index
+      ? { ...it, dueDate: date, ...(date && !it.flagged ? { flagged: true, flagDoneAt: null } : {}) }
+      : it,
+  );
+  set((s) => ({ cells: { ...s.cells, [key]: next } }));
+  const t = timers.get(key);
+  if (t) clearTimeout(t);
+  await persistCell(key);
+  void refreshImportant();
+}
+
+/**
  * 다른 날로 옮기기(improve-1103v8-spec T4): 항목(본 항목이면 세부 항목까지)을 같은 업무의 date 칸 맨 아래로.
  * 다른 주의 칸은 저장소에서 읽어 붙이고, 두 칸을 한 batch(받는 칸 먼저) → 실행 취소 1단계.
  * 항목 id가 그대로라 ★·처리 완료·시작 시각·매주 반복·Cabinet·메모 연결이 따라간다.
@@ -562,6 +585,7 @@ export async function moveItemToDate(fromKey: string, index: number, date: DateS
       flagDoneAt: i.flagDoneAt,
       recurrenceId: i.recurrenceId,
       startTime: i.startTime ?? null,
+      dueDate: i.dueDate ?? null,
     }));
     dstSaved = dst;
   }

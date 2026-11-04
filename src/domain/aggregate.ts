@@ -13,6 +13,8 @@ export interface SummaryItem {
   flagged?: boolean;
   /** 시작 시각 — 자동 집계에는 쓰지 않고 엑셀 원장 `시작 시각` 열에만(improve-1103v8-spec 1-4) */
   startTime?: string | null;
+  /** 마감일 — 자동 집계에는 쓰지 않고 엑셀 원장 `마감일` 열에만(improve-1104v10-spec 3절) */
+  dueDate?: string | null;
 }
 
 export interface SummaryInput {

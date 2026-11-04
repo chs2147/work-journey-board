@@ -36,6 +36,7 @@ import type { SummaryInput } from "../domain/aggregate";
 import { isDayMarkKind, isLeaveWeek, isOffDay, LABEL_MAX, type DayMarkKind } from "../domain/dayMark";
 import { resolveHolidays } from "../domain/holidaysKr";
 import { isStartTime } from "../domain/startTime";
+import { isDueDate } from "../domain/dueDate";
 import { normalizeTagName, tagNameProblem, type Tag } from "../domain/tags";
 import type { ExistingItem, ImportContext, ImportPlan } from "../domain/importer";
 import type { ActivityRow } from "../domain/insights";
@@ -276,6 +277,8 @@ interface ItemSnapshot {
   recurrence_id: string | null;
   /** v10부터(그 전 되돌리기 자료에는 없음) */
   start_time?: string | null;
+  /** v13부터 */
+  due_date?: string | null;
   created_at: string;
   updated_at: string;
   import_id: string | null;
@@ -365,6 +368,7 @@ interface ItemRow {
   flag_done_at: string | null;
   recurrence_id: string | null;
   start_time: string | null;
+  due_date?: string | null;
 }
 interface ImportantRow extends ItemRow {
   category_name: string;
@@ -401,7 +405,7 @@ export interface RepeatPreview {
 }
 
 const ITEM_COLUMNS =
-  "id, date, category_id, seq, depth, text, flagged, flag_done_at, recurrence_id, start_time";
+  "id, date, category_id, seq, depth, text, flagged, flag_done_at, recurrence_id, start_time, due_date";
 
 const toCategory = (r: CategoryRow): Category => ({
   id: r.id,
@@ -427,6 +431,7 @@ const toItem = (r: ItemRow): EntryItem => ({
   flagDoneAt: r.flag_done_at,
   recurrenceId: r.recurrence_id,
   startTime: r.start_time ?? null,
+  dueDate: r.due_date ?? null,
 });
 
 /**
@@ -1194,6 +1199,7 @@ export class JournalRepository {
       flagDoneAt: d.flagged ? null : (d.flagDoneAt ?? null),
       recurrenceId: d.recurrenceId ?? null,
       startTime: isStartTime(d.startTime) ? d.startTime : null,
+      dueDate: isDueDate(d.dueDate) ? d.dueDate : null,
     }));
     const ids = items.map((i) => i.id);
     const ts = this.ts();
@@ -1206,13 +1212,13 @@ export class JournalRepository {
       },
       ...items.map((it) => ({
         sql: `INSERT INTO entry_item (id, date, category_id, seq, depth, text, flagged, flag_done_at, recurrence_id,
-                                      start_time, created_at, updated_at)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                      start_time, due_date, created_at, updated_at)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
               ON CONFLICT(id) DO UPDATE SET
                 date = excluded.date, category_id = excluded.category_id, seq = excluded.seq,
                 depth = excluded.depth, text = excluded.text, flagged = excluded.flagged,
                 flag_done_at = excluded.flag_done_at, recurrence_id = excluded.recurrence_id,
-                start_time = excluded.start_time,
+                start_time = excluded.start_time, due_date = excluded.due_date,
                 updated_at = CASE WHEN entry_item.text <> excluded.text OR entry_item.depth <> excluded.depth
                                     OR entry_item.seq <> excluded.seq OR entry_item.date <> excluded.date
                                     OR entry_item.category_id <> excluded.category_id
@@ -1229,6 +1235,7 @@ export class JournalRepository {
           it.flagDoneAt ?? null,
           it.recurrenceId ?? null,
           it.startTime ?? null,
+          it.dueDate ?? null,
           ts,
           ts,
         ],
@@ -1241,7 +1248,7 @@ export class JournalRepository {
   private async importantRows(where: string, params: SqlParam[]): Promise<ImportantItem[]> {
     const rows = await this.db.select<ImportantRow>(
       `SELECT e.id, e.date, e.category_id, e.seq, e.depth, e.text, e.flagged, e.flag_done_at, e.recurrence_id,
-              e.start_time, c.name AS category_name, c.color AS category_color, c.sort_order AS category_order,
+              e.start_time, e.due_date, c.name AS category_name, c.color AS category_color, c.sort_order AS category_order,
               CASE WHEN e.depth = 1 THEN (
                 SELECT p.text FROM entry_item p
                 WHERE p.date = e.date AND p.category_id = e.category_id AND p.depth = 0 AND p.seq < e.seq
@@ -1266,6 +1273,7 @@ export class JournalRepository {
       parentText: r.parent_text,
       flagDoneAt: r.flag_done_at,
       startTime: r.start_time ?? null,
+      dueDate: r.due_date ?? null,
     }));
   }
 
@@ -1282,7 +1290,7 @@ export class JournalRepository {
       if (!part.length) continue;
       const rows = await this.db.select<ItemRow & { category_name: string; category_color: string }>(
         `SELECT e.id, e.date, e.category_id, e.seq, e.depth, e.text, e.flagged, e.flag_done_at, e.recurrence_id,
-                e.start_time, c.name AS category_name, c.color AS category_color
+                e.start_time, e.due_date, c.name AS category_name, c.color AS category_color
          FROM entry_item e JOIN category c ON c.id = e.category_id
          WHERE e.id IN (${part.map(() => "?").join(", ")})`,
         part,
@@ -1766,8 +1774,9 @@ export class JournalRepository {
       depth: number;
       text: string;
       name: string;
+      due_date: string | null;
     }>(
-      `SELECT i.id, i.date, i.category_id, i.depth, i.text, c.name FROM entry_item i JOIN category c ON c.id = i.category_id
+      `SELECT i.id, i.date, i.category_id, i.depth, i.text, i.due_date, c.name FROM entry_item i JOIN category c ON c.id = i.category_id
        WHERE ${where}${from ? " AND i.date >= ?" : ""} ORDER BY i.date DESC, c.sort_order, i.seq LIMIT ${SEARCH_LIMIT + 1}`,
       params,
     );
@@ -1781,6 +1790,7 @@ export class JournalRepository {
       categoryName: r.name,
       itemId: r.id,
       text: r.text,
+      dueDate: r.due_date,
     }));
     const notes = await this.db.select<{ week_id: string; doc: string }>(
       `SELECT week_id, doc FROM week_note${from ? " WHERE week_id >= ?" : ""}`,
@@ -2541,8 +2551,9 @@ export class JournalRepository {
       seq: number;
       text: string;
       flagged: number;
+      due_date: string | null;
     }>(
-      "SELECT id, date, category_id, depth, seq, text, flagged FROM entry_item ORDER BY date, category_id, seq",
+      "SELECT id, date, category_id, depth, seq, text, flagged, due_date FROM entry_item ORDER BY date, category_id, seq",
     );
     const noteRows = await this.db.select<{ week_id: string; doc: string }>(
       "SELECT week_id, doc FROM week_note",
@@ -2583,6 +2594,7 @@ export class JournalRepository {
         seq: Number(e.seq),
         text: e.text,
         flagged: Number(e.flagged) === 1,
+        dueDate: e.due_date,
       })),
       notes,
       cabinet: {
@@ -2712,7 +2724,7 @@ export class JournalRepository {
       const ids = plan.deleteItemIds.slice(i, i + 500);
       undo.deletedItems.push(
         ...(await this.db.select<ItemSnapshot>(
-          `SELECT id, date, category_id, seq, depth, text, flagged, flag_done_at, recurrence_id, start_time, created_at, updated_at, import_id
+          `SELECT id, date, category_id, seq, depth, text, flagged, flag_done_at, recurrence_id, start_time, due_date, created_at, updated_at, import_id
            FROM entry_item WHERE id IN (${ids.map(() => "?").join(", ")})`,
           ids,
         )),
@@ -2819,8 +2831,8 @@ export class JournalRepository {
     for (const it of undo.deletedItems)
       stmts.push({
         sql: `INSERT OR IGNORE INTO entry_item (id, date, category_id, seq, depth, text, flagged, flag_done_at, recurrence_id,
-                                                start_time, created_at, updated_at, import_id)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                                                start_time, due_date, created_at, updated_at, import_id)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         params: [
           it.id,
           it.date,
@@ -2832,6 +2844,7 @@ export class JournalRepository {
           it.flag_done_at,
           it.recurrence_id,
           it.start_time ?? null,
+          it.due_date ?? null,
           it.created_at,
           it.updated_at,
           it.import_id,

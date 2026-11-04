@@ -212,6 +212,8 @@ export interface LedgerRow {
   flagged: boolean;
   /** 시작 시각(improve-1103v8-spec 1-4) */
   startTime: string | null;
+  /** 마감일(improve-1104v10-spec 3절) */
+  dueDate: string | null;
 }
 
 /** 원장 행: 날짜 → 업무 보드 순서 → seq, 주간 메모는 그 주 맨 끝 1행. 보이는 업무의 모든 항목(종료된 업무의 과거 항목 포함) */
@@ -239,6 +241,7 @@ export function ledgerRows(weeks: ExportWeek[]): LedgerRow[] {
             text: it.text,
             flagged: it.flagged === true,
             startTime: it.startTime ?? null,
+            dueDate: it.dueDate ?? null,
           });
         }
       }
@@ -256,6 +259,7 @@ export function ledgerRows(weeks: ExportWeek[]): LedgerRow[] {
         text: memo,
         flagged: false,
         startTime: null,
+        dueDate: null,
       });
     }
   }
@@ -272,6 +276,7 @@ const LEDGER_COLUMNS = [
   { header: "내용", width: 80 },
   { header: "중요", width: 6 },
   { header: "시작 시각", width: 10 },
+  { header: "마감일", width: 12 },
 ];
 
 function writeLedgerSheet(ws: Worksheet, weeks: ExportWeek[]) {
@@ -297,6 +302,7 @@ function writeLedgerSheet(ws: Worksheet, weeks: ExportWeek[]) {
       row.text,
       row.flagged ? "★" : null,
       row.startTime,
+      row.dueDate,
     ];
     r.eachCell({ includeEmpty: true }, (cell, col) => {
       setFont(cell);

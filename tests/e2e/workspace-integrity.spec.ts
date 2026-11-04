@@ -217,3 +217,28 @@ test("지식 카드·근거 묶음도 공간마다 따로: 카드는 만든 공�
     expect(await count()).toBe(1);
   }
 });
+
+test("마감일도 공간마다 따로: 정한 공간 일지에만, 공간을 오가도(3번) 꼬리표·중요 업무 묶음이 그 공간에만(v10, CLAUDE.md 4-7)", async ({
+  page,
+}) => {
+  const count = () =>
+    page.evaluate(() =>
+      (globalThis as unknown as { __wjbApp: { dueCount(): Promise<number> } }).__wjbApp.dueCount(),
+    );
+  await page.keyboard.press("Alt+KeyU");
+  await page.keyboard.type("1026");
+  await page.keyboard.press("Enter");
+  await expect(page.getByTestId("due-chip")).toHaveCount(1);
+  await page.getByTestId("rail-important").click();
+  await expect(page.getByTestId("important-group-due")).toBeVisible();
+  expect(await count()).toBe(1);
+  for (let round = 0; round < 3; round++) {
+    await switchTo(page, 2, "개인");
+    expect(await count()).toBe(0);
+    await expect(page.getByTestId("due-chip")).toHaveCount(0);
+    await expect(page.getByTestId("important-group-due")).toHaveCount(0);
+    await switchTo(page, 1, "회사");
+    expect(await count()).toBe(1);
+    await expect(page.getByTestId("due-chip")).toHaveText("⏳ 10/26(월) D-4");
+  }
+});

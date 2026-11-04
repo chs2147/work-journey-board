@@ -17,6 +17,7 @@ import {
   useBoard,
 } from "../board/boardStore";
 import { IconDone } from "../common/icons";
+import { dueView } from "../board/dueView";
 import styles from "./ImportantPanel.module.css";
 
 /** 처리한 날(내 PC 날짜)로 묶음 — 목록은 이미 최근 순 */
@@ -117,7 +118,7 @@ export function ImportantPanel({ overlay }: { overlay: boolean }) {
             <section
               key={g.key}
               aria-label={STR.important.groups[g.key]}
-              className={g.key === "today" ? styles.todayArea : undefined}
+              className={g.key === "today" ? styles.todayArea : g.key === "due" ? styles.dueArea : undefined}
               data-testid={`important-group-${g.key}`}
             >
               <h3 className={`${styles.group} ${styles[`group_${g.key}`] ?? ""}`} data-group={g.key}>
@@ -133,6 +134,66 @@ export function ImportantPanel({ overlay }: { overlay: boolean }) {
                 </span>
                 <span>{g.items.length}</span>
               </h3>
+              {g.key === "due" && (
+                <ul className={styles.rows}>
+                  {g.items.map((it) => {
+                    const v = dueView(today, it.dueDate!);
+                    const due = shortDateLabel(it.dueDate!);
+                    return (
+                      <li key={it.id} className={styles.row} data-testid="important-due-row">
+                        <button
+                          type="button"
+                          className={styles.check}
+                          aria-label={STR.important.complete(it.text)}
+                          title={STR.important.completeTitle}
+                          onClick={() => void completeImportant(it.id)}
+                        >
+                          ✓
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.main}
+                          data-row
+                          data-testid="important-row"
+                          onClick={() => void revealItem(it)}
+                          onKeyDown={(e) => onRowKey(e, it)}
+                        >
+                          <span className={styles.dueLine}>
+                            {it.parentText && <span className={styles.parent}>{it.parentText} ›</span>}
+                            <span className={styles.text}>{it.text}</span>
+                            <span
+                              className={`${styles.dueBadge} ${styles[`due_${v.kind}`] ?? ""}`}
+                              data-testid="important-due-badge"
+                              data-due-kind={v.kind}
+                            >
+                              {v.short}
+                            </span>
+                          </span>
+                          <span className={styles.meta}>
+                            <span>
+                              <span
+                                className={styles.dot}
+                                style={{ background: `var(--cat-${it.categoryColor})` }}
+                              />{" "}
+                              {STR.dueDate.panelMeta(
+                                it.categoryName,
+                                due,
+                                it.date === it.dueDate ? null : shortDateLabel(it.date),
+                              )}
+                              {it.startTime && (
+                                <span className={styles.time} data-testid="important-time">
+                                  {" "}
+                                  {STR.startTime.chip(it.startTime)}
+                                </span>
+                              )}
+                            </span>
+                          </span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
               {g.categories.map((c) => (
                 <div key={c.id} role="group" aria-label={c.name} data-testid="important-category">
                   <h4 className={styles.cat}>

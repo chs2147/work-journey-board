@@ -22,6 +22,8 @@ export interface SampleData {
     depth: number;
     text: string;
     flagged?: boolean;
+    /** 마감일(improve-1104v10-spec) */
+    dueDate?: string;
   }[];
   memos: { date: string; text: string }[];
   /** 저장된 주간 요약(수정본·AI본) — I-M2 통합 검증용 */
@@ -64,7 +66,7 @@ export async function seedSample(driver: SqlDriver, data: SampleData, now: Date 
   }
   for (const it of data.items) {
     stmts.push({
-      sql: "INSERT INTO entry_item (id, date, category_id, seq, depth, text, flagged, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      sql: "INSERT INTO entry_item (id, date, category_id, seq, depth, text, flagged, due_date, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
       params: [
         it.id ?? uuidv7(),
         it.date,
@@ -73,6 +75,7 @@ export async function seedSample(driver: SqlDriver, data: SampleData, now: Date 
         it.depth,
         it.text,
         it.flagged ? 1 : 0,
+        it.dueDate ?? null,
         ts,
         ts,
       ],

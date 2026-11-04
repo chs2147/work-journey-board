@@ -912,6 +912,7 @@ function DetailPanel({ node, all }: { node: UNode | null; all: UGraph }) {
         {node.weekId && node.kind === "note" && ` · ${node.weekId}`}
         {ws && spaces.length > 1 && ` · ${ws.name}`}
         {node.flagged && ` · ${STR.universe.flagged}`}
+        {node.dueDate && ` · ${STR.universe.due(shortDateLabel(node.dueDate))}`}
         {node.ended && ` · ${STR.universe.ended}`}
       </div>
       {other && ws && <p className={styles.notice}>{STR.universe.otherSpace(ws.name)}</p>}

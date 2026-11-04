@@ -155,10 +155,11 @@ describe("양식 샘플과 비교(docs/samples/sample-export_2026-W42~W43.xlsx)"
     expect(heights(ours)).toEqual(heights(theirs));
   });
 
-  it("원장: A~G열은 샘플과 같고, H열 `중요`(★)·I열 `시작 시각`이 더해진다", async () => {
+  it("원장: A~G열은 샘플과 같고, H열 `중요`(★)·I열 `시작 시각`·J열 `마감일`이 더해진다", async () => {
     const weeks = await sampleWeeks();
     weeks[1]!.input.items.find((i) => i.text === "A협력사 현장 점검")!.flagged = true;
     weeks[1]!.input.items.find((i) => i.text === "A협력사 현장 점검")!.startTime = "10:00";
+    weeks[1]!.input.items.find((i) => i.text === "A협력사 현장 점검")!.dueDate = "2026-10-30";
     const wb = await readBack(await buildWorkbook(ExcelJS, weeks, opt()));
     const ref = new ExcelJS.Workbook();
     await ref.xlsx.readFile(decodePath(SAMPLE_PATH));
@@ -171,10 +172,13 @@ describe("양식 샘플과 비교(docs/samples/sample-export_2026-W42~W43.xlsx)"
     expect(ours.getRow(1).getCell(9).value).toBe("시작 시각");
     expect(flaggedRow[8]).toBe("10:00");
     expect(values(ours).filter((r) => r[8] === "10:00")).toHaveLength(1);
-    expect(ours.columns.map((c) => c.width)).toEqual([12, 10, 6, 24, 6, 6, 80, 6, 10]);
+    expect(ours.getRow(1).getCell(10).value).toBe("마감일");
+    expect(flaggedRow[9]).toBe("2026-10-30");
+    expect(values(ours).filter((r) => r[9] === "2026-10-30")).toHaveLength(1);
+    expect(ours.columns.map((c) => c.width)).toEqual([12, 10, 6, 24, 6, 6, 80, 6, 10, 12]);
     expect(ours.getCell("A2").numFmt).toBe("yyyy-mm-dd");
     expect(ours.views[0]).toMatchObject({ state: "frozen", ySplit: 1, topLeftCell: "A2" });
-    expect(ours.autoFilter).toEqual("A1:I28");
+    expect(ours.autoFilter).toEqual("A1:J28");
   });
 });
 

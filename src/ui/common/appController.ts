@@ -655,6 +655,15 @@ if (typeof window !== "undefined")
         const j = get().journal;
         return j.state === "ready" ? (await j.repo.listCards()).length : -1;
       },
+      /** 지금 연 공간 일지에서 마감일이 있는 항목 수(v10) */
+      async dueCount() {
+        const j = get().journal;
+        if (j.state !== "ready") return -1;
+        const r = await j.driver.select<{ n: number }>(
+          "SELECT COUNT(*) AS n FROM entry_item WHERE due_date IS NOT NULL",
+        );
+        return r[0]?.n ?? 0;
+      },
       /** 지금 연 공간 일지의 직접 연결 수(UV2) */
       async relationCount() {
         const j = get().journal;

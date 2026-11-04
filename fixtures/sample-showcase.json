@@ -152,7 +152,8 @@
       "depth": 0,
       "text": "개발계 1차 배포 일정 확정(11/2)",
       "id": "it-deploy",
-      "flagged": true
+      "flagged": true,
+      "dueDate": "2026-10-26"
     },
     {
       "date": "2026-10-24",
@@ -182,7 +183,8 @@
       "depth": 1,
       "text": "계정 관리 미흡 2건 발견",
       "id": "it-acct",
-      "flagged": true
+      "flagged": true,
+      "dueDate": "2026-10-20"
     },
     {
       "date": "2026-10-22",

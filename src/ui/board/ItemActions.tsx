@@ -11,6 +11,7 @@ import {
 } from "react";
 import { krHolidaysBetween } from "../../domain/holidaysKr";
 import { parseTimeInput, QUARTERS, stepTime } from "../../domain/startTime";
+import { defaultDue, parseDueInput, quickDues } from "../../domain/dueDate";
 import { addDays, dayIndex, formatDate, parseDate, shortDateLabel, type DateStr } from "../../domain/week";
 import { osText } from "../../shared/platformText";
 import { STR } from "../../shared/strings";
@@ -400,6 +401,175 @@ export function MoveDatePopover({
         </button>
       </div>
       <span className={styles.popHelp}>{M.help}</span>
+    </Pop>
+  );
+}
+
+/** 마감일 고르기(improve-1104v10-spec 2-3): 빠른 단추 + 달력 · 숫자 바로 입력 · 지우기 */
+export function DueDatePopover({
+  text,
+  today,
+  initial,
+  hasValue,
+  onSave,
+  onClose,
+}: {
+  text: string;
+  today: DateStr;
+  initial: DateStr | null;
+  hasValue: boolean;
+  onSave(date: DateStr | null): void;
+  onClose(): void;
+}) {
+  const D = STR.dueDate;
+  const M = STR.moveDate;
+  const start = initial ?? defaultDue(today);
+  const [sel, setSel] = useState<DateStr>(start);
+  const [month, setMonth] = useState<DateStr>(monthStart(start));
+  const [typed, setTyped] = useState("");
+  const grid = useMemo(() => {
+    const lead = dayIndex(month);
+    const first = addDays(month, -lead);
+    return Array.from({ length: 42 }, (_, i) => addDays(first, i));
+  }, [month]);
+  const holidays = useMemo(() => krHolidaysBetween(grid[0]!, grid[41]!), [grid]);
+  const pick = (d: DateStr) => {
+    setSel(d);
+    if (monthStart(d) !== month) setMonth(monthStart(d));
+  };
+  const md = (d: DateStr) => shortDateLabel(d).replace(" ", "");
+  const [y, m] = [Number(month.slice(0, 4)), Number(month.slice(5, 7))];
+  const title = D.title(text.length > 30 ? `${text.slice(0, 29)}…` : text);
+  return (
+    <Pop
+      label={title}
+      className={styles.movePop}
+      testId="due-date-popover"
+      onClose={onClose}
+      onKeyDown={(e) => {
+        if (/^\d$/.test(e.key)) {
+          // 숫자 바로 입력(1026·20261026)
+          e.preventDefault();
+          const next = (typed + e.key).slice(-8);
+          setTyped(next);
+          const d = parseDueInput(next, today);
+          if (d) pick(d);
+          return;
+        }
+        const step = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }[e.key];
+        if (step && (e.target as HTMLElement).closest("[data-cal]")) {
+          e.preventDefault();
+          pick(addDays(sel, step));
+        } else if (e.key === "Enter" && (e.target as HTMLElement).closest("[data-cal]")) {
+          e.preventDefault();
+          onSave(sel);
+        } else if (e.key === "Delete" && hasValue) {
+          e.preventDefault();
+          onSave(null);
+        }
+      }}
+    >
+      <strong className={styles.popTitle}>{title}</strong>
+      <div className={styles.moveQuick}>
+        {quickDues(today).map((q) => (
+          <button
+            key={q.key}
+            type="button"
+            className={styles.popBtn}
+            data-testid={`due-quick-${q.key}`}
+            title={md(q.date)}
+            onClick={() => onSave(q.date)}
+          >
+            {D.quick[q.key as keyof typeof D.quick]}
+          </button>
+        ))}
+      </div>
+      <div className={styles.calHead}>
+        <span className={styles.popLabel}>{D.pick}</span>
+        <button
+          type="button"
+          className={styles.calNav}
+          aria-label={M.prevMonth}
+          onClick={() => setMonth(addMonths(month, -1))}
+        >
+          ‹
+        </button>
+        <span data-testid="due-month">{M.month(y, m)}</span>
+        <button
+          type="button"
+          className={styles.calNav}
+          aria-label={M.nextMonth}
+          onClick={() => setMonth(addMonths(month, 1))}
+        >
+          ›
+        </button>
+      </div>
+      <div
+        className={styles.cal}
+        role="grid"
+        data-cal
+        data-autofocus
+        tabIndex={0}
+        aria-label={D.pick}
+        data-testid="due-cal"
+      >
+        {["월", "화", "수", "목", "금", "토", "일"].map((d, i) => (
+          <b key={d} className={i >= 5 ? styles.calOff : undefined}>
+            {d}
+          </b>
+        ))}
+        {grid.map((d) => {
+          const off = dayIndex(d) >= 5 || !!holidays[d];
+          return (
+            <button
+              key={d}
+              type="button"
+              tabIndex={-1}
+              role="gridcell"
+              aria-selected={d === sel}
+              aria-label={shortDateLabel(d)}
+              title={holidays[d]?.name}
+              className={[
+                styles.calDay,
+                monthStart(d) !== month ? styles.calOut : "",
+                off ? styles.calOff : "",
+                d === today ? styles.calToday : "",
+                d === sel ? styles.calSel : "",
+              ].join(" ")}
+              onClick={() => setSel(d)}
+              onDoubleClick={() => onSave(d)}
+            >
+              {Number(d.slice(8, 10))}
+            </button>
+          );
+        })}
+      </div>
+      <span className={styles.popHelp}>{D.flagNote}</span>
+      <div className={styles.popActions}>
+        {hasValue && (
+          <button
+            type="button"
+            className={styles.popBtn}
+            data-testid="due-clear"
+            onClick={() => onSave(null)}
+          >
+            {D.clear}
+          </button>
+        )}
+        <span className={styles.popSpacer} />
+        <button type="button" className={styles.popBtn} onClick={onClose}>
+          {D.cancel}
+        </button>
+        <button
+          type="button"
+          className={styles.popPrimary}
+          data-testid="due-save"
+          onClick={() => onSave(sel)}
+        >
+          {D.save(md(sel))}
+        </button>
+      </div>
+      <span className={styles.popHelp}>{D.help}</span>
     </Pop>
   );
 }

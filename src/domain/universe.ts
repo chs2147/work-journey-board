@@ -95,6 +95,8 @@ export interface UNode {
   card?: { type: CardType; status: CardStatus };
   /** Cabinet 경로·주소(근거 묶음에서 기본 뺌, UV4) */
   target?: string;
+  /** 업무 항목 마감일(improve-1104v10-spec) */
+  dueDate?: string;
 }
 
 export interface UEdge {
@@ -128,6 +130,8 @@ export interface UniverseSnapshot {
     seq: number;
     text: string;
     flagged: boolean;
+    /** 마감일(improve-1104v10-spec 3절) */
+    dueDate?: string | null;
   }[];
   notes: { weekId: WeekId; doc: NoteDoc }[];
   cabinet: {
@@ -233,6 +237,7 @@ export function buildGraph(s: UniverseSnapshot): UGraph {
         color: catColor.get(e.categoryId),
         depth: e.depth,
         flagged: e.flagged,
+        ...(e.dueDate ? { dueDate: e.dueDate } : {}),
       });
       if (e.depth === 1 && parent)
         edges.push({ id: `${id}>parent`, from: id, to: parent, source: "membership" });

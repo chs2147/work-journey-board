@@ -26,6 +26,8 @@ export interface SearchHit {
   linkedItemId?: string;
   /** 찾은 줄(앞뒤를 줄인 글) */
   text: string;
+  /** 업무 기록의 마감일(improve-1104v10-spec 3절) */
+  dueDate?: string | null;
 }
 
 /** 검색어 → 낱말(소문자). 2글자 미만이면 빈 배열 */

@@ -31,6 +31,8 @@ export interface ItemMarks {
   recurrenceId?: string | null;
   /** 그날 시작 시각 'HH:MM'(15분 단위, improve-1103v8-spec T1) — 없으면 null */
   startTime?: string | null;
+  /** 마감일 'YYYY-MM-DD'(improve-1104v10-spec) — 없으면 null */
+  dueDate?: string | null;
 }
 
 export interface EntryItem extends ItemMarks {
@@ -69,4 +71,6 @@ export interface ImportantItem {
   flagDoneAt: string | null;
   /** 시작 시각(improve-1103v8-spec T1) */
   startTime?: string | null;
+  /** 마감일(improve-1104v10-spec) */
+  dueDate?: string | null;
 }

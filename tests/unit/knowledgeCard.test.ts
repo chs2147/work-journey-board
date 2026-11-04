@@ -201,7 +201,7 @@ describe("마이그레이션 v11 → v12(knowledge_card)", () => {
       "INSERT INTO category (id, name, color, sort_order, created_at, updated_at) VALUES ('c1', '업무', 'c1', 1, 't', 't')",
     );
     const before = vi.fn().mockResolvedValue(undefined);
-    expect(await migrate(db, { beforeMigrate: before })).toBe(12);
+    expect(await migrate(db, { migrations: MIGRATIONS.slice(0, 12), beforeMigrate: before })).toBe(12);
     expect(before).toHaveBeenCalledWith(11, 12);
     await db.execute(
       "INSERT INTO knowledge_card (id, card_type, title, created_at, updated_at) VALUES ('k1', 'solution', '제목', 't', 't')",

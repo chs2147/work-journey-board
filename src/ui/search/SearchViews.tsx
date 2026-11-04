@@ -244,7 +244,8 @@ export function SearchPanel({ overlay }: { overlay: boolean }) {
 }
 
 function where(h: SearchHit): string {
-  if (h.area === "item") return `${h.categoryName ?? ""} · ${dayLabel(h.date!)}`;
+  if (h.area === "item")
+    return `${h.categoryName ?? ""} · ${dayLabel(h.date!)}${h.dueDate ? ` · ${STR.dueDate.searchTag(h.dueDate.slice(5).replace("-", "/"))}` : ""}`;
   return T.memoWhere;
 }
 
