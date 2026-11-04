@@ -1,5 +1,20 @@
 // 영속 데이터 접근의 유일한 경로(CLAUDE.md 4-3). UI는 이 클래스만 쓰고 SQL을 직접 실행하지 않는다.
 import {
+  CARD_LIMITS,
+  cardProblem,
+  clip,
+  fingerprint,
+  sourceKey,
+  type CardDraft,
+  type CardProblem,
+  type CardSource,
+  type CardSourceKind,
+  type CardStatus,
+  type CardType,
+  type KnowledgeCard,
+  type SourceNow,
+} from "../domain/knowledgeCard";
+import {
   relationProblem,
   type RelationProblem,
   type URelation,
@@ -51,6 +66,8 @@ import {
   importMemoBox,
   isNoteEmpty,
   noteAssetIds,
+  boxName,
+  boxText,
   noteToText,
   parseNoteDoc,
   positionBelow,
@@ -96,6 +113,55 @@ export class RelationError extends ValidationError {
   }
 }
 
+/** 지식 카드를 저장할 수 없는 까닭(UV3) */
+export interface CardHit {
+  id: string;
+  type: CardType;
+  status: CardStatus;
+  title: string;
+  text: string;
+}
+
+export class CardError extends ValidationError {
+  constructor(readonly problem: CardProblem | "missing" | "stale") {
+    super(`지식 카드를 저장할 수 없습니다(${problem})`);
+  }
+}
+
+type CardRow = {
+  id: string;
+  card_type: string;
+  title: string;
+  summary: string;
+  conditions: string;
+  body: string;
+  status: string;
+  revision: number;
+  created_at: string;
+  updated_at: string;
+  reviewed_at: string | null;
+};
+type CardSourceRow = {
+  id: string;
+  card_id: string;
+  source_kind: string;
+  source_id: string;
+  source_week: string | null;
+  excerpt: string;
+  content_fp: string;
+  location_fp: string;
+  locator_json: string;
+  captured_at: string;
+};
+const locatorOf = (json: string) => {
+  try {
+    const v = JSON.parse(json) as { label?: unknown };
+    return typeof v.label === "string" ? v.label : "";
+  } catch {
+    return "";
+  }
+};
+
 type RelationRow = {
   id: string;
   from_kind: string;
@@ -107,6 +173,7 @@ type RelationRow = {
   relation_type: string;
   note: string;
 };
+const STR_NOTE_WEEK = "메모";
 const relationOf = (r: RelationRow): URelation => ({
   id: r.id,
   from: {
@@ -1724,6 +1791,22 @@ export class JournalRepository {
     return { hits: all.slice(0, SEARCH_LIMIT), truncated: all.length > SEARCH_LIMIT };
   }
 
+  /** 지식 카드 검색(UV3): 제목·요약·적용 조건·본문에 낱말이 모두 든 것(최근 고친 순, 50개까지) */
+  async searchCards(query: string): Promise<CardHit[]> {
+    const terms = searchTerms(query);
+    if (!terms.length) return [];
+    return (await this.listCards())
+      .filter((c) => matchesAll(`${c.title} ${c.summary} ${c.conditions} ${c.body}`, terms))
+      .slice(0, 50)
+      .map((c) => ({
+        id: c.id,
+        type: c.type,
+        status: c.status,
+        title: c.title,
+        text: [c.summary, c.conditions, c.body].find((x) => matchesAll(x, terms)) ?? c.summary ?? c.title,
+      }));
+  }
+
   /** Cabinet 검색(features-1102-spec F5 #7): 제목·주소/경로에 낱말이 모두 든 것 */
   async searchCabinet(query: string): Promise<CabinetHit[]> {
     const terms = searchTerms(query);
@@ -2073,6 +2156,379 @@ export class JournalRepository {
     return true;
   }
 
+  // ── 지식 카드(UV3, universe-spec 5-2·8-1) ─────────────────────────────────
+  /** 지금 원문(지문 재료) — 끝점마다. 없으면 그 키가 빠진다 */
+  async sourcesNow(
+    list: { kind: CardSourceKind; sourceId: string; week?: WeekId | null }[],
+  ): Promise<Map<string, SourceNow>> {
+    const out = new Map<string, SourceNow>();
+    const ids = (k: CardSourceKind) => [...new Set(list.filter((x) => x.kind === k).map((x) => x.sourceId))];
+    const marks = (n: number) => Array(n).fill("?").join(", ");
+    const { categories } = await this.readCategories();
+    const catName = new Map(categories.map((c) => [c.id, c.name]));
+    const entryIds = ids("entry");
+    if (entryIds.length) {
+      const rows = await this.db.select<{
+        id: string;
+        date: string;
+        category_id: string;
+        depth: number;
+        seq: number;
+        text: string;
+      }>(
+        `SELECT e.id, e.date, e.category_id, e.depth, e.seq, e.text FROM entry_item e
+          WHERE EXISTS (SELECT 1 FROM entry_item x WHERE x.id IN (${marks(entryIds.length)}) AND x.date = e.date AND x.category_id = e.category_id)
+          ORDER BY e.date, e.category_id, e.seq`,
+        entryIds,
+      );
+      let parent = "";
+      let cell = "";
+      const want = new Set(entryIds);
+      for (const r of rows) {
+        const k = `${r.date}|${r.category_id}`;
+        if (k !== cell) {
+          cell = k;
+          parent = "";
+        }
+        const depth = Number(r.depth) > 0 ? 1 : 0;
+        if (want.has(r.id))
+          out.set(sourceKey({ kind: "entry", sourceId: r.id }), {
+            text: r.text,
+            content: `${depth}|${r.text}|${depth ? parent : ""}`,
+            location: `${r.date}|${r.category_id}`,
+            locator: `${catName.get(r.category_id) ?? ""} · ${r.date}`,
+          });
+        if (!depth) parent = r.text;
+      }
+    }
+    const weeks = [...new Set(list.filter((x) => x.kind === "note" && x.week).map((x) => x.week!))];
+    if (weeks.length) {
+      const rows = await this.db.select<{ week_id: string; doc: string }>(
+        `SELECT week_id, doc FROM week_note WHERE week_id IN (${marks(weeks.length)})`,
+        weeks,
+      );
+      for (const r of rows)
+        for (const b of parseNoteDoc(r.doc).boxes) {
+          const key = sourceKey({ kind: "note", sourceId: b.id, week: r.week_id as WeekId });
+          if (!list.some((x) => sourceKey(x) === key)) continue;
+          const text = boxText(b).trim() || boxName(b);
+          const refs = (b.refs ?? []).map((x) => x.item).join(",");
+          out.set(key, {
+            text,
+            content: `${b.kind}|${text}|${b.kind === "link" ? `${b.url}|${b.note}` : ""}|${refs}`,
+            location: r.week_id,
+            locator: `${STR_NOTE_WEEK} ${r.week_id}`,
+          });
+        }
+    }
+    const cabIds = ids("cabinet");
+    if (cabIds.length) {
+      const rows = await this.db.select<{ id: string; title: string; target: string }>(
+        `SELECT id, title, target FROM cabinet_item WHERE id IN (${marks(cabIds.length)})`,
+        cabIds,
+      );
+      for (const r of rows)
+        out.set(sourceKey({ kind: "cabinet", sourceId: r.id }), {
+          text: r.title,
+          content: `${r.title}|${r.target}`,
+          location: "",
+          locator: "Cabinet",
+        });
+    }
+    for (const c of categories)
+      if (ids("category").includes(c.id))
+        out.set(sourceKey({ kind: "category", sourceId: c.id }), {
+          text: c.name,
+          content: c.name,
+          location: "",
+          locator: "업무",
+        });
+    const tagIds = ids("tag");
+    if (tagIds.length) {
+      const { tags } = await this.readTags();
+      for (const t of tags)
+        if (tagIds.includes(t.id))
+          out.set(sourceKey({ kind: "tag", sourceId: t.id }), {
+            text: `# ${t.name}`,
+            content: t.name,
+            location: "",
+            locator: "태그",
+          });
+    }
+    return out;
+  }
+
+  /** 지우지 않은 카드 전체(관련 업무·출처 포함, 출처는 순서대로) */
+  async listCards(): Promise<KnowledgeCard[]> {
+    const cards = await this.db.select<CardRow>(
+      "SELECT id, card_type, title, summary, conditions, body, status, revision, created_at, updated_at, reviewed_at FROM knowledge_card WHERE deleted_at IS NULL ORDER BY updated_at DESC, id",
+    );
+    if (!cards.length) return [];
+    const cats = await this.db.select<{ card_id: string; category_id: string }>(
+      "SELECT card_id, category_id FROM knowledge_card_category",
+    );
+    const srcs = await this.db.select<CardSourceRow & { sort_order: number }>(
+      "SELECT id, card_id, source_kind, source_id, source_week, excerpt, content_fp, location_fp, locator_json, captured_at, sort_order FROM knowledge_card_source ORDER BY card_id, sort_order",
+    );
+    return cards.map((c) => ({
+      id: c.id,
+      type: c.card_type as CardType,
+      title: c.title,
+      summary: c.summary,
+      conditions: c.conditions,
+      body: c.body,
+      status: c.status as CardStatus,
+      revision: Number(c.revision),
+      categoryIds: cats.filter((x) => x.card_id === c.id).map((x) => x.category_id),
+      sources: srcs
+        .filter((x) => x.card_id === c.id)
+        .map((x): CardSource => ({
+          id: x.id,
+          kind: x.source_kind as CardSourceKind,
+          sourceId: x.source_id,
+          ...(x.source_week ? { week: x.source_week as WeekId } : {}),
+          excerpt: x.excerpt,
+          contentFp: x.content_fp,
+          locationFp: x.location_fp,
+          locator: locatorOf(x.locator_json),
+          capturedAt: x.captured_at,
+        })),
+      createdAt: c.created_at,
+      updatedAt: c.updated_at,
+      reviewedAt: c.reviewed_at,
+    }));
+  }
+
+  async getCard(id: string): Promise<KnowledgeCard | null> {
+    return (await this.listCards()).find((c) => c.id === id) ?? null;
+  }
+
+  /** 초안 정리 + 검사 — 앞뒤 빈칸·같은 출처 중복 제거, 관련 업무는 있는 것만 */
+  private async cleanCard(d: CardDraft): Promise<CardDraft> {
+    const seen = new Set<string>();
+    const sources = d.sources.filter((x) => {
+      const k = sourceKey(x);
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+    const { categories } = await this.readCategories();
+    const have = new Set(categories.map((c) => c.id));
+    const out: CardDraft = {
+      ...d,
+      title: d.title.trim(),
+      summary: d.summary.trim(),
+      conditions: d.conditions.trim(),
+      body: d.body.replace(/\s+$/, ""),
+      categoryIds: [...new Set(d.categoryIds)].filter((c) => have.has(c)),
+      sources,
+    };
+    const problem = cardProblem(out);
+    if (problem) throw new CardError(problem);
+    return out;
+  }
+
+  private sourceInsert(
+    cardId: string,
+    s: CardDraft["sources"][number],
+    now: SourceNow,
+    order: number,
+    ts: string,
+  ) {
+    return {
+      sql: `INSERT INTO knowledge_card_source (id, card_id, source_kind, source_id, source_week, excerpt, content_fp, location_fp, locator_json, sort_order, captured_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      params: [
+        uuidv7(this.clock().getTime()),
+        cardId,
+        s.kind,
+        s.sourceId,
+        s.week ?? null,
+        clip(now.text, CARD_LIMITS.excerpt),
+        fingerprint(now.content),
+        fingerprint(now.location),
+        JSON.stringify({ label: now.locator }),
+        order,
+        ts,
+      ] as SqlParam[],
+    };
+  }
+
+  /** 카드 만들기 — 출처는 지금 원문을 "당시 발췌"로 남긴다(원문이 없으면 거부) */
+  async createCard(draft: CardDraft): Promise<KnowledgeCard> {
+    const d = await this.cleanCard(draft);
+    const now = await this.sourcesNow(d.sources);
+    if (d.sources.some((x) => !now.has(sourceKey(x)))) throw new CardError("missing");
+    const id = uuidv7(this.clock().getTime());
+    const ts = this.ts();
+    await this.db.batch([
+      {
+        sql: `INSERT INTO knowledge_card (id, card_type, title, summary, conditions, body, status, created_at, updated_at, reviewed_at)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        params: [
+          id,
+          d.type,
+          d.title,
+          d.summary,
+          d.conditions,
+          d.body,
+          d.status,
+          ts,
+          ts,
+          d.status === "reviewed" ? ts : null,
+        ],
+      },
+      ...d.categoryIds.map((c) => ({
+        sql: "INSERT INTO knowledge_card_category (card_id, category_id) VALUES (?, ?)",
+        params: [id, c] as SqlParam[],
+      })),
+      ...d.sources.map((x, i) => this.sourceInsert(id, x, now.get(sourceKey(x))!, i, ts)),
+    ]);
+    return (await this.getCard(id))!;
+  }
+
+  /**
+   * 카드 고치기 — 남은 출처는 당시 발췌·지문을 그대로 두고, 새 출처만 지금 원문으로 남긴다.
+   * revision이 다르면(다른 곳에서 먼저 고침) 거부. 고치기 전 카드를 돌려준다(실행 취소)
+   */
+  async updateCard(id: string, draft: CardDraft, revision?: number): Promise<KnowledgeCard> {
+    const before = await this.getCard(id);
+    if (!before) throw new CardError("missing");
+    if (revision !== undefined && revision !== before.revision) throw new CardError("stale");
+    const d = await this.cleanCard(draft);
+    const kept = new Map(before.sources.map((x) => [sourceKey(x), x]));
+    const fresh = d.sources.filter((x) => !kept.has(sourceKey(x)));
+    const now = await this.sourcesNow(fresh);
+    if (fresh.some((x) => !now.has(sourceKey(x)))) throw new CardError("missing");
+    const ts = this.ts();
+    const stmts: SqlStatement[] = [
+      {
+        sql: `UPDATE knowledge_card SET card_type = ?, title = ?, summary = ?, conditions = ?, body = ?, status = ?, updated_at = ?,
+                reviewed_at = CASE WHEN ? = 'reviewed' AND status <> 'reviewed' THEN ? WHEN ? = 'draft' THEN NULL ELSE reviewed_at END,
+                revision = revision + 1 WHERE id = ? AND deleted_at IS NULL`,
+        params: [d.type, d.title, d.summary, d.conditions, d.body, d.status, ts, d.status, ts, d.status, id],
+      },
+      { sql: "DELETE FROM knowledge_card_category WHERE card_id = ?", params: [id] },
+      ...d.categoryIds.map((c) => ({
+        sql: "INSERT INTO knowledge_card_category (card_id, category_id) VALUES (?, ?)",
+        params: [id, c] as SqlParam[],
+      })),
+    ];
+    const keepKeys = new Set(d.sources.map(sourceKey));
+    for (const x of before.sources)
+      if (!keepKeys.has(sourceKey(x)))
+        stmts.push({ sql: "DELETE FROM knowledge_card_source WHERE id = ?", params: [x.id] });
+    d.sources.forEach((x, i) => {
+      const k = kept.get(sourceKey(x));
+      if (k)
+        stmts.push({
+          sql: "UPDATE knowledge_card_source SET sort_order = ? WHERE id = ?",
+          params: [i, k.id],
+        });
+      else stmts.push(this.sourceInsert(id, x, now.get(sourceKey(x))!, i, ts));
+    });
+    await this.db.batch(stmts);
+    return before;
+  }
+
+  /** 상태만 바꾸기(초안 → 검토함 → 보관) — "검토함"은 사용자가 적용 조건·출처를 확인했다는 표시 */
+  async setCardStatus(id: string, status: CardStatus): Promise<CardStatus> {
+    const before = await this.getCard(id);
+    if (!before) throw new CardError("missing");
+    const ts = this.ts();
+    await this.db.batch([
+      {
+        sql: `UPDATE knowledge_card SET status = ?, updated_at = ?, revision = revision + 1,
+                reviewed_at = CASE WHEN ? = 'reviewed' THEN ? WHEN ? = 'draft' THEN NULL ELSE reviewed_at END
+              WHERE id = ? AND deleted_at IS NULL`,
+        params: [status, ts, status, ts, status, id],
+      },
+    ]);
+    return before.status;
+  }
+
+  /** 출처 [다시 확인] — 지금 원문을 새 발췌·지문으로(원문이 없으면 거부) */
+  async recheckCardSource(cardId: string, sourceRowId: string): Promise<void> {
+    const card = await this.getCard(cardId);
+    const src = card?.sources.find((x) => x.id === sourceRowId);
+    if (!card || !src) throw new CardError("missing");
+    const now = (await this.sourcesNow([src])).get(sourceKey(src));
+    if (!now) throw new CardError("missing");
+    const ts = this.ts();
+    await this.db.batch([
+      {
+        sql: "UPDATE knowledge_card_source SET excerpt = ?, content_fp = ?, location_fp = ?, locator_json = ?, captured_at = ? WHERE id = ?",
+        params: [
+          clip(now.text, CARD_LIMITS.excerpt),
+          fingerprint(now.content),
+          fingerprint(now.location),
+          JSON.stringify({ label: now.locator }),
+          ts,
+          sourceRowId,
+        ],
+      },
+      {
+        sql: "UPDATE knowledge_card SET updated_at = ?, revision = revision + 1 WHERE id = ?",
+        params: [ts, cardId],
+      },
+    ]);
+  }
+
+  /** 지우기(소프트 — 되돌리기 가능) */
+  async deleteCard(id: string): Promise<void> {
+    await this.db.batch([
+      {
+        sql: "UPDATE knowledge_card SET deleted_at = ?, updated_at = ?, revision = revision + 1 WHERE id = ? AND deleted_at IS NULL",
+        params: [this.ts(), this.ts(), id],
+      },
+    ]);
+  }
+
+  async restoreCard(id: string): Promise<void> {
+    await this.db.batch([
+      {
+        sql: "UPDATE knowledge_card SET deleted_at = NULL, updated_at = ?, revision = revision + 1 WHERE id = ?",
+        params: [this.ts(), id],
+      },
+    ]);
+  }
+
+  /** 보드 ◆ 표시: 카드 출처인 항목 → 카드 id들 */
+  async cardSourceEntries(): Promise<Record<string, string[]>> {
+    const rows = await this.db.select<{ source_id: string; card_id: string }>(
+      `SELECT s.source_id, s.card_id FROM knowledge_card_source s JOIN knowledge_card c ON c.id = s.card_id
+        WHERE s.source_kind = 'entry' AND c.deleted_at IS NULL ORDER BY c.updated_at DESC`,
+    );
+    const out: Record<string, string[]> = {};
+    for (const r of rows) (out[r.source_id] ??= []).push(r.card_id);
+    return out;
+  }
+
+  /** 작성 중 임시본(창을 닫아도 복구) — 이 일지 안 app_meta에만 */
+  async getCardDraft(): Promise<CardDraft | null> {
+    const [row] = await this.db.select<{ value: string }>(
+      "SELECT value FROM app_meta WHERE key = 'card_draft'",
+    );
+    if (!row) return null;
+    try {
+      const v = JSON.parse(row.value) as CardDraft;
+      return v && typeof v.title === "string" && Array.isArray(v.sources) ? v : null;
+    } catch {
+      return null;
+    }
+  }
+
+  async saveCardDraft(d: CardDraft | null): Promise<void> {
+    if (!d) {
+      await this.db.execute("DELETE FROM app_meta WHERE key = 'card_draft'");
+      return;
+    }
+    await this.db.execute(
+      "INSERT INTO app_meta (key, value) VALUES ('card_draft', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+      [JSON.stringify(d)],
+    );
+  }
+
   async getUniverseSnapshot(ws: UniverseSnapshot["ws"]): Promise<UniverseSnapshot> {
     const { categories, periods } = await this.readCategories();
     const open = new Set(periods.filter((p) => p.endDate === null).map((p) => p.categoryId));
@@ -2134,6 +2590,7 @@ export class JournalRepository {
         links: cab.links.map((l) => ({ itemId: l.itemId, categoryId: l.categoryId, entryId: l.entryId })),
       },
       relations: await this.listRelations(),
+      cards: await this.listCards(),
     };
   }
 

@@ -8,6 +8,7 @@ import { useBoard } from "../board/boardStore";
 import { PanelResizer } from "../common/PanelResizer";
 import { usePanelWidths } from "../common/panelWidths";
 import { useNote } from "../note/noteStore";
+import { openCard } from "../universe/universeStore";
 import styles from "./Search.module.css";
 import {
   closePanel,
@@ -163,8 +164,32 @@ export function SearchPanel({ overlay }: { overlay: boolean }) {
       </div>
       <div className={styles.list} ref={listRef} data-testid="search-results">
         {!terms.length && <p className={styles.note}>{T.hint}</p>}
-        {terms.length > 0 && !s.busy && list.length === 0 && !s.cabinet.length && (
+        {terms.length > 0 && !s.busy && list.length === 0 && !s.cabinet.length && !s.cards.length && (
           <p className={styles.note}>{T.empty}</p>
+        )}
+        {s.filter === "all" && s.cards.length > 0 && (
+          <>
+            <div className={styles.week}>{STR.universe.kindName.card}</div>
+            {s.cards.map((c) => (
+              <button
+                key={c.id}
+                type="button"
+                className={styles.hit}
+                data-testid="search-card-hit"
+                onClick={() => void openCard(c.id)}
+              >
+                <span className={styles.meta}>
+                  <span className={`${styles.kind} ${styles.k_link}`}>
+                    ◆ {STR.universe.card.typeName[c.type]} · {STR.universe.card.statusName[c.status]}
+                  </span>
+                  <span className={styles.where}>{c.title}</span>
+                </span>
+                <span className={styles.text}>
+                  <Marked text={c.text || c.title} terms={terms} />
+                </span>
+              </button>
+            ))}
+          </>
         )}
         {s.filter === "all" && s.cabinet.length > 0 && (
           <>

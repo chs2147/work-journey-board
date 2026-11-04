@@ -30,7 +30,38 @@ import { useAppStore } from "../common/appStore";
 import { toast } from "../board/boardStore";
 import { WorkspaceMark } from "../common/workspaceIcons";
 import {
+  CARD_LIMITS,
+  CARD_STATUSES,
+  CARD_TYPES,
+  sourceKey,
+  type CardStatus,
+  type SourceState,
+} from "../../domain/knowledgeCard";
+import { PACK_MAX_CHARS, PACK_MAX_ITEMS, PACK_QUESTION_MAX } from "../../domain/contextPack";
+import {
+  addCardSource,
+  addToPack,
+  closePackDrawer,
+  copyPack,
+  emptyPack,
+  movePackItem,
+  packFrom,
+  removeFromPack,
+  savePackMarkdown,
+  setPackField,
+  togglePackDrawer,
+  usePack,
   addRelation,
+  closeCardEditor,
+  deleteCard,
+  editCard,
+  openCardEditor,
+  patchCardDraft,
+  recheckCardSource,
+  removeCardSource,
+  resolveDraftPrompt,
+  saveCard,
+  setCardStatus,
   clearTime,
   closeLinkDialog,
   combined,
@@ -62,6 +93,7 @@ export function UniverseView() {
   const shown = useMemo(() => filterGraph(all, filter), [all, filter]);
   const byId = useMemo(() => new Map(all.nodes.map((n) => [n.id, n])), [all]);
   const selected = s.selected ? (byId.get(s.selected) ?? null) : null;
+  const packOpen = usePack((p) => p.open);
 
   return (
     <section className={styles.view} aria-label={STR.universe.title} data-testid="universe-view">
@@ -94,6 +126,7 @@ export function UniverseView() {
             </button>
           ))}
         </div>
+        <PackButton />
         {s.loading && <span className={styles.muted}>{STR.universe.loading}</span>}
         {s.notices.map((n) => (
           <span key={n} className={styles.notice} role="status">
@@ -117,7 +150,10 @@ export function UniverseView() {
         <DetailPanel node={selected} all={all} />
       </div>
       <TimeBar all={all} />
+      {packOpen && <PackDrawer all={all} />}
       {s.linkDialog && <LinkDialog all={all} />}
+      {s.cardEditor && <CardEditor all={all} />}
+      {s.draftPrompt && <DraftPrompt />}
     </section>
   );
 }
@@ -261,6 +297,7 @@ function KindGlyph({ kind, color }: { kind: UNodeKind; color?: string }) {
       {kind === "workspace" && (
         <circle r="5" fill="none" stroke={c} strokeWidth="1.6" strokeDasharray="2 2" />
       )}
+      {kind === "card" && <path d="M0-6l6 6-6 6-6-6z" fill="var(--card-fill, #8a6fd1)" />}
     </svg>
   );
 }
@@ -280,6 +317,8 @@ function edgeStyle(e: UEdge): { stroke: string; width: number; dash?: string; op
       return { stroke: "var(--text-3)", width: 1.2, dash: "2 3", opacity: 0.9 };
     case "relation":
       return { stroke: "var(--accent)", width: 2.8, opacity: 1 };
+    case "card-source":
+      return { stroke: "#8a6fd1", width: 1.2, dash: "6 2 1 2", opacity: 0.95 };
   }
 }
 
@@ -495,6 +534,14 @@ function NodeShape({
       {n.kind === "workspace" && (
         <circle r={r + 2} fill="none" stroke={color} strokeWidth="2" strokeDasharray="3 3" />
       )}
+      {n.kind === "card" && (
+        <path
+          d={`M0 ${-r - 3}L${r + 3} 0 0 ${r + 3}${-r - 3} 0z`}
+          fill={n.card?.status === "archived" ? "var(--surface-sub)" : "var(--card-fill, #8a6fd1)"}
+          stroke={n.card?.status === "reviewed" ? "var(--accent)" : "#6b52b3"}
+          strokeWidth={n.card?.status === "reviewed" ? 2.2 : 1.2}
+        />
+      )}
       <text
         y={n.kind === "category" || n.kind === "tag" ? 4 : r + 14}
         textAnchor="middle"
@@ -575,6 +622,15 @@ function GalaxyMap({ graph, selected }: { graph: UGraph; selected: string | null
       } else if (n.kind === "cabinet") {
         ctx.strokeStyle = v("--text-3");
         ctx.strokeRect(X - 3.5, Y - 2.5, 7, 5);
+      } else if (n.kind === "card") {
+        ctx.fillStyle = "#8a6fd1";
+        ctx.beginPath();
+        ctx.moveTo(X, Y - 4);
+        ctx.lineTo(X + 4, Y);
+        ctx.lineTo(X, Y + 4);
+        ctx.lineTo(X - 4, Y);
+        ctx.closePath();
+        ctx.fill();
       } else if (n.kind === "workspace") {
         ctx.strokeStyle = catColor(n);
         ctx.setLineDash([3, 5]);
@@ -828,6 +884,7 @@ function DetailPanel({ node, all }: { node: UNode | null; all: UGraph }) {
         <p className={styles.muted}>{STR.universe.noSelection}</p>
       </aside>
     );
+  if (node.kind === "card") return <CardDetail node={node} all={all} />;
   const other = !!cur && !sameDir(node.ws, cur);
   const ws = spaces.find((e) => sameDir(e.dir, node.ws));
   const cat = node.categoryId
@@ -938,6 +995,26 @@ function DetailPanel({ node, all }: { node: UNode | null; all: UGraph }) {
         {!other && node.kind !== "workspace" && (
           <button
             type="button"
+            data-testid="u-pack-add"
+            title={STR.universe.pack.addHint}
+            onClick={() => addToPack(node.id)}
+          >
+            {STR.universe.pack.add}
+          </button>
+        )}
+        {!other && node.kind !== "workspace" && (
+          <button
+            type="button"
+            data-testid="u-make-card"
+            title={STR.universe.card.makeHint}
+            onClick={() => void openCardEditor(node.id)}
+          >
+            {STR.universe.card.make}
+          </button>
+        )}
+        {!other && node.kind !== "workspace" && (
+          <button
+            type="button"
             data-testid="u-connect"
             title={STR.universe.rel.connectHint}
             onClick={() => openLinkDialog(node.id)}
@@ -986,7 +1063,9 @@ function LinkDialog({ all }: { all: UGraph }) {
   }, []);
   const candidates = useMemo(() => {
     if (!from) return [];
-    const own = all.nodes.filter((n) => n.ws === from.ws && n.kind !== "workspace" && n.id !== from.id);
+    const own = all.nodes.filter(
+      (n) => n.ws === from.ws && n.kind !== "workspace" && n.kind !== "card" && n.id !== from.id,
+    );
     const words = q.trim().toLowerCase().split(/\s+/).filter(Boolean);
     if (q.trim().length >= 2)
       return own
@@ -1211,5 +1290,628 @@ function TimeBar({ all }: { all: UGraph }) {
         ))}
       </div>
     </div>
+  );
+}
+
+// ── 지식 카드(UV3, spec 5-2) ─────────────────────────────────────────
+const STATE_CLASS: Record<SourceState, string> = {
+  ok: "stOk",
+  changed: "stChanged",
+  moved: "stMoved",
+  missing: "stMissing",
+};
+
+/** 대상 찾기 목록 — 같은 업무·최근 기록, 두 글자 이상이면 검색(직접 연결·카드 출처가 함께 쓴다) */
+function useCandidates(all: UGraph, from: UNode | undefined, q: string, exclude: (n: UNode) => boolean) {
+  return useMemo(() => {
+    if (!from) return [];
+    const own = all.nodes.filter(
+      (n) => n.ws === from.ws && n.kind !== "workspace" && n.kind !== "card" && !exclude(n),
+    );
+    const words = q.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    if (q.trim().length >= 2)
+      return own
+        .filter((n) => words.every((w) => `${n.title} ${n.text}`.toLowerCase().includes(w)))
+        .slice(0, 40);
+    const entries = own
+      .filter((n) => n.kind === "entry")
+      .sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""));
+    const same = from.categoryId ? entries.filter((n) => n.categoryId === from.categoryId).slice(0, 12) : [];
+    const recent = entries.filter((n) => !same.includes(n)).slice(0, 12);
+    return [...same, ...recent];
+  }, [all, from, q, exclude]);
+}
+
+function CardDetail({ node, all }: { node: UNode; all: UGraph }) {
+  const view = useUniverse((s) => (s.cardView?.cardId === node.refId ? s.cardView : null));
+  const cur = useAppStore((s) => (s.journal.state === "ready" ? s.journal.dataDir : null));
+  const own = !!cur && sameDir(node.ws, cur);
+  const [open, setOpen] = useState<string | null>(null);
+  const byId = useMemo(() => new Map(all.nodes.map((n) => [n.id, n])), [all]);
+  const c = view?.card;
+  const C = STR.universe.card;
+  const status = (c?.status ?? node.card?.status ?? "draft") as CardStatus;
+  return (
+    <aside className={styles.detail} data-testid="universe-detail">
+      <span className={styles.badge}>
+        {STR.universe.kindName.card}
+        {node.card && ` · ${C.typeName[node.card.type]}`}
+      </span>
+      <h3 className={styles.title} data-testid="u-detail-title">
+        {c?.title ?? node.title}
+      </h3>
+      <div className={styles.meta}>
+        <span className={`${styles.status} ${styles[`status_${status}`] ?? ""}`} data-testid="u-card-status">
+          {C.statusName[status]}
+        </span>
+        {c && ` · ${c.updatedAt.slice(0, 10)}`}
+      </div>
+      {!c ? (
+        <p className={styles.muted}>{STR.universe.loading}</p>
+      ) : (
+        <>
+          {c.summary && <p className={styles.cardSummary}>{c.summary}</p>}
+          {c.conditions && (
+            <>
+              <div className={styles.label}>{C.conditions.split("(")[0]}</div>
+              <div className={styles.orig}>{c.conditions}</div>
+            </>
+          )}
+          {c.body && (
+            <>
+              <div className={styles.label}>{C.body.split("(")[0]}</div>
+              <div className={styles.orig} data-testid="u-card-body">
+                {c.body}
+              </div>
+            </>
+          )}
+          <div className={styles.label}>{C.sources(c.sources.length)}</div>
+          <ul className={styles.why} data-testid="u-card-sources">
+            {c.sources.map((src) => {
+              const st = view!.states[src.id];
+              const state = st?.state ?? "missing";
+              const target = byId.get(
+                src.kind === "note"
+                  ? `${node.ws}/note/${src.week ?? ""}/${src.sourceId}`
+                  : `${node.ws}/${src.kind}/${src.sourceId}`,
+              );
+              return (
+                <li key={src.id} data-testid="u-card-source" data-state={state}>
+                  <div className={styles.srcRow}>
+                    <span
+                      className={`${styles.srcState} ${styles[STATE_CLASS[state]]}`}
+                      title={C.stateHint[state]}
+                    >
+                      {C.state[state]}
+                    </span>
+                    <span className={styles.srcText}>{st?.now?.text ?? src.excerpt}</span>
+                  </div>
+                  <div className={styles.relRow}>
+                    <span className={styles.muted}>{st?.now?.locator ?? src.locator}</span>
+                    <span className={styles.relActs}>
+                      {state !== "ok" && (
+                        <button
+                          type="button"
+                          data-testid="u-card-compare"
+                          aria-expanded={open === src.id}
+                          onClick={() => setOpen(open === src.id ? null : src.id)}
+                        >
+                          {C.compare}
+                        </button>
+                      )}
+                      {own && (state === "changed" || state === "moved") && (
+                        <button
+                          type="button"
+                          data-testid="u-card-recheck"
+                          onClick={() => void recheckCardSource(c.id, src.id).then((m) => m && toastMsg(m))}
+                        >
+                          {C.recheck}
+                        </button>
+                      )}
+                      {target && (
+                        <button type="button" onClick={() => void revealNode(target)}>
+                          {C.openSource}
+                        </button>
+                      )}
+                    </span>
+                  </div>
+                  {open === src.id && (
+                    <div className={styles.compare} data-testid="u-card-diff">
+                      <div>
+                        <div className={styles.label}>{C.excerpt}</div>
+                        <div className={styles.orig}>{src.excerpt || "—"}</div>
+                      </div>
+                      <div>
+                        <div className={styles.label}>{C.now}</div>
+                        <div className={styles.orig}>{st?.now?.text ?? C.state.missing}</div>
+                      </div>
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </>
+      )}
+      {own && c && (
+        <div className={styles.actions}>
+          <button
+            type="button"
+            className={styles.primary}
+            data-testid="u-card-edit"
+            onClick={() => void editCard(c.id)}
+          >
+            {C.edit}
+          </button>
+          {status !== "reviewed" && (
+            <button
+              type="button"
+              data-testid="u-card-review"
+              title={C.statusHint}
+              onClick={() => void setCardStatus(c.id, "reviewed").then((m) => m && toastMsg(m))}
+            >
+              {C.markReviewed}
+            </button>
+          )}
+          {status !== "archived" && (
+            <button
+              type="button"
+              data-testid="u-card-archive"
+              onClick={() => void setCardStatus(c.id, "archived")}
+            >
+              {C.archive}
+            </button>
+          )}
+          {status !== "draft" && (
+            <button type="button" onClick={() => void setCardStatus(c.id, "draft")}>
+              {C.backToDraft}
+            </button>
+          )}
+          <button type="button" data-testid="u-pack-add" onClick={() => addToPack(node.id)}>
+            {STR.universe.pack.add}
+          </button>
+          <button type="button" data-testid="u-card-delete" onClick={() => void deleteCard(c.id)}>
+            {C.remove}
+          </button>
+        </div>
+      )}
+    </aside>
+  );
+}
+
+function DraftPrompt() {
+  const C = STR.universe.card;
+  return (
+    <div className={styles.dialogBack}>
+      <div
+        className={styles.dialog}
+        role="alertdialog"
+        aria-label={C.draftFound}
+        data-testid="u-card-draft-prompt"
+      >
+        <h3>{C.draftFound}</h3>
+        <p className={styles.muted}>{C.draftKept}</p>
+        <div className={styles.actions}>
+          <button
+            type="button"
+            className={styles.primary}
+            data-testid="u-card-draft-resume"
+            onClick={() => resolveDraftPrompt(true)}
+          >
+            {C.draftResume}
+          </button>
+          <button type="button" data-testid="u-card-draft-discard" onClick={() => resolveDraftPrompt(false)}>
+            {C.draftDiscard}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Counted({ value, max }: { value: string; max: number }) {
+  const n = [...value].length;
+  return <span className={n > max ? styles.over : styles.muted}>{STR.universe.card.count(n, max)}</span>;
+}
+
+function CardEditor({ all }: { all: UGraph }) {
+  const ed = useUniverse((s) => s.cardEditor)!;
+  const cur = useAppStore((s) => (s.journal.state === "ready" ? s.journal.dataDir : null));
+  const d = ed.draft;
+  const C = STR.universe.card;
+  const [q, setQ] = useState("");
+  const [busy, setBusy] = useState(false);
+  const byKey = useMemo(() => {
+    const m = new Map<string, UNode>();
+    for (const n of all.nodes) {
+      if (!cur || !sameDir(n.ws, cur)) continue;
+      if (n.kind === "workspace" || n.kind === "card") continue;
+      const k =
+        n.kind === "note"
+          ? sourceKey({ kind: "note", sourceId: n.refId, week: n.weekId ?? null })
+          : sourceKey({ kind: n.kind, sourceId: n.refId });
+      m.set(k, n);
+    }
+    return m;
+  }, [all, cur]);
+  const first = d.sources[0] ? byKey.get(sourceKey(d.sources[0])) : undefined;
+  const chosen = useMemo(() => new Set(d.sources.map(sourceKey)), [d.sources]);
+  const exclude = useMemo(
+    () => (n: UNode) =>
+      chosen.has(
+        n.kind === "note"
+          ? sourceKey({ kind: "note", sourceId: n.refId, week: n.weekId ?? null })
+          : sourceKey({ kind: n.kind as "entry", sourceId: n.refId }),
+      ),
+    [chosen],
+  );
+  const candidates = useCandidates(
+    all,
+    first ?? all.nodes.find((n) => cur && sameDir(n.ws, cur)),
+    q,
+    exclude,
+  );
+  const categories = useMemo(
+    () => all.nodes.filter((n) => n.kind === "category" && cur && sameDir(n.ws, cur)),
+    [all, cur],
+  );
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      e.preventDefault();
+      e.stopPropagation();
+      closeCardEditor();
+    };
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, []);
+  const save = async () => {
+    setBusy(true);
+    await saveCard();
+    setBusy(false);
+  };
+  return (
+    <div className={styles.dialogBack}>
+      <div
+        className={`${styles.dialog} ${styles.cardDialog}`}
+        role="dialog"
+        aria-modal="true"
+        aria-label={d.id ? C.editTitle : C.newTitle}
+        data-testid="u-card-editor"
+      >
+        <h3>{d.id ? C.editTitle : C.newTitle}</h3>
+        <div className={styles.cardGrid}>
+          <div>
+            <div className={styles.label}>{C.typeLabel}</div>
+            <div className={styles.relTypes} role="radiogroup" aria-label={C.typeLabel}>
+              {CARD_TYPES.map((t) => (
+                <label key={t}>
+                  <input
+                    type="radio"
+                    name="u-card-type"
+                    checked={d.type === t}
+                    data-testid={`u-card-type-${t}`}
+                    onChange={() => patchCardDraft({ type: t })}
+                  />
+                  {C.typeName[t]}
+                </label>
+              ))}
+            </div>
+            <div className={styles.label}>{C.statusLabel}</div>
+            <div className={styles.relTypes} role="radiogroup" aria-label={C.statusLabel}>
+              {CARD_STATUSES.map((t) => (
+                <label key={t} title={t === "reviewed" ? C.statusHint : undefined}>
+                  <input
+                    type="radio"
+                    name="u-card-status"
+                    checked={d.status === t}
+                    data-testid={`u-card-status-${t}`}
+                    onChange={() => patchCardDraft({ status: t })}
+                  />
+                  {C.statusName[t]}
+                </label>
+              ))}
+            </div>
+            <label className={styles.field}>
+              <span className={styles.label}>
+                {C.title} <Counted value={d.title} max={CARD_LIMITS.title} />
+              </span>
+              <input
+                className={styles.input}
+                data-testid="u-card-title"
+                value={d.title}
+                maxLength={CARD_LIMITS.title}
+                onChange={(e) => patchCardDraft({ title: e.target.value })}
+              />
+            </label>
+            <label className={styles.field}>
+              <span className={styles.label}>
+                {C.summary} <Counted value={d.summary} max={CARD_LIMITS.summary} />
+              </span>
+              <textarea
+                className={styles.relNote}
+                rows={2}
+                data-testid="u-card-summary"
+                value={d.summary}
+                maxLength={CARD_LIMITS.summary}
+                onChange={(e) => patchCardDraft({ summary: e.target.value })}
+              />
+            </label>
+            <label className={styles.field}>
+              <span className={styles.label}>
+                {C.conditions} <Counted value={d.conditions} max={CARD_LIMITS.conditions} />
+              </span>
+              <textarea
+                className={styles.relNote}
+                rows={2}
+                data-testid="u-card-conditions"
+                value={d.conditions}
+                maxLength={CARD_LIMITS.conditions}
+                onChange={(e) => patchCardDraft({ conditions: e.target.value })}
+              />
+            </label>
+            <label className={styles.field}>
+              <span className={styles.label}>
+                {C.body} <Counted value={d.body} max={CARD_LIMITS.body} />
+              </span>
+              <textarea
+                className={styles.relNote}
+                rows={5}
+                data-testid="u-card-body-input"
+                value={d.body}
+                maxLength={CARD_LIMITS.body}
+                onChange={(e) => patchCardDraft({ body: e.target.value })}
+              />
+            </label>
+          </div>
+          <div>
+            <div className={styles.label}>{C.sources(d.sources.length)}</div>
+            <p className={styles.muted}>{C.noExcerptCopy}</p>
+            <ul className={styles.relList} data-testid="u-card-chosen">
+              {d.sources.map((src) => {
+                const k = sourceKey(src);
+                const n = byKey.get(k);
+                return (
+                  <li key={k} className={styles.chosenRow}>
+                    {n && <KindGlyph kind={n.kind} color={n.color ? `var(--cat-${n.color})` : undefined} />}
+                    <span>{n?.title ?? C.state.missing}</span>
+                    <button
+                      type="button"
+                      aria-label={C.removeSource}
+                      title={C.removeSource}
+                      data-testid="u-card-source-remove"
+                      onClick={() => removeCardSource(k)}
+                    >
+                      ✕
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+            <div className={styles.label}>{C.addSource}</div>
+            <input
+              type="search"
+              className={styles.input}
+              placeholder={C.addSourceSearch}
+              aria-label={C.addSourceSearch}
+              data-testid="u-card-source-search"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+            />
+            <ul className={styles.relList} aria-label={C.addSource}>
+              {candidates.length === 0 && <li className={styles.muted}>{STR.universe.rel.targetNone}</li>}
+              {candidates.map((n) => (
+                <li key={n.id}>
+                  <button
+                    type="button"
+                    data-testid="u-card-source-candidate"
+                    onClick={() => addCardSource(n.id)}
+                  >
+                    <KindGlyph kind={n.kind} color={n.color ? `var(--cat-${n.color})` : undefined} />
+                    <span>{n.title}</span>
+                    {n.date && <span className={styles.muted}>{shortDateLabel(n.date)}</span>}
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <div className={styles.label}>{C.categories}</div>
+            <div className={styles.chips}>
+              {categories.map((c) => {
+                const on = d.categoryIds.includes(c.refId);
+                return (
+                  <label key={c.id} className={styles.check}>
+                    <input
+                      type="checkbox"
+                      checked={on}
+                      onChange={() =>
+                        patchCardDraft({
+                          categoryIds: on
+                            ? d.categoryIds.filter((x) => x !== c.refId)
+                            : [...d.categoryIds, c.refId],
+                        })
+                      }
+                    />
+                    <span className={styles.dot} style={{ background: `var(--cat-${c.color})` }} />
+                    {c.title}
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+        {!d.id && <p className={styles.muted}>{C.draftKept}</p>}
+        {ed.error && (
+          <p className={styles.notice} role="alert" data-testid="u-card-error">
+            {ed.error}
+          </p>
+        )}
+        <div className={styles.actions}>
+          <button
+            type="button"
+            className={styles.primary}
+            data-testid="u-card-save"
+            disabled={busy}
+            onClick={() => void save()}
+          >
+            {C.save}
+          </button>
+          <button type="button" data-testid="u-card-cancel" onClick={closeCardEditor}>
+            {C.cancel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PackButton() {
+  const n = usePack((p) => p.items.length);
+  const open = usePack((p) => p.open);
+  return (
+    <button
+      type="button"
+      className={`${styles.packBtn} ${open ? styles.segOn : ""}`}
+      aria-pressed={open}
+      data-testid="pack-toggle"
+      onClick={togglePackDrawer}
+    >
+      {STR.universe.pack.drawer(n)}
+    </button>
+  );
+}
+
+// ── 근거 묶음 서랍(UV4, spec 5-3) ─────────────────────────────────────
+function PackDrawer({ all }: { all: UGraph }) {
+  const pack = usePack();
+  const P = STR.universe.pack;
+  const r = useMemo(() => packFrom(all, pack), [all, pack]);
+  const byId = useMemo(() => new Map(all.nodes.map((n) => [n.id, n])), [all]);
+  return (
+    <aside className={styles.drawer} aria-label={P.title} data-testid="pack-drawer">
+      <div className={styles.drawerHead}>
+        <h3>{P.title}</h3>
+        <button type="button" aria-label={STR.universe.card.cancel} onClick={closePackDrawer}>
+          ✕
+        </button>
+      </div>
+      <p className={styles.muted}>{P.boundary}</p>
+      <label className={styles.field}>
+        <span className={styles.label}>{P.question}</span>
+        <textarea
+          className={styles.relNote}
+          rows={2}
+          maxLength={PACK_QUESTION_MAX}
+          placeholder={P.questionPlaceholder}
+          data-testid="pack-question"
+          value={pack.question}
+          onChange={(e) => setPackField({ question: e.target.value })}
+        />
+      </label>
+      <label className={styles.field}>
+        <span className={styles.label}>{P.purpose}</span>
+        <input
+          className={styles.input}
+          placeholder={P.purposePlaceholder}
+          data-testid="pack-purpose"
+          value={pack.purpose}
+          onChange={(e) => setPackField({ purpose: e.target.value })}
+        />
+      </label>
+      <label className={styles.check}>
+        <input
+          type="checkbox"
+          checked={pack.includePaths}
+          data-testid="pack-paths"
+          onChange={(e) => setPackField({ includePaths: e.target.checked })}
+        />
+        {P.includePaths}
+      </label>
+      <div className={styles.label}>
+        {P.items(r.included.length, PACK_MAX_ITEMS)} · {P.chars(r.chars, PACK_MAX_CHARS)}
+      </div>
+      {pack.items.length === 0 ? (
+        <p className={styles.muted}>{P.empty}</p>
+      ) : (
+        <ul className={styles.relList} data-testid="pack-items">
+          {pack.items.map((id, i) => {
+            const n = byId.get(id);
+            const inc = r.included.find((x) => x.item.key === id);
+            const exc = r.excluded.find((x) => x.item.key === id);
+            return (
+              <li key={id} className={styles.chosenRow} data-testid="pack-item">
+                {inc && <b className={styles.ref}>{inc.ref}</b>}
+                {n && <KindGlyph kind={n.kind} color={n.color ? `var(--cat-${n.color})` : undefined} />}
+                <span>
+                  {n?.title ?? STR.universe.card.state.missing}
+                  {exc && <em className={styles.over}> · {P.reason[exc.reason]}</em>}
+                </span>
+                <button
+                  type="button"
+                  aria-label={P.up}
+                  disabled={i === 0}
+                  onClick={() => movePackItem(id, -1)}
+                >
+                  ↑
+                </button>
+                <button
+                  type="button"
+                  aria-label={P.down}
+                  disabled={i === pack.items.length - 1}
+                  onClick={() => movePackItem(id, 1)}
+                >
+                  ↓
+                </button>
+                <button
+                  type="button"
+                  aria-label={P.remove}
+                  title={P.remove}
+                  data-testid="pack-remove"
+                  onClick={() => removeFromPack(id)}
+                >
+                  ✕
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      {r.excluded.some((x) => x.reason !== "empty") && (
+        <p className={styles.notice} data-testid="pack-excluded">
+          {P.excluded(r.excluded.filter((x) => x.reason !== "empty").length)}
+        </p>
+      )}
+      {r.missing.length > 0 && <p className={styles.notice}>{P.missing(r.missing.length)}</p>}
+      <div className={styles.label}>{P.preview}</div>
+      <pre className={styles.packPreview} data-testid="pack-preview">
+        {r.text}
+      </pre>
+      {pack.notice && (
+        <p className={styles.notice} role="alert" data-testid="pack-notice">
+          {pack.notice}
+        </p>
+      )}
+      <div className={styles.actions}>
+        <button
+          type="button"
+          className={styles.primary}
+          data-testid="pack-copy"
+          disabled={!pack.items.length}
+          onClick={() => void copyPack()}
+        >
+          {P.copy}
+        </button>
+        <button
+          type="button"
+          data-testid="pack-save"
+          disabled={!pack.items.length}
+          onClick={() => void savePackMarkdown()}
+        >
+          {P.save}
+        </button>
+        <button type="button" disabled={!pack.items.length} onClick={emptyPack}>
+          {P.clear}
+        </button>
+      </div>
+    </aside>
   );
 }

@@ -3,9 +3,11 @@
 import type { CategoryColorKey } from "../shared/palette";
 import { boxName, boxText, readingOrder, type NoteDoc } from "./note";
 import { addDays, parseDate, weekIdOf, weekStart, type DateStr, type WeekId } from "./week";
+import type { CardStatus, CardType, KnowledgeCard } from "./knowledgeCard";
 
-export type UNodeKind = "workspace" | "category" | "tag" | "entry" | "note" | "cabinet";
-export type UEdgeSource = "membership" | "tag" | "note-ref" | "note-edge" | "cabinet-link" | "relation";
+export type UNodeKind = "workspace" | "category" | "tag" | "entry" | "note" | "cabinet" | "card";
+export type UEdgeSource =
+  "membership" | "tag" | "note-ref" | "note-edge" | "cabinet-link" | "relation" | "card-source";
 
 // ── 직접 연결(UV2, universe-spec 5-1) ─────────────────────────────────────
 /** 관련(무방향) · 후속 · 근거 · 반대 근거 · 대체(방향 = from → to) */
@@ -19,7 +21,7 @@ export const RELATION_TYPES: URelationType[] = [
 ];
 export const isDirected = (t: URelationType) => t !== "related";
 /** 끝점이 될 수 있는 종류(공간 노드 제외) */
-export type URelationKind = Exclude<UNodeKind, "workspace">;
+export type URelationKind = Exclude<UNodeKind, "workspace" | "card">;
 export const RELATION_KINDS: URelationKind[] = ["category", "tag", "entry", "note", "cabinet"];
 export const RELATION_NOTE_MAX = 200;
 /** 끝점 = 종류 + 원본 id(메모 상자는 주도 — 상자 id는 주 문서 안에서만 고유) */
@@ -39,7 +41,7 @@ export const endKey = (e: URelationEnd) => [e.kind, e.week ?? "", e.id].join("/"
 export const sameEnd = (a: URelationEnd, b: URelationEnd) => endKey(a) === endKey(b);
 /** 노드 → 끝점(공간 노드는 끝점이 될 수 없음) */
 export function endOf(n: UNode): URelationEnd | null {
-  if (n.kind === "workspace") return null;
+  if (n.kind === "workspace" || n.kind === "card") return null;
   return n.kind === "note"
     ? { kind: "note", id: n.refId, week: n.weekId ?? null }
     : { kind: n.kind, id: n.refId };
@@ -89,6 +91,10 @@ export interface UNode {
   ended?: boolean;
   noteKind?: "text" | "image" | "link";
   cabinetKind?: "folder" | "link";
+  /** 지식 카드(UV3) */
+  card?: { type: CardType; status: CardStatus };
+  /** Cabinet 경로·주소(근거 묶음에서 기본 뺌, UV4) */
+  target?: string;
 }
 
 export interface UEdge {
@@ -130,6 +136,20 @@ export interface UniverseSnapshot {
   };
   /** 직접 연결(UV2) — 끊은 것은 빼고 */
   relations?: URelation[];
+  /** 지식 카드(UV3) — 지운 것은 빼고 */
+  cards?: Pick<
+    KnowledgeCard,
+    | "id"
+    | "type"
+    | "title"
+    | "summary"
+    | "conditions"
+    | "body"
+    | "status"
+    | "categoryIds"
+    | "sources"
+    | "updatedAt"
+  >[];
 }
 
 export const nid = (ws: string, kind: UNodeKind, ...ids: string[]) => [ws, kind, ...ids].join("/");
@@ -277,6 +297,7 @@ export function buildGraph(s: UniverseSnapshot): UGraph {
       title: it.title,
       text: it.title,
       cabinetKind: it.kind,
+      target: it.target,
     });
   }
   const cabIds = new Set(s.cabinet.items.map((i) => i.id));
@@ -298,8 +319,27 @@ export function buildGraph(s: UniverseSnapshot): UGraph {
         source: "cabinet-link",
       });
   }
-  // 직접 연결: 두 끝이 이 일지에 있을 때만 그린다(원본이 지워진 연결은 행은 남고 그리지 않음)
+  // 지식 카드: 카드 → 출처(가는 이중선), 원문이 지워진 출처는 선만 없음(카드 상세에서 "원문 없음")
   const have = new Set(nodes.map((n) => n.id));
+  for (const c of s.cards ?? []) {
+    const id = nid(ws, "card", c.id);
+    nodes.push({
+      id,
+      ws,
+      kind: "card",
+      refId: c.id,
+      title: oneLine(c.title, 60),
+      text: [c.summary, c.conditions, c.body].filter((x) => x.trim()).join("\n\n") || c.title,
+      date: c.updatedAt.slice(0, 10) as DateStr,
+      card: { type: c.type, status: c.status },
+    });
+    for (const src of c.sources) {
+      const to = endNodeId(ws, { kind: src.kind, id: src.sourceId, week: src.week ?? null });
+      if (have.has(to)) edges.push({ id: `${id}>src:${src.id}`, from: id, to, source: "card-source" });
+    }
+  }
+  for (const n of nodes) have.add(n.id);
+  // 직접 연결: 두 끝이 이 일지에 있을 때만 그린다(원본이 지워진 연결은 행은 남고 그리지 않음)
   for (const r of s.relations ?? []) {
     const from = endNodeId(ws, r.from);
     const to = endNodeId(ws, r.to);
@@ -336,7 +376,7 @@ export interface UFilter {
   range: { from: DateStr; to: DateStr } | null;
 }
 
-export const ALL_KINDS: UNodeKind[] = ["workspace", "category", "tag", "entry", "note", "cabinet"];
+export const ALL_KINDS: UNodeKind[] = ["workspace", "category", "tag", "entry", "note", "cabinet", "card"];
 export const ALL_SOURCES: UEdgeSource[] = [
   "membership",
   "tag",
@@ -344,6 +384,7 @@ export const ALL_SOURCES: UEdgeSource[] = [
   "note-edge",
   "cabinet-link",
   "relation",
+  "card-source",
 ];
 export const DEFAULT_FILTER: UFilter = {
   query: "",
@@ -614,6 +655,7 @@ export function layoutGalaxy(g: UGraph, w: number, h: number): Pos {
     };
     for (const n of g.nodes.filter((x) => x.ws === ws && x.kind === "note")) pos.set(n.id, near(n.id, 10));
     for (const n of g.nodes.filter((x) => x.ws === ws && x.kind === "cabinet")) pos.set(n.id, near(n.id, 16));
+    for (const n of g.nodes.filter((x) => x.ws === ws && x.kind === "card")) pos.set(n.id, near(n.id, 20));
     // 태그: 연결된 업무들의 가운데
     for (const t of g.nodes.filter((x) => x.ws === ws && x.kind === "tag")) {
       const cs = g.edges

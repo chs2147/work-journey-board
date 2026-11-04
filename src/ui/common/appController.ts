@@ -178,13 +178,20 @@ function detachAll() {
   detachSummary();
   detachNote();
   detachInsights();
-  for (const f of extraDetach) f();
+  for (const f of detachList()) f();
 }
 
-/** appController를 가져다 쓰는 저장소(Universe 등)가 자기 detach를 등록하는 곳 — 서로 가져오기 고리 없이 detachAll에 들어간다(CLAUDE.md 4-7) */
-const extraDetach: (() => void)[] = [];
+/**
+ * appController를 가져다 쓰는 저장소(Universe·검색 등)가 자기 detach를 등록하는 곳 — 서로 가져오기 고리 없이 detachAll에 들어간다(CLAUDE.md 4-7).
+ * 목록은 함수 선언(끌어올림)에 붙여 둔다 — 가져오기 고리에서 이 모듈 본문보다 먼저 불려도 안전하게.
+ */
+function detachList(): (() => void)[] {
+  const holder = detachList as unknown as { fns?: (() => void)[] };
+  return (holder.fns ??= []);
+}
 export function onDetach(f: () => void) {
-  if (!extraDetach.includes(f)) extraDetach.push(f);
+  const l = detachList();
+  if (!l.includes(f)) l.push(f);
 }
 
 function stopPeriodic() {
@@ -633,6 +640,20 @@ if (typeof window !== "undefined")
       async assetCount() {
         const j = get().journal;
         return j.state === "ready" ? (await j.repo.noteAssetStats()).count : -1;
+      },
+      /**
+       * 브라우저 모드 시험 전용: 화면을 거치지 않고 일지의 그 글 항목 끝에 " (가상 고침)"을 붙인다
+       * (다른 창에서 고친 것과 같은 상황 — 근거 묶음 복사 직전 재확인 시험, UV4). 실앱에서는 아무것도 하지 않는다.
+       */
+      async touchEntry(text: string) {
+        const j = get().journal;
+        if (j.state !== "ready" || platform().kind !== "browser") return;
+        await j.driver.execute("UPDATE entry_item SET text = text || ' (가상 고침)' WHERE text = ?", [text]);
+      },
+      /** 지금 연 공간 일지의 지식 카드 수(UV3) */
+      async cardCount() {
+        const j = get().journal;
+        return j.state === "ready" ? (await j.repo.listCards()).length : -1;
       },
       /** 지금 연 공간 일지의 직접 연결 수(UV2) */
       async relationCount() {

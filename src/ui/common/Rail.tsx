@@ -11,7 +11,7 @@ import { toggleCabinet, useCabinet } from "../cabinet/cabinetStore";
 import { useAppStore } from "./appStore";
 import styles from "./Rail.module.css";
 import { WorkspaceRailButton } from "./WorkspaceSwitcher";
-import { closeUniverse, openUniverse, useUniverse } from "../universe/universeStore";
+import { closeUniverse, openUniverse, usePack, useUniverse } from "../universe/universeStore";
 import { osText } from "../../shared/platformText";
 import { sameDir } from "../../domain/workspace";
 
@@ -96,6 +96,7 @@ export function Rail() {
   const updateDot = useUpdate(hasUpdate);
   // 설정이 열려 있으면 그 화면이 "지금 보기"(보드·인사이트는 숨겨 둔 채)
   const universeOpen = useUniverse((s) => s.open) && !settingsOpen;
+  const packCount = usePack((s) => s.items.length);
   const insightsOpen = useInsights((s) => s.open) && !settingsOpen && !universeOpen;
   const boardOn = !insightsOpen && !settingsOpen && !universeOpen;
   const important = useBoard((s) => s.important);
@@ -160,6 +161,15 @@ export function Rail() {
         onClick={() => void openUniverse()}
       >
         <UniverseIcon />
+        {packCount > 0 && (
+          <span
+            className={styles.badge}
+            data-testid="pack-badge"
+            aria-label={STR.universe.pack.rail(packCount)}
+          >
+            {packCount}
+          </span>
+        )}
       </button>
       <span className={styles.sep} aria-hidden="true" />
       <button

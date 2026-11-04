@@ -1,5 +1,6 @@
 /* Universe(universe-spec 4절) — 테마 토큰만 쓴다(시그니처·라이트·다크 자동) */
 .view {
+  position: relative;
   flex: 1 1 auto;
   min-width: 0;
   min-height: 0;
@@ -593,4 +594,196 @@
 .dialog .actions {
   justify-content: flex-end;
   margin-top: 6px;
+}
+
+/* ── 지식 카드(UV3) ── */
+.cardDialog {
+  width: min(880px, calc(100vw - 32px));
+}
+
+.cardGrid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: var(--sp-4);
+}
+
+@media (width <= 760px) {
+  .cardGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.field .label {
+  display: flex;
+  justify-content: space-between;
+}
+
+.over {
+  color: var(--danger, #c0392b);
+  font-size: var(--fs-xs);
+}
+
+.chosenRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--line);
+}
+
+.chosenRow span {
+  flex: 1;
+}
+
+.relList .chosenRow button {
+  flex: none;
+  width: auto;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--text-3);
+  cursor: pointer;
+}
+
+.status {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--surface-sub);
+  font-size: var(--fs-xs);
+}
+
+.status_reviewed {
+  background: var(--accent);
+  color: var(--primary-fg, #fff);
+}
+
+.status_archived {
+  color: var(--text-3);
+}
+
+.cardSummary {
+  margin: 4px 0;
+  font-weight: var(--fw-bold);
+}
+
+.srcRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--line);
+}
+
+.srcText {
+  flex: 1;
+  white-space: pre-wrap;
+}
+
+.srcState {
+  flex: none;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: var(--fs-xs);
+}
+
+.stOk {
+  background: var(--surface-sub);
+  color: var(--text-2);
+}
+
+.stChanged {
+  background: #f6dfb5;
+  color: #6b4a00;
+}
+
+.stMoved {
+  background: #dbe7f7;
+  color: #1d4a80;
+}
+
+.stMissing {
+  background: #f3d2d2;
+  color: #7a1f1f;
+}
+
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+/* ── 근거 묶음(UV4) ── */
+.packBtn {
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-1);
+  font: inherit;
+  cursor: pointer;
+}
+
+.drawer {
+  position: absolute;
+  top: 52px;
+  right: var(--sp-4);
+  bottom: var(--sp-3);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: min(440px, calc(100% - 32px));
+  overflow: auto;
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg, 10px);
+  background: var(--surface-card);
+  box-shadow: 0 12px 40px rgb(0 0 0 / 18%);
+}
+
+.drawerHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.drawerHead h3 {
+  margin: 0;
+  font-size: var(--fs-md);
+}
+
+.drawerHead button {
+  border: 0;
+  background: none;
+  color: var(--text-2);
+  cursor: pointer;
+}
+
+.ref {
+  flex: none;
+  min-width: 26px;
+  color: var(--accent);
+  font-size: var(--fs-xs);
+}
+
+.packPreview {
+  max-height: 260px;
+  min-height: 120px;
+  margin: 0;
+  overflow: auto;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-sub);
+  font-size: var(--fs-xs);
+  white-space: pre-wrap;
 }

@@ -45,6 +45,7 @@ import { IconClock, IconDone, IconMoveDate, IconNote, IconRepeat, IconTrash } fr
 import { startRowDrag, useLinkDrop, useLinkHover, useRowDrag } from "./rowDrag";
 import { useCabinet, openCabinet, openItem as openCabinetItem } from "../cabinet/cabinetStore";
 import { CabinetRailIcon } from "../cabinet/CabinetIcons";
+import { addEntryToPack, openCard, useCardMarks } from "../universe/universeStore";
 import styles from "./Board.module.css";
 
 export interface CellNav {
@@ -115,6 +116,18 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
   for (const pair of cabKey.split(",")) {
     const [eid, cid] = pair.split(":");
     if (eid && cid) (cabOf[eid] ??= []).push(cid);
+  }
+  // 지식 카드 출처(UV3 ◆) — 이 칸 항목만
+  const cardKey = useCardMarks((st) =>
+    items
+      .filter((x) => st.byEntry[x.id]?.length)
+      .map((x) => `${x.id}:${st.byEntry[x.id]!.join("+")}`)
+      .join(","),
+  );
+  const cardsOf: Record<string, string[]> = {};
+  for (const pair of cardKey.split(",")) {
+    const [eid, ids] = pair.split(":");
+    if (eid && ids) cardsOf[eid] = ids.split("+");
   }
   const linkCount: Record<string, number> = {};
   for (const id of linkKey.split(",")) if (id) linkCount[id] = (linkCount[id] ?? 0) + 1;
@@ -327,6 +340,7 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
                 dragFrom && i >= dragFrom.start && i < dragFrom.end ? styles.dragSource : "",
                 linkCount[it.id] ? styles.linked : "",
                 cabOf[it.id] ? styles.cab : "",
+                cardsOf[it.id] ? styles.carded : "",
                 linkTarget === it.id || linkHover === it.id ? styles.linkTarget : "",
                 it.startTime ? styles.hasTime : "",
               ].join(" ")}
@@ -463,6 +477,21 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
                   ↻
                 </button>
               )}
+              {/* 지식 카드 출처 ◆(UV3) — 누르면 Universe에서 그 카드 */}
+              {cardsOf[it.id] && (
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  className={styles.cardBadge}
+                  aria-label={STR.universe.card.boardMark(cardsOf[it.id]!.length)}
+                  title={STR.universe.card.boardMark(cardsOf[it.id]!.length)}
+                  data-testid="card-badge"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => void openCard(cardsOf[it.id]![0]!)}
+                >
+                  ◆
+                </button>
+              )}
               {/* Cabinet 표시 — 하나면 그 폴더 창·링크, 여럿이면 Cabinet에서 */}
               {cabOf[it.id] && (
                 <button
@@ -524,6 +553,15 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
                       onSelect: () => {
                         setTool(null);
                         addLinkedBox(it.id);
+                      },
+                    },
+                    {
+                      key: "pack",
+                      icon: <span aria-hidden="true">＋</span>,
+                      label: STR.universe.pack.add,
+                      onSelect: () => {
+                        setTool(null);
+                        addEntryToPack(it.id);
                       },
                     },
                     ...(it.depth === 0

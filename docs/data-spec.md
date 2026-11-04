@@ -218,6 +218,15 @@ CREATE TABLE app_meta (
   - 기존 메모 연결(`refs`)·관계선(`edges`)·Cabinet 연결은 복사하지 않는다(읽을 때 투영).
 - 직전 백업은 `_pre-migration-v11`. 구조 v10 판은 v11 일지를 열지 못한다(새 판 안내) — Universe의 다른 공간 읽기도 구조 판이 같을 때만.
 
+### 3-s. 스키마 v12 (2026-11-04, `0012_knowledge_card.sql`)
+- 지식 카드(universe-spec 5-2·8-1, UV3): `knowledge_card(id, card_type 'solution'|'decision'|'learning'|'guide', title 1~120, summary ≤300, conditions ≤1,000, body ≤10,000, status 'draft'|'reviewed'|'archived', revision, created_at, updated_at, reviewed_at, deleted_at)`.
+- `knowledge_card_category(card_id → knowledge_card CASCADE, category_id → category CASCADE)` — 관련 업무.
+- `knowledge_card_source(id, card_id → knowledge_card CASCADE, source_kind 'entry'|'note'|'cabinet'|'category'|'tag', source_id, source_week, excerpt ≤2,000, content_fp, location_fp, locator_json, sort_order, captured_at)` — 같은 출처는 고유 색인 `ux_knowledge_card_source(card_id, source_kind, ifnull(source_week,''), source_id)`로 한 번만. 원본이 지워져도 출처 행은 남는다(읽을 때 "원문 없음").
+- 지문(`domain/knowledgeCard.ts` `fingerprint`, FNV-1a 32비트 ×2 — "바뀌었나"만 보는 용도): 항목 = 깊이·글·(세부면) 본 항목 글 / 위치 = 날짜·업무 · 메모 상자 = 종류·글·링크 주소·메모·연결 / 위치 = 주 · Cabinet = 제목·대상 · 업무·태그 = 이름.
+- 출처 상태 = 일치 · 내용 변경(content_fp 다름) · 위치 변경(location_fp만 다름) · 원문 없음. 카드를 자동으로 고치지 않고 [다시 확인]이 발췌·지문만 지금 원문으로 바꾼다.
+- 작성 중 임시본 = `app_meta` 키 `card_draft`(새 카드만, 0.8초 뒤 저장). 지우기 = `deleted_at`(되돌리기).
+- 직전 백업은 `_pre-migration-v12`.
+
 ## 4. 카테고리 활성 계산
 
 ### 4-1. 주 W에 보일 카테고리

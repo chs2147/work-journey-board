@@ -1,13 +1,13 @@
 // 검색 상태(features-1102-spec F1): 검색어·결과·거르기·지금 결과. 결과가 있는 동안 "검색 결과 기준 보기"(띠)는
 // [검색 초기화] 전까지 유지 — 패널을 닫아도 남는다. 앱을 다시 켜면 처음부터.
 import { create } from "zustand";
-import type { CabinetHit } from "../../data/repository";
+import type { CabinetHit, CardHit } from "../../data/repository";
 import type { SearchHit } from "../../domain/search";
 import { searchTerms } from "../../domain/search";
 import { addDays, type DateStr } from "../../domain/week";
 import { goToWeek, reportError, revealItem, setTagFilter, useBoard } from "../board/boardStore";
 import { useAppStore } from "../common/appStore";
-import { setSettingsOpen } from "../common/appController";
+import { onDetach, setSettingsOpen } from "../common/appController";
 import { closeInsights, useInsights } from "../insights/insightsStore";
 import { revealBox, useNote } from "../note/noteStore";
 import { setSummaryOpen, useSummary } from "../summary/summaryStore";
@@ -23,6 +23,8 @@ interface SearchState {
   truncated: boolean;
   /** Cabinet 제목·주소에서 찾은 것(features-1102-spec F5 #7) — 목록 맨 위 따로, F3 이동 대상 아님 */
   cabinet: CabinetHit[];
+  /** 지식 카드(UV3) */
+  cards: CardHit[];
   filter: SearchFilter;
   range: SearchRange;
   /** 지금 결과(보이는 목록 기준 위치) */
@@ -41,6 +43,7 @@ export const useSearch = create<SearchState>(() => ({
   hits: [],
   truncated: false,
   cabinet: [],
+  cards: [],
   filter: "all",
   range: "all",
   index: -1,
@@ -87,7 +90,7 @@ export async function runSearch(query = get().query) {
   const j = useAppStore.getState().journal;
   if (j.state !== "ready") return;
   if (!searchTerms(query).length) {
-    set({ hits: [], cabinet: [], truncated: false, index: -1, ran: query.trim() });
+    set({ hits: [], cabinet: [], cards: [], truncated: false, index: -1, ran: query.trim() });
     return;
   }
   const my = ++seq;
@@ -96,11 +99,14 @@ export async function runSearch(query = get().query) {
     const today = useBoard.getState().today;
     const { hits, truncated } = await j.repo.search(query, rangeFrom(get().range, today));
     const cabinet = await j.repo.searchCabinet(query);
-    if (my !== seq) return;
+    const cards = await j.repo.searchCards(query);
+    // 그사이 다시 찾았거나 다른 일지로 바뀌었으면 버린다(CLAUDE.md 4-7)
+    if (my !== seq || useAppStore.getState().journal !== j) return;
     if (useSummary.getState().open) setSummaryOpen(false);
     set({
       hits,
       cabinet,
+      cards,
       truncated,
       ran: query.trim(),
       index: -1,
@@ -132,6 +138,7 @@ export function resetSearch() {
     ran: "",
     hits: [],
     cabinet: [],
+    cards: [],
     truncated: false,
     index: -1,
     active: false,
@@ -139,6 +146,9 @@ export function resetSearch() {
     filter: "all",
   });
 }
+
+// 일지를 바꾸면 이전 일지의 결과·강조를 비운다(CLAUDE.md 4-7)
+onDetach(resetSearch);
 
 /** 결과로 이동(features-1102-spec F1 바로가기) */
 export async function goToHit(i: number) {

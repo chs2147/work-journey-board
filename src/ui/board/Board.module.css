@@ -693,6 +693,44 @@
   color: var(--text-3);
 }
 
+/* 지식 카드 출처(universe-spec D9): 오른쪽 끝(Cabinet 표시가 있으면 그 왼쪽)에 ◆ — 다른 배지는 그만큼 비켜 선다 */
+.carded {
+  --cab-off: 18px;
+}
+
+.cab.carded {
+  --cab-off: 40px;
+}
+
+.carded .itemInput,
+.carded .itemView {
+  padding-right: calc(2px + var(--cab-off));
+}
+
+.cardBadge {
+  position: absolute;
+  top: 3px;
+  right: 1px;
+  width: 16px;
+  height: calc(var(--fs-md) * 1.45);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: #8a6fd1;
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.cab .cardBadge {
+  right: 23px;
+}
+
+.cardBadge:hover {
+  background: var(--surface-sub);
+}
+
 /* 매주 반복(important-repeat-spec 3-4): 반복 중이면 글 끝에 ↻(자리를 늘 비워 둠), 아니면 마우스를 올릴 때만 ↻ */
 .repeating .itemInput {
   padding-right: calc(18px + var(--cab-off, 0px));

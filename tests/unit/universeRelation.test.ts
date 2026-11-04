@@ -243,7 +243,7 @@ describe("마이그레이션 v10 → v11(universe_relation)", () => {
       "INSERT INTO category (id, name, color, sort_order, created_at, updated_at) VALUES ('c1', '업무', 'c1', 1, 't', 't')",
     );
     const before = vi.fn().mockResolvedValue(undefined);
-    expect(await migrate(db, { beforeMigrate: before })).toBe(11);
+    expect(await migrate(db, { beforeMigrate: before, migrations: MIGRATIONS.slice(0, 11) })).toBe(11);
     expect(before).toHaveBeenCalledWith(10, 11);
     expect(await db.select("SELECT id FROM category")).toEqual([{ id: "c1" }]);
     const ins = (vals: string) =>

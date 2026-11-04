@@ -185,3 +185,35 @@ test("Universe 직접 연결은 만든 공간 일지에만: 공간을 오가도 
   await page.getByTestId("u-view-map").click();
   await expect(page.getByTestId("u-rel-line")).toHaveCount(1);
 });
+
+test("지식 카드·근거 묶음도 공간마다 따로: 카드는 만든 공간 일지에만, 공간을 바꾸면 근거 묶음·보드 ◆가 비워진다(CLAUDE.md 4-7)", async ({
+  page,
+}) => {
+  const count = () =>
+    page.evaluate(() =>
+      (globalThis as unknown as { __wjbApp: { cardCount(): Promise<number> } }).__wjbApp.cardCount(),
+    );
+  await page.keyboard.press("Alt+Digit5");
+  await page.getByTestId("u-view-list").click();
+  await page
+    .getByTestId("universe-list")
+    .getByTestId("u-row")
+    .filter({ has: page.locator("td", { hasText: /^\s*업무 항목$/ }) })
+    .first()
+    .click();
+  await page.getByTestId("u-pack-add").click();
+  await expect(page.getByTestId("pack-badge")).toHaveText("1");
+  await page.getByTestId("u-make-card").click();
+  await page.getByTestId("u-card-title").fill("가상: 회사 카드");
+  await page.getByTestId("u-card-save").click();
+  await expect(page.getByTestId("u-detail-title")).toHaveText("가상: 회사 카드");
+  expect(await count()).toBe(1);
+  for (let round = 0; round < 3; round++) {
+    await switchTo(page, 2, "개인");
+    expect(await count()).toBe(0);
+    await expect(page.getByTestId("pack-badge")).toHaveCount(0); // 이전 공간 원문은 묶음에 남지 않는다
+    await expect(page.getByTestId("card-badge")).toHaveCount(0);
+    await switchTo(page, 1, "회사");
+    expect(await count()).toBe(1);
+  }
+});

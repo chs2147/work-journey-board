@@ -91,6 +91,11 @@ npm run tauri dev    # 실앱 모드(윈도우·맥 / 리눅스는 webkit2gtk-4.
 - 설치 파일: `main`에 반영되면 *Build desktop installers*가 윈도우(NSIS)·맥(유니버설 DMG)을 나란히 만들고, **둘 다 성공해야** [Releases](https://github.com/chs2147/work-journey-board/releases)에 `v<버전>`으로 함께 올린다 — 0.x·`-rc`는 사전 릴리스, 1.0.0 이상 정식 판은 정식 릴리스. 윈도우 오프라인 설치판은 요청할 때만 Actions → *Build desktop installers* → Run workflow(main) → `offline`으로 그 판 릴리스에 더한다. 하나의 원본으로 두 플랫폼을 같은 판으로 운영한다([docs/macos-spec.md](docs/macos-spec.md)).
 
 ## Version History
+### v1.12.0-rc.1 (2026-11-04) — Universe 지식 카드 + 근거 묶음(검증용)
+- **지식 카드** — 해결법·의사결정·배운 점·업무 길잡이, 출처마다 당시 발췌·근거 상태(내용 변경·위치 변경·원문 없음)·비교·다시 확인, 초안·검토함·보관, 작성 중 임시본, 보드 ◆·통합 검색 · 구조 v12(직전 자동 백업)
+- **근거 묶음** — 담기(Universe·카드·보드 메뉴)·서랍·미리보기·사내 AI용 복사·Markdown 저장, 한도·경로/주소 빼기·복사 직전 재검증
+- UV1 지도 보기·UV2 직접 연결(`1.10.0-rc.1`)을 포함
+
 ### v1.10.0-rc.1 (2026-11-04) — Universe 지도 보기 + 직접 연결(검증용)
 - **직접 연결** — Universe 상세 [연결하기]로 주를 넘어 잇기(관련·후속·근거·반대 근거·대체), 굵은 선·화살표·문구, 고치기·끊기, Universe 안 `Ctrl+Z`/`Ctrl+Y` · 구조 v11(직전 자동 백업)
 - UV1 지도 보기(`1.9.0-rc.2`)를 포함
