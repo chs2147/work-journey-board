@@ -419,12 +419,6 @@ section:first-child > .group {
   color: var(--text-1);
 }
 
-.dueCount {
-  margin-left: auto;
-  color: var(--text-3);
-  font-weight: normal;
-}
-
 .dueLine .dot {
   flex: none;
   align-self: center;
@@ -441,8 +435,8 @@ section:first-child > .group {
 
 .dueBadge {
   flex: none;
-  padding: 0 6px;
-  border-radius: 5px;
+  padding: 2px 8px;
+  border-radius: 4px;
   font-size: var(--fs-xs);
   font-weight: var(--fw-bold);
   white-space: nowrap;
@@ -454,8 +448,8 @@ section:first-child > .group {
 }
 
 .due_today {
-  background: var(--due-today-bg);
-  color: var(--due-today);
+  background: var(--due-today);
+  color: var(--surface-card);
 }
 
 .due_soon {

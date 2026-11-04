@@ -371,7 +371,9 @@ function schedule(key: string, run: () => Promise<unknown>) {
 }
 
 /** 대기 중인 저장을 모두 지금 실행한다(주 이동·실행 취소·종료 전에). */
+const categoryWrites = new Set<Promise<unknown>>();
 export async function flushAll() {
+  await Promise.allSettled([...categoryWrites]);
   const keys = [...timers.keys()];
   for (const k of keys) {
     clearTimeout(timers.get(k)!);
@@ -390,6 +392,7 @@ async function loadWeek(weekId: WeekId, focusDay: DateStr) {
   const r = requireRepo();
   const seq = ++loadSeq;
   loading = { weekId, focusDay };
+  if (get().weekId !== weekId) set({ addOpen: false });
   const stale = () => seq !== loadSeq;
   try {
     await loadWeekNow(r, weekId, focusDay, stale);
@@ -484,6 +487,7 @@ export function detachBoard() {
   loadSeq++; // 진행 중인 주 불러오기 결과는 버린다
   loading = null;
   repo = null;
+  set({ addOpen: false });
   undoStack.length = 0;
   redoStack.length = 0;
   syncUndoFlags();
@@ -810,12 +814,18 @@ export function setFocusDay(day: DateStr) {
   void refreshPrevDates();
 }
 
-/** 포커스 열의 첫 업무 칸(기록이 있으면 마지막 항목 끝)으로 커서. 업무가 없으면 업무 추가 입력칸. */
+/** 포커스 열의 첫 업무 칸(기록이 있으면 마지막 항목 끝)으로 커서. 업무가 없으면 상단 업무 추가 버튼. */
 export function focusStartCell() {
   const { focusDay, cells } = get();
   const cats = shownCategories(get());
   const first = cats.find((c) => c.state === "active") ?? cats[0];
-  if (!first) return set({ addOpen: true });
+  if (!first) {
+    set({ focus: null });
+    requestAnimationFrame(() =>
+      document.querySelector<HTMLButtonElement>('[data-testid="category-add"]')?.focus(),
+    );
+    return;
+  }
   const key = cellKey(focusDay, first.category.id);
   const items = cells[key] ?? [];
   if (items.length === 0) {
@@ -915,6 +925,34 @@ export async function addCategory(name: string): Promise<boolean> {
     reportError(e);
     return false;
   }
+}
+
+/** v11: 업무·새 태그·연결을 한 트랜잭션으로 생성하고 원래 주/공간에서만 화면 갱신. */
+export async function addCategoryWithTags(
+  name: string,
+  tagIds: string[],
+  newTags: string[],
+  signal: AbortSignal,
+) {
+  const r = requireRepo();
+  const weekId = get().weekId;
+  const pending = track(() => r.createCategory(name, weekId, { tagIds, newTags, signal }));
+  categoryWrites.add(pending);
+  let category;
+  try {
+    category = await pending;
+  } finally {
+    categoryWrites.delete(pending);
+  }
+  if (repo !== r || get().weekId !== weekId || signal.aborted) return false;
+  const assigned = (await r.getCategoryTags())[category.id] ?? [];
+  if (repo !== r || get().weekId !== weekId || signal.aborted) return false;
+  if (get().tagFilter.length && !matchesTagFilter(assigned, get().tagFilter)) {
+    setTagFilter([]);
+    toast(STR.categoryCreate.filterCleared);
+  }
+  await reload();
+  return repo === r && get().weekId === weekId ? category.id : false;
 }
 
 export async function renameCategory(id: string, name: string) {

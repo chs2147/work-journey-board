@@ -154,7 +154,7 @@ test("주말: 기록 있는 토요일은 넓게, 빈 일요일은 좁게 — 누
 
 test("업무 관리: 지난 주에서 추가 → 이번 주로 이월, 이름·색·순서, 종료와 되돌리기", async ({ page }) => {
   await page.keyboard.press("Alt+ArrowLeft"); // W42
-  await page.getByRole("button", { name: "+ 업무 추가" }).click();
+  await page.getByTestId("category-add").click();
   await page.keyboard.type("분기 결산 지원");
   await page.keyboard.press("Enter");
   await page.keyboard.press("Escape");
@@ -274,11 +274,15 @@ test("2분 시나리오: 빈 일지에서 키보드만으로 업무 3개 × 항�
     await page.keyboard.type(t);
   };
   const started = Date.now();
-  // 빈 일지면 업무 추가 입력칸이 열려 있다
-  await expect(page.getByRole("textbox", { name: "+ 업무 추가" })).toBeFocused();
+  // 빈 일지는 상단 업무 추가에서 팝업을 연다
+  await page.getByTestId("category-add").click();
+  await expect(page.getByRole("textbox", { name: "업무 이름", exact: true })).toBeFocused();
   for (const n of ["업무 가", "업무 나", "업무 다"]) {
     await type(n);
+    for (let i = 0; i < 3; i++) await press("Shift+Tab");
     await press("Enter");
+    await expect(page.getByRole("textbox", { name: "업무 이름", exact: true })).toHaveValue("");
+    await expect(page.getByRole("textbox", { name: "업무 이름", exact: true })).toBeFocused();
   }
   await press("Escape");
   await press("Alt+KeyT"); // 오늘 열 첫 업무 칸으로
@@ -299,13 +303,13 @@ test("2분 시나리오: 빈 일지에서 키보드만으로 업무 3개 × 항�
     expect(await values(cell(page, `업무 ${n}`, TODAY))).toEqual([`${n} 첫째 진행`, `${n} 둘째 진행`]);
   }
   await expect(page.locator(".note-prose")).toHaveText("메모 한 줄");
-  // 글자 외 조작 키 = Enter×3 + Esc + Alt+T + (Enter + ↓)×3 + Esc = 12회
+  // 팝업에서 Shift+Tab 3회로 추가하고 계속에 이동(3개). 기존 12회 + 9회 = 21회
   expect(
     keys -
       ["업무 가", "업무 나", "업무 다"].join("").length -
       6 * "가 첫째 진행".length -
       "메모 한 줄".length,
-  ).toBe(12);
+  ).toBe(21);
 });
 
 test("업무 행 머리를 끌어서 순서 바꾸기 — 머리의 위쪽 절반에 놓으면 그 위로", async ({ page }) => {

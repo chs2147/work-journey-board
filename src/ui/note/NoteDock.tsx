@@ -219,9 +219,24 @@ export function NoteDock({ variant = "dock" }: Props) {
           className={styles.splitter}
           aria-label={STR.note.resizeDock}
           title={STR.note.resizeDock}
-          tabIndex={-1}
+          tabIndex={0}
           onPointerDown={startResize}
           onDoubleClick={setDockAuto}
+          onKeyDown={(e) => {
+            if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+              e.preventDefault();
+              setDockHeight(
+                Math.max(
+                  120,
+                  (auto ? (dockRef.current?.offsetHeight ?? height) : height) +
+                    (e.key === "ArrowUp" ? 16 : -16),
+                ),
+              );
+            } else if (e.key === "Home") {
+              e.preventDefault();
+              setDockAuto();
+            }
+          }}
         />
       )}
       {/* 머리 빈 곳을 두 번 누르면 보드 우선 자동 높이로 */}

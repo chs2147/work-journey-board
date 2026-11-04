@@ -141,6 +141,7 @@ export function CategoryHeader({
       draggable={!editing}
       title={STR.categoryMenu.dragHint}
       data-testid="category-header"
+      data-category-id={category.id}
       onDragStart={(e: DragEvent<HTMLDivElement>) => {
         e.dataTransfer.effectAllowed = "move";
         e.dataTransfer.setData(DRAG_TYPE, category.id);

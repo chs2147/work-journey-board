@@ -31,6 +31,10 @@ const LIBS: [string, string, string][] = [
   ["ExcelJS", "4.4", "MIT"],
   ["date-fns", "4.4", "MIT"],
   ["Zustand", "5.0", "MIT"],
+  ["mdast-util-from-markdown", "2.1.0", "MIT"],
+  ["mdast-util-gfm", "3.1.0", "MIT"],
+  ["micromark-extension-gfm", "3.0.0", "MIT"],
+  ["htmlparser2", "12.0.0", "MIT"],
 ];
 
 export function AboutCard() {

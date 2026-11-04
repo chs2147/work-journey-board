@@ -108,7 +108,8 @@ test("보드·주간 메모 편집기(서식 전부)·엑셀 내보내기 — CS
   // 서식마다 적용을 기다린다(선택 영역 반영 전에 다음 서식을 누르면 앞 서식이 덮일 수 있다)
   await toolbar.getByLabel("글자 크기").selectOption("xl");
   await expect(prose.locator(".note-fs-xl")).toHaveCount(1);
-  await toolbar.getByLabel("글자색").selectOption("blue");
+  await toolbar.getByRole("button", { name: "글자색", exact: true }).click();
+  await toolbar.getByRole("radio", { name: "파랑", exact: true }).click();
   await expect(prose.locator(".note-c-blue")).toHaveCount(1);
   await toolbar.getByRole("button", { name: "형광펜" }).click();
   await expect(prose.locator("mark.note-hl")).toHaveCount(1);

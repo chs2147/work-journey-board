@@ -5,7 +5,7 @@
   flex-direction: column;
   min-height: 0;
   background: var(--surface-card);
-  border-top: 1px solid var(--line);
+  border-top: 0;
 }
 
 .dockExpanded {
@@ -20,23 +20,28 @@
 
 .splitter {
   flex: 0 0 auto;
+  position: relative;
+  z-index: 4;
   height: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  margin: -4px 0;
+  padding: 0;
   border: 0;
-  border-bottom: 1px solid var(--line);
-  background: var(--surface-sub);
+  background: transparent;
   cursor: row-resize;
   touch-action: none;
 }
-
 .splitter::after {
   content: "";
+  position: absolute;
+  top: 3px;
+  left: calc(50% - 20px);
   width: 40px;
-  height: 3px;
-  border-radius: 2px;
+  height: 2px;
   background: var(--line-strong);
+}
+.splitter:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 0;
 }
 
 .head {
@@ -1738,4 +1743,64 @@ button.stripText:hover {
   font-size: var(--fs-xs);
   white-space: nowrap;
   pointer-events: none;
+}
+
+.colorWrap {
+  position: relative;
+  display: inline-flex;
+}
+.colorA {
+  border-bottom: 3px solid currentColor;
+  line-height: 1;
+  padding: 0 2px;
+}
+.colorMenu {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 6px);
+  display: flex;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.15);
+  z-index: 10;
+}
+.swatch {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  font: inherit;
+  cursor: pointer;
+  color: var(--swatch-ink);
+  background: var(--surface-card);
+  box-shadow: inset 0 -5px var(--swatch-ink);
+}
+.swatch[aria-checked="true"] {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.swatch:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.swatch_default {
+  --swatch-ink: var(--text-1);
+}
+.swatch_gray {
+  --swatch-ink: var(--text-2);
+}
+.swatch_orange {
+  --swatch-ink: var(--note-orange);
+}
+.swatch_blue {
+  --swatch-ink: var(--note-blue);
+}
+.swatch_green {
+  --swatch-ink: var(--note-green);
+}
+.swatch_red {
+  --swatch-ink: var(--note-red);
 }

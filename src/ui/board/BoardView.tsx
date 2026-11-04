@@ -1,4 +1,4 @@
-// 주간 보드: 포커스 열 격자(overview 10-1). 행 = 업무, 열 = 월~일, 아래 = 업무 추가. 메모는 보드 아래 메모 도크(weekly-note-spec).
+// 주간 보드: 포커스 열 격자(overview 10-1). 행 = 업무, 열 = 월~일, 업무 추가 = 상단 팝업. 메모는 보드 아래 메모 도크(weekly-note-spec).
 import { useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { ColResizer } from "./ColResizer";
 import { useColWidths } from "./colWidths";
@@ -11,7 +11,6 @@ import { TagFilterBanner } from "./TagFilterBanner";
 import { CategoryHeader } from "./CategoryHeader";
 import { DayHeader } from "./DayHeader";
 import { CellEditor, type CellNav } from "./CellEditor";
-import { AddCategoryRow } from "./AddCategoryRow";
 import styles from "./Board.module.css";
 
 const LABEL_WIDTH = "184px";
@@ -152,8 +151,6 @@ export function BoardView() {
               })}
             </Row>
           ))}
-
-          <AddCategoryRow />
         </div>
       </div>
     </>

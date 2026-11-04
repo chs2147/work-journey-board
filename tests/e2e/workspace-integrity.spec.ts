@@ -242,3 +242,49 @@ test("마감일도 공간마다 따로: 정한 공간 일지에만, 공간을 �
     await expect(page.getByTestId("due-chip")).toHaveText("⏳ 10/26(월) D-4");
   }
 });
+
+test("v11 Markdown 생성 후 공간 3회 왕복해 링크·글 보존, 읽기 중 전환하면 생성 취소", async ({ page }) => {
+  await expect(page.locator("[data-note-drop]")).toBeVisible();
+  const note = page.locator(".note-prose").filter({ hasText: "v11 공간 전용" });
+  await page.evaluate(() => {
+    const el = document.querySelector("[data-note-drop]")!;
+    const dt = new DataTransfer();
+    dt.items.add(
+      new File(["# v11 공간 전용\n\n[링크](https://example.com)"], "공간.md", { type: "text/markdown" }),
+    );
+    el.dispatchEvent(new DragEvent("drop", { bubbles: true, cancelable: true, dataTransfer: dt }));
+  });
+  await expect(note).toHaveCount(1);
+  await saved(page);
+  for (let i = 0; i < 3; i++) {
+    await switchTo(page, 2, "개인");
+    await expect(note).toHaveCount(0);
+    await switchTo(page, 1, "회사");
+    await expect(note).toHaveCount(1);
+    await expect(note.locator('a[href="https://example.com"]')).toHaveAttribute(
+      "href",
+      "https://example.com",
+    );
+  }
+  await page.evaluate(() => {
+    const original = File.prototype.arrayBuffer;
+    File.prototype.arrayBuffer = function () {
+      if (this.name !== "지연.md") return original.call(this);
+      document.body.dataset.reading = "true";
+      return new Promise<ArrayBuffer>((resolve) => {
+        (globalThis as unknown as { releaseMd(): void }).releaseMd = () =>
+          void original.call(this).then(resolve);
+      });
+    };
+    const el = document.querySelector("[data-note-drop]")!;
+    const dt = new DataTransfer();
+    dt.items.add(new File(["오면 안 되는 지연 메모"], "지연.md", { type: "text/markdown" }));
+    el.dispatchEvent(new DragEvent("drop", { bubbles: true, cancelable: true, dataTransfer: dt }));
+  });
+  await expect(page.locator("body")).toHaveAttribute("data-reading", "true");
+  await switchTo(page, 2, "개인");
+  await page.evaluate(() => (globalThis as unknown as { releaseMd(): void }).releaseMd());
+  await expect(page.locator(".note-prose").filter({ hasText: "오면 안 되는 지연 메모" })).toHaveCount(0);
+  await switchTo(page, 1, "회사");
+  await expect(page.locator(".note-prose").filter({ hasText: "오면 안 되는 지연 메모" })).toHaveCount(0);
+});

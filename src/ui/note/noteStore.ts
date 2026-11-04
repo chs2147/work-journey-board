@@ -186,6 +186,7 @@ let loadedDoc: NoteDoc | null = null;
  * 1.8.0 결함: 공간을 바꾼 직후 "이전 공간의 문서"로 "새 공간의 이미지"를 정리해 그림이 지워졌다(v1.8.1).
  */
 let docRepo: JournalRepository | null = null;
+let noteGeneration = 0;
 const undoStack: NoteDoc[] = [];
 const redoStack: NoteDoc[] = [];
 
@@ -199,6 +200,7 @@ const syncUndo = () => set({ canUndo: undoStack.length > 0, canRedo: redoStack.l
  * 다음 일지에 이전 문서·예약 저장·그림이 섞이지 않게 한다(v1.8.1).
  */
 export function detachNote() {
+  noteGeneration++;
   if (saveTimer) clearTimeout(saveTimer);
   saveTimer = null;
   unsubscribe?.();
@@ -247,6 +249,7 @@ export async function initNote(r: JournalRepository) {
 }
 
 async function loadWeek(weekId: WeekId, finish = true) {
+  noteGeneration++;
   const r = repo;
   if (!r || !weekId) return;
   if (finish) await finishNote();
@@ -530,6 +533,87 @@ export function pastePlace(): { x: number; y: number } {
     return { x: cur.x, y: cur.y };
   if (cur) return { x: cur.x, y: snap(cur.y + (cur.h ?? 48) + BOX_GAP) };
   return positionBelow(doc);
+}
+
+/** 파일 드롭은 이미지와 Markdown만 받는다. Markdown은 한 드롭당 실행 취소 한 단계. */
+export async function addDroppedFiles(files: File[], at: { x: number; y: number }) {
+  const r = docRepo;
+  const weekId = get().weekId;
+  const generation = noteGeneration;
+  const current = () =>
+    !!r &&
+    repo === r &&
+    docRepo === r &&
+    get().weekId === weekId &&
+    useBoard.getState().weekId === weekId &&
+    noteGeneration === generation;
+  if (!current()) return;
+  const markdown = files.filter((f) => /\.(md|markdown)$/i.test(f.name));
+  // 이미지 처리도 원래 대상 주/공간일 때만 시작한다.
+  const images = files.filter((f) => !markdown.includes(f) && f.type.startsWith("image/"));
+  for (const file of files.filter((f) => !markdown.includes(f) && !images.includes(f)))
+    toast(STR.markdownDrop.failed(file.name, STR.markdownDrop.unsupported));
+  if (markdown.length) {
+    const { markdownToNote, MARKDOWN_MAX_BYTES, MARKDOWN_MAX_FILES } =
+      await import("../../domain/markdownNote");
+    if (!current()) return;
+    if (markdown.length > MARKDOWN_MAX_FILES) {
+      toast(STR.markdownDrop.limit);
+      return;
+    }
+    const documents: PMNode[] = [];
+    let excluded = false;
+    for (const file of markdown) {
+      try {
+        if (file.size > MARKDOWN_MAX_BYTES) throw new Error(STR.markdownDrop.tooLarge);
+        const bytes = await file.arrayBuffer();
+        if (!current()) return;
+        let raw: string;
+        try {
+          raw = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+        } catch {
+          throw new Error(STR.markdownDrop.encoding);
+        }
+        if (raw.includes("\0")) throw new Error(STR.markdownDrop.encoding);
+        const result = markdownToNote(raw);
+        if (!result.text.trim()) throw new Error(STR.markdownDrop.empty);
+        documents.push(result.content);
+        excluded ||= result.excluded;
+      } catch (e) {
+        if (!current()) return;
+        toast(STR.markdownDrop.failed(file.name, e instanceof Error ? e.message : String(e)));
+      }
+    }
+    if (!current()) return;
+    if (documents.length) {
+      const editing = get().editingId;
+      if (editing) endEditing(editing);
+      const doc = withoutPending(get().doc);
+      const boxes: NoteBox[] = documents.map((content, i) => ({
+        id: uuidv7(),
+        kind: "text",
+        x: snap(at.x + i * 24),
+        y: snap(at.y + i * 24),
+        w: BOX_DEFAULT_W,
+        z: topZ(doc) + 1 + i,
+        bg: null,
+        content,
+      }));
+      commit({ ...doc, boxes: [...doc.boxes, ...boxes] }, true);
+      set({ selectedId: boxes[0]!.id, editingId: null, pendingId: null });
+      // 편집기의 정규화/그 뒤의 다른 상자 변경과 무관하게 이번에 만든 상자만 취소한다.
+      const importedIds = new Set(boxes.map((b) => b.id));
+      toast(STR.markdownDrop.done(boxes.length, excluded), {
+        label: STR.toast.undo,
+        run: () => {
+          if (!current() || !get().doc.boxes.some((b) => importedIds.has(b.id))) return;
+          commit(withoutBoxes(get().doc, importedIds), true);
+          set({ selectedId: null, editingId: null, multi: [], ...EDGE_RESET });
+        },
+      });
+    }
+  }
+  if (images.length && current()) await addImages(images, at);
 }
 
 /** 그림 파일들을 이미지 상자로(겹치지 않게 24px씩 비켜). 실패한 파일은 토스트로 알린다 */

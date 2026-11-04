@@ -183,7 +183,15 @@ test("#7 정보·오픈소스 라이선스: 버전·소개 사이트·릴리스 
   await expect(oss).toContainText("© 2021 Kil Hyung-jin");
   await expect(oss).toContainText("고운돋움 (Gowun Dodum)");
   await expect(oss).toContainText("© 2021 The Gowun Dodum Project Authors");
-  await expect(oss.locator("table tr")).toHaveCount(8);
+  await expect(oss.locator("table tr")).toHaveCount(12);
+  for (const library of [
+    "mdast-util-from-markdown",
+    "mdast-util-gfm",
+    "micromark-extension-gfm",
+    "htmlparser2",
+  ]) {
+    await expect(oss.getByRole("rowheader", { name: library, exact: true })).toBeVisible();
+  }
   await oss.getByRole("button", { name: "고운돋움 (Gowun Dodum) 라이선스 전문" }).click();
   const dlg = page.getByRole("dialog", { name: "고운돋움 (Gowun Dodum) 라이선스 전문" });
   await expect(dlg).toContainText("SIL OPEN FONT LICENSE");

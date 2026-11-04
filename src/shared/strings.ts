@@ -17,6 +17,40 @@ export function formatBytes(n: number): string {
 
 /** 윈도우 표기 원본(테스트가 맥 표기 변환을 검사할 때 쓴다) — 화면은 STR을 쓴다 */
 export const STR_BASE = {
+  categoryCreate: {
+    button: "업무 추가",
+    title: "업무 추가",
+    name: "업무 이름",
+    nameHint: "알아보기 쉬운 이름으로 입력해 주세요 · 최대 40자",
+    tags: "태그",
+    optional: "선택 · 여러 개 가능",
+    search: "태그 검색",
+    newTag: "새 태그 이름",
+    addTag: "+ 태그 추가",
+    noTags: "등록된 태그가 없습니다",
+    draft: "새 태그",
+    remove: (name: string) => `${name} 제거`,
+    hint: "태그 없이도 만들 수 있습니다. 새 태그는 업무와 함께 저장됩니다.",
+    cancel: "취소",
+    close: "닫기",
+    again: "추가하고 계속",
+    submit: "업무 추가",
+    busy: "추가 중…",
+    required: "업무 이름을 입력해 주세요",
+    context: (week: string) => `${week}에 추가합니다`,
+    filterCleared: "새 업무를 보이도록 태그 필터를 해제했습니다",
+  },
+  markdownDrop: {
+    limit: "마크다운은 한 번에 10개까지 가져올 수 있습니다",
+    unsupported: "지원하지 않는 파일 형식입니다",
+    tooLarge: "파일 크기가 5MiB를 넘습니다",
+    encoding: "UTF-8 텍스트 파일이 아닙니다",
+    empty: "가져올 텍스트가 없습니다",
+    failed: (name: string, reason: string) => `${name}: ${reason}`,
+    done: (n: number, excluded: boolean) =>
+      `텍스트 메모 ${n}개를 만들었습니다${excluded ? " · 이미지/첨부 데이터 제외" : ""}`,
+  },
+  notePalette: { mixed: "여러 색", title: "글자색", edit: "메모를 편집한 뒤 글자색을 선택하세요" },
   /** 항목 도구 ⋯ 메뉴(improve-1103v8-spec 5절) */
   itemTools: {
     more: "항목 메뉴",
@@ -134,7 +168,7 @@ export const STR_BASE = {
     addCategoryPlaceholder: "업무 이름 입력 후 Enter (Esc 닫기)",
     memoPlaceholder: "메모",
     ended: "종료됨",
-    emptyBoard: '아직 업무가 없습니다. 아래 "+ 업무 추가"로 첫 업무를 만들어 보세요.',
+    emptyBoard: "아직 업무가 없습니다. 상단 업무 추가로 첫 업무를 만들어 보세요.",
     itemAria: (category: string, day: string) => `${category} · ${day} 기록`,
   },
   /** 요일 머리 ⋯ 메뉴 — 연차·반차(improve-1026-spec 1절) */

@@ -7,6 +7,7 @@ import {
   goWeek,
   retryFailed,
   setViewMode,
+  setAddOpen,
   setYearOpen,
   useBoard,
 } from "../board/boardStore";
@@ -18,14 +19,16 @@ import { leaveSettings } from "./appController";
 import { useAppStore } from "./appStore";
 import { BrandLockup } from "./Brand";
 import { sameDir } from "../../domain/workspace";
-import { IconDayView, IconWeekView } from "./icons";
+import { IconCategoryAdd, IconSummaryDoc, IconExportFile, IconDayView, IconWeekView } from "./icons";
 import { TagFilterMenu } from "./TagFilterMenu";
 import { SearchBox } from "../search/SearchViews";
 import { useInsights } from "../insights/insightsStore";
 import { closeUniverse, useUniverse } from "../universe/universeStore";
+import { AddCategoryDialog } from "../board/AddCategoryDialog";
 import styles from "./TopBar.module.css";
 
 export function TopBar() {
+  const addOpen = useBoard((s) => s.addOpen);
   const ready = useBoard((s) => s.ready);
   const weekId = useBoard((s) => s.weekId);
   const yearOpen = useBoard((s) => s.yearOpen);
@@ -177,23 +180,37 @@ export function TopBar() {
         {ready && journalReady && week && (
           <button
             type="button"
-            className={styles.textButton}
+            className={`${styles.textButton} ${styles.actionButton}`}
+            data-testid="category-add"
+            onClick={() => setAddOpen(true)}
+          >
+            <IconCategoryAdd />
+            {STR.categoryCreate.button}
+          </button>
+        )}
+        {ready && journalReady && week && addOpen && <AddCategoryDialog />}
+        {ready && journalReady && week && (
+          <button
+            type="button"
+            className={`${styles.textButton} ${styles.actionButton}`}
             title={STR.summary.buttonTitle}
             aria-pressed={summaryOpen}
             data-testid="summary-toggle"
             onClick={() => toggleSummary()}
           >
+            <IconSummaryDoc />
             {STR.summary.button}
           </button>
         )}
         {ready && journalReady && week && (
           <button
             type="button"
-            className={styles.textButton}
+            className={`${styles.textButton} ${styles.actionButton}`}
             title={STR.export.buttonTitle}
             data-testid="export-open"
             onClick={() => toggleExport()}
           >
+            <IconExportFile />
             {STR.export.button}
           </button>
         )}

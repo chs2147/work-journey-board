@@ -18,12 +18,12 @@ import {
   isLinkedTo,
   FONT_SIZES,
   NOTE_BG,
-  TEXT_COLORS,
   type ImageBox,
   type NoteDoc,
   type PMNode,
   type TextBox,
 } from "../../domain/note";
+import { NoteColorPalette } from "./NoteColorPalette";
 import { STR } from "../../shared/strings";
 import { reportError, toast, useBoard } from "../board/boardStore";
 import { useAppStore } from "../common/appStore";
@@ -43,6 +43,7 @@ import { singleUrl } from "../../domain/links";
 import { openLink } from "../common/openLink";
 import {
   addBox,
+  addDroppedFiles,
   addBoxBelow,
   addImages,
   addLinkBox,
@@ -415,7 +416,7 @@ export default function NoteCanvas() {
     const rect = canvasRef.current!.getBoundingClientRect();
     const at = { x: (e.clientX - rect.left) / zoom, y: (e.clientY - rect.top) / zoom };
     if (url) addLinkBox(url, at);
-    else void addImages([...e.dataTransfer.files], at);
+    else void addDroppedFiles([...e.dataTransfer.files], at);
   };
 
   return (
@@ -805,6 +806,18 @@ function FormatToolbar({ editor, box, zoom }: { editor: Editor; box: TextBox; zo
           : "paragraph",
       size: (ed.getAttributes("fontSize").size as string | undefined) ?? "m",
       color: (ed.getAttributes("textColor").color as string | undefined) ?? "default",
+      mixed: (() => {
+        const values = new Set<string>();
+        const { from, to, empty } = ed.state.selection;
+        if (!empty)
+          ed.state.doc.nodesBetween(from, to, (node) => {
+            if (node.isText)
+              values.add(
+                String(node.marks.find((m) => m.type.name === "textColor")?.attrs.color ?? "default"),
+              );
+          });
+        return values.size > 1;
+      })(),
       bold: ed.isActive("bold"),
       italic: ed.isActive("italic"),
       underline: ed.isActive("underline"),
@@ -885,22 +898,7 @@ function FormatToolbar({ editor, box, zoom }: { editor: Editor; box: TextBox; zo
       )}
       {toggle(STR.note.strike, st.strike, () => run((c) => c.toggleStrike()), "S", styles.toolStrike)}
       <span className={styles.sep} />
-      <select
-        aria-label={STR.note.color}
-        value={st.color}
-        onChange={(e) => {
-          const v = e.target.value;
-          if (v === "default") run((c) => c.unsetMark("textColor"));
-          else run((c) => c.setMark("textColor", { color: v }));
-        }}
-      >
-        <option value="default">{STR.note.colors.default}</option>
-        {TEXT_COLORS.map((c) => (
-          <option key={c} value={c}>
-            {STR.note.colors[c]}
-          </option>
-        ))}
-      </select>
+      <NoteColorPalette editor={editor} color={st.color} mixed={st.mixed} />
       {toggle(
         STR.note.highlight,
         st.highlight,
