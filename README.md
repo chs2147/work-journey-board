@@ -92,6 +92,12 @@ npm run tauri dev    # 실앱 모드(윈도우·맥 / 리눅스는 webkit2gtk-4.
 - 설치 파일: `main`에 반영되면 *Build desktop installers*가 윈도우(NSIS)·맥(유니버설 DMG)을 나란히 만들고, **둘 다 성공해야** [Releases](https://github.com/chs2147/work-journey-board/releases)에 `v<버전>`으로 함께 올린다 — 0.x·`-rc`는 사전 릴리스, 1.0.0 이상 정식 판은 정식 릴리스. 윈도우 오프라인 설치판은 요청할 때만 Actions → *Build desktop installers* → Run workflow(main) → `offline`으로 그 판 릴리스에 더한다. 하나의 원본으로 두 플랫폼을 같은 판으로 운영한다([docs/macos-spec.md](docs/macos-spec.md)).
 
 ## Version History
+### v1.17.0 (2026-11-05) — 백업 버전·복원·보관 정책
+- 백업 파일명·이력에 생성 앱과 실제 DB 구조 표시, 복원 전 호환성·손상·구조 검사
+- 일일 기간/개수·월간·용량 목표와 정리 미리보기, 보호 사본·최신 정상 일일 사본 보존
+- 복원 후 현재 정책 유지·파손 복원 자동 삭제 보류·워크스페이스별 정책 분리
+- RC1 CI·Windows/macOS 빌드 통과 후 정식 반영, DB 구조 v14 유지
+
 ### v1.17.0-rc.1 (2026-11-05) — 백업 버전·복원·보관 정책 검증판
 - 백업 파일명과 이력에 생성 앱·실제 DB 구조 표시, 복원 시 실제 구조·호환성·손상 검사
 - 기간/개수·월간·용량 목표, 정리 미리보기와 보호 사본 유지, 공간별 정책 분리
