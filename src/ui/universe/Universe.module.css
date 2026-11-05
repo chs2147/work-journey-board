@@ -820,8 +820,7 @@
   right: 24px;
   width: 300px;
 }
-.filterDrawer > button,
-.detailDrawer > button {
+.drawerContent > button {
   float: right;
   margin: 8px;
 }
@@ -896,4 +895,45 @@
 .seg.iconSeg button:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: -3px;
+}
+
+.filterDrawer,
+.detailDrawer {
+  overflow: hidden;
+}
+.drawerContent {
+  height: 100%;
+  overflow: auto;
+}
+.drawerResizer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 10px;
+  cursor: col-resize;
+  touch-action: none;
+  z-index: 6;
+}
+.resizeRight {
+  right: 0;
+}
+.resizeLeft {
+  left: 0;
+}
+.drawerResizer:hover,
+.drawerResizer:focus-visible,
+.drawerResizer:active {
+  background: var(--accent-soft);
+  box-shadow: inset 2px 0 var(--accent);
+  outline: none;
+}
+
+.drawerResizer::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: calc(50% - 18px);
+  width: 2px;
+  height: 36px;
+  background: var(--line-strong);
 }

@@ -92,6 +92,7 @@ import {
   useUniverse,
 } from "./universeStore";
 import { IconSpace3d, IconSpace2d, IconFocus, IconGalaxy, IconMap, IconList } from "../common/icons";
+import { ResizableUniversePanel } from "./ResizableUniversePanel";
 import styles from "./Universe.module.css";
 
 const UniverseScene = lazy(() => import("./UniverseScene"));
@@ -299,7 +300,7 @@ export function UniverseView() {
       </div>
       <div className={styles.body}>
         {filterOpen && (
-          <div id="u-filter-panel" className={styles.filterDrawer}>
+          <ResizableUniversePanel side="filter">
             <button
               type="button"
               aria-label="필터 접기"
@@ -311,7 +312,7 @@ export function UniverseView() {
               ×
             </button>
             <FilterPanel all={all} />
-          </div>
+          </ResizableUniversePanel>
         )}
         <div className={`${styles.center} ${s.view === "map" ? styles.space : ""}`}>
           {all.nodes.length <= 1 && !s.loading ? (
@@ -329,7 +330,7 @@ export function UniverseView() {
           )}
         </div>
         {detailOpen && (
-          <div id="u-detail-panel" className={styles.detailDrawer}>
+          <ResizableUniversePanel side="detail">
             <button
               type="button"
               aria-label="상세 접기"
@@ -341,7 +342,7 @@ export function UniverseView() {
               ×
             </button>
             <DetailPanel node={selected} all={all} />
-          </div>
+          </ResizableUniversePanel>
         )}
       </div>
       <TimeBar all={all} />
