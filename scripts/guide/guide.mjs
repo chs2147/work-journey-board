@@ -371,6 +371,7 @@ async function shots(base = "http://localhost:1420") {
       url: show,
       run: async (p) => {
         await p.keyboard.press("Alt+5");
+        await p.getByTestId("u-toggle-detail").click();
         await p.waitForTimeout(600);
         // 직접 연결 하나(가상 기록끼리) — 굵은 화살표와 "왜 이어졌나" 문구가 보이게(UV2)
         await p.getByTestId("u-connect").click();

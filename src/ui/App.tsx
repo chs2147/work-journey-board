@@ -142,12 +142,12 @@ function Workspace() {
   const width = useWindowWidth();
   const importantW = usePanelWidths((s) => s.important);
   const summaryW = usePanelWidths((s) => s.summary);
-  const leftW = panelOpen && !narrow && !settingsOpen ? importantW : 0;
+  const leftW = panelOpen && !universeOpen && !narrow && !settingsOpen ? importantW : 0;
   const summaryOverlay = width - RAIL_W - leftW - summaryW < BOARD_MIN_W;
   return (
     <div className={styles.workspace}>
       <Rail />
-      {panelOpen && !settingsOpen && <ImportantPanel overlay={narrow} />}
+      {panelOpen && !universeOpen && !settingsOpen && <ImportantPanel overlay={narrow} />}
       {insightsOpen0 && !universeOpen && !settingsOpen && <InsightsView />}
       {universeOpen && !settingsOpen && <UniverseView />}
       {settingsOpen && <SettingsView />}

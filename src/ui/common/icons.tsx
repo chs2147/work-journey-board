@@ -224,3 +224,35 @@ export const IconExportFile = () => (
     <path d="M8 1.5v8M5 6.5l3 3 3-3M2 10v4h12v-4" />
   </Svg>
 );
+
+/** Universe: cube / plane / target / orbital galaxy / list. */
+export const IconSpace3d = () => (
+  <Svg>
+    <path d="M8 1.5l5.5 3v7L8 14.5l-5.5-3v-7zM2.5 4.5L8 8l5.5-3.5M8 8v6.5M8 1.5v4" />
+  </Svg>
+);
+export const IconSpace2d = () => (
+  <Svg>
+    <rect x="2.5" y="2.5" width="11" height="11" rx="1" />
+    <path d="M5.5 10.5h5M5.5 10.5v-5" />
+  </Svg>
+);
+export const IconFocus = () => (
+  <Svg>
+    <circle cx="8" cy="8" r="4" />
+    <circle cx="8" cy="8" r="1" />
+    <path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2" />
+  </Svg>
+);
+export const IconGalaxy = () => (
+  <Svg>
+    <ellipse cx="8" cy="8" rx="6.5" ry="2.7" transform="rotate(-35 8 8)" />
+    <ellipse cx="8" cy="8" rx="6.5" ry="2.7" transform="rotate(35 8 8)" />
+    <circle cx="8" cy="8" r="1" />
+  </Svg>
+);
+export const IconList = () => (
+  <Svg>
+    <path d="M6 4h7M6 8h7M6 12h7M2.5 4H3M2.5 8H3M2.5 12H3" />
+  </Svg>
+);

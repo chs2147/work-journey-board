@@ -1,6 +1,15 @@
 // Universe 화면(universe-spec 4절, UV1): 왼쪽 필터 · 가운데 지도(초점 = SVG, 은하 = canvas)/목록 · 오른쪽 상세 · 바닥 시간 막대.
 // 읽기만 한다 — 원문 편집기 없음, 고치기는 [원본 열기]로 보드·메모·Cabinet에서(첨부 디자인 7절).
-import { useEffect, useMemo, useRef, useState, type PointerEvent as RPointerEvent } from "react";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type PointerEvent as RPointerEvent,
+} from "react";
 import {
   ALL_KINDS,
   ALL_SOURCES,
@@ -82,8 +91,12 @@ import {
   toggleWorkspace,
   useUniverse,
 } from "./universeStore";
+import { IconSpace3d, IconSpace2d, IconFocus, IconGalaxy, IconMap, IconList } from "../common/icons";
+import { ResizableUniversePanel } from "./ResizableUniversePanel";
 import styles from "./Universe.module.css";
 
+const UniverseScene = lazy(() => import("./UniverseScene"));
+const panelSession = { filter: false, detail: false };
 const NOTE_FILL = "#e3c87a";
 
 export function UniverseView() {
@@ -93,39 +106,190 @@ export function UniverseView() {
   const shown = useMemo(() => filterGraph(all, filter), [all, filter]);
   const byId = useMemo(() => new Map(all.nodes.map((n) => [n.id, n])), [all]);
   const selected = s.selected ? (byId.get(s.selected) ?? null) : null;
+  const activeFilters =
+    Number(!!s.filter.query.trim()) +
+    s.filter.categoryIds.length +
+    s.filter.tagIds.length +
+    Number(s.filter.kinds.length !== ALL_KINDS.length) +
+    Number(s.filter.sources.length !== ALL_SOURCES.length) +
+    Number(!!s.filter.range) +
+    Number(!s.filter.includeEnded);
+
   const packOpen = usePack((p) => p.open);
+  const [filterOpen, setFilterOpen] = useState(panelSession.filter);
+  const [detailOpen, setDetailOpen] = useState(panelSession.detail);
+  const [dynamic, setDynamic] = useState(() => !matchMedia("(prefers-reduced-motion: reduce)").matches);
+  const [failed, setFailed] = useState(false);
+  const motionTouched = useRef(false);
+  useEffect(() => {
+    let active = true;
+    void useAppStore
+      .getState()
+      .platform?.loadConfig()
+      .then((config) => {
+        if (
+          active &&
+          !motionTouched.current &&
+          !matchMedia("(prefers-reduced-motion: reduce)").matches &&
+          config?.universeMotion
+        )
+          setDynamic(config.universeMotion === "dynamic");
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, []);
+  const chooseMotion = (value: boolean) => {
+    motionTouched.current = true;
+    setFailed(false);
+    setDynamic(value);
+    void useAppStore
+      .getState()
+      .platform?.saveConfig({ universeMotion: value ? "dynamic" : "static" })
+      .catch(() => toast("지도 표현 설정을 저장하지 못했습니다."));
+  };
+  useEffect(() => {
+    panelSession.filter = filterOpen;
+    panelSession.detail = detailOpen;
+  }, [filterOpen, detailOpen]);
+  useEffect(() => {
+    const resize = () => {
+      if (innerWidth <= 1050 && filterOpen && detailOpen) setFilterOpen(false);
+    };
+    window.addEventListener("resize", resize);
+    resize();
+    return () => window.removeEventListener("resize", resize);
+  }, [filterOpen, detailOpen]);
+
+  const filterButton = useRef<HTMLButtonElement>(null);
+  const detailButton = useRef<HTMLButtonElement>(null);
+  const failScene = useCallback(() => {
+    setFailed(true);
+    setDynamic(false);
+  }, []);
+  const lastPanel = useRef<"filter" | "detail">("detail");
+  const togglePanel = (panel: "filter" | "detail") => {
+    lastPanel.current = panel;
+    if (panel === "filter") {
+      setFilterOpen(!filterOpen);
+      if (innerWidth <= 1050) setDetailOpen(false);
+    } else {
+      setDetailOpen(!detailOpen);
+      if (innerWidth <= 1050) setFilterOpen(false);
+    }
+  };
+  useEffect(() => {
+    const media = matchMedia("(prefers-reduced-motion: reduce)");
+    const changed = () => {
+      if (media.matches) setDynamic(false);
+    };
+    media.addEventListener("change", changed);
+    return () => media.removeEventListener("change", changed);
+  }, []);
+  useEffect(() => {
+    const key = (e: KeyboardEvent) => {
+      if (e.key !== "Escape" || s.linkDialog || s.cardEditor || s.draftPrompt || packOpen) return;
+      if (detailOpen && (!filterOpen || lastPanel.current === "detail")) {
+        setDetailOpen(false);
+        detailButton.current?.focus();
+      } else if (filterOpen) {
+        setFilterOpen(false);
+        filterButton.current?.focus();
+      } else return;
+      e.preventDefault();
+      e.stopPropagation();
+    };
+    document.addEventListener("keydown", key, true);
+    return () => document.removeEventListener("keydown", key, true);
+  }, [filterOpen, detailOpen, s.linkDialog, s.cardEditor, s.draftPrompt, packOpen]);
 
   return (
     <section className={styles.view} aria-label={STR.universe.title} data-testid="universe-view">
       <div className={styles.toolbar}>
-        <div className={styles.seg} role="group" aria-label={STR.universe.modeLabel}>
+        <button
+          type="button"
+          ref={filterButton}
+          data-testid="u-toggle-filter"
+          aria-expanded={filterOpen}
+          aria-controls="u-filter-panel"
+          onClick={() => togglePanel("filter")}
+        >
+          ☷ 필터 {activeFilters > 0 && `(${activeFilters})`}
+        </button>
+        <button
+          type="button"
+          ref={detailButton}
+          data-testid="u-toggle-detail"
+          aria-expanded={detailOpen}
+          aria-controls="u-detail-panel"
+          onClick={() => togglePanel("detail")}
+        >
+          ▤ 상세
+        </button>
+        <div className={`${styles.seg} ${styles.iconSeg}`} role="group" aria-label="지도 표현">
+          <button
+            type="button"
+            aria-pressed={dynamic}
+            aria-label="다이나믹 3D"
+            title="다이나믹 3D"
+            data-testid="u-dynamic"
+            onClick={() => {
+              chooseMotion(true);
+            }}
+          >
+            <IconSpace3d />
+          </button>
+          <button
+            type="button"
+            aria-pressed={!dynamic}
+            aria-label="정적 2D"
+            title="정적 2D"
+            data-testid="u-static"
+            onClick={() => chooseMotion(false)}
+          >
+            <IconSpace2d />
+          </button>
+        </div>
+        {failed && <span role="status">3D를 사용할 수 없어 정적 지도로 전환했습니다.</span>}
+
+        <div className={`${styles.seg} ${styles.iconSeg}`} role="group" aria-label={STR.universe.modeLabel}>
           {(["focus", "galaxy"] as const).map((m) => (
             <button
               key={m}
               type="button"
               aria-pressed={s.mode === m}
               className={s.mode === m ? styles.segOn : ""}
+              aria-label={m === "focus" ? STR.universe.modeFocus : STR.universe.modeGalaxy}
+              title={m === "focus" ? STR.universe.modeFocus : STR.universe.modeGalaxy}
               data-testid={`u-mode-${m}`}
               onClick={() => setMode(m)}
             >
-              {m === "focus" ? STR.universe.modeFocus : STR.universe.modeGalaxy}
+              {m === "focus" ? <IconFocus /> : <IconGalaxy />}
             </button>
           ))}
         </div>
-        <div className={styles.seg} role="group" aria-label={STR.universe.viewLabel}>
+        <div className={`${styles.seg} ${styles.iconSeg}`} role="group" aria-label={STR.universe.viewLabel}>
           {(["map", "list"] as const).map((v) => (
             <button
               key={v}
               type="button"
               aria-pressed={s.view === v}
               className={s.view === v ? styles.segOn : ""}
+              aria-label={v === "map" ? STR.universe.viewMap : STR.universe.viewList}
+              title={v === "map" ? STR.universe.viewMap : STR.universe.viewList}
               data-testid={`u-view-${v}`}
               onClick={() => setView(v)}
             >
-              {v === "map" ? STR.universe.viewMap : STR.universe.viewList}
+              {v === "map" ? <IconMap /> : <IconList />}
             </button>
           ))}
         </div>
+        {activeFilters > 0 && (
+          <button type="button" onClick={resetFilter}>
+            필터 초기화
+          </button>
+        )}
         <PackButton />
         {s.loading && <span className={styles.muted}>{STR.universe.loading}</span>}
         {s.notices.map((n) => (
@@ -135,19 +299,51 @@ export function UniverseView() {
         ))}
       </div>
       <div className={styles.body}>
-        <FilterPanel all={all} />
-        <div className={styles.center}>
+        {filterOpen && (
+          <ResizableUniversePanel side="filter">
+            <button
+              type="button"
+              aria-label="필터 접기"
+              onClick={() => {
+                setFilterOpen(false);
+                filterButton.current?.focus();
+              }}
+            >
+              ×
+            </button>
+            <FilterPanel all={all} />
+          </ResizableUniversePanel>
+        )}
+        <div className={`${styles.center} ${s.view === "map" ? styles.space : ""}`}>
           {all.nodes.length <= 1 && !s.loading ? (
             <p className={styles.empty}>{STR.universe.empty}</p>
           ) : s.view === "list" ? (
             <ListView graph={shown} selected={s.selected} />
+          ) : dynamic ? (
+            <Suspense fallback={<p className={styles.empty}>3D 지도 준비 중…</p>}>
+              <UniverseScene graph={shown} onFailure={failScene} />
+            </Suspense>
           ) : s.mode === "focus" ? (
             <FocusMap all={all} shown={shown} />
           ) : (
             <GalaxyMap graph={shown} selected={s.selected} />
           )}
         </div>
-        <DetailPanel node={selected} all={all} />
+        {detailOpen && (
+          <ResizableUniversePanel side="detail">
+            <button
+              type="button"
+              aria-label="상세 접기"
+              onClick={() => {
+                setDetailOpen(false);
+                detailButton.current?.focus();
+              }}
+            >
+              ×
+            </button>
+            <DetailPanel node={selected} all={all} />
+          </ResizableUniversePanel>
+        )}
       </div>
       <TimeBar all={all} />
       {packOpen && <PackDrawer all={all} />}
