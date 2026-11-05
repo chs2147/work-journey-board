@@ -1708,28 +1708,32 @@
   box-shadow: 0 0 0 1px currentcolor;
 }
 
-/* v12: reserve rail + importance + completion for every row, preventing text jumps. */
+/* v12: reserve rail + importance for every row, preventing text jumps. */
 .item,
 .itemSub {
-  padding-left: 54px;
+  padding-left: 33px;
 }
 .bullet {
   left: 11px;
 }
 .completionAction {
   position: absolute;
-  top: 3px;
-  left: 30px;
-  width: 18px;
+  right: 0;
+  top: -18px;
+  width: 24px;
   height: 20px;
   padding: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 0;
-  background: none;
   color: var(--text-3);
   cursor: pointer;
+  z-index: 6;
+  opacity: 0;
+  pointer-events: none;
+  background: var(--surface-card);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
 }
 .completionAction:hover,
 .completionAction:focus-visible {
@@ -1753,10 +1757,30 @@
 
 .timeChip,
 .itemSub > .timeChip {
-  left: 54px;
+  left: 33px;
 }
 .dropLine::after,
 .dropLineSub::after,
 .linkTarget {
   border-radius: 0;
+}
+
+/* Compact v12 controls: reserve only rail + star; completion action floats above
+   the active row so narrow week columns keep their reading width and height. */
+.item,
+.itemSub {
+  padding-left: 33px;
+}
+.timeChip,
+.itemSub > .timeChip {
+  left: 33px;
+}
+
+.item:hover > .completionAction,
+.itemSub:hover > .completionAction,
+.item:focus-within > .completionAction,
+.itemSub:focus-within > .completionAction,
+.completionAction:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
 }

@@ -332,6 +332,7 @@ test("v12 completion and undo stay in their own workspace across three round tri
     page.getByTestId("cell-차세대 정산 시스템 구축-2026-10-22").locator("[data-item-index]").first();
   const originalFlag = await row().getAttribute("data-flagged");
   const before = await count();
+  await row().hover();
   await row().getByTestId("item-completion").click();
   await expect(row()).toHaveAttribute("data-done", "true");
   expect(await count()).toBe(before + 1);
@@ -345,6 +346,7 @@ test("v12 completion and undo stay in their own workspace across three round tri
     expect(await count()).toBe(otherBefore);
     await switchTo(page, 1, "회사");
   }
+  await row().hover();
   await row().getByTestId("item-completion").click();
   await expect(row()).not.toHaveAttribute("data-done", "true");
   expect(await row().getAttribute("data-flagged")).toBe(originalFlag);

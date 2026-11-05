@@ -16,6 +16,7 @@ test("ordinary completion uses an icon, strikes only text and survives week swit
   const content = await text.inputValue();
   const toggle = row.getByTestId("item-completion");
   await expect(toggle.locator("svg")).toHaveCount(1);
+  await row.hover();
   await toggle.click();
   await expect(row).toHaveAttribute("data-done", "true");
   await expect(text).toHaveCSS("text-decoration-line", "line-through");
@@ -23,6 +24,7 @@ test("ordinary completion uses an icon, strikes only text and survives week swit
   await page.keyboard.press("Alt+ArrowRight");
   await page.keyboard.press("Alt+ArrowLeft");
   await expect(root(page)).toHaveAttribute("data-done", "true");
+  await root(page).hover();
   await root(page).getByTestId("item-completion").click();
   await expect(root(page)).not.toHaveAttribute("data-done", "true");
   expect(await root(page).getAttribute("data-flagged")).toBe(previous);
@@ -37,6 +39,7 @@ test("completion in Important panel updates the same row and inline undo restore
   await panel.getByRole("button", { name: `처리 완료: ${FIRST}`, exact: true }).click();
   await expect(root(page)).toHaveAttribute("data-done", "true");
   await expect(root(page).locator("textarea")).toHaveCSS("text-decoration-line", "line-through");
+  await root(page).hover();
   await root(page).getByTestId("item-completion").click();
   await expect(root(page)).toHaveAttribute("data-flagged", "true");
 });
@@ -77,6 +80,7 @@ test("copy preview excludes a completed parent and its unfinished child without 
   await page.keyboard.press("Enter");
   await page.keyboard.press("Tab");
   await page.locator(":focus").fill("가상 하위");
+  await source.locator("[data-item-index]").first().hover();
   await source.getByTestId("item-completion").first().click();
   await expect(source.locator("[data-item-index]").first()).toHaveAttribute("data-done", "true");
   const target = page.getByTestId("cell-v12 가상-2026-10-22");
@@ -88,10 +92,27 @@ test("copy preview excludes a completed parent and its unfinished child without 
     "title",
     "직전 기록은 모두 완료되어 가져올 항목이 없습니다.",
   );
+  await source.locator("[data-item-index]").first().hover();
   await source.getByTestId("item-completion").first().click();
   await page.getByTestId("summary-toggle").focus();
   await expect(target.getByTestId("pull-previous")).toBeEnabled();
   await target.getByTestId("pull-previous").click();
   await expect(target.locator("textarea").first()).toHaveValue("가상 부모");
   await expect(target.locator("textarea").nth(1)).toHaveValue("가상 하위");
+});
+
+test("completion action is keyboard reachable and does not change row geometry when revealed", async ({
+  page,
+}) => {
+  const row = root(page),
+    action = row.getByTestId("item-completion");
+  await page.mouse.move(0, 0);
+  await page.getByTestId("summary-toggle").focus();
+  await expect(action).toHaveCSS("opacity", "0");
+  const before = await row.boundingBox();
+  await action.focus();
+  await expect(action).toHaveCSS("opacity", "1");
+  expect(await row.boundingBox()).toEqual(before);
+  await page.keyboard.press("Space");
+  await expect(row).toHaveAttribute("data-done", "true");
 });

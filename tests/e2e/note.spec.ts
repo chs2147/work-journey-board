@@ -238,17 +238,25 @@ test("크게 보기는 보드를 숨기고, 경계선으로 높이 조절 · 접
   await expect.poll(async () => Math.round((await dock.boundingBox())!.height - h0)).toBe(100);
 });
 
-test("보드 우선 자동 높이: 작은 화면에서도 업무 행이 다 보이고 메모는 남는 공간(최소 160), 끌면 고정·머리 두 번 누르면 자동", async ({
+test("보드 우선 자동 높이: 작은 화면에서도 업무 행에 접근하고 메모는 남는 공간(최소 160), 끌면 고정·머리 두 번 누르면 자동", async ({
   page,
 }) => {
   const dock = page.getByTestId("note-dock");
   const headers = page.getByTestId("category-header");
   const box = async () => (await dock.boundingBox())!;
-  // 1366×768(회사 노트북 흔한 해상도): 업무 4행이 모두 보이고 메모 도크는 그 아래 남는 공간
+  // 내용이 들어가면 모두 표시하고, 더 길면 보드만 스크롤한다. 메모 최소 높이는 보존한다.
   await page.setViewportSize({ width: 1366, height: 768 });
   await expect(dock).toHaveAttribute("data-dock-mode", "auto");
   const lastHead = (await headers.last().boundingBox())!;
-  expect(lastHead.y + lastHead.height).toBeLessThanOrEqual((await box()).y);
+  if (lastHead.y + lastHead.height > (await box()).y) {
+    const scroll = page.locator("[data-drag-scroll]");
+    expect(await scroll.evaluate((el) => el.scrollHeight > el.clientHeight)).toBe(true);
+    await headers.last().scrollIntoViewIfNeeded();
+    const visibleLast = (await headers.last().boundingBox())!;
+    expect(visibleLast.y + visibleLast.height).toBeLessThanOrEqual((await box()).y + 1);
+  } else {
+    expect(lastHead.y + lastHead.height).toBeLessThanOrEqual((await box()).y);
+  }
   expect((await box()).height).toBeGreaterThanOrEqual(160);
   // 큰 화면: 보드 아래 빈 띠 없이 메모가 남는 공간을 다 쓴다
   await page.setViewportSize({ width: 1440, height: 900 });
