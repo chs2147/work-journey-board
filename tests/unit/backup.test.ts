@@ -1,3 +1,4 @@
+import { versionedBackupName, parseBackupName } from "../../src/data/backupIdentity";
 // @vitest-environment node
 import { describe, expect, it, vi } from "vitest";
 import {
@@ -25,6 +26,20 @@ function memFs(db: SqlDriver) {
   const removed: string[] = [];
   const dirOf = (p: string) => p.slice(0, p.lastIndexOf("/"));
   const fs: BackupFs = {
+    stat: async (p) => ({
+      exists: files.has(p),
+      isDir: false,
+      size: files.has(p) ? 0 : null,
+      modified: null,
+    }),
+    inspect: (path) =>
+      attached(path, async () => {
+        const check = await db.select<{ quick_check: string }>("PRAGMA copy.quick_check");
+        const [schema] = await db.select<{ value: string }>(
+          "SELECT value FROM copy.app_meta WHERE key='schema_version'",
+        );
+        return { ok: check[0]?.quick_check === "ok", schema: Number(schema?.value) };
+      }),
     join: (...p) => p.join("/").replace(/\/+/g, "/"),
     ensureDir: async () => undefined,
     list: async (d) => [...files.keys()].filter((p) => dirOf(p) === d).map((p) => p.slice(d.length + 1)),
@@ -137,12 +152,12 @@ describe("VACUUM INTO 백업 (sql.js 가상 FS에서 실제 파일)", () => {
     const { fs, driver, verify, categoryNames } = memFs(db);
     const dir = newDir();
     const path = await runManualBackup(driver, fs, dir, new Date(2026, 9, 23, 8, 31), verify);
-    expect(path).toBe(`${dir}/backups/work-journey_2026-10-23_0831_manual.db`);
+    expect(path).toBe(`${dir}/backups/${versionedBackupName(new Date(2026, 9, 23, 8, 31), "manual", 14)}`);
     expect(await categoryNames(path)).toEqual(["백업 확인"]);
     expect(await quickCheck(db)).toBe(true);
   });
 
-  it("자동 백업: 같은 날은 덮어쓰고, 월간은 달에 한 번, 롤링은 패턴 파일만 삭제", async () => {
+  it("자동 사본 생성과 정리 분리: 월간 달에 한 번·검사할 수 없는 과거 사본은 보존", async () => {
     const { db } = await freshRepo();
     const { fs, driver, verify, removed, writeFile } = memFs(db);
     const dir = newDir();
@@ -161,7 +176,7 @@ describe("VACUUM INTO 백업 (sql.js 가상 FS에서 실제 파일)", () => {
       verify,
     );
     expect(r1.monthly).not.toBeNull();
-    expect(r1.deleted).toEqual(["work-journey_2026-10-01.db"]);
+    expect(r1.deleted).toEqual([]); // 정리는 실제 파일 검사 가능한 세션에서만 실행
     const r2 = await runAutoBackup(
       driver,
       fs,
@@ -171,7 +186,10 @@ describe("VACUUM INTO 백업 (sql.js 가상 FS에서 실제 파일)", () => {
       verify,
     );
     expect(r2.monthly).toBeNull(); // 이번 달 월간 사본은 이미 있음
-    expect(r2.deleted).toEqual([]); // 같은 날 덮어쓰기라 개수 그대로
+    expect(r2.deleted).toEqual([]);
+    expect(
+      (await fs.list(`${dir}/backups`)).filter((n) => parseBackupName(n)?.kind === "daily"),
+    ).toHaveLength(15); // 검사 실패한 과거 사본은 보존하고 정상 같은 날짜 슬롯만 교체
 
     const left = await fs.list(`${dir}/backups`);
     expect(left).toContain("work-journey_2026-10-01_0900_manual.db");

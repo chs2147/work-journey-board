@@ -9,6 +9,7 @@ import {
   type BackupFs,
   type VerifyCopy,
 } from "../data/backup";
+import { quickCheck, readSchemaVersion, backupStructureMatches } from "../data/migrate";
 import type { SqlDriver, SqlParam } from "../data/driver";
 import type { SqlJsDriver } from "../data/drivers/sqlJs";
 import type { FsEntry } from "../domain/cabinet";
@@ -73,6 +74,7 @@ export function createFakeFs(open: OpenSqlJs): FakeFs {
       if (!dirs.has(parentOf(target))) throw new Error(`unable to open database: ${target}`);
       if (exists(target)) throw new Error(`output file already exists: ${target}`);
       files.set(target, d.exportBytes());
+      mtimes.set(target, Date.now());
       return { changes: 0 };
     },
     select: (sql, params) => d.select(sql, params),
@@ -84,7 +86,34 @@ export function createFakeFs(open: OpenSqlJs): FakeFs {
     },
   });
 
+  const stat: FakeFs["stat"] = async (path) => {
+    const p = norm(path);
+    if (dirs.has(p)) return { exists: true, isDir: true, size: null, modified: null, isSymlink: false };
+    const b = bytesOf(p);
+    return {
+      exists: !!b,
+      isDir: false,
+      size: b?.length ?? null,
+      modified: mtimes.get(p) ?? null,
+      isSymlink: false,
+    };
+  };
   const backupFs: BackupFs = {
+    stat,
+    async inspect(path) {
+      const bytes = bytesOf(path);
+      if (!bytes) return { ok: false, schema: null };
+      let d: SqlDriver | undefined;
+      try {
+        d = await open(bytes);
+        const schema = await readSchemaVersion(d);
+        return { ok: (await quickCheck(d)) && (await backupStructureMatches(d, schema)), schema };
+      } catch {
+        return { ok: false, schema: null };
+      } finally {
+        await d?.close();
+      }
+    },
     join,
     ensureDir: async (dir) => ensureDirSync(dir),
     list: async (dir) =>
@@ -96,7 +125,9 @@ export function createFakeFs(open: OpenSqlJs): FakeFs {
       const b = bytesOf(from);
       if (!b) throw new Error(`없는 파일: ${from}`);
       files.set(norm(to), b);
+      mtimes.set(norm(to), mtimes.get(norm(from)) ?? Date.now());
       files.delete(norm(from));
+      mtimes.delete(norm(from));
     },
     remove: async (path) => {
       if (!isDeletableByApp(nameOf(path))) throw new Error(`삭제 금지 파일: ${path}`); // 실앱 Rust 가드와 같은 규칙
@@ -106,12 +137,7 @@ export function createFakeFs(open: OpenSqlJs): FakeFs {
 
   return {
     join,
-    async stat(path) {
-      const p = norm(path);
-      if (dirs.has(p)) return { exists: true, isDir: true, size: null };
-      const b = bytesOf(p);
-      return b ? { exists: true, isDir: false, size: b.length } : { exists: false, isDir: false, size: null };
-    },
+    stat,
     ensureDir: async (dir) => ensureDirSync(dir),
     async copyNew(from, to) {
       if (exists(to)) throw new Error(`이미 있는 파일: ${to}`);

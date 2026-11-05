@@ -3,7 +3,8 @@
 import {
   BACKUP_DIR,
   DATA_FILE,
-  backupNames,
+  backupExclusive,
+  uniqueBackupName,
   runAutoBackup,
   runManualBackup,
   runPreImportBackup,
@@ -12,12 +13,26 @@ import {
   type BackupFs,
   type VerifyCopy,
 } from "./backup";
+import { parseBackupName, versionedBackupName, BACKUP_APP_VERSION } from "./backupIdentity";
+import { localDate } from "../domain/localTime";
 import { isCorruptError, prepareConnection, type SqlDriver } from "./driver";
-import { LATEST_SCHEMA_VERSION, migrate, quickCheck, readSchemaVersion } from "./migrate";
+import {
+  LATEST_SCHEMA_VERSION,
+  migrate,
+  quickCheck,
+  readSchemaVersion,
+  backupStructureMatches,
+} from "./migrate";
 
 export interface SessionFs {
   join(...parts: string[]): string;
-  stat(path: string): Promise<{ exists: boolean; isDir: boolean; size: number | null }>;
+  stat(path: string): Promise<{
+    exists: boolean;
+    isDir: boolean;
+    size: number | null;
+    modified?: number | null;
+    isSymlink?: boolean;
+  }>;
   ensureDir(path: string): Promise<void>;
   copyNew(from: string, to: string): Promise<void>;
   openDatabase(path: string): Promise<SqlDriver>;
@@ -79,10 +94,22 @@ export async function backupIfFirstToday(
   driver: SqlDriver,
   dataDir: string,
   now: Date,
-  keep: { daily: number; monthly: number },
+  keep: { daily: number; monthly: number; preserve?: boolean },
 ) {
   const names = await fs.backupFs.list(fs.join(dataDir, BACKUP_DIR));
-  if (names.includes(backupNames.daily(now))) return null;
+  const schema = await readSchemaVersion(driver);
+  if (
+    names.some((n) => {
+      const b = parseBackupName(n);
+      return (
+        b?.kind === "daily" &&
+        b.date === localDate(now) &&
+        b.appVersion === BACKUP_APP_VERSION &&
+        b.schemaVersion === schema
+      );
+    })
+  )
+    return null;
   return runAutoBackup(driver, fs.backupFs, dataDir, now, keep, fs.verifyCopy);
 }
 
@@ -92,7 +119,7 @@ export function backupOnExit(
   driver: SqlDriver,
   dataDir: string,
   now: Date,
-  keep: { daily: number; monthly: number },
+  keep: { daily: number; monthly: number; preserve?: boolean },
 ) {
   return runAutoBackup(driver, fs.backupFs, dataDir, now, keep, fs.verifyCopy);
 }
@@ -131,35 +158,27 @@ export interface BackupInfo {
   /** `2026-10-23` 또는 `2026-10-23 08:31` */
   when: string;
   kind: "daily" | "monthly" | "manual" | "pre-migration" | "other";
+  appVersion?: string;
+  schemaVersion?: number | null;
 }
 
 /** 백업 파일 이름에서 시각·종류를 읽어 가장 최근 것을 고른다. */
 export function latestBackup(names: string[]): BackupInfo | null {
   const parsed = names
-    .map((name) => {
-      const m =
-        /^work-journey_(\d{4}-\d{2})(?:-(\d{2}))?(?:_(\d{2})(\d{2}))?(?:_(monthly|manual|pre-migration-v\d+|before-restore|pre-import|pre-update))?\.db$/.exec(
-          name,
-        );
-      if (!m) return null;
-      const [, ym, d, hh, mm, tag] = m;
-      const sortKey = `${ym}-${d ?? "00"} ${hh ?? "00"}:${mm ?? "00"}`; // 시각 없는 일일 사본은 그날 첫 실행(0시)으로 본다
-      const when = d ? `${ym}-${d}${hh ? ` ${hh}:${mm}` : ""}` : ym!;
-      const kind: BackupInfo["kind"] = !tag
-        ? "daily"
-        : tag === "monthly"
-          ? "monthly"
-          : tag === "manual"
-            ? "manual"
-            : tag.startsWith("pre-migration")
-              ? "pre-migration"
-              : "other";
-      return { name, when, kind, sortKey };
-    })
-    .filter((x): x is BackupInfo & { sortKey: string } => x !== null)
-    .sort((a, b) => (a.sortKey < b.sortKey ? 1 : -1));
+    .map(parseBackupName)
+    .filter((b) => b !== null)
+    .sort((a, b) => b.sortKey.localeCompare(a.sortKey));
   const top = parsed[0];
-  return top ? { name: top.name, when: top.when, kind: top.kind } : null;
+  if (!top) return null;
+  const kind: BackupInfo["kind"] = ["daily", "monthly", "manual", "pre-migration"].includes(top.kind)
+    ? (top.kind as BackupInfo["kind"])
+    : "other";
+  return {
+    name: top.name,
+    when: top.when,
+    kind,
+    ...(!top.legacy ? { appVersion: top.appVersion!, schemaVersion: top.schemaVersion } : {}),
+  };
 }
 
 export interface BackupFolderStats {
@@ -167,6 +186,10 @@ export interface BackupFolderStats {
   bytes: number;
   /** 종류별 개수·크기 */
   byKind: Record<BackupInfo["kind"], { count: number; bytes: number }>;
+  totalBytes: number;
+  automaticBytes: number;
+  protectedBytes: number;
+  otherBytes: number;
 }
 
 /** 백업 폴더 용량(optimize-1031-plan B5·O1 진단) — `.db` 파일만 센다(임시 사본 제외) */
@@ -176,12 +199,23 @@ export async function backupFolderStats(fs: SessionFs, dataDir: string): Promise
   const out: BackupFolderStats = {
     count: 0,
     bytes: 0,
+    totalBytes: 0,
+    automaticBytes: 0,
+    protectedBytes: 0,
+    otherBytes: 0,
     byKind: { daily: empty(), monthly: empty(), manual: empty(), "pre-migration": empty(), other: empty() },
   };
   if (!(await fs.stat(dir)).isDir) return out;
   for (const name of await fs.backupFs.list(dir)) {
+    const st = await fs.stat(fs.join(dir, name));
+    if (st.isDir) continue;
+    const size = st.size ?? 0;
+    out.totalBytes += size;
+    const id = parseBackupName(name);
+    if (id && (id.kind === "daily" || id.kind === "monthly")) out.automaticBytes += size;
+    else if (id) out.protectedBytes += size;
+    else out.otherBytes += size;
     if (!name.endsWith(".db")) continue;
-    const size = (await fs.stat(fs.join(dir, name))).size ?? 0;
     const kind = latestBackup([name])?.kind ?? "other";
     out.count++;
     out.bytes += size;
@@ -220,17 +254,33 @@ export interface BackupSummary {
   categories: number;
   items: number;
   lastDate: string | null;
+  schemaVersion?: number;
+  reason?: "newer" | "mismatch" | "invalid";
+  fingerprint?: string;
 }
 
 /** 복원 전에 백업 사본을 따로 열어 검사하고 요약(업무 수·항목 수·마지막 기록일)을 만든다 — 사본은 고치지 않는다 */
 export async function inspectBackup(fs: SessionFs, dataDir: string, name: string): Promise<BackupSummary> {
-  const path = fs.join(dataDir, BACKUP_DIR, name);
   const bad: BackupSummary = { ok: false, newer: false, categories: 0, items: 0, lastDate: null };
-  if (!(await fs.verifyCopy(path).catch(() => false))) return bad;
-  const d = await fs.openDatabase(path);
+  const identity = parseBackupName(name);
+  if (!identity) return bad;
+  const path = fs.join(dataDir, BACKUP_DIR, name);
+  const stat = await fs.stat(path);
+  if (!stat.exists || stat.isDir || ("isSymlink" in stat && stat.isSymlink)) return bad;
+  let d: SqlDriver | undefined;
   try {
+    if (!(await fs.verifyCopy(path))) return { ...bad, reason: "invalid" };
+    d = await fs.openDatabase(path);
     const version = await readSchemaVersion(d);
-    if (version > LATEST_SCHEMA_VERSION) return { ...bad, newer: true };
+    if (!Number.isSafeInteger(version) || version < 1) return { ...bad, reason: "invalid" };
+    if (!identity.legacy && identity.schemaVersion !== version)
+      return { ...bad, schemaVersion: version, reason: "mismatch" };
+    if (version > LATEST_SCHEMA_VERSION)
+      return { ...bad, newer: true, schemaVersion: version, reason: "newer" };
+    if (!(await backupStructureMatches(d, version)))
+      return { ...bad, schemaVersion: version, reason: "invalid" };
+    if ((await d.select("PRAGMA foreign_key_check")).length)
+      return { ...bad, schemaVersion: version, reason: "invalid" };
     const [c] = await d.select<{ n: number }>("SELECT COUNT(*) AS n FROM category");
     const [i] = await d.select<{ n: number; last: string | null }>(
       "SELECT COUNT(*) AS n, MAX(date) AS last FROM entry_item WHERE trim(text) <> ''",
@@ -241,11 +291,13 @@ export async function inspectBackup(fs: SessionFs, dataDir: string, name: string
       categories: Number(c?.n ?? 0),
       items: Number(i?.n ?? 0),
       lastDate: i?.last ?? null,
+      schemaVersion: version,
+      fingerprint: JSON.stringify([name, stat.size, "modified" in stat ? stat.modified : null, version]),
     };
   } catch {
-    return bad;
+    return { ...bad, reason: "invalid" };
   } finally {
-    await d.close().catch(() => undefined);
+    await d?.close().catch(() => undefined);
   }
 }
 
@@ -255,15 +307,27 @@ export async function restoreFromBackup(
   dataDir: string,
   name: string,
   now: Date,
+  expectedFingerprint?: string,
 ): Promise<string> {
-  if (!latestBackup([name])) throw new Error(`백업 파일이 아닙니다: ${name}`);
-  // 같은 분에 다시 복원(되돌리기)해도 보존 사본 이름이 겹치지 않게 1분씩 뒤로
-  const taken = new Set(await fs.backupFs.list(fs.join(dataDir, BACKUP_DIR)));
-  let before = backupNames.beforeRestore(now);
-  for (let i = 1; taken.has(before) && i < 1440; i++)
-    before = backupNames.beforeRestore(new Date(now.getTime() + i * 60_000));
-  await fs.restoreJournal(dataDir, name, before);
-  return before;
+  return backupExclusive(fs.join(dataDir, BACKUP_DIR), async () => {
+    const checked = await inspectBackup(fs, dataDir, name);
+    if (!checked.ok)
+      throw new Error(
+        checked.newer ? "앱 업데이트가 필요한 백업입니다" : "백업 검사에 실패했습니다. 다시 선택해 주세요.",
+      );
+    if (expectedFingerprint && checked.fingerprint !== expectedFingerprint)
+      throw new Error("백업이 변경되었습니다. 다시 선택해 주세요.");
+    const snapshot = await fs.backupFs
+      .inspect?.(journalPath(fs, dataDir))
+      .catch(() => ({ ok: false, schema: null }));
+    const before = await uniqueBackupName(
+      fs.backupFs,
+      fs.join(dataDir, BACKUP_DIR),
+      versionedBackupName(now, "before-restore", snapshot?.ok ? snapshot.schema : null),
+    );
+    await fs.restoreJournal(dataDir, name, before);
+    return before;
+  });
 }
 
 export type FolderKind = "same" | "has-journal" | "empty";

@@ -1,6 +1,20 @@
 // 앱 흐름(overview 10-8·10-10): 시작 → 첫 실행 / 저장 폴더 없음 / 파일 이상 / 보드, 종료 백업, 저장 위치 전환·옮기기.
 import { JournalRepository } from "../../data/repository";
-import { runMirrorBackup } from "../../data/backup";
+import {
+  runMirrorBackup,
+  BACKUP_DIR,
+  backupExclusive,
+  previewBackupCleanup,
+  executeBackupCleanup,
+} from "../../data/backup";
+import {
+  sameCleanupPlan,
+  normalizeBackupPolicy,
+  type BackupPolicy,
+  type CleanupPlan,
+  type BackupControl,
+} from "../../data/backupPolicy";
+import { inspectBackup, manualBackup } from "../../data/session";
 import { integrityCheck } from "../../data/migrate";
 import {
   backupIfFirstToday,
@@ -122,15 +136,91 @@ type BackupKind = "start" | "periodic" | "exit";
  * 도는 동안 저장소 쓰기는 기다린다(repo.exclusive). 보조 위치가 정해져 있으면 거기에도 하나 더(B6).
  * 그 달 월간 사본을 만들었으면 일지 전체 검사(B7). exit에서는 알릴 화면이 없어 실패를 삼킨다.
  */
-async function autoBackup(kind: BackupKind): Promise<void> {
+let backupTasks: Promise<unknown> = Promise.resolve();
+let closingJournal: SqlDriver | null = null;
+async function backupTask<T>(work: () => Promise<T>): Promise<T> {
+  const next = backupTasks.catch(() => undefined).then(work);
+  backupTasks = next;
+  return next;
+}
+async function readBackupControl(dir: string) {
+  return (await platform().loadConfig())?.backupControlBy?.[dir] ?? { paused: false };
+}
+async function writeBackupControl(dir: string, control: BackupControl) {
+  const p = platform(),
+    c = await p.loadConfig();
+  await p.saveConfig({ backupControlBy: { ...c?.backupControlBy, [dir]: control } });
+}
+export async function previewRetention(policy: BackupPolicy) {
   const j = get().journal;
-  if (j.state !== "ready" || backupRunning) return;
+  if (j.state !== "ready") throw new Error(STR.restore.notOpen);
+  const dir = platform().join(j.dataDir, BACKUP_DIR);
+  return backupTask(() =>
+    backupExclusive(dir, () => previewBackupCleanup(platform().backupFs, dir, policy, platform().now())),
+  );
+}
+export async function applyRetention(policy: BackupPolicy, expected: CleanupPlan) {
+  const j = get().journal;
+  if (j.state !== "ready") throw new Error(STR.restore.notOpen);
+  const p = platform(),
+    dir = p.join(j.dataDir, BACKUP_DIR),
+    normalized = normalizeBackupPolicy(policy);
+  if (expected.scope !== dir) throw new Error(STR.backupV13.scopeChanged);
+  return backupTask(() =>
+    j.repo.exclusiveWithSettings((save) =>
+      backupExclusive(dir, async () => {
+        if (get().journal !== j) throw new Error(STR.restore.notOpen);
+        const fresh = await previewBackupCleanup(p.backupFs, dir, normalized, p.now());
+        if (!sameCleanupPlan(expected, fresh)) return { changed: fresh };
+        await save({ backup: normalized });
+        let result: Awaited<ReturnType<typeof executeBackupCleanup>>;
+        try {
+          result = await executeBackupCleanup(p.backupFs, dir, fresh);
+        } catch (e) {
+          await writeBackupControl(j.dataDir, { paused: true });
+          throw new Error(STR.backupV13.applyDeferred + String(e), { cause: e });
+        }
+        const lastCleanup = {
+          at: p.now().toISOString(),
+          deleted: result.deleted.length,
+          failed: result.failed.length,
+          freed: result.freed,
+        };
+        let recordingFailed = false;
+        try {
+          await writeBackupControl(j.dataDir, { paused: false, lastCleanup });
+        } catch {
+          recordingFailed = true;
+        }
+        return { result, recordingFailed };
+      }),
+    ),
+  );
+}
+export async function manualBackupNow() {
+  const j = get().journal;
+  if (j.state !== "ready") throw new Error(STR.restore.notOpen);
+  return backupTask(() =>
+    j.repo.exclusive(() => manualBackup(platform(), j.driver, j.dataDir, platform().now())),
+  );
+}
+async function autoBackup(kind: BackupKind): Promise<void> {
+  const expected = get().journal;
+  return backupTask(() => (get().journal === expected ? autoBackupWork(kind) : Promise.resolve()));
+}
+async function autoBackupWork(kind: BackupKind): Promise<void> {
+  const j = get().journal;
+  if (j.state !== "ready" || backupRunning || j.driver === closingJournal) return;
   const p = platform();
   backupRunning = true;
   if (kind !== "exit") set({ backingUp: true });
   try {
     const s = await j.repo.getSettings();
-    const keep = { daily: s.backup.dailyKeep, monthly: s.backup.monthlyKeep };
+    const keep = {
+      daily: s.backup.dailyKeep,
+      monthly: s.backup.monthlyKeep,
+      preserve: (await readBackupControl(j.dataDir)).paused,
+    };
     const writes = j.repo.writeCount;
     const now = p.now();
     const result = await j.repo.exclusive(() =>
@@ -138,12 +228,42 @@ async function autoBackup(kind: BackupKind): Promise<void> {
         ? backupIfFirstToday(p, j.driver, j.dataDir, now, keep)
         : backupOnExit(p, j.driver, j.dataDir, now, keep),
     );
+    if (result) {
+      const control = await readBackupControl(j.dataDir);
+      if (!control.paused) {
+        const dir = p.join(j.dataDir, BACKUP_DIR);
+        const cleanup = await backupExclusive(dir, async () =>
+          executeBackupCleanup(p.backupFs, dir, await previewBackupCleanup(p.backupFs, dir, s.backup, now)),
+        );
+        if (cleanup.deleted.length || cleanup.failed.length)
+          await writeBackupControl(j.dataDir, {
+            ...control,
+            lastCleanup: {
+              at: now.toISOString(),
+              deleted: cleanup.deleted.length,
+              failed: cleanup.failed.length,
+              freed: cleanup.freed,
+            },
+          });
+        if (cleanup.failed.length && kind !== "exit")
+          toast(STR.backupV13.partial(cleanup.deleted.length, cleanup.failed.length));
+      }
+    }
     lastBackup = { writes, at: now.getTime() };
     const mirror = (await p.loadConfig())?.backupMirror;
     if (mirror && result) {
       try {
         const dir = mirrorDirFor(mirror);
-        await j.repo.exclusive(() => runMirrorBackup(j.driver, p.backupFs, dir, now, p.verifyCopy));
+        await j.repo.exclusive(async () =>
+          runMirrorBackup(
+            j.driver,
+            p.backupFs,
+            dir,
+            now,
+            p.verifyCopy,
+            (await readBackupControl(j.dataDir)).paused,
+          ),
+        );
       } catch (e) {
         if (kind !== "exit") toast(STR.backupMore.mirrorFailed(errMsg(e)));
       }
@@ -207,7 +327,7 @@ function onCorrupt(e: unknown) {
   stopPeriodic();
   detachAll();
   set({ journal: { state: "integrity", dataDir: j.dataDir, path: journalPath(platform(), j.dataDir) } });
-  void j.driver.close().catch(() => undefined);
+  void backupTask(() => j.driver.close().catch(() => undefined));
 }
 
 /** 앱 종료 직전: 대기 중인 저장을 끝내고, 마지막 백업 뒤 바뀐 게 있으면 그날 일일 백업을 덮어쓴다(B3). 실패해도 창은 닫힌다. */
@@ -230,6 +350,11 @@ async function activate(driver: SqlDriver, dataDir: string) {
   detachAll(); // 이전 일지의 문서·예약 저장·그림이 새 일지에 섞이지 않게(v1.8.1)
   const repo = new JournalRepository(driver, () => p.now());
   repo.setCorruptHandler(onCorrupt);
+  const control = await readBackupControl(dataDir);
+  if (control.pendingPolicy) {
+    await repo.updateSettings({ backup: control.pendingPolicy });
+    await writeBackupControl(dataDir, { ...control, paused: false, pendingPolicy: undefined });
+  }
   const [row] = await driver.select<{ v: string }>("SELECT sqlite_version() AS v");
   p.splash?.status(STR.splash.preparing);
   await initBoard(repo);
@@ -238,35 +363,73 @@ async function activate(driver: SqlDriver, dataDir: string) {
   await initInsights(repo);
   await syncWorkspace(repo, dataDir);
   set({ journal: { state: "ready", driver, repo, dataDir, sqliteVersion: row?.v ?? "?" } });
+  closingJournal = null;
   lastBackup = { writes: repo.writeCount, at: p.now().getTime() };
   void restoreCabinet().catch(() => undefined);
-  void waitInputIdle(START_BACKUP_MAX_WAIT_MS).then(() => autoBackup("start"));
+  void waitInputIdle(START_BACKUP_MAX_WAIT_MS).then(() => {
+    const current = get().journal;
+    if (current.state === "ready" && current.repo === repo) return autoBackup("start");
+  });
   periodicTimer = setInterval(() => void periodicTick().catch(() => undefined), PERIODIC_CHECK_MS);
 }
 
 /** 백업에서 복원(O5): 지금 일지를 닫고(대기 저장 마무리) → 보존 사본을 남기고 백업을 일지로 → 다시 연다. 실패하면 오류 글 */
-export async function restoreBackup(name: string): Promise<string | null> {
+export async function restoreBackup(
+  name: string,
+  expectedFingerprint?: string,
+  expectedDataDir?: string,
+): Promise<string | null> {
+  const current = get().journal;
+  const dir =
+    expectedDataDir ??
+    (current.state === "ready" || current.state === "integrity" ? current.dataDir : undefined);
+  return backupTask(() => restoreBackupWork(name, expectedFingerprint, dir));
+}
+async function restoreBackupWork(
+  name: string,
+  expectedFingerprint?: string,
+  expectedDataDir?: string,
+): Promise<string | null> {
   const j = get().journal;
   const dataDir = j.state === "ready" || j.state === "integrity" ? j.dataDir : null;
-  if (!dataDir) return STR.restore.notOpen;
+  if (!dataDir || (j.state === "ready" && j.driver === closingJournal)) return STR.restore.notOpen;
+  if (dataDir !== expectedDataDir) return STR.backupV13.scopeChanged;
   const p = platform();
+  const checked = await inspectBackup(p, dataDir, name);
+  if (!checked.ok) return checked.newer ? STR.restore.newer : STR.restore.bad;
+  if (expectedFingerprint && checked.fingerprint !== expectedFingerprint) return STR.backupV13.previewChanged;
+  const control = await readBackupControl(dataDir);
+  const keepPolicy = j.state === "ready" ? (await j.repo.getSettings()).backup : undefined;
+  await writeBackupControl(dataDir, { ...control, paused: true, pendingPolicy: keepPolicy });
   if (j.state === "ready") {
-    await flushPending().catch(() => undefined);
-    await finishNote().catch(() => undefined);
+    try {
+      await flushPending();
+      await finishNote();
+    } catch (e) {
+      await writeBackupControl(dataDir, control);
+      return errMsg(e);
+    }
     stopPeriodic();
+    set({ journal: { state: "loading" } });
     detachAll();
     await j.driver.close().catch(() => undefined);
   }
   let before: string;
   try {
-    before = await restoreFromBackup(p, dataDir, name, p.now());
+    before = await restoreFromBackup(p, dataDir, name, p.now(), checked.fingerprint);
   } catch (e) {
     await openAt(dataDir);
     return errMsg(e);
   }
   set({ settingsOpen: false });
   if (await openAt(dataDir))
-    toast(STR.restore.done(name), { label: STR.restore.undo, run: () => void restoreBackup(before) });
+    toast(STR.restore.done(name), {
+      label: STR.restore.undo,
+      run: async () => {
+        const e = await restoreBackup(before, undefined, dataDir);
+        if (e) toast(e);
+      },
+    });
   return null;
 }
 
@@ -352,8 +515,12 @@ async function closeCurrent() {
   await flushPending();
   await finishNote().catch(() => undefined);
   stopPeriodic();
+  closingJournal = j.state === "ready" ? j.driver : null;
   detachAll();
-  if (j.state === "ready") await j.driver.close().catch(() => undefined);
+  if (j.state === "ready") {
+    await backupTasks.catch(() => undefined);
+    await j.repo.exclusive(() => j.driver.close()).catch(() => undefined);
+  }
 }
 
 /** 설정 > 저장 위치: 다른 폴더의 기존 일지로 전환(지금 일지는 그대로). 새 일지를 먼저 열어 보고 성공해야 바꾼다. */
@@ -376,6 +543,9 @@ export async function switchTo(dataDir: string): Promise<string | null> {
 
 /** 설정 > 저장 위치: 지금 일지를 새 폴더로 옮긴다. 실패하면 기존 위치를 그대로 쓴다(overview 10-10). */
 export async function moveTo(dataDir: string, copyBackups: boolean): Promise<string | null> {
+  return backupTask(() => moveToWork(dataDir, copyBackups));
+}
+async function moveToWork(dataDir: string, copyBackups: boolean): Promise<string | null> {
   const j = get().journal;
   if (j.state !== "ready") return "일지가 열려 있지 않습니다";
   const p = platform();
@@ -383,7 +553,8 @@ export async function moveTo(dataDir: string, copyBackups: boolean): Promise<str
   await finishNote().catch(() => undefined);
   let next: SqlDriver;
   try {
-    await copyJournalTo(p, j.driver, j.dataDir, dataDir, copyBackups, p.now());
+    await j.repo.exclusive(() => copyJournalTo(p, j.driver, j.dataDir, dataDir, copyBackups, p.now()));
+    await writeBackupControl(dataDir, await readBackupControl(j.dataDir));
     next = await openJournalAt(p, dataDir, () => p.now());
   } catch (e) {
     return errMsg(e);

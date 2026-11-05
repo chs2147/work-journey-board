@@ -352,3 +352,59 @@ test("v12 completion and undo stay in their own workspace across three round tri
   expect(await row().getAttribute("data-flagged")).toBe(originalFlag);
   expect(await count()).toBe(before);
 });
+
+test("v13 백업 보관 정책·보호 사본이 공간별로 유지되고 3회 왕복 후 이미지/기록이 그대로", async ({
+  page,
+}) => {
+  const { openSettings } = await import("./settings-helper");
+  await addImage(page, "#2a78d6", "v13-회사-그림");
+  const count1 = await storedAssets(page);
+  async function policy(days: number) {
+    await openSettings(page, "data");
+    await page.getByTestId("backup-policy-open").click();
+    const dialog = page.getByRole("dialog");
+    await dialog.getByRole("spinbutton", { name: "일일 보관 기준" }).fill(String(days));
+    await dialog.getByRole("button", { name: "정리 미리보기", exact: true }).click();
+    await page.getByTestId("backup-policy-apply").click();
+    await expect(dialog).toContainText("보관 정책 적용");
+    await expect(dialog.getByRole("button", { name: "닫기", exact: true })).toBeEnabled();
+    await page.keyboard.press("Escape");
+    await expect(dialog).toHaveCount(0);
+    await page.getByRole("button", { name: "지금 백업", exact: true }).click();
+    await expect(page.getByTestId("last-backup")).toContainText("DB 구조 v14");
+    await page.keyboard.press("Escape");
+  }
+  await policy(7);
+  await switchTo(page, 2, "개인");
+  await addImage(page, "#e55", "v13-개인-그림");
+  const count2 = await storedAssets(page);
+  await policy(90);
+  for (let i = 0; i < 3; i++) {
+    await switchTo(page, 1, "회사");
+    expect(await storedAssets(page)).toBe(count1);
+    await openSettings(page, "data");
+    await expect(page.getByTestId("settings-cat-data")).toContainText("일일 최근 7일");
+    await page.keyboard.press("Escape");
+    await switchTo(page, 2, "개인");
+    expect(await storedAssets(page)).toBe(count2);
+    await openSettings(page, "data");
+    await expect(page.getByTestId("settings-cat-data")).toContainText("일일 최근 90일");
+    await page.keyboard.press("Escape");
+  }
+  const names = await page.evaluate(() =>
+    (globalThis as unknown as { __wjb: { files(): string[] } }).__wjb.files(),
+  );
+  expect(names.filter((n) => n.includes("_manual_app-v"))).toHaveLength(2);
+  await expect(missing(page)).toHaveCount(0);
+});
+
+test("v13 정책 창을 연 상태로 공간을 바꾸면 이전 공간의 창을 닫음", async ({ page }) => {
+  const { openSettings } = await import("./settings-helper");
+  await openSettings(page, "data");
+  await page.getByTestId("backup-policy-open").click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await switchTo(page, 2, "개인");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await switchTo(page, 1, "회사");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+});

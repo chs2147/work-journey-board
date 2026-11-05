@@ -1,3 +1,4 @@
+import { normalizeBackupPolicy } from "./backupPolicy";
 import { copyablePrevious } from "../domain/previousItems";
 // 영속 데이터 접근의 유일한 경로(CLAUDE.md 4-3). UI는 이 클래스만 쓰고 SQL을 직접 실행하지 않는다.
 import {
@@ -479,10 +480,12 @@ export class JournalRepository {
   /** 파일 파손으로 보이는 오류가 나면 부를 곳(B4) */
   private onCorrupt: ((e: unknown) => void) | null = null;
 
+  private readonly sourceDb: SqlDriver;
   constructor(
     db: SqlDriver,
     private readonly clock: () => Date = () => new Date(),
   ) {
+    this.sourceDb = db;
     const touched = (sql: string) => {
       for (const key of Object.keys(CACHE_RES) as CacheKey[])
         if (CACHE_RES[key].test(sql)) this.cache.delete(key);
@@ -543,6 +546,24 @@ export class JournalRepository {
     }
   }
 
+  /** 백업 정책 확인/저장/정리 동안 쓰기를 막는다. 콜백의 저장 함수는 같은 배타 구간에서만 사용한다. */
+  async exclusiveWithSettings<T>(
+    work: (save: (patch: SettingsPatch) => Promise<Settings>) => Promise<T>,
+  ): Promise<T> {
+    return this.exclusive(() =>
+      work(async (patch) => {
+        const next = mergeSettings(await this.getSettings(), patch);
+        await this.sourceDb.execute(
+          "INSERT INTO app_meta (key, value) VALUES ('settings', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+          [JSON.stringify(next)],
+        );
+        this.writes++;
+        this.cache.delete("settings");
+        return next;
+      }),
+    );
+  }
+
   /** 캐시에서 읽기 — 부르는 쪽이 고쳐도 캐시가 바뀌지 않게 사본을 준다 */
   private async cached<T>(key: CacheKey, load: () => Promise<T>): Promise<T> {
     let hit = this.cache.get(key) as Promise<T> | undefined;
@@ -584,6 +605,15 @@ export class JournalRepository {
     } catch {
       stored = undefined; // 손상된 설정은 기본값으로
     }
+    if (stored && typeof stored === "object" && "backup" in stored) {
+      const old = stored as { backup: Parameters<typeof normalizeBackupPolicy>[0] };
+      old.backup = normalizeBackupPolicy(old.backup, true);
+    }
+    if (!stored || typeof stored !== "object" || !("backup" in stored))
+      stored = {
+        ...(stored && typeof stored === "object" ? stored : {}),
+        backup: normalizeBackupPolicy(undefined, true),
+      };
     return mergeSettings(structuredClone(DEFAULT_SETTINGS), stored);
   }
 

@@ -59,7 +59,11 @@ test("새 판 있음: 띠 + 설정 점 · [나중에]는 띠만 숨김 · [자�
   await dlg.getByRole("button", { name: "내려받고 설치" }).click();
   await expect(page.getByText("브라우저 모드에서는 설치하지 않습니다(실앱에서만)")).toBeVisible();
   expect(await calls(page)).toEqual(["check", "download", "install"]);
-  expect((await files(page)).some((f) => /\/backups\/work-journey_.*_pre-update\.db$/.test(f))).toBe(true);
+  expect(
+    (await files(page)).some((f) =>
+      /\/backups\/work-journey_.*_pre-update_app-v[^/]+_db-v\d+(?:_c\d+)?\.db$/.test(f),
+    ),
+  ).toBe(true);
 });
 
 test("연결 실패: 띠 없이 조용히 · 설정에 '확인하지 못했습니다 — …'", async ({ page }) => {

@@ -28,7 +28,9 @@ test("파일이 깨졌으면: 데이터 파일 문제 화면 → 백업 고르�
   await expect(page.getByTestId("category-header")).toHaveCount(4);
   await expect(page.getByText(/백업\(work-journey_2026-10-21\.db\)에서 복원했습니다/)).toBeVisible();
   expect(
-    (await files(page)).some((f) => /backups\/work-journey_2026-10-22_\d{4}_before-restore\.db$/.test(f)),
+    (await files(page)).some((f) =>
+      /backups\/work-journey_2026-10-22_\d{9}_before-restore_app-v[^/]+_db-vunknown(?:_c\d+)?\.db$/.test(f),
+    ),
   ).toBe(true);
 });
 

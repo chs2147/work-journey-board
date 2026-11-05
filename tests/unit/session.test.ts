@@ -1,3 +1,4 @@
+import { versionedBackupName } from "../../src/data/backupIdentity";
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
 import { DATA_FILE, isRestorableName, runMirrorBackup } from "../../src/data/backup";
@@ -56,8 +57,8 @@ describe("일지 열기 (data-spec 7-3·7-5)", () => {
     await fs.ensureDir("/d/WJ");
     const db = await openJournalAt(fs, "/d/WJ", now);
     const first = await backupIfFirstToday(fs, db, "/d/WJ", now(), keep);
-    expect(first?.daily).toBe("/d/WJ/backups/work-journey_2026-10-23.db");
-    expect(first?.monthly).toBe("/d/WJ/backups/work-journey_2026-10_monthly.db");
+    expect(first?.daily).toBe(`/d/WJ/backups/${versionedBackupName(now(), "daily", 14)}`);
+    expect(first?.monthly).toBe(`/d/WJ/backups/${versionedBackupName(now(), "monthly", 14)}`);
     expect(await backupIfFirstToday(fs, db, "/d/WJ", now(), keep)).toBeNull();
   });
 });
@@ -116,8 +117,8 @@ describe("저장 위치 옮기기 (overview 10-10)", () => {
     ]);
     const all = fs.listAll();
     expect(all).toContain(`/old/${DATA_FILE}`);
-    expect(all).toContain("/old/backups/work-journey_2026-10-23_0831_manual.db");
-    expect(all).toContain("/new/backups/work-journey_2026-10-23.db");
+    expect(all).toContain(`/old/backups/${versionedBackupName(now(), "manual", 14)}`);
+    expect(all).toContain(`/new/backups/${versionedBackupName(now(), "daily", 14)}`);
     expect(all).not.toContain("/new/backups/내 파일.txt");
   });
 
@@ -176,9 +177,9 @@ describe("백업 보강·복원(optimize-1031-plan O4·O5)", () => {
     for (const d of [18, 19, 20, 21, 22, 23])
       await runMirrorBackup(db, fs.backupFs, "/e/mirror", new Date(2026, 9, d, 9), fs.verifyCopy);
     expect(await fs.backupFs.list("/e/mirror")).toEqual([
-      "work-journey_2026-10-21.db",
-      "work-journey_2026-10-22.db",
-      "work-journey_2026-10-23.db",
+      versionedBackupName(new Date(2026, 9, 21, 9), "daily", 14),
+      versionedBackupName(new Date(2026, 9, 22, 9), "daily", 14),
+      versionedBackupName(new Date(2026, 9, 23, 9), "daily", 14),
       "내 문서.txt",
     ]);
   });
@@ -188,17 +189,17 @@ describe("백업 보강·복원(optimize-1031-plan O4·O5)", () => {
     await repo.createCategory("백업 뒤에 만든 업무", "2026-W43");
     const list = await listRestorable(fs, "/d/WJ");
     expect(list.map((b) => b.name)).toEqual([
-      "work-journey_2026-10-23.db",
-      "work-journey_2026-10_monthly.db",
+      versionedBackupName(now(), "monthly", 14),
+      versionedBackupName(now(), "daily", 14),
     ]);
-    expect(await inspectBackup(fs, "/d/WJ", "work-journey_2026-10-23.db")).toMatchObject({
+    expect(await inspectBackup(fs, "/d/WJ", versionedBackupName(now(), "daily", 14))).toMatchObject({
       ok: true,
       newer: false,
       categories: 1,
     });
     await db.close();
-    const before = await restoreFromBackup(fs, "/d/WJ", "work-journey_2026-10-23.db", now());
-    expect(before).toBe("work-journey_2026-10-23_0831_before-restore.db");
+    const before = await restoreFromBackup(fs, "/d/WJ", versionedBackupName(now(), "daily", 14), now());
+    expect(before).toBe(versionedBackupName(now(), "before-restore", 14));
     const reopened = new JournalRepository(await openJournalAt(fs, "/d/WJ", now), now);
     expect((await reopened.listCategories()).categories.map((c) => c.name)).toEqual(["가상 업무"]);
     expect(await fs.backupFs.list("/d/WJ/backups")).toContain(before);
@@ -209,9 +210,9 @@ describe("백업 보강·복원(optimize-1031-plan O4·O5)", () => {
     const { fs } = await journalWithBackup();
     fs.writeFile("/d/WJ/backups/내 메모.db");
     await expect(restoreFromBackup(fs, "/d/WJ", "내 메모.db", now())).rejects.toThrow();
-    await expect(restoreFromBackup(fs, "/d/WJ", "work-journey_2026-10-23.db", now())).rejects.toThrow(
-      "열려 있습니다",
-    );
+    await expect(
+      restoreFromBackup(fs, "/d/WJ", versionedBackupName(now(), "daily", 14), now()),
+    ).rejects.toThrow("열려 있습니다");
     fs.writeFile("/d/WJ/backups/work-journey_2026-10-01.db", new TextEncoder().encode("깨짐".repeat(50)));
     expect((await inspectBackup(fs, "/d/WJ", "work-journey_2026-10-01.db")).ok).toBe(false);
     expect(isRestorableName("work-journey_2026-10-23_0831_pre-update.db")).toBe(true);

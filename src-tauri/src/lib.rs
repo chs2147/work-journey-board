@@ -1,5 +1,6 @@
 //! Work Journey Board 데스크톱 껍데기. 플러그인 등록·창 설정만 둔다 — 업무 로직은 웹 앱(src/) 쪽에(CLAUDE.md 4-5).
 
+mod backup_name;
 mod cabinet;
 mod db_batch;
 mod files;
