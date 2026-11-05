@@ -183,8 +183,9 @@ test("#7 정보·오픈소스 라이선스: 버전·소개 사이트·릴리스 
   await expect(oss).toContainText("© 2021 Kil Hyung-jin");
   await expect(oss).toContainText("고운돋움 (Gowun Dodum)");
   await expect(oss).toContainText("© 2021 The Gowun Dodum Project Authors");
-  await expect(oss.locator("table tr")).toHaveCount(12);
+  await expect(oss.locator("table tr")).toHaveCount(13);
   for (const library of [
+    "Three.js",
     "mdast-util-from-markdown",
     "mdast-util-gfm",
     "micromark-extension-gfm",

@@ -92,6 +92,10 @@ npm run tauri dev    # 실앱 모드(윈도우·맥 / 리눅스는 webkit2gtk-4.
 - 설치 파일: `main`에 반영되면 *Build desktop installers*가 윈도우(NSIS)·맥(유니버설 DMG)을 나란히 만들고, **둘 다 성공해야** [Releases](https://github.com/chs2147/work-journey-board/releases)에 `v<버전>`으로 함께 올린다 — 0.x·`-rc`는 사전 릴리스, 1.0.0 이상 정식 판은 정식 릴리스. 윈도우 오프라인 설치판은 요청할 때만 Actions → *Build desktop installers* → Run workflow(main) → `offline`으로 그 판 릴리스에 더한다. 하나의 원본으로 두 플랫폼을 같은 판으로 운영한다([docs/macos-spec.md](docs/macos-spec.md)).
 
 ## Version History
+### v1.15.1 (2026-11-05) — Universe 초기 탐색 모드 유지
+- 카메라 초기화·복원 중에는 자동 은하/초점 전환을 수행하지 않고, 실제 확대·축소 입력이 있을 때만 전환
+- Universe 회귀 테스트의 비동기 열림 대기와 라이선스 표 검사 갱신
+
 ### v1.15.0 (2026-11-05) — Universe 3D 탐색과 조절 가능한 패널
 - 다이나믹 3D·정적 2D, 독립 다크 지도, 은하↔초점 카메라 전환과 모노그램 아이콘 버튼
 - 접이식 필터·상세 패널의 너비 조절·저장, 설정 서브메뉴 설명 한 줄 표시

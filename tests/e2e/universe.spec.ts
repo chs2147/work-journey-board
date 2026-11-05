@@ -15,7 +15,8 @@ test("Alt+5: 커서가 있는 항목이 가운데 — 상세에 원문·연결 �
 }) => {
   await open(page);
   await page.keyboard.press("Alt+Digit5");
-  if (await page.getByTestId("universe-view").isVisible()) {
+  await expect(page.getByTestId("universe-view")).toBeVisible();
+  {
     await page.getByTestId("u-static").click();
     for (const id of ["u-toggle-filter", "u-toggle-detail"]) {
       const toggle = page.getByTestId(id);
@@ -36,13 +37,7 @@ test("Alt+5: 커서가 있는 항목이 가운데 — 상세에 원문·연결 �
   expect(await nodes.count()).toBeGreaterThan(3);
   await expect(nodes.filter({ hasText: "차세대 정산 시스템 구축" })).toHaveCount(1);
   await page.keyboard.press("Alt+Digit5");
-  if (await page.getByTestId("universe-view").isVisible()) {
-    await page.getByTestId("u-static").click();
-    for (const id of ["u-toggle-filter", "u-toggle-detail"]) {
-      const toggle = page.getByTestId(id);
-      if ((await toggle.getAttribute("aria-expanded")) === "false") await toggle.click();
-    }
-  }
+
   await expect(view).toHaveCount(0);
   await expect(page.getByTestId("week-title")).toBeVisible();
 });
@@ -72,7 +67,8 @@ test("별을 누르면 상세가 바뀌고, 두 번 누르면 그 별이 가운�
 test("업무 별 [원본 열기] = 경과 타임라인, 목록 보기에서 Enter = 원본", async ({ page }) => {
   await open(page);
   await page.keyboard.press("Alt+Digit5");
-  if (await page.getByTestId("universe-view").isVisible()) {
+  await expect(page.getByTestId("universe-view")).toBeVisible();
+  {
     await page.getByTestId("u-static").click();
     for (const id of ["u-toggle-filter", "u-toggle-detail"]) {
       const toggle = page.getByTestId(id);
@@ -91,7 +87,8 @@ test("업무 별 [원본 열기] = 경과 타임라인, 목록 보기에서 Ente
   await expect(page.getByTestId("insights-title")).toBeVisible();
   // 다시 Universe → 목록 줄에서 Enter
   await page.keyboard.press("Alt+Digit5");
-  if (await page.getByTestId("universe-view").isVisible()) {
+  await expect(page.getByTestId("universe-view")).toBeVisible();
+  {
     await page.getByTestId("u-static").click();
     for (const id of ["u-toggle-filter", "u-toggle-detail"]) {
       const toggle = page.getByTestId(id);
@@ -107,7 +104,8 @@ test("업무 별 [원본 열기] = 경과 타임라인, 목록 보기에서 Ente
 test("필터: 검색·종류 · 은하 보기(전체 연결망) · 시간 막대 년→월→주 확대·전체 기간", async ({ page }) => {
   await open(page);
   await page.keyboard.press("Alt+Digit5");
-  if (await page.getByTestId("universe-view").isVisible()) {
+  await expect(page.getByTestId("universe-view")).toBeVisible();
+  {
     await page.getByTestId("u-static").click();
     for (const id of ["u-toggle-filter", "u-toggle-detail"]) {
       const toggle = page.getByTestId(id);
@@ -150,7 +148,8 @@ test("여러 워크스페이스: 다른 공간을 켜면 읽기 전용으로 함
 }) => {
   await open(page, "&ws=2");
   await page.keyboard.press("Alt+Digit5");
-  if (await page.getByTestId("universe-view").isVisible()) {
+  await expect(page.getByTestId("universe-view")).toBeVisible();
+  {
     await page.getByTestId("u-static").click();
     for (const id of ["u-toggle-filter", "u-toggle-detail"]) {
       const toggle = page.getByTestId(id);
@@ -191,7 +190,8 @@ test("직접 연결: [연결하기] → 대상 찾기·종류·설명 → 굵은
 }) => {
   await open(page);
   await page.keyboard.press("Alt+Digit5");
-  if (await page.getByTestId("universe-view").isVisible()) {
+  await expect(page.getByTestId("universe-view")).toBeVisible();
+  {
     await page.getByTestId("u-static").click();
     for (const id of ["u-toggle-filter", "u-toggle-detail"]) {
       const toggle = page.getByTestId(id);
@@ -230,7 +230,8 @@ test("직접 연결: [연결하기] → 대상 찾기·종류·설명 → 굵은
 test("직접 연결 고치기(종류·방향·설명)·끊기 — 다시 열어도 그대로, 끊어도 원문은 그대로", async ({ page }) => {
   await open(page);
   await page.keyboard.press("Alt+Digit5");
-  if (await page.getByTestId("universe-view").isVisible()) {
+  await expect(page.getByTestId("universe-view")).toBeVisible();
+  {
     await page.getByTestId("u-static").click();
     for (const id of ["u-toggle-filter", "u-toggle-detail"]) {
       const toggle = page.getByTestId(id);
@@ -253,16 +254,11 @@ test("직접 연결 고치기(종류·방향·설명)·끊기 — 다시 열어�
 
   // 보드로 갔다가 다시 열어도 그대로
   await page.keyboard.press("Alt+Digit5");
-  if (await page.getByTestId("universe-view").isVisible()) {
-    await page.getByTestId("u-static").click();
-    for (const id of ["u-toggle-filter", "u-toggle-detail"]) {
-      const toggle = page.getByTestId(id);
-      if ((await toggle.getAttribute("aria-expanded")) === "false") await toggle.click();
-    }
-  }
+
   await expect(page.getByTestId("universe-view")).toHaveCount(0);
   await page.keyboard.press("Alt+Digit5");
-  if (await page.getByTestId("universe-view").isVisible()) {
+  await expect(page.getByTestId("universe-view")).toBeVisible();
+  {
     await page.getByTestId("u-static").click();
     for (const id of ["u-toggle-filter", "u-toggle-detail"]) {
       const toggle = page.getByTestId(id);

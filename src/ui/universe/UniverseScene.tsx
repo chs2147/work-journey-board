@@ -157,6 +157,7 @@ export default function UniverseScene({ graph, onFailure }: { graph: UGraph; onF
       start: number;
     } | null = null;
     let saved: { position: T.Vector3; target: T.Vector3 } | null = null;
+    let zoomIntent = false;
     let gate = 0,
       pointerStart: { x: number; y: number } | null = null;
     const reduced = matchMedia("(prefers-reduced-motion: reduce)");
@@ -175,6 +176,7 @@ export default function UniverseScene({ graph, onFailure }: { graph: UGraph; onF
       fly(center.clone(), center.clone().add(new T.Vector3(0, radius * 0.3, fitDistance)));
     };
     const zoom = (k: number) => {
+      zoomIntent = true;
       flight = null;
       camera.position.sub(controls.target).multiplyScalar(k).add(controls.target);
       controls.update();
@@ -209,6 +211,7 @@ export default function UniverseScene({ graph, onFailure }: { graph: UGraph; onF
       if (id) focusOn(id);
     };
     const wheel = (e: WheelEvent) => {
+      zoomIntent = true;
       if (e.deltaY < 0) {
         const id = hit(e.clientX, e.clientY);
         if (id) select(id);
@@ -288,12 +291,14 @@ export default function UniverseScene({ graph, onFailure }: { graph: UGraph; onF
         if (p === 1) flight = null;
       }
       controls.update();
-      if (now > gate && !flight) {
+      if (zoomIntent && now > gate && !flight) {
         const ratio = camera.position.distanceTo(controls.target) / fitDistance;
         if (state.mode === "galaxy" && ratio < 0.42 && state.selected && index.has(state.selected)) {
+          zoomIntent = false;
           focusOn(state.selected);
           gate = now + 850;
         } else if (state.mode === "focus" && ratio > 0.65) {
+          zoomIntent = false;
           setMode("galaxy");
           gate = now + 850;
         }

@@ -29,6 +29,9 @@ test("real WebGL scene or explicit fallback, static view remains available", asy
       .getByTestId("universe-3d-canvas")
       .or(page.getByRole("status").filter({ hasText: "3D를 사용할 수 없어" })),
   ).toBeVisible();
+  // Initial camera settling must never be interpreted as a user zoom-out.
+  await page.waitForTimeout(1200);
+  await expect(page.getByTestId("u-mode-focus")).toHaveAttribute("aria-pressed", "true");
   await page.getByTestId("u-static").click();
   await expect(page.getByTestId("universe-3d-canvas")).toHaveCount(0);
   await expect(page.getByTestId("universe-map")).toBeVisible();
