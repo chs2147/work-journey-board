@@ -31,6 +31,13 @@ test("지식 카드: [지식 카드로 정리] → 유형·제목·요약·조�
 }) => {
   await open(page);
   await page.keyboard.press("Alt+Digit5");
+  if (await page.getByTestId("universe-view").isVisible()) {
+    await page.getByTestId("u-static").click();
+    for (const id of ["u-toggle-filter", "u-toggle-detail"]) {
+      const toggle = page.getByTestId(id);
+      if ((await toggle.getAttribute("aria-expanded")) === "false") await toggle.click();
+    }
+  }
   await makeCard(page, "가상: 이관 재시도 해결법");
   const detail = page.getByTestId("universe-detail");
   await expect(detail.getByTestId("u-detail-title")).toHaveText("가상: 이관 재시도 해결법");
@@ -44,14 +51,42 @@ test("지식 카드: [지식 카드로 정리] → 유형·제목·요약·조�
   await expect(detail.getByTestId("u-card-status")).toHaveText("검토함");
   // 보드 ◆: 누르면 Universe에서 그 카드
   await page.keyboard.press("Alt+Digit5");
+  if (await page.getByTestId("universe-view").isVisible()) {
+    await page.getByTestId("u-static").click();
+    for (const id of ["u-toggle-filter", "u-toggle-detail"]) {
+      const toggle = page.getByTestId(id);
+      if ((await toggle.getAttribute("aria-expanded")) === "false") await toggle.click();
+    }
+  }
   const badge = page.getByTestId("card-badge");
   await expect(badge).toHaveCount(1); // 이 주 보드에 보이는 출처 항목(다른 출처 10/12는 지난주)
   await page.keyboard.press("Alt+Digit5");
+  if (await page.getByTestId("universe-view").isVisible()) {
+    await page.getByTestId("u-static").click();
+    for (const id of ["u-toggle-filter", "u-toggle-detail"]) {
+      const toggle = page.getByTestId(id);
+      if ((await toggle.getAttribute("aria-expanded")) === "false") await toggle.click();
+    }
+  }
   await page.keyboard.press("Alt+Digit5");
+  if (await page.getByTestId("universe-view").isVisible()) {
+    await page.getByTestId("u-static").click();
+    for (const id of ["u-toggle-filter", "u-toggle-detail"]) {
+      const toggle = page.getByTestId(id);
+      if ((await toggle.getAttribute("aria-expanded")) === "false") await toggle.click();
+    }
+  }
   await badge.first().click();
   await expect(page.getByTestId("u-detail-title")).toHaveText("가상: 이관 재시도 해결법");
   // 통합 검색 결과에 카드 묶음
   await page.keyboard.press("Alt+Digit5");
+  if (await page.getByTestId("universe-view").isVisible()) {
+    await page.getByTestId("u-static").click();
+    for (const id of ["u-toggle-filter", "u-toggle-detail"]) {
+      const toggle = page.getByTestId(id);
+      if ((await toggle.getAttribute("aria-expanded")) === "false") await toggle.click();
+    }
+  }
   await page.keyboard.press("Control+Shift+KeyF");
   await page.keyboard.type("재시도 해결법");
   await page.keyboard.press("Enter");
@@ -67,6 +102,13 @@ test("원문을 고치면 출처가 '내용 변경' — 당시 발췌와 지금 
 }) => {
   await open(page);
   await page.keyboard.press("Alt+Digit5");
+  if (await page.getByTestId("universe-view").isVisible()) {
+    await page.getByTestId("u-static").click();
+    for (const id of ["u-toggle-filter", "u-toggle-detail"]) {
+      const toggle = page.getByTestId(id);
+      if ((await toggle.getAttribute("aria-expanded")) === "false") await toggle.click();
+    }
+  }
   await makeCard(page, "가상: 비교 카드", "");
   // 원문 고치기(다른 창에서 고친 것과 같게 일지에서 직접) → 카드를 다시 고르면 근거 상태를 다시 읽는다
   await page.evaluate(async () => {
@@ -74,6 +116,13 @@ test("원문을 고치면 출처가 '내용 변경' — 당시 발췌와 지금 
     await w.__wjbApp.touchEntry("테스트 데이터 이관 스크립트 작성 착수");
   });
   await page.keyboard.press("Alt+Digit5");
+  if (await page.getByTestId("universe-view").isVisible()) {
+    await page.getByTestId("u-static").click();
+    for (const id of ["u-toggle-filter", "u-toggle-detail"]) {
+      const toggle = page.getByTestId(id);
+      if ((await toggle.getAttribute("aria-expanded")) === "false") await toggle.click();
+    }
+  }
   await page.getByTestId("card-badge").first().click();
   const src = page.getByTestId("u-card-source").first();
   await expect(src).toHaveAttribute("data-state", "changed");
@@ -90,6 +139,13 @@ test("작성 중 임시본: 닫았다 다시 [지식 카드로 정리] → [이�
 }) => {
   await open(page);
   await page.keyboard.press("Alt+Digit5");
+  if (await page.getByTestId("universe-view").isVisible()) {
+    await page.getByTestId("u-static").click();
+    for (const id of ["u-toggle-filter", "u-toggle-detail"]) {
+      const toggle = page.getByTestId(id);
+      if ((await toggle.getAttribute("aria-expanded")) === "false") await toggle.click();
+    }
+  }
   await page.getByTestId("u-make-card").click();
   await page.getByTestId("u-card-title").fill("가상: 쓰다 만 카드");
   await page.waitForTimeout(1100); // 임시본 저장(0.8초 뒤)
@@ -127,6 +183,13 @@ test("근거 묶음: Universe·보드 메뉴에서 담기 → 레일 숫자 → 
   await expect(page.getByTestId("pack-badge")).toHaveText("1");
   await row.locator("textarea").first().click(); // 커서를 그 항목에 두고 Universe(그 항목이 가운데)
   await page.keyboard.press("Alt+Digit5");
+  if (await page.getByTestId("universe-view").isVisible()) {
+    await page.getByTestId("u-static").click();
+    for (const id of ["u-toggle-filter", "u-toggle-detail"]) {
+      const toggle = page.getByTestId(id);
+      if ((await toggle.getAttribute("aria-expanded")) === "false") await toggle.click();
+    }
+  }
   await page.getByTestId("u-pack-add").click(); // 같은 항목 → 이미 담김
   await expect(page.getByRole("status").filter({ hasText: "이미 근거 묶음에 담겨 있습니다" })).toBeVisible();
   await page
@@ -171,6 +234,13 @@ test("근거 묶음: Universe·보드 메뉴에서 담기 → 레일 숫자 → 
 test("근거 묶음: 복사 직전 원문이 바뀌었으면 미리보기를 새로 만들고 다시 확인받는다", async ({ page }) => {
   await open(page);
   await page.keyboard.press("Alt+Digit5");
+  if (await page.getByTestId("universe-view").isVisible()) {
+    await page.getByTestId("u-static").click();
+    for (const id of ["u-toggle-filter", "u-toggle-detail"]) {
+      const toggle = page.getByTestId(id);
+      if ((await toggle.getAttribute("aria-expanded")) === "false") await toggle.click();
+    }
+  }
   await page.getByTestId("u-pack-add").click();
   // Universe를 닫고 보드에서 원문을 고친 뒤 다시 와서(지도는 다시 읽지 않은 채) 바로 복사
   await page.getByTestId("pack-toggle").click();

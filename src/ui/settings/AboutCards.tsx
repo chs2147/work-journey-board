@@ -23,6 +23,7 @@ const FONTS = [
 ];
 
 const LIBS: [string, string, string][] = [
+  ["Three.js", "0.180.0", "MIT"],
   ["Tauri", "2", "MIT / Apache-2.0"],
   ["React", "18.3", "MIT"],
   ["Tiptap · ProseMirror", "3.32", "MIT"],

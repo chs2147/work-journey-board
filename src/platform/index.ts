@@ -13,6 +13,7 @@ export interface AppConfig {
   dataDir: string;
   /** 화면 테마(improve-1027v5-spec 4-2) — 이 PC 취향이라 일지가 아니라 여기에. 없으면 시스템 설정 */
   theme?: ThemePref;
+  universeMotion?: "dynamic" | "static";
   /** 보조 백업 위치(optimize-1031-plan B6) — 이 PC의 다른 폴더에 일일 사본을 하나 더. 없으면 끔 */
   backupMirror?: string | null;
   /** Cabinet(features-1102-spec F5): 열려 있던 Cabinet 창·폴더 창(하위 위치) — 다음에 켜면 그대로 다시 연다 */
@@ -221,6 +222,8 @@ export function parseConfig(raw: string | null): AppConfig | null {
     const c = JSON.parse(raw) as Partial<AppConfig>;
     if (typeof c.dataDir !== "string" || !c.dataDir) return null;
     const out: AppConfig = { dataDir: c.dataDir };
+    if (c.universeMotion === "dynamic" || c.universeMotion === "static")
+      out.universeMotion = c.universeMotion;
     if (isThemePref(c.theme)) out.theme = c.theme;
     if (typeof c.backupMirror === "string" && c.backupMirror) out.backupMirror = c.backupMirror;
     const cab = parseCabinetConfig(c.cabinet);

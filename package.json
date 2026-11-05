@@ -39,6 +39,7 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "sql.js": "^1.15.1",
+    "three": "0.180.0",
     "zustand": "^5.0.16"
   },
   "devDependencies": {
@@ -51,6 +52,7 @@
     "@types/react": "^18.3.31",
     "@types/react-dom": "^18.3.7",
     "@types/sql.js": "^1.4.11",
+    "@types/three": "0.180.0",
     "@vitejs/plugin-react": "^6.1.2",
     "eslint": "^10.13.0",
     "eslint-plugin-react-hooks": "^7.1.1",

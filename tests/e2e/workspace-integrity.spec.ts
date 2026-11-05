@@ -131,6 +131,13 @@ test("Universe: 다른 공간을 읽기 전용으로 켜고 [그 공간에서 �
   for (let round = 0; round < 3; round++) {
     // 회사에서 Universe → 개인 공간 켜기(읽기 전용) → 개인 항목 [그 공간에서 열기]
     await page.keyboard.press("Alt+Digit5");
+    if (await page.getByTestId("universe-view").isVisible()) {
+      await page.getByTestId("u-static").click();
+      for (const id of ["u-toggle-filter", "u-toggle-detail"]) {
+        const toggle = page.getByTestId(id);
+        if ((await toggle.getAttribute("aria-expanded")) === "false") await toggle.click();
+      }
+    }
     await page.getByTestId("u-view-list").click();
     const toggle = page.getByTestId("u-ws-toggle").nth(1);
     if (!(await toggle.isChecked())) await toggle.check();
@@ -163,6 +170,13 @@ test("Universe 직접 연결은 만든 공간 일지에만: 공간을 오가도 
       (globalThis as unknown as { __wjbApp: { relationCount(): Promise<number> } }).__wjbApp.relationCount(),
     );
   await page.keyboard.press("Alt+Digit5");
+  if (await page.getByTestId("universe-view").isVisible()) {
+    await page.getByTestId("u-static").click();
+    for (const id of ["u-toggle-filter", "u-toggle-detail"]) {
+      const toggle = page.getByTestId(id);
+      if ((await toggle.getAttribute("aria-expanded")) === "false") await toggle.click();
+    }
+  }
   await page.getByTestId("u-view-list").click();
   await page
     .getByTestId("universe-list")
@@ -182,6 +196,13 @@ test("Universe 직접 연결은 만든 공간 일지에만: 공간을 오가도 
     expect(await count()).toBe(1);
   }
   await page.keyboard.press("Alt+Digit5");
+  if (await page.getByTestId("universe-view").isVisible()) {
+    await page.getByTestId("u-static").click();
+    for (const id of ["u-toggle-filter", "u-toggle-detail"]) {
+      const toggle = page.getByTestId(id);
+      if ((await toggle.getAttribute("aria-expanded")) === "false") await toggle.click();
+    }
+  }
   await page.getByTestId("u-view-map").click();
   await expect(page.getByTestId("u-rel-line")).toHaveCount(1);
 });
@@ -194,6 +215,13 @@ test("지식 카드·근거 묶음도 공간마다 따로: 카드는 만든 공�
       (globalThis as unknown as { __wjbApp: { cardCount(): Promise<number> } }).__wjbApp.cardCount(),
     );
   await page.keyboard.press("Alt+Digit5");
+  if (await page.getByTestId("universe-view").isVisible()) {
+    await page.getByTestId("u-static").click();
+    for (const id of ["u-toggle-filter", "u-toggle-detail"]) {
+      const toggle = page.getByTestId(id);
+      if ((await toggle.getAttribute("aria-expanded")) === "false") await toggle.click();
+    }
+  }
   await page.getByTestId("u-view-list").click();
   await page
     .getByTestId("universe-list")
