@@ -91,6 +91,7 @@ import {
   toggleWorkspace,
   useUniverse,
 } from "./universeStore";
+import { IconSpace3d, IconSpace2d, IconFocus, IconGalaxy, IconMap, IconList } from "../common/icons";
 import styles from "./Universe.module.css";
 
 const UniverseScene = lazy(() => import("./UniverseScene"));
@@ -225,53 +226,61 @@ export function UniverseView() {
         >
           ▤ 상세
         </button>
-        <div className={styles.seg} role="group" aria-label="지도 표현">
+        <div className={`${styles.seg} ${styles.iconSeg}`} role="group" aria-label="지도 표현">
           <button
             type="button"
             aria-pressed={dynamic}
+            aria-label="다이나믹 3D"
+            title="다이나믹 3D"
             data-testid="u-dynamic"
             onClick={() => {
               chooseMotion(true);
             }}
           >
-            다이나믹 3D
+            <IconSpace3d />
           </button>
           <button
             type="button"
             aria-pressed={!dynamic}
+            aria-label="정적 2D"
+            title="정적 2D"
             data-testid="u-static"
             onClick={() => chooseMotion(false)}
           >
-            정적 2D
+            <IconSpace2d />
           </button>
         </div>
         {failed && <span role="status">3D를 사용할 수 없어 정적 지도로 전환했습니다.</span>}
 
-        <div className={styles.seg} role="group" aria-label={STR.universe.modeLabel}>
+        <div className={`${styles.seg} ${styles.iconSeg}`} role="group" aria-label={STR.universe.modeLabel}>
           {(["focus", "galaxy"] as const).map((m) => (
             <button
               key={m}
               type="button"
               aria-pressed={s.mode === m}
               className={s.mode === m ? styles.segOn : ""}
+              aria-label={m === "focus" ? STR.universe.modeFocus : STR.universe.modeGalaxy}
+              title={m === "focus" ? STR.universe.modeFocus : STR.universe.modeGalaxy}
               data-testid={`u-mode-${m}`}
               onClick={() => setMode(m)}
             >
-              {m === "focus" ? STR.universe.modeFocus : STR.universe.modeGalaxy}
+              {m === "focus" ? <IconFocus /> : <IconGalaxy />}
             </button>
           ))}
         </div>
-        <div className={styles.seg} role="group" aria-label={STR.universe.viewLabel}>
+        <div className={`${styles.seg} ${styles.iconSeg}`} role="group" aria-label={STR.universe.viewLabel}>
           {(["map", "list"] as const).map((v) => (
             <button
               key={v}
               type="button"
               aria-pressed={s.view === v}
               className={s.view === v ? styles.segOn : ""}
+              aria-label={v === "map" ? STR.universe.viewMap : STR.universe.viewList}
+              title={v === "map" ? STR.universe.viewMap : STR.universe.viewList}
               data-testid={`u-view-${v}`}
               onClick={() => setView(v)}
             >
-              {v === "map" ? STR.universe.viewMap : STR.universe.viewList}
+              {v === "map" ? <IconMap /> : <IconList />}
             </button>
           ))}
         </div>
