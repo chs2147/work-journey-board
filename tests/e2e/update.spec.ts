@@ -86,7 +86,11 @@ test("받은 파일이 SHA256SUMS와 다르면 설치하지 않음 · 오류 + [
   );
   await expect(dlg.getByRole("button", { name: "다시 시도" })).toBeVisible();
   expect(await calls(page)).toEqual(["check", "download"]);
-  expect((await files(page)).some((f) => f.endsWith("_pre-update.db"))).toBe(false);
+  expect(
+    (await files(page)).some((f) =>
+      /\/backups\/work-journey_.*_pre-update(?:_app-v[^/]+_db-v\d+(?:_c\d+)?)?\.db$/.test(f),
+    ),
+  ).toBe(false);
   await page.keyboard.press("Escape");
   await expect(dlg).toHaveCount(0);
 });
