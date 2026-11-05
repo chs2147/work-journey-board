@@ -92,6 +92,11 @@ npm run tauri dev    # 실앱 모드(윈도우·맥 / 리눅스는 webkit2gtk-4.
 - 설치 파일: `main`에 반영되면 *Build desktop installers*가 윈도우(NSIS)·맥(유니버설 DMG)을 나란히 만들고, **둘 다 성공해야** [Releases](https://github.com/chs2147/work-journey-board/releases)에 `v<버전>`으로 함께 올린다 — 0.x·`-rc`는 사전 릴리스, 1.0.0 이상 정식 판은 정식 릴리스. 윈도우 오프라인 설치판은 요청할 때만 Actions → *Build desktop installers* → Run workflow(main) → `offline`으로 그 판 릴리스에 더한다. 하나의 원본으로 두 플랫폼을 같은 판으로 운영한다([docs/macos-spec.md](docs/macos-spec.md)).
 
 ## Version History
+### v1.15.0-rc.1 (2026-11-05) — Universe 3D 개편 A안 검증판
+- 다이나믹 3D 회전·이동·줌과 은하↔초점 전환, 독립 다크 지도·정적 2D 대체
+- 필터·상세 패널 접기/펼치기와 상단 모노그램 전환 버튼
+- Windows 기본판·macOS 유니버설 DMG 검증용 빌드, GPU·트랙패드 실기 확인 대상
+
 ### v1.14.0 (2026-11-04) — 직선 색상 띠와 업무·메모 입력 개선
 - 앱 전체 세로 색상 띠의 끝을 직선으로 통일하고, 마감일 묶음의 개수를 제거·남은 날을 임박도별 컬러칩으로 표시
 - 상단 **업무 추가·주간 요약·내보내기** 아이콘 버튼, 업무명·기존/신규 태그를 함께 입력하는 업무 추가 팝업
