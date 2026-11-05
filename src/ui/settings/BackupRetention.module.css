@@ -1,0 +1,115 @@
+.hints {
+  color: var(--text-3);
+  font-size: var(--fs-sm);
+}
+.hints p {
+  margin: var(--sp-2) 0;
+}
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-5, 20px);
+}
+.grid label {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-sm);
+  margin: var(--sp-3) 0 var(--sp-2);
+}
+.line {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.grid input[type="number"] {
+  width: 96px;
+}
+.grid input,
+.grid select {
+  color: var(--text-1);
+  background: var(--surface-card);
+  border: 1px solid var(--line);
+  padding: var(--sp-2);
+  border-radius: var(--radius-sm);
+  font: inherit;
+}
+.muted {
+  color: var(--text-3);
+  font-size: var(--fs-sm);
+}
+.warning {
+  padding: var(--sp-3);
+  background: var(--surface-sub);
+  color: var(--text-2);
+  border: 1px solid var(--line);
+  border-radius: 0;
+  font-size: var(--fs-sm);
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+.actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font: inherit;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--btn-line);
+  background: var(--btn-bg);
+  color: var(--btn-fg);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.actions button:last-child {
+  background: var(--primary-bg);
+  color: var(--primary-fg);
+  border-color: var(--primary-line);
+}
+.actions button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.preview {
+  border-top: 1px solid var(--line);
+  padding-top: var(--sp-4);
+}
+.metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  font-size: var(--fs-sm);
+}
+.metrics strong {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: var(--sp-3);
+}
+.tableWrap {
+  max-height: 240px;
+  overflow: auto;
+}
+.tableWrap table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+}
+.tableWrap th,
+.tableWrap td {
+  padding: var(--sp-2);
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+.tableWrap td:first-child {
+  overflow-wrap: anywhere;
+  max-width: 460px;
+}
+@media (max-width: 700px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

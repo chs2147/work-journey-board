@@ -268,3 +268,19 @@ export const IconUndoComplete = () => (
     <path d="M6 3L2 7l4 4M2 7h7a4 4 0 0 1 0 8" />
   </Svg>
 );
+
+export const IconBackup = () => (
+  <Svg>
+    <path d="M3 2.5h8l2 2v9H3zM5 2.5v4h5v-4M5 13.5v-5h6v5" />
+  </Svg>
+);
+export const IconBackupHistory = () => (
+  <Svg>
+    <path d="M2 7a6 6 0 1 1 1 6M2 3v4h4M8 4.5V8l2 1.5" />
+  </Svg>
+);
+export const IconTune = () => (
+  <Svg>
+    <path d="M2 4h12M2 8h12M2 12h12M5 2v4M11 6v4M6 10v4" />
+  </Svg>
+);

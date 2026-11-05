@@ -1,0 +1,24 @@
+# name<TAB>restorable<TAB>deletable
+work-journey_2026-11-05_143012123_daily_app-v1.17.0_db-v14.db	true	true
+work-journey_2026-11-05_143012123_monthly_app-v1.17.0-rc.1_db-v14_c2.db	true	true
+work-journey_2026-11-05_143012123_manual_app-v1.17.0_db-v14.db	true	false
+work-journey_2026-11-05_143012123_pre-migration-to-v15_app-v1.17.0_db-v14.db	true	false
+work-journey_2026-11-05_143012123_pre-update_app-v1.17.0_db-v14.db	true	false
+work-journey_2026-11-05_143012123_pre-import_app-v1.17.0_db-v14.db	true	false
+work-journey_2026-11-05_143012123_before-restore_app-v1.17.0_db-vunknown_c1.db	true	false
+work-journey_2026-11-05_143012123_daily_app-v1.17.0_db-v14.db.tmp	false	true
+work-journey_2026-02-30_143012123_daily_app-v1.17.0_db-v14.db	false	false
+work-journey_2026-11-05_243012123_daily_app-v1.17.0_db-v14.db	false	false
+work-journey_2026-11-05_143012123_daily_app-v1.17.0-01_db-v14.db	false	false
+work-journey_2026-11-05_143012123_daily_app-v1.17.0_db-v0.db	false	false
+work-journey_2026-11-05_143012123_daily_app-v1.17.0_db-vunknown.db	false	false
+work-journey_2026-11-05_143012123_daily_app-v1.17.0+build.1_db-v14.db	true	true
+work-journey_2026-02-28.db	true	true
+work-journey_2026-02-30.db	false	false
+work-journey_2026-10_monthly.db	true	true
+work-journey_2026-10-23_0831_manual.db	true	false
+work-journey_2026-10-23_0831_before-restore.db	true	false
+work-journey.db	false	false
+note.txt	false	false
+work-journey_2026-10.db	true	false
+work-journey_2026-10-23_0831.db	true	false

@@ -6,6 +6,7 @@ import { getAllWebviewWindows, WebviewWindow } from "@tauri-apps/api/webviewWind
 import Database from "@tauri-apps/plugin-sql";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { open, save } from "@tauri-apps/plugin-dialog";
+import { quickCheck, readSchemaVersion, backupStructureMatches } from "../data/migrate";
 import type { BackupFs } from "../data/backup";
 import { openTauriSql } from "../data/drivers/tauriSql";
 import type { FsEntry } from "../domain/cabinet";
@@ -232,6 +233,30 @@ const backupFs: BackupFs = {
   list: (dir) => invoke<string[]>("fs_list", { dir }),
   rename: (from, to) => invoke("fs_rename_backup", { from, to }),
   remove: (path) => invoke("fs_remove_backup", { path }),
+  removeChecked: (path, size, modified) =>
+    invoke("fs_remove_backup", { path, expectedSize: size, expectedModified: modified }),
+  stat: async (path) => {
+    const r = await invoke<{
+      exists: boolean;
+      is_dir: boolean;
+      size: number | null;
+      modified: number | null;
+      is_symlink: boolean;
+    }>("fs_stat", { path });
+    return { exists: r.exists, isDir: r.is_dir, size: r.size, modified: r.modified, isSymlink: r.is_symlink };
+  },
+  async inspect(path) {
+    let d: Awaited<ReturnType<typeof openTauriSql>> | undefined;
+    try {
+      d = await openTauriSql(path);
+      const schema = await readSchemaVersion(d);
+      return { ok: (await quickCheck(d)) && (await backupStructureMatches(d, schema)), schema };
+    } catch {
+      return { ok: false, schema: null };
+    } finally {
+      await d?.close().catch(() => undefined);
+    }
+  },
 };
 
 export const tauriPlatform: Platform = {
@@ -265,8 +290,20 @@ export const tauriPlatform: Platform = {
     return isOneDriveLike(path, oneDriveRoots);
   },
   async stat(path) {
-    const r = await invoke<{ exists: boolean; is_dir: boolean; size: number | null }>("fs_stat", { path });
-    return { exists: r.exists, isDir: r.is_dir, size: r.size } satisfies PathInfo;
+    const r = await invoke<{
+      exists: boolean;
+      is_dir: boolean;
+      size: number | null;
+      modified: number | null;
+      is_symlink: boolean;
+    }>("fs_stat", { path });
+    return {
+      exists: r.exists,
+      isDir: r.is_dir,
+      size: r.size,
+      modified: r.modified,
+      isSymlink: r.is_symlink,
+    } satisfies PathInfo;
   },
   ensureDir: (dir) => invoke("fs_ensure_dir", { dir }),
   copyNew: (from, to) => invoke("fs_copy_new", { from, to }),

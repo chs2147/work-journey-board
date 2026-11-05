@@ -1,4 +1,5 @@
 // 스키마 마이그레이션(data-spec 7-5): 번호 순 전진 전용, 기존 데이터가 있으면 직전 백업 후 단일 트랜잭션으로 적용.
+import { RECOMMENDED_BACKUP_POLICY } from "./backupPolicy";
 import type { SqlDriver, SqlStatement } from "./driver";
 import init0001 from "./migrations/0001_init.sql?raw";
 import importantRepeat0002 from "./migrations/0002_important_repeat.sql?raw";
@@ -100,6 +101,10 @@ export async function migrate(driver: SqlDriver, opts: MigrateOptions = {}): Pro
   });
   if (from === 0) {
     statements.push({ sql: "INSERT INTO app_meta (key, value) VALUES ('created_at', ?)", params: [now] });
+    statements.push({
+      sql: "INSERT INTO app_meta (key,value) VALUES ('settings', ?)",
+      params: [JSON.stringify({ backup: RECOMMENDED_BACKUP_POLICY })],
+    });
   }
   await driver.batch(statements);
   return latest;
@@ -115,4 +120,44 @@ export async function quickCheck(driver: SqlDriver): Promise<boolean> {
 export async function integrityCheck(driver: SqlDriver): Promise<boolean> {
   const rows = await driver.select<{ integrity_check: string }>("PRAGMA integrity_check");
   return rows.length === 1 && rows[0]?.integrity_check === "ok";
+}
+
+/** 복원·마이그레이션에 필요한 표와 알려진 열도 확인한다. 읽기 전용. */
+export async function backupStructureMatches(driver: SqlDriver, version: number): Promise<boolean> {
+  if (!Number.isSafeInteger(version) || version < 1) return false;
+  if (version > LATEST_SCHEMA_VERSION) return true; // 새 구조는 호출자가 복원/삭제를 거부하며 보호 사본 생성은 허용한다.
+  const required: [number, string[]][] = [
+    [1, ["app_meta", "category", "category_period", "entry_item", "day_memo", "weekly_summary"]],
+    [2, ["recurrence", "recurrence_line", "recurrence_week"]],
+    [3, ["week_note", "note_asset"]],
+    [4, ["import_batch"]],
+    [5, ["day_mark"]],
+    [6, ["tag", "category_tag"]],
+    [9, ["cabinet_item", "cabinet_link"]],
+    [11, ["universe_relation"]],
+    [12, ["knowledge_card", "knowledge_card_category", "knowledge_card_source"]],
+  ];
+  const tables = new Set(
+    (await driver.select<{ name: string }>("SELECT name FROM sqlite_master WHERE type='table'")).map(
+      (r) => r.name,
+    ),
+  );
+  if (required.some(([v, names]) => v <= version && names.some((n) => !tables.has(n)))) return false;
+  const columns = new Set(
+    (await driver.select<{ name: string }>("PRAGMA table_info(entry_item)")).map((r) => r.name),
+  );
+  if (
+    ["id", "date", "category_id", "seq", "depth", "text", "created_at", "updated_at"].some(
+      (c) => !columns.has(c),
+    )
+  )
+    return false;
+  const introduced: [number, string[]][] = [
+    [2, ["flagged", "flag_done_at", "recurrence_id"]],
+    [4, ["import_id"]],
+    [10, ["start_time"]],
+    [13, ["due_date"]],
+    [14, ["completion_was_flagged"]],
+  ];
+  return introduced.every(([v, names]) => names.every((n) => columns.has(n) === version >= v));
 }

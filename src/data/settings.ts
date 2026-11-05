@@ -1,4 +1,5 @@
 // 앱 설정(app_meta.settings JSON, data-spec 3-4). 저장된 값이 일부 빠져 있어도 기본값과 합쳐 읽는다.
+import { normalizeBackupPolicy, RECOMMENDED_BACKUP_POLICY, type BackupPolicy } from "./backupPolicy";
 import { COMPANY_DATE_RE, LABEL_MAX_HOLIDAY, type HolidaySettings } from "../domain/holidaysKr";
 import { parseMeta, type WorkspaceMeta } from "../domain/workspace";
 export interface Settings {
@@ -7,7 +8,7 @@ export interface Settings {
   /** 무기록 종료 제안 기준 주 수. 0 = 끔, 그 외 2~8 */
   nudgeWeeks: number;
   /** periodicHours = 켜 둔 동안 바뀐 게 있으면 이 시간마다 그날 일일 사본을 덮어씀(optimize-1031-plan B1, 0 = 끔) */
-  backup: { dailyKeep: number; monthlyKeep: number; periodicHours: number };
+  backup: BackupPolicy;
   summary: { includeMemo: boolean };
   /** 달력·휴일(features-1102-spec F2·F3): 대한민국 공휴일 자동 표시·끈 날짜·회사 휴일·기타 휴가 사유 */
   holiday: HolidaySettings;
@@ -103,7 +104,7 @@ const OLD_DEFAULT_DOCK_HEIGHT = 280;
 export const DEFAULT_SETTINGS: Settings = {
   workspace: null,
   nudgeWeeks: 3,
-  backup: { dailyKeep: 14, monthlyKeep: 12, periodicHours: 2 },
+  backup: { ...RECOMMENDED_BACKUP_POLICY },
   summary: { includeMemo: true },
   holiday: {
     krEnabled: true,
@@ -173,6 +174,8 @@ export function mergeSettings(base: Settings, patch: unknown): Settings {
   )
     s.ui.noteDockAuto = false;
   s.workspace = parseMeta(s.workspace);
+  s.backup = normalizeBackupPolicy(s.backup, false);
+
   if (!validNudgeWeeks(s.nudgeWeeks)) s.nudgeWeeks = DEFAULT_SETTINGS.nudgeWeeks;
   if (!(s.backup.dailyKeep >= 1)) s.backup.dailyKeep = DEFAULT_SETTINGS.backup.dailyKeep;
   if (!(s.backup.monthlyKeep >= 0)) s.backup.monthlyKeep = DEFAULT_SETTINGS.backup.monthlyKeep;

@@ -1,6 +1,7 @@
 // 첫 실행·저장 위치·설정·백업 E2E (i-m1-plan S4). 브라우저 모드의 가짜 폴더(/demo/...)를 쓴다.
 // 폴더 선택 대화상자는 브라우저 모드에서 경로 입력(prompt)으로 대신한다 → page.once("dialog")로 응답.
 import { expect, test, type Page } from "@playwright/test";
+import { parseBackupName } from "../../src/data/backupIdentity";
 import { openSettings, settingsView } from "./settings-helper";
 
 const TODAY = "2026-10-22";
@@ -8,6 +9,18 @@ const q = (extra = "") => `/?today=${TODAY}${extra}`;
 
 const files = (page: Page) =>
   page.evaluate(() => (globalThis as unknown as { __wjb: { files(): string[] } }).__wjb.files());
+
+const hasBackup = async (page: Page, dir: string, kind: string, date: string) =>
+  (await files(page)).some((path) => {
+    const b = parseBackupName(path.split("/").at(-1)!);
+    return (
+      path.startsWith(dir + "/backups/") &&
+      b?.kind === kind &&
+      b.date.startsWith(date) &&
+      b.appVersion !== null &&
+      b.schemaVersion === 14
+    );
+  });
 const answerFolder = (page: Page, path: string) => page.once("dialog", (d) => void d.accept(path));
 const headers = (page: Page) => page.getByTestId("category-header");
 
@@ -32,9 +45,9 @@ test.describe("첫 실행 (overview 10-8)", () => {
     expect(await files(page)).toContain("/demo/WorkJourney/work-journey.db");
     // 시작 백업은 보드를 띄운 뒤, 입력이 3초 쉬는 틈에(optimize-1031-plan B2)
     await expect
-      .poll(() => files(page), { timeout: 15_000 })
-      .toContain("/demo/WorkJourney/backups/work-journey_2026-10-22.db");
-    expect(await files(page)).toContain("/demo/WorkJourney/backups/work-journey_2026-10_monthly.db");
+      .poll(() => hasBackup(page, "/demo/WorkJourney", "daily", TODAY), { timeout: 15000 })
+      .toBe(true);
+    expect(await hasBackup(page, "/demo/WorkJourney", "monthly", "2026-10")).toBe(true);
   });
 
   test("OneDrive 폴더를 고르면 경고, 추천 폴더로 되돌리기", async ({ page }) => {
@@ -98,14 +111,16 @@ test.describe("설정 > 저장 위치 (overview 10-10)", () => {
       "옮겼습니다. 이전 폴더의 파일은 그대로 남아 있습니다.",
     );
     await expect(page.getByTestId("settings-data-dir")).toHaveText("/demo/New");
-    await expect
-      .poll(() => files(page), { timeout: 15_000 })
-      .toContain("/demo/New/backups/work-journey_2026-10-22.db");
+    await expect.poll(() => hasBackup(page, "/demo/New", "daily", TODAY), { timeout: 15000 }).toBe(true);
     const all = await files(page);
     expect(all).toContain("/demo/New/work-journey.db");
     expect(all).toContain("/demo/WorkJourney/work-journey.db");
     expect(
-      all.filter((p) => p.startsWith("/demo/WorkJourney/backups/") && p.endsWith("_manual.db")),
+      all.filter(
+        (p) =>
+          p.startsWith("/demo/WorkJourney/backups/") &&
+          parseBackupName(p.split("/").at(-1)!)?.kind === "manual",
+      ),
     ).toHaveLength(1);
     await page.getByTestId("settings-back").click();
     await expect(headers(page)).toHaveCount(4);
@@ -133,10 +148,10 @@ test.describe("설정 > 백업·업무·무기록", () => {
     await page.goto(q());
     await expect(headers(page).first()).toBeVisible();
     await expect
-      .poll(() => files(page), { timeout: 15_000 })
-      .toContain("/demo/WorkJourney/backups/work-journey_2026-10-22.db");
+      .poll(() => hasBackup(page, "/demo/WorkJourney", "daily", TODAY), { timeout: 15000 })
+      .toBe(true);
     await openSettings(page, "data");
-    await expect(page.getByTestId("last-backup")).toHaveText("2026-10-22");
+    await expect(page.getByTestId("last-backup")).toContainText("2026-10-22");
     await page.getByRole("button", { name: "지금 백업" }).click();
     await expect(page.getByTestId("last-backup")).toHaveText(/^2026-10-22 \d{2}:\d{2}/);
   });
@@ -181,5 +196,5 @@ test("창을 닫기 직전 입력 중인 내용도 저장되고 종료 백업이
   await expect(
     page.getByTestId(`cell-차세대 정산 시스템 구축-${TODAY}`).locator("textarea").first(),
   ).toHaveValue("테스트 데이터 이관 스크립트 작성 착수 (종료 직전)");
-  expect(await files(page)).toContain("/demo/WorkJourney/backups/work-journey_2026-10-22.db");
+  expect(await hasBackup(page, "/demo/WorkJourney", "daily", TODAY)).toBe(true);
 });

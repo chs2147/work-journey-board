@@ -64,7 +64,36 @@ pub fn onedrive_roots() -> Vec<String> {
 pub struct PathInfo {
     exists: bool,
     is_dir: bool,
+    is_symlink: bool,
+    modified: Option<u64>,
     size: Option<u64>,
+}
+
+fn modified_ms(m: &fs::Metadata) -> Option<u64> {
+    m.modified()
+        .ok()?
+        .duration_since(std::time::UNIX_EPOCH)
+        .ok()
+        .map(|d| d.as_millis() as u64)
+}
+fn safe_backup_path(path: &Path) -> bool {
+    if !path.is_absolute() {
+        return false;
+    }
+    if path
+        .components()
+        .any(|c| matches!(c, std::path::Component::ParentDir))
+    {
+        return false;
+    }
+    for ancestor in path.ancestors() {
+        match fs::symlink_metadata(ancestor) {
+            Ok(m) if m.file_type().is_symlink() => return false,
+            Err(e) if e.kind() != std::io::ErrorKind::NotFound => return false,
+            _ => {}
+        }
+    }
+    true
 }
 
 #[tauri::command]
@@ -73,11 +102,15 @@ pub fn fs_stat(path: String) -> PathInfo {
         Ok(m) => PathInfo {
             exists: true,
             is_dir: m.is_dir(),
+            is_symlink: !safe_backup_path(std::path::Path::new(&path)),
+            modified: modified_ms(&m),
             size: m.is_file().then(|| m.len()),
         },
         Err(_) => PathInfo {
             exists: false,
             is_dir: false,
+            is_symlink: false,
+            modified: None,
             size: None,
         },
     }
@@ -119,28 +152,40 @@ fn is_digits(s: &str, n: usize) -> bool {
 
 /// work-journey_YYYY-MM-DD.db
 fn is_daily(name: &str) -> bool {
+    if crate::backup_name::kind(name) == Some("daily") {
+        return true;
+    }
     name.strip_prefix("work-journey_")
         .and_then(|r| r.strip_suffix(".db"))
         .map(|d| {
             let p: Vec<&str> = d.split('-').collect();
-            p.len() == 3 && is_digits(p[0], 4) && is_digits(p[1], 2) && is_digits(p[2], 2)
+            p.len() == 3 && crate::backup_name::date(d)
         })
         .unwrap_or(false)
 }
 
 /// work-journey_YYYY-MM_monthly.db
 fn is_monthly(name: &str) -> bool {
+    if crate::backup_name::kind(name) == Some("monthly") {
+        return true;
+    }
     name.strip_prefix("work-journey_")
         .and_then(|r| r.strip_suffix("_monthly.db"))
         .map(|d| {
             let p: Vec<&str> = d.split('-').collect();
-            p.len() == 2 && is_digits(p[0], 4) && is_digits(p[1], 2)
+            p.len() == 2 && crate::backup_name::date(&format!("{d}-01"))
         })
         .unwrap_or(false)
 }
 
 /// work-journey_<영숫자·_·->.db.tmp — 앱이 만든 임시 백업 사본
 fn is_temp(name: &str) -> bool {
+    if name
+        .strip_suffix(".tmp")
+        .is_some_and(|n| crate::backup_name::kind(n).is_some())
+    {
+        return true;
+    }
     name.strip_prefix("work-journey_")
         .and_then(|r| r.strip_suffix(".db.tmp"))
         .map(|m| {
@@ -157,10 +202,24 @@ fn is_deletable(name: &str) -> bool {
 }
 
 #[tauri::command]
-pub fn fs_remove_backup(path: String) -> Result<(), String> {
+pub fn fs_remove_backup(
+    path: String,
+    expected_size: Option<u64>,
+    expected_modified: Option<u64>,
+) -> Result<(), String> {
     let name = file_name(&path);
     if !is_deletable(&name) {
         return Err(format!("삭제 금지 파일: {name}"));
+    }
+    if !safe_backup_path(Path::new(&path)) {
+        return Err("링크 또는 상대 경로는 정리할 수 없습니다".into());
+    }
+    let meta = fs::symlink_metadata(&path).map_err(err)?;
+    if !meta.is_file()
+        || expected_size.is_some_and(|s| s != meta.len())
+        || expected_modified.is_some_and(|m| Some(m) != modified_ms(&meta))
+    {
+        return Err("정리 대상이 변경되었습니다".into());
     }
     fs::remove_file(&path).map_err(err)
 }
@@ -171,6 +230,15 @@ pub fn fs_rename_backup(from: String, to: String) -> Result<(), String> {
     let (f, t) = (file_name(&from), file_name(&to));
     if !is_temp(&f) || !(t.starts_with("work-journey_") && t.ends_with(".db")) {
         return Err(format!("허용되지 않은 이름 바꾸기: {f} → {t}"));
+    }
+    if !safe_backup_path(Path::new(&from))
+        || !safe_backup_path(Path::new(&to))
+        || Path::new(&from).parent() != Path::new(&to).parent()
+    {
+        return Err("허용되지 않은 백업 경로".into());
+    }
+    if crate::backup_name::kind(&t).is_some() && Path::new(&to).exists() {
+        return Err("이미 있는 백업입니다".into());
     }
     fs::rename(&from, &to).map_err(err)
 }
@@ -191,6 +259,9 @@ pub fn fs_copy_new(from: String, to: String) -> Result<(), String> {
 /// 복원할 수 있는 백업 이름(src/data/backup.ts isRestorableName과 같은 규칙):
 /// work-journey_YYYY-MM[-DD][_HHMM][_monthly|_manual|_pre-migration-vN|_before-restore|_pre-import|_pre-update].db
 fn is_restorable(name: &str) -> bool {
+    if crate::backup_name::kind(name).is_some() {
+        return true;
+    }
     let Some(core) = name
         .strip_prefix("work-journey_")
         .and_then(|r| r.strip_suffix(".db"))
@@ -203,11 +274,20 @@ fn is_restorable(name: &str) -> bool {
         && is_digits(date[0], 4)
         && is_digits(date[1], 2)
         && (date.len() == 2 || is_digits(date[2], 2));
-    if !date_ok {
+    if !date_ok
+        || !crate::backup_name::date(&if date.len() == 2 {
+            format!("{}-01", date.join("-"))
+        } else {
+            date.join("-")
+        })
+    {
         return false;
     }
     if parts.peek().is_some_and(|p| is_digits(p, 4)) {
-        parts.next();
+        let t = parts.next().unwrap();
+        if t[..2].parse::<u32>().unwrap() > 23 || t[2..].parse::<u32>().unwrap() > 59 {
+            return false;
+        }
     }
     if let Some(tag) = parts.next() {
         let tag_ok = matches!(
@@ -225,6 +305,9 @@ fn is_restorable(name: &str) -> bool {
 
 /// 복원 직전 보존 사본 이름: work-journey_YYYY-MM-DD_HHMM_before-restore.db
 fn is_before_restore(name: &str) -> bool {
+    if crate::backup_name::kind(name) == Some("before-restore") {
+        return true;
+    }
     name.strip_prefix("work-journey_")
         .and_then(|r| r.strip_suffix("_before-restore.db"))
         .map(|m| {
@@ -254,6 +337,9 @@ pub fn restore_journal(
     let journal = dir.join("work-journey.db");
     let backup = dir.join("backups").join(&backup_name);
     let before = dir.join("backups").join(&before_name);
+    if !safe_backup_path(&backup) || !safe_backup_path(&before) || !safe_backup_path(&journal) {
+        return Err("허용되지 않은 복원 경로".into());
+    }
     if !backup.is_file() {
         return Err(format!("없는 백업: {backup_name}"));
     }
@@ -594,8 +680,62 @@ mod tests {
     }
 
     #[test]
+    fn v13_shared_backup_name_cases() {
+        for line in include_str!("../../fixtures/backup-name-cases.tsv")
+            .lines()
+            .filter(|s| !s.starts_with('#'))
+        {
+            let p: Vec<_> = line.split('\t').collect();
+            assert_eq!(p.len(), 3);
+            assert_eq!(is_restorable(p[0]), p[1] == "true", "{}", p[0]);
+            assert_eq!(is_deletable(p[0]), p[2] == "true", "{}", p[0]);
+        }
+    }
+    #[test]
+    fn v13_cleanup_guard_checks_metadata_and_preserves_protected() {
+        let dir = fs::canonicalize(std::env::temp_dir())
+            .unwrap()
+            .join(format!("wjb-v13-guard-{}", std::process::id()));
+        fs::create_dir_all(&dir).unwrap();
+        let auto = dir.join("work-journey_2026-11-05_143012123_daily_app-v1.17.0_db-v14.db");
+        let manual = dir.join("work-journey_2026-11-05_143012123_manual_app-v1.17.0_db-v14.db");
+        fs::write(&auto, b"keep").unwrap();
+        fs::write(&manual, b"keep").unwrap();
+        assert!(fs_remove_backup(auto.to_string_lossy().into(), Some(999), None).is_err());
+        assert!(auto.exists());
+        assert!(fs_remove_backup(manual.to_string_lossy().into(), None, None).is_err());
+        assert!(manual.exists());
+        assert!(fs_remove_backup(auto.to_string_lossy().into(), Some(4), Some(0)).is_err());
+        fs_remove_backup(
+            auto.to_string_lossy().into(),
+            Some(4),
+            modified_ms(&fs::metadata(&auto).unwrap()),
+        )
+        .unwrap();
+        assert!(!auto.exists());
+        fs::remove_dir_all(&dir).unwrap();
+    }
+    #[cfg(unix)]
+    #[test]
+    fn v13_backup_symlinks_rejected() {
+        let dir = fs::canonicalize(std::env::temp_dir())
+            .unwrap()
+            .join(format!("wjb-v13-link-{}", std::process::id()));
+        fs::create_dir_all(&dir).unwrap();
+        let target = dir.join("user.txt");
+        let link = dir.join("work-journey_2026-11-05.db");
+        fs::write(&target, b"keep").unwrap();
+        std::os::unix::fs::symlink(&target, &link).unwrap();
+        assert!(fs_remove_backup(link.to_string_lossy().into(), None, None).is_err());
+        assert_eq!(fs::read(&target).unwrap(), b"keep");
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
     fn restore_keeps_current_and_copies_backup() {
-        let dir = std::env::temp_dir().join(format!("wjb-restore-{}", std::process::id()));
+        let dir = fs::canonicalize(std::env::temp_dir())
+            .unwrap()
+            .join(format!("wjb-restore-{}", std::process::id()));
         let _ = fs::remove_dir_all(&dir);
         fs::create_dir_all(dir.join("backups")).unwrap();
         fs::write(dir.join("work-journey.db"), b"broken").unwrap();

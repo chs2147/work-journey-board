@@ -1,3 +1,4 @@
+import { normalizeBackupPolicy, type BackupControl } from "../data/backupPolicy";
 import { isTauri } from "@tauri-apps/api/core";
 import type { BackupFs, VerifyCopy } from "../data/backup";
 import type { SqlDriver } from "../data/driver";
@@ -11,6 +12,7 @@ import { isThemePref, type ThemePref } from "../shared/theme";
 /** `%LOCALAPPDATA%\WorkJourneyBoard\config.json` 내용. DB를 찾기 위한 정보라 DB 안에 둘 수 없다(data-spec 3-4). */
 export interface AppConfig {
   dataDir: string;
+  backupControlBy?: Record<string, BackupControl>;
   /** 화면 테마(improve-1027v5-spec 4-2) — 이 PC 취향이라 일지가 아니라 여기에. 없으면 시스템 설정 */
   theme?: ThemePref;
   universeMotion?: "dynamic" | "static";
@@ -102,6 +104,8 @@ export interface PathInfo {
   exists: boolean;
   isDir: boolean;
   size: number | null;
+  modified?: number | null;
+  isSymlink?: boolean;
 }
 
 export interface Platform {
@@ -223,6 +227,26 @@ export function parseConfig(raw: string | null): AppConfig | null {
     const c = JSON.parse(raw) as Partial<AppConfig>;
     if (typeof c.dataDir !== "string" || !c.dataDir) return null;
     const out: AppConfig = { dataDir: c.dataDir };
+    if (c.backupControlBy && typeof c.backupControlBy === "object" && !Array.isArray(c.backupControlBy)) {
+      out.backupControlBy = Object.fromEntries(
+        Object.entries(c.backupControlBy)
+          .filter(([, v]) => v && typeof v.paused === "boolean")
+          .map(([k, v]) => [
+            k,
+            {
+              paused: v.paused,
+              ...(v.pendingPolicy ? { pendingPolicy: normalizeBackupPolicy(v.pendingPolicy) } : {}),
+              ...(v.lastCleanup &&
+              typeof v.lastCleanup.at === "string" &&
+              [v.lastCleanup.deleted, v.lastCleanup.failed, v.lastCleanup.freed].every(
+                (n) => Number.isFinite(n) && n >= 0,
+              )
+                ? { lastCleanup: v.lastCleanup }
+                : {}),
+            },
+          ]),
+      );
+    }
     if (c.universeMotion === "dynamic" || c.universeMotion === "static")
       out.universeMotion = c.universeMotion;
     if (

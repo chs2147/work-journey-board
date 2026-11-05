@@ -90,6 +90,9 @@
 }
 
 .primary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
   padding: var(--sp-2) var(--sp-4);
   border: 1px solid var(--primary-line);
   border-radius: var(--radius-md);
@@ -102,4 +105,105 @@
 .primary:disabled {
   opacity: 0.6;
   cursor: default;
+}
+
+.tableHead,
+.item {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr 1fr 0.9fr 0.8fr 0.9fr;
+  gap: var(--sp-2);
+  font-size: var(--fs-sm);
+}
+.tableHead {
+  padding: var(--sp-2) var(--sp-3);
+  color: var(--text-3);
+  background: var(--surface-sub);
+}
+.list {
+  max-height: 310px;
+  border-radius: 0;
+}
+.on,
+.status {
+  border-radius: 0;
+}
+.size {
+  text-align: left;
+}
+.filter {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  font-size: var(--fs-sm);
+}
+.filter select {
+  font: inherit;
+  color: var(--text-1);
+  background: var(--surface-card);
+  padding: var(--sp-1);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+.detail {
+  display: block;
+}
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-4);
+  margin: var(--sp-3) 0;
+}
+.compare h4 {
+  margin: 0 0 var(--sp-2);
+}
+.compare dl {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--sp-2);
+  margin: 0;
+  font-size: var(--fs-sm);
+}
+.compare dt {
+  color: var(--text-2);
+}
+.compare dd {
+  margin: 0;
+}
+.filename {
+  overflow-wrap: anywhere;
+  font: var(--fs-sm)/1.7 monospace;
+  background: var(--surface-sub);
+  padding: var(--sp-2);
+}
+.status {
+  background: var(--accent-soft);
+  padding: var(--sp-3);
+  color: var(--text-1);
+  font-size: var(--fs-sm);
+}
+.actions {
+  display: flex;
+  gap: var(--sp-3);
+  align-items: center;
+  justify-content: space-between;
+}
+.item:disabled {
+  cursor: default;
+  opacity: 0.65;
+}
+@media (max-width: 720px) {
+  .tableHead {
+    display: none;
+  }
+  .item {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--sp-1);
+  }
+  .compare {
+    grid-template-columns: 1fr;
+  }
+  .actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
 }

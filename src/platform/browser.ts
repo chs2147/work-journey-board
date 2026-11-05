@@ -303,6 +303,16 @@ Object.assign(globalThis, {
   __wjb: {
     exit: () => exitHandler?.(),
     files: () => fs.listAll(),
+    /** 브라우저 가상 파일만 복사/검사 준비. 실제 플랫폼에는 이 훅이 없다. */
+    copyFile: (from: string, to: string) => fs.copyNew(from, to),
+    async backupSchema(path: string, version: number) {
+      const d = await fs.openDatabase(path);
+      try {
+        await d.execute("UPDATE app_meta SET value=? WHERE key='schema_version'", [String(version)]);
+      } finally {
+        await d.close();
+      }
+    },
     clipboard: () => lastClipboard,
     lastExport: () => lastExport,
     exportLog: () => [...exportLog],

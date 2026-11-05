@@ -18,10 +18,14 @@ import {
   classifyFolder,
   journalPath,
   lastBackupOf,
-  manualBackup,
   type BackupFolderStats,
   type BackupInfo,
 } from "../../data/session";
+import { BackupRetention } from "./BackupRetention";
+import { backupBytes } from "../common/backupUi";
+import { BackupDialog } from "../common/BackupDialog";
+import { IconBackup, IconBackupHistory } from "../common/icons";
+import { manualBackupNow } from "../common/appController";
 import { RestorePanel } from "../common/RestorePanel";
 import { SETTINGS_CATEGORIES, type Settings, type SettingsCategory } from "../../data/settings";
 import { formatBytes, STR } from "../../shared/strings";
@@ -99,6 +103,12 @@ export function SettingsView() {
   const [backupStats, setBackupStats] = useState<BackupFolderStats | null>(null);
   const [mirror, setMirror] = useState<string | null>(null);
   const [restoreOpen, setRestoreOpen] = useState(false);
+  const [restoreBusy, setRestoreBusy] = useState(false);
+  const [restoreScope, setRestoreScope] = useState(ready?.dataDir);
+  if (restoreScope !== ready?.dataDir) {
+    setRestoreScope(ready?.dataDir);
+    setRestoreOpen(false);
+  }
   const tabRefs = useRef<Partial<Record<SettingsCategory, HTMLButtonElement | null>>>({});
   const pendingRef = useRef(pending);
   useEffect(() => {
@@ -239,7 +249,6 @@ export function SettingsView() {
     await refresh();
   };
 
-  const keep = settings ? settings.backup.dailyKeep + settings.backup.monthlyKeep : 0;
   const imageBytes = imageUse?.bytes ?? 0;
   const imageShare = size ? Math.min(100, Math.round((imageBytes / size) * 100)) : 0;
 
@@ -334,7 +343,17 @@ export function SettingsView() {
       <Card id="s-backup" title={STR.settings.backup} desc={STR.settings.backupDesc}>
         <Row
           label={STR.settings.lastBackupLabel}
-          desc={last ? last.when : STR.settings.noBackup}
+          desc={
+            last ? (
+              <>
+                {last.when}
+                <br />
+                {STR.backupV13.backupVersions(last.appVersion, last.schemaVersion)}
+              </>
+            ) : (
+              STR.settings.noBackup
+            )
+          }
           descTestId="last-backup"
         >
           <button
@@ -342,7 +361,7 @@ export function SettingsView() {
             className={styles.primary}
             onClick={async () => {
               try {
-                await manualBackup(platform, ready.driver, ready.dataDir, platform.now());
+                await manualBackupNow();
                 toast(STR.settings.backupDone);
               } catch (e) {
                 toast(STR.toast.error(e instanceof Error ? e.message : String(e)));
@@ -350,13 +369,11 @@ export function SettingsView() {
               await refresh();
             }}
           >
-            {STR.settings.backupNow}
+            <IconBackup /> {STR.settings.backupNow}
           </button>
         </Row>
-        <Row
-          label={STR.settings.policyLabel}
-          desc={settings && STR.settings.backupPolicy(settings.backup.dailyKeep, settings.backup.monthlyKeep)}
-        >
+        <BackupRetention key={ready.dataDir} settings={settings} onChanged={refresh} />
+        <Row label={STR.settings.openBackups}>
           <button
             type="button"
             onClick={() => void platform.openFolder(platform.join(ready.dataDir, BACKUP_DIR))}
@@ -372,7 +389,14 @@ export function SettingsView() {
               {backupStats && (
                 <span data-testid="backup-usage">
                   {" · "}
-                  {STR.backupMore.usage(backupStats.count, formatBytes(backupStats.bytes))}
+                  {STR.backupMore.usage(backupStats.count, backupBytes(backupStats.bytes))}
+                  <br />
+                  {STR.backupV13.folderBreakdown(
+                    backupBytes(backupStats.totalBytes),
+                    backupBytes(backupStats.automaticBytes),
+                    backupBytes(backupStats.protectedBytes),
+                    backupBytes(backupStats.otherBytes),
+                  )}
                 </span>
               )}
             </>
@@ -433,34 +457,15 @@ export function SettingsView() {
         </Row>
         <Row label={STR.restore.rowLabel} desc={STR.restore.rowDesc}>
           <button type="button" data-testid="restore-open" onClick={() => setRestoreOpen(true)}>
-            {STR.restore.open}
+            <IconBackupHistory /> {STR.restore.open}
           </button>
         </Row>
       </Card>
       {restoreOpen && (
-        <div
-          className={styles.modalBack}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="restore-title"
-          onKeyDown={(e) => {
-            if (e.key === "Escape") {
-              e.stopPropagation();
-              setRestoreOpen(false);
-            }
-          }}
-        >
-          <div className={styles.modal}>
-            <h3 id="restore-title">{STR.restore.title}</h3>
-            <p className={styles.rowDesc}>{STR.restore.intro}</p>
-            <RestorePanel dataDir={ready.dataDir} />
-            <div className={styles.modalActions}>
-              <button type="button" autoFocus onClick={() => setRestoreOpen(false)}>
-                {STR.restore.cancel}
-              </button>
-            </div>
-          </div>
-        </div>
+        <BackupDialog title={STR.restore.title} busy={restoreBusy} onClose={() => setRestoreOpen(false)}>
+          <p className={styles.rowDesc}>{STR.restore.intro}</p>
+          <RestorePanel dataDir={ready.dataDir} onBusyChange={setRestoreBusy} />
+        </BackupDialog>
       )}
 
       {/* 용량(weekly-note-spec 5-3): 메모 이미지는 일지 파일 안에 있어 백업 사본마다 함께 들어간다 */}
@@ -471,9 +476,9 @@ export function SettingsView() {
               <span data-testid="storage-usage">
                 {STR.settings.usage(formatBytes(size), imageUse.count, formatBytes(imageUse.bytes))}
               </span>
-              {settings && (
+              {backupStats && (
                 <span className={styles.rowDesc}>
-                  {STR.settings.usageBackups(keep, formatBytes(size * keep))}
+                  {STR.backupMore.usage(backupStats.count, backupBytes(backupStats.totalBytes))}
                 </span>
               )}
             </div>
