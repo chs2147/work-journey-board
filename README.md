@@ -92,6 +92,12 @@ npm run tauri dev    # 실앱 모드(윈도우·맥 / 리눅스는 webkit2gtk-4.
 - 설치 파일: `main`에 반영되면 *Build desktop installers*가 윈도우(NSIS)·맥(유니버설 DMG)을 나란히 만들고, **둘 다 성공해야** [Releases](https://github.com/chs2147/work-journey-board/releases)에 `v<버전>`으로 함께 올린다 — 0.x·`-rc`는 사전 릴리스, 1.0.0 이상 정식 판은 정식 릴리스. 윈도우 오프라인 설치판은 요청할 때만 Actions → *Build desktop installers* → Run workflow(main) → `offline`으로 그 판 릴리스에 더한다. 하나의 원본으로 두 플랫폼을 같은 판으로 운영한다([docs/macos-spec.md](docs/macos-spec.md)).
 
 ## Version History
+### v1.16.0 (2026-11-05) — 항목 완료·가져오기·직각 띠 개선
+- 항목별 모노그램 완료/취소와 본문 취소선, 중요 업무 완료 상태 동기화·완료 전 별표 복원
+- 완료 항목과 완료 부모의 하위 묶음 가져오기 제외, 직전 날짜 유지·0건 안내
+- 직각 강조 띠·별표 여백·글자색 팔레트, 좁은 칸의 줄바꿈·메모 영역 회귀 수정
+- RC2 CI 통과 후 정식 반영, 구조 v14(변경 직전 자동 백업), Windows 기본판·macOS 유니버설 DMG
+
 ### v1.16.0-rc.2 (2026-11-05) — 좁은 칸의 완료 조작·메모 영역 회귀 수정
 - 완료·취소 아이콘은 행 hover/키보드 접근 때 표시해 본문 공간을 과도하게 줄이지 않음
 - 완료 배지·취소선은 상시 유지, 행 드래그·메모 연결점·작은 창 메모 최소 높이 회귀 점검
