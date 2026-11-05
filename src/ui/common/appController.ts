@@ -656,6 +656,14 @@ if (typeof window !== "undefined")
         return j.state === "ready" ? (await j.repo.listCards()).length : -1;
       },
       /** 지금 연 공간 일지에서 마감일이 있는 항목 수(v10) */
+      async completedCount(week: string) {
+        const j = get().journal;
+        if (j.state !== "ready") return -1;
+        const view = await j.repo.getWeek(week);
+        return Object.values(view.items)
+          .flat()
+          .filter((item) => !item.flagged && !!item.flagDoneAt).length;
+      },
       async dueCount() {
         const j = get().journal;
         if (j.state !== "ready") return -1;

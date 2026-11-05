@@ -15,6 +15,7 @@ import type { ItemDraft } from "../../domain/types";
 import { STR } from "../../shared/strings";
 import { DAY_LABELS, dayIndex } from "../../domain/week";
 import {
+  completeImportant,
   deleteItemAt,
   editCell,
   leaveCell,
@@ -43,7 +44,16 @@ import { addLinkedBox, pasteImagesFromBoard, revealBox, useNote } from "../note/
 import { linkedBoxes } from "../../domain/note";
 import { autoSize, isComposingKey, useRemeasure } from "./helpers";
 import { LinkedText } from "./LinkedText";
-import { IconClock, IconDone, IconMoveDate, IconNote, IconRepeat, IconTrash } from "../common/icons";
+import {
+  IconCompleteItem,
+  IconUndoComplete,
+  IconClock,
+  IconDone,
+  IconMoveDate,
+  IconNote,
+  IconRepeat,
+  IconTrash,
+} from "../common/icons";
 import { startRowDrag, useLinkDrop, useLinkHover, useRowDrag } from "./rowDrag";
 import { useCabinet, openCabinet, openItem as openCabinetItem } from "../cabinet/cabinetStore";
 import { CabinetRailIcon } from "../cabinet/CabinetIcons";
@@ -71,6 +81,7 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
   const pulseId = useBoard((s) => s.pulseId);
   const repeating = useBoard((s) => s.repeating);
   const previews = useBoard((s) => s.previews[cellKey]);
+  const prevItems = useBoard((s) => s.prevItems[splitKey(cellKey).categoryId]);
   const prevDate = useBoard((s) => s.prevDates[splitKey(cellKey).categoryId]);
   const refs = useRef<(HTMLTextAreaElement | null)[]>([]);
   /** 입력칸에 커서가 있는 항목 — 링크가 든 항목은 이때만 입력칸, 아니면 "보기"(improve-1026-spec 9-1) */
@@ -343,6 +354,7 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
               className={[
                 it.depth === 1 ? styles.itemSub : styles.item,
                 it.flagged ? styles.flagged : "",
+                isDone(it) ? styles.completedItem : "",
                 isRepeating ? styles.repeating : "",
                 pulseId === it.id ? styles.pulse : "",
                 i >= delStart && i < delEnd ? styles.deleting : "",
@@ -363,6 +375,7 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
                 setTool({ i, kind: "menu" });
               }}
               data-item-id={it.text.trim() ? it.id : undefined}
+              data-done={isDone(it) ? "true" : undefined}
               data-flagged={it.flagged ? "true" : undefined}
               data-repeating={isRepeating ? "true" : undefined}
             >
@@ -408,6 +421,22 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
                     refs.current[i]?.focus();
                   }}
                 />
+              )}
+              {it.text.trim() && (
+                <button
+                  type="button"
+                  className={styles.completionAction}
+                  aria-label={
+                    isDone(it) ? STR.itemCompletion.undo(it.text) : STR.itemCompletion.complete(it.text)
+                  }
+                  title={isDone(it) ? STR.itemCompletion.undo(it.text) : STR.itemCompletion.complete(it.text)}
+                  aria-pressed={isDone(it)}
+                  data-testid="item-completion"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => void (isDone(it) ? undoImportant(it.id) : completeImportant(it.id))}
+                >
+                  {isDone(it) ? <IconUndoComplete /> : <IconCompleteItem />}
+                </button>
               )}
               {/* ⋮⋮ 끌기 손잡이(improve-1026v2-spec 3-1) — 부호 단추 다음(자리는 CSS로 왼쪽 여백) */}
               {it.text.trim() && (
@@ -697,6 +726,11 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
         <button
           type="button"
           className={styles.pullButton}
+          aria-label={
+            prevItems?.length === 0 ? STR.itemCompletion.emptyPrevious : STR.pull.button(pullLabel(prevDate))
+          }
+          disabled={prevItems?.length === 0}
+          title={prevItems?.length === 0 ? STR.itemCompletion.emptyPrevious : STR.pull.key}
           data-testid="pull-previous"
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => void pullPrevious(cellKey)}

@@ -98,6 +98,7 @@ export interface BoardState {
   dayMarkInfo: Record<DateStr, DayMarkInfo>;
   /** 포커스 열 기준 업무별 직전 기록일(빈 칸의 가져오기 단추, spec 3-2) — 키: 업무 id */
   prevDates: Record<string, DateStr>;
+  prevExcluded: Record<string, number>;
   /** 모든 태그(순서대로)와 업무별 태그 id(improve-1026-spec 4절) */
   tags: Tag[];
   categoryTags: Record<string, string[]>;
@@ -125,6 +126,8 @@ const sameItems = (a: ItemDraft[], b: ItemDraft[]) =>
       x.depth === b[i]!.depth &&
       x.text === b[i]!.text &&
       Boolean(x.flagged) === Boolean(b[i]!.flagged) &&
+      (x.flagDoneAt ?? null) === (b[i]!.flagDoneAt ?? null) &&
+      (x.completionWasFlagged ?? true) === (b[i]!.completionWasFlagged ?? true) &&
       (x.startTime ?? null) === (b[i]!.startTime ?? null) &&
       (x.dueDate ?? null) === (b[i]!.dueDate ?? null),
   );
@@ -165,6 +168,7 @@ export const useBoard = create<BoardState>(() => ({
   dayMarks: {},
   dayMarkInfo: {},
   prevDates: {},
+  prevExcluded: {},
   tags: [],
   categoryTags: {},
   tagFilter: [],
@@ -438,6 +442,7 @@ async function loadWeekNow(r: JournalRepository, weekId: WeekId, focusDay: DateS
         text: i.text,
         flagged: i.flagged,
         flagDoneAt: i.flagDoneAt,
+        completionWasFlagged: i.completionWasFlagged,
         recurrenceId: i.recurrenceId,
         startTime: i.startTime ?? null,
         dueDate: i.dueDate ?? null,
@@ -487,7 +492,7 @@ export function detachBoard() {
   loadSeq++; // 진행 중인 주 불러오기 결과는 버린다
   loading = null;
   repo = null;
-  set({ addOpen: false });
+  set({ addOpen: false, prevDates: {}, prevItems: {}, prevExcluded: {} });
   undoStack.length = 0;
   redoStack.length = 0;
   syncUndoFlags();
@@ -587,6 +592,7 @@ export async function moveItemToDate(fromKey: string, index: number, date: DateS
       text: i.text,
       flagged: i.flagged,
       flagDoneAt: i.flagDoneAt,
+      completionWasFlagged: i.completionWasFlagged,
       recurrenceId: i.recurrenceId,
       startTime: i.startTime ?? null,
       dueDate: i.dueDate ?? null,
@@ -622,7 +628,10 @@ export async function moveItemToDate(fromKey: string, index: number, date: DateS
 }
 
 /** 화면에 있는 같은 항목의 표시를 저장본과 맞춘다(목록에서 처리·되돌리기 후). */
-function patchLocalItem(id: string, marks: Pick<ItemDraft, "flagged" | "flagDoneAt">) {
+function patchLocalItem(
+  id: string,
+  marks: Pick<ItemDraft, "flagged" | "flagDoneAt" | "completionWasFlagged">,
+) {
   const cells = { ...get().cells };
   for (const [key, items] of Object.entries(cells)) {
     if (!items.some((i) => i.id === id)) continue;
@@ -641,28 +650,40 @@ function patchLocalItem(id: string, marks: Pick<ItemDraft, "flagged" | "flagDone
 export async function completeImportant(id: string) {
   const r = requireRepo();
   await flushAll();
+  if (repo !== r) return;
+  let completion: Awaited<ReturnType<JournalRepository["completeFlag"]>>;
   try {
-    await track(() => r.completeFlag(id));
+    completion = await track(() => r.completeFlag(id));
   } catch (e) {
     reportError(e);
     return;
   }
-  patchLocalItem(id, { flagged: false, flagDoneAt: new Date().toISOString() });
+  if (repo !== r || !completion) return;
+  patchLocalItem(id, {
+    flagged: false,
+    flagDoneAt: completion.at,
+    completionWasFlagged: completion.wasImportant,
+  });
   await refreshImportant();
+  void refreshPrevDates();
   toast(STR.important.completed, { label: STR.toast.undo, run: () => void undoImportant(id) });
 }
 
 export async function undoImportant(id: string) {
   const r = requireRepo();
   await flushAll();
+  if (repo !== r) return;
+  let wasImportant: boolean;
   try {
-    await track(() => r.undoComplete(id));
+    wasImportant = await track(() => r.undoComplete(id));
   } catch (e) {
     reportError(e);
     return;
   }
-  patchLocalItem(id, { flagged: true, flagDoneAt: null });
+  if (repo !== r) return;
+  patchLocalItem(id, { flagged: wasImportant, flagDoneAt: null });
   await refreshImportant();
+  void refreshPrevDates();
 }
 
 /** 목록 항목으로 이동: 그 주·그 요일로 가서 그 항목 입력칸에 커서(글 끝) + 잠깐 강조 */
@@ -1128,15 +1149,17 @@ async function refreshPrevDates() {
   if (!r || !day) return;
   try {
     const recs = await r.previousRecordsByCategory(day);
-    if (get().focusDay !== day) return;
+    if (repo !== r || get().focusDay !== day) return;
     const prevDates: Record<string, DateStr> = {};
+    const prevExcluded: Record<string, number> = {};
     const prevItems: BoardState["prevItems"] = {};
     for (const rec of recs)
       for (const [id, items] of Object.entries(rec.cells)) {
         prevDates[id] = rec.date;
         prevItems[id] = items;
+        prevExcluded[id] = rec.excluded ?? 0;
       }
-    set({ prevDates, prevItems });
+    set({ prevDates, prevItems, prevExcluded });
   } catch {
     // 단추 표시용 — 실패해도 가져오기(Alt+P)는 그때 다시 찾는다
   }
@@ -1157,16 +1180,21 @@ export async function previousDayFor(date: DateStr): Promise<DateStr | null> {
 /** 칸 하나(Alt+P·빈 칸 단추): 그 업무의 직전 기록일 내역을 칸 끝에 덧붙이고 마지막 항목에 커서 */
 export async function pullPrevious(key: string) {
   await flushAll();
+  const sourceRepo = requireRepo(),
+    generation = loadSeq;
+  const stale = () => repo !== sourceRepo || loadSeq !== generation;
   const { date, categoryId } = splitKey(key);
   let prev;
   try {
-    prev = await requireRepo().previousRecord(date, [categoryId]);
+    prev = await sourceRepo.previousRecord(date, [categoryId]);
   } catch (e) {
     reportError(e);
     return;
   }
+  if (stale()) return;
   const source = prev?.cells[categoryId];
-  if (!prev || !source?.length) return toast(STR.pull.none);
+  if (!prev || !source?.length)
+    return toast(prev?.excluded ? STR.itemCompletion.emptyPrevious : STR.pull.none);
   const { items, added } = appendCopies(get().cells[key] ?? [], source, uuidv7);
   const label = pullLabel(prev.date);
   if (added === 0) return toast(STR.pull.already(label));
@@ -1175,20 +1203,32 @@ export async function pullPrevious(key: string) {
     focus: { kind: "item", key, index: items.length - 1, caret: "end" },
   }));
   await persistCell(key);
-  toast(STR.pull.done(label, added), { label: STR.toast.undo, run: () => void undo() });
+  toast(
+    STR.pull.done(label, added) + (prev.excluded ? ` · ${STR.itemCompletion.excluded(prev.excluded)}` : ""),
+    {
+      label: STR.toast.undo,
+      run: () => void undo(),
+    },
+  );
 }
 
 /** 요일 전체(Alt+Shift+P·요일 머리 메뉴): 직전 기록일의 모든 업무 내역을 이 날 각 업무 칸 끝에. 되돌리기 한 번 */
 export async function pullPreviousDay(date: DateStr) {
   await flushAll();
+  const sourceRepo = requireRepo(),
+    generation = loadSeq;
+  const stale = () => repo !== sourceRepo || loadSeq !== generation;
   let prev;
   try {
-    prev = await requireRepo().previousRecord(date, activeCategoryIds());
+    prev = await sourceRepo.previousRecord(date, activeCategoryIds());
   } catch (e) {
     reportError(e);
     return;
   }
+  if (stale()) return;
   if (!prev) return toast(STR.pull.none);
+  if (!Object.values(prev.cells).some((items) => items.length))
+    return toast(prev.excluded ? STR.itemCompletion.emptyPrevious : STR.pull.none);
   const label = pullLabel(prev.date);
   const changes: { key: string; before: ItemDraft[]; after: ItemDraft[] }[] = [];
   let total = 0;
@@ -1199,6 +1239,7 @@ export async function pullPreviousDay(date: DateStr) {
       const key = cellKey(date, id);
       const before = persistedCells.get(key) ?? [];
       const { items, added } = appendCopies(get().cells[key] ?? [], source, uuidv7);
+      if (stale()) return;
       if (added === 0) continue;
       await applyCell(key, items);
       changes.push({ key, before, after: normalizeCell(items) });
@@ -1217,7 +1258,11 @@ export async function pullPreviousDay(date: DateStr) {
       for (const c of changes) await applyCell(c.key, c.after);
     },
   });
-  toast(STR.pull.doneAll(label, total, changes.length), { label: STR.toast.undo, run: () => void undo() });
+  toast(
+    STR.pull.doneAll(label, total, changes.length) +
+      (prev.excluded ? ` · ${STR.itemCompletion.excluded(prev.excluded)}` : ""),
+    { label: STR.toast.undo, run: () => void undo() },
+  );
 }
 
 // ── 업무 태그·태그 필터(improve-1026-spec 4~6절) ─────────

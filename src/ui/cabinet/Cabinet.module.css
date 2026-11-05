@@ -933,3 +933,8 @@
   font: inherit;
   cursor: pointer;
 }
+
+.markBefore,
+.markAfter {
+  border-radius: 0;
+}

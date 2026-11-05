@@ -37,6 +37,7 @@ export function TodayView() {
   const tags = useBoard((s) => s.tags);
   const prevDates = useBoard((s) => s.prevDates);
   const prevItems = useBoard((s) => s.prevItems);
+  const prevExcluded = useBoard((s) => s.prevExcluded);
   const narrow = useMediaQuery("(max-width: 1099px)");
   const [memoOpen, setMemoOpen] = useState(false);
   const [split, setSplit] = useState(DEFAULT_SETTINGS.ui.todaySplit);
@@ -245,6 +246,7 @@ export function TodayView() {
                   <div className={styles.prev} data-testid="today-prev">
                     <span className={styles.prevText}>
                       <b>{STR.today.prevLine(pullLabel(prevDate))}</b>{" "}
+                      {prev.length === 0 && STR.itemCompletion.emptyPrevious}
                       {prev
                         .filter((i) => i.depth === 0)
                         .slice(0, 2)
@@ -253,10 +255,12 @@ export function TodayView() {
                       {prev.filter((i) => i.depth === 0).length > 2 &&
                         ` ${STR.today.more(prev.filter((i) => i.depth === 0).length - 2)}`}
                     </span>
+                    {!!prevExcluded[id] && <span>{STR.itemCompletion.excluded(prevExcluded[id]!)}</span>}
                     <button
                       type="button"
                       className={styles.pull}
-                      title={STR.today.pullTitle}
+                      disabled={prev.length === 0}
+                      title={prev.length === 0 ? STR.itemCompletion.emptyPrevious : STR.today.pullTitle}
                       onMouseDown={(e) => e.preventDefault()}
                       onClick={() => void pullPrevious(key)}
                     >

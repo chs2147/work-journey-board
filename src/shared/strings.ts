@@ -674,6 +674,12 @@ export const STR_BASE = {
     thumbRemove: "썸네일 빼기",
     thumbAlt: (title: string) => `썸네일: ${title}`,
   },
+  itemCompletion: {
+    complete: (text: string) => `항목 완료: ${text}`,
+    undo: (text: string) => `항목 완료 취소: ${text}`,
+    emptyPrevious: "직전 기록은 모두 완료되어 가져올 항목이 없습니다.",
+    excluded: (n: number) => `완료 묶음 ${n}개 제외`,
+  },
   /** 직전 기록 가져오기(improve-1026-spec 3절) */
   pull: {
     button: (label: string) => `${label} 내역 가져오기`,

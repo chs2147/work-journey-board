@@ -1749,11 +1749,7 @@ button.stripText:hover {
   position: relative;
   display: inline-flex;
 }
-.colorA {
-  border-bottom: 3px solid currentColor;
-  line-height: 1;
-  padding: 0 2px;
-}
+
 .colorMenu {
   position: absolute;
   left: 0;
@@ -1776,7 +1772,7 @@ button.stripText:hover {
   cursor: pointer;
   color: var(--swatch-ink);
   background: var(--surface-card);
-  box-shadow: inset 0 -5px var(--swatch-ink);
+  box-shadow: none;
 }
 .swatch[aria-checked="true"] {
   outline: 2px solid var(--accent);
@@ -1803,4 +1799,33 @@ button.stripText:hover {
 }
 .swatch_red {
   --swatch-ink: var(--note-red);
+}
+
+.colorGlyph {
+  font-weight: var(--fw-bold);
+}
+.colorChip {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  background: currentColor;
+  border: 1px solid var(--line-strong);
+  border-radius: 0;
+  vertical-align: middle;
+}
+.colorMixed {
+  background: linear-gradient(90deg, var(--text-1) 50%, var(--surface-card) 50%);
+}
+.colorMenu {
+  border-radius: 0;
+}
+.swatch {
+  border-radius: 0;
+  background: var(--swatch-ink);
+  color: var(--surface-card);
+  box-shadow: none;
+}
+.swatch_default {
+  background: var(--surface-card);
+  color: var(--text-1);
 }
