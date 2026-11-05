@@ -256,3 +256,15 @@ export const IconList = () => (
     <path d="M6 4h7M6 8h7M6 12h7M2.5 4H3M2.5 8H3M2.5 12H3" />
   </Svg>
 );
+
+export const IconCompleteItem = () => (
+  <Svg>
+    <rect x="2" y="2" width="12" height="12" rx="2" />
+    <path d="M4.5 8l2.5 2.5 4.5-5" />
+  </Svg>
+);
+export const IconUndoComplete = () => (
+  <Svg>
+    <path d="M6 3L2 7l4 4M2 7h7a4 4 0 0 1 0 8" />
+  </Svg>
+);

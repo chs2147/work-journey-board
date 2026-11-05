@@ -40,8 +40,12 @@ export function NoteColorPalette({
         onMouseDown={(e) => e.preventDefault()}
         onClick={() => setOpen((v) => !v)}
       >
-        <span className={`${styles.colorA} note-c-${color}`}>A</span>{" "}
-        {mixed ? STR.notePalette.mixed : STR.notePalette.title} ▾
+        <span className={styles.colorGlyph}>A</span>{" "}
+        <span
+          aria-hidden="true"
+          className={`${styles.colorChip} note-c-${color} ${mixed ? styles.colorMixed : ""}`}
+        />{" "}
+        ▾
       </button>
       {open && (
         <span
@@ -89,7 +93,7 @@ export function NoteColorPalette({
                 setOpen(false);
               }}
             >
-              {!mixed && color === v ? "✓" : "A"}
+              {!mixed && color === v ? "✓" : v === "default" ? "↶" : ""}
             </button>
           ))}
         </span>

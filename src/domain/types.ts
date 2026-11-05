@@ -25,8 +25,9 @@ export type Depth = 0 | 1;
 export interface ItemMarks {
   /** 중요 표시 — 아직 챙겨야 하는 일 */
   flagged?: boolean;
-  /** 중요 업무 목록에서 처리 완료한 시각(UTC). 최근 완료 7일 보관에 쓴다 */
+  /** 항목 처리 완료 시각(UTC). 중요 업무에서 완료한 항목도 같은 상태를 사용한다 */
   flagDoneAt?: string | null;
+  completionWasFlagged?: boolean;
   /** 매주 반복 규칙 id */
   recurrenceId?: string | null;
   /** 그날 시작 시각 'HH:MM'(15분 단위, improve-1103v8-spec T1) — 없으면 null */

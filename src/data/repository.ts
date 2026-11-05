@@ -1,3 +1,4 @@
+import { copyablePrevious } from "../domain/previousItems";
 // 영속 데이터 접근의 유일한 경로(CLAUDE.md 4-3). UI는 이 클래스만 쓰고 SQL을 직접 실행하지 않는다.
 import {
   CARD_LIMITS,
@@ -213,6 +214,7 @@ export interface PreviousRecord {
   date: DateStr;
   /** 키: 업무 id, 칸 안 순서대로 */
   cells: Record<string, { depth: Depth; text: string }[]>;
+  excluded?: number;
 }
 
 /** 직전 기록을 찾는 범위(일) — 4주 */
@@ -274,6 +276,7 @@ interface ItemSnapshot {
   text: string;
   flagged: number;
   flag_done_at: string | null;
+  completion_was_flagged?: number;
   recurrence_id: string | null;
   /** v10부터(그 전 되돌리기 자료에는 없음) */
   start_time?: string | null;
@@ -366,6 +369,7 @@ interface ItemRow {
   text: string;
   flagged: number;
   flag_done_at: string | null;
+  completion_was_flagged?: number;
   recurrence_id: string | null;
   start_time: string | null;
   due_date?: string | null;
@@ -405,7 +409,7 @@ export interface RepeatPreview {
 }
 
 const ITEM_COLUMNS =
-  "id, date, category_id, seq, depth, text, flagged, flag_done_at, recurrence_id, start_time, due_date";
+  "id, date, category_id, seq, depth, text, flagged, flag_done_at, completion_was_flagged, recurrence_id, start_time, due_date";
 
 const toCategory = (r: CategoryRow): Category => ({
   id: r.id,
@@ -429,6 +433,7 @@ const toItem = (r: ItemRow): EntryItem => ({
   text: r.text,
   flagged: Number(r.flagged) === 1,
   flagDoneAt: r.flag_done_at,
+  completionWasFlagged: r.completion_was_flagged !== 0,
   recurrenceId: r.recurrence_id,
   startTime: r.start_time ?? null,
   dueDate: r.due_date ?? null,
@@ -920,35 +925,69 @@ export class JournalRepository {
       [from, before, ...categoryIds],
     );
     if (!row?.d) return null;
-    const rows = await this.db.select<{ category_id: string; depth: number; text: string }>(
-      `SELECT category_id, depth, text FROM entry_item
-       WHERE date = ? AND category_id IN (${inCats}) AND trim(text) <> '' ORDER BY category_id, seq`,
+    const rows = await this.db.select<{
+      category_id: string;
+      depth: number;
+      text: string;
+      flagged: number;
+      flag_done_at: string | null;
+    }>(
+      `SELECT category_id, depth, text, flagged, flag_done_at FROM entry_item
+       WHERE date = ? AND category_id IN (${inCats}) ORDER BY category_id, seq`,
       [row.d, ...categoryIds],
     );
     const cells: PreviousRecord["cells"] = {};
-    for (const r of rows)
-      (cells[r.category_id] ??= []).push({ depth: Number(r.depth) as Depth, text: r.text });
-    return { date: row.d, cells };
+    let excluded = 0;
+    for (const id of categoryIds.filter((id) => rows.some((r) => r.category_id === id))) {
+      const result = copyablePrevious(
+        rows
+          .filter((r) => r.category_id === id)
+          .map((r) => ({
+            depth: Number(r.depth) as Depth,
+            text: r.text,
+            flagged: Number(r.flagged) === 1,
+            flagDoneAt: r.flag_done_at,
+          })),
+      );
+      cells[id] = result.items;
+      excluded += result.excluded;
+    }
+    return { date: row.d, cells, ...(excluded ? { excluded } : {}) };
   }
 
   /** 업무별 직전 기록일과 그날 내역(오늘 뷰 카드의 미리보기, spec 8-2) — 키: 업무 id */
   async previousRecordsByCategory(before: DateStr): Promise<PreviousRecord[]> {
     const dates = await this.previousRecordDates(before);
     const pairs = Object.entries(dates);
-    if (pairs.length === 0) return [];
-    const rows = await this.db.select<{ category_id: string; date: string; depth: number; text: string }>(
-      `SELECT category_id, date, depth, text FROM entry_item
-       WHERE trim(text) <> '' AND (${pairs.map(() => "(category_id = ? AND date = ?)").join(" OR ")})
-       ORDER BY category_id, seq`,
+    if (!pairs.length) return [];
+    const rows = await this.db.select<{
+      category_id: string;
+      date: string;
+      depth: number;
+      text: string;
+      flagged: number;
+      flag_done_at: string | null;
+    }>(
+      `SELECT category_id, date, depth, text, flagged, flag_done_at FROM entry_item WHERE (${pairs.map(() => "(category_id = ? AND date = ?)").join(" OR ")}) ORDER BY category_id, seq`,
       pairs.flat(),
     );
-    const out = new Map<string, PreviousRecord>();
-    for (const r of rows) {
-      const rec = out.get(r.category_id) ?? { date: r.date, cells: { [r.category_id]: [] } };
-      rec.cells[r.category_id]!.push({ depth: Number(r.depth) as Depth, text: r.text });
-      out.set(r.category_id, rec);
-    }
-    return [...out.values()];
+    return pairs.map(([id, date]) => {
+      const result = copyablePrevious(
+        rows
+          .filter((r) => r.category_id === id)
+          .map((r) => ({
+            depth: Number(r.depth) as Depth,
+            text: r.text,
+            flagged: Number(r.flagged) === 1,
+            flagDoneAt: r.flag_done_at,
+          })),
+      );
+      return {
+        date,
+        cells: { [id]: result.items },
+        ...(result.excluded ? { excluded: result.excluded } : {}),
+      };
+    });
   }
 
   /** 업무별 직전 기록일(빈 칸의 [10/28(수) 내역 가져오기] 단추용) — 키: 업무 id */
@@ -1240,6 +1279,7 @@ export class JournalRepository {
       text: d.text.slice(0, 2000),
       flagged: d.flagged === true,
       flagDoneAt: d.flagged ? null : (d.flagDoneAt ?? null),
+      completionWasFlagged: d.completionWasFlagged ?? true,
       recurrenceId: d.recurrenceId ?? null,
       startTime: isStartTime(d.startTime) ? d.startTime : null,
       dueDate: isDueDate(d.dueDate) ? d.dueDate : null,
@@ -1254,13 +1294,13 @@ export class JournalRepository {
         params: [date, categoryId, ...ids],
       },
       ...items.map((it) => ({
-        sql: `INSERT INTO entry_item (id, date, category_id, seq, depth, text, flagged, flag_done_at, recurrence_id,
+        sql: `INSERT INTO entry_item (id, date, category_id, seq, depth, text, flagged, flag_done_at, completion_was_flagged, recurrence_id,
                                       start_time, due_date, created_at, updated_at)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
               ON CONFLICT(id) DO UPDATE SET
                 date = excluded.date, category_id = excluded.category_id, seq = excluded.seq,
                 depth = excluded.depth, text = excluded.text, flagged = excluded.flagged,
-                flag_done_at = excluded.flag_done_at, recurrence_id = excluded.recurrence_id,
+                flag_done_at = excluded.flag_done_at, completion_was_flagged = excluded.completion_was_flagged, recurrence_id = excluded.recurrence_id,
                 start_time = excluded.start_time, due_date = excluded.due_date,
                 updated_at = CASE WHEN entry_item.text <> excluded.text OR entry_item.depth <> excluded.depth
                                     OR entry_item.seq <> excluded.seq OR entry_item.date <> excluded.date
@@ -1276,6 +1316,7 @@ export class JournalRepository {
           it.text,
           it.flagged ? 1 : 0,
           it.flagDoneAt ?? null,
+          it.completionWasFlagged === false ? 0 : 1,
           it.recurrenceId ?? null,
           it.startTime ?? null,
           it.dueDate ?? null,
@@ -1290,7 +1331,7 @@ export class JournalRepository {
   // ── 중요 업무(important-repeat-spec 2절) ──────────────
   private async importantRows(where: string, params: SqlParam[]): Promise<ImportantItem[]> {
     const rows = await this.db.select<ImportantRow>(
-      `SELECT e.id, e.date, e.category_id, e.seq, e.depth, e.text, e.flagged, e.flag_done_at, e.recurrence_id,
+      `SELECT e.id, e.date, e.category_id, e.seq, e.depth, e.text, e.flagged, e.flag_done_at, e.completion_was_flagged, e.recurrence_id,
               e.start_time, e.due_date, c.name AS category_name, c.color AS category_color, c.sort_order AS category_order,
               CASE WHEN e.depth = 1 THEN (
                 SELECT p.text FROM entry_item p
@@ -1332,7 +1373,7 @@ export class JournalRepository {
       const part = ids.slice(i, i + 500);
       if (!part.length) continue;
       const rows = await this.db.select<ItemRow & { category_name: string; category_color: string }>(
-        `SELECT e.id, e.date, e.category_id, e.seq, e.depth, e.text, e.flagged, e.flag_done_at, e.recurrence_id,
+        `SELECT e.id, e.date, e.category_id, e.seq, e.depth, e.text, e.flagged, e.flag_done_at, e.completion_was_flagged, e.recurrence_id,
                 e.start_time, e.due_date, c.name AS category_name, c.color AS category_color
          FROM entry_item e JOIN category c ON c.id = e.category_id
          WHERE e.id IN (${part.map(() => "?").join(", ")})`,
@@ -1362,27 +1403,40 @@ export class JournalRepository {
     const start = parseDate(weekStart(weekId));
     const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 7);
     const rows = await this.importantRows(
-      "e.flagged = 0 AND e.flag_done_at IS NOT NULL AND e.flag_done_at >= ? AND e.flag_done_at < ?",
+      "e.flagged = 0 AND e.completion_was_flagged = 1 AND e.flag_done_at IS NOT NULL AND e.flag_done_at >= ? AND e.flag_done_at < ?",
       [utcTimestamp(start), utcTimestamp(end)],
     );
     return rows.sort((a, b) => (b.flagDoneAt ?? "").localeCompare(a.flagDoneAt ?? ""));
   }
 
   /** 중요 업무 목록에서 처리 완료: 강조 해제 + 완료 시각 기록 */
-  async completeFlag(id: string): Promise<void> {
+  async completeFlag(id: string): Promise<{ wasImportant: boolean; at: string } | null> {
     const ts = this.ts();
     await this.db.execute(
-      "UPDATE entry_item SET flagged = 0, flag_done_at = ?, updated_at = ? WHERE id = ? AND flagged = 1",
+      "UPDATE entry_item SET completion_was_flagged = flagged, flagged = 0, flag_done_at = ?, updated_at = ? WHERE id = ? AND flag_done_at IS NULL",
       [ts, ts, id],
     );
+    const [row] = await this.db.select<{ completion_was_flagged: number; flag_done_at: string | null }>(
+      "SELECT completion_was_flagged, flag_done_at FROM entry_item WHERE id = ?",
+      [id],
+    );
+    return row?.flag_done_at
+      ? { wasImportant: row.completion_was_flagged !== 0, at: row.flag_done_at }
+      : null;
   }
 
-  /** 처리 완료 되돌리기: 다시 중요 */
-  async undoComplete(id: string): Promise<void> {
+  /** 완료 전 중요 표시를 복원한다(일반 항목이면 별표를 만들지 않는다). */
+  async undoComplete(id: string): Promise<boolean> {
+    const [row] = await this.db.select<{ completion_was_flagged: number }>(
+      "SELECT completion_was_flagged FROM entry_item WHERE id = ?",
+      [id],
+    );
+    const important = row?.completion_was_flagged !== 0;
     await this.db.execute(
-      "UPDATE entry_item SET flagged = 1, flag_done_at = NULL, updated_at = ? WHERE id = ?",
+      "UPDATE entry_item SET flagged = completion_was_flagged, flag_done_at = NULL, updated_at = ? WHERE id = ?",
       [this.ts(), id],
     );
+    return important;
   }
 
   // ── 매주 반복(important-repeat-spec 3절) ───────────────
@@ -2767,7 +2821,7 @@ export class JournalRepository {
       const ids = plan.deleteItemIds.slice(i, i + 500);
       undo.deletedItems.push(
         ...(await this.db.select<ItemSnapshot>(
-          `SELECT id, date, category_id, seq, depth, text, flagged, flag_done_at, recurrence_id, start_time, due_date, created_at, updated_at, import_id
+          `SELECT id, date, category_id, seq, depth, text, flagged, flag_done_at, completion_was_flagged, recurrence_id, start_time, due_date, created_at, updated_at, import_id
            FROM entry_item WHERE id IN (${ids.map(() => "?").join(", ")})`,
           ids,
         )),
@@ -2873,9 +2927,9 @@ export class JournalRepository {
     ];
     for (const it of undo.deletedItems)
       stmts.push({
-        sql: `INSERT OR IGNORE INTO entry_item (id, date, category_id, seq, depth, text, flagged, flag_done_at, recurrence_id,
+        sql: `INSERT OR IGNORE INTO entry_item (id, date, category_id, seq, depth, text, flagged, flag_done_at, completion_was_flagged, recurrence_id,
                                                 start_time, due_date, created_at, updated_at, import_id)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         params: [
           it.id,
           it.date,
@@ -2885,6 +2939,7 @@ export class JournalRepository {
           it.text,
           it.flagged,
           it.flag_done_at,
+          it.completion_was_flagged ?? 1,
           it.recurrence_id,
           it.start_time ?? null,
           it.due_date ?? null,

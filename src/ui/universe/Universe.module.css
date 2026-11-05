@@ -937,3 +937,7 @@
   height: 36px;
   background: var(--line-strong);
 }
+
+.seg.iconSeg {
+  border-radius: 0;
+}

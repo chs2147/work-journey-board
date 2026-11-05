@@ -142,6 +142,8 @@ test("#4 배경색 칩 5개가 각자 색으로 보인다", async ({ page }) => 
 test("#7 연결점 4개(위·오른쪽·아래·왼쪽) — 위·오른쪽에서 끌어도 잇기 · 폭 조절은 오른쪽 아래 모서리", async ({
   page,
 }) => {
+  // This scenario tests connector handles, independent of the remaining dock height.
+  await page.getByRole("button", { name: "크게 보기", exact: true }).first().click();
   const a = await makeBox(page, "가상 왼쪽 상자", 40, 200);
   const b = await makeBox(page, "가상 오른쪽 상자", 560, 200);
   await a.hover();

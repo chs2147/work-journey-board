@@ -14,6 +14,8 @@ import universeRelation0011 from "./migrations/0011_universe_relation.sql?raw";
 import knowledgeCard0012 from "./migrations/0012_knowledge_card.sql?raw";
 import dueDate0013 from "./migrations/0013_due_date.sql?raw";
 
+import completion0014 from "./migrations/0014_completion_origin.sql?raw";
+
 export interface Migration {
   version: number;
   sql: string;
@@ -34,6 +36,7 @@ export const MIGRATIONS: Migration[] = [
   { version: 11, sql: universeRelation0011 },
   { version: 12, sql: knowledgeCard0012 },
   { version: 13, sql: dueDate0013 },
+  { version: 14, sql: completion0014 },
 ];
 
 export const LATEST_SCHEMA_VERSION = MIGRATIONS.at(-1)!.version;

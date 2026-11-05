@@ -648,7 +648,7 @@
 
 /* 중요 항목: 옅은 형광펜 띠 + 왼쪽 선 */
 .flagged {
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  border-radius: 0;
   background: var(--mark);
   box-shadow: inset 3px 0 0 var(--mark-line);
 }
@@ -1706,4 +1706,81 @@
 
 .dueChip:hover {
   box-shadow: 0 0 0 1px currentcolor;
+}
+
+/* v12: reserve rail + importance for every row, preventing text jumps. */
+.item,
+.itemSub {
+  padding-left: 33px;
+}
+.bullet {
+  left: 11px;
+}
+.completionAction {
+  position: absolute;
+  right: 0;
+  top: -18px;
+  width: 24px;
+  height: 20px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-3);
+  cursor: pointer;
+  z-index: 6;
+  opacity: 0;
+  pointer-events: none;
+  background: var(--surface-card);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+}
+.completionAction:hover,
+.completionAction:focus-visible {
+  color: var(--accent);
+  outline: 1px solid var(--accent);
+}
+.completedItem .completionAction {
+  color: var(--done);
+}
+.completedItem .itemInput,
+.completedItem .itemView,
+.completedItem .itemView a {
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+
+.dropBefore,
+.dropAfter {
+  border-radius: 0;
+}
+
+.timeChip,
+.itemSub > .timeChip {
+  left: 33px;
+}
+.dropLine::after,
+.dropLineSub::after,
+.linkTarget {
+  border-radius: 0;
+}
+
+/* Compact v12 controls: reserve only rail + star; completion action floats above
+   the active row so narrow week columns keep their reading width and height. */
+.item,
+.itemSub {
+  padding-left: 33px;
+}
+.timeChip,
+.itemSub > .timeChip {
+  left: 33px;
+}
+
+.item:hover > .completionAction,
+.itemSub:hover > .completionAction,
+.item:focus-within > .completionAction,
+.itemSub:focus-within > .completionAction,
+.completionAction:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
 }
