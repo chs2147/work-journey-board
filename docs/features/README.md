@@ -1,10 +1,10 @@
 # Feature List 운영 구조
 
-현재 기준: **Work Journey Board 1.18.1 · DB 구조 v14 · 문서 스키마 1**.
+현재 기준: **Work Journey Board 1.19.0-rc.1 · DB 구조 v15 · 문서 스키마 1**.
 
 정식 릴리스에도 검토용 Excel과 `SHA256SUMS_features.txt`를 설치 파일과 함께 첨부한다.
 
-[현재 기능 목록](CURRENT.md) · [검토용 Excel](exports/work-journey-board/Work-Journey-Board-Feature-List-v1.18.1.xlsx)
+[현재 기능 목록](CURRENT.md) · [검토용 Excel](exports/work-journey-board/Work-Journey-Board-Feature-List-v1.19.0-rc.1.xlsx)
 
 ## 1. 목적과 범위
 
@@ -13,7 +13,7 @@
 - **제품(productId)**: 독립한 기능 범위와 자체 앱 버전을 가진 제품 계열. 현재 실제 제품은 `work-journey-board` 하나다.
 - **앱 버전**: 기능이 제공되는 semver. 최초 제공 버전은 비RC 출시 기록에서 확인된 최초 판으로, 0.x 개발판도 포함한다. 처음 정식 출시한 1.0.0과 다르다. RC 선행 구현은 `preview`에 별도로 기록한다. 아직 비RC 판에 제공되지 않은 RC 전용 기능은 `introduced: null`, 실제 `preview`와 active 상태를 기록하며 Excel에는 **RC 제공만**으로 표시한다. 카탈로그/제품 버전에는 RC를 사용할 수 있고 RC 숫자는 semver 순서로 비교한다.
 - **배포 프로필(profileId)**: 같은 제품·같은 버전의 Windows 기본판, macOS 유니버설, Windows 오프라인 패키징. 오프라인은 다른 앱 제품이 아니다. 지원되는 프로필과 해당 릴리스에서 실제 빌드된 산출물도 구분한다.
-- **문서 schemaVersion / DB 구조**: 문서 형식 번호와 일지 DB 구조 번호는 앱 버전과 별개다. 이번 문서 정리로 DB 구조는 바뀌지 않는다.
+- **문서 schemaVersion / DB 구조**: 문서 형식 번호와 일지 DB 구조 번호는 앱 버전과 별개다. v15 문서 정리는 DB 구조를 바꾸지 않았다. v16 공유 메모 연결부터 일지 구조 v15를 사용한다.
 
 ## 2. 파일 구조와 정본
 

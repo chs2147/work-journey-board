@@ -1,3 +1,4 @@
+import { LATEST_SCHEMA_VERSION } from "../../src/data/migrate";
 import { versionedBackupName, parseBackupName } from "../../src/data/backupIdentity";
 // @vitest-environment node
 import { describe, expect, it, vi } from "vitest";
@@ -152,7 +153,9 @@ describe("VACUUM INTO 백업 (sql.js 가상 FS에서 실제 파일)", () => {
     const { fs, driver, verify, categoryNames } = memFs(db);
     const dir = newDir();
     const path = await runManualBackup(driver, fs, dir, new Date(2026, 9, 23, 8, 31), verify);
-    expect(path).toBe(`${dir}/backups/${versionedBackupName(new Date(2026, 9, 23, 8, 31), "manual", 14)}`);
+    expect(path).toBe(
+      `${dir}/backups/${versionedBackupName(new Date(2026, 9, 23, 8, 31), "manual", LATEST_SCHEMA_VERSION)}`,
+    );
     expect(await categoryNames(path)).toEqual(["백업 확인"]);
     expect(await quickCheck(db)).toBe(true);
   });

@@ -168,8 +168,12 @@ export function buildTimeline(input: TimelineInput): TimelineRow[] {
     const w = weekIdOf(it.date);
     byWeek.set(w, [...(byWeek.get(w) ?? []), it]);
   }
-  const memoFor = (weekId: WeekId, itemId: string) =>
-    readingOrder((input.notes?.[weekId]?.boxes ?? []).filter((b) => isLinkedTo(b, itemId)))
+  const memoFor = (itemId: string) =>
+    readingOrder(
+      Object.values(input.notes ?? {})
+        .flatMap((doc) => doc.boxes)
+        .filter((b) => isLinkedTo(b, itemId)),
+    )
       .map(linkedMemoText)
       .filter((t) => t.trim() !== "");
 
@@ -243,7 +247,7 @@ export function buildTimeline(input: TimelineInput): TimelineRow[] {
           doneAt: it.flagged !== true && it.flagDoneAt ? it.flagDoneAt : null,
           repeat: !!it.recurrenceId,
           startTime: it.startTime ?? null,
-          memos: memoFor(w, it.id),
+          memos: memoFor(it.id),
         })),
       });
     } else {

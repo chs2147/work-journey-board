@@ -66,6 +66,7 @@ import {
   docFromDayMemos,
   emptyDoc,
   IMAGE_MIMES,
+  LINK_MAX,
   importMemoBox,
   isNoteEmpty,
   noteAssetIds,
@@ -211,10 +212,20 @@ export interface DayMarkInfo {
 }
 
 /** 직전 기록 가져오기의 원본(improve-1026-spec 3절) */
+export interface ItemRelations {
+  notes: { note_week_id: string; box_id: string; entry_id: string; created_at: string }[];
+  cabinet: { id: string; item_id: string; entry_id: string; created_at: string }[];
+}
+export interface CopiedEntries {
+  cells: { date: DateStr; categoryId: string; items: ItemDraft[] }[];
+  relations: ItemRelations;
+  placements: Record<string, string | null>;
+}
+
 export interface PreviousRecord {
   date: DateStr;
   /** 키: 업무 id, 칸 안 순서대로 */
-  cells: Record<string, { depth: Depth; text: string }[]>;
+  cells: Record<string, { id?: string; depth: Depth; text: string }[]>;
   excluded?: number;
 }
 
@@ -290,6 +301,7 @@ interface ItemSnapshot {
 
 /** 되돌리기 자료(import_batch.undo_json) */
 interface ImportUndo {
+  relations?: ItemRelations;
   deletedItems: ItemSnapshot[];
   notes: { weekId: WeekId; doc: string | null }[];
   createdCategories: string[];
@@ -472,6 +484,7 @@ export interface CabinetHit {
 
 export class JournalRepository {
   private readonly db: SqlDriver;
+  private copyQueue: Promise<void> = Promise.resolve();
   private readonly cache = new Map<CacheKey, Promise<unknown>>();
   /** 저장소를 거친 쓰기 횟수 — 마지막 백업 뒤로 바뀐 게 있는지(optimize-1031-plan B1·B3) */
   private writes = 0;
@@ -956,13 +969,14 @@ export class JournalRepository {
     );
     if (!row?.d) return null;
     const rows = await this.db.select<{
+      id: string;
       category_id: string;
       depth: number;
       text: string;
       flagged: number;
       flag_done_at: string | null;
     }>(
-      `SELECT category_id, depth, text, flagged, flag_done_at FROM entry_item
+      `SELECT id, category_id, depth, text, flagged, flag_done_at FROM entry_item
        WHERE date = ? AND category_id IN (${inCats}) ORDER BY category_id, seq`,
       [row.d, ...categoryIds],
     );
@@ -973,6 +987,7 @@ export class JournalRepository {
         rows
           .filter((r) => r.category_id === id)
           .map((r) => ({
+            id: r.id,
             depth: Number(r.depth) as Depth,
             text: r.text,
             flagged: Number(r.flagged) === 1,
@@ -991,6 +1006,7 @@ export class JournalRepository {
     const pairs = Object.entries(dates);
     if (!pairs.length) return [];
     const rows = await this.db.select<{
+      id: string;
       category_id: string;
       date: string;
       depth: number;
@@ -998,7 +1014,7 @@ export class JournalRepository {
       flagged: number;
       flag_done_at: string | null;
     }>(
-      `SELECT category_id, date, depth, text, flagged, flag_done_at FROM entry_item WHERE (${pairs.map(() => "(category_id = ? AND date = ?)").join(" OR ")}) ORDER BY category_id, seq`,
+      `SELECT id, category_id, date, depth, text, flagged, flag_done_at FROM entry_item WHERE (${pairs.map(() => "(category_id = ? AND date = ?)").join(" OR ")}) ORDER BY category_id, seq`,
       pairs.flat(),
     );
     return pairs.map(([id, date]) => {
@@ -1006,6 +1022,7 @@ export class JournalRepository {
         rows
           .filter((r) => r.category_id === id)
           .map((r) => ({
+            id: r.id,
             depth: Number(r.depth) as Depth,
             text: r.text,
             flagged: Number(r.flagged) === 1,
@@ -1040,7 +1057,7 @@ export class JournalRepository {
     const [row] = await this.db.select<{ doc: string }>("SELECT doc FROM week_note WHERE week_id = ?", [
       weekId,
     ]);
-    if (row) return { doc: parseNoteDoc(row.doc), legacy: false };
+    if (row) return { doc: await this.hydrateNote(weekId, parseNoteDoc(row.doc)), legacy: false };
     const { start, end } = weekRange(weekId);
     const memos = await this.db.select<{ date: string; text: string }>(
       "SELECT date, text FROM day_memo WHERE date BETWEEN ? AND ?",
@@ -1053,12 +1070,80 @@ export class JournalRepository {
   }
 
   /** 메모 문서 저장(통째로). 비어도 행을 남긴다 — 예전 요일 메모가 다시 보이지 않게 */
-  async saveWeekNote(weekId: WeekId, doc: NoteDoc): Promise<void> {
-    const json = JSON.stringify(parseNoteDoc(JSON.stringify(doc)));
+  /** Apply only ref changes since the caller's baseline. External copy links survive stale content saves. */
+  async saveWeekNote(weekId: WeekId, doc: NoteDoc, baseline?: NoteDoc): Promise<void> {
+    const clean = parseNoteDoc(JSON.stringify(doc));
+    const before = baseline ?? (await this.getWeekNote(weekId)).doc;
+    const stored = {
+      ...clean,
+      boxes: clean.boxes.map((b) => {
+        const { refs: _refs, ...box } = b;
+        void _refs;
+        return box;
+      }),
+    };
+    const json = JSON.stringify(stored);
     if (json.length > NOTE_MAX) throw new ValidationError("메모가 너무 큽니다");
-    await this.db.execute(
-      "INSERT INTO week_note (week_id, doc, updated_at) VALUES (?, ?, ?) ON CONFLICT(week_id) DO UPDATE SET doc = excluded.doc, updated_at = excluded.updated_at",
-      [weekId, json, this.ts()],
+    const stmts: SqlStatement[] = [
+      {
+        sql: "INSERT INTO week_note (week_id, doc, updated_at) VALUES (?, ?, ?) ON CONFLICT(week_id) DO UPDATE SET doc = excluded.doc, updated_at = excluded.updated_at",
+        params: [weekId, json, this.ts()],
+      },
+    ];
+    stmts.push({
+      sql: "DELETE FROM note_entry_link WHERE note_week_id = ? AND box_id NOT IN (SELECT json_extract(value, '$.id') FROM json_each(?, '$.boxes'))",
+      params: [weekId, json],
+    });
+    const current = await this.noteLinks(weekId);
+    for (const box of clean.boxes) {
+      const previous = new Set(before.boxes.find((b) => b.id === box.id)?.refs?.map((r) => r.item) ?? []);
+      const next = new Set(box.refs?.map((r) => r.item) ?? []);
+      const live = new Set(current.filter((r) => r.box_id === box.id).map((r) => r.entry_id));
+      for (const id of previous)
+        if (!next.has(id)) {
+          live.delete(id);
+          stmts.push({
+            sql: "DELETE FROM note_entry_link WHERE note_week_id = ? AND box_id = ? AND entry_id = ?",
+            params: [weekId, box.id, id],
+          });
+        }
+      for (const id of next)
+        if (!previous.has(id)) {
+          live.add(id);
+          stmts.push({
+            sql: "INSERT OR IGNORE INTO note_entry_link (note_week_id, box_id, entry_id, created_at) SELECT ?, ?, id, ? FROM entry_item WHERE id = ?",
+            params: [weekId, box.id, this.ts(), id],
+          });
+        }
+      if (live.size > LINK_MAX) throw new ValidationError(`메모 연결은 객체당 ${LINK_MAX}개까지 가능합니다.`);
+    }
+    await this.db.batch(stmts);
+  }
+
+  private async noteLinks(weekId: WeekId) {
+    return this.db.select<{ box_id: string; entry_id: string }>(
+      "SELECT box_id, entry_id FROM note_entry_link WHERE note_week_id = ? ORDER BY created_at, entry_id",
+      [weekId],
+    );
+  }
+
+  private async hydrateNote(weekId: WeekId, doc: NoteDoc): Promise<NoteDoc> {
+    const links = await this.noteLinks(weekId);
+    return {
+      ...doc,
+      boxes: doc.boxes.map((b) => ({
+        ...b,
+        refs: links.filter((r) => r.box_id === b.id).map((r) => ({ item: r.entry_id })),
+      })),
+    };
+  }
+
+  /** Global memo badges point to original objects, including objects owned by another week. */
+  async linkedMemos(entryIds: string[]) {
+    if (!entryIds.length) return [];
+    return this.db.select<{ entryId: string; weekId: WeekId; boxId: string }>(
+      `SELECT entry_id AS entryId, note_week_id AS weekId, box_id AS boxId FROM note_entry_link WHERE entry_id IN (${entryIds.map(() => "?").join(",")}) ORDER BY note_week_id, box_id`,
+      entryIds,
     );
   }
 
@@ -1292,6 +1377,195 @@ export class JournalRepository {
   async saveCells(cells: { date: DateStr; categoryId: string; items: ItemDraft[] }[]): Promise<void> {
     const stmts = cells.flatMap((c) => this.cellStatements(c.date, c.categoryId, c.items).stmts);
     await this.db.batch(stmts);
+  }
+
+  async itemRelations(ids: string[]): Promise<ItemRelations> {
+    if (!ids.length) return { notes: [], cabinet: [] };
+    const marks = ids.map(() => "?").join(",");
+    const [notes, cabinet] = await Promise.all([
+      this.db.select<ItemRelations["notes"][number]>(
+        `SELECT * FROM note_entry_link WHERE entry_id IN (${marks})`,
+        ids,
+      ),
+      this.db.select<ItemRelations["cabinet"][number]>(
+        `SELECT id, item_id, entry_id, created_at FROM cabinet_link WHERE entry_id IN (${marks})`,
+        ids,
+      ),
+    ]);
+    return { notes, cabinet };
+  }
+
+  private relationStatements(links: ItemRelations, strict = false): SqlStatement[] {
+    return [
+      ...links.notes.map((r) => ({
+        sql: strict
+          ? "INSERT INTO note_entry_link (note_week_id, box_id, created_at, entry_id) VALUES (?, ?, ?, ?)"
+          : `INSERT OR IGNORE INTO note_entry_link (note_week_id, box_id, entry_id, created_at)
+        SELECT ?, ?, e.id, ? FROM entry_item e WHERE e.id = ? AND EXISTS
+        (SELECT 1 FROM week_note n, json_each(n.doc, '$.boxes') b WHERE n.week_id = ? AND json_extract(b.value, '$.id') = ?)`,
+        params: strict
+          ? [r.note_week_id, r.box_id, r.created_at, r.entry_id]
+          : [r.note_week_id, r.box_id, r.created_at, r.entry_id, r.note_week_id, r.box_id],
+      })),
+      ...links.cabinet.map((r) => ({
+        sql: strict
+          ? "INSERT INTO cabinet_link (id, item_id, entry_id, created_at) VALUES (?, ?, ?, ?)"
+          : `INSERT OR IGNORE INTO cabinet_link (id, item_id, entry_id, created_at)
+        SELECT ?, c.id, e.id, ? FROM cabinet_item c, entry_item e WHERE c.id = ? AND e.id = ?`,
+        params: strict
+          ? [r.id, r.item_id, r.entry_id, r.created_at]
+          : [r.id, r.created_at, r.item_id, r.entry_id],
+      })),
+    ];
+  }
+
+  async restoreItemRelations(links: ItemRelations): Promise<void> {
+    await this.db.batch(this.relationStatements(links));
+  }
+
+  private serializeCopy<T>(work: () => Promise<T>): Promise<T> {
+    const result = this.copyQueue.then(work);
+    this.copyQueue = result.then(
+      () => undefined,
+      () => undefined,
+    );
+    return result;
+  }
+
+  /** Only change ordering on existing rows; a copy never overwrites their text/metadata or deletes them. */
+  private copiedStatements(cells: CopiedEntries["cells"], ids: Set<string>): SqlStatement[] {
+    return cells.flatMap((c) =>
+      this.cellStatements(c.date, c.categoryId, c.items)
+        .stmts.slice(1)
+        .map((st) =>
+          ids.has(String(st.params?.[0]))
+            ? { ...st, sql: st.sql.split("ON CONFLICT(id)")[0]! }
+            : {
+                sql: "UPDATE entry_item SET seq = ? WHERE id = ? AND date = ? AND category_id = ?",
+                params: [st.params![3]!, st.params![0]!, c.date, c.categoryId],
+              },
+        ),
+    );
+  }
+
+  /** Atomic additions only: source objects are shared; no existing item/content is replaced. */
+  async copyEntries(
+    cells: CopiedEntries["cells"],
+    mapping: { source: string; target: string }[],
+  ): Promise<CopiedEntries> {
+    return this.serializeCopy(() => this.performCopyEntries(cells, mapping));
+  }
+
+  private async performCopyEntries(
+    cells: CopiedEntries["cells"],
+    mapping: { source: string; target: string }[],
+  ): Promise<CopiedEntries> {
+    if (new Set(mapping.map((m) => m.target)).size !== mapping.length)
+      throw new ValidationError("복제 항목 ID가 중복됩니다.");
+    const additions = cells.map((c) => ({
+      ...c,
+      items: c.items.filter((i) => mapping.some((m) => m.target === i.id)),
+    }));
+    const { categories, periods } = await this.listCategories();
+    for (const cell of additions) {
+      const range = weekRange(weekIdOf(cell.date));
+      if (
+        !visibleCategories(categories, periods, range.start, range.end, new Set()).some(
+          (c) => c.category.id === cell.categoryId,
+        )
+      )
+        throw new ValidationError("대상 주에 표시되지 않는 업무입니다. 업무를 재활성한 후 복제해 주세요.");
+    }
+    const sourceIds = [...new Set(mapping.map((m) => m.source))];
+    const sources = await this.getItemsByIds(sourceIds);
+    if (sources.length !== sourceIds.length)
+      throw new ValidationError("원본 항목이 변경되었습니다. 다시 선택해 주세요.");
+    if ((await this.getItemsByIds(mapping.map((m) => m.target))).length)
+      throw new ValidationError("이미 복제한 항목입니다.");
+    for (const pair of mapping) {
+      const source = sources.find((i) => i.id === pair.source);
+      const target = additions.flatMap((c) => c.items).find((i) => i.id === pair.target);
+      if (!target || !source || target.text !== source.text)
+        throw new ValidationError("원본 항목이 변경되었습니다. 다시 선택해 주세요.");
+    }
+    const original = await this.itemRelations(sourceIds);
+    const relations: ItemRelations = { notes: [], cabinet: [] };
+    for (const m of mapping) {
+      relations.notes.push(
+        ...original.notes
+          .filter((r) => r.entry_id === m.source)
+          .map((r) => ({ ...r, entry_id: m.target, created_at: this.ts() })),
+      );
+      relations.cabinet.push(
+        ...original.cabinet
+          .filter((r) => r.entry_id === m.source)
+          .map((r) => ({ ...r, id: uuidv7(), entry_id: m.target, created_at: this.ts() })),
+      );
+    }
+    for (const note of relations.notes) {
+      const [count] = await this.db.select<{ n: number }>(
+        "SELECT COUNT(*) AS n FROM note_entry_link WHERE note_week_id = ? AND box_id = ?",
+        [note.note_week_id, note.box_id],
+      );
+      const added = relations.notes.filter(
+        (r) => r.note_week_id === note.note_week_id && r.box_id === note.box_id,
+      ).length;
+      if (Number(count?.n ?? 0) + added > LINK_MAX) {
+        const box = (await this.getWeekNote(note.note_week_id)).doc.boxes.find((b) => b.id === note.box_id);
+        const name = box ? boxName(box).slice(0, 40) : "연결된 메모";
+        throw new ValidationError(
+          `메모 ‘${name}’의 예상 연결 ${Number(count?.n ?? 0) + added}개가 한도 ${LINK_MAX}개를 넘습니다. 연결을 정리한 후 다시 시도해 주세요.`,
+        );
+      }
+    }
+    for (const cell of cells) {
+      const old = await this.getCategoryEntries(cell.categoryId, cell.date, cell.date);
+      if (old.some((i) => !cell.items.some((j) => j.id === i.id)))
+        throw new ValidationError("대상 기록이 변경되었습니다. 다시 시도해 주세요.");
+    }
+    // Cell diffs may insert children among existing rows; existing IDs remain intact.
+    const statements = this.copiedStatements(cells, new Set(mapping.map((m) => m.target)));
+    await this.db.batch([...statements, ...this.relationStatements(relations, true)]);
+    const placements: Record<string, string | null> = {};
+    for (const cell of cells)
+      cell.items.forEach((item, index) => {
+        if (mapping.some((m) => m.target === item.id))
+          placements[item.id] = cell.items[index - 1]?.id ?? null;
+      });
+    return { cells: additions, relations, placements };
+  }
+
+  async undoCopiedEntries(copy: CopiedEntries): Promise<void> {
+    return this.serializeCopy(() => this.performUndoCopy(copy));
+  }
+  private async performUndoCopy(copy: CopiedEntries): Promise<void> {
+    const ids = copy.cells.flatMap((c) => c.items.map((i) => i.id));
+    if (ids.length)
+      await this.db.batch(ids.map((id) => ({ sql: "DELETE FROM entry_item WHERE id = ?", params: [id] })));
+  }
+
+  async redoCopiedEntries(copy: CopiedEntries): Promise<void> {
+    return this.serializeCopy(() => this.performRedoCopy(copy));
+  }
+  private async performRedoCopy(copy: CopiedEntries): Promise<void> {
+    const cells: CopiedEntries["cells"] = [];
+    for (const c of copy.cells) {
+      const existing = await this.getCategoryEntries(c.categoryId, c.date, c.date);
+      if (existing.some((e) => c.items.some((i) => i.id === e.id)))
+        throw new ValidationError("복제 항목이 이미 존재합니다.");
+      const items: ItemDraft[] = [...existing];
+      for (const item of c.items) {
+        const anchor = copy.placements[item.id];
+        const index = anchor ? items.findIndex((i) => i.id === anchor) : -1;
+        const at = anchor === null ? 0 : index >= 0 ? index + 1 : items.length;
+        items.splice(at, 0, index < 0 && item.depth === 1 ? { ...item, depth: 0 } : item);
+      }
+      cells.push({ ...c, items });
+    }
+    await this.db.batch([
+      ...this.copiedStatements(cells, new Set(copy.cells.flatMap((c) => c.items.map((i) => i.id)))),
+      ...this.relationStatements(copy.relations),
+    ]);
   }
 
   private cellStatements(
@@ -2345,7 +2619,7 @@ export class JournalRepository {
         weeks,
       );
       for (const r of rows)
-        for (const b of parseNoteDoc(r.doc).boxes) {
+        for (const b of (await this.hydrateNote(r.week_id, parseNoteDoc(r.doc))).boxes) {
           const key = sourceKey({ kind: "note", sourceId: b.id, week: r.week_id as WeekId });
           if (!list.some((x) => sourceKey(x) === key)) continue;
           const text = boxText(b).trim() || boxName(b);
@@ -2685,10 +2959,12 @@ export class JournalRepository {
     const noteRows = await this.db.select<{ week_id: string; doc: string }>(
       "SELECT week_id, doc FROM week_note",
     );
-    const notes: UniverseSnapshot["notes"] = noteRows.map((r) => ({
-      weekId: r.week_id as WeekId,
-      doc: parseNoteDoc(r.doc),
-    }));
+    const notes: UniverseSnapshot["notes"] = await Promise.all(
+      noteRows.map(async (r) => ({
+        weekId: r.week_id as WeekId,
+        doc: await this.hydrateNote(r.week_id, parseNoteDoc(r.doc)),
+      })),
+    );
     const have = new Set(notes.map((n) => n.weekId));
     const memos = await this.db.select<{ date: string; text: string }>("SELECT date, text FROM day_memo");
     const legacy = new Map<WeekId, Record<DateStr, string>>();
@@ -2733,12 +3009,20 @@ export class JournalRepository {
     };
   }
 
-  async getWeekNotesBetween(fromWeek: WeekId, toWeek: WeekId): Promise<Record<WeekId, NoteDoc>> {
+  async getWeekNotesBetween(
+    fromWeek: WeekId,
+    toWeek: WeekId,
+    includeLinked = false,
+  ): Promise<Record<WeekId, NoteDoc>> {
     const rows = await this.db.select<{ week_id: string; doc: string }>(
-      "SELECT week_id, doc FROM week_note WHERE week_id BETWEEN ? AND ?",
-      [fromWeek, toWeek],
+      `SELECT week_id, doc FROM week_note WHERE week_id BETWEEN ? AND ?${includeLinked ? " OR week_id IN (SELECT l.note_week_id FROM note_entry_link l JOIN entry_item e ON e.id = l.entry_id WHERE e.date BETWEEN ? AND ?)" : ""}`,
+      includeLinked ? [fromWeek, toWeek, weekStart(fromWeek), weekRange(toWeek).end] : [fromWeek, toWeek],
     );
-    return Object.fromEntries(rows.map((r) => [r.week_id, parseNoteDoc(r.doc)]));
+    return Object.fromEntries(
+      await Promise.all(
+        rows.map(async (r) => [r.week_id, await this.hydrateNote(r.week_id, parseNoteDoc(r.doc))]),
+      ),
+    );
   }
 
   // ── 기존 일지 가져오기(i-m3-plan 3절) ─────────────────
@@ -2796,6 +3080,7 @@ export class JournalRepository {
     const ts = this.ts();
     const stmts: SqlStatement[] = [];
     const undo: ImportUndo = {
+      relations: await this.itemRelations(plan.deleteItemIds),
       deletedItems: [],
       notes: [],
       createdCategories: [],
@@ -2877,14 +3162,28 @@ export class JournalRepository {
         m.weekId,
       ]);
       undo.notes.push({ weekId: m.weekId, doc: row?.doc ?? null });
+      if (m.mode !== "add") {
+        const relations = await this.noteLinks(m.weekId);
+        undo.relations!.notes.push(
+          ...relations.map((r) => ({ ...r, note_week_id: m.weekId, created_at: ts })),
+        );
+        stmts.push({ sql: "DELETE FROM note_entry_link WHERE note_week_id = ?", params: [m.weekId] });
+      }
       const current = m.mode === "add" ? (await this.getWeekNote(m.weekId)).doc : emptyDoc();
       const boxes = m.lines.length
         ? [...current.boxes, importMemoBox(uuidv7(), m.lines, positionBelow(current), topZ(current) + 1)]
         : current.boxes;
-      const json = JSON.stringify(parseNoteDoc(JSON.stringify({ v: 1, boxes })));
+      const storedDoc = JSON.stringify({
+        v: 1,
+        boxes: parseNoteDoc(JSON.stringify({ v: 1, boxes })).boxes.map((b) => {
+          const { refs: _refs, ...box } = b;
+          void _refs;
+          return box;
+        }),
+      });
       stmts.push({
         sql: "INSERT INTO week_note (week_id, doc, updated_at) VALUES (?, ?, ?) ON CONFLICT(week_id) DO UPDATE SET doc = excluded.doc, updated_at = excluded.updated_at",
-        params: [m.weekId, json, ts],
+        params: [m.weekId, storedDoc, ts],
       });
     }
 
@@ -2987,6 +3286,7 @@ export class JournalRepository {
               params: [n.weekId, n.doc, this.ts()],
             },
       );
+    if (undo.relations) stmts.push(...this.relationStatements(undo.relations));
     for (const p of undo.periodStarts)
       stmts.push({
         sql: "UPDATE category_period SET start_date = ? WHERE id = ?",

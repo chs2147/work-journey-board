@@ -63,7 +63,7 @@ test("탭 줄: 활동 개요 = 업무 고르기·종료 업무 포함·기간은
   await expect(page.getByTestId("insight-title")).toContainText(B);
 });
 
-test("12주·일: 모든 업무 + 업무 행, 84칸, 주말 폭 절반, 오늘 ▼·연차 '연', 오지 않은 날·기간 밖, 기록 N일, ◀ ▶", async ({
+test("12주·일: 모든 업무 + 업무 행, 84칸, 주말 폭 절반, 오늘 ▼·연차 '연', 오지 않은 날·기간 밖, 기록 일수 열 숨김, ◀ ▶", async ({
   page,
 }) => {
   await openOverview(page);
@@ -74,9 +74,8 @@ test("12주·일: 모든 업무 + 업무 행, 84칸, 주말 폭 절반, 오늘 �
   await expect(row(page, "cat-a").locator("[data-heat-key]")).toHaveCount(84);
   const sat = await heatCell(page, "cat-a", "2026-10-17").boundingBox();
   const fri = await heatCell(page, "cat-a", "2026-10-16").boundingBox();
-  // 보이는 폭 6·12px + 투명 테두리 2px(눌리는 영역 = 칸 사이 간격 포함)
-  expect(Math.round(sat!.width)).toBe(8);
-  expect(Math.round(fri!.width)).toBe(14);
+  // v16: absolute widths flex with the viewport; weekend/weekday ratio remains .57.
+  expect(sat!.width / fri!.width).toBeCloseTo(0.57, 1);
   await expect(page.locator('[data-heat-mark="today"]')).toHaveCount(1);
   await expect(page.locator('[data-heat-mark="today"]')).toHaveText("▼");
   await expect(page.locator('[data-heat-mark="leave"]')).toHaveText("연");
@@ -86,7 +85,7 @@ test("12주·일: 모든 업무 + 업무 행, 84칸, 주말 폭 절반, 오늘 �
   await expect(heatCell(page, "cat-a", "2026-10-23")).toHaveAttribute("data-level", "future");
   await expect(heatCell(page, "cat-b", "2026-09-30")).toHaveAttribute("data-level", "outside");
   await expect(heatCell(page, "cat-b", "2026-10-06")).toHaveAttribute("data-level", "0");
-  await expect(row(page, "cat-b").getByTestId("heat-days")).toHaveText("기록 2일");
+  await expect(page.getByTestId("heat-days")).toHaveCount(0);
 
   await expect(page.getByTestId("heat-next")).toBeDisabled();
   await page.getByTestId("heat-prev").click();
@@ -172,6 +171,8 @@ test("키보드: 격자는 Tab 한 번(오늘·첫 업무 칸), 방향키·Home/
   await openOverview(page);
   await page.getByTestId("heat-table-toggle").focus();
   await page.keyboard.press("Tab");
+  await expect(page.locator(":focus")).toHaveAttribute("role", "separator");
+  await page.keyboard.press("Tab");
   const focused = page.locator(":focus");
   await expect(focused).toHaveAttribute("data-heat-key", TODAY);
   await expect(focused).toHaveAttribute("aria-label", new RegExp(`^${A} · 10/22\\(목\\)`));
@@ -208,7 +209,8 @@ test("키보드: 격자는 Tab 한 번(오늘·첫 업무 칸), 방향키·Home/
   // 칸 Enter → 보드
   await page.getByTestId("insight-tab-overview").click();
   await page.getByTestId("heat-table-toggle").focus();
-  await page.keyboard.press("Tab");
+  await page.keyboard.press("Tab"); // width separator
+  await page.keyboard.press("Tab"); // one roving grid entry
   await page.keyboard.press("Enter");
   await expect(insights(page)).toHaveCount(0);
   await expect(page.locator(":focus")).toHaveValue(FLAGGED);
@@ -241,7 +243,7 @@ test("업무 고르기: 두 탭 공통, 종료 업무는 포함일 때만, 모�
   await page.getByTestId("insight-pick").click();
   await opts.filter({ hasText: C }).click();
   await expect(row(page, "cat-c")).toHaveCount(1);
-  await expect(row(page, "cat-c").getByTestId("heat-days")).toHaveText("기록 0일");
+  await expect(page.getByTestId("heat-days")).toHaveCount(0);
 
   await page.getByTestId("pick-none").click();
   await expect(page.getByTestId("heat-none")).toContainText("고른 업무가 없습니다");
@@ -267,7 +269,7 @@ test("[표로 보기]: 일 = 업무 × 주(본 항목 · 기록한 날), 연간 
   await expect(table.locator("tbody tr").filter({ hasText: A }).locator("td").first()).toHaveText("—");
 });
 
-test("좁은 창: 카드 안 가로 스크롤 + 업무 이름 열 고정, 끝(오늘)이 보임", async ({ page }) => {
+test("좁은 창: 날짜 격자가 남은 폭에 맞춰 줄고 이름·오늘이 함께 보임", async ({ page }) => {
   await page.setViewportSize({ width: 1000, height: 800 });
   await page.getByTestId("rail-insights").click();
   // 좁은 창에서는 중요 업무 패널이 겹쳐 뜨므로 탭 줄은 키보드로
@@ -280,8 +282,8 @@ test("좁은 창: 카드 안 가로 스크롤 + 업무 이름 열 고정, 끝(�
     cw: el.clientWidth,
     sl: el.scrollLeft,
   }));
-  expect(sw).toBeGreaterThan(cw);
-  expect(sl).toBeGreaterThan(0);
+  expect(sw - cw).toBeLessThanOrEqual(1);
+  expect(sl).toBe(0);
   await expect(heatCell(page, "cat-a", TODAY)).toBeInViewport();
   await expect(row(page, "cat-a").getByTestId("heat-row-name")).toBeInViewport();
   await scroll.evaluate((el) => (el.scrollLeft = 0));

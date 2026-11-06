@@ -94,6 +94,12 @@ npm run tauri dev    # 실앱 모드(윈도우·맥 / 리눅스는 webkit2gtk-4.
 현재 상세 기능과 도입 버전: [Feature List 운영 문서](docs/features/README.md) · [현재 목록](docs/features/CURRENT.md) · [검토용 Excel](docs/features/exports/work-journey-board/Work-Journey-Board-Feature-List-v1.18.1.xlsx)
 
 ## Version History
+### v1.19.0-rc.1 (2026-11-06) — 날짜 복제·공유 연결·인사이트 너비 조절 검증판
+- 주간/데일리 항목 ⋯ 메뉴의 **날짜로 복제…**. 부모·하위 범위, 상태·시각·마감일 안내와 공유 메모/Cabinet 연결, 일괄 되돌리기.
+- 이전 내역 가져오기에도 실제 추가한 항목의 연결을 보존. 완료·중복 제외 유지.
+- 업무 타임라인 목록과 활동 이름 열 너비를 각각 조절·저장. 활동 날짜 칸은 남은 폭에 맞추며 기록 일수 제목·표시 열은 제거.
+- DB v15 정규 메모 연결, 이전 직전 자동 백업·구버전 열기 차단. 검토용 기능 목록/Excel·가이드 동반 갱신. 작업 브랜치 구현 버전이며 설치 파일 배포는 별도 실행.
+
 ### v1.18.1 (2026-11-06) — Feature List 문서 체계·타임라인 구분선 대비
 - 고정 Feature ID·최초 제공/개선 버전·파생 제품/배포 프로필·버전 스냅샷과 검토용 Excel 운영 체계
 - 현재 활성 229개 항목과 제거·대체/계획 항목 분리, 출시 이력·명세·구현 위치 연결

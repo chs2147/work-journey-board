@@ -1,3 +1,4 @@
+import { CURRENT_SCHEMA as LATEST_SCHEMA_VERSION } from "./schema-helper";
 import { expect, test, type Page } from "@playwright/test";
 import { openSettings } from "./settings-helper";
 const files = (page: Page) =>
@@ -27,7 +28,7 @@ async function start(page: Page) {
   await expect(page.getByTestId("week-title")).toBeVisible();
   await openSettings(page, "data");
   await page.getByRole("button", { name: "지금 백업", exact: true }).click();
-  await expect(page.getByTestId("last-backup")).toContainText("DB 구조 v14");
+  await expect(page.getByTestId("last-backup")).toContainText(`DB 구조 v${LATEST_SCHEMA_VERSION}`);
   const source = (await files(page)).find((p) => p.includes("_manual_app-v"))!;
   return source;
 }
@@ -36,9 +37,10 @@ test("v13 이력의 생성/실제 버전, 구형·새 구조·불일치 판정�
     dir = source.slice(0, source.lastIndexOf("/"));
   const old = dir + "/work-journey_2026-10-01.db";
   await copy(page, source, old);
-  const future = dir + "/work-journey_2026-11-04_090000000_manual_app-v1.18.0_db-v15.db";
+  const future =
+    dir + `/work-journey_2026-11-04_090000000_manual_app-v1.18.0_db-v${LATEST_SCHEMA_VERSION + 1}.db`;
   await copy(page, source, future);
-  await schema(page, future, 15);
+  await schema(page, future, LATEST_SCHEMA_VERSION + 1);
   const mismatch = dir + "/work-journey_2026-11-03_090000000_manual_app-v1.17.0_db-v13.db";
   await copy(page, source, mismatch);
   await page.getByTestId("restore-open").click();
@@ -46,10 +48,12 @@ test("v13 이력의 생성/실제 버전, 구형·새 구조·불일치 판정�
   await expect(dialog).toHaveAccessibleName("백업 이력·복원");
   await page.getByTestId("restore-item").filter({ hasText: "기록 없음" }).click();
   await expect(page.getByTestId("restore-detail")).toContainText("백업 실제 구조");
-  await expect(page.getByTestId("restore-detail")).toContainText("v14");
+  await expect(page.getByTestId("restore-detail")).toContainText(`v${LATEST_SCHEMA_VERSION}`);
   await expect(page.getByRole("button", { name: "이 사본으로 복원" })).toBeEnabled();
   // 생성 앱 버전은 현재 앱과 같을 수 있다. 검사할 DB 구조로 고르고 실제 선택 파일도 확인한다.
-  const futureRow = page.getByTestId("restore-item").filter({ has: page.getByText("v15", { exact: true }) });
+  const futureRow = page
+    .getByTestId("restore-item")
+    .filter({ has: page.getByText(`v${LATEST_SCHEMA_VERSION + 1}`, { exact: true }) });
   await expect(futureRow).toHaveCount(1);
   await futureRow.click();
   await expect(page.getByTestId("restore-detail")).toContainText(future.slice(future.lastIndexOf("/") + 1));
@@ -75,7 +79,7 @@ test("v13 기간/용량 미리보기, 변경 재확인과 실제 정리·보호 
   const source = await start(page),
     dir = source.slice(0, source.lastIndexOf("/"));
   const stale = [1, 2, 3].map(
-    (d) => dir + `/work-journey_2026-10-0${d}_090000000_daily_app-v1.16.0_db-v14.db`,
+    (d) => dir + `/work-journey_2026-10-0${d}_090000000_daily_app-v1.16.0_db-v${LATEST_SCHEMA_VERSION}.db`,
   );
   for (const path of stale) await copy(page, source, path);
   await page.getByTestId("backup-policy-open").click();
@@ -84,7 +88,7 @@ test("v13 기간/용량 미리보기, 변경 재확인과 실제 정리·보호 
   await dialog.getByRole("spinbutton", { name: "일일 보관 기준" }).fill("2");
   await dialog.getByRole("button", { name: "정리 미리보기", exact: true }).click();
   await expect(page.getByTestId("backup-cleanup-preview")).toContainText("정리 후보 3개");
-  const extra = dir + "/work-journey_2026-10-04_090000000_daily_app-v1.16.0_db-v14.db";
+  const extra = dir + `/work-journey_2026-10-04_090000000_daily_app-v1.16.0_db-v${LATEST_SCHEMA_VERSION}.db`;
   await copy(page, source, extra);
   await page.getByTestId("backup-policy-apply").click();
   await expect(dialog).toContainText("파일 목록이 변경");

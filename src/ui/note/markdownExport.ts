@@ -83,14 +83,8 @@ export async function buildMarkdown(repo: JournalRepository, s: MdExportState, i
   const input = await Promise.all(
     weeks.map(async (w) => {
       const doc = docs[w] ?? emptyDoc();
-      const needItems = s.links && doc.boxes.some((b) => b.refs?.length);
-      const view = needItems ? await repo.getWeek(w, { note: false }) : null;
-      const names = new Map(view?.categories.map((c) => [c.category.id, c.category.name]) ?? []);
-      const items = new Map(
-        Object.values(view?.items ?? {})
-          .flat()
-          .map((it) => [it.id, it]),
-      );
+      const refs = s.links ? [...new Set(doc.boxes.flatMap((b) => b.refs?.map((r) => r.item) ?? []))] : [];
+      const items = new Map((await repo.getItemsByIds(refs)).map((it) => [it.id, it]));
       const metas = doc.boxes.some((b) => b.kind === "image") ? await repo.getNoteAssetMeta(w) : [];
       const mime = new Map(metas.map((m) => [m.id, m.mime]));
       return {
@@ -98,7 +92,7 @@ export async function buildMarkdown(repo: JournalRepository, s: MdExportState, i
         doc,
         itemLabel: (id: string) => {
           const it = items.get(id);
-          return it ? `${names.get(it.categoryId) ?? ""} · ${md(it.date)} · ${it.text}` : null;
+          return it ? `${it.categoryName} · ${md(it.date)} · ${it.text}` : null;
         },
         assetMime: (id: string) => mime.get(id) ?? null,
       };

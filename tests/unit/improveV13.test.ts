@@ -171,9 +171,12 @@ describe("v13 실제 SQLite 백업 안전성", () => {
     await repo.createCategory("가상 업무", "2026-W45");
     const original = await runManualBackup(db, fs.backupFs, "/w", now, fs.verifyCopy);
     const name = original.split("/").at(-1)!;
-    expect(await inspectBackup(fs, "/w", name)).toMatchObject({ ok: true, schemaVersion: 14 });
-    fs.movePath(original, original.replace("db-v14", "db-v13"));
-    const mismatch = name.replace("db-v14", "db-v13");
+    expect(await inspectBackup(fs, "/w", name)).toMatchObject({
+      ok: true,
+      schemaVersion: LATEST_SCHEMA_VERSION,
+    });
+    fs.movePath(original, original.replace(`db-v${LATEST_SCHEMA_VERSION}`, "db-v13"));
+    const mismatch = name.replace(`db-v${LATEST_SCHEMA_VERSION}`, "db-v13");
     expect(await inspectBackup(fs, "/w", mismatch)).toMatchObject({ ok: false, reason: "mismatch" });
     await expect(restoreFromBackup(fs, "/w", mismatch, now)).rejects.toThrow();
     expect(fs.listAll()).toContain("/w/work-journey.db");
@@ -223,7 +226,11 @@ describe("v13 실제 SQLite 백업 안전성", () => {
     expect(fs.listAll()).toContain(first.daily);
     await expect(runManualBackup(db, fs.backupFs, "/w", now, async () => false)).rejects.toThrow();
     expect(fs.listAll()).toContain(first.daily);
-    const name = await uniqueBackupName(fs.backupFs, "/w/backups", versionedBackupName(now, "daily", 14));
+    const name = await uniqueBackupName(
+      fs.backupFs,
+      "/w/backups",
+      versionedBackupName(now, "daily", LATEST_SCHEMA_VERSION),
+    );
     expect(name).toContain("_c2.db");
     await runAutoBackup(
       db,
@@ -262,6 +269,7 @@ describe("v13 실제 SQLite 백업 안전성", () => {
 it("v13 구형 구조 실제 복원 후 전진 마이그레이션, 원본 백업은 그대로", async () => {
   const { fs, db, repo } = await setup();
   await repo.createCategory("가상 복원 업무", "2026-W45");
+  await db.execute("DROP TABLE note_entry_link");
   await db.execute("ALTER TABLE entry_item DROP COLUMN completion_was_flagged");
   await db.execute("UPDATE app_meta SET value='13' WHERE key='schema_version'");
   const path = await runManualBackup(db, fs.backupFs, "/w", now, fs.verifyCopy),

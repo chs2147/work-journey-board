@@ -46,6 +46,7 @@ import {
   useInsights,
   type InsightTab,
 } from "./insightsStore";
+import { useInsightWidth } from "./useInsightWidth";
 import styles from "./Insights.module.css";
 
 /** 달 접기 기준일(4-6): 오늘 — 단 마지막 기록이 그보다 앞이면(종료된 업무) 그 날, 마지막 3개 달이 펼쳐진 채 보이게 */
@@ -78,6 +79,11 @@ const SearchIcon = () => (
 
 export function InsightsView() {
   const st = useInsights();
+  const {
+    observe: observeWidth,
+    width: selectedWidth,
+    separator: widthSeparator,
+  } = useInsightWidth("timeline");
   const today = useBoard((s) => s.today);
   const tags = useBoard((s) => s.tags);
   const categoryTags = useBoard((s) => s.categoryTags);
@@ -418,39 +424,43 @@ export function InsightsView() {
         </div>
       ) : (
         <div
+          ref={observeWidth}
           className={styles.body}
           role="tabpanel"
           id="insight-panel"
           aria-labelledby="insight-tab-timeline"
         >
           {!narrow && (
-            <nav
-              className={styles.list}
-              aria-label={STR.insights.listHead}
-              onKeyDown={onListKey}
-              data-testid="insight-list"
-            >
-              <div className={styles.listHead}>
-                <span>{STR.insights.listHead}</span>
-                <span>{STR.insights.listCount(ongoing.length, ended.length)}</span>
-              </div>
-              {hiddenByFilter && (
-                <div className={styles.filterNote}>
-                  {STR.insights.hiddenByFilter}
-                  {tagFilter.length > 0 && (
-                    <>
-                      {" · "}
-                      <button type="button" className={styles.linkBtn} onClick={() => setTagFilter([])}>
-                        {STR.insights.clearFilter}
-                      </button>
-                    </>
-                  )}
+            <div className={styles.listFrame} style={{ flexBasis: selectedWidth }}>
+              <nav
+                className={styles.list}
+                aria-label={STR.insights.listHead}
+                onKeyDown={onListKey}
+                data-testid="insight-list"
+              >
+                <div className={styles.listHead}>
+                  <span>{STR.insights.listHead}</span>
+                  <span>{STR.insights.listCount(ongoing.length, ended.length)}</span>
                 </div>
-              )}
-              {listOn.map((c) => catButton(c, false))}
-              {listOff.length > 0 && <div className={styles.group}>{STR.insights.endedGroup}</div>}
-              {listOff.map((c) => catButton(c, true))}
-            </nav>
+                {hiddenByFilter && (
+                  <div className={styles.filterNote}>
+                    {STR.insights.hiddenByFilter}
+                    {tagFilter.length > 0 && (
+                      <>
+                        {" · "}
+                        <button type="button" className={styles.linkBtn} onClick={() => setTagFilter([])}>
+                          {STR.insights.clearFilter}
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
+                {listOn.map((c) => catButton(c, false))}
+                {listOff.length > 0 && <div className={styles.group}>{STR.insights.endedGroup}</div>}
+                {listOff.map((c) => catButton(c, true))}
+              </nav>
+              {widthSeparator}
+            </div>
           )}
 
           <div className={styles.main}>

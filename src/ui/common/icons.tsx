@@ -313,3 +313,10 @@ export const IconChevronRight = () => (
     <path d="m6 3 5 5-5 5" />
   </Svg>
 );
+
+export const IconCopyItem = () => (
+  <Svg>
+    <path d="M4 10H2V2h8v2" />
+    <rect x="6" y="6" width="8" height="8" />
+  </Svg>
+);

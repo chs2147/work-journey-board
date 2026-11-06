@@ -333,6 +333,20 @@ async function shots(base = "http://localhost:1420") {
     "06-summary": { url: show, run: (p) => p.getByTestId("summary-toggle").click() },
     "07-export": { url: show, run: (p) => p.keyboard.press("Alt+E") },
     "08-insights": { url: show, run: (p) => p.keyboard.press("Alt+3") },
+    "16-copy-date": {
+      url: show,
+      run: async (p) => {
+        await p.getByTestId("drag-row").first().click();
+        await p.getByRole("menuitem", { name: "날짜로 복제…" }).click();
+      },
+    },
+    "16-activity": {
+      url: show,
+      run: async (p) => {
+        await p.getByTestId("rail-insights").click();
+        await p.getByTestId("insight-tab-overview").click();
+      },
+    },
     "09-search": {
       url: show,
       run: async (p) => {

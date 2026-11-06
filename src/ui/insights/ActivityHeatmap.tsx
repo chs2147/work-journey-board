@@ -20,14 +20,14 @@ import { DAY_LABELS, dayIndex, parseWeekId, type DateStr } from "../../domain/we
 import { IconTable } from "../common/icons";
 import { STR } from "../../shared/strings";
 import { moveHeat, openTimelineOf, revealHeatCell, setHeatUnit, type HeatData } from "./insightsStore";
+import { useInsightWidth } from "./useInsightWidth";
 import styles from "./Insights.module.css";
 
 const LEVEL = [styles.l0, styles.l1, styles.l2, styles.l3, styles.l4];
 const md = (d: string) => `${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}`;
 const dayLabel = (d: DateStr) => `${md(d)}(${DAY_LABELS[dayIndex(d)]})`;
 const clip = (s: string, n: number) => (s.length > n ? `${s.slice(0, n).trimEnd()}…` : s);
-const NAME_W = 196;
-const COUNT_W = 64;
+
 const TIP_DELAY = 300;
 
 interface Props {
@@ -46,13 +46,17 @@ interface Tip {
 }
 
 export function ActivityHeatmap({ range, heat, rows, periods, today }: Props) {
+  const {
+    observe: observeWidth,
+    width: selectedWidth,
+    separator: widthSeparator,
+  } = useInsightWidth("activity");
   const unit = range.unit;
   const [table, setTable] = useState(false);
   const [cursor, setCursor] = useState<{ r: number; c: number } | null>(null);
   const [tip, setTip] = useState<Tip | null>(null);
   const timer = useRef<number | undefined>(undefined);
   const gridRef = useRef<HTMLDivElement>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
   const tipRef = useRef<HTMLDivElement>(null);
   const ready = heat && heat.unit === unit && heat.from === range.from;
 
@@ -69,20 +73,17 @@ export function ActivityHeatmap({ range, heat, rows, periods, today }: Props) {
   const nameOf = (id: string | null) =>
     id === null ? STR.insights.heatAll : (rows.find((r) => r.category.id === id)?.category.name ?? "");
 
-  // 칸 폭(보이는 폭 + 투명 테두리 2px): 일 = 평일 12px · 토·일 6px, 주 = 18px
+  // 이름 열 조절 시 날짜 칸은 남은 폭에 맞춘다. 주말은 평일보다 좁은 비율 유지.
   const template = useMemo(
     () =>
       [
-        `${NAME_W}px`,
+        `${selectedWidth}px`,
         ...columns.map((c) =>
-          unit === "week" ? "minmax(20px, 1fr)" : c.weekend ? "minmax(8px, .57fr)" : "minmax(14px, 1fr)",
+          unit === "week" ? "minmax(0, 1fr)" : c.weekend ? "minmax(0, .57fr)" : "minmax(0, 1fr)",
         ),
-        `${COUNT_W}px`,
       ].join(" "),
-    [columns, unit],
+    [columns, unit, selectedWidth],
   );
-  const minWidth =
-    NAME_W + COUNT_W + columns.reduce((sum, c) => sum + (unit === "week" ? 20 : c.weekend ? 8 : 14), 0);
   const nowCol = columns.findIndex((c) => c.current);
   const startCol = nowCol >= 0 ? nowCol : columns.length - 1;
   const cur = cursor ?? { r: grid.length > 1 ? 1 : 0, c: startCol };
@@ -90,13 +91,6 @@ export function ActivityHeatmap({ range, heat, rows, periods, today }: Props) {
   const curC = Math.max(-1, Math.min(cur.c, columns.length - 1));
 
   useEffect(() => () => window.clearTimeout(timer.current), []);
-
-  // 칸이 카드보다 넓으면(중요 업무 패널을 편 창 등) 끝(오늘·이번 주 쪽)이 보이게 맨 오른쪽으로
-  const hasRows = rows.length > 0;
-  useLayoutEffect(() => {
-    const el = scrollRef.current;
-    if (el) el.scrollLeft = el.scrollWidth;
-  }, [range.from, unit, hasRows]);
 
   // 툴팁이 화면 밖으로 나가지 않게(칸 아래 → 넘치면 위, 좌우는 화면 안으로)
   useLayoutEffect(() => {
@@ -269,7 +263,12 @@ export function ActivityHeatmap({ range, heat, rows, periods, today }: Props) {
     ].join(" ");
 
   return (
-    <section className={styles.card} aria-label={STR.insights.heat} data-testid="activity-heatmap">
+    <section
+      ref={observeWidth}
+      className={styles.card}
+      aria-label={STR.insights.heat}
+      data-testid="activity-heatmap"
+    >
       <div className={styles.mapHead}>
         <h3 className={styles.mapTitle}>{STR.insights.heat}</h3>
         <span className={styles.muted}>{STR.insights.heatHint(unit)}</span>
@@ -339,8 +338,11 @@ export function ActivityHeatmap({ range, heat, rows, periods, today }: Props) {
           <span>{STR.insights.heatNoneHint}</span>
         </div>
       ) : (
-        <div ref={scrollRef} className={styles.heatScroll} onMouseLeave={hideTip}>
-          <div className={styles.heatInner} style={{ minWidth }} aria-hidden="true">
+        <div className={styles.heatScroll} onMouseLeave={hideTip}>
+          <div className={styles.heatResizeRail} style={{ left: selectedWidth }}>
+            {widthSeparator}
+          </div>
+          <div className={styles.heatInner} aria-hidden="true">
             <div className={styles.hrow} style={{ gridTemplateColumns: template }}>
               <span className={styles.hname} />
               {monthHead.map((m, i) => (
@@ -391,7 +393,7 @@ export function ActivityHeatmap({ range, heat, rows, periods, today }: Props) {
           <div
             ref={gridRef}
             className={`${styles.heatInner} ${styles.heatGrid}`}
-            style={{ minWidth }}
+
             role="grid"
             aria-label={`${STR.insights.heat} ${range.label}`}
             aria-rowcount={grid.length}
@@ -475,9 +477,6 @@ export function ActivityHeatmap({ range, heat, rows, periods, today }: Props) {
                       />
                     );
                   })}
-                  <span className={styles.hcount} data-testid="heat-days">
-                    {STR.insights.heatDays(row.recordedDays)}
-                  </span>
                 </div>
               );
             })}

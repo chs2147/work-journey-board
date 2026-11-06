@@ -917,17 +917,17 @@
 
 /* 연결된 항목: 배지는 늘 오른쪽 끝에 고정(누를 수 있게), ↻는 배지 왼쪽으로 비켜 선다 */
 .linked > .repeatOn {
-  right: calc(30px + var(--cab-off, 0px));
+  right: calc(var(--memo-space, 30px) + var(--cab-off, 0px));
 }
 
 .linked .itemInput,
 .linked .itemView {
-  padding-right: calc(30px + var(--cab-off, 0px));
+  padding-right: calc(var(--memo-space, 30px) + var(--cab-off, 0px));
 }
 
 .repeating.linked .itemInput,
 .repeating.linked .itemView {
-  padding-right: calc(48px + var(--cab-off, 0px));
+  padding-right: calc(var(--memo-space, 30px) + 18px + var(--cab-off, 0px));
 }
 
 .linkTarget {
@@ -1783,4 +1783,13 @@
 .completionAction:focus-visible {
   opacity: 1;
   pointer-events: auto;
+}
+
+[data-foreign-memo="true"] {
+  --memo-space: 58px;
+}
+.memoWeek {
+  margin-left: 2px;
+  font-size: 10px;
+  white-space: nowrap;
 }

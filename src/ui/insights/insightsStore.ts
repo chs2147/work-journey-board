@@ -342,7 +342,7 @@ export async function loadInsights() {
       const { from, to } = spanDates(span);
       const [entries, notes, dayMarks] = await Promise.all([
         r.getCategoryEntries(id, from, to),
-        r.getWeekNotesBetween(span.fromWeek, span.toWeek),
+        r.getWeekNotesBetween(span.fromWeek, span.toWeek, true),
         r.getDayMarks(from, to),
       ]);
       data = { ...data, span, days, entries, notes, dayMarks };

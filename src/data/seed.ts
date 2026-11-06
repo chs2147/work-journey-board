@@ -1,4 +1,5 @@
 // 가상 샘플 시드(브라우저 모드·테스트 전용). 실제 업무 기록을 넣지 않는다(CLAUDE.md 4-2).
+import { parseNoteDoc } from "../domain/note";
 import type { SqlDriver, SqlStatement } from "./driver";
 import { uuidv7 } from "./ids";
 
@@ -110,6 +111,12 @@ export async function seedSample(driver: SqlDriver, data: SampleData, now: Date 
       sql: "INSERT INTO week_note (week_id, doc, updated_at) VALUES (?, ?, ?)",
       params: [n.weekId, JSON.stringify(n.doc), ts],
     });
+    for (const box of parseNoteDoc(JSON.stringify(n.doc)).boxes)
+      for (const ref of box.refs ?? [])
+        stmts.push({
+          sql: "INSERT OR IGNORE INTO note_entry_link (note_week_id, box_id, entry_id, created_at) SELECT ?, ?, id, ? FROM entry_item WHERE id = ?",
+          params: [n.weekId, box.id, ts, ref.item],
+        });
   }
   for (const a of data.assets ?? []) {
     stmts.push({

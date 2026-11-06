@@ -71,7 +71,7 @@ describe("직전 기록일 찾기", () => {
     await save("2026-10-23", a, "금 A", " 금 A 세부");
     await save("2026-10-21", b, "수 B");
     const prev = await repo.previousRecord("2026-10-26", [a]);
-    expect(prev).toEqual({
+    expect(prev).toMatchObject({
       date: "2026-10-23",
       cells: {
         [a]: [

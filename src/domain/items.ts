@@ -157,12 +157,13 @@ export function moveItem(
  */
 export function appendCopies(
   target: ItemDraft[],
-  source: readonly { depth: Depth; text: string }[],
+  source: readonly { id?: string; depth: Depth; text: string }[],
   newId: () => string,
-): { items: ItemDraft[]; added: number } {
+): { items: ItemDraft[]; added: number; mapping: { source: string; target: string }[] } {
   const items = normalizeCell(target).map((i) => ({ ...i }));
   const same = (a: string, b: string) => a.trim() === b.trim();
   let added = 0;
+  const mapping: { source: string; target: string }[] = [];
   /** 지금 세부 항목을 붙일 묶음의 끝 다음 자리(-1 = 세부 항목을 붙일 본 항목 없음) */
   let insertAt = -1;
   for (const s of source) {
@@ -173,7 +174,9 @@ export function appendCopies(
         insertAt = blockRange(items, at)[1];
         continue;
       }
-      items.push({ id: newId(), depth: 0, text: s.text });
+      const id = newId();
+      items.push({ id, depth: 0, text: s.text });
+      if (s.id) mapping.push({ source: s.id, target: id });
       added++;
       insertAt = items.length;
       continue;
@@ -182,9 +185,11 @@ export function appendCopies(
     let start = insertAt - 1;
     while (start > 0 && items[start]!.depth === 1) start--;
     if (items.slice(start + 1, insertAt).some((i) => same(i.text, s.text))) continue;
-    items.splice(insertAt, 0, { id: newId(), depth: 1, text: s.text });
+    const id = newId();
+    items.splice(insertAt, 0, { id, depth: 1, text: s.text });
+    if (s.id) mapping.push({ source: s.id, target: id });
     insertAt++;
     added++;
   }
-  return { items, added };
+  return { items, added, mapping };
 }

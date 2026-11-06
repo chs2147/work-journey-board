@@ -52,6 +52,7 @@ import { exportImageBytes, ImageInputError, prepareImage } from "./imageProcess"
 import { clearImageCache } from "./imageCache";
 import {
   focusStartCell,
+  goToWeek,
   reportError,
   SAVE_DELAY_MS,
   toast,
@@ -182,6 +183,7 @@ let focusSeq = 0;
 let lastEditedId: string | null = null;
 /** 이 주를 불러온 그때의 문서 — 그대로면(고친 적 없음) 떠날 때 이미지 정리를 건너뛴다(optimize-1031-plan O3) */
 let loadedDoc: NoteDoc | null = null;
+let savedDoc: NoteDoc = emptyDoc();
 /**
  * 지금 화면의 메모 문서를 읽어 온 일지(워크스페이스). 저장·이미지 정리는 **늘 이 일지에만** 한다 —
  * 1.8.0 결함: 공간을 바꾼 직후 "이전 공간의 문서"로 "새 공간의 이미지"를 정리해 그림이 지워졌다(v1.8.1).
@@ -222,6 +224,7 @@ export function detachNote() {
   repo = null;
   docRepo = null;
   loadedDoc = null;
+  savedDoc = emptyDoc();
   lastEditedId = null;
   undoStack.length = 0;
   redoStack.length = 0;
@@ -278,6 +281,7 @@ async function loadWeek(weekId: WeekId, finish = true) {
     redoStack.length = 0;
     lastEditedId = null;
     loadedDoc = doc;
+    savedDoc = doc;
     const assets = Object.fromEntries(rows.map(({ id, ...a }) => [id, a]));
     set({
       weekId,
@@ -317,7 +321,8 @@ export async function flushNote(force = false) {
   const { weekId, doc } = get();
   if (!r || !weekId) return;
   try {
-    await track(() => r.saveWeekNote(weekId, doc));
+    await track(() => r.saveWeekNote(weekId, doc, savedDoc));
+    if (docRepo === r && get().weekId === weekId) savedDoc = doc;
     if (get().weekId === weekId) set({ legacy: false });
   } catch (e) {
     reportError(e);
@@ -327,6 +332,42 @@ export async function flushNote(force = false) {
 /** 저장소에서 이 주 메모를 다시 읽기(가져오기·되돌리기가 메모를 바꾼 뒤). 대기 중인 저장은 부르는 쪽이 먼저 끝낸다 */
 export async function reloadNote() {
   await loadWeek(useBoard.getState().weekId, false);
+}
+
+/** Merge relationship changes without resetting edits, selections or memo undo history. */
+export async function refreshNoteLinks() {
+  const r = docRepo;
+  const weekId = get().weekId;
+  if (!r || !weekId) return;
+  const { doc: authoritative } = await r.getWeekNote(weekId);
+  if (docRepo !== r || get().weekId !== weekId) return;
+  const merge = (doc: NoteDoc): NoteDoc => ({
+    ...doc,
+    boxes: doc.boxes.map((b) => {
+      const previous = new Set(savedDoc.boxes.find((x) => x.id === b.id)?.refs?.map((x) => x.item) ?? []);
+      const live = new Set(authoritative.boxes.find((x) => x.id === b.id)?.refs?.map((x) => x.item) ?? []);
+      const refs = new Set(b.refs?.map((x) => x.item) ?? []);
+      for (const id of live) if (!previous.has(id)) refs.add(id);
+      for (const id of previous) if (!live.has(id)) refs.delete(id);
+      return { ...b, refs: [...refs].map((item) => ({ item })) };
+    }),
+  });
+  const next = merge(get().doc);
+  for (let i = 0; i < undoStack.length; i++) undoStack[i] = merge(undoStack[i]!);
+  for (let i = 0; i < redoStack.length; i++) redoStack[i] = merge(redoStack[i]!);
+  savedDoc = authoritative;
+  set({ doc: next });
+}
+
+export async function revealMemo(weekId: WeekId, boxId: string) {
+  const r = repo;
+  if (get().weekId !== weekId) {
+    await finishNote();
+    await goToWeek(weekId);
+    if (repo !== r) return;
+    await loadWeek(weekId, false);
+  }
+  if (repo === r && get().doc.boxes.some((b) => b.id === boxId)) revealBox(boxId);
 }
 
 /**

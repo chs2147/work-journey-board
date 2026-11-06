@@ -1,5 +1,6 @@
 // 메모 보드 스냅샷 동작(improve-1027v3-spec 1절): 지금 주 → PNG 저장(저장 대화상자, 내보내기와 같은 규칙) · 클립보드 복사,
 // 다른 주(엑셀) → 저장소에서 읽어 그린다. 파일 쓰기는 Platform만(CLAUDE.md 4-3), 외부 통신 없음.
+import type { NoteDoc } from "../../domain/note";
 import { workspacePart } from "../../export/filename";
 import { workspaceLabel } from "../common/appController";
 import type { JournalRepository } from "../../data/repository";
@@ -25,6 +26,24 @@ function baseInput(weekId: WeekId, now: Date) {
   };
 }
 
+/** Cross-week shared links use the original entry's current label in PNG/Excel, too. */
+async function linkedLines(repo: JournalRepository, doc: NoteDoc, lines: SnapshotInput["lines"]) {
+  const missing = [...new Set(doc.boxes.flatMap((b) => b.refs?.map((r) => r.item) ?? []))].filter(
+    (id) => !lines[id],
+  );
+  for (const it of await repo.getItemsByIds(missing))
+    lines[it.id] = {
+      catName: it.categoryName,
+      color: colorOf(it.categoryColor),
+      dateLabel: shortDateLabel(it.date),
+      text: it.text,
+      order: `9999|${it.date}|${String(it.seq).padStart(4, "0")}`,
+      flagged: !!it.flagged,
+      done: !it.flagged && !!it.flagDoneAt,
+    };
+  return lines;
+}
+
 /** 지금 보고 있는 주의 메모(대기 상자 빼고) — 이미지는 원본을 이때만 읽는다(스토어는 크기만 들고 있음) */
 async function currentInput(repo: JournalRepository, now: Date): Promise<SnapshotInput> {
   const { doc, pendingId, weekId } = useNote.getState();
@@ -35,7 +54,7 @@ async function currentInput(repo: JournalRepository, now: Date): Promise<Snapsho
     ...baseInput(weekId, now),
     doc: { ...doc, boxes: doc.boxes.filter((b) => b.id !== pendingId) },
     images: assets,
-    lines: snapLines(categories, cells, colorOf, shortDateLabel),
+    lines: await linkedLines(repo, doc, snapLines(categories, cells, colorOf, shortDateLabel)),
   };
 }
 
@@ -51,11 +70,15 @@ export async function weekSnapshotInput(
     ...baseInput(weekId, now),
     doc: view.note,
     images: Object.fromEntries(rows.map(({ id, ...a }) => [id, a])),
-    lines: snapLines(
-      view.categories.map((c) => c.category),
-      view.items,
-      colorOf,
-      shortDateLabel,
+    lines: await linkedLines(
+      repo,
+      view.note,
+      snapLines(
+        view.categories.map((c) => c.category),
+        view.items,
+        colorOf,
+        shortDateLabel,
+      ),
     ),
   };
 }

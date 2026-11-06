@@ -9,6 +9,7 @@ import {
   type ClipboardEvent,
   type KeyboardEvent,
 } from "react";
+import { CopyDateDialog } from "./CopyDateDialog";
 import { hasLink } from "../../domain/links";
 import { deleteRange, indentAt, moveItem, outdentAt, parsePastedLines } from "../../domain/items";
 import type { ItemDraft } from "../../domain/types";
@@ -40,8 +41,7 @@ import { DonePopover } from "./DonePopover";
 import { DueDatePopover, ItemMenu, MoveDatePopover, StartTimePopover } from "./ItemActions";
 import { dueView } from "./dueView";
 import { defaultStartTime } from "../../domain/startTime";
-import { addLinkedBox, pasteImagesFromBoard, revealBox, useNote } from "../note/noteStore";
-import { linkedBoxes } from "../../domain/note";
+import { addLinkedBox, pasteImagesFromBoard, revealMemo, useNote } from "../note/noteStore";
 import { autoSize, isComposingKey, useRemeasure } from "./helpers";
 import { LinkedText } from "./LinkedText";
 import {
@@ -50,6 +50,7 @@ import {
   IconClock,
   IconDone,
   IconMoveDate,
+  IconCopyItem,
   IconNote,
   IconRepeat,
   IconTrash,
@@ -91,7 +92,9 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
   /** 완료 뱃지 창이 열린 항목(improve-1027v4-spec 2-1) */
   const [doneOpen, setDoneOpen] = useState<number | null>(null);
   /** 항목 ⋯ 메뉴·시작 시각 창·다른 날로 옮기기 창(improve-1103v8-spec 5절) */
-  const [tool, setTool] = useState<{ i: number; kind: "menu" | "time" | "move" | "due" } | null>(null);
+  const [tool, setTool] = useState<{ i: number; kind: "menu" | "time" | "move" | "due" | "copy" } | null>(
+    null,
+  );
   const today = useBoard((s) => s.today);
   const closeTool = (i: number) => {
     setTool(null);
@@ -117,6 +120,17 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
     }
     return out;
   });
+  const foreignMemos = useBoard((s) =>
+    s.memoLinks
+      .filter((l) => l.weekId !== s.weekId && items.some((i) => i.id === l.entryId))
+      .map((l) => `${l.entryId}:${l.weekId}:${l.boxId}`)
+      .join(","),
+  );
+  const foreignOf: Record<string, { weekId: string; boxId: string }[]> = {};
+  for (const value of foreignMemos.split(",")) {
+    const [id, weekId, boxId] = value.split(":");
+    if (id && weekId && boxId) (foreignOf[id] ??= []).push({ weekId, boxId });
+  }
   // Cabinet 연결(features-1102-spec F5) — 이 칸 항목에 연결된 폴더·링크 id(글자열로 골라 다시 그리기 줄임)
   const cabKey = useCabinet((st) => {
     const ids = new Set(items.map((x) => x.id));
@@ -143,6 +157,7 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
     if (eid && ids) cardsOf[eid] = ids.split("+");
   }
   const linkCount: Record<string, number> = {};
+  for (const [id, links] of Object.entries(foreignOf)) linkCount[id] = links.length;
   for (const id of linkKey.split(",")) if (id) linkCount[id] = (linkCount[id] ?? 0) + 1;
   const linkTarget = useLinkDrop((st) => st.itemId);
   const linkAlready = useLinkDrop((st) => st.linked);
@@ -375,6 +390,7 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
                 setTool({ i, kind: "menu" });
               }}
               data-item-id={it.text.trim() ? it.id : undefined}
+              data-foreign-memo={foreignOf[it.id]?.length ? "true" : undefined}
               data-done={isDone(it) ? "true" : undefined}
               data-flagged={it.flagged ? "true" : undefined}
               data-repeating={isRepeating ? "true" : undefined}
@@ -561,16 +577,25 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
                   tabIndex={-1}
                   className={styles.memoBadge}
                   aria-label={STR.linked.badge(linkCount[it.id]!)}
-                  title={STR.linked.badge(linkCount[it.id]!)}
+                  title={
+                    STR.linked.badge(linkCount[it.id]!) +
+                    (foreignOf[it.id]?.length ? ` · 원본 주차 ${foreignOf[it.id]![0]!.weekId}` : "")
+                  }
                   data-testid="memo-badge"
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => {
-                    const first = linkedBoxes(useNote.getState().doc, it.id)[0];
-                    if (first) revealBox(first.id);
+                    const note = useNote.getState();
+                    const first = note.doc.boxes.find((b) => b.refs?.some((r) => r.item === it.id));
+                    const foreign = foreignOf[it.id]?.[0];
+                    if (foreign) void revealMemo(foreign.weekId, foreign.boxId);
+                    else if (first) void revealMemo(note.weekId, first.id);
                   }}
                 >
                   <IconNote />
                   {linkCount[it.id]}
+                  {foreignOf[it.id]?.[0] && (
+                    <span className={styles.memoWeek}>{foreignOf[it.id]![0]!.weekId.slice(5)}</span>
+                  )}
                 </button>
               )}
               {linkTarget === it.id && (
@@ -643,6 +668,12 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
                       onSelect: () => setTool({ i, kind: "move" }),
                     },
                     {
+                      key: "copy",
+                      icon: <IconCopyItem />,
+                      label: STR.copyDate.menu,
+                      onSelect: () => setTool({ i, kind: "copy" }),
+                    },
+                    {
                       key: "delete",
                       icon: <IconTrash />,
                       label: deleteMenuLabel(items, i),
@@ -683,6 +714,9 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
                   }}
                   onClose={() => closeTool(i)}
                 />
+              )}
+              {tool?.i === i && tool.kind === "copy" && (
+                <CopyDateDialog cellKey={cellKey} itemId={it.id} onClose={() => closeTool(i)} />
               )}
               {tool?.i === i && tool.kind === "move" && (
                 <MoveDatePopover

@@ -46,6 +46,8 @@ export interface Settings {
     tagFilter: string[];
     /** 인사이트에서 마지막으로 본 업무(m3-s1-spec 1-2) — 레일로 열면 그 업무 */
     insightCategory: string | null;
+    insightListWidth: number;
+    activityNameWidth: number;
     /** 인사이트 업무 경과 지도 펼침(4-0) */
     insightMapOpen: boolean;
     /** 인사이트에서 마지막으로 본 탭(m3-s2-spec 1절) */
@@ -129,6 +131,8 @@ export const DEFAULT_SETTINGS: Settings = {
     summaryPanelW: 360,
     boardColW: { label: null, days: [null, null, null, null, null, null, null] },
     insightCategory: null,
+    insightListWidth: 272,
+    activityNameWidth: 196,
     insightMapOpen: true,
     insightTab: "timeline",
     exportSnapshots: false,
@@ -211,6 +215,8 @@ export function mergeSettings(base: Settings, patch: unknown): Settings {
   for (const [k, spec] of [
     ["importantPanelW", PANEL_W.important],
     ["summaryPanelW", PANEL_W.summary],
+    ["insightListWidth", { min: 200, max: 480, def: 272 }],
+    ["activityNameWidth", { min: 160, max: 420, def: 196 }],
   ] as const) {
     const v = s.ui[k];
     if (!(typeof v === "number" && v >= spec.min && v <= spec.max)) s.ui[k] = spec.def;

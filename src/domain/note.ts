@@ -16,7 +16,7 @@ export const NOTE_BG = ["yellow", "blue", "green", "pink"] as const;
 export type NoteBg = (typeof NOTE_BG)[number];
 
 /**
- * 업무 항목 연결(improve-1026v2-spec 6-4 → multi-link-spec 7-1): 상자가 가리키는 같은 주의 entry_item id.
+ * 업무 항목 연결(improve-1026v2-spec 6-4 → multi-link-spec 7-1): 상자가 가리키는 같은 일지의 entry_item id.
  * 한 상자 = 여러 항목(`refs`). 타이틀 글(업무명·날짜·항목 글)은 저장하지 않고 화면이 늘 지금 항목에서 만든다
  */
 export interface BoxRef {

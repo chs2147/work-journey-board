@@ -817,6 +817,32 @@ if (typeof window !== "undefined")
           canUndo: useNote.getState().canUndo,
         };
       },
+      /** Read-only browser assertion: copying may grow relations, never shared objects/assets. */
+      async journalCounts() {
+        const j = get().journal;
+        if (j.state !== "ready" || platform().kind !== "browser") return null;
+        const tables = [
+          "entry_item",
+          "week_note",
+          "note_entry_link",
+          "note_asset",
+          "cabinet_item",
+          "cabinet_link",
+        ] as const;
+        const counts: Record<string, number> = {};
+        for (const table of tables)
+          counts[table] = Number(
+            (await j.driver.select<{ n: number }>(`SELECT COUNT(*) AS n FROM ${table}`))[0]?.n ?? 0,
+          );
+        counts.note_boxes = Number(
+          (
+            await j.driver.select<{ n: number }>(
+              "SELECT COUNT(*) AS n FROM week_note n, json_each(n.doc, '$.boxes')",
+            )
+          )[0]?.n ?? 0,
+        );
+        return counts;
+      },
       async assetCount() {
         const j = get().journal;
         return j.state === "ready" ? (await j.repo.noteAssetStats()).count : -1;

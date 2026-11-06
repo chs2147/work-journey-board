@@ -17,6 +17,8 @@ import dueDate0013 from "./migrations/0013_due_date.sql?raw";
 
 import completion0014 from "./migrations/0014_completion_origin.sql?raw";
 
+import noteLinks0015 from "./migrations/0015_note_entry_link.sql?raw";
+
 export interface Migration {
   version: number;
   sql: string;
@@ -38,6 +40,7 @@ export const MIGRATIONS: Migration[] = [
   { version: 12, sql: knowledgeCard0012 },
   { version: 13, sql: dueDate0013 },
   { version: 14, sql: completion0014 },
+  { version: 15, sql: noteLinks0015 },
 ];
 
 export const LATEST_SCHEMA_VERSION = MIGRATIONS.at(-1)!.version;
@@ -134,6 +137,7 @@ export async function backupStructureMatches(driver: SqlDriver, version: number)
     [5, ["day_mark"]],
     [6, ["tag", "category_tag"]],
     [9, ["cabinet_item", "cabinet_link"]],
+    [15, ["note_entry_link"]],
     [11, ["universe_relation"]],
     [12, ["knowledge_card", "knowledge_card_category", "knowledge_card_source"]],
   ];
@@ -152,6 +156,12 @@ export async function backupStructureMatches(driver: SqlDriver, version: number)
     )
   )
     return false;
+  if (version >= 15) {
+    const noteColumns = new Set(
+      (await driver.select<{ name: string }>("PRAGMA table_info(note_entry_link)")).map((c) => c.name),
+    );
+    if (["note_week_id", "box_id", "entry_id", "created_at"].some((c) => !noteColumns.has(c))) return false;
+  }
   const introduced: [number, string[]][] = [
     [2, ["flagged", "flag_done_at", "recurrence_id"]],
     [4, ["import_id"]],

@@ -4,7 +4,7 @@ import { freshRepo } from "./helpers";
 import { uuidv7 } from "../../src/data/ids";
 import { cellKey } from "../../src/data/repository";
 import { copyablePrevious } from "../../src/domain/previousItems";
-import { migrate, MIGRATIONS } from "../../src/data/migrate";
+import { LATEST_SCHEMA_VERSION, migrate, MIGRATIONS } from "../../src/data/migrate";
 import { openSqlJsMemory } from "../../src/data/drivers/sqlJs";
 import type { ItemDraft } from "../../src/domain/types";
 const draft = (text: string, depth: 0 | 1 = 0, flagged = false): ItemDraft => ({
@@ -85,7 +85,7 @@ describe("v12 completion and copy boundaries", () => {
     );
     const backup = vi.fn();
     await migrate(db, { beforeMigrate: backup });
-    expect(backup).toHaveBeenCalledWith(13, 14);
+    expect(backup).toHaveBeenCalledWith(13, LATEST_SCHEMA_VERSION);
     const [row] = await db.select<{ completion_was_flagged: number }>(
       "SELECT completion_was_flagged FROM entry_item",
     );

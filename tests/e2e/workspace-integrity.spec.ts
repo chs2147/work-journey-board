@@ -1,6 +1,8 @@
 // 워크스페이스 전환 무결성(v1.8.1 긴급 수정): 공간을 바꿔도 각 공간의 기록·메모·이미지·요약이 그 공간 일지에 그대로 남는다.
 // 1.8.0 결함 = 전환 직후 메모 정리가 "이전 공간의 메모"를 기준으로 "새 공간의 이미지"를 지움(그림을 찾을 수 없습니다).
 // 그림은 테스트가 그 자리에서 그린 단색 도형(가상 이미지)만 쓴다.
+import { CURRENT_SCHEMA } from "./schema-helper";
+import { seedV16, openCopyV16 } from "./v16-helper";
 import { expect, test, type Page } from "@playwright/test";
 
 const TODAY = "2026-10-22";
@@ -371,7 +373,7 @@ test("v13 백업 보관 정책·보호 사본이 공간별로 유지되고 3회 
     await page.keyboard.press("Escape");
     await expect(dialog).toHaveCount(0);
     await page.getByRole("button", { name: "지금 백업", exact: true }).click();
-    await expect(page.getByTestId("last-backup")).toContainText("DB 구조 v14");
+    await expect(page.getByTestId("last-backup")).toContainText(`DB 구조 v${CURRENT_SCHEMA}`);
     await page.keyboard.press("Escape");
   }
   await policy(7);
@@ -481,4 +483,42 @@ test("v14 묶음 이동 후 공간 3회 왕복: 글/이미지/위치 보존, 실
   await switchTo(page, 1, "회사");
   expect((await snapshot()).boxes).toEqual(company);
   expect(await storedAssets(page)).toBe(assets);
+});
+
+const journalCounts = (page: Page) =>
+  page.evaluate(() =>
+    (
+      globalThis as unknown as { __wjbApp: { journalCounts(): Promise<Record<string, number>> } }
+    ).__wjbApp.journalCounts(),
+  );
+
+test("v16 다른 주 복제 후 공간 3회 왕복: 원본 메모·이미지·Cabinet은 그대로, 연결과 항목만 증가", async ({
+  page,
+}) => {
+  await addImage(page, "#327ad4", "v16-보존-그림");
+  await seedV16(page);
+  const before = await journalCounts(page);
+  const dialog = await openCopyV16(page);
+  await dialog.getByLabel("복제할 날짜").fill("2026-10-29");
+  await dialog.getByRole("button", { name: "복제", exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+  const company = await journalCounts(page);
+  expect(company.entry_item).toBe(before.entry_item! + 2);
+  expect(company.note_entry_link).toBe(before.note_entry_link! + 2);
+  expect(company.cabinet_link).toBe(before.cabinet_link! + 1);
+  for (const key of ["note_boxes", "note_asset", "cabinet_item"]) expect(company[key]).toBe(before[key]);
+  await switchTo(page, 2, "개인");
+  const personal = await journalCounts(page);
+  for (let round = 0; round < 3; round++) {
+    await switchTo(page, 1, "회사");
+    expect(await journalCounts(page)).toEqual(company);
+    await expect(missing(page)).toHaveCount(0);
+    await expect(page.locator('[data-box-id="v16-memo"] [data-testid="link-strip"]')).toHaveAttribute(
+      "data-count",
+      "4",
+    );
+    await switchTo(page, 2, "개인");
+    expect(await journalCounts(page)).toEqual(personal);
+    await expect(missing(page)).toHaveCount(0);
+  }
 });

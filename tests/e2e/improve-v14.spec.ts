@@ -123,7 +123,7 @@ test("업무 타임라인: 지도 상시 표시, 메뉴/표/월 아이콘과 글
   });
   expect(layout).toEqual({ month: "20px", week: "16px", rule: "1px", monthRule: "1px", below: true });
 });
-test("활동: 넓은 창에서 격자 확장, 좁으면 내부 스크롤, 날짜/월/합계 정렬 및 표 아이콘", async ({ page }) => {
+test("활동: 넓은 창에서 격자 확장, 좁으면 유동 축소, 날짜/월/합계 정렬 및 표 아이콘", async ({ page }) => {
   await page.setViewportSize({ width: 1920, height: 1000 });
   await page.goto("/?today=2026-10-22&sample=insights");
   await page.getByTestId("rail-insights").click();
@@ -139,7 +139,7 @@ test("활동: 넓은 창에서 격자 확장, 좁으면 내부 스크롤, 날짜
   expect(new Set(wide.columns).size).toBe(1);
   await page.setViewportSize({ width: 900, height: 900 });
   const narrow = await measure();
-  expect(narrow.width).toBeGreaterThan(narrow.parent);
+  expect(Math.abs(narrow.width - narrow.parent)).toBeLessThan(2);
   expect(wide.width).toBeGreaterThan(narrow.width);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   const toggle = page.getByTestId("heat-table-toggle");

@@ -3,7 +3,7 @@
 // - 실행 취소 단위 = 저장 1회(체크포인트). 저장 전에는 대기 중인 저장을 먼저 끝낸다.
 import { create } from "zustand";
 import type { DayMarkKind } from "../../domain/dayMark";
-import { appendCopies, deleteAt, moveRows, normalizeCell } from "../../domain/items";
+import { appendCopies, deleteRange, deleteAt, moveRows, normalizeCell } from "../../domain/items";
 import { matchesTagFilter, NO_TAG, type Tag } from "../../domain/tags";
 import type { VisibleCategory } from "../../domain/categories";
 import { groupRange, type Recurrence } from "../../domain/recurrence";
@@ -24,6 +24,7 @@ import {
   cellKey,
   ValidationError,
   type JournalRepository,
+  type CopiedEntries,
   type RepeatPreview,
   type WeekView,
 } from "../../data/repository";
@@ -58,6 +59,7 @@ interface UndoEntry {
 }
 
 export interface BoardState {
+  memoLinks: { entryId: string; weekId: WeekId; boxId: string }[];
   ready: boolean;
   today: DateStr;
   weekId: WeekId;
@@ -140,6 +142,7 @@ export const splitKey = (key: string) => {
 export const newDraft = (text = "", depth: 0 | 1 = 0): ItemDraft => ({ id: uuidv7(), depth, text });
 
 export const useBoard = create<BoardState>(() => ({
+  memoLinks: [],
   ready: false,
   today: "",
   weekId: "",
@@ -252,21 +255,37 @@ async function persistCell(key: string, quiet = false): Promise<boolean> {
   const after = normalizeCell(current);
   if (sameItems(before, after)) return false;
   const { date, categoryId } = splitKey(key);
+  const r = requireRepo();
+  const removedIds = before.filter((i) => !after.some((j) => j.id === i.id)).map((i) => i.id);
+  const relations = removedIds.length ? await r.itemRelations(removedIds) : { notes: [], cabinet: [] };
+  if (repo !== r) return false;
   try {
-    await track(() => requireRepo().saveCell(date, categoryId, after));
+    await track(() => r.saveCell(date, categoryId, after));
   } catch (e) {
     markFailed(key, true);
     reportError(e);
     return false;
   }
+  if (repo !== r) return false;
   persistedCells.set(key, after);
   markFailed(key, false);
   if (date < get().focusDay) void refreshPrevDates();
   if (before.some((i) => i.flagged) || after.some((i) => i.flagged)) void refreshImportant();
-  const entry: UndoEntry = { undo: () => applyCell(key, before), redo: () => applyCell(key, after) };
+  const entry: UndoEntry = {
+    undo: async () => {
+      await applyCell(key, before);
+      await r.restoreItemRelations(relations);
+      await refreshLinkedObjects();
+    },
+    redo: async () => {
+      await applyCell(key, after);
+      await refreshLinkedObjects();
+    },
+  };
   pushUndo(entry);
   const keptIds = new Set(after.map((i) => i.id));
   const lost = before.filter((i) => !keptIds.has(i.id) && i.text.trim()).length;
+  if (lost > 0) await refreshLinkedObjects();
   if (lost > 0 && !quiet)
     toast(STR.toast.itemsDeleted(lost), { label: STR.toast.undo, run: () => void undo() });
   return true;
@@ -421,6 +440,7 @@ async function loadWeekNow(r: JournalRepository, weekId: WeekId, focusDay: DateS
   if (stale()) return;
   // 메모 문서는 메모 도크(noteStore)가 따로 읽는다 — 보드는 읽지 않음
   const view = await r.getWeek(weekId, { note: false });
+  const memoLinks = await r.linkedMemos(Object.values(view.items).flatMap((a) => a.map((i) => i.id)));
   const rules: Recurrence[] = await r.listRecurrences();
   const previews: Record<string, RepeatPreview[]> = {};
   if (weekId > current) {
@@ -452,6 +472,7 @@ async function loadWeekNow(r: JournalRepository, weekId: WeekId, focusDay: DateS
     }
   }
   set({
+    memoLinks,
     ready: true,
     today,
     weekId,
@@ -492,7 +513,7 @@ export function detachBoard() {
   loadSeq++; // 진행 중인 주 불러오기 결과는 버린다
   loading = null;
   repo = null;
-  set({ addOpen: false, prevDates: {}, prevItems: {}, prevExcluded: {} });
+  set({ memoLinks: [], addOpen: false, prevDates: {}, prevItems: {}, prevExcluded: {} });
   undoStack.length = 0;
   redoStack.length = 0;
   syncUndoFlags();
@@ -1179,90 +1200,152 @@ export async function previousDayFor(date: DateStr): Promise<DateStr | null> {
 
 /** 칸 하나(Alt+P·빈 칸 단추): 그 업무의 직전 기록일 내역을 칸 끝에 덧붙이고 마지막 항목에 커서 */
 export async function pullPrevious(key: string) {
-  await flushAll();
-  const sourceRepo = requireRepo(),
-    generation = loadSeq;
-  const stale = () => repo !== sourceRepo || loadSeq !== generation;
-  const { date, categoryId } = splitKey(key);
-  let prev;
-  try {
-    prev = await sourceRepo.previousRecord(date, [categoryId]);
-  } catch (e) {
-    reportError(e);
-    return;
-  }
-  if (stale()) return;
-  const source = prev?.cells[categoryId];
-  if (!prev || !source?.length)
-    return toast(prev?.excluded ? STR.itemCompletion.emptyPrevious : STR.pull.none);
-  const { items, added } = appendCopies(get().cells[key] ?? [], source, uuidv7);
-  const label = pullLabel(prev.date);
-  if (added === 0) return toast(STR.pull.already(label));
-  set((s) => ({
-    cells: { ...s.cells, [key]: items },
-    focus: { kind: "item", key, index: items.length - 1, caret: "end" },
-  }));
-  await persistCell(key);
-  toast(
-    STR.pull.done(label, added) + (prev.excluded ? ` · ${STR.itemCompletion.excluded(prev.excluded)}` : ""),
-    {
-      label: STR.toast.undo,
-      run: () => void undo(),
-    },
+  await importPrevious([key], splitKey(key).date);
+}
+
+export async function pullPreviousDay(date: DateStr) {
+  await importPrevious(
+    activeCategoryIds().map((id) => cellKey(date, id)),
+    date,
   );
 }
 
-/** 요일 전체(Alt+Shift+P·요일 머리 메뉴): 직전 기록일의 모든 업무 내역을 이 날 각 업무 칸 끝에. 되돌리기 한 번 */
-export async function pullPreviousDay(date: DateStr) {
+async function importPrevious(keys: string[], date: DateStr) {
   await flushAll();
   const sourceRepo = requireRepo(),
     generation = loadSeq;
   const stale = () => repo !== sourceRepo || loadSeq !== generation;
-  let prev;
   try {
-    prev = await sourceRepo.previousRecord(date, activeCategoryIds());
-  } catch (e) {
-    reportError(e);
-    return;
-  }
-  if (stale()) return;
-  if (!prev) return toast(STR.pull.none);
-  if (!Object.values(prev.cells).some((items) => items.length))
-    return toast(prev.excluded ? STR.itemCompletion.emptyPrevious : STR.pull.none);
-  const label = pullLabel(prev.date);
-  const changes: { key: string; before: ItemDraft[]; after: ItemDraft[] }[] = [];
-  let total = 0;
-  try {
-    for (const id of activeCategoryIds()) {
-      const source = prev.cells[id];
-      if (!source?.length) continue;
-      const key = cellKey(date, id);
-      const before = persistedCells.get(key) ?? [];
-      const { items, added } = appendCopies(get().cells[key] ?? [], source, uuidv7);
-      if (stale()) return;
-      if (added === 0) continue;
-      await applyCell(key, items);
-      changes.push({ key, before, after: normalizeCell(items) });
-      total += added;
+    const { flushNote } = await import("../note/noteStore");
+    await flushNote();
+    if (stale()) return;
+    const prev = await sourceRepo.previousRecord(
+      date,
+      keys.map((key) => splitKey(key).categoryId),
+    );
+    if (stale()) return;
+    if (!prev || !Object.values(prev.cells).some((xs) => xs.length))
+      return toast(prev?.excluded ? STR.itemCompletion.emptyPrevious : STR.pull.none);
+    const cells: CopiedEntries["cells"] = [];
+    const mapping: { source: string; target: string }[] = [];
+    for (const key of keys) {
+      const { categoryId } = splitKey(key);
+      const result = appendCopies(get().cells[key] ?? [], prev.cells[categoryId] ?? [], uuidv7);
+      if (!result.added) continue;
+      cells.push({ date, categoryId, items: result.items });
+      mapping.push(...result.mapping);
     }
+    if (!cells.length) return toast(STR.pull.already(pullLabel(prev.date)));
+    const copied = await track(() => sourceRepo.copyEntries(cells, mapping));
+    if (stale()) return;
+    await acceptCopied(copied, sourceRepo);
+    if (stale()) return;
+    if (keys.length === 1) {
+      const key = keys[0]!;
+      set({ focus: { kind: "item", key, index: (get().cells[key]?.length ?? 1) - 1, caret: "end" } });
+    } else setFocusDay(date);
+    toast(
+      STR.pull.done(pullLabel(prev.date), mapping.length) +
+        (prev.excluded ? ` · ${STR.itemCompletion.excluded(prev.excluded)}` : ""),
+      { label: STR.toast.undo, run: () => void undo() },
+    );
   } catch (e) {
-    reportError(e);
+    if (!stale()) reportError(e);
   }
-  if (changes.length === 0) return toast(STR.pull.already(label));
-  setFocusDay(date);
+}
+
+/** Update relationships in place, keeping memo content and both independent undo stacks. */
+export async function refreshLinkedObjects() {
+  const r = repo,
+    seq = loadSeq;
+  if (!r) return;
+  const ids = Object.values(get().cells).flatMap((xs) => xs.map((i) => i.id));
+  const memoLinks = await r.linkedMemos(ids);
+  if (repo !== r || seq !== loadSeq) return;
+  set({ memoLinks });
+  const [{ refreshNoteLinks }, { loadCabinet }] = await Promise.all([
+    import("../note/noteStore"),
+    import("../cabinet/cabinetStore"),
+  ]);
+  if (repo !== r || seq !== loadSeq) return;
+  await refreshNoteLinks();
+  await loadCabinet();
+}
+
+async function refreshCopiedCells(copy: CopiedEntries, r: JournalRepository) {
+  const seq = loadSeq;
+  const changes = await Promise.all(
+    copy.cells.map(async (c) => ({
+      key: cellKey(c.date, c.categoryId),
+      items: await r.getCategoryEntries(c.categoryId, c.date, c.date),
+    })),
+  );
+  if (repo !== r || seq !== loadSeq) return;
+  set((s) => {
+    const cells = { ...s.cells };
+    for (const c of changes) {
+      if (c.key in cells) cells[c.key] = c.items;
+      persistedCells.set(c.key, c.items);
+    }
+    return { cells };
+  });
+  await refreshLinkedObjects();
+  await refreshImportant();
+  void refreshPrevDates();
+}
+
+async function acceptCopied(copy: CopiedEntries, r: JournalRepository) {
+  await refreshCopiedCells(copy, r);
+  if (repo !== r) return;
   pushUndo({
     undo: async () => {
-      for (const c of changes) await applyCell(c.key, c.before);
+      if (repo !== r) return;
+      await r.undoCopiedEntries(copy);
+      await refreshCopiedCells(copy, r);
     },
     redo: async () => {
-      for (const c of changes) await applyCell(c.key, c.after);
+      if (repo !== r) return;
+      await r.redoCopiedEntries(copy);
+      await refreshCopiedCells(copy, r);
     },
   });
-  toast(
-    STR.pull.doneAll(label, total, changes.length) +
-      (prev.excluded ? ` · ${STR.itemCompletion.excluded(prev.excluded)}` : ""),
-    { label: STR.toast.undo, run: () => void undo() },
+}
+
+export async function copyItemToDate(fromKey: string, itemId: string, date: DateStr, expected: string) {
+  await flushAll();
+  const r = requireRepo(),
+    seq = loadSeq;
+  const { flushNote } = await import("../note/noteStore");
+  await flushNote();
+  if (repo !== r || seq !== loadSeq) throw new ValidationError("화면이 변경되었습니다. 다시 선택해 주세요.");
+  const src = get().cells[fromKey] ?? [];
+  const index = src.findIndex((x) => x.id === itemId);
+  const end = index < 0 ? index : deleteRange(src, index)[1];
+  const originals = src.slice(index, end);
+  if (index < 0 || JSON.stringify(originals) !== expected)
+    throw new ValidationError("원본 항목이 변경되었습니다. 다시 선택해 주세요.");
+  const { categoryId } = splitKey(fromKey);
+  const target = await r.getCategoryEntries(categoryId, date, date);
+  if (repo !== r || seq !== loadSeq) return false;
+  const copies = originals.map((i, n): ItemDraft => ({
+    id: uuidv7(),
+    depth: n === 0 ? 0 : i.depth,
+    text: i.text,
+    flagged: i.flagDoneAt ? i.completionWasFlagged !== false : !!i.flagged,
+    startTime: i.startTime,
+    dueDate: i.dueDate,
+  }));
+  const mapping = originals.map((i, n) => ({ source: i.id, target: copies[n]!.id }));
+  const copy = await track(() =>
+    r.copyEntries([{ date, categoryId, items: [...target, ...copies] }], mapping),
   );
+  if (repo !== r || seq !== loadSeq) return true;
+  await acceptCopied(copy, r);
+  toast(`${shortDateLabel(date)}에 항목 ${copies.length}개를 복제했습니다.`, [
+    { label: STR.moveDate.goThere, run: () => void revealItem({ id: copies[0]!.id, date, categoryId }) },
+    { label: STR.toast.undo, run: () => void undo() },
+  ]);
+  return true;
 }
 
 // ── 업무 태그·태그 필터(improve-1026-spec 4~6절) ─────────
