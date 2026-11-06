@@ -43,6 +43,7 @@
   | `improve-1105v12-spec.md` | 개선 v12: 항목별 모노그램 완료/취소·본문 취소선·완료 묶음 가져오기 제외·여백·직각 글자색 A안. 일반 완료의 원래 중요 표시 보존을 위한 구조 v14, `improve-v12` RC2 검증 → **`v1.16.0` main 반영(2026-11-05)** |
   | `improve-1105v13-spec.md` | 개선 v13: 백업 생성 앱/실제 구조 버전·이력/복원 호환성·기간/용량 보관·정리 미리보기. 2026-11-05 A안 승인, `improve-v13` RC1 검증 → `v1.17.0` main 반영, 일지 구조 v14 유지 |
   | `improve-1106v14-spec.md` | 개선 v14: 객체 본문 그룹 이동·선택 외곽, 업무 타임라인/활동 아이콘·위계·구분선·유동 폭 — A안 승인, `improve-v14` RC1 → `v1.18.0` main 반영 |
+  | `features/` | 현재 Feature List 정본·고정 ID·도입/개선/제거 이력·제품/배포 프로필·버전 스냅샷·검토용 Excel. `scripts/features/generate.mjs build`/`check`, v1.18.1부터 앱 버전/기능 변경과 함께 갱신 |
   | `guide/` | **빠른 이용 가이드 원본**(장면별 `NN-이름.md` 14 + 부록 · `map.md` 기능 ↔ 장면 대응표·기준 판·갱신일) → `node scripts/guide/guide.mjs build`·`pdf`·`shots`가 소개 사이트 `site/guide/`(HTML·PDF·스크린샷) 생성, CI `guide.mjs check` |
   | `brand-spec.md` | 앱 아이콘(노트·책갈피, 작은 판)·워드마크(그로테스크 + 손글씨 Journey, SVG 도형) — 생성 도구 `scripts/brand/` |
   | `wireframes/` | 주간 보드·첫 실행/연간 보기·인사이트·스플래시 와이어프레임(svg)·스플래시 창 화면(png) |
@@ -173,6 +174,11 @@ npm run lint && npm run typecheck
 - **빌드·배포 기본(2026-11-04 사용자 지시)**: 별도 언급이 없으면 **Windows 기본판(`embed`) + macOS 유니버설 DMG를 매번 함께** 만든다. 현재 작업 브랜치 `design-renewal-v2`도 설치 파일 자동 빌드 대상이다.
 - **오프라인 설치판(`webview=offline` 수동 실행)은 사용자가 따로 요구할 때만 만든다**(2026-10-23 사용자 지시, 2026-11-01 재확인 — 정식 판 자동 포함 예외는 폐지). main에서 수동 실행하면 그 판 릴리스에 오프라인판을 더한다. 기본 설치 파일 빌드(푸시 시 자동)는 그대로다.
   - 정식 판(`1.0.0` 이상, 꼬리표 없음)의 main 빌드는 릴리스를 사전 릴리스가 아닌 **정식(Latest)** 으로 표시한다(`scripts/release-notes.mjs formal`이 판정, release-phase2-spec 4절). 0.x·-rc 판은 사전 릴리스.
+
+### Feature List 동반 갱신 (v15)
+- 기능 추가·변경·제거·이름 변경과 판올림은 `docs/features/README.md` 규칙으로 고정 ID·버전·근거를 갱신하고 현재 스냅샷·Markdown·Excel을 함께 생성한다.
+- 앱·제품·파생 프로필·DB·문서 형식 버전을 혼동하지 않는다. 현재 생성 도구는 기준 제품과 세 배포 프로필용이다. 독립 파생 제품은 상위 고정 스냅샷·자체 도입 버전·차이표·생성 연결을 먼저 정의한다.
+- `node scripts/features/generate.mjs build` → `check`가 CI에서 검사된다. 검토자의 Excel 사본을 덮어쓰지 않는다. 과거 버전 스냅샷은 유지한다.
 
 ## 7. 마일스톤 (project-plan.md)
 I-M0 설치 검증(◆G1) → I-M1 핵심 기록(◆G2 2주 실사용) → I-M2 집계·엑셀 → I-M3 시각화 → I-M4 AI 클립보드 다리 → I-M5 안정화·v1.0.0

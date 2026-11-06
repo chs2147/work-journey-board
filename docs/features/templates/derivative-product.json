@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "templateOnly": true,
+  "productId": "example-derived",
+  "name": "미등록 파생 제품 예시",
+  "currentVersion": "0.1.0",
+  "upstream": {
+    "productId": "work-journey-board",
+    "version": "1.18.1",
+    "snapshot": "releases/work-journey-board/v1.18.1.json"
+  },
+  "features": [
+    {
+      "featureId": "WJB-UNIVERSE-001",
+      "state": "excluded",
+      "reason": "파생 제품의 승인된 범위로 결정할 예시",
+      "introducedInProduct": null
+    }
+  ],
+  "additionalFeatureCatalog": "products/example-derived/catalog.json",
+  "profiles": [],
+  "note": "현재 제공 제품 아님. 상위 버전은 고정하며 로컬 버전 0.1.0과 상위 기능 도입 버전 1.12.0을 비교하지 않는다. 실제 등록 전에 파생 범위·차이·기능별 로컬 도입 버전·검토 근거를 확정한다."
+}

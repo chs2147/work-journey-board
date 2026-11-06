@@ -212,6 +212,15 @@ jobs:
           pattern: work-journey-board-*
           merge-multiple: true
 
+      - name: Collect review Feature List workbook
+        shell: bash
+        env:
+          APP_VERSION: ${{ needs.plan.outputs.version }}
+        run: |
+          mkdir -p out
+          feature_workbook="docs/features/exports/work-journey-board/Work-Journey-Board-Feature-List-v${APP_VERSION}.xlsx"
+          cp "$feature_workbook" out/
+
       # SHA256SUMS.txt = 기본 설치 파일들(윈도우 exe + 맥 dmg), SHA256SUMS_offline.txt = 오프라인판
       - name: Checksums
         shell: bash
@@ -220,6 +229,7 @@ jobs:
           ls *_offline.exe >/dev/null 2>&1 && sha256sum *_offline.exe > SHA256SUMS_offline.txt
           base=$(ls *.exe *.dmg 2>/dev/null | grep -v _offline || true)
           [ -n "$base" ] && sha256sum $base > SHA256SUMS.txt
+          sha256sum *Feature-List*.xlsx > SHA256SUMS_features.txt
           cat SHA256SUMS*.txt; ls -l
 
       # 릴리스 본문 = docs/release-notes/v<버전>.md + 설치 파일 표(improve-1027v3-spec 5절, 공통 규칙 3-6)

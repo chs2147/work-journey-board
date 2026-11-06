@@ -1,0 +1,16 @@
+{
+  "templateOnly": true,
+  "id": "example-profile",
+  "name": "미등록 패키징 예시",
+  "parent": "windows-standard",
+  "abstract": false,
+  "platform": "windows",
+  "releasePolicy": "승인 후 등록",
+  "overrides": [
+    {
+      "featureId": "WJB-UNIVERSE-001",
+      "state": "excluded",
+      "reason": "승인된 범위의 예시"
+    }
+  ]
+}

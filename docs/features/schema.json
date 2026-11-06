@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Work Journey Board Feature catalog v1",
+  "type": "object",
+  "required": ["schemaVersion", "productId", "catalogVersion", "asOfDate", "appSchemaVersion", "features"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "productId": {"type": "string", "minLength": 1},
+    "catalogVersion": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "asOfDate": {"type": "string", "format": "date"},
+    "appSchemaVersion": {"type": "integer", "minimum": 1},
+    "features": {"type": "array", "items": {"$ref": "#/$defs/feature"}}
+  },
+  "$defs": {
+    "feature": {
+      "type": "object",
+      "required": ["id", "area", "section", "kind", "name", "description", "introduced", "status", "history", "platforms", "platformSince", "sources", "implementation", "verification"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^WJB-[A-Z]+-[0-9]{3}$"},
+        "name": {"type": "string", "minLength": 1},
+        "introduced": {"type": ["string", "null"]},
+        "status": {"enum": ["active", "retired", "planned"]},
+        "platforms": {"type": "array", "items": {"enum": ["windows", "macos"]}},
+        "history": {"type": "array", "items": {"type": "object", "required": ["version", "type", "description", "source"], "properties": {"type": {"enum": ["added", "changed", "retired"]}}}},
+        "sources": {"type": "array", "minItems": 1, "items": {"type": "string"}}
+      }
+    }
+  }
+}

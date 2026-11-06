@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "productId": "work-journey-board",
+  "name": "Work Journey Board",
+  "currentVersion": "1.18.1",
+  "upstream": null,
+  "catalog": "catalog.json",
+  "profiles": [
+    "windows-standard",
+    "macos-universal",
+    "windows-offline"
+  ],
+  "defaultArtifactProfiles": [
+    "windows-standard",
+    "macos-universal"
+  ],
+  "versionPolicy": "한 원본·한 앱 버전·세 패키징 프로필. 오프라인판은 요청 때만 배포."
+}

@@ -33,6 +33,7 @@
   --surface-sub: #f1efe8;
   --surface-focus: #f4f9fe;
   --line: #d3d1c7;
+  --timeline-divider: var(--line);
   --line-strong: #b4b2a9;
   --text-1: #2c2c2a;
   --text-2: #5f5e5a;
@@ -268,6 +269,7 @@
   --surface-focus: #f4ebdd;
   --line: #e9e1d5;
   --line-strong: #d6c3aa;
+  --timeline-divider: #947b62;
   --text-1: #423c34;
   --text-2: #6b6054;
   --text-3: #786f63;

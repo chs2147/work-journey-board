@@ -32,6 +32,9 @@ jobs:
       - name: Quick guide check (features-1102-spec F6)
         run: node scripts/guide/guide.mjs check
 
+      - name: Feature catalog and review workbook check
+        run: node scripts/features/generate.mjs check
+
       - name: Install Playwright browsers (Chromium, WebKit)
         run: npx playwright install --with-deps chromium webkit
       - run: npm run e2e

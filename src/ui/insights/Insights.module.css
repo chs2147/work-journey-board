@@ -633,7 +633,7 @@
   grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-4);
   padding: var(--sp-5) 0;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--timeline-divider);
   border-radius: 0;
 }
 
@@ -1287,7 +1287,7 @@
   margin: var(--sp-4) 0 0;
   padding: var(--sp-4) 0;
   border: 0;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--timeline-divider);
   border-radius: 0;
   background: transparent;
   color: var(--text-1);

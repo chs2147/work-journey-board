@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "profiles": [
+    {
+      "id": "base-common",
+      "name": "공통 기준 제품",
+      "parent": null,
+      "abstract": true,
+      "platform": null,
+      "releasePolicy": "제품 공통 원본; 배포 파일 아님",
+      "overrides": []
+    },
+    {
+      "id": "windows-standard",
+      "name": "Windows 기본판",
+      "parent": "base-common",
+      "abstract": false,
+      "platform": "windows",
+      "releasePolicy": "매 정식 릴리스 기본 빌드",
+      "overrides": [
+        {
+          "featureId": "WJB-DIST-002",
+          "state": "excluded",
+          "reason": "WebView2 부트스트래퍼 패키징"
+        }
+      ]
+    },
+    {
+      "id": "macos-universal",
+      "name": "macOS 유니버설",
+      "parent": "base-common",
+      "abstract": false,
+      "platform": "macos",
+      "releasePolicy": "매 정식 릴리스 기본 빌드",
+      "overrides": []
+    },
+    {
+      "id": "windows-offline",
+      "name": "Windows 오프라인 설치판",
+      "parent": "windows-standard",
+      "abstract": false,
+      "platform": "windows",
+      "releasePolicy": "별도 요청 때만 빌드; 현재 정식 릴리스 기본 산출물에는 없음",
+      "overrides": [
+        {
+          "featureId": "WJB-DIST-001",
+          "state": "excluded",
+          "reason": "부트스트래퍼 대신 오프라인 런타임 포함"
+        },
+        {
+          "featureId": "WJB-DIST-002",
+          "state": "included",
+          "reason": "WebView2 오프라인 런타임 포함"
+        }
+      ]
+    }
+  ]
+}

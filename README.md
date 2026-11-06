@@ -91,7 +91,15 @@ npm run tauri dev    # 실앱 모드(윈도우·맥 / 리눅스는 webkit2gtk-4.
 - 브라우저 모드 주소 옵션(E2E·시연): `?today=YYYY-MM-DD` 오늘 고정 · `?empty=1` 빈 일지 · `?fresh=1` 첫 실행 화면 · `?existing=/경로` 그 폴더에 샘플 일지 준비 · `?config=/경로` 설정 폴더 지정 · `?sample=year`(`year-img`) 가상 1년치 일지 · `?sample=showcase` README·소개 사이트 화면용 메모 보드 예시 · `?corrupt=1` 파손 일지
 - 설치 파일: `main`에 반영되면 *Build desktop installers*가 윈도우(NSIS)·맥(유니버설 DMG)을 나란히 만들고, **둘 다 성공해야** [Releases](https://github.com/chs2147/work-journey-board/releases)에 `v<버전>`으로 함께 올린다 — 0.x·`-rc`는 사전 릴리스, 1.0.0 이상 정식 판은 정식 릴리스. 윈도우 오프라인 설치판은 요청할 때만 Actions → *Build desktop installers* → Run workflow(main) → `offline`으로 그 판 릴리스에 더한다. 하나의 원본으로 두 플랫폼을 같은 판으로 운영한다([docs/macos-spec.md](docs/macos-spec.md)).
 
+현재 상세 기능과 도입 버전: [Feature List 운영 문서](docs/features/README.md) · [현재 목록](docs/features/CURRENT.md) · [검토용 Excel](docs/features/exports/work-journey-board/Work-Journey-Board-Feature-List-v1.18.1.xlsx)
+
 ## Version History
+### v1.18.1 (2026-11-06) — Feature List 문서 체계·타임라인 구분선 대비
+- 고정 Feature ID·최초 제공/개선 버전·파생 제품/배포 프로필·버전 스냅샷과 검토용 Excel 운영 체계
+- 현재 활성 229개 항목과 제거·대체/계획 항목 분리, 출시 이력·명세·구현 위치 연결
+- 시그니처 업무 타임라인 월 아래·주차 사이 구분선을 배경과 구분되는 갈색으로 강화
+- 앱 기능 추가·DB 구조 변경 없음, Windows 기본판·macOS 유니버설 DMG
+
 ### v1.18.0 (2026-11-06) — 메모 다중 이동·인사이트 개선
 - 선택한 메모 본문 어디든 전체 이동, 클릭 선택 유지·더블클릭 개별 편집, 직각 선택 외곽·취소/되돌리기
 - 업무 타임라인/활동 아이콘·명칭, 지도 상시 표시, 월→주→상세 위계와 구분선

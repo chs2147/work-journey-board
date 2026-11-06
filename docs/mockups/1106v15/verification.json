@@ -1,0 +1,41 @@
+{
+  "results": [
+    {
+      "theme": "signature",
+      "month": "rgb(148, 123, 98)",
+      "week": "rgb(148, 123, 98)",
+      "line": "rgb(233, 225, 213)",
+      "page": "rgb(237, 230, 220)",
+      "focus": "rgb(244, 235, 221)",
+      "width": "1px",
+      "radius": "0px",
+      "overflow": false,
+      "pageContrast": 3.217679809717988,
+      "currentWeekContrast": 3.373495502185809,
+      "oldPageContrast": 1.0467693860044058
+    },
+    {
+      "theme": "light",
+      "month": "rgb(211, 209, 199)",
+      "week": "rgb(211, 209, 199)",
+      "line": "rgb(211, 209, 199)",
+      "page": "rgb(250, 249, 245)",
+      "focus": "rgb(244, 249, 254)",
+      "width": "1px",
+      "radius": "0px",
+      "overflow": false
+    },
+    {
+      "theme": "dark",
+      "month": "rgb(61, 61, 58)",
+      "week": "rgb(61, 61, 58)",
+      "line": "rgb(61, 61, 58)",
+      "page": "rgb(26, 26, 25)",
+      "focus": "rgb(29, 42, 56)",
+      "width": "1px",
+      "radius": "0px",
+      "overflow": false
+    }
+  ],
+  "errors": []
+}
