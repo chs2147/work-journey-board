@@ -12,7 +12,7 @@ test("parent copy dialog preserves references across weeks, badge opens original
   await start(page);
   await seedV16(page);
   const dialog = await openCopyV16(page);
-  await expect(dialog).toContainText("항목 2개 · 메모 연결 2개 · Cabinet 연결 1개");
+  await expect(dialog).toContainText("항목 2개 · 메모 연결 2개 · Cabi.NET 연결 1개");
   await dialog.getByLabel("복제할 날짜").fill("2026-10-29");
   await expect(dialog).toContainText("원래 마감일 이후");
   await dialog.getByRole("button", { name: "복제", exact: true }).click();
