@@ -48,10 +48,20 @@ test("v13 이력의 생성/실제 버전, 구형·새 구조·불일치 판정�
   await expect(page.getByTestId("restore-detail")).toContainText("백업 실제 구조");
   await expect(page.getByTestId("restore-detail")).toContainText("v14");
   await expect(page.getByRole("button", { name: "이 사본으로 복원" })).toBeEnabled();
-  await page.getByTestId("restore-item").filter({ hasText: "1.18.0" }).click();
+  // 생성 앱 버전은 현재 앱과 같을 수 있다. 검사할 DB 구조로 고르고 실제 선택 파일도 확인한다.
+  const futureRow = page.getByTestId("restore-item").filter({ has: page.getByText("v15", { exact: true }) });
+  await expect(futureRow).toHaveCount(1);
+  await futureRow.click();
+  await expect(page.getByTestId("restore-detail")).toContainText(future.slice(future.lastIndexOf("/") + 1));
   await expect(page.getByTestId("restore-detail")).toContainText("앱을 업데이트");
   await expect(page.getByRole("button", { name: "이 사본으로 복원" })).toBeDisabled();
-  await page.getByTestId("restore-item").filter({ hasText: "1.17.0" }).filter({ hasText: "v13" }).click();
+  await page
+    .getByTestId("restore-item")
+    .filter({ has: page.getByText("v13", { exact: true }) })
+    .click();
+  await expect(page.getByTestId("restore-detail")).toContainText(
+    mismatch.slice(mismatch.lastIndexOf("/") + 1),
+  );
   await expect(page.getByTestId("restore-detail")).toContainText("파일 정보 불일치");
   await expect(page.getByRole("button", { name: "이 사본으로 복원" })).toBeDisabled();
   await dialog.getByLabel("종류", { exact: true }).selectOption("protected");
