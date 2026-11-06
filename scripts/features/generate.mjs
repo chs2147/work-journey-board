@@ -26,16 +26,42 @@ const states = {
   planned: "미제공·계획",
 };
 const eventNames = { added: "도입", changed: "개선", retired: "제거·대체" };
+// 정식 판과 RC를 같은 순서에서 비교하되 build 메타데이터는 순서에 영향을 주지 않는다.
+const releaseVersion = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
 const compare = (a, b) => {
-  const x = a.split(".").map(Number),
-    y = b.split(".").map(Number);
-  for (let i = 0; i < 3; i++) if (x[i] !== y[i]) return x[i] - y[i];
+  const parse = (value) => {
+    if (!releaseVersion.test(value)) throw Error(`버전 형식 오류: ${value}`);
+    const clean = value.split("+")[0],
+      dash = clean.indexOf("-");
+    return {
+      core: (dash < 0 ? clean : clean.slice(0, dash)).split(".").map(Number),
+      pre: dash < 0 ? [] : clean.slice(dash + 1).split("."),
+    };
+  };
+  const x = parse(a),
+    y = parse(b);
+  for (let i = 0; i < 3; i++) if (x.core[i] !== y.core[i]) return x.core[i] - y.core[i];
+  if (!x.pre.length || !y.pre.length) return x.pre.length === y.pre.length ? 0 : x.pre.length ? -1 : 1;
+  for (let i = 0; i < Math.max(x.pre.length, y.pre.length); i++) {
+    if (x.pre[i] === y.pre[i]) continue;
+    if (x.pre[i] === undefined) return -1;
+    if (y.pre[i] === undefined) return 1;
+    const nx = /^\d+$/.test(x.pre[i]),
+      ny = /^\d+$/.test(y.pre[i]);
+    if (nx && ny) return Number(x.pre[i]) - Number(y.pre[i]);
+    if (nx !== ny) return nx ? -1 : 1;
+    return x.pre[i] < y.pre[i] ? -1 : 1;
+  }
   return 0;
 };
+const firstAvailable = (f) =>
+  f.preview && (!f.introduced || compare(f.preview, f.introduced) < 0) ? f.preview : f.introduced;
+const introducedLabel = (f) => f.introduced ?? (f.status === "active" && f.preview ? "RC 제공만" : "미제공");
 const concrete = profiles.filter((p) => !p.abstract);
 function at(f, v) {
-  if (!f.introduced) return "planned";
-  if (compare(f.introduced, v) > 0) return "notYet";
+  const first = firstAvailable(f);
+  if (!first) return "planned";
+  if (compare(first, v) > 0) return "notYet";
   if (f.retired && compare(f.retired, v) <= 0) return "retired";
   return "included";
 }
@@ -64,14 +90,21 @@ function validate() {
     throw Error("앱 버전과 카탈로그 버전 불일치. 기준 버전·스냅샷·엑셀을 함께 갱신하세요.");
   if (new Set(features.map((f) => f.id)).size !== features.length) throw Error("중복 Feature ID");
   const semver = /^\d+\.\d+\.\d+$/;
+  if (!releaseVersion.test(version)) throw Error("카탈로그 버전 형식 오류");
   for (const f of features) {
     if (!/^WJB-[A-Z]+-\d{3}$/.test(f.id) || !f.name || !f.description || !f.sources.length)
       throw Error(`필수 필드: ${f.id}`);
     if (!["active", "retired", "planned"].includes(f.status)) throw Error(`기능 상태 오류: ${f.id}`);
-    if (f.status !== "planned" && (!semver.test(f.introduced) || !f.implementation.length))
+    if (f.introduced && !semver.test(f.introduced)) throw Error(`비RC 도입 버전 형식 오류: ${f.id}`);
+    if (f.preview && !releaseVersion.test(f.preview)) throw Error(`RC 버전 형식 오류: ${f.id}`);
+    if (f.status !== "planned" && (!firstAvailable(f) || !f.implementation.length))
       throw Error(`도입 버전/구현 근거 없음: ${f.id}`);
     for (const e of f.history) {
-      if (!semver.test(e.version) || compare(e.version, version) > 0 || compare(e.version, f.introduced) < 0)
+      if (
+        !releaseVersion.test(e.version) ||
+        compare(e.version, version) > 0 ||
+        compare(e.version, firstAvailable(f)) < 0
+      )
         throw Error(`변경 버전 오류: ${f.id}`);
       if (!Object.hasOwn(eventNames, e.type) || !fs.existsSync(path.join(ROOT, e.source)))
         throw Error(`이력 근거 없음: ${f.id}`);
@@ -151,7 +184,7 @@ function markdown() {
     );
     for (const f of active.filter((f) => f.area === area))
       lines.push(
-        `| ${f.id} | ${f.name} — ${f.description} | ${f.introduced} | ${f.lastChanged} | ${f.platforms.join(" / ")} |`,
+        `| ${f.id} | ${f.name} — ${f.description} | ${introducedLabel(f)} | ${f.lastChanged} | ${f.platforms.join(" / ")} |`,
       );
     lines.push("");
   }
@@ -272,7 +305,7 @@ async function workbook() {
     f.section,
     f.name,
     f.description,
-    f.introduced,
+    introducedLabel(f),
     f.preview ?? "—",
     f.lastChanged,
     ...concrete.map((p) => states[resolve(f, p.id)]),
@@ -338,7 +371,7 @@ async function workbook() {
       f.id,
       f.area,
       f.name,
-      f.introduced ?? "미제공",
+      introducedLabel(f),
       ...milestones.map((v) => states[at(f, v)]),
     ]),
     [25, 24, 44, 15, ...milestones.map(() => 17)],
@@ -436,7 +469,7 @@ async function workbook() {
         f.area,
         f.name,
         f.status === "retired" ? "제거·대체" : "미제공·계획",
-        f.introduced ?? "미제공",
+        introducedLabel(f),
         f.retired ?? "—",
         f.description,
         f.sources.join("\n"),
@@ -491,7 +524,7 @@ async function workbook() {
   const review = table(
     "09_검토입력",
     ["Feature ID", "영역", "기능명", "도입 버전", "검토 상태", "검토자", "검토 의견", "처리 버전/근거"],
-    features.map((f) => [f.id, f.area, f.name, f.introduced ?? "미제공", "미검토", "", "", ""]),
+    features.map((f) => [f.id, f.area, f.name, introducedLabel(f), "미검토", "", "", ""]),
     [26, 26, 44, 18, 22, 24, 95, 55],
     3,
   );
