@@ -27,6 +27,7 @@ import {
 } from "../board/boardStore";
 import { useAppStore } from "../common/appStore";
 import { useMediaQuery } from "../common/useMediaQuery";
+import { IconTimeline, IconActivity } from "../common/icons";
 import { CategoryPicker } from "./CategoryPicker";
 import { JourneyMap } from "./JourneyMap";
 import { OverviewTab } from "./OverviewTab";
@@ -39,7 +40,6 @@ import {
   mapUnitOf,
   selectCategory,
   setIncludeEnded,
-  setMapOpen,
   setPeriod,
   setQuery,
   setTab,
@@ -317,6 +317,7 @@ export function InsightsView() {
               data-testid={`insight-tab-${t}`}
               onClick={() => setTab(t)}
             >
+              {t === "timeline" ? <IconTimeline /> : <IconActivity />}
               {t === "timeline" ? STR.insights.timeline : STR.insights.overview}
             </button>
           ))}
@@ -531,11 +532,6 @@ export function InsightsView() {
                         )}
                       </span>
                     )}
-                    {!st.mapOpen && cells.length > 0 && (
-                      <button type="button" className={styles.btn} onClick={() => setMapOpen(true)}>
-                        {STR.insights.mapShow}
-                      </button>
-                    )}
                     <button
                       type="button"
                       className={styles.btn}
@@ -550,7 +546,7 @@ export function InsightsView() {
                   </div>
                 </div>
 
-                {st.mapOpen && cells.length > 0 && unit && (
+                {cells.length > 0 && unit && (
                   <div style={{ padding: "0 24px" }}>
                     <JourneyMap
                       cells={cells}
@@ -560,11 +556,6 @@ export function InsightsView() {
                       visibleWeeks={st.visibleWeeks}
                       ongoing={catOngoing}
                     />
-                    <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                      <button type="button" className={styles.linkBtn} onClick={() => setMapOpen(false)}>
-                        {STR.insights.mapHide}
-                      </button>
-                    </div>
                   </div>
                 )}
 

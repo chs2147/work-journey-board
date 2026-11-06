@@ -630,15 +630,22 @@
 
 .week {
   display: grid;
-  grid-template-columns: 118px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-4);
-  padding: var(--sp-3) 10px;
-  border-radius: var(--radius-md);
+  padding: var(--sp-5) 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+}
+
+.weekBody {
+  min-width: 0;
+  padding-left: var(--sp-6);
 }
 
 .weekNow {
   background: var(--surface-focus);
-  box-shadow: inset 0 0 0 1px var(--heat-1);
+  padding-left: var(--sp-4);
+  padding-right: var(--sp-4);
 }
 
 .dim {
@@ -647,9 +654,13 @@
 
 .weekHead {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+  font-size: 16px;
+}
+
+.weekHead .muted {
   font-size: var(--fs-sm);
 }
 
@@ -1081,7 +1092,7 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  width: max-content;
+  width: 100%;
 }
 
 .heatGrid {
@@ -1262,4 +1273,48 @@
   color: var(--accent);
   font-size: var(--fs-xs);
   font-variant-numeric: tabular-nums;
+}
+
+/* v14: 월 → 주 → 기록. 기존 본문 좌우 기준선에 정렬. */
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.monthHead,
+.folded {
+  width: 100%;
+  margin: var(--sp-4) 0 0;
+  padding: var(--sp-4) 0;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-1);
+  font: inherit;
+  font-size: 20px;
+  font-weight: var(--fw-bold);
+  text-align: left;
+  cursor: pointer;
+}
+.monthHead::after {
+  display: none;
+}
+.monthHead .muted,
+.folded .muted {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-regular);
+}
+.monthHead:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.iconBtn[aria-pressed="true"] {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.heatScroll {
+  min-width: 0;
+  width: 100%;
 }

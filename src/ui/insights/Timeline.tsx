@@ -14,7 +14,7 @@ import { splitLinks, shortUrl } from "../../domain/links";
 import { DAY_LABELS, dayIndex, type DateStr } from "../../domain/week";
 import { STR } from "../../shared/strings";
 import { doneDate } from "../../domain/important";
-import { IconDone } from "../common/icons";
+import { IconDone, IconChevronDown, IconChevronRight } from "../common/icons";
 import { openLink } from "../common/openLink";
 import { revealOnBoard, setVisibleWeeks, toggleMonth, useInsights } from "./insightsStore";
 import styles from "./Insights.module.css";
@@ -301,32 +301,34 @@ export function Timeline({ rows, today, categoryId, query, search, currentMatch,
             type="button"
             className={styles.folded}
             aria-expanded={false}
+            aria-label={`${r.label} ${STR.insights.unfold}`}
+            title={STR.insights.unfold}
             data-tl-nav
             data-month-head={r.month}
             data-testid="month-folded"
             onClick={() => toggleMonth(r.month, true)}
           >
-            <span aria-hidden="true">▸</span>
             <b>{r.label}</b>
             <span className={styles.muted}>{STR.insights.monthFolded(r.weeks, r.items)}</span>
             <span className={styles.grow} />
-            <span className={styles.muted}>{STR.insights.unfold}</span>
+            <IconChevronRight />
           </button>
         ) : (
-          <div key={`m-${r.month}`} className={styles.monthHead} data-month-head={r.month}>
-            <button
-              type="button"
-              className={styles.foldBtn}
-              aria-expanded={true}
-              aria-label={`${r.label} ${STR.insights.fold}`}
-              title={STR.insights.fold}
-              onClick={() => toggleMonth(r.month, false)}
-            >
-              ▾
-            </button>
-            {r.label}
+          <button
+            key={`m-${r.month}`}
+            className={styles.monthHead}
+            data-month-head={r.month}
+            type="button"
+            aria-expanded={true}
+            aria-label={`${r.label} ${STR.insights.fold}`}
+            title={STR.insights.fold}
+            onClick={() => toggleMonth(r.month, false)}
+          >
+            <span>{r.label}</span>
             {hits > 0 && <span className={styles.hitChip}>{STR.insights.matchesIn(hits)}</span>}
-          </div>
+            <span className={styles.grow} />
+            <IconChevronDown />
+          </button>
         ),
       );
       continue;
@@ -352,7 +354,7 @@ export function Timeline({ rows, today, categoryId, query, search, currentMatch,
               <span className={styles.muted}>{mdd(r.start, r.end)}</span>
               {r.current && <span className={styles.nowChip}>{STR.insights.thisWeek}</span>}
             </div>
-            <div>
+            <div className={styles.weekBody}>
               {r.marks.length > 0 && (
                 <div className={styles.marks}>
                   {r.marks.map((m) => (

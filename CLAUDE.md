@@ -42,6 +42,7 @@
   | `universe-renewal-v2-spec.md` | Universe 개편 A안: 독립 다크 지도·다이나믹 3D/정적 2D·줌 전환·접이식 필터/상세 — 2026-11-05 승인, 작업 브랜치 `universe-renewal-v2` 구현 |
   | `improve-1105v12-spec.md` | 개선 v12: 항목별 모노그램 완료/취소·본문 취소선·완료 묶음 가져오기 제외·여백·직각 글자색 A안. 일반 완료의 원래 중요 표시 보존을 위한 구조 v14, `improve-v12` RC2 검증 → **`v1.16.0` main 반영(2026-11-05)** |
   | `improve-1105v13-spec.md` | 개선 v13: 백업 생성 앱/실제 구조 버전·이력/복원 호환성·기간/용량 보관·정리 미리보기. 2026-11-05 A안 승인, `improve-v13` RC1 검증 → `v1.17.0` main 반영, 일지 구조 v14 유지 |
+  | `improve-1106v14-spec.md` | 개선 v14: 객체 본문 그룹 이동·선택 외곽, 업무 타임라인/활동 아이콘·위계·구분선·유동 폭 — A안 승인, `improve-v14` 구현 |
   | `guide/` | **빠른 이용 가이드 원본**(장면별 `NN-이름.md` 14 + 부록 · `map.md` 기능 ↔ 장면 대응표·기준 판·갱신일) → `node scripts/guide/guide.mjs build`·`pdf`·`shots`가 소개 사이트 `site/guide/`(HTML·PDF·스크린샷) 생성, CI `guide.mjs check` |
   | `brand-spec.md` | 앱 아이콘(노트·책갈피, 작은 판)·워드마크(그로테스크 + 손글씨 Journey, SVG 도형) — 생성 도구 `scripts/brand/` |
   | `wireframes/` | 주간 보드·첫 실행/연간 보기·인사이트·스플래시 와이어프레임(svg)·스플래시 창 화면(png) |

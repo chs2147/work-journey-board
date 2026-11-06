@@ -24,7 +24,7 @@
 ## 핵심 기능
 - **매일 2분, 키보드만으로** — 요일 × 업무 칸에 개조식 기록(Enter 다음 줄 · Tab 세부 항목 · ↓ 다음 업무), 오늘 열 강조, 직전 기록 가져오기, 중요 표시·매주 반복·연차, 주간 메모 보드
 - **쓰기만 하면 주간 보고** — 업무별·요일별 자동 집계, 수정본, 사내 AI 도구용 다듬기 지시문, 엑셀 2시트 · 메모 보드 그림
-- **지나온 일이 한눈에** — 업무별 경과 타임라인·경과 지도, 활동 히트맵, 연간 보기
+- **지나온 일이 한눈에** — 업무별 업무 타임라인·경과 지도, 활동 히트맵, 연간 보기
 - **메모 보드로 맥락까지** — 업무 항목에 연결한 메모·이미지·링크 카드, 상자끼리 관계선, 선택 사각형으로 여러 상자 함께 옮기기, PNG·**마크다운**으로 내보내기
 - **Cabinet — 자주 쓰는 폴더·링크** — 업무별로 작업 폴더·위키·대시보드를 끌어 놓아 등록하고, 별도 창에서 폴더를 열어 파일을 바로 열기. 보드의 업무 이름·항목 옆 🗄로 한 번에 이동
 - **Universe — 기록과 지식의 연결 지도** — 기록·메모·폴더가 어떻게 이어지는지 한눈에 보고 원래 자리로(`Alt+5`). 주를 넘는 직접 연결, 해결법·배운 점을 남기는 지식 카드, 사내 AI에 붙여 넣을 근거 묶음
@@ -34,7 +34,7 @@
 
 | 주간 요약 | 인사이트 |
 |---|---|
-| ![주간 요약 — 자동 집계](docs/screenshots/summary-signature.png) | ![인사이트 — 경과 타임라인](docs/screenshots/insights-signature.png) |
+| ![주간 요약 — 자동 집계](docs/screenshots/summary-signature.png) | ![인사이트 — 업무 타임라인](docs/screenshots/insights-signature.png) |
 
 ## 설치
 [Releases](https://github.com/chs2147/work-journey-board/releases/latest)에서 내려받습니다 — **Windows 10·11 · macOS 13 이상**(1.6.0부터, 같은 판·같은 기능).
@@ -60,7 +60,7 @@
 | [docs/overview.md](docs/overview.md) | 요구사항 · 설계 결정 이력 · **화면 구성(10절)** · 단축키(10-3절) · 인계 명세(12절) |
 | [docs/data-spec.md](docs/data-spec.md) | ISO 주차 · 스키마 SQL · 카테고리 활성/무기록 규칙 · 삭제 · 백업 · 저장소 인터페이스 |
 | [docs/output-spec.md](docs/output-spec.md) | 주간 자동 집계 · 엑셀 2시트 양식 · 내보내기 · AI 클립보드 지시문 |
-| [docs/viz-spec.md](docs/viz-spec.md) | 경과 타임라인 · 활동 히트맵 · 기간 막대 · 주별 비중 · 업무 색 팔레트 |
+| [docs/viz-spec.md](docs/viz-spec.md) | 업무 타임라인 · 활동 히트맵 · 기간 막대 · 주별 비중 · 업무 색 팔레트 |
 | [docs/brand-spec.md](docs/brand-spec.md) | 앱 아이콘 · 워드마크 규칙 · 만드는 방법 |
 | [docs/release-phase2-spec.md](docs/release-phase2-spec.md) | 정식 릴리스 준비 — 시그니처 기본값 · 설치 프로그램 그림 · 정식 판/오프라인판 배포 · 만든 이 표시 |
 | [docs/optimize-1031-plan.md](docs/optimize-1031-plan.md) | 최적화 · 백업 보강 · 앱 안 복원(v0.4.0) |
@@ -92,6 +92,12 @@ npm run tauri dev    # 실앱 모드(윈도우·맥 / 리눅스는 webkit2gtk-4.
 - 설치 파일: `main`에 반영되면 *Build desktop installers*가 윈도우(NSIS)·맥(유니버설 DMG)을 나란히 만들고, **둘 다 성공해야** [Releases](https://github.com/chs2147/work-journey-board/releases)에 `v<버전>`으로 함께 올린다 — 0.x·`-rc`는 사전 릴리스, 1.0.0 이상 정식 판은 정식 릴리스. 윈도우 오프라인 설치판은 요청할 때만 Actions → *Build desktop installers* → Run workflow(main) → `offline`으로 그 판 릴리스에 더한다. 하나의 원본으로 두 플랫폼을 같은 판으로 운영한다([docs/macos-spec.md](docs/macos-spec.md)).
 
 ## Version History
+### v1.18.0-rc.1 (2026-11-06) — 메모 다중 이동·인사이트 개선 검증판
+- 선택한 텍스트·이미지·링크 본문 어디든 전체 이동, 직각 선택 외곽·보조 손잡이·취소/한 번에 되돌리기
+- 업무 타임라인/활동 아이콘·명칭, 지도 상시 표시, 월→주→상세 위계와 구분선
+- 활동 격자 유동 폭·내부 스크롤, 가이드 갱신, DB 구조 v14 유지
+- Windows 기본판·macOS 유니버설 DMG 검증용 빌드
+
 ### v1.17.1 (2026-11-06) — 백업 보관 규칙 안내 정렬 수정
 - 보관 규칙 아래 안내·삭제 보류·정리 이력에 기존 설정 행과 같은 좌우 여백 적용
 - 카드 제목·설정 행·메시지 공통 여백과 새 텍스트 영역 정렬 규칙 추가

@@ -55,10 +55,10 @@ test("탭 줄: 활동 개요 = 업무 고르기·종료 업무 포함·기간은
   await page.keyboard.press("ArrowLeft");
   await expect(page.getByTestId("insight-tab-overview")).toHaveAttribute("aria-selected", "true");
 
-  // 업무 머리 ⋯ [경과 타임라인 보기] = 늘 타임라인 탭
+  // 업무 머리 ⋯ [업무 타임라인 보기] = 늘 타임라인 탭
   await page.keyboard.press("Alt+Digit1");
   await page.getByRole("button", { name: `${B} 메뉴` }).click();
-  await page.getByRole("menuitem", { name: /경과 타임라인 보기/ }).click();
+  await page.getByRole("menuitem", { name: /업무 타임라인 보기/ }).click();
   await expect(page.getByTestId("insight-tab-timeline")).toHaveAttribute("aria-selected", "true");
   await expect(page.getByTestId("insight-title")).toContainText(B);
 });

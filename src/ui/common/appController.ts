@@ -43,7 +43,7 @@ import {
   useBoard,
 } from "../board/boardStore";
 import { detachSummary, flushDraft, initSummary } from "../summary/summaryStore";
-import { detachNote, finishNote, flushNote, initNote } from "../note/noteStore";
+import { detachNote, finishNote, flushNote, initNote, useNote } from "../note/noteStore";
 import { detachInsights, initInsights, useInsights } from "../insights/insightsStore";
 import { restoreCabinet, shutdownCabinet, suspendCabinet } from "../cabinet/cabinetStore";
 import { closeInsights } from "../insights/insightsStore";
@@ -808,6 +808,15 @@ export async function addExistingWorkspace(dir: string): Promise<string | null> 
 if (typeof window !== "undefined")
   Object.assign(globalThis, {
     __wjbApp: {
+      /** 브라우저 E2E 전용: 메모 저장 결과와 실행 취소의 공간 분리 확인(읽기만). */
+      async noteSnapshot() {
+        const j = get().journal;
+        if (j.state !== "ready" || platform().kind !== "browser") return null;
+        return {
+          doc: (await j.repo.getWeekNote(useBoard.getState().weekId)).doc,
+          canUndo: useNote.getState().canUndo,
+        };
+      },
       async assetCount() {
         const j = get().journal;
         return j.state === "ready" ? (await j.repo.noteAssetStats()).count : -1;

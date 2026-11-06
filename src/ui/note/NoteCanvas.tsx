@@ -24,10 +24,11 @@ import {
   type TextBox,
 } from "../../domain/note";
 import { NoteColorPalette } from "./NoteColorPalette";
+import { IconMoveGroup } from "../common/icons";
 import { STR } from "../../shared/strings";
 import { reportError, toast, useBoard } from "../board/boardStore";
 import { useAppStore } from "../common/appStore";
-import { onSelectedBoxKey, startBoxDrag, useBoxFrame } from "./boxShared";
+import { onSelectedBoxKey, startBoxDrag, startGroupDrag, useBoxFrame } from "./boxShared";
 import { noteExtensions } from "./editorExtensions";
 import { ImageBoxView, ImagePreview } from "./ImageBoxView";
 import { Minimap } from "./Minimap";
@@ -66,6 +67,8 @@ import {
   updateContent,
   useNote,
   clearMulti,
+  cancelNoteGesture,
+  isNoteGestureActive,
   deleteBoxes,
   redoNote,
   undoNote,
@@ -87,6 +90,7 @@ const ROOM = { right: 40, bottom: 160 };
 const isEditable = (el: Element | null) => !!el?.closest('input, textarea, select, [contenteditable="true"]');
 
 export default function NoteCanvas() {
+  useEffect(() => () => cancelNoteGesture(), []);
   const doc = useNote((s) => s.doc);
   const editingId = useNote((s) => s.editingId);
   const selectedId = useNote((s) => s.selectedId);
@@ -131,7 +135,7 @@ export default function NoteCanvas() {
   useEffect(() => {
     if (!multi.length) return;
     const onKey = (e: globalThis.KeyboardEvent) => {
-      if (e.isComposing || isEditable(document.activeElement)) return;
+      if (e.isComposing || isEditable(document.activeElement) || isNoteGestureActive()) return;
       const ids = useNote.getState().multi;
       const step = e.shiftKey ? 32 : 8;
       const d = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[
@@ -211,7 +215,7 @@ export default function NoteCanvas() {
     // 처음엔 가장 가까운 상자
     if (!st().linking?.target) setLinkTarget(list()[0]?.id ?? null);
     const onKey = (e: globalThis.KeyboardEvent) => {
-      if (e.isComposing || isEditable(document.activeElement)) return;
+      if (e.isComposing || isEditable(document.activeElement) || isNoteGestureActive()) return;
       const cands = list();
       const cur = cands.findIndex((b) => b.id === st().linking?.target);
       if (e.key === "Tab") {
@@ -335,7 +339,21 @@ export default function NoteCanvas() {
 
   /** 키보드로 잇는 중에 마우스로 상자를 누르면 그 상자와 잇고, 빈 곳이면 취소 */
   const onCanvasPointerDownCapture = (e: PointerEvent<HTMLDivElement>) => {
-    const l = useNote.getState().linking;
+    const st = useNote.getState();
+    const target = e.target as Element;
+    const box = st.doc.boxes.find(
+      (b) => b.id === target.closest<HTMLElement>("[data-box-id]")?.dataset.boxId,
+    );
+    if (e.button === 0 && box && (e.shiftKey || (st.multi.length > 1 && st.multi.includes(box.id)))) {
+      // 버튼·명시적 링크·입력은 각 기능 우선. 이동 손잡이는 그룹 이동에 포함.
+      const control = target.closest("button, input, textarea, select, [role=button], [data-open]");
+      const grip = control?.classList.contains(styles.grip!);
+      if ((!control || grip) && !(e.ctrlKey || e.metaKey)) {
+        startBoxDrag(e, box, "move");
+        return;
+      }
+    }
+    const l = st.linking;
     if (!l || l.mode !== "keys" || e.button !== 0) return;
     e.preventDefault();
     e.stopPropagation();
@@ -351,6 +369,7 @@ export default function NoteCanvas() {
     if (e.target !== e.currentTarget || e.button !== 0) return;
     e.preventDefault();
     if (useNote.getState().edgeId) selectEdge(null);
+    const hadMulti = useNote.getState().multi.length > 0;
     const canvas = e.currentTarget;
     const [sx, sy] = [e.clientX, e.clientY];
     let dragging = false;
@@ -391,6 +410,7 @@ export default function NoteCanvas() {
         return;
       }
       clearMulti();
+      if (hadMulti) return;
       const rect = canvas.getBoundingClientRect();
       if (editingId) endEditing(editingId);
       addBox((sx - rect.left) / zoom, (sy - rect.top) / zoom);
@@ -471,6 +491,16 @@ export default function NoteCanvas() {
             data-note-drop
             onPointerDownCapture={onCanvasPointerDownCapture}
             onPointerDown={onCanvasPointerDown}
+            onDoubleClickCapture={(e) => {
+              const target = e.target as Element;
+              if (target.closest("button, input, textarea, select, [data-open]")) return;
+              const id = target.closest<HTMLElement>("[data-box-id]")?.dataset.boxId;
+              if (!id || !useNote.getState().multi.includes(id)) return;
+              selectBox(id);
+              const box = doc.boxes.find((b) => b.id === id);
+              if (box?.kind === "text") editors[id]?.commands.focus("end");
+              else if (box?.kind === "image") setPreviewId(id);
+            }}
             // 빈 곳 클릭의 기본 동작(포커스 옮기기)이 방금 커서를 넣은 새 상자를 빼앗지 않게
             onMouseDown={(e) => e.target === e.currentTarget && e.preventDefault()}
             onDragOverCapture={(e) => {
@@ -537,6 +567,7 @@ export default function NoteCanvas() {
           {editingBox && editingEditor && editingBox.id !== pendingId && (
             <FormatToolbar editor={editingEditor} box={editingBox} zoom={zoom} />
           )}
+          <GroupSelection doc={doc} ids={multi} zoom={zoom} />
           <EdgeToolbar doc={doc} zoom={zoom} />
           <LinkPicker doc={doc} zoom={zoom} />
         </div>
@@ -912,6 +943,36 @@ function FormatToolbar({ editor, box, zoom }: { editor: Editor; box: TextBox; zo
       {toggle(STR.note.ordered, st.ordered, () => run((c) => c.toggleOrderedList()), "1.")}
       {toggle(STR.note.task, st.task, () => run((c) => c.toggleTaskList()), "☑")}
       {toggle(STR.note.rule, false, () => run((c) => c.setHorizontalRule()), "—")}
+    </div>
+  );
+}
+
+/** 선택 외곽/보조 이동 도구는 배율과 무관한 크기로 표시한다. */
+function GroupSelection({ doc, ids, zoom }: { doc: NoteDoc; ids: string[]; zoom: number }) {
+  const boxes = doc.boxes.filter((b) => ids.includes(b.id));
+  if (boxes.length < 2) return null;
+  const x = Math.min(...boxes.map((b) => b.x)) * zoom;
+  const y = Math.min(...boxes.map((b) => b.y)) * zoom;
+  const right = Math.max(...boxes.map((b) => b.x + b.w)) * zoom;
+  const bottom = Math.max(...boxes.map((b) => b.y + (b.h ?? 80))) * zoom;
+  return (
+    <div
+      className={styles.groupFrame}
+      data-testid="note-group-frame"
+      style={{ left: x - 6, top: y - 6, width: right - x + 12, height: bottom - y + 12 }}
+    >
+      <div className={styles.groupTools} style={{ top: y >= 40 ? -35 : 8 }}>
+        <span>{STR.note.groupCount(boxes.length)}</span>
+        <button
+          type="button"
+          title={STR.note.groupMoveHint}
+          aria-label={STR.note.groupMoveHint}
+          onPointerDown={(e) => startGroupDrag(e, ids)}
+        >
+          <IconMoveGroup />
+          {STR.note.groupMove}
+        </button>
+      </div>
     </div>
   );
 }

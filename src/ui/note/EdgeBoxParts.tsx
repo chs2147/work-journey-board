@@ -77,7 +77,9 @@ const KNOB_CLASS: Record<(typeof SIDES)[number], string | undefined> = {
 
 /** 연결점 4개 — 어느 쪽에서 끌어도 선 경로는 두 상자 위치로 정한다(routeEdge). 마우스를 올리거나 선택했을 때만(CSS), 대기 상자·[관계선 보기] 끔이면 없음 */
 export function EdgeKnobs({ boxId }: { boxId: string }) {
-  const on = useNote((s) => s.showEdges && s.pendingId !== boxId && s.editingId !== boxId);
+  const on = useNote(
+    (s) => !s.multi.includes(boxId) && s.showEdges && s.pendingId !== boxId && s.editingId !== boxId,
+  );
   const dragging = useNote((s) => s.linking?.from === boxId);
   if (!on) return null;
   return (

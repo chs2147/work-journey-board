@@ -4,6 +4,7 @@
 import { create } from "zustand";
 import {
   BOX_DEFAULT_W,
+  GRID,
   BOX_GAP,
   clampImageWidth,
   clampLinkWidth,
@@ -187,6 +188,18 @@ let loadedDoc: NoteDoc | null = null;
  */
 let docRepo: JournalRepository | null = null;
 let noteGeneration = 0;
+let cancelPointerGesture: (() => void) | null = null;
+export function registerNoteGesture(cancel: () => void) {
+  cancelNoteGesture();
+  cancelPointerGesture = cancel;
+  return () => {
+    if (cancelPointerGesture === cancel) cancelPointerGesture = null;
+  };
+}
+export function cancelNoteGesture() {
+  cancelPointerGesture?.();
+}
+export const isNoteGestureActive = () => cancelPointerGesture !== null;
 const undoStack: NoteDoc[] = [];
 const redoStack: NoteDoc[] = [];
 
@@ -200,6 +213,7 @@ const syncUndo = () => set({ canUndo: undoStack.length > 0, canRedo: redoStack.l
  * 다음 일지에 이전 문서·예약 저장·그림이 섞이지 않게 한다(v1.8.1).
  */
 export function detachNote() {
+  cancelNoteGesture();
   noteGeneration++;
   if (saveTimer) clearTimeout(saveTimer);
   saveTimer = null;
@@ -249,6 +263,7 @@ export async function initNote(r: JournalRepository) {
 }
 
 async function loadWeek(weekId: WeekId, finish = true) {
+  cancelNoteGesture();
   noteGeneration++;
   const r = repo;
   if (!r || !weekId) return;
@@ -286,11 +301,15 @@ async function loadWeek(weekId: WeekId, finish = true) {
 function scheduleSave() {
   if (!docRepo) return; // 일지를 바꾸는 중(연결 끊김) — 다음 일지에 이전 문서를 쓰지 않는다
   if (saveTimer) clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => void flushNote(true), SAVE_DELAY_MS);
+  saveTimer = setTimeout(() => {
+    if (isNoteGestureActive()) scheduleSave();
+    else void flushNote(true);
+  }, SAVE_DELAY_MS);
 }
 
 /** 대기 중인 저장을 지금 끝낸다(주 이동·창 닫기·내보내기 전에). force = 타이머 없이도 저장 */
 export async function flushNote(force = false) {
+  cancelNoteGesture();
   if (!saveTimer && !force) return;
   if (saveTimer) clearTimeout(saveTimer);
   saveTimer = null;
@@ -315,6 +334,7 @@ export async function reloadNote() {
  * 이 주의 메모 실행 취소 기록도 함께 사라지는 때라, 지운 상자를 되살릴 길이 없을 때만 정리한다(스펙 5-2).
  */
 export async function finishNote() {
+  cancelNoteGesture();
   await flushNote();
   const r = docRepo; // 문서를 읽어 온 그 일지에만(다른 공간의 이미지를 이 문서 기준으로 지우지 않게)
   const { weekId, doc, legacy } = get();
@@ -718,8 +738,11 @@ export function clearLinkThumb(id: string) {
   );
 }
 
+/** 포인터 제스처가 읽기 시작한 문서인지 확인하는 세대. 주/일지 교체마다 달라진다. */
+export const noteGestureGeneration = () => noteGeneration;
+
 export function setEditing(id: string | null) {
-  set(id ? { editingId: id, selectedId: null, ...EDGE_RESET } : { editingId: null });
+  set(id ? { editingId: id, selectedId: null, multi: [], ...EDGE_RESET } : { editingId: null });
 }
 
 /** 편집 끝 — 빈 상자는 저절로 없앤다(빈 상자가 쌓이지 않게, 스펙 4-2) */
@@ -757,8 +780,14 @@ export function selectBox(id: string | null) {
 // ── 여러 상자 함께(improve-1102v7 K7) ──────────────────
 export function setMulti(ids: string[]) {
   const cur = get().multi;
-  if (ids.length === cur.length && ids.every((x, i) => x === cur[i])) return;
-  set({ multi: ids, selectedId: null, edgeId: null, edgeLabelOpen: false });
+  if (ids.length > 1 && ids.length === cur.length && ids.every((x, i) => x === cur[i])) return;
+  set({
+    multi: ids.length > 1 ? ids : [],
+    selectedId: ids.length === 1 ? ids[0] : null,
+    editingId: null,
+    edgeId: null,
+    edgeLabelOpen: false,
+  });
 }
 export function clearMulti() {
   if (get().multi.length) set({ multi: [] });
@@ -776,13 +805,17 @@ const mapMany = (ids: string[], f: (b: NoteBox) => NoteBox): NoteDoc => {
 };
 /** 함께 끄는 동안 — 시작 자리에서 dx·dy만큼 */
 export function moveBoxesLive(origins: { id: string; x: number; y: number }[], dx: number, dy: number) {
+  if (!origins.length) return;
+  // 하나의 변화량을 제한/스냅해 경계에서도 객체 사이 간격을 보존한다.
+  dx = Math.max(-Math.min(...origins.map((o) => o.x)), Math.round(dx / GRID) * GRID);
+  dy = Math.max(-Math.min(...origins.map((o) => o.y)), Math.round(dy / GRID) * GRID);
   const at = new Map(origins.map((o) => [o.id, o]));
   set({
     doc: mapMany(
       origins.map((o) => o.id),
       (b) => {
         const o = at.get(b.id)!;
-        return { ...b, x: Math.max(0, snap(o.x + dx)), y: Math.max(0, snap(o.y + dy)) };
+        return { ...b, x: o.x + dx, y: o.y + dy };
       },
     ),
   });

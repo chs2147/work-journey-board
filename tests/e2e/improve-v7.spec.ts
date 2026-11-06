@@ -194,6 +194,7 @@ test("메모 보드: 빈 곳을 끌어 사각형으로 여러 상자 고르기 �
   // 고른 상자 하나(첫 상자 머리)를 끌면 함께 이동
   const first = page.locator('[data-testid="note-canvas"] [data-multi="1"]').first();
   const grip = first.locator("button").first();
+  await grip.scrollIntoViewIfNeeded();
   const gb = (await grip.boundingBox())!;
   await page.mouse.move(gb.x + gb.width / 2, gb.y + gb.height / 2);
   await page.mouse.down();

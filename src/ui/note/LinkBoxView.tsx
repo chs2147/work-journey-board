@@ -51,6 +51,7 @@ export function LinkBoxView({ box, selected }: { box: LinkBox; selected: boolean
   };
   const startEdit = () => {
     setMenuOpen(false);
+    selectBox(box.id);
     setEditing(true);
   };
   const copyUrl = async () => {

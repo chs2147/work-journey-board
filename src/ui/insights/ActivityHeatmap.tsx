@@ -17,6 +17,7 @@ import {
 } from "../../domain/insights";
 import type { Category, CategoryPeriod } from "../../domain/types";
 import { DAY_LABELS, dayIndex, parseWeekId, type DateStr } from "../../domain/week";
+import { IconTable } from "../common/icons";
 import { STR } from "../../shared/strings";
 import { moveHeat, openTimelineOf, revealHeatCell, setHeatUnit, type HeatData } from "./insightsStore";
 import styles from "./Insights.module.css";
@@ -73,11 +74,15 @@ export function ActivityHeatmap({ range, heat, rows, periods, today }: Props) {
     () =>
       [
         `${NAME_W}px`,
-        ...columns.map((c) => (unit === "week" ? "20px" : c.weekend ? "8px" : "14px")),
+        ...columns.map((c) =>
+          unit === "week" ? "minmax(20px, 1fr)" : c.weekend ? "minmax(8px, .57fr)" : "minmax(14px, 1fr)",
+        ),
         `${COUNT_W}px`,
       ].join(" "),
     [columns, unit],
   );
+  const minWidth =
+    NAME_W + COUNT_W + columns.reduce((sum, c) => sum + (unit === "week" ? 20 : c.weekend ? 8 : 14), 0);
   const nowCol = columns.findIndex((c) => c.current);
   const startCol = nowCol >= 0 ? nowCol : columns.length - 1;
   const cur = cursor ?? { r: grid.length > 1 ? 1 : 0, c: startCol };
@@ -316,12 +321,15 @@ export function ActivityHeatmap({ range, heat, rows, periods, today }: Props) {
         </div>
         <button
           type="button"
-          className={styles.linkBtn}
+          className={styles.iconBtn}
           aria-expanded={table}
+          aria-pressed={table}
+          aria-label={table ? STR.insights.heatTableHide : STR.insights.heatTable}
+          title={table ? STR.insights.heatTableHide : STR.insights.heatTable}
           data-testid="heat-table-toggle"
           onClick={() => setTable((t) => !t)}
         >
-          {table ? STR.insights.heatTableHide : STR.insights.heatTable}
+          <IconTable />
         </button>
       </div>
 
@@ -332,7 +340,7 @@ export function ActivityHeatmap({ range, heat, rows, periods, today }: Props) {
         </div>
       ) : (
         <div ref={scrollRef} className={styles.heatScroll} onMouseLeave={hideTip}>
-          <div className={styles.heatInner} aria-hidden="true">
+          <div className={styles.heatInner} style={{ minWidth }} aria-hidden="true">
             <div className={styles.hrow} style={{ gridTemplateColumns: template }}>
               <span className={styles.hname} />
               {monthHead.map((m, i) => (
@@ -383,6 +391,7 @@ export function ActivityHeatmap({ range, heat, rows, periods, today }: Props) {
           <div
             ref={gridRef}
             className={`${styles.heatInner} ${styles.heatGrid}`}
+            style={{ minWidth }}
             role="grid"
             aria-label={`${STR.insights.heat} ${range.label}`}
             aria-rowcount={grid.length}
