@@ -349,7 +349,7 @@ export async function refreshNoteLinks() {
       const refs = new Set(b.refs?.map((x) => x.item) ?? []);
       for (const id of live) if (!previous.has(id)) refs.add(id);
       for (const id of previous) if (!live.has(id)) refs.delete(id);
-      return { ...b, refs: [...refs].map((item) => ({ item })) };
+      return refs.size ? { ...b, refs: [...refs].map((item) => ({ item })) } : withoutRef(b);
     }),
   });
   const next = merge(get().doc);

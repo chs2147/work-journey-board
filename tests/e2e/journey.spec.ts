@@ -52,6 +52,7 @@ test("첫 실행부터 5주 사용: 이월 · 매주 반복 · 무기록 배지 
   await page.keyboard.press("ArrowDown");
   await page.keyboard.type("개발 서버 구성");
   await page.keyboard.press("ArrowDown");
+  await expect(page.locator(":focus")).toHaveClass(/note-prose/);
   await page.keyboard.type("분기 목표 정리");
   await page.keyboard.press("Escape");
 

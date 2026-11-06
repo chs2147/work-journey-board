@@ -1,10 +1,10 @@
-# 현재 Feature List — v1.19.0-rc.1
+# 현재 Feature List — v1.19.0-rc.2
 
 기준일 2026-11-06 · DB 구조 v15 · 활성 232개 · 제거/대체 3개 · 미제공/계획 3개
 
 원본은 [catalog.json](catalog.json), 운영 규칙은 [README.md](README.md)입니다. 최초 제공 버전은 0.x 개발판을 포함한 비RC 출시 이력 기준이며 RC는 별도 필드입니다.
 
-[검토용 Excel](exports/work-journey-board/Work-Journey-Board-Feature-List-v1.19.0-rc.1.xlsx) · [현재 스냅샷](releases/work-journey-board/v1.19.0-rc.1.json)
+[검토용 Excel](exports/work-journey-board/Work-Journey-Board-Feature-List-v1.19.0-rc.2.xlsx) · [현재 스냅샷](releases/work-journey-board/v1.19.0-rc.2.json)
 
 ## 주간 보드·입력
 
@@ -101,7 +101,7 @@
 | WJB-NOTE-023 | 그룹 외곽·보조 이동 버튼 — 직각 점선 선택 외곽·선택 개수·함께 이동 버튼을 표시한다. | 1.18.0 | 1.18.0 | windows / macos |
 | WJB-NOTE-024 | 클릭 유지·개별 편집 전환 — 클릭은 그룹 유지, 더블클릭은 해당 객체 편집 또는 이미지 보기로 전환한다. | 1.18.0 | 1.18.0 | windows / macos |
 | WJB-NOTE-025 | 그룹 취소·경계·공간 안전 — Esc·포인터 취소·주/공간 전환 시 임시 이동을 원복하고 확정은 한 번에 되돌린다. | 1.18.0 | 1.18.0 | windows / macos |
-| WJB-NOTE-026 | 항목과 메모 연결 — 주차를 넘어 같은 메모 객체를 공유하며 원본 주차 배지로 원본 객체를 연다. 정규 관계가 연결의 정본이다. | 0.2.11 | 1.19.0-rc.1 | windows / macos |
+| WJB-NOTE-026 | 항목과 메모 연결 — 주차를 넘어 같은 메모 객체를 공유하며 원본 주차 배지로 원본 객체를 연다. 정규 관계가 연결의 정본이다. | 0.2.11 | 1.19.0-rc.2 | windows / macos |
 | WJB-NOTE-027 | 한 메모 여러 항목 연결 — 복제 시 같은 메모의 연결만 추가하고 20개 한도 초과 시 전체 작업을 취소한다. | 0.2.15 | 1.19.0-rc.1 | windows / macos |
 | WJB-NOTE-028 | 많은 연결 접기·선택 목록 — 연결이 많으면 접고 목록 검색·선택으로 연결을 관리한다. | 0.2.15 | 0.2.15 | windows / macos |
 | WJB-NOTE-029 | 메모 객체 관계선 — 상자의 연결점 또는 키보드로 다른 상자를 잇는다. | 0.2.14 | 0.2.16 | windows / macos |

@@ -1,5 +1,5 @@
 // 개선 v2 V3 E2E(improve-1026v2-spec 4~7절): 업무연계 메모 — 행의 [메모] · 행을 메모 판으로 끌기 · 메모 상자를 항목으로 끌기 ·
-// 타이틀 띠(누르면 그 항목으로) · 연결 해제 · 항목 삭제 시 "연결된 항목이 삭제됨" · 보드 배지. 브라우저 모드, 가상 샘플만.
+// 타이틀 띠(누르면 그 항목으로) · 연결 해제 · 항목 삭제 시 관계 정리(v16) · 보드 배지. 브라우저 모드, 가상 샘플만.
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
 const TODAY = "2026-10-22";
@@ -109,7 +109,7 @@ test("아무것도 안 치고 떠나면 연결 상자도 사라진다(빈 상자
   await expect(firstRow(page).getByTestId("memo-badge")).toHaveCount(0);
 });
 
-test("연결 해제(끊긴 사슬) → 띠·배지 사라짐, 되돌리기 · 항목을 지우면 '연결된 항목이 삭제됨', 삭제를 되돌리면 정상", async ({
+test("연결 해제(끊긴 사슬) → 띠·배지 사라짐, 되돌리기 · 항목 삭제 시 연결만 정리하고 메모 본문 보존, 삭제를 되돌리면 연결 복원", async ({
   page,
 }) => {
   await firstRow(page).hover();
@@ -129,15 +129,14 @@ test("연결 해제(끊긴 사슬) → 띠·배지 사라짐, 되돌리기 · �
   await page.getByRole("status").getByRole("button", { name: "되돌리기" }).last().click();
   await expect(stripBox(page).getByTestId("link-strip")).toContainText(FIRST);
 
-  // 항목 삭제 → 띠가 회색 안내 + [연결 해제]
+  // v16 정규 관계: 항목 삭제는 관계만 제거하고 메모 본문은 유지한다.
   await firstRow(page).locator("textarea").click();
   await page.keyboard.press("Alt+Delete");
-  const strip = stripBox(page).getByTestId("link-strip");
-  await expect(strip).toContainText("연결된 항목이 삭제됨");
-  await expect(strip.getByRole("button", { name: "연결 해제" })).toBeVisible();
-  // 삭제를 되돌리면(같은 id) 다시 정상
+  await expect(page.getByTestId("link-strip")).toHaveCount(0);
+  await expect(page.locator(".note-prose", { hasText: "연결 해제 확인용" })).toHaveCount(1);
+  // 삭제를 되돌리면 원래 id와 정규 연결을 함께 복원한다.
   await page.getByRole("status").getByRole("button", { name: "되돌리기" }).last().click();
-  await expect(strip).toContainText(FIRST);
+  await expect(stripBox(page).getByTestId("link-strip")).toContainText(FIRST);
 });
 
 test("행을 ⋮⋮로 끌어 메모 판에 놓기 → 놓은 자리에 연결된 상자(행은 그대로)", async ({ page }) => {

@@ -94,6 +94,11 @@ npm run tauri dev    # 실앱 모드(윈도우·맥 / 리눅스는 webkit2gtk-4.
 현재 상세 기능과 도입 버전: [Feature List 운영 문서](docs/features/README.md) · [현재 목록](docs/features/CURRENT.md) · [검토용 Excel](docs/features/exports/work-journey-board/Work-Journey-Board-Feature-List-v1.18.1.xlsx)
 
 ## Version History
+### v1.19.0-rc.2 (2026-11-06) — 메모 연결·백업 회귀 검증 보완
+- 연결 없는 메모의 빈 띠를 제거하고 항목 삭제 전 메모 저장을 끝내 삭제 취소에서 원래 연결을 복원.
+- 첫 실행·저장 위치 이동·종료 백업 검증을 현재 DB 구조 번호에 맞춤. 메모 이동·삭제 취소 회귀 검증 보완.
+- v16 날짜 복제·공유 연결·유동 활동 격자·기록 일수 열 제거는 동일. DB v15 유지, RC1과 구분한 검증용 설치 파일.
+
 ### v1.19.0-rc.1 (2026-11-06) — 날짜 복제·공유 연결·인사이트 너비 조절 검증판
 - 주간/데일리 항목 ⋯ 메뉴의 **날짜로 복제…**. 부모·하위 범위, 상태·시각·마감일 안내와 공유 메모/Cabinet 연결, 일괄 되돌리기.
 - 이전 내역 가져오기에도 실제 추가한 항목의 연결을 보존. 완료·중복 제외 유지.

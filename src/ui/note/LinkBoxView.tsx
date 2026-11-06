@@ -155,7 +155,7 @@ export function LinkBoxView({ box, selected }: { box: LinkBox; selected: boolean
           </button>
         </div>
       )}
-      {box.refs && <LinkStrip boxId={box.id} refs={box.refs} />}
+      {!!box.refs?.length && <LinkStrip boxId={box.id} refs={box.refs} />}
       <input
         ref={fileRef}
         type="file"

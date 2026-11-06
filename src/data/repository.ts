@@ -74,6 +74,7 @@ import {
   boxText,
   noteToText,
   parseNoteDoc,
+  withoutRef,
   positionBelow,
   topZ,
   type ImageMime,
@@ -1131,10 +1132,10 @@ export class JournalRepository {
     const links = await this.noteLinks(weekId);
     return {
       ...doc,
-      boxes: doc.boxes.map((b) => ({
-        ...b,
-        refs: links.filter((r) => r.box_id === b.id).map((r) => ({ item: r.entry_id })),
-      })),
+      boxes: doc.boxes.map((b) => {
+        const refs = links.filter((r) => r.box_id === b.id).map((r) => ({ item: r.entry_id }));
+        return refs.length ? { ...b, refs } : withoutRef(b);
+      }),
     };
   }
 

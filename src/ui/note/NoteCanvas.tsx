@@ -799,7 +799,7 @@ function TextBoxView({
           </button>
         </div>
       )}
-      {box.refs && <LinkStrip boxId={box.id} refs={box.refs} />}
+      {!!box.refs?.length && <LinkStrip boxId={box.id} refs={box.refs} />}
       <EditorContent editor={editor} className={styles.editor} />
       {/* 대기 상자의 안내 — 글자를 치면 사라진다(조합 중에도 같은 편집기를 그대로 쓰게 구조는 바꾸지 않는다) */}
       {pending && (

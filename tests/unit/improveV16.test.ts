@@ -298,6 +298,12 @@ describe("v16 shared memo/Cabinet copies", () => {
     expect(await repo.getWeekNotesBetween("2026-W44", "2026-W44", true)).toHaveProperty("2026-W43");
   });
 
+  it("round-trips an unlinked memo without an empty refs field", async () => {
+    const { repo } = await setup();
+    await repo.saveWeekNote("2026-W43", memo([]));
+    expect((await repo.getWeekNote("2026-W43")).doc.boxes[0]).not.toHaveProperty("refs");
+  });
+
   it("v14 migration preserves legacy refs and images, backup precedes migration, normalized refs survive reopen", async () => {
     const db = await openSqlJsMemory();
     await prepareConnection(db);

@@ -1,6 +1,7 @@
 // 첫 실행·저장 위치·설정·백업 E2E (i-m1-plan S4). 브라우저 모드의 가짜 폴더(/demo/...)를 쓴다.
 // 폴더 선택 대화상자는 브라우저 모드에서 경로 입력(prompt)으로 대신한다 → page.once("dialog")로 응답.
 import { expect, test, type Page } from "@playwright/test";
+import { CURRENT_SCHEMA } from "./schema-helper";
 import { parseBackupName } from "../../src/data/backupIdentity";
 import { openSettings, settingsView } from "./settings-helper";
 
@@ -18,7 +19,7 @@ const hasBackup = async (page: Page, dir: string, kind: string, date: string) =>
       b?.kind === kind &&
       b.date.startsWith(date) &&
       b.appVersion !== null &&
-      b.schemaVersion === 14
+      b.schemaVersion === CURRENT_SCHEMA
     );
   });
 const answerFolder = (page: Page, path: string) => page.once("dialog", (d) => void d.accept(path));

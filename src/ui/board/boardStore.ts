@@ -257,6 +257,11 @@ async function persistCell(key: string, quiet = false): Promise<boolean> {
   const { date, categoryId } = splitKey(key);
   const r = requireRepo();
   const removedIds = before.filter((i) => !after.some((j) => j.id === i.id)).map((i) => i.id);
+  if (removedIds.length) {
+    const { flushNote } = await import("../note/noteStore");
+    await flushNote();
+    if (repo !== r) return false;
+  }
   const relations = removedIds.length ? await r.itemRelations(removedIds) : { notes: [], cabinet: [] };
   if (repo !== r) return false;
   try {
