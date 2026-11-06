@@ -1,10 +1,10 @@
-# 현재 Feature List — v1.20.0-rc.1
+# 현재 Feature List — v1.20.0
 
-기준일 2026-11-06 · DB 구조 v16 · 활성 241개 · 제거/대체 3개 · 미제공/계획 3개
+기준일 2026-11-07 · DB 구조 v16 · 활성 241개 · 제거/대체 3개 · 미제공/계획 3개
 
 원본은 [catalog.json](catalog.json), 운영 규칙은 [README.md](README.md)입니다. 최초 제공 버전은 0.x 개발판을 포함한 비RC 출시 이력 기준이며 RC는 별도 필드입니다.
 
-[검토용 Excel](exports/work-journey-board/Work-Journey-Board-Feature-List-v1.20.0-rc.1.xlsx) · [현재 스냅샷](releases/work-journey-board/v1.20.0-rc.1.json)
+[검토용 Excel](exports/work-journey-board/Work-Journey-Board-Feature-List-v1.20.0.xlsx) · [현재 스냅샷](releases/work-journey-board/v1.20.0.json)
 
 ## 주간 보드·입력
 
@@ -202,29 +202,29 @@
 
 | Feature ID | 기능 | 최초 제공 | 최근 개선 | 현재 제공 범위 |
 |---|---|---|---|---|
-| WJB-CABINET-001 | 업무별 폴더·링크 등록 — 업무에 로컬 작업 폴더나 웹 링크를 등록해 모아 둔다. | 1.3.0 | 1.20.0-rc.1 | windows / macos |
-| WJB-CABINET-002 | 폴더 내용 탐색 — 연결한 폴더의 파일·하위 폴더를 보고 열기·상위 이동을 제공한다. | 1.3.0 | 1.20.0-rc.1 | windows / macos |
-| WJB-CABINET-003 | 읽기·열기 중심 탐색 — Cabi.NET 안에서 원본 파일을 편집하거나 삭제하지 않는다. | 1.3.0 | 1.20.0-rc.1 | windows / macos |
-| WJB-CABINET-004 | 별도 Cabi.NET 창 — Cabi.NET을 앱 밖 별도 창으로 열고 닫는다. | 1.4.0 | 1.20.0-rc.1 | windows / macos |
-| WJB-CABINET-005 | 전체·진행 업무 목록 — 등록 0개 업무를 포함해 전체·진행 중 업무를 고른다. | 1.4.0 | 1.20.0-rc.1 | windows / macos |
-| WJB-CABINET-006 | 등록 항목 순서·업무 이동 — 항목 줄을 끌어 순서를 바꾸거나 다른 업무와 연결한다. | 1.4.0 | 1.20.0-rc.1 | windows / macos |
-| WJB-CABINET-007 | 브라우저 주소 아이콘 드롭 — 브라우저의 주소 아이콘·URL을 끌어 링크를 등록한다. | 1.4.0 | 1.20.0-rc.1 | windows / macos |
-| WJB-CABINET-008 | 폴더 안 탐색기·Finder 열기 — 등록한 폴더 안을 운영체제 파일 탐색기로 연다. | 1.4.0 | 1.20.0-rc.1 | windows / macos |
-| WJB-CABINET-009 | 업무 머리 Cabi.NET 바로가기 — 업무 이름 옆 바로가기로 해당 업무의 Cabi.NET을 연다. | 1.4.0 | 1.20.0-rc.1 | windows / macos |
-| WJB-CABINET-010 | 폴더 확인·경로 다시 지정 — 없는 폴더를 안내하고 다른 경로를 지정한다. | 1.5.0 | 1.20.0-rc.1 | windows / macos |
-| WJB-CABINET-011 | 새로고침·폴더 자동 반영 — 수동 새로고침과 열린 폴더의 변경 반영을 제공한다. | 1.5.0 | 1.20.0-rc.1 | windows / macos |
-| WJB-CABINET-012 | Cabi.NET 목록 폭 조절 — 업무 목록 너비를 끌어 조절한다. | 1.5.0 | 1.20.0-rc.1 | windows / macos |
-| WJB-CABINET-013 | 바로가기·긴 경로 안내 — Windows 바로가기와 긴 폴더 경로를 처리하고 드롭 실패 이유를 안내한다. | 1.5.0 | 1.20.0-rc.1 | windows |
-| WJB-CABINET-014 | Finder 드롭·별칭 지원 — macOS 폴더 드롭·별칭·숨김 파일 처리에 대응한다. | 1.6.0 | 1.20.0-rc.1 | macos |
-| WJB-CABINET-015 | 업무별 여러 노트·모달리스 창 — 기존 업무 분류당 여러 노트를 날짜와 무관하게 작성하며 같은 노트 창을 재사용한다. | RC 제공만 | 1.20.0-rc.1 | windows / macos |
-| WJB-CABINET-016 | 블록 단위 Markdown 노트 편집 — 제목·목록·체크·표·코드·인용·이미지·링크·글자색과 블록 이동·복제·삭제를 제공한다. | RC 제공만 | 1.20.0-rc.1 | windows / macos |
-| WJB-CABINET-017 | Markdown 가져오기와 Markdown/PDF 내보내기 — 블록 구조·URL을 유지하고 선택한 상대 경로 이미지를 함께 가져온다. base64·실행 HTML·외부 이미지 자동 다운로드는 제외한다. 한글 PDF와 Markdown/이미지 묶음을 저장한다. | RC 제공만 | 1.20.0-rc.1 | windows / macos |
-| WJB-CABINET-018 | 업무당 하나의 자유 메모보드 — 주차와 분리된 업무 보드를 모달리스 창에서 열고 기존 보드 엔진·접이식/폭 조절 자료함을 사용한다. | RC 제공만 | 1.20.0-rc.1 | windows / macos |
-| WJB-CABINET-019 | 폴더·링크·노트 원본 참조 카드 — 기존 자료와 노트를 보드로 끌어 연결 카드로 배치한다. 카드 삭제는 원본을 삭제하지 않는다. | RC 제공만 | 1.20.0-rc.1 | windows / macos |
-| WJB-CABINET-020 | 업무에 누적된 주간 메모 모아보기 — 업무항목 연결을 기준으로 전체 기간에서 조회·중복 제거·검색하고 원본 연결 또는 사본으로 추가한다. | RC 제공만 | 1.20.0-rc.1 | windows / macos |
-| WJB-CABINET-021 | 주간↔업무 보드 객체 복제 — 복제 아이콘 드래그 또는 객체 복사/붙여넣기로 원본을 유지하며 새 객체·이미지 자산·내부 관계선을 만든다. 날짜별 업무항목 연결은 자동 복사하지 않는다. | RC 제공만 | 1.20.0-rc.1 | windows / macos |
-| WJB-CABINET-022 | 목록·카드·보드 보기와 노트/보드 검색 — Cabi.NET 허브에서 여러 보기·검색·미리보기를 사용하고 전역 검색에서 노트·업무 보드를 연다. | RC 제공만 | 1.20.0-rc.1 | windows / macos |
-| WJB-CABINET-023 | 멀티윈도 저장 확인과 충돌 방지 — 메인 단일 writer·세션 epoch·문서 revision으로 저장하고 종료/공간 전환 전 자식 창 저장을 확인한다. DB v16 백업/복원에 새 콘텐츠를 포함한다. | RC 제공만 | 1.20.0-rc.1 | windows / macos |
+| WJB-CABINET-001 | 업무별 폴더·링크 등록 — 업무에 로컬 작업 폴더나 웹 링크를 등록해 모아 둔다. | 1.3.0 | 1.20.0 | windows / macos |
+| WJB-CABINET-002 | 폴더 내용 탐색 — 연결한 폴더의 파일·하위 폴더를 보고 열기·상위 이동을 제공한다. | 1.3.0 | 1.20.0 | windows / macos |
+| WJB-CABINET-003 | 읽기·열기 중심 탐색 — Cabi.NET 안에서 원본 파일을 편집하거나 삭제하지 않는다. | 1.3.0 | 1.20.0 | windows / macos |
+| WJB-CABINET-004 | 별도 Cabi.NET 창 — Cabi.NET을 앱 밖 별도 창으로 열고 닫는다. | 1.4.0 | 1.20.0 | windows / macos |
+| WJB-CABINET-005 | 전체·진행 업무 목록 — 등록 0개 업무를 포함해 전체·진행 중 업무를 고른다. | 1.4.0 | 1.20.0 | windows / macos |
+| WJB-CABINET-006 | 등록 항목 순서·업무 이동 — 항목 줄을 끌어 순서를 바꾸거나 다른 업무와 연결한다. | 1.4.0 | 1.20.0 | windows / macos |
+| WJB-CABINET-007 | 브라우저 주소 아이콘 드롭 — 브라우저의 주소 아이콘·URL을 끌어 링크를 등록한다. | 1.4.0 | 1.20.0 | windows / macos |
+| WJB-CABINET-008 | 폴더 안 탐색기·Finder 열기 — 등록한 폴더 안을 운영체제 파일 탐색기로 연다. | 1.4.0 | 1.20.0 | windows / macos |
+| WJB-CABINET-009 | 업무 머리 Cabi.NET 바로가기 — 업무 이름 옆 바로가기로 해당 업무의 Cabi.NET을 연다. | 1.4.0 | 1.20.0 | windows / macos |
+| WJB-CABINET-010 | 폴더 확인·경로 다시 지정 — 없는 폴더를 안내하고 다른 경로를 지정한다. | 1.5.0 | 1.20.0 | windows / macos |
+| WJB-CABINET-011 | 새로고침·폴더 자동 반영 — 수동 새로고침과 열린 폴더의 변경 반영을 제공한다. | 1.5.0 | 1.20.0 | windows / macos |
+| WJB-CABINET-012 | Cabi.NET 목록 폭 조절 — 업무 목록 너비를 끌어 조절한다. | 1.5.0 | 1.20.0 | windows / macos |
+| WJB-CABINET-013 | 바로가기·긴 경로 안내 — Windows 바로가기와 긴 폴더 경로를 처리하고 드롭 실패 이유를 안내한다. | 1.5.0 | 1.20.0 | windows |
+| WJB-CABINET-014 | Finder 드롭·별칭 지원 — macOS 폴더 드롭·별칭·숨김 파일 처리에 대응한다. | 1.6.0 | 1.20.0 | macos |
+| WJB-CABINET-015 | 업무별 여러 노트·모달리스 창 — 기존 업무 분류당 여러 노트를 날짜와 무관하게 작성하며 같은 노트 창을 재사용한다. | 1.20.0 | 1.20.0 | windows / macos |
+| WJB-CABINET-016 | 블록 단위 Markdown 노트 편집 — 제목·목록·체크·표·코드·인용·이미지·링크·글자색과 블록 이동·복제·삭제를 제공한다. | 1.20.0 | 1.20.0 | windows / macos |
+| WJB-CABINET-017 | Markdown 가져오기와 Markdown/PDF 내보내기 — 블록 구조·URL을 유지하고 선택한 상대 경로 이미지를 함께 가져온다. base64·실행 HTML·외부 이미지 자동 다운로드는 제외한다. 한글 PDF와 Markdown/이미지 묶음을 저장한다. | 1.20.0 | 1.20.0 | windows / macos |
+| WJB-CABINET-018 | 업무당 하나의 자유 메모보드 — 주차와 분리된 업무 보드를 모달리스 창에서 열고 기존 보드 엔진·접이식/폭 조절 자료함을 사용한다. | 1.20.0 | 1.20.0 | windows / macos |
+| WJB-CABINET-019 | 폴더·링크·노트 원본 참조 카드 — 기존 자료와 노트를 보드로 끌어 연결 카드로 배치한다. 카드 삭제는 원본을 삭제하지 않는다. | 1.20.0 | 1.20.0 | windows / macos |
+| WJB-CABINET-020 | 업무에 누적된 주간 메모 모아보기 — 업무항목 연결을 기준으로 전체 기간에서 조회·중복 제거·검색하고 원본 연결 또는 사본으로 추가한다. | 1.20.0 | 1.20.0 | windows / macos |
+| WJB-CABINET-021 | 주간↔업무 보드 객체 복제 — 복제 아이콘 드래그 또는 객체 복사/붙여넣기로 원본을 유지하며 새 객체·이미지 자산·내부 관계선을 만든다. 날짜별 업무항목 연결은 자동 복사하지 않는다. | 1.20.0 | 1.20.0 | windows / macos |
+| WJB-CABINET-022 | 목록·카드·보드 보기와 노트/보드 검색 — Cabi.NET 허브에서 여러 보기·검색·미리보기를 사용하고 전역 검색에서 노트·업무 보드를 연다. | 1.20.0 | 1.20.0 | windows / macos |
+| WJB-CABINET-023 | 멀티윈도 저장 확인과 충돌 방지 — 메인 단일 writer·세션 epoch·문서 revision으로 저장하고 종료/공간 전환 전 자식 창 저장을 확인한다. DB v16 백업/복원에 새 콘텐츠를 포함한다. | 1.20.0 | 1.20.0 | windows / macos |
 
 ## 워크스페이스
 

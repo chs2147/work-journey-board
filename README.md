@@ -27,10 +27,10 @@
 - **지나온 일이 한눈에** — 년월→주차→업무 내역으로 이어지는 업무 타임라인, 유연한 열 너비의 활동 히트맵·habit tracker, 연간 보기
 - **메모 보드로 맥락까지** — 업무항목에 연결한 글·이미지·링크 카드와 관계선, 다중 선택·그룹 이동·글자색·Markdown 파일 드롭, PNG·Markdown 내보내기
 - **Universe — 기록이 살아 있는 연결 지도로** — 독립된 다크 우주에서 3D 회전·이동·확대/축소, 줌에 따라 이어지는 은하↔초점 탐색, 정적 2D·목록 보기. 접고 폭을 조절하는 필터·상세 패널, 시간 탐색·주를 넘는 직접 연결, 지식 카드·외부 AI에 붙여 넣을 근거 묶음 (`Alt+5`)
-- **Cabi.NET — 업무별 자료·노트·메모보드** — 기존 Cabinet의 폴더·링크 관리를 확장한 업무 작업 공간. **1.20.0-rc.1 검증판**에서 업무별 복수 블록 노트와 업무당 하나의 자유 보드를 별도 모달리스 창으로 제공. 누적 주간 메모 연결, 주간↔업무 보드 객체·이미지 복제, 목록·카드·보드 보기, Markdown 가져오기와 Markdown·한글 PDF 내보내기 ([실제 화면](docs/mockups/cabinet-v2/implemented/README.md))
+- **Cabi.NET — 업무별 자료·노트·메모보드** — 기존 Cabinet의 폴더·링크 관리를 확장한 업무 작업 공간. **1.20.0**부터 업무별 복수 블록 노트와 업무당 하나의 자유 보드를 별도 모달리스 창으로 제공. 누적 주간 메모 연결, 주간↔업무 보드 객체·이미지 복제, 목록·카드·보드 보기, Markdown 가져오기와 Markdown·한글 PDF 내보내기 ([실제 화면](docs/mockups/cabinet-v2/implemented/README.md))
 - **워크스페이스로 회사·개인 따로** — 공간마다 독립 일지 파일, 레일의 공간 아이콘과 `Ctrl+Alt+1~9`로 전환. 업무·메모·자료·지식의 맥락을 공간별로 보관
-- **찾고 맞추기** — 업무·메모·자료 통합 검색(`Ctrl+Shift+F`), Cabi.NET 노트·업무 보드 검색(RC), 대한민국 공휴일·회사 휴일·기타 휴가, 업무·요일 열 폭 조절
-- **빠른 이용 가이드** — 장면별 사용법을 [소개 사이트](https://chs2147.github.io/work-journey-board/guide/)에서 보거나 PDF로 내려받기. 최신 정식판은 Releases, Cabi.NET V2는 현재 RC 검증 단계
+- **찾고 맞추기** — 업무·메모·자료 통합 검색(`Ctrl+Shift+F`), Cabi.NET 노트·업무 보드 검색, 대한민국 공휴일·회사 휴일·기타 휴가, 업무·요일 열 폭 조절
+- **빠른 이용 가이드** — 장면별 사용법을 [소개 사이트](https://chs2147.github.io/work-journey-board/guide/)에서 보거나 PDF로 내려받기. 최신 정식판은 Releases에서 확인
 
 | 주간 요약 | 인사이트 |
 |---|---|
@@ -91,9 +91,16 @@ npm run tauri dev    # 실앱 모드(윈도우·맥 / 리눅스는 webkit2gtk-4.
 - 브라우저 모드 주소 옵션(E2E·시연): `?today=YYYY-MM-DD` 오늘 고정 · `?empty=1` 빈 일지 · `?fresh=1` 첫 실행 화면 · `?existing=/경로` 그 폴더에 샘플 일지 준비 · `?config=/경로` 설정 폴더 지정 · `?sample=year`(`year-img`) 가상 1년치 일지 · `?sample=showcase` README·소개 사이트 화면용 메모 보드 예시 · `?corrupt=1` 파손 일지
 - 설치 파일: `main`에 반영되면 *Build desktop installers*가 윈도우(NSIS)·맥(유니버설 DMG)을 나란히 만들고, **둘 다 성공해야** [Releases](https://github.com/chs2147/work-journey-board/releases)에 `v<버전>`으로 함께 올린다 — 0.x·`-rc`는 사전 릴리스, 1.0.0 이상 정식 판은 정식 릴리스. 윈도우 오프라인 설치판은 요청할 때만 Actions → *Build desktop installers* → Run workflow(main) → `offline`으로 그 판 릴리스에 더한다. 하나의 원본으로 두 플랫폼을 같은 판으로 운영한다([docs/macos-spec.md](docs/macos-spec.md)).
 
-현재 상세 기능과 도입 버전: [Feature List 운영 문서](docs/features/README.md) · [현재 목록](docs/features/CURRENT.md) · [검토용 Excel](docs/features/exports/work-journey-board/Work-Journey-Board-Feature-List-v1.20.0-rc.1.xlsx)
+현재 상세 기능과 도입 버전: [Feature List 운영 문서](docs/features/README.md) · [현재 목록](docs/features/CURRENT.md) · [검토용 Excel](docs/features/exports/work-journey-board/Work-Journey-Board-Feature-List-v1.20.0.xlsx)
 
 ## Version History
+
+### v1.20.0 (2026-11-07) — Cabi.NET 업무 작업 공간·Universe 소개 개편
+- 업무별 복수 블록 노트와 단일 전용 메모보드, 별도 모달리스 창·자료 원본 카드·누적 주간 메모 연동.
+- 주간↔업무 보드 객체·이미지·관계선 복제, Markdown 가져오기 및 Markdown·한글 PDF 내보내기, 전역 검색·저장 안정성 보강.
+- README 기능 소개와 티저의 Universe·Cabi.NET 전용 모션 섹션 갱신. main 게시 시 Cabi.NET RC 표시 제거.
+- DB v16, 이전 직전 백업. 기존 main 1.19.0은 `release/v1.19.0`에 보존. Windows 기본 설치판·macOS 유니버설 DMG 동시 제공.
+
 ### v1.20.0-rc.1 (2026-11-06) — Cabi.NET 업무 노트·메모보드 개편 검증판
 - Cabinet → Cabi.NET. 업무별 여러 블록 노트와 업무당 하나의 자유 메모보드, 각각 별도 모달리스 창.
 - Markdown 구조·링크·선택 이미지 가져오기, Markdown/이미지 묶음 및 한글 PDF 내보내기.

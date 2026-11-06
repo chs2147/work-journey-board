@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "product": "Work Journey Board",
-  "catalogVersion": "1.20.0-rc.1",
-  "asOfDate": "2026-11-06",
+  "catalogVersion": "1.20.0",
+  "asOfDate": "2026-11-07",
   "baseRelease": "1.19.0",
-  "sourceCommit": "8c2ce2e",
+  "sourceCommit": "22de066",
   "appSchemaVersion": 16,
   "versionDefinition": "최초 제공 = 비RC 출시 이력에서 기능 제공이 확인된 최초 버전(0.x 개발판 포함); RC는 preview로 별도 기록",
   "verificationScope": "문서·출시 이력·현행 소스 위치 대조. 기능별 실기 전수 검증을 뜻하지 않음.",
@@ -5996,13 +5996,20 @@
           "type": "changed",
           "description": "Cabi.NET 표시명으로 통일. 기존 자료·업무/업무항목 연결 보존.",
           "source": "docs/cabinet-v2-spec.md"
+        },
+        {
+          "version": "1.20.0",
+          "type": "changed",
+          "description": "Cabi.NET 정식 제공. RC 선행 이력은 유지한다.",
+          "source": "docs/release-notes/v1.20.0.md"
         }
       ],
       "sources": [
         "docs/features-1102-spec.md",
         "README.md",
         "docs/release-notes/v1.3.0.md",
-        "docs/cabinet-v2-spec.md"
+        "docs/cabinet-v2-spec.md",
+        "docs/release-notes/v1.20.0.md"
       ],
       "implementation": [
         "src/ui/cabinet"
@@ -6011,7 +6018,7 @@
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "제품 기능",
-      "lastChanged": "1.20.0-rc.1",
+      "lastChanged": "1.20.0",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
@@ -6044,13 +6051,20 @@
           "type": "changed",
           "description": "Cabi.NET 표시명으로 통일. 기존 자료·업무/업무항목 연결 보존.",
           "source": "docs/cabinet-v2-spec.md"
+        },
+        {
+          "version": "1.20.0",
+          "type": "changed",
+          "description": "Cabi.NET 정식 제공. RC 선행 이력은 유지한다.",
+          "source": "docs/release-notes/v1.20.0.md"
         }
       ],
       "sources": [
         "docs/features-1102-spec.md",
         "README.md",
         "docs/release-notes/v1.3.0.md",
-        "docs/cabinet-v2-spec.md"
+        "docs/cabinet-v2-spec.md",
+        "docs/release-notes/v1.20.0.md"
       ],
       "implementation": [
         "src/ui/cabinet"
@@ -6059,7 +6073,7 @@
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "제품 기능",
-      "lastChanged": "1.20.0-rc.1",
+      "lastChanged": "1.20.0",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
@@ -6092,13 +6106,20 @@
           "type": "changed",
           "description": "Cabi.NET 표시명으로 통일. 기존 자료·업무/업무항목 연결 보존.",
           "source": "docs/cabinet-v2-spec.md"
+        },
+        {
+          "version": "1.20.0",
+          "type": "changed",
+          "description": "Cabi.NET 정식 제공. RC 선행 이력은 유지한다.",
+          "source": "docs/release-notes/v1.20.0.md"
         }
       ],
       "sources": [
         "docs/features-1102-spec.md",
         "README.md",
         "docs/release-notes/v1.3.0.md",
-        "docs/cabinet-v2-spec.md"
+        "docs/cabinet-v2-spec.md",
+        "docs/release-notes/v1.20.0.md"
       ],
       "implementation": [
         "src/ui/cabinet"
@@ -6107,7 +6128,7 @@
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "제품 기능",
-      "lastChanged": "1.20.0-rc.1",
+      "lastChanged": "1.20.0",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
@@ -6140,13 +6161,20 @@
           "type": "changed",
           "description": "Cabi.NET 표시명으로 통일. 기존 자료·업무/업무항목 연결 보존.",
           "source": "docs/cabinet-v2-spec.md"
+        },
+        {
+          "version": "1.20.0",
+          "type": "changed",
+          "description": "Cabi.NET 정식 제공. RC 선행 이력은 유지한다.",
+          "source": "docs/release-notes/v1.20.0.md"
         }
       ],
       "sources": [
         "docs/features-1102-spec.md",
         "README.md",
         "docs/release-notes/v1.4.0.md",
-        "docs/cabinet-v2-spec.md"
+        "docs/cabinet-v2-spec.md",
+        "docs/release-notes/v1.20.0.md"
       ],
       "implementation": [
         "src/ui/cabinet"
@@ -6155,7 +6183,7 @@
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "제품 기능",
-      "lastChanged": "1.20.0-rc.1",
+      "lastChanged": "1.20.0",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
@@ -6188,13 +6216,20 @@
           "type": "changed",
           "description": "Cabi.NET 표시명으로 통일. 기존 자료·업무/업무항목 연결 보존.",
           "source": "docs/cabinet-v2-spec.md"
+        },
+        {
+          "version": "1.20.0",
+          "type": "changed",
+          "description": "Cabi.NET 정식 제공. RC 선행 이력은 유지한다.",
+          "source": "docs/release-notes/v1.20.0.md"
         }
       ],
       "sources": [
         "docs/features-1102-spec.md",
         "README.md",
         "docs/release-notes/v1.4.0.md",
-        "docs/cabinet-v2-spec.md"
+        "docs/cabinet-v2-spec.md",
+        "docs/release-notes/v1.20.0.md"
       ],
       "implementation": [
         "src/ui/cabinet"
@@ -6203,7 +6238,7 @@
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "제품 기능",
-      "lastChanged": "1.20.0-rc.1",
+      "lastChanged": "1.20.0",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
@@ -6236,13 +6271,20 @@
           "type": "changed",
           "description": "Cabi.NET 표시명으로 통일. 기존 자료·업무/업무항목 연결 보존.",
           "source": "docs/cabinet-v2-spec.md"
+        },
+        {
+          "version": "1.20.0",
+          "type": "changed",
+          "description": "Cabi.NET 정식 제공. RC 선행 이력은 유지한다.",
+          "source": "docs/release-notes/v1.20.0.md"
         }
       ],
       "sources": [
         "docs/features-1102-spec.md",
         "README.md",
         "docs/release-notes/v1.4.0.md",
-        "docs/cabinet-v2-spec.md"
+        "docs/cabinet-v2-spec.md",
+        "docs/release-notes/v1.20.0.md"
       ],
       "implementation": [
         "src/ui/cabinet"
@@ -6251,7 +6293,7 @@
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "제품 기능",
-      "lastChanged": "1.20.0-rc.1",
+      "lastChanged": "1.20.0",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
@@ -6284,13 +6326,20 @@
           "type": "changed",
           "description": "Cabi.NET 표시명으로 통일. 기존 자료·업무/업무항목 연결 보존.",
           "source": "docs/cabinet-v2-spec.md"
+        },
+        {
+          "version": "1.20.0",
+          "type": "changed",
+          "description": "Cabi.NET 정식 제공. RC 선행 이력은 유지한다.",
+          "source": "docs/release-notes/v1.20.0.md"
         }
       ],
       "sources": [
         "docs/features-1102-spec.md",
         "README.md",
         "docs/release-notes/v1.4.0.md",
-        "docs/cabinet-v2-spec.md"
+        "docs/cabinet-v2-spec.md",
+        "docs/release-notes/v1.20.0.md"
       ],
       "implementation": [
         "src/ui/cabinet"
@@ -6299,7 +6348,7 @@
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "제품 기능",
-      "lastChanged": "1.20.0-rc.1",
+      "lastChanged": "1.20.0",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
@@ -6332,13 +6381,20 @@
           "type": "changed",
           "description": "Cabi.NET 표시명으로 통일. 기존 자료·업무/업무항목 연결 보존.",
           "source": "docs/cabinet-v2-spec.md"
+        },
+        {
+          "version": "1.20.0",
+          "type": "changed",
+          "description": "Cabi.NET 정식 제공. RC 선행 이력은 유지한다.",
+          "source": "docs/release-notes/v1.20.0.md"
         }
       ],
       "sources": [
         "docs/features-1102-spec.md",
         "README.md",
         "docs/release-notes/v1.4.0.md",
-        "docs/cabinet-v2-spec.md"
+        "docs/cabinet-v2-spec.md",
+        "docs/release-notes/v1.20.0.md"
       ],
       "implementation": [
         "src/ui/cabinet"
@@ -6347,7 +6403,7 @@
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "제품 기능",
-      "lastChanged": "1.20.0-rc.1",
+      "lastChanged": "1.20.0",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
@@ -6380,13 +6436,20 @@
           "type": "changed",
           "description": "Cabi.NET 표시명으로 통일. 기존 자료·업무/업무항목 연결 보존.",
           "source": "docs/cabinet-v2-spec.md"
+        },
+        {
+          "version": "1.20.0",
+          "type": "changed",
+          "description": "Cabi.NET 정식 제공. RC 선행 이력은 유지한다.",
+          "source": "docs/release-notes/v1.20.0.md"
         }
       ],
       "sources": [
         "docs/features-1102-spec.md",
         "README.md",
         "docs/release-notes/v1.4.0.md",
-        "docs/cabinet-v2-spec.md"
+        "docs/cabinet-v2-spec.md",
+        "docs/release-notes/v1.20.0.md"
       ],
       "implementation": [
         "src/ui/cabinet"
@@ -6395,7 +6458,7 @@
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "제품 기능",
-      "lastChanged": "1.20.0-rc.1",
+      "lastChanged": "1.20.0",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
@@ -6428,13 +6491,20 @@
           "type": "changed",
           "description": "Cabi.NET 표시명으로 통일. 기존 자료·업무/업무항목 연결 보존.",
           "source": "docs/cabinet-v2-spec.md"
+        },
+        {
+          "version": "1.20.0",
+          "type": "changed",
+          "description": "Cabi.NET 정식 제공. RC 선행 이력은 유지한다.",
+          "source": "docs/release-notes/v1.20.0.md"
         }
       ],
       "sources": [
         "docs/features-1102-spec.md",
         "README.md",
         "docs/release-notes/v1.5.0.md",
-        "docs/cabinet-v2-spec.md"
+        "docs/cabinet-v2-spec.md",
+        "docs/release-notes/v1.20.0.md"
       ],
       "implementation": [
         "src/ui/cabinet"
@@ -6443,7 +6513,7 @@
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "제품 기능",
-      "lastChanged": "1.20.0-rc.1",
+      "lastChanged": "1.20.0",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
@@ -6476,13 +6546,20 @@
           "type": "changed",
           "description": "Cabi.NET 표시명으로 통일. 기존 자료·업무/업무항목 연결 보존.",
           "source": "docs/cabinet-v2-spec.md"
+        },
+        {
+          "version": "1.20.0",
+          "type": "changed",
+          "description": "Cabi.NET 정식 제공. RC 선행 이력은 유지한다.",
+          "source": "docs/release-notes/v1.20.0.md"
         }
       ],
       "sources": [
         "docs/features-1102-spec.md",
         "README.md",
         "docs/release-notes/v1.5.0.md",
-        "docs/cabinet-v2-spec.md"
+        "docs/cabinet-v2-spec.md",
+        "docs/release-notes/v1.20.0.md"
       ],
       "implementation": [
         "src/ui/cabinet"
@@ -6491,7 +6568,7 @@
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "제품 기능",
-      "lastChanged": "1.20.0-rc.1",
+      "lastChanged": "1.20.0",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
@@ -6524,13 +6601,20 @@
           "type": "changed",
           "description": "Cabi.NET 표시명으로 통일. 기존 자료·업무/업무항목 연결 보존.",
           "source": "docs/cabinet-v2-spec.md"
+        },
+        {
+          "version": "1.20.0",
+          "type": "changed",
+          "description": "Cabi.NET 정식 제공. RC 선행 이력은 유지한다.",
+          "source": "docs/release-notes/v1.20.0.md"
         }
       ],
       "sources": [
         "docs/features-1102-spec.md",
         "README.md",
         "docs/release-notes/v1.5.0.md",
-        "docs/cabinet-v2-spec.md"
+        "docs/cabinet-v2-spec.md",
+        "docs/release-notes/v1.20.0.md"
       ],
       "implementation": [
         "src/ui/cabinet"
@@ -6539,7 +6623,7 @@
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "제품 기능",
-      "lastChanged": "1.20.0-rc.1",
+      "lastChanged": "1.20.0",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
@@ -6570,13 +6654,20 @@
           "type": "changed",
           "description": "Cabi.NET 표시명으로 통일. 기존 자료·업무/업무항목 연결 보존.",
           "source": "docs/cabinet-v2-spec.md"
+        },
+        {
+          "version": "1.20.0",
+          "type": "changed",
+          "description": "Cabi.NET 정식 제공. RC 선행 이력은 유지한다.",
+          "source": "docs/release-notes/v1.20.0.md"
         }
       ],
       "sources": [
         "docs/features-1102-spec.md",
         "README.md",
         "docs/release-notes/v1.5.0.md",
-        "docs/cabinet-v2-spec.md"
+        "docs/cabinet-v2-spec.md",
+        "docs/release-notes/v1.20.0.md"
       ],
       "implementation": [
         "src/ui/cabinet"
@@ -6585,7 +6676,7 @@
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "제품 기능",
-      "lastChanged": "1.20.0-rc.1",
+      "lastChanged": "1.20.0",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
@@ -6616,13 +6707,20 @@
           "type": "changed",
           "description": "Cabi.NET 표시명으로 통일. 기존 자료·업무/업무항목 연결 보존.",
           "source": "docs/cabinet-v2-spec.md"
+        },
+        {
+          "version": "1.20.0",
+          "type": "changed",
+          "description": "Cabi.NET 정식 제공. RC 선행 이력은 유지한다.",
+          "source": "docs/release-notes/v1.20.0.md"
         }
       ],
       "sources": [
         "docs/features-1102-spec.md",
         "README.md",
         "docs/release-notes/v1.6.0.md",
-        "docs/cabinet-v2-spec.md"
+        "docs/cabinet-v2-spec.md",
+        "docs/release-notes/v1.20.0.md"
       ],
       "implementation": [
         "src/ui/cabinet"
@@ -6631,7 +6729,7 @@
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "제품 기능",
-      "lastChanged": "1.20.0-rc.1",
+      "lastChanged": "1.20.0",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
@@ -10196,7 +10294,7 @@
       "name": "업무별 여러 노트·모달리스 창",
       "description": "기존 업무 분류당 여러 노트를 날짜와 무관하게 작성하며 같은 노트 창을 재사용한다.",
       "entry": "Cabi.NET",
-      "introduced": null,
+      "introduced": "1.20.0",
       "preview": "1.20.0-rc.1",
       "status": "active",
       "platforms": [
@@ -10213,11 +10311,18 @@
           "type": "added",
           "description": "기존 업무 분류당 여러 노트를 날짜와 무관하게 작성하며 같은 노트 창을 재사용한다.",
           "source": "docs/cabinet-v2-spec.md"
+        },
+        {
+          "version": "1.20.0",
+          "type": "added",
+          "description": "Cabi.NET 정식 제공. RC 선행 이력은 유지한다.",
+          "source": "docs/release-notes/v1.20.0.md"
         }
       ],
       "sources": [
         "docs/cabinet-v2-spec.md",
-        "docs/release-notes/v1.20.0-rc.1.md"
+        "docs/release-notes/v1.20.0-rc.1.md",
+        "docs/release-notes/v1.20.0.md"
       ],
       "implementation": [
         "src/ui/cabinet",
@@ -10226,8 +10331,8 @@
       ],
       "verification": "브라우저/저장소 자동 검사 대상. Windows/macOS 실제 설치·WebView 간 드래그는 실기 확인 필요.",
       "reviewStatus": "미검토",
-      "reviewNote": "정식 도입 버전은 main 반영 때 확정.",
-      "lastChanged": "1.20.0-rc.1",
+      "reviewNote": "사용자 승인으로 1.20.0 정식 도입 버전 확정. 실기 전수 검토와 구분.",
+      "lastChanged": "1.20.0",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
@@ -10238,7 +10343,7 @@
       "name": "블록 단위 Markdown 노트 편집",
       "description": "제목·목록·체크·표·코드·인용·이미지·링크·글자색과 블록 이동·복제·삭제를 제공한다.",
       "entry": "Cabi.NET",
-      "introduced": null,
+      "introduced": "1.20.0",
       "preview": "1.20.0-rc.1",
       "status": "active",
       "platforms": [
@@ -10255,11 +10360,18 @@
           "type": "added",
           "description": "제목·목록·체크·표·코드·인용·이미지·링크·글자색과 블록 이동·복제·삭제를 제공한다.",
           "source": "docs/cabinet-v2-spec.md"
+        },
+        {
+          "version": "1.20.0",
+          "type": "added",
+          "description": "Cabi.NET 정식 제공. RC 선행 이력은 유지한다.",
+          "source": "docs/release-notes/v1.20.0.md"
         }
       ],
       "sources": [
         "docs/cabinet-v2-spec.md",
-        "docs/release-notes/v1.20.0-rc.1.md"
+        "docs/release-notes/v1.20.0-rc.1.md",
+        "docs/release-notes/v1.20.0.md"
       ],
       "implementation": [
         "src/ui/cabinet",
@@ -10268,8 +10380,8 @@
       ],
       "verification": "브라우저/저장소 자동 검사 대상. Windows/macOS 실제 설치·WebView 간 드래그는 실기 확인 필요.",
       "reviewStatus": "미검토",
-      "reviewNote": "정식 도입 버전은 main 반영 때 확정.",
-      "lastChanged": "1.20.0-rc.1",
+      "reviewNote": "사용자 승인으로 1.20.0 정식 도입 버전 확정. 실기 전수 검토와 구분.",
+      "lastChanged": "1.20.0",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
@@ -10280,7 +10392,7 @@
       "name": "Markdown 가져오기와 Markdown/PDF 내보내기",
       "description": "블록 구조·URL을 유지하고 선택한 상대 경로 이미지를 함께 가져온다. base64·실행 HTML·외부 이미지 자동 다운로드는 제외한다. 한글 PDF와 Markdown/이미지 묶음을 저장한다.",
       "entry": "Cabi.NET",
-      "introduced": null,
+      "introduced": "1.20.0",
       "preview": "1.20.0-rc.1",
       "status": "active",
       "platforms": [
@@ -10297,11 +10409,18 @@
           "type": "added",
           "description": "블록 구조·URL을 유지하고 선택한 상대 경로 이미지를 함께 가져온다. base64·실행 HTML·외부 이미지 자동 다운로드는 제외한다. 한글 PDF와 Markdown/이미지 묶음을 저장한다.",
           "source": "docs/cabinet-v2-spec.md"
+        },
+        {
+          "version": "1.20.0",
+          "type": "added",
+          "description": "Cabi.NET 정식 제공. RC 선행 이력은 유지한다.",
+          "source": "docs/release-notes/v1.20.0.md"
         }
       ],
       "sources": [
         "docs/cabinet-v2-spec.md",
-        "docs/release-notes/v1.20.0-rc.1.md"
+        "docs/release-notes/v1.20.0-rc.1.md",
+        "docs/release-notes/v1.20.0.md"
       ],
       "implementation": [
         "src/ui/cabinet",
@@ -10310,8 +10429,8 @@
       ],
       "verification": "브라우저/저장소 자동 검사 대상. Windows/macOS 실제 설치·WebView 간 드래그는 실기 확인 필요.",
       "reviewStatus": "미검토",
-      "reviewNote": "정식 도입 버전은 main 반영 때 확정.",
-      "lastChanged": "1.20.0-rc.1",
+      "reviewNote": "사용자 승인으로 1.20.0 정식 도입 버전 확정. 실기 전수 검토와 구분.",
+      "lastChanged": "1.20.0",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
@@ -10322,7 +10441,7 @@
       "name": "업무당 하나의 자유 메모보드",
       "description": "주차와 분리된 업무 보드를 모달리스 창에서 열고 기존 보드 엔진·접이식/폭 조절 자료함을 사용한다.",
       "entry": "Cabi.NET",
-      "introduced": null,
+      "introduced": "1.20.0",
       "preview": "1.20.0-rc.1",
       "status": "active",
       "platforms": [
@@ -10339,11 +10458,18 @@
           "type": "added",
           "description": "주차와 분리된 업무 보드를 모달리스 창에서 열고 기존 보드 엔진·접이식/폭 조절 자료함을 사용한다.",
           "source": "docs/cabinet-v2-spec.md"
+        },
+        {
+          "version": "1.20.0",
+          "type": "added",
+          "description": "Cabi.NET 정식 제공. RC 선행 이력은 유지한다.",
+          "source": "docs/release-notes/v1.20.0.md"
         }
       ],
       "sources": [
         "docs/cabinet-v2-spec.md",
-        "docs/release-notes/v1.20.0-rc.1.md"
+        "docs/release-notes/v1.20.0-rc.1.md",
+        "docs/release-notes/v1.20.0.md"
       ],
       "implementation": [
         "src/ui/cabinet",
@@ -10352,8 +10478,8 @@
       ],
       "verification": "브라우저/저장소 자동 검사 대상. Windows/macOS 실제 설치·WebView 간 드래그는 실기 확인 필요.",
       "reviewStatus": "미검토",
-      "reviewNote": "정식 도입 버전은 main 반영 때 확정.",
-      "lastChanged": "1.20.0-rc.1",
+      "reviewNote": "사용자 승인으로 1.20.0 정식 도입 버전 확정. 실기 전수 검토와 구분.",
+      "lastChanged": "1.20.0",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
@@ -10364,7 +10490,7 @@
       "name": "폴더·링크·노트 원본 참조 카드",
       "description": "기존 자료와 노트를 보드로 끌어 연결 카드로 배치한다. 카드 삭제는 원본을 삭제하지 않는다.",
       "entry": "Cabi.NET",
-      "introduced": null,
+      "introduced": "1.20.0",
       "preview": "1.20.0-rc.1",
       "status": "active",
       "platforms": [
@@ -10381,11 +10507,18 @@
           "type": "added",
           "description": "기존 자료와 노트를 보드로 끌어 연결 카드로 배치한다. 카드 삭제는 원본을 삭제하지 않는다.",
           "source": "docs/cabinet-v2-spec.md"
+        },
+        {
+          "version": "1.20.0",
+          "type": "added",
+          "description": "Cabi.NET 정식 제공. RC 선행 이력은 유지한다.",
+          "source": "docs/release-notes/v1.20.0.md"
         }
       ],
       "sources": [
         "docs/cabinet-v2-spec.md",
-        "docs/release-notes/v1.20.0-rc.1.md"
+        "docs/release-notes/v1.20.0-rc.1.md",
+        "docs/release-notes/v1.20.0.md"
       ],
       "implementation": [
         "src/ui/cabinet",
@@ -10394,8 +10527,8 @@
       ],
       "verification": "브라우저/저장소 자동 검사 대상. Windows/macOS 실제 설치·WebView 간 드래그는 실기 확인 필요.",
       "reviewStatus": "미검토",
-      "reviewNote": "정식 도입 버전은 main 반영 때 확정.",
-      "lastChanged": "1.20.0-rc.1",
+      "reviewNote": "사용자 승인으로 1.20.0 정식 도입 버전 확정. 실기 전수 검토와 구분.",
+      "lastChanged": "1.20.0",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
@@ -10406,7 +10539,7 @@
       "name": "업무에 누적된 주간 메모 모아보기",
       "description": "업무항목 연결을 기준으로 전체 기간에서 조회·중복 제거·검색하고 원본 연결 또는 사본으로 추가한다.",
       "entry": "Cabi.NET",
-      "introduced": null,
+      "introduced": "1.20.0",
       "preview": "1.20.0-rc.1",
       "status": "active",
       "platforms": [
@@ -10423,11 +10556,18 @@
           "type": "added",
           "description": "업무항목 연결을 기준으로 전체 기간에서 조회·중복 제거·검색하고 원본 연결 또는 사본으로 추가한다.",
           "source": "docs/cabinet-v2-spec.md"
+        },
+        {
+          "version": "1.20.0",
+          "type": "added",
+          "description": "Cabi.NET 정식 제공. RC 선행 이력은 유지한다.",
+          "source": "docs/release-notes/v1.20.0.md"
         }
       ],
       "sources": [
         "docs/cabinet-v2-spec.md",
-        "docs/release-notes/v1.20.0-rc.1.md"
+        "docs/release-notes/v1.20.0-rc.1.md",
+        "docs/release-notes/v1.20.0.md"
       ],
       "implementation": [
         "src/ui/cabinet",
@@ -10436,8 +10576,8 @@
       ],
       "verification": "브라우저/저장소 자동 검사 대상. Windows/macOS 실제 설치·WebView 간 드래그는 실기 확인 필요.",
       "reviewStatus": "미검토",
-      "reviewNote": "정식 도입 버전은 main 반영 때 확정.",
-      "lastChanged": "1.20.0-rc.1",
+      "reviewNote": "사용자 승인으로 1.20.0 정식 도입 버전 확정. 실기 전수 검토와 구분.",
+      "lastChanged": "1.20.0",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
@@ -10448,7 +10588,7 @@
       "name": "주간↔업무 보드 객체 복제",
       "description": "복제 아이콘 드래그 또는 객체 복사/붙여넣기로 원본을 유지하며 새 객체·이미지 자산·내부 관계선을 만든다. 날짜별 업무항목 연결은 자동 복사하지 않는다.",
       "entry": "Cabi.NET",
-      "introduced": null,
+      "introduced": "1.20.0",
       "preview": "1.20.0-rc.1",
       "status": "active",
       "platforms": [
@@ -10465,11 +10605,18 @@
           "type": "added",
           "description": "복제 아이콘 드래그 또는 객체 복사/붙여넣기로 원본을 유지하며 새 객체·이미지 자산·내부 관계선을 만든다. 날짜별 업무항목 연결은 자동 복사하지 않는다.",
           "source": "docs/cabinet-v2-spec.md"
+        },
+        {
+          "version": "1.20.0",
+          "type": "added",
+          "description": "Cabi.NET 정식 제공. RC 선행 이력은 유지한다.",
+          "source": "docs/release-notes/v1.20.0.md"
         }
       ],
       "sources": [
         "docs/cabinet-v2-spec.md",
-        "docs/release-notes/v1.20.0-rc.1.md"
+        "docs/release-notes/v1.20.0-rc.1.md",
+        "docs/release-notes/v1.20.0.md"
       ],
       "implementation": [
         "src/ui/cabinet",
@@ -10478,8 +10625,8 @@
       ],
       "verification": "브라우저/저장소 자동 검사 대상. Windows/macOS 실제 설치·WebView 간 드래그는 실기 확인 필요.",
       "reviewStatus": "미검토",
-      "reviewNote": "정식 도입 버전은 main 반영 때 확정.",
-      "lastChanged": "1.20.0-rc.1",
+      "reviewNote": "사용자 승인으로 1.20.0 정식 도입 버전 확정. 실기 전수 검토와 구분.",
+      "lastChanged": "1.20.0",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
@@ -10490,7 +10637,7 @@
       "name": "목록·카드·보드 보기와 노트/보드 검색",
       "description": "Cabi.NET 허브에서 여러 보기·검색·미리보기를 사용하고 전역 검색에서 노트·업무 보드를 연다.",
       "entry": "Cabi.NET",
-      "introduced": null,
+      "introduced": "1.20.0",
       "preview": "1.20.0-rc.1",
       "status": "active",
       "platforms": [
@@ -10507,11 +10654,18 @@
           "type": "added",
           "description": "Cabi.NET 허브에서 여러 보기·검색·미리보기를 사용하고 전역 검색에서 노트·업무 보드를 연다.",
           "source": "docs/cabinet-v2-spec.md"
+        },
+        {
+          "version": "1.20.0",
+          "type": "added",
+          "description": "Cabi.NET 정식 제공. RC 선행 이력은 유지한다.",
+          "source": "docs/release-notes/v1.20.0.md"
         }
       ],
       "sources": [
         "docs/cabinet-v2-spec.md",
-        "docs/release-notes/v1.20.0-rc.1.md"
+        "docs/release-notes/v1.20.0-rc.1.md",
+        "docs/release-notes/v1.20.0.md"
       ],
       "implementation": [
         "src/ui/cabinet",
@@ -10520,8 +10674,8 @@
       ],
       "verification": "브라우저/저장소 자동 검사 대상. Windows/macOS 실제 설치·WebView 간 드래그는 실기 확인 필요.",
       "reviewStatus": "미검토",
-      "reviewNote": "정식 도입 버전은 main 반영 때 확정.",
-      "lastChanged": "1.20.0-rc.1",
+      "reviewNote": "사용자 승인으로 1.20.0 정식 도입 버전 확정. 실기 전수 검토와 구분.",
+      "lastChanged": "1.20.0",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
@@ -10532,7 +10686,7 @@
       "name": "멀티윈도 저장 확인과 충돌 방지",
       "description": "메인 단일 writer·세션 epoch·문서 revision으로 저장하고 종료/공간 전환 전 자식 창 저장을 확인한다. DB v16 백업/복원에 새 콘텐츠를 포함한다.",
       "entry": "Cabi.NET",
-      "introduced": null,
+      "introduced": "1.20.0",
       "preview": "1.20.0-rc.1",
       "status": "active",
       "platforms": [
@@ -10549,11 +10703,18 @@
           "type": "added",
           "description": "메인 단일 writer·세션 epoch·문서 revision으로 저장하고 종료/공간 전환 전 자식 창 저장을 확인한다. DB v16 백업/복원에 새 콘텐츠를 포함한다.",
           "source": "docs/cabinet-v2-spec.md"
+        },
+        {
+          "version": "1.20.0",
+          "type": "added",
+          "description": "Cabi.NET 정식 제공. RC 선행 이력은 유지한다.",
+          "source": "docs/release-notes/v1.20.0.md"
         }
       ],
       "sources": [
         "docs/cabinet-v2-spec.md",
-        "docs/release-notes/v1.20.0-rc.1.md"
+        "docs/release-notes/v1.20.0-rc.1.md",
+        "docs/release-notes/v1.20.0.md"
       ],
       "implementation": [
         "src/ui/cabinet",
@@ -10562,11 +10723,11 @@
       ],
       "verification": "브라우저/저장소 자동 검사 대상. Windows/macOS 실제 설치·WebView 간 드래그는 실기 확인 필요.",
       "reviewStatus": "미검토",
-      "reviewNote": "정식 도입 버전은 main 반영 때 확정.",
-      "lastChanged": "1.20.0-rc.1",
+      "reviewNote": "사용자 승인으로 1.20.0 정식 도입 버전 확정. 실기 전수 검토와 구분.",
+      "lastChanged": "1.20.0",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     }
   ],
   "productId": "work-journey-board",
-  "sourceRef": "v1.18.1"
+  "sourceRef": "22de066"
 }

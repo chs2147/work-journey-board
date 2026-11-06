@@ -259,3 +259,7 @@ Cabi.NET 허브 ├─ 명령(requestId, workspaceId, sessionEpoch, docId, baseR
 이 Linux 환경에는 Rust/Cargo가 없어 네이티브 컴파일/단위 검사·Windows 기본 설치판·macOS 유니버설 DMG는 실행하지 않았다. Rust 변경은 기존 내보내기 경로 검증에 `.pdf`와 관련 경로 검사 사례를 추가하는 범위다. 실제 WebView 창 간 드래그/취소/다중 모니터 배율, OS 한글 조합·닫기, 설치 후 기존 DB 업그레이드는 Windows/macOS RC 설치 확인 때 수행한다. 네이티브 관문을 브라우저 통과로 대체하지 않는다.
 
 현재 브랜치 작업이며 main 병합·정식 버전·게시·배포는 수행하지 않았다.
+
+## 11. 1.20.0 정식 main 반영 승인 — 2026-11-07
+
+사용자가 main 반영 및 1.20.0 정식 버전을 승인했다. main 1.19.0(`8c2ce2e`)은 원격 `release/v1.19.0`에 보존했다. cabinet-v2 최종 CI와 직전 수정 CI 모두 성공 확인 후 로컬 main에 fast-forward 반영했다. 앱/잠금 파일·릴리스 노트·Feature List/Excel·가이드를 1.20.0으로 갱신한다. Windows 기본 설치판과 macOS 유니버설 DMG를 함께 빌드하며, 오프라인 설치판은 실행하지 않는다. 티저의 RC 배지·접미사·정식판 미포함 안내는 제거한다. 위 RC 검증 기록은 당시 수행 범위를 그대로 보존하며, OS 실기 확인을 새로 수행했다고 표시하지 않는다.
