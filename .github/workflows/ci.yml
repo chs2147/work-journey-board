@@ -9,7 +9,8 @@ on:
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # 검증 브랜치는 진행 중 검사를 보존하고 최신 후속 실행을 대기시킨다.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/cabinet-v2' }}
 
 jobs:
   web:
