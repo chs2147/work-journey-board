@@ -1,3 +1,4 @@
+import { browserCabiBridge } from "./cabiBridge";
 import wasmUrl from "sql.js/dist/sql-wasm.wasm?url";
 import sample from "../../fixtures/sample-weeks.json";
 import sampleLong from "../../fixtures/sample-long.json";
@@ -142,6 +143,7 @@ const ready = (async () => {
 
 export const browserPlatform: Platform = {
   kind: "browser",
+  cabi: browserCabiBridge(),
   now() {
     const real = new Date();
     if (!fixedToday) return real;
@@ -187,13 +189,15 @@ export const browserPlatform: Platform = {
     const name = baseName(path);
     const url = URL.createObjectURL(
       new Blob([bytes as BlobPart], {
-        type: name.toLowerCase().endsWith(".png")
-          ? "image/png"
-          : name.toLowerCase().endsWith(".webp")
-            ? "image/webp"
-            : name.toLowerCase().endsWith(".md")
-              ? "text/markdown"
-              : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        type: name.toLowerCase().endsWith(".pdf")
+          ? "application/pdf"
+          : name.toLowerCase().endsWith(".png")
+            ? "image/png"
+            : name.toLowerCase().endsWith(".webp")
+              ? "image/webp"
+              : name.toLowerCase().endsWith(".md")
+                ? "text/markdown"
+                : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       }),
     );
     const a = Object.assign(document.createElement("a"), { href: url, download: name });

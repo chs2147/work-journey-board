@@ -1,3 +1,4 @@
+import { flushCabiWindows, closeCabiWindows } from "../cabinet/cabiService";
 // 앱 흐름(overview 10-8·10-10): 시작 → 첫 실행 / 저장 폴더 없음 / 파일 이상 / 보드, 종료 백업, 저장 위치 전환·옮기기.
 import { JournalRepository } from "../../data/repository";
 import {
@@ -98,6 +99,7 @@ export async function start() {
 
 /** 대기 중인 저장(보드 칸·메모 + 주간 요약 수정본)을 끝낸다 */
 async function flushPending() {
+  await flushCabiWindows();
   await flushAll();
   await flushDraft();
   await flushNote();
@@ -332,6 +334,7 @@ function onCorrupt(e: unknown) {
 
 /** 앱 종료 직전: 대기 중인 저장을 끝내고, 마지막 백업 뒤 바뀐 게 있으면 그날 일일 백업을 덮어쓴다(B3). 실패해도 창은 닫힌다. */
 async function onExit() {
+  await closeCabiWindows();
   // Cabinet: 열린 창 상태를 이 PC 설정에 남기고 폴더 창(별도 OS 창)을 닫는다(F5)
   await shutdownCabinet().catch(() => undefined);
   await flushPending().catch(() => undefined);
@@ -828,6 +831,10 @@ if (typeof window !== "undefined")
           "note_asset",
           "cabinet_item",
           "cabinet_link",
+          "cabi_note",
+          "cabi_board",
+          "cabi_asset",
+          "cabi_entry_link",
         ] as const;
         const counts: Record<string, number> = {};
         for (const table of tables)

@@ -1,3 +1,5 @@
+import { CABI } from "../shared/cabiStrings";
+import type { CabiBridge } from "./cabiBridge";
 import { normalizeBackupPolicy, type BackupControl } from "../data/backupPolicy";
 import { isTauri } from "@tauri-apps/api/core";
 import type { BackupFs, VerifyCopy } from "../data/backup";
@@ -89,8 +91,9 @@ export interface FolderWindows {
 }
 
 /** 내보내기 종류 — 저장 대화상자의 파일 형식 거르개와 허용 확장자 */
-export type ExportKind = "xlsx" | "image" | "markdown" | "markdownImage";
+export type ExportKind = "xlsx" | "image" | "markdown" | "markdownImage" | "pdf";
 export const EXPORT_EXTS: Record<ExportKind, readonly string[]> = {
+  pdf: [".pdf"],
   xlsx: [".xlsx"],
   image: [".png", ".webp"],
   /** 메모 보드 마크다운(features-1102-spec F4) */
@@ -109,6 +112,7 @@ export interface PathInfo {
 }
 
 export interface Platform {
+  readonly cabi: CabiBridge;
   readonly kind: "tauri" | "browser";
   /** 현재 시각. 브라우저 모드는 테스트용으로 날짜를 고정할 수 있다. */
   now(): Date;
@@ -319,11 +323,13 @@ export function exportPathProblem(path: string, dataDir: string, kind: ExportKin
   const norm = (p: string) => p.replace(/\//g, "\\").replace(/\\+$/, "").toLowerCase();
   const name = baseName(path).toLowerCase();
   if (!EXPORT_EXTS[kind].some((ext) => name.endsWith(ext) && name.length > ext.length))
-    return kind === "image"
-      ? STR.note.onlyImage
-      : kind === "xlsx"
-        ? STR.export.onlyXlsx
-        : STR.mdExport.onlyMd;
+    return kind === "pdf"
+      ? CABI.onlyPdf
+      : kind === "image"
+        ? STR.note.onlyImage
+        : kind === "xlsx"
+          ? STR.export.onlyXlsx
+          : STR.mdExport.onlyMd;
   if (kind === "markdownImage" && !baseName(dirOf(path)).toLowerCase().endsWith(MD_IMAGE_DIR_SUFFIX))
     return STR.mdExport.onlyMd;
   if (norm(dirOf(path)) === `${norm(dataDir)}\\backups`) return STR.export.notBackups;

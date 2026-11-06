@@ -1,10 +1,10 @@
-# 현재 Feature List — v1.19.0
+# 현재 Feature List — v1.20.0-rc.1
 
-기준일 2026-11-06 · DB 구조 v15 · 활성 232개 · 제거/대체 3개 · 미제공/계획 3개
+기준일 2026-11-06 · DB 구조 v16 · 활성 241개 · 제거/대체 3개 · 미제공/계획 3개
 
 원본은 [catalog.json](catalog.json), 운영 규칙은 [README.md](README.md)입니다. 최초 제공 버전은 0.x 개발판을 포함한 비RC 출시 이력 기준이며 RC는 별도 필드입니다.
 
-[검토용 Excel](exports/work-journey-board/Work-Journey-Board-Feature-List-v1.19.0.xlsx) · [현재 스냅샷](releases/work-journey-board/v1.19.0.json)
+[검토용 Excel](exports/work-journey-board/Work-Journey-Board-Feature-List-v1.20.0-rc.1.xlsx) · [현재 스냅샷](releases/work-journey-board/v1.20.0-rc.1.json)
 
 ## 주간 보드·입력
 
@@ -28,14 +28,14 @@
 | WJB-BOARD-016 | 주간 업무·요일 열 폭 조절 — 업무 열과 요일 열을 끌어 조절하고 폭을 기억한다. | 1.5.0 | 1.5.0 | windows / macos |
 | WJB-BOARD-017 | 하루 업무 카드 보기 — 한 날짜의 업무 카드와 메모 보드를 함께 본다. | 0.2.7 | 1.1.1 | windows / macos |
 | WJB-BOARD-018 | 주간·데일리 전환 기억 — 보기 전환과 마지막 보기를 기억하며 데일리에서는 하루씩 이동한다. | 0.2.7 | 0.2.7 | windows / macos |
-| WJB-BOARD-019 | 이전 업무 항목 가져오기 — 실제 추가하는 항목의 메모/Cabinet 연결도 복사하며 완료 묶음·중복 제외와 전체 실패 롤백을 유지한다. | 0.2.5 | 1.19.0 | windows / macos |
+| WJB-BOARD-019 | 이전 업무 항목 가져오기 — 실제 추가하는 항목의 메모/Cabi.NET 연결도 복사하며 완료 묶음·중복 제외와 전체 실패 롤백을 유지한다. | 0.2.5 | 1.19.0 | windows / macos |
 | WJB-BOARD-020 | 모든 업무 일괄 가져오기 — 요일 전체 항목과 공유 연결을 한 트랜잭션으로 가져오고 한 번에 되돌린다. | 0.2.5 | 1.19.0 | windows / macos |
 | WJB-BOARD-021 | 항목 시작 시각 — 15분 단위 시작 시각을 입력하고 보드·중요 업무·엑셀에 표시한다. | 1.7.0 | 1.7.1 | windows / macos |
 | WJB-BOARD-022 | 항목 다른 날로 이동 — 달력·다음 주·이전 주·내일로 본 항목과 세부 항목을 함께 이동한다. | 1.7.0 | 1.7.0 | windows / macos |
 | WJB-BOARD-023 | 항목 마감일 — 달력·빠른 입력으로 마감일을 정하고 남은 날과 지연 상태를 표시한다. | 1.13.0 | 1.13.0 | windows / macos |
 | WJB-BOARD-024 | 모든 항목 완료·완료 취소 — 모노그램 아이콘으로 완료 상태를 바꾸고 항목 본문에 취소선을 표시한다. | 1.16.0 | 1.16.0 | windows / macos |
 | WJB-BOARD-025 | 업무 기록 URL 링크 — 본문 URL을 링크와 열기 아이콘으로 표시하고 OS 브라우저로 연다. | 0.2.8 | 0.2.8 | windows / macos |
-| WJB-BOARD-026 | 항목 날짜 지정 복제 — 주간/데일리 항목 ⋯ 메뉴에서 날짜를 지정하여 본·하위 항목과 공유 메모/Cabinet 연결을 새 항목으로 추가한다. 완료는 초기화하고 시각·마감일을 유지한다. | 1.19.0 | 1.19.0 | windows / macos |
+| WJB-BOARD-026 | 항목 날짜 지정 복제 — 주간/데일리 항목 ⋯ 메뉴에서 날짜를 지정하여 본·하위 항목과 공유 메모/Cabi.NET 연결을 새 항목으로 추가한다. 완료는 초기화하고 시각·마감일을 유지한다. | 1.19.0 | 1.19.0 | windows / macos |
 
 ## 업무·태그 관리
 
@@ -198,24 +198,33 @@
 | WJB-CALENDAR-006 | 대한민국 공휴일 내장 표 — 2026~2030년 국내 공휴일을 앱에 포함된 표로 표시한다. | 1.3.0 | 1.3.0 | windows / macos |
 | WJB-CALENDAR-007 | 달력·휴일 관리 — 설정에서 휴일 목록을 확인·추가·수정·삭제한다. | 1.3.0 | 1.3.0 | windows / macos |
 
-## Cabinet
+## Cabi.NET
 
 | Feature ID | 기능 | 최초 제공 | 최근 개선 | 현재 제공 범위 |
 |---|---|---|---|---|
-| WJB-CABINET-001 | 업무별 폴더·링크 등록 — 업무에 로컬 작업 폴더나 웹 링크를 등록해 모아 둔다. | 1.3.0 | 1.3.0 | windows / macos |
-| WJB-CABINET-002 | 폴더 내용 탐색 — 연결한 폴더의 파일·하위 폴더를 보고 열기·상위 이동을 제공한다. | 1.3.0 | 1.3.0 | windows / macos |
-| WJB-CABINET-003 | 읽기·열기 중심 탐색 — Cabinet 안에서 원본 파일을 편집하거나 삭제하지 않는다. | 1.3.0 | 1.3.0 | windows / macos |
-| WJB-CABINET-004 | 별도 Cabinet 창 — Cabinet을 앱 밖 별도 창으로 열고 닫는다. | 1.4.0 | 1.4.0 | windows / macos |
-| WJB-CABINET-005 | 전체·진행 업무 목록 — 등록 0개 업무를 포함해 전체·진행 중 업무를 고른다. | 1.4.0 | 1.4.0 | windows / macos |
-| WJB-CABINET-006 | 등록 항목 순서·업무 이동 — 항목 줄을 끌어 순서를 바꾸거나 다른 업무와 연결한다. | 1.4.0 | 1.4.0 | windows / macos |
-| WJB-CABINET-007 | 브라우저 주소 아이콘 드롭 — 브라우저의 주소 아이콘·URL을 끌어 링크를 등록한다. | 1.4.0 | 1.4.0 | windows / macos |
-| WJB-CABINET-008 | 폴더 안 탐색기·Finder 열기 — 등록한 폴더 안을 운영체제 파일 탐색기로 연다. | 1.4.0 | 1.4.0 | windows / macos |
-| WJB-CABINET-009 | 업무 머리 Cabinet 바로가기 — 업무 이름 옆 바로가기로 해당 업무의 Cabinet을 연다. | 1.4.0 | 1.4.0 | windows / macos |
-| WJB-CABINET-010 | 폴더 확인·경로 다시 지정 — 없는 폴더를 안내하고 다른 경로를 지정한다. | 1.5.0 | 1.5.0 | windows / macos |
-| WJB-CABINET-011 | 새로고침·폴더 자동 반영 — 수동 새로고침과 열린 폴더의 변경 반영을 제공한다. | 1.5.0 | 1.5.0 | windows / macos |
-| WJB-CABINET-012 | Cabinet 목록 폭 조절 — 업무 목록 너비를 끌어 조절한다. | 1.5.0 | 1.5.0 | windows / macos |
-| WJB-CABINET-013 | 바로가기·긴 경로 안내 — Windows 바로가기와 긴 폴더 경로를 처리하고 드롭 실패 이유를 안내한다. | 1.5.0 | 1.5.0 | windows |
-| WJB-CABINET-014 | Finder 드롭·별칭 지원 — macOS 폴더 드롭·별칭·숨김 파일 처리에 대응한다. | 1.6.0 | 1.6.0 | macos |
+| WJB-CABINET-001 | 업무별 폴더·링크 등록 — 업무에 로컬 작업 폴더나 웹 링크를 등록해 모아 둔다. | 1.3.0 | 1.20.0-rc.1 | windows / macos |
+| WJB-CABINET-002 | 폴더 내용 탐색 — 연결한 폴더의 파일·하위 폴더를 보고 열기·상위 이동을 제공한다. | 1.3.0 | 1.20.0-rc.1 | windows / macos |
+| WJB-CABINET-003 | 읽기·열기 중심 탐색 — Cabi.NET 안에서 원본 파일을 편집하거나 삭제하지 않는다. | 1.3.0 | 1.20.0-rc.1 | windows / macos |
+| WJB-CABINET-004 | 별도 Cabi.NET 창 — Cabi.NET을 앱 밖 별도 창으로 열고 닫는다. | 1.4.0 | 1.20.0-rc.1 | windows / macos |
+| WJB-CABINET-005 | 전체·진행 업무 목록 — 등록 0개 업무를 포함해 전체·진행 중 업무를 고른다. | 1.4.0 | 1.20.0-rc.1 | windows / macos |
+| WJB-CABINET-006 | 등록 항목 순서·업무 이동 — 항목 줄을 끌어 순서를 바꾸거나 다른 업무와 연결한다. | 1.4.0 | 1.20.0-rc.1 | windows / macos |
+| WJB-CABINET-007 | 브라우저 주소 아이콘 드롭 — 브라우저의 주소 아이콘·URL을 끌어 링크를 등록한다. | 1.4.0 | 1.20.0-rc.1 | windows / macos |
+| WJB-CABINET-008 | 폴더 안 탐색기·Finder 열기 — 등록한 폴더 안을 운영체제 파일 탐색기로 연다. | 1.4.0 | 1.20.0-rc.1 | windows / macos |
+| WJB-CABINET-009 | 업무 머리 Cabi.NET 바로가기 — 업무 이름 옆 바로가기로 해당 업무의 Cabi.NET을 연다. | 1.4.0 | 1.20.0-rc.1 | windows / macos |
+| WJB-CABINET-010 | 폴더 확인·경로 다시 지정 — 없는 폴더를 안내하고 다른 경로를 지정한다. | 1.5.0 | 1.20.0-rc.1 | windows / macos |
+| WJB-CABINET-011 | 새로고침·폴더 자동 반영 — 수동 새로고침과 열린 폴더의 변경 반영을 제공한다. | 1.5.0 | 1.20.0-rc.1 | windows / macos |
+| WJB-CABINET-012 | Cabi.NET 목록 폭 조절 — 업무 목록 너비를 끌어 조절한다. | 1.5.0 | 1.20.0-rc.1 | windows / macos |
+| WJB-CABINET-013 | 바로가기·긴 경로 안내 — Windows 바로가기와 긴 폴더 경로를 처리하고 드롭 실패 이유를 안내한다. | 1.5.0 | 1.20.0-rc.1 | windows |
+| WJB-CABINET-014 | Finder 드롭·별칭 지원 — macOS 폴더 드롭·별칭·숨김 파일 처리에 대응한다. | 1.6.0 | 1.20.0-rc.1 | macos |
+| WJB-CABINET-015 | 업무별 여러 노트·모달리스 창 — 기존 업무 분류당 여러 노트를 날짜와 무관하게 작성하며 같은 노트 창을 재사용한다. | RC 제공만 | 1.20.0-rc.1 | windows / macos |
+| WJB-CABINET-016 | 블록 단위 Markdown 노트 편집 — 제목·목록·체크·표·코드·인용·이미지·링크·글자색과 블록 이동·복제·삭제를 제공한다. | RC 제공만 | 1.20.0-rc.1 | windows / macos |
+| WJB-CABINET-017 | Markdown 가져오기와 Markdown/PDF 내보내기 — 블록 구조·URL을 유지하고 선택한 상대 경로 이미지를 함께 가져온다. base64·실행 HTML·외부 이미지 자동 다운로드는 제외한다. 한글 PDF와 Markdown/이미지 묶음을 저장한다. | RC 제공만 | 1.20.0-rc.1 | windows / macos |
+| WJB-CABINET-018 | 업무당 하나의 자유 메모보드 — 주차와 분리된 업무 보드를 모달리스 창에서 열고 기존 보드 엔진·접이식/폭 조절 자료함을 사용한다. | RC 제공만 | 1.20.0-rc.1 | windows / macos |
+| WJB-CABINET-019 | 폴더·링크·노트 원본 참조 카드 — 기존 자료와 노트를 보드로 끌어 연결 카드로 배치한다. 카드 삭제는 원본을 삭제하지 않는다. | RC 제공만 | 1.20.0-rc.1 | windows / macos |
+| WJB-CABINET-020 | 업무에 누적된 주간 메모 모아보기 — 업무항목 연결을 기준으로 전체 기간에서 조회·중복 제거·검색하고 원본 연결 또는 사본으로 추가한다. | RC 제공만 | 1.20.0-rc.1 | windows / macos |
+| WJB-CABINET-021 | 주간↔업무 보드 객체 복제 — 복제 아이콘 드래그 또는 객체 복사/붙여넣기로 원본을 유지하며 새 객체·이미지 자산·내부 관계선을 만든다. 날짜별 업무항목 연결은 자동 복사하지 않는다. | RC 제공만 | 1.20.0-rc.1 | windows / macos |
+| WJB-CABINET-022 | 목록·카드·보드 보기와 노트/보드 검색 — Cabi.NET 허브에서 여러 보기·검색·미리보기를 사용하고 전역 검색에서 노트·업무 보드를 연다. | RC 제공만 | 1.20.0-rc.1 | windows / macos |
+| WJB-CABINET-023 | 멀티윈도 저장 확인과 충돌 방지 — 메인 단일 writer·세션 epoch·문서 revision으로 저장하고 종료/공간 전환 전 자식 창 저장을 확인한다. DB v16 백업/복원에 새 콘텐츠를 포함한다. | RC 제공만 | 1.20.0-rc.1 | windows / macos |
 
 ## 워크스페이스
 
@@ -236,17 +245,17 @@
 
 | Feature ID | 기능 | 최초 제공 | 최근 개선 | 현재 제공 범위 |
 |---|---|---|---|---|
-| WJB-UNIVERSE-001 | 여러 종류 기록의 연결망 — 업무·항목·태그·메모·Cabinet·지식 카드를 연결해 본다. | 1.12.0 | 1.12.0 | windows / macos |
+| WJB-UNIVERSE-001 | 여러 종류 기록의 연결망 — 업무·항목·태그·메모·Cabi.NET·지식 카드를 연결해 본다. | 1.12.0 | 1.12.0 | windows / macos |
 | WJB-UNIVERSE-002 | 초점·은하·목록 보기 — 한 노드 중심의 초점, 전체 은하, 목록 보기를 전환한다. | 1.12.0 | 1.15.0 | windows / macos |
 | WJB-UNIVERSE-003 | 년→월→주→일 시간 탐색 — 시간 막대로 범위를 바꾸고 해당 시기의 기록을 탐색한다. | 1.12.0 | 1.12.0 | windows / macos |
 | WJB-UNIVERSE-004 | 연결 이유·원문 확인 — 선택한 노드와 관계가 이어진 근거 및 원문 정보를 본다. | 1.12.0 | 1.12.0 | windows / macos |
-| WJB-UNIVERSE-005 | 원본 자리로 열기 — 항목·메모·업무·Cabinet의 원래 화면으로 이동한다. | 1.12.0 | 1.12.0 | windows / macos |
+| WJB-UNIVERSE-005 | 원본 자리로 열기 — 항목·메모·업무·Cabi.NET의 원래 화면으로 이동한다. | 1.12.0 | 1.12.0 | windows / macos |
 | WJB-UNIVERSE-006 | 여러 공간 읽기 전용 지도 — 다른 공간의 연결망을 함께 보고 그 공간에서 열 수 있다. | 1.12.0 | 1.12.0 | windows / macos |
 | WJB-UNIVERSE-007 | 주를 넘는 직접 연결 — 관련·후속·근거·반대 근거·대체 관계를 직접 만든다. | 1.12.0 | 1.12.0 | windows / macos |
 | WJB-UNIVERSE-008 | 관계 문구·방향·편집·해제 — 직접 관계를 굵은 선·화살표로 구분하고 편집·삭제한다. | 1.12.0 | 1.12.0 | windows / macos |
 | WJB-UNIVERSE-009 | Universe 실행 취소 — Universe에서 직접 연결 변경을 되돌리고 다시 적용한다. | 1.12.0 | 1.12.0 | windows / macos |
 | WJB-UNIVERSE-010 | 지식 카드 종류·본문 — 해결법·의사결정·배운 점·업무 길잡이 카드의 제목·요약·조건·본문을 쓴다. | 1.12.0 | 1.12.0 | windows / macos |
-| WJB-UNIVERSE-011 | 출처·관련 업무 관리 — 기록·메모·Cabinet·업무·태그 출처와 관련 업무를 연결한다. | 1.12.0 | 1.12.0 | windows / macos |
+| WJB-UNIVERSE-011 | 출처·관련 업무 관리 — 기록·메모·Cabi.NET·업무·태그 출처와 관련 업무를 연결한다. | 1.12.0 | 1.12.0 | windows / macos |
 | WJB-UNIVERSE-012 | 당시 발췌·근거 변경 상태 — 출처의 내용 변경·위치 변경·원문 없음 상태를 구분한다. | 1.12.0 | 1.12.0 | windows / macos |
 | WJB-UNIVERSE-013 | 발췌 비교·다시 확인 — 당시 발췌와 현재 원문을 비교하고 근거를 다시 확인한다. | 1.12.0 | 1.12.0 | windows / macos |
 | WJB-UNIVERSE-014 | 초안·검토함·보관·임시본 — 카드 정리 상태와 작성 중 임시 내용을 관리한다. | 1.12.0 | 1.12.0 | windows / macos |

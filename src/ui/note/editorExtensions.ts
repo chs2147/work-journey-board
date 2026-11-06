@@ -35,7 +35,7 @@ const FontSize = Mark.create({
 });
 
 /** 글자색(테마 토큰) — `<span data-color class="note-c-blue">` */
-const TextColor = Mark.create({
+export const TextColor = Mark.create({
   name: "textColor",
   addAttributes() {
     return {
@@ -120,7 +120,7 @@ function linkOpenDecorations(doc: PMDocNode): DecorationSet {
   return DecorationSet.create(doc, decos);
 }
 
-const LinkOpener = Extension.create({
+export const LinkOpener = Extension.create({
   name: "linkOpener",
   addProseMirrorPlugins() {
     return [

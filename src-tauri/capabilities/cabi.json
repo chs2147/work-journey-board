@@ -1,0 +1,18 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "cabi-documents",
+  "description": "Cabi.NET 업무 노트/보드: 메인 창으로 허용 요청을 보내며 DB·네트워크에 직접 접근하지 않음",
+  "windows": ["cabi-*"],
+  "permissions": [
+    "core:default",
+    "core:window:allow-close",
+    "core:window:allow-destroy",
+    "core:window:allow-set-theme",
+    "core:window:allow-set-focus",
+    "core:window:allow-set-title",
+    "dialog:allow-open",
+    "dialog:allow-save",
+    "clipboard-manager:allow-write-text",
+    "window-state:default"
+  ]
+}

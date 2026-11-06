@@ -3,6 +3,61 @@
 import { expect, test, type Page } from "@playwright/test";
 import { openSettings } from "./settings-helper";
 
+test("Cabi.NET 블록 노트와 한글 PDF 내보내기 — 실제 CSP 아래에서 외부 요청·정책 위반 없음", async ({
+  page,
+  context,
+}) => {
+  await context.addInitScript(() => {
+    (window as unknown as { __csp: string[] }).__csp = [];
+    document.addEventListener("securitypolicyviolation", (e) =>
+      (window as unknown as { __csp: string[] }).__csp.push(`${e.violatedDirective} ${e.blockedURI}`),
+    );
+  });
+  const external: string[] = [];
+  context.on("request", (request) => {
+    if (
+      !request.url().startsWith("http://localhost:4173/") &&
+      !request.url().startsWith("data:") &&
+      !request.url().startsWith("blob:")
+    )
+      external.push(request.url());
+  });
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto("/?today=2026-10-22&sample=showcase");
+  await page.getByTestId("week-title").waitFor();
+  await page.keyboard.press("Alt+4");
+  await page.getByLabel("업무를 선택해 주세요", { exact: true }).selectOption({ index: 1 });
+  const popup = page.waitForEvent("popup");
+  await page.getByTestId("cabi-new-note").click();
+  const note = await popup;
+  await note.getByTestId("cabi-note-editor").waitFor();
+  await note.getByLabel("노트 제목", { exact: true }).fill("가상 한글 PDF");
+  await note.getByTestId("cabi-import-input").setInputFiles({
+    name: "가상 문서.md",
+    mimeType: "text/markdown",
+    buffer: Buffer.from(
+      "# 가상 문서\n\n| 이름 | 값 |\n| --- | --- |\n| 가상 | 1 |\n\n[예시](https://example.com)",
+    ),
+  });
+  await note.getByRole("dialog").getByRole("button", { name: "현재 위치에 삽입", exact: true }).click();
+  await expect(note.locator('[contenteditable="true"] table')).toBeVisible();
+  note.on("dialog", (dialog) => void dialog.accept(dialog.defaultValue()));
+  const file = note.waitForEvent("download");
+  await note.getByRole("button", { name: "내보내기", exact: true }).click();
+  await note.getByRole("button", { name: "PDF로 내보내기", exact: true }).click();
+  const download = await file;
+  expect(download.suggestedFilename()).toContain(".pdf");
+  const path = await download.path();
+  expect(path).not.toBeNull();
+  const { readFile } = await import("node:fs/promises");
+  const bytes = await readFile(path!);
+  expect(bytes.subarray(0, 4).toString()).toBe("%PDF");
+  const { PDFDocument } = await import("pdf-lib");
+  expect((await PDFDocument.load(bytes)).getPageCount()).toBeGreaterThan(0);
+  expect(external).toEqual([]);
+  expect(await note.evaluate(() => (window as unknown as { __csp: string[] }).__csp)).toEqual([]);
+});
+
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     (window as unknown as { __csp: string[] }).__csp = [];

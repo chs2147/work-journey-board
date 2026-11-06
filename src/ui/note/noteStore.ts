@@ -61,7 +61,31 @@ import {
   useBoard,
 } from "../board/boardStore";
 
+export type NoteRepository = Pick<
+  JournalRepository,
+  | "getSettings"
+  | "updateSettings"
+  | "getWeekNote"
+  | "saveWeekNote"
+  | "getNoteAssetMeta"
+  | "getNoteAssets"
+  | "getNoteAsset"
+  | "getNoteAssetView"
+  | "setNoteAssetThumb"
+  | "addNoteAsset"
+  | "pruneNoteAssets"
+  | "getItemsByIds"
+>;
+export interface TaskNoteOwner {
+  categoryId: string;
+  boardId: string;
+  title: string;
+  dataDir: string;
+}
+
 export interface NoteState {
+  task: TaskNoteOwner | null;
+  saveError: string | null;
   weekId: WeekId;
   doc: NoteDoc;
   /** 아직 저장한 적 없는 주의 예전 요일 메모를 보여 주는 중 */
@@ -142,6 +166,8 @@ const metaOf = (img: NoteImage): NoteImage => ({
 export const noteRepo = () => repo;
 
 export const useNote = create<NoteState>(() => ({
+  task: null,
+  saveError: null,
   weekId: "",
   doc: emptyDoc(),
   legacy: false,
@@ -175,8 +201,9 @@ export const useNote = create<NoteState>(() => ({
 const set = useNote.setState;
 const get = useNote.getState;
 
-let repo: JournalRepository | null = null;
+let repo: NoteRepository | null = null;
 let saveTimer: ReturnType<typeof setTimeout> | null = null;
+let noteSaveQueue: Promise<void> = Promise.resolve();
 let unsubscribe: (() => void) | null = null;
 let focusSeq = 0;
 /** 마지막으로 글을 고친 상자(Alt+M으로 돌아갈 자리) */
@@ -188,7 +215,7 @@ let savedDoc: NoteDoc = emptyDoc();
  * 지금 화면의 메모 문서를 읽어 온 일지(워크스페이스). 저장·이미지 정리는 **늘 이 일지에만** 한다 —
  * 1.8.0 결함: 공간을 바꾼 직후 "이전 공간의 문서"로 "새 공간의 이미지"를 정리해 그림이 지워졌다(v1.8.1).
  */
-let docRepo: JournalRepository | null = null;
+let docRepo: NoteRepository | null = null;
 let noteGeneration = 0;
 let cancelPointerGesture: (() => void) | null = null;
 export function registerNoteGesture(cancel: () => void) {
@@ -230,6 +257,8 @@ export function detachNote() {
   redoStack.length = 0;
   clearImageCache();
   set({
+    task: null,
+    saveError: null,
     weekId: "",
     doc: emptyDoc(),
     legacy: false,
@@ -303,6 +332,7 @@ async function loadWeek(weekId: WeekId, finish = true) {
 
 // ── 저장 ──────────────────────────────────────────────
 function scheduleSave() {
+  if (get().task) document.body.dataset.cabiDirty = "true";
   if (!docRepo) return; // 일지를 바꾸는 중(연결 끊김) — 다음 일지에 이전 문서를 쓰지 않는다
   if (saveTimer) clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
@@ -312,20 +342,38 @@ function scheduleSave() {
 }
 
 /** 대기 중인 저장을 지금 끝낸다(주 이동·창 닫기·내보내기 전에). force = 타이머 없이도 저장 */
-export async function flushNote(force = false) {
+export async function flushNote(force = false, strict = false) {
   cancelNoteGesture();
   if (!saveTimer && !force) return;
   if (saveTimer) clearTimeout(saveTimer);
   saveTimer = null;
   const r = docRepo;
   const { weekId, doc } = get();
-  if (!r || !weekId) return;
-  try {
+  if (!r || (!weekId && !get().task)) return;
+  const generation = noteGeneration;
+  const job = noteSaveQueue.then(async () => {
+    if (docRepo !== r || noteGeneration !== generation) return;
+    if (!get().legacy && JSON.stringify(doc) === JSON.stringify(savedDoc)) {
+      if (get().task && get().doc === doc) document.body.dataset.cabiDirty = "false";
+      set({ saveError: null });
+      return;
+    }
     await track(() => r.saveWeekNote(weekId, doc, savedDoc));
     if (docRepo === r && get().weekId === weekId) savedDoc = doc;
-    if (get().weekId === weekId) set({ legacy: false });
+    if (get().weekId === weekId) set({ legacy: false, saveError: null });
+    if (get().task && get().doc === doc) document.body.dataset.cabiDirty = "false";
+    void useAppStore
+      .getState()
+      .platform?.cabi.publish({ type: "changed" })
+      .catch(() => undefined);
+  });
+  noteSaveQueue = job.catch(() => undefined);
+  try {
+    await job;
   } catch (e) {
+    set({ saveError: e instanceof Error ? e.message : String(e) });
     reportError(e);
+    if (strict) throw e;
   }
 }
 
@@ -338,7 +386,7 @@ export async function reloadNote() {
 export async function refreshNoteLinks() {
   const r = docRepo;
   const weekId = get().weekId;
-  if (!r || !weekId) return;
+  if (!r || (!weekId && !get().task)) return;
   const { doc: authoritative } = await r.getWeekNote(weekId);
   if (docRepo !== r || get().weekId !== weekId) return;
   const merge = (doc: NoteDoc): NoteDoc => ({
@@ -376,10 +424,10 @@ export async function revealMemo(weekId: WeekId, boxId: string) {
  */
 export async function finishNote() {
   cancelNoteGesture();
-  await flushNote();
+  await flushNote(false, !!get().task);
   const r = docRepo; // 문서를 읽어 온 그 일지에만(다른 공간의 이미지를 이 문서 기준으로 지우지 않게)
   const { weekId, doc, legacy } = get();
-  if (!r || !weekId || legacy || doc === loadedDoc) return;
+  if (!r || (!weekId && !get().task) || legacy || doc === loadedDoc) return;
   await r.pruneNoteAssets(weekId, noteAssetIds(doc)).catch(reportError);
   if (docRepo === r && get().doc === doc) loadedDoc = doc; // 정리를 마친 문서 — 다시 불러도 또 정리하지 않는다
 }
@@ -606,7 +654,7 @@ export async function addDroppedFiles(files: File[], at: { x: number; y: number 
     repo === r &&
     docRepo === r &&
     get().weekId === weekId &&
-    useBoard.getState().weekId === weekId &&
+    (get().task !== null || useBoard.getState().weekId === weekId) &&
     noteGeneration === generation;
   if (!current()) return;
   const markdown = files.filter((f) => /\.(md|markdown)$/i.test(f.name));
@@ -906,9 +954,9 @@ export function moveBoxLive(id: string, x: number, y: number) {
  */
 export async function saveImage(id: string) {
   const box = boxOf(id);
-  const j = useAppStore.getState().journal;
+  const j = noteExportContext();
   const platform = useAppStore.getState().platform;
-  if (!box || box.kind !== "image" || j.state !== "ready" || !platform) return;
+  if (!box || box.kind !== "image" || !j || !platform) return;
   if (!get().assets[box.asset]) return toast(STR.note.imageMissing);
   try {
     const img = await j.repo.getNoteAsset(box.asset);
@@ -1267,4 +1315,61 @@ export function cancelLinking() {
 
 export function setShowEdges(showEdges: boolean) {
   set({ showEdges, ...(showEdges ? {} : EDGE_RESET) });
+}
+
+/** Date-independent task owner, using the same canvas/store engine in its own window. */
+export async function initTaskNote(r: NoteRepository, task: TaskNoteOwner) {
+  detachNote();
+  repo = r;
+  docRepo = r;
+  const generation = noteGeneration;
+  const [{ doc }, rows] = await Promise.all([r.getWeekNote(""), r.getNoteAssetMeta("")]);
+  if (repo !== r || generation !== noteGeneration) return;
+  loadedDoc = null;
+  savedDoc = doc;
+  set({
+    task,
+    weekId: "",
+    doc,
+    assets: Object.fromEntries(rows.map(({ id, ...a }) => [id, a])),
+    expanded: false,
+    collapsed: false,
+    zoom: 1,
+    legacy: false,
+  });
+}
+export function importBoardObjects(incoming: NoteDoc) {
+  const doc = get().doc,
+    z = topZ(doc);
+  commit(
+    {
+      ...doc,
+      boxes: [...doc.boxes, ...incoming.boxes.map((b, i) => ({ ...b, z: z + i + 1 }))],
+      edges: [...(doc.edges ?? []), ...(incoming.edges ?? [])],
+    },
+    true,
+  );
+  setMulti(incoming.boxes.map((b) => b.id));
+}
+export async function refreshBoardAssetMeta() {
+  const r = docRepo;
+  if (!r) return;
+  const rows = await r.getNoteAssetMeta(get().weekId);
+  if (docRepo !== r) return;
+  set({ assets: Object.fromEntries(rows.map(({ id, ...a }) => [id, a])) });
+}
+export function noteExportContext() {
+  const r = noteRepo();
+  const task = get().task;
+  const j = useAppStore.getState().journal;
+  return r && (task || j.state === "ready")
+    ? { repo: r, dataDir: task?.dataDir ?? (j.state === "ready" ? j.dataDir : "") }
+    : null;
+}
+
+/** Async board operations must remain bound to the document/workspace they started in. */
+export function captureNoteScope() {
+  const r = docRepo,
+    generation = noteGeneration;
+  return () => docRepo === r && r !== null && noteGeneration === generation;
 }

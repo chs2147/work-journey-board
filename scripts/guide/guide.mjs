@@ -366,6 +366,32 @@ async function shots(base = "http://localhost:1420") {
       url: show,
       run: async (p) => {
         await p.keyboard.press("Alt+4");
+        await p.getByLabel("업무를 선택해 주세요", { exact: true }).selectOption({ index: 1 });
+        const notePromise = p.waitForEvent("popup");
+        await p.getByTestId("cabi-new-note").click();
+        const note = await notePromise;
+        await note.getByTestId("cabi-note-editor").waitFor();
+        await note.getByLabel("노트 제목", { exact: true }).fill("검토 방향과 결정 사항");
+        await note
+          .locator('[contenteditable="true"]')
+          .fill(
+            "가상 샘플 업무의 검토 방향과 결정 사항을 기록합니다.\n업무 자료와 주간 메모를 연결해 맥락을 이어 갑니다.",
+          );
+        await note.waitForTimeout(800);
+        await note.screenshot({ path: join(OUT, "shots", "11-cabi-note.png") });
+        const boardPromise = p.waitForEvent("popup");
+        await p.getByTestId("cabi-open-board").click();
+        const board = await boardPromise;
+        await board.getByTestId("note-scroll").waitFor();
+        await board.getByRole("button", { name: "주간 메모", exact: true }).click();
+        const panel = board.getByTestId("cabi-weekly-panel");
+        await panel.locator('input[type="checkbox"]').first().check();
+        await panel.getByRole("button", { name: "1개 보드에 추가", exact: true }).click();
+        await board.getByTestId("note-box").waitFor();
+        await board.waitForTimeout(700);
+        await board.screenshot({ path: join(OUT, "shots", "11-cabi-board.png") });
+        await board.close();
+        await note.close();
         await p.locator('[data-testid="cabinet-row"][data-kind="folder"]').nth(1).dblclick();
         await p.locator('[data-testid="folder-row"][data-name="2026-10 이관"]').dblclick();
       },

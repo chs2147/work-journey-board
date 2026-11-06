@@ -10,6 +10,7 @@
   | 문서 | 내용 |
   |---|---|
   | `overview.md` | 요구사항·결정 이력·**10절 화면 구성**·**12절 인계 명세** |
+  | `cabinet-v2-spec.md` | Cabi.NET 개편 — 추천 A 조합 승인, `cabinet-v2` 브랜치, 검증판 1.20.0-rc.1 / DB v16, 업무 노트·업무 보드·원본 참조·주간 메모 연동·양방향 객체 복제 |
   | `data-spec.md` | 주차 규칙·스키마 SQL·활성/무기록 규칙·삭제·백업·저장소 인터페이스 |
   | `output-spec.md` | 자동 집계 포맷·엑셀 2시트·내보내기·AI 지시문 |
   | `viz-spec.md` | 4개 시각화·업무 색 팔레트 |
@@ -183,3 +184,10 @@ npm run lint && npm run typecheck
 
 ## 7. 마일스톤 (project-plan.md)
 I-M0 설치 검증(◆G1) → I-M1 핵심 기록(◆G2 2주 실사용) → I-M2 집계·엑셀 → I-M3 시각화 → I-M4 AI 클립보드 다리 → I-M5 안정화·v1.0.0
+
+### Cabi.NET 구현 규칙 (2026-11-06 승인)
+- 업무 소유자 = category.id, 날짜별 entry_item 아님. 보드는 업무당 1개, 노트는 여러 개. 주차 ID로 위장해 저장하지 않는다.
+- 노트/보드 창은 DB를 직접 열지 않고 메인 허용 RPC로 저장한다. epoch/revision, 닫기/공간 전환 전 flush 확인을 유지한다.
+- 원본 연결 카드와 독립 사본을 구분한다. 객체 복제 시 이미지 소유 자산·객체 ID를 새로 만들고 선택 그룹 내부 관계선만 복제한다.
+- **노트 PDF 내보내기 예외**: 승인된 Cabi.NET 요구에 따라 저장 대화상자로 고른 `.pdf`에만 `Platform.writeExport` → Rust `export_write`로 저장한다. 일지/등록된 공간의 backups 경로는 기존 가드를 유지한다. 글꼴/라이브러리는 번들하고 실행 중 외부 통신은 하지 않는다.
+- 신규 런타임 의존성 `pdf-lib`·`@pdf-lib/fontkit`·`@tiptap/extension-table`은 로컬 문서 처리만 사용하며 네트워크 기능/자동 전송을 넣지 않는다.

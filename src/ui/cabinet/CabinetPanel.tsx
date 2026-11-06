@@ -1,15 +1,16 @@
+import { CabiHub } from "./CabiHub";
+import { cabiCall } from "./cabiService";
+import { CABI_DRAG_PREFIX } from "./cabiDragFormat";
 // Cabinet 창(features-1102-spec F5, 시안 f5b): 앱 안 모달리스 창 — 왼쪽 업무별 묶음, 오른쪽 [전체·폴더·링크] 목록,
 // 끌어 놓기 등록(탐색기 폴더 = A안 경로, 브라우저 링크 = 브라우저가 준 제목), 링크 등록 창(제목 고치기), 연결 고치기.
 import { useEffect, useMemo, useRef, useState, type DragEvent, type KeyboardEvent } from "react";
 import { useWindowDrag } from "./useWindowDrag";
 import {
   ALL_GROUP,
-  countKinds,
   firstAnchor,
   linkTitleFromUrl,
   shortUrl,
   UNLINKED,
-  type CabinetFilter,
   type CabinetItem,
   type CabinetLinkDraft,
 } from "../../domain/cabinet";
@@ -54,7 +55,10 @@ let draggingId: string | null = null;
 /** standalone = 실앱 별도 OS 창(창 머리·위치는 OS가) */
 export function CabinetPanel({ standalone = false }: { standalone?: boolean }) {
   const s = useCabinet();
-  const { pos, onPointerDown, z, raise } = useWindowDrag({ x: 76, y: 96 });
+  const { pos, onPointerDown, z, raise } = useWindowDrag({
+    x: Math.max(16, (window.innerWidth - 1180) / 2),
+    y: 60,
+  });
   const [dropOn, setDropOn] = useState(false);
   const [groupOver, setGroupOver] = useState<string | null>(null);
   const [mark, setMark] = useState<{ id: string; after: boolean } | null>(null);
@@ -62,10 +66,6 @@ export function CabinetPanel({ standalone = false }: { standalone?: boolean }) {
   const group = currentGroup(s);
   const groupIds = groups.find((g) => g.key === group)?.itemIds ?? [];
   const inGroup = s.items.filter((i) => groupIds.includes(i.id));
-  const counts = countKinds(inGroup);
-  const shown = inGroup
-    .filter((i) => s.filter === "all" || i.kind === s.filter)
-    .sort((a, b) => groupIds.indexOf(a.id) - groupIds.indexOf(b.id));
   const groupName = (key: string) =>
     key === ALL_GROUP
       ? STR.cabinet.allGroup
@@ -149,7 +149,17 @@ export function CabinetPanel({ standalone = false }: { standalone?: boolean }) {
     <div
       ref={panelRef}
       className={standalone ? styles.standalone : styles.win}
-      style={standalone ? undefined : { left: pos.x, top: pos.y, width: 820, height: 560, zIndex: z }}
+      style={
+        standalone
+          ? undefined
+          : {
+              left: pos.x,
+              top: pos.y,
+              width: 1180,
+              height: Math.min(760, window.innerHeight - 80),
+              zIndex: z,
+            }
+      }
       onPointerDownCapture={standalone ? undefined : raise}
       onFocusCapture={standalone ? undefined : raise}
       role={standalone ? "main" : "dialog"}
@@ -219,7 +229,12 @@ export function CabinetPanel({ standalone = false }: { standalone?: boolean }) {
               )}
               <span className={styles.groupName}>{groupName(g.key)}</span>
               {g.ended && <span className={styles.endedTag}>{STR.cabinet.endedTag}</span>}
-              <span className={styles.groupCount}>{g.itemIds.length}</span>
+              <span className={styles.groupCount}>
+                {g.itemIds.length +
+                  (g.key === ALL_GROUP
+                    ? Object.values(s.cabiCounts).reduce((sum, n) => sum + n, 0)
+                    : (s.cabiCounts[g.key] ?? 0))}
+              </span>
             </button>
           ))}
           <div className={`${styles.drop} ${dropOn ? styles.dropOn : ""}`} data-testid="cabinet-drop">
@@ -228,68 +243,44 @@ export function CabinetPanel({ standalone = false }: { standalone?: boolean }) {
         </nav>
         <SideResizer width={sideW} onChange={setSideW} />
         <section className={`${styles.main} ${dropOn ? styles.mainOn : ""}`}>
-          <div className={styles.mainHead}>
-            <span className={styles.mainTitle} data-testid="cabinet-group-title">
-              {groupName(group)}
-            </span>
-            <div className={styles.chips} role="radiogroup" aria-label={STR.cabinet.filterAria}>
-              {(["all", "folder", "link"] as CabinetFilter[]).map((f) => (
+          <CabiHub
+            includeNotes={group !== UNLINKED}
+            categoryId={canTakeItem(group) ? group : null}
+            name={groupName(group)}
+            resources={inGroup}
+            renderResource={(it) => <CabinetRow key={it.id} item={it} drag={rowDrag} />}
+            footer={
+              <div className={styles.foot}>
                 <button
-                  key={f}
                   type="button"
-                  role="radio"
-                  aria-checked={s.filter === f}
-                  className={`${styles.chip} ${s.filter === f ? styles.chipOn : ""}`}
-                  data-testid={`cabinet-filter-${f}`}
-                  onClick={() => useCabinet.setState({ filter: f })}
+                  className={styles.button}
+                  data-testid="cabinet-add-folder"
+                  onClick={() => void pickAndAddFolders()}
                 >
-                  {f === "folder" && <FolderIcon size={13} />}
-                  {f === "link" && <LinkIcon size={13} />}
-                  {STR.cabinet.filters[f]} {counts[f]}
+                  {STR.cabinet.addFolder}
                 </button>
-              ))}
-            </div>
-          </div>
-          {s.items.length === 0 ? (
-            <p className={styles.empty}>{STR.cabinet.empty}</p>
-          ) : shown.length === 0 ? (
-            <p className={styles.empty}>{STR.cabinet.emptyGroup}</p>
-          ) : (
-            <ul className={styles.list} data-testid="cabinet-list">
-              {shown.map((it) => (
-                <CabinetRow key={it.id} item={it} drag={rowDrag} />
-              ))}
-            </ul>
-          )}
-          <div className={styles.foot}>
-            <button
-              type="button"
-              className={styles.button}
-              data-testid="cabinet-add-folder"
-              onClick={() => void pickAndAddFolders()}
-            >
-              {STR.cabinet.addFolder}
-            </button>
-            <button
-              type="button"
-              className={styles.button}
-              data-testid="cabinet-add-link"
-              onClick={newLinkDialog}
-            >
-              {STR.cabinet.addLink}
-            </button>
-            <button
-              type="button"
-              className={styles.button}
-              title={STR.cabinet.check.title}
-              data-testid="cabinet-check"
-              disabled={s.checking}
-              onClick={() => void checkFolders(true)}
-            >
-              ⟳ {s.checking ? STR.cabinet.check.busy : STR.cabinet.check.button}
-            </button>
-            <span className={styles.footHint}>{STR.cabinet.footHint}</span>
-          </div>
+                <button
+                  type="button"
+                  className={styles.button}
+                  data-testid="cabinet-add-link"
+                  onClick={newLinkDialog}
+                >
+                  {STR.cabinet.addLink}
+                </button>
+                <button
+                  type="button"
+                  className={styles.button}
+                  title={STR.cabinet.check.title}
+                  data-testid="cabinet-check"
+                  disabled={s.checking}
+                  onClick={() => void checkFolders(true)}
+                >
+                  ⟳ {s.checking ? STR.cabinet.check.busy : STR.cabinet.check.button}
+                </button>
+                <span className={styles.footHint}>{STR.cabinet.footHint}</span>
+              </div>
+            }
+          />
           {s.linkDialog && <LinkDialog />}
           {s.linksFor && <LinksDialog itemId={s.linksFor} />}
         </section>
@@ -373,6 +364,9 @@ function CabinetRow({ item, drag }: { item: CabinetItem; drag: RowDrag }) {
       draggable={!renaming}
       onDragStart={(e) => {
         e.dataTransfer.setData(CAB_MIME, item.id);
+        const token = crypto.randomUUID();
+        e.dataTransfer.setData("text/plain", CABI_DRAG_PREFIX + token);
+        void cabiCall("dragResource", token, { kind: item.kind, id: item.id }).catch(() => undefined);
         e.dataTransfer.effectAllowed = "copyMove"; // 업무에 놓기 = copy, 순서 = move
         drag.onStart(item.id);
       }}

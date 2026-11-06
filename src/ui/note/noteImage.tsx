@@ -5,7 +5,7 @@
 //   ③ 그림 데이터(base64)는 스토어에 들고 있지 않는다 — 그릴 때 한 장씩 읽고 버린다
 // 썸네일이 없는 예전 이미지는 처음 그릴 때 만들어 저장한다. CSP는 그대로(blob: 주소를 쓰지 않음).
 import { useEffect, useRef, useState, type CanvasHTMLAttributes } from "react";
-import type { JournalRepository } from "../../data/repository";
+import type { NoteRepository } from "./noteStore";
 import { decodeImage } from "./imageProcess";
 import { loadDisplayBitmap, peekBitmap } from "./imageCache";
 
@@ -40,7 +40,7 @@ export function NoteImageCanvas({
   cover = false,
   ...rest
 }: CanvasProps & {
-  repo: JournalRepository | null;
+  repo: NoteRepository | null;
   assetId: string;
   width: number;
   height: number;
@@ -105,7 +105,7 @@ export function FullImageCanvas({
   height,
   label,
 }: {
-  repo: JournalRepository | null;
+  repo: NoteRepository | null;
   assetId: string;
   width: number;
   height: number;

@@ -59,7 +59,7 @@ interface UndoEntry {
 }
 
 export interface BoardState {
-  memoLinks: { entryId: string; weekId: WeekId; boxId: string }[];
+  memoLinks: { entryId: string; weekId: WeekId; boxId: string; taskCategoryId?: string }[];
   ready: boolean;
   today: DateStr;
   weekId: WeekId;

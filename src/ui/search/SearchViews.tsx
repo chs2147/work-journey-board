@@ -1,3 +1,5 @@
+import { openCabi } from "../cabinet/cabiService";
+import { CABI } from "../../shared/cabiStrings";
 // 검색 화면(features-1102-spec F1): 상단 검색 칸 · 오른쪽 결과 패널 · 보드 위 "결과 기준 보기" 띠 · 보드·메모 강조.
 import { Fragment, useEffect, useRef } from "react";
 import { openCabinet } from "../cabinet/cabinetStore";
@@ -164,9 +166,13 @@ export function SearchPanel({ overlay }: { overlay: boolean }) {
       </div>
       <div className={styles.list} ref={listRef} data-testid="search-results">
         {!terms.length && <p className={styles.note}>{T.hint}</p>}
-        {terms.length > 0 && !s.busy && list.length === 0 && !s.cabinet.length && !s.cards.length && (
-          <p className={styles.note}>{T.empty}</p>
-        )}
+        {terms.length > 0 &&
+          !s.busy &&
+          list.length === 0 &&
+          !s.cabinet.length &&
+          !s.cards.length &&
+          !s.cabiNotes.length &&
+          !s.cabiBoards.length && <p className={styles.note}>{T.empty}</p>}
         {s.filter === "all" && s.cards.length > 0 && (
           <>
             <div className={styles.week}>{STR.universe.kindName.card}</div>
@@ -191,9 +197,37 @@ export function SearchPanel({ overlay }: { overlay: boolean }) {
             ))}
           </>
         )}
+        {s.filter === "all" &&
+          [
+            ...s.cabiNotes.map((n) => ({ id: n.id, title: n.title, text: n.excerpt, kind: "note" as const })),
+            ...s.cabiBoards.map((b) => ({
+              id: b.categoryId,
+              title: b.title,
+              text: CABI.boardOwner,
+              kind: "board" as const,
+            })),
+          ].map((hit) => (
+            <button
+              key={hit.kind + hit.id}
+              type="button"
+              className={styles.hit}
+              data-testid="search-cabi-hit"
+              onClick={() => void openCabi(hit.kind, hit.id)}
+            >
+              <span className={styles.meta}>
+                <span className={styles.kind}>
+                  {CABI.name} · {hit.kind === "note" ? CABI.note : CABI.board}
+                </span>
+                <span className={styles.where}>{hit.title}</span>
+              </span>
+              <span className={styles.text}>
+                <Marked text={hit.text} terms={terms} />
+              </span>
+            </button>
+          ))}
         {s.filter === "all" && s.cabinet.length > 0 && (
           <>
-            <div className={styles.week}>Cabinet</div>
+            <div className={styles.week}>{CABI.name}</div>
             {s.cabinet.map((c) => (
               <button
                 key={c.id}

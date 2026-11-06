@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
   "product": "Work Journey Board",
-  "catalogVersion": "1.19.0",
+  "catalogVersion": "1.20.0-rc.1",
   "asOfDate": "2026-11-06",
-  "baseRelease": "1.18.1",
-  "sourceCommit": "c1ac7a8",
-  "appSchemaVersion": 15,
+  "baseRelease": "1.19.0",
+  "sourceCommit": "8c2ce2e",
+  "appSchemaVersion": 16,
   "versionDefinition": "최초 제공 = 비RC 출시 이력에서 기능 제공이 확인된 최초 버전(0.x 개발판 포함); RC는 preview로 별도 기록",
   "verificationScope": "문서·출시 이력·현행 소스 위치 대조. 기능별 실기 전수 검증을 뜻하지 않음.",
   "features": [
@@ -47,7 +47,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.0.3",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-BOARD-002",
@@ -87,7 +87,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.0.2",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-BOARD-003",
@@ -133,7 +133,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.4.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-BOARD-004",
@@ -173,7 +173,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.0.3",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-BOARD-005",
@@ -213,7 +213,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.0.3",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-BOARD-006",
@@ -253,7 +253,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.0.3",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-BOARD-007",
@@ -293,7 +293,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.0.3",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-BOARD-008",
@@ -333,7 +333,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.0.3",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-BOARD-009",
@@ -379,7 +379,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.7.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-BOARD-010",
@@ -425,7 +425,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.20",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-BOARD-011",
@@ -465,7 +465,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.0.3",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-BOARD-012",
@@ -505,7 +505,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.9",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-BOARD-013",
@@ -545,7 +545,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.10",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-BOARD-014",
@@ -586,7 +586,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.7.1",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-BOARD-015",
@@ -626,7 +626,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.5",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-BOARD-016",
@@ -667,7 +667,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.5.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-BOARD-017",
@@ -719,7 +719,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.1.1",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-BOARD-018",
@@ -759,14 +759,14 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.7",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-BOARD-019",
       "area": "주간 보드·입력",
       "section": "직전 기록",
       "name": "이전 업무 항목 가져오기",
-      "description": "실제 추가하는 항목의 메모/Cabinet 연결도 복사하며 완료 묶음·중복 제외와 전체 실패 롤백을 유지한다.",
+      "description": "실제 추가하는 항목의 메모/Cabi.NET 연결도 복사하며 완료 묶음·중복 제외와 전체 실패 롤백을 유지한다.",
       "entry": "주간 보드·입력",
       "introduced": "0.2.5",
       "preview": null,
@@ -819,7 +819,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.19.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-BOARD-020",
@@ -873,7 +873,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.19.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-BOARD-021",
@@ -920,7 +920,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.7.1",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-BOARD-022",
@@ -961,7 +961,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.7.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-BOARD-023",
@@ -1002,7 +1002,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.13.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-BOARD-024",
@@ -1043,7 +1043,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.16.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-BOARD-025",
@@ -1083,7 +1083,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.8",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-TASK-001",
@@ -1129,7 +1129,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.14.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-TASK-002",
@@ -1175,7 +1175,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.0.10",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-TASK-003",
@@ -1215,7 +1215,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.0.2",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-TASK-004",
@@ -1255,7 +1255,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.0.3",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-TASK-005",
@@ -1295,7 +1295,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.0.4",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-TASK-006",
@@ -1335,7 +1335,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.0.2",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-TASK-007",
@@ -1375,7 +1375,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.6",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-TASK-008",
@@ -1415,7 +1415,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.6",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-TASK-009",
@@ -1455,7 +1455,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.6",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-TASK-010",
@@ -1495,7 +1495,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.6",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-TASK-011",
@@ -1535,7 +1535,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.6",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-IMPORTANT-001",
@@ -1581,7 +1581,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.16.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-IMPORTANT-002",
@@ -1639,7 +1639,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.7.1",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-IMPORTANT-003",
@@ -1679,7 +1679,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.0.11",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-IMPORTANT-004",
@@ -1731,7 +1731,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.16.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-IMPORTANT-005",
@@ -1772,7 +1772,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.18",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-IMPORTANT-006",
@@ -1813,7 +1813,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.1.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-IMPORTANT-007",
@@ -1866,7 +1866,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.14.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-IMPORTANT-008",
@@ -1907,7 +1907,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.14.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-IMPORTANT-009",
@@ -1948,7 +1948,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.16.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-IMPORTANT-010",
@@ -1988,7 +1988,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.0.12",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-IMPORTANT-011",
@@ -2028,7 +2028,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.0.12",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-IMPORTANT-012",
@@ -2068,7 +2068,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.0.12",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-IMPORTANT-013",
@@ -2108,7 +2108,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.0.12",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-IMPORTANT-014",
@@ -2148,7 +2148,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.0.12",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-NOTE-001",
@@ -2188,7 +2188,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.1",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-NOTE-002",
@@ -2228,7 +2228,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.1",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-NOTE-003",
@@ -2268,7 +2268,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.3",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-NOTE-004",
@@ -2314,7 +2314,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.5",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-NOTE-005",
@@ -2354,7 +2354,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.1",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-NOTE-006",
@@ -2394,7 +2394,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.1",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-NOTE-007",
@@ -2441,7 +2441,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.16.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-NOTE-008",
@@ -2481,7 +2481,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.1",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-NOTE-009",
@@ -2521,7 +2521,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.1",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-NOTE-010",
@@ -2561,7 +2561,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.1",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-NOTE-011",
@@ -2601,7 +2601,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.2",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-NOTE-012",
@@ -2647,7 +2647,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.4.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-NOTE-013",
@@ -2687,7 +2687,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.2",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-NOTE-014",
@@ -2727,7 +2727,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.2",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-NOTE-015",
@@ -2767,7 +2767,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.3",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-NOTE-016",
@@ -2807,7 +2807,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.8",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-NOTE-017",
@@ -2847,7 +2847,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.8",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-NOTE-018",
@@ -2893,7 +2893,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.1.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-NOTE-019",
@@ -2933,7 +2933,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.7",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-NOTE-020",
@@ -2973,7 +2973,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.7",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-NOTE-021",
@@ -3014,7 +3014,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.5.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-NOTE-022",
@@ -3055,7 +3055,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.18.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-NOTE-023",
@@ -3096,7 +3096,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.18.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-NOTE-024",
@@ -3137,7 +3137,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.18.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-NOTE-025",
@@ -3178,7 +3178,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.18.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-NOTE-026",
@@ -3238,7 +3238,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.19.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-NOTE-027",
@@ -3292,7 +3292,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.19.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-NOTE-028",
@@ -3332,7 +3332,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.15",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-NOTE-029",
@@ -3378,7 +3378,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.16",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-NOTE-030",
@@ -3418,7 +3418,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.14",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-NOTE-031",
@@ -3458,7 +3458,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.14",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-NOTE-032",
@@ -3505,7 +3505,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.6.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-NOTE-033",
@@ -3546,7 +3546,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.3.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-NOTE-034",
@@ -3587,7 +3587,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.14.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-SUMMARY-001",
@@ -3627,7 +3627,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.1.1",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-SUMMARY-002",
@@ -3685,7 +3685,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.8",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-SUMMARY-003",
@@ -3725,7 +3725,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.1.1",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-SUMMARY-004",
@@ -3765,7 +3765,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.1.1",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-SUMMARY-005",
@@ -3805,7 +3805,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.1.1",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-SUMMARY-006",
@@ -3845,7 +3845,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.1.1",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-SUMMARY-007",
@@ -3891,7 +3891,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.1.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-SUMMARY-008",
@@ -3931,7 +3931,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.5",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-EXPORT-001",
@@ -3971,7 +3971,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.1.3",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-EXPORT-002",
@@ -4011,7 +4011,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.1.3",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-EXPORT-003",
@@ -4063,7 +4063,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.13.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-EXPORT-004",
@@ -4103,7 +4103,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.1.3",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-EXPORT-005",
@@ -4144,7 +4144,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.17",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-EXPORT-006",
@@ -4184,7 +4184,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.1.3",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-EXPORT-007",
@@ -4225,7 +4225,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.8.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-IMPORT-001",
@@ -4265,7 +4265,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.4",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-IMPORT-002",
@@ -4305,7 +4305,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.4",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-IMPORT-003",
@@ -4351,7 +4351,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.20",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-IMPORT-004",
@@ -4391,7 +4391,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.4",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-IMPORT-005",
@@ -4431,7 +4431,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.4",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-IMPORT-006",
@@ -4471,7 +4471,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.4",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-INSIGHT-001",
@@ -4517,7 +4517,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.18.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-INSIGHT-002",
@@ -4557,7 +4557,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.12",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-INSIGHT-003",
@@ -4603,7 +4603,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.18.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-INSIGHT-004",
@@ -4650,7 +4650,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.18.1",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-INSIGHT-005",
@@ -4696,7 +4696,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.18.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-INSIGHT-006",
@@ -4736,7 +4736,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.12",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-INSIGHT-007",
@@ -4788,7 +4788,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.7.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-INSIGHT-008",
@@ -4842,7 +4842,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.19.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-INSIGHT-009",
@@ -4882,7 +4882,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.12",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-INSIGHT-010",
@@ -4922,7 +4922,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.12",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-INSIGHT-011",
@@ -4968,7 +4968,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.18.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-INSIGHT-012",
@@ -5008,7 +5008,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.12",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-INSIGHT-013",
@@ -5054,7 +5054,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.18.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-INSIGHT-014",
@@ -5100,7 +5100,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.18.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-INSIGHT-015",
@@ -5140,7 +5140,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.13",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-INSIGHT-016",
@@ -5180,7 +5180,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.13",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-INSIGHT-017",
@@ -5234,7 +5234,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.19.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-INSIGHT-018",
@@ -5274,7 +5274,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.13",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-INSIGHT-019",
@@ -5314,7 +5314,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.13",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-INSIGHT-020",
@@ -5360,7 +5360,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.18.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-INSIGHT-021",
@@ -5414,7 +5414,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.19.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-INSIGHT-022",
@@ -5469,7 +5469,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.19.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-SEARCH-001",
@@ -5516,7 +5516,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.12.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-SEARCH-002",
@@ -5557,7 +5557,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.2.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-SEARCH-003",
@@ -5598,7 +5598,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.2.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-SEARCH-004",
@@ -5639,7 +5639,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.2.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-SEARCH-005",
@@ -5680,7 +5680,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.2.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-CALENDAR-001",
@@ -5720,7 +5720,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.5",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-CALENDAR-002",
@@ -5760,7 +5760,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.5",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-CALENDAR-003",
@@ -5800,7 +5800,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.5",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-CALENDAR-004",
@@ -5841,7 +5841,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.3.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-CALENDAR-005",
@@ -5882,7 +5882,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.3.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-CALENDAR-006",
@@ -5923,7 +5923,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.3.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-CALENDAR-007",
@@ -5964,15 +5964,15 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.3.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-CABINET-001",
-      "area": "Cabinet",
+      "area": "Cabi.NET",
       "section": "등록",
       "name": "업무별 폴더·링크 등록",
       "description": "업무에 로컬 작업 폴더나 웹 링크를 등록해 모아 둔다.",
-      "entry": "Cabinet",
+      "entry": "Cabi.NET",
       "introduced": "1.3.0",
       "preview": null,
       "status": "active",
@@ -5990,12 +5990,19 @@
           "type": "added",
           "description": "업무에 로컬 작업 폴더나 웹 링크를 등록해 모아 둔다.",
           "source": "docs/release-notes/v1.3.0.md"
+        },
+        {
+          "version": "1.20.0-rc.1",
+          "type": "changed",
+          "description": "Cabi.NET 표시명으로 통일. 기존 자료·업무/업무항목 연결 보존.",
+          "source": "docs/cabinet-v2-spec.md"
         }
       ],
       "sources": [
         "docs/features-1102-spec.md",
         "README.md",
-        "docs/release-notes/v1.3.0.md"
+        "docs/release-notes/v1.3.0.md",
+        "docs/cabinet-v2-spec.md"
       ],
       "implementation": [
         "src/ui/cabinet"
@@ -6004,16 +6011,16 @@
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "제품 기능",
-      "lastChanged": "1.3.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "lastChanged": "1.20.0-rc.1",
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-CABINET-002",
-      "area": "Cabinet",
+      "area": "Cabi.NET",
       "section": "폴더",
       "name": "폴더 내용 탐색",
       "description": "연결한 폴더의 파일·하위 폴더를 보고 열기·상위 이동을 제공한다.",
-      "entry": "Cabinet",
+      "entry": "Cabi.NET",
       "introduced": "1.3.0",
       "preview": null,
       "status": "active",
@@ -6031,12 +6038,19 @@
           "type": "added",
           "description": "연결한 폴더의 파일·하위 폴더를 보고 열기·상위 이동을 제공한다.",
           "source": "docs/release-notes/v1.3.0.md"
+        },
+        {
+          "version": "1.20.0-rc.1",
+          "type": "changed",
+          "description": "Cabi.NET 표시명으로 통일. 기존 자료·업무/업무항목 연결 보존.",
+          "source": "docs/cabinet-v2-spec.md"
         }
       ],
       "sources": [
         "docs/features-1102-spec.md",
         "README.md",
-        "docs/release-notes/v1.3.0.md"
+        "docs/release-notes/v1.3.0.md",
+        "docs/cabinet-v2-spec.md"
       ],
       "implementation": [
         "src/ui/cabinet"
@@ -6045,16 +6059,16 @@
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "제품 기능",
-      "lastChanged": "1.3.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "lastChanged": "1.20.0-rc.1",
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-CABINET-003",
-      "area": "Cabinet",
+      "area": "Cabi.NET",
       "section": "안전",
       "name": "읽기·열기 중심 탐색",
-      "description": "Cabinet 안에서 원본 파일을 편집하거나 삭제하지 않는다.",
-      "entry": "Cabinet",
+      "description": "Cabi.NET 안에서 원본 파일을 편집하거나 삭제하지 않는다.",
+      "entry": "Cabi.NET",
       "introduced": "1.3.0",
       "preview": null,
       "status": "active",
@@ -6072,12 +6086,19 @@
           "type": "added",
           "description": "Cabinet 안에서 원본 파일을 편집하거나 삭제하지 않는다.",
           "source": "docs/release-notes/v1.3.0.md"
+        },
+        {
+          "version": "1.20.0-rc.1",
+          "type": "changed",
+          "description": "Cabi.NET 표시명으로 통일. 기존 자료·업무/업무항목 연결 보존.",
+          "source": "docs/cabinet-v2-spec.md"
         }
       ],
       "sources": [
         "docs/features-1102-spec.md",
         "README.md",
-        "docs/release-notes/v1.3.0.md"
+        "docs/release-notes/v1.3.0.md",
+        "docs/cabinet-v2-spec.md"
       ],
       "implementation": [
         "src/ui/cabinet"
@@ -6086,16 +6107,16 @@
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "제품 기능",
-      "lastChanged": "1.3.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "lastChanged": "1.20.0-rc.1",
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-CABINET-004",
-      "area": "Cabinet",
+      "area": "Cabi.NET",
       "section": "창",
-      "name": "별도 Cabinet 창",
-      "description": "Cabinet을 앱 밖 별도 창으로 열고 닫는다.",
-      "entry": "Cabinet",
+      "name": "별도 Cabi.NET 창",
+      "description": "Cabi.NET을 앱 밖 별도 창으로 열고 닫는다.",
+      "entry": "Cabi.NET",
       "introduced": "1.4.0",
       "preview": null,
       "status": "active",
@@ -6113,12 +6134,19 @@
           "type": "added",
           "description": "Cabinet을 앱 밖 별도 창으로 열고 닫는다.",
           "source": "docs/release-notes/v1.4.0.md"
+        },
+        {
+          "version": "1.20.0-rc.1",
+          "type": "changed",
+          "description": "Cabi.NET 표시명으로 통일. 기존 자료·업무/업무항목 연결 보존.",
+          "source": "docs/cabinet-v2-spec.md"
         }
       ],
       "sources": [
         "docs/features-1102-spec.md",
         "README.md",
-        "docs/release-notes/v1.4.0.md"
+        "docs/release-notes/v1.4.0.md",
+        "docs/cabinet-v2-spec.md"
       ],
       "implementation": [
         "src/ui/cabinet"
@@ -6127,16 +6155,16 @@
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "제품 기능",
-      "lastChanged": "1.4.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "lastChanged": "1.20.0-rc.1",
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-CABINET-005",
-      "area": "Cabinet",
+      "area": "Cabi.NET",
       "section": "업무",
       "name": "전체·진행 업무 목록",
       "description": "등록 0개 업무를 포함해 전체·진행 중 업무를 고른다.",
-      "entry": "Cabinet",
+      "entry": "Cabi.NET",
       "introduced": "1.4.0",
       "preview": null,
       "status": "active",
@@ -6154,12 +6182,19 @@
           "type": "added",
           "description": "등록 0개 업무를 포함해 전체·진행 중 업무를 고른다.",
           "source": "docs/release-notes/v1.4.0.md"
+        },
+        {
+          "version": "1.20.0-rc.1",
+          "type": "changed",
+          "description": "Cabi.NET 표시명으로 통일. 기존 자료·업무/업무항목 연결 보존.",
+          "source": "docs/cabinet-v2-spec.md"
         }
       ],
       "sources": [
         "docs/features-1102-spec.md",
         "README.md",
-        "docs/release-notes/v1.4.0.md"
+        "docs/release-notes/v1.4.0.md",
+        "docs/cabinet-v2-spec.md"
       ],
       "implementation": [
         "src/ui/cabinet"
@@ -6168,16 +6203,16 @@
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "제품 기능",
-      "lastChanged": "1.4.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "lastChanged": "1.20.0-rc.1",
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-CABINET-006",
-      "area": "Cabinet",
+      "area": "Cabi.NET",
       "section": "정렬",
       "name": "등록 항목 순서·업무 이동",
       "description": "항목 줄을 끌어 순서를 바꾸거나 다른 업무와 연결한다.",
-      "entry": "Cabinet",
+      "entry": "Cabi.NET",
       "introduced": "1.4.0",
       "preview": null,
       "status": "active",
@@ -6195,12 +6230,19 @@
           "type": "added",
           "description": "항목 줄을 끌어 순서를 바꾸거나 다른 업무와 연결한다.",
           "source": "docs/release-notes/v1.4.0.md"
+        },
+        {
+          "version": "1.20.0-rc.1",
+          "type": "changed",
+          "description": "Cabi.NET 표시명으로 통일. 기존 자료·업무/업무항목 연결 보존.",
+          "source": "docs/cabinet-v2-spec.md"
         }
       ],
       "sources": [
         "docs/features-1102-spec.md",
         "README.md",
-        "docs/release-notes/v1.4.0.md"
+        "docs/release-notes/v1.4.0.md",
+        "docs/cabinet-v2-spec.md"
       ],
       "implementation": [
         "src/ui/cabinet"
@@ -6209,16 +6251,16 @@
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "제품 기능",
-      "lastChanged": "1.4.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "lastChanged": "1.20.0-rc.1",
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-CABINET-007",
-      "area": "Cabinet",
+      "area": "Cabi.NET",
       "section": "등록",
       "name": "브라우저 주소 아이콘 드롭",
       "description": "브라우저의 주소 아이콘·URL을 끌어 링크를 등록한다.",
-      "entry": "Cabinet",
+      "entry": "Cabi.NET",
       "introduced": "1.4.0",
       "preview": null,
       "status": "active",
@@ -6236,12 +6278,19 @@
           "type": "added",
           "description": "브라우저의 주소 아이콘·URL을 끌어 링크를 등록한다.",
           "source": "docs/release-notes/v1.4.0.md"
+        },
+        {
+          "version": "1.20.0-rc.1",
+          "type": "changed",
+          "description": "Cabi.NET 표시명으로 통일. 기존 자료·업무/업무항목 연결 보존.",
+          "source": "docs/cabinet-v2-spec.md"
         }
       ],
       "sources": [
         "docs/features-1102-spec.md",
         "README.md",
-        "docs/release-notes/v1.4.0.md"
+        "docs/release-notes/v1.4.0.md",
+        "docs/cabinet-v2-spec.md"
       ],
       "implementation": [
         "src/ui/cabinet"
@@ -6250,16 +6299,16 @@
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "제품 기능",
-      "lastChanged": "1.4.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "lastChanged": "1.20.0-rc.1",
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-CABINET-008",
-      "area": "Cabinet",
+      "area": "Cabi.NET",
       "section": "열기",
       "name": "폴더 안 탐색기·Finder 열기",
       "description": "등록한 폴더 안을 운영체제 파일 탐색기로 연다.",
-      "entry": "Cabinet",
+      "entry": "Cabi.NET",
       "introduced": "1.4.0",
       "preview": null,
       "status": "active",
@@ -6277,12 +6326,19 @@
           "type": "added",
           "description": "등록한 폴더 안을 운영체제 파일 탐색기로 연다.",
           "source": "docs/release-notes/v1.4.0.md"
+        },
+        {
+          "version": "1.20.0-rc.1",
+          "type": "changed",
+          "description": "Cabi.NET 표시명으로 통일. 기존 자료·업무/업무항목 연결 보존.",
+          "source": "docs/cabinet-v2-spec.md"
         }
       ],
       "sources": [
         "docs/features-1102-spec.md",
         "README.md",
-        "docs/release-notes/v1.4.0.md"
+        "docs/release-notes/v1.4.0.md",
+        "docs/cabinet-v2-spec.md"
       ],
       "implementation": [
         "src/ui/cabinet"
@@ -6291,16 +6347,16 @@
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "제품 기능",
-      "lastChanged": "1.4.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "lastChanged": "1.20.0-rc.1",
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-CABINET-009",
-      "area": "Cabinet",
+      "area": "Cabi.NET",
       "section": "업무",
-      "name": "업무 머리 Cabinet 바로가기",
-      "description": "업무 이름 옆 바로가기로 해당 업무의 Cabinet을 연다.",
-      "entry": "Cabinet",
+      "name": "업무 머리 Cabi.NET 바로가기",
+      "description": "업무 이름 옆 바로가기로 해당 업무의 Cabi.NET을 연다.",
+      "entry": "Cabi.NET",
       "introduced": "1.4.0",
       "preview": null,
       "status": "active",
@@ -6318,12 +6374,19 @@
           "type": "added",
           "description": "업무 이름 옆 바로가기로 해당 업무의 Cabinet을 연다.",
           "source": "docs/release-notes/v1.4.0.md"
+        },
+        {
+          "version": "1.20.0-rc.1",
+          "type": "changed",
+          "description": "Cabi.NET 표시명으로 통일. 기존 자료·업무/업무항목 연결 보존.",
+          "source": "docs/cabinet-v2-spec.md"
         }
       ],
       "sources": [
         "docs/features-1102-spec.md",
         "README.md",
-        "docs/release-notes/v1.4.0.md"
+        "docs/release-notes/v1.4.0.md",
+        "docs/cabinet-v2-spec.md"
       ],
       "implementation": [
         "src/ui/cabinet"
@@ -6332,16 +6395,16 @@
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "제품 기능",
-      "lastChanged": "1.4.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "lastChanged": "1.20.0-rc.1",
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-CABINET-010",
-      "area": "Cabinet",
+      "area": "Cabi.NET",
       "section": "복구",
       "name": "폴더 확인·경로 다시 지정",
       "description": "없는 폴더를 안내하고 다른 경로를 지정한다.",
-      "entry": "Cabinet",
+      "entry": "Cabi.NET",
       "introduced": "1.5.0",
       "preview": null,
       "status": "active",
@@ -6359,12 +6422,19 @@
           "type": "added",
           "description": "없는 폴더를 안내하고 다른 경로를 지정한다.",
           "source": "docs/release-notes/v1.5.0.md"
+        },
+        {
+          "version": "1.20.0-rc.1",
+          "type": "changed",
+          "description": "Cabi.NET 표시명으로 통일. 기존 자료·업무/업무항목 연결 보존.",
+          "source": "docs/cabinet-v2-spec.md"
         }
       ],
       "sources": [
         "docs/features-1102-spec.md",
         "README.md",
-        "docs/release-notes/v1.5.0.md"
+        "docs/release-notes/v1.5.0.md",
+        "docs/cabinet-v2-spec.md"
       ],
       "implementation": [
         "src/ui/cabinet"
@@ -6373,16 +6443,16 @@
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "제품 기능",
-      "lastChanged": "1.5.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "lastChanged": "1.20.0-rc.1",
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-CABINET-011",
-      "area": "Cabinet",
+      "area": "Cabi.NET",
       "section": "갱신",
       "name": "새로고침·폴더 자동 반영",
       "description": "수동 새로고침과 열린 폴더의 변경 반영을 제공한다.",
-      "entry": "Cabinet",
+      "entry": "Cabi.NET",
       "introduced": "1.5.0",
       "preview": null,
       "status": "active",
@@ -6400,12 +6470,19 @@
           "type": "added",
           "description": "수동 새로고침과 열린 폴더의 변경 반영을 제공한다.",
           "source": "docs/release-notes/v1.5.0.md"
+        },
+        {
+          "version": "1.20.0-rc.1",
+          "type": "changed",
+          "description": "Cabi.NET 표시명으로 통일. 기존 자료·업무/업무항목 연결 보존.",
+          "source": "docs/cabinet-v2-spec.md"
         }
       ],
       "sources": [
         "docs/features-1102-spec.md",
         "README.md",
-        "docs/release-notes/v1.5.0.md"
+        "docs/release-notes/v1.5.0.md",
+        "docs/cabinet-v2-spec.md"
       ],
       "implementation": [
         "src/ui/cabinet"
@@ -6414,16 +6491,16 @@
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "제품 기능",
-      "lastChanged": "1.5.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "lastChanged": "1.20.0-rc.1",
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-CABINET-012",
-      "area": "Cabinet",
+      "area": "Cabi.NET",
       "section": "배치",
-      "name": "Cabinet 목록 폭 조절",
+      "name": "Cabi.NET 목록 폭 조절",
       "description": "업무 목록 너비를 끌어 조절한다.",
-      "entry": "Cabinet",
+      "entry": "Cabi.NET",
       "introduced": "1.5.0",
       "preview": null,
       "status": "active",
@@ -6441,12 +6518,19 @@
           "type": "added",
           "description": "업무 목록 너비를 끌어 조절한다.",
           "source": "docs/release-notes/v1.5.0.md"
+        },
+        {
+          "version": "1.20.0-rc.1",
+          "type": "changed",
+          "description": "Cabi.NET 표시명으로 통일. 기존 자료·업무/업무항목 연결 보존.",
+          "source": "docs/cabinet-v2-spec.md"
         }
       ],
       "sources": [
         "docs/features-1102-spec.md",
         "README.md",
-        "docs/release-notes/v1.5.0.md"
+        "docs/release-notes/v1.5.0.md",
+        "docs/cabinet-v2-spec.md"
       ],
       "implementation": [
         "src/ui/cabinet"
@@ -6455,16 +6539,16 @@
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "제품 기능",
-      "lastChanged": "1.5.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "lastChanged": "1.20.0-rc.1",
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-CABINET-013",
-      "area": "Cabinet",
+      "area": "Cabi.NET",
       "section": "드롭",
       "name": "바로가기·긴 경로 안내",
       "description": "Windows 바로가기와 긴 폴더 경로를 처리하고 드롭 실패 이유를 안내한다.",
-      "entry": "Cabinet",
+      "entry": "Cabi.NET",
       "introduced": "1.5.0",
       "preview": null,
       "status": "active",
@@ -6480,12 +6564,19 @@
           "type": "added",
           "description": "Windows 바로가기와 긴 폴더 경로를 처리하고 드롭 실패 이유를 안내한다.",
           "source": "docs/release-notes/v1.5.0.md"
+        },
+        {
+          "version": "1.20.0-rc.1",
+          "type": "changed",
+          "description": "Cabi.NET 표시명으로 통일. 기존 자료·업무/업무항목 연결 보존.",
+          "source": "docs/cabinet-v2-spec.md"
         }
       ],
       "sources": [
         "docs/features-1102-spec.md",
         "README.md",
-        "docs/release-notes/v1.5.0.md"
+        "docs/release-notes/v1.5.0.md",
+        "docs/cabinet-v2-spec.md"
       ],
       "implementation": [
         "src/ui/cabinet"
@@ -6494,16 +6585,16 @@
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "제품 기능",
-      "lastChanged": "1.5.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "lastChanged": "1.20.0-rc.1",
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-CABINET-014",
-      "area": "Cabinet",
+      "area": "Cabi.NET",
       "section": "macOS",
       "name": "Finder 드롭·별칭 지원",
       "description": "macOS 폴더 드롭·별칭·숨김 파일 처리에 대응한다.",
-      "entry": "Cabinet",
+      "entry": "Cabi.NET",
       "introduced": "1.6.0",
       "preview": null,
       "status": "active",
@@ -6519,12 +6610,19 @@
           "type": "added",
           "description": "macOS 폴더 드롭·별칭·숨김 파일 처리에 대응한다.",
           "source": "docs/release-notes/v1.6.0.md"
+        },
+        {
+          "version": "1.20.0-rc.1",
+          "type": "changed",
+          "description": "Cabi.NET 표시명으로 통일. 기존 자료·업무/업무항목 연결 보존.",
+          "source": "docs/cabinet-v2-spec.md"
         }
       ],
       "sources": [
         "docs/features-1102-spec.md",
         "README.md",
-        "docs/release-notes/v1.6.0.md"
+        "docs/release-notes/v1.6.0.md",
+        "docs/cabinet-v2-spec.md"
       ],
       "implementation": [
         "src/ui/cabinet"
@@ -6533,8 +6631,8 @@
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "제품 기능",
-      "lastChanged": "1.6.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "lastChanged": "1.20.0-rc.1",
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-SPACE-001",
@@ -6575,7 +6673,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.8.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-SPACE-002",
@@ -6616,7 +6714,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.8.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-SPACE-003",
@@ -6657,7 +6755,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.8.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-SPACE-004",
@@ -6698,7 +6796,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.8.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-SPACE-005",
@@ -6739,7 +6837,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.8.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-SPACE-006",
@@ -6780,7 +6878,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.8.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-SPACE-007",
@@ -6821,7 +6919,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.8.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-SPACE-008",
@@ -6862,7 +6960,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.8.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-SPACE-009",
@@ -6909,7 +7007,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.18.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-SPACE-010",
@@ -6950,14 +7048,14 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.8.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-UNIVERSE-001",
       "area": "Universe·지식",
       "section": "지도",
       "name": "여러 종류 기록의 연결망",
-      "description": "업무·항목·태그·메모·Cabinet·지식 카드를 연결해 본다.",
+      "description": "업무·항목·태그·메모·Cabi.NET·지식 카드를 연결해 본다.",
       "entry": "Universe·지식",
       "introduced": "1.12.0",
       "preview": "1.9.0-rc.1",
@@ -6991,7 +7089,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.12.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-UNIVERSE-002",
@@ -7038,7 +7136,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.15.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-UNIVERSE-003",
@@ -7079,7 +7177,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.12.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-UNIVERSE-004",
@@ -7120,14 +7218,14 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.12.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-UNIVERSE-005",
       "area": "Universe·지식",
       "section": "이동",
       "name": "원본 자리로 열기",
-      "description": "항목·메모·업무·Cabinet의 원래 화면으로 이동한다.",
+      "description": "항목·메모·업무·Cabi.NET의 원래 화면으로 이동한다.",
       "entry": "Universe·지식",
       "introduced": "1.12.0",
       "preview": "1.9.0-rc.1",
@@ -7161,7 +7259,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.12.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-UNIVERSE-006",
@@ -7202,7 +7300,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.12.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-UNIVERSE-007",
@@ -7243,7 +7341,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.12.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-UNIVERSE-008",
@@ -7284,7 +7382,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.12.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-UNIVERSE-009",
@@ -7325,7 +7423,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.12.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-UNIVERSE-010",
@@ -7366,14 +7464,14 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.12.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-UNIVERSE-011",
       "area": "Universe·지식",
       "section": "지식 카드",
       "name": "출처·관련 업무 관리",
-      "description": "기록·메모·Cabinet·업무·태그 출처와 관련 업무를 연결한다.",
+      "description": "기록·메모·Cabi.NET·업무·태그 출처와 관련 업무를 연결한다.",
       "entry": "Universe·지식",
       "introduced": "1.12.0",
       "preview": "1.12.0-rc.1",
@@ -7407,7 +7505,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.12.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-UNIVERSE-012",
@@ -7448,7 +7546,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.12.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-UNIVERSE-013",
@@ -7489,7 +7587,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.12.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-UNIVERSE-014",
@@ -7530,7 +7628,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.12.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-UNIVERSE-015",
@@ -7571,7 +7669,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.12.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-UNIVERSE-016",
@@ -7612,7 +7710,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.12.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-UNIVERSE-017",
@@ -7653,7 +7751,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.12.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-UNIVERSE-018",
@@ -7694,7 +7792,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.12.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-UNIVERSE-019",
@@ -7735,7 +7833,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.15.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-UNIVERSE-020",
@@ -7776,7 +7874,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.15.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-UNIVERSE-021",
@@ -7823,7 +7921,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.15.1",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-UNIVERSE-022",
@@ -7864,7 +7962,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.15.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-UNIVERSE-023",
@@ -7905,7 +8003,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.15.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-BACKUP-001",
@@ -7951,7 +8049,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.7.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-BACKUP-002",
@@ -7997,7 +8095,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.6.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-BACKUP-003",
@@ -8037,7 +8135,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.0.4",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-BACKUP-004",
@@ -8077,7 +8175,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.0.2",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-BACKUP-005",
@@ -8117,7 +8215,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.0.2",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-BACKUP-006",
@@ -8163,7 +8261,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.4.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-BACKUP-007",
@@ -8209,7 +8307,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.17.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-BACKUP-008",
@@ -8250,7 +8348,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.4.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-BACKUP-009",
@@ -8291,7 +8389,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.4.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-BACKUP-010",
@@ -8332,7 +8430,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.4.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-BACKUP-011",
@@ -8372,7 +8470,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.2",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-BACKUP-012",
@@ -8413,7 +8511,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.4.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-BACKUP-013",
@@ -8454,7 +8552,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.4.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-BACKUP-014",
@@ -8495,7 +8593,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.17.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-BACKUP-015",
@@ -8536,7 +8634,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.17.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-BACKUP-016",
@@ -8577,7 +8675,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.17.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-BACKUP-017",
@@ -8618,7 +8716,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.17.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-BACKUP-018",
@@ -8659,7 +8757,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.17.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-BACKUP-019",
@@ -8700,7 +8798,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.17.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-BACKUP-020",
@@ -8741,7 +8839,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.17.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-BACKUP-021",
@@ -8782,7 +8880,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.17.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-BACKUP-022",
@@ -8829,7 +8927,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.17.1",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-SETTINGS-001",
@@ -8870,7 +8968,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.20",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-SETTINGS-002",
@@ -8911,7 +9009,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "0.2.20",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-SETTINGS-003",
@@ -8964,7 +9062,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.18.1",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-SETTINGS-004",
@@ -9011,7 +9109,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.16.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-SETTINGS-005",
@@ -9052,7 +9150,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.15.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-SETTINGS-006",
@@ -9105,7 +9203,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.6.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-SETTINGS-007",
@@ -9146,7 +9244,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.1.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-SETTINGS-008",
@@ -9187,7 +9285,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.3.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-SETTINGS-009",
@@ -9239,7 +9337,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.4.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-SETTINGS-010",
@@ -9285,7 +9383,7 @@
       "reviewNote": "",
       "kind": "제품 기능",
       "lastChanged": "1.0.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-DIST-001",
@@ -9323,7 +9421,7 @@
       "reviewNote": "",
       "kind": "배포·플랫폼",
       "lastChanged": "0.0.1",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-DIST-002",
@@ -9361,7 +9459,7 @@
       "reviewNote": "",
       "kind": "배포·플랫폼",
       "lastChanged": "0.0.1",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-DIST-003",
@@ -9400,7 +9498,7 @@
       "reviewNote": "",
       "kind": "배포·플랫폼",
       "lastChanged": "1.6.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-DIST-004",
@@ -9439,7 +9537,7 @@
       "reviewNote": "",
       "kind": "배포·플랫폼",
       "lastChanged": "1.6.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-DIST-005",
@@ -9479,7 +9577,7 @@
       "reviewNote": "",
       "kind": "배포·플랫폼",
       "lastChanged": "0.0.1",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-DIST-006",
@@ -9520,7 +9618,7 @@
       "reviewNote": "",
       "kind": "배포·플랫폼",
       "lastChanged": "0.2.19",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-DIST-007",
@@ -9573,7 +9671,7 @@
       "reviewNote": "",
       "kind": "배포·플랫폼",
       "lastChanged": "1.8.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-DIST-008",
@@ -9619,7 +9717,7 @@
       "reviewNote": "",
       "kind": "개발 운영",
       "lastChanged": "1.6.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-DIST-009",
@@ -9659,7 +9757,7 @@
       "reviewNote": "",
       "kind": "개발 운영",
       "lastChanged": "0.0.1",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-DIST-010",
@@ -9700,7 +9798,7 @@
       "reviewNote": "",
       "kind": "개발 운영",
       "lastChanged": "1.6.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-DIST-011",
@@ -9741,7 +9839,7 @@
       "reviewNote": "",
       "kind": "개발 운영",
       "lastChanged": "1.0.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-ARCHIVE-001",
@@ -9957,7 +10055,7 @@
       "area": "주간 보드·입력",
       "section": "복제",
       "name": "항목 날짜 지정 복제",
-      "description": "주간/데일리 항목 ⋯ 메뉴에서 날짜를 지정하여 본·하위 항목과 공유 메모/Cabinet 연결을 새 항목으로 추가한다. 완료는 초기화하고 시각·마감일을 유지한다.",
+      "description": "주간/데일리 항목 ⋯ 메뉴에서 날짜를 지정하여 본·하위 항목과 공유 메모/Cabi.NET 연결을 새 항목으로 추가한다. 완료는 초기화하고 시각·마감일을 유지한다.",
       "entry": "항목 ⋯ 메뉴",
       "introduced": "1.19.0",
       "preview": "1.19.0-rc.1",
@@ -9996,7 +10094,7 @@
       "reviewNote": "v16 A안·기록 일수 제거 승인, RC2 검증 후 1.19.0 정식 제공.",
       "kind": "제품 기능",
       "lastChanged": "1.19.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-INSIGHT-023",
@@ -10042,7 +10140,7 @@
       "reviewNote": "v16 A안·기록 일수 제거 승인, RC2 검증 후 1.19.0 정식 제공.",
       "kind": "제품 기능",
       "lastChanged": "1.19.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
       "id": "WJB-INSIGHT-024",
@@ -10088,7 +10186,385 @@
       "reviewNote": "v16 A안·기록 일수 제거 승인, RC2 검증 후 1.19.0 정식 제공.",
       "kind": "제품 기능",
       "lastChanged": "1.19.0",
-      "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
+    },
+    {
+      "id": "WJB-CABINET-015",
+      "area": "Cabi.NET",
+      "section": "업무 노트",
+      "kind": "제품 기능",
+      "name": "업무별 여러 노트·모달리스 창",
+      "description": "기존 업무 분류당 여러 노트를 날짜와 무관하게 작성하며 같은 노트 창을 재사용한다.",
+      "entry": "Cabi.NET",
+      "introduced": null,
+      "preview": "1.20.0-rc.1",
+      "status": "active",
+      "platforms": [
+        "windows",
+        "macos"
+      ],
+      "platformSince": {
+        "windows": "1.20.0-rc.1",
+        "macos": "1.20.0-rc.1"
+      },
+      "history": [
+        {
+          "version": "1.20.0-rc.1",
+          "type": "added",
+          "description": "기존 업무 분류당 여러 노트를 날짜와 무관하게 작성하며 같은 노트 창을 재사용한다.",
+          "source": "docs/cabinet-v2-spec.md"
+        }
+      ],
+      "sources": [
+        "docs/cabinet-v2-spec.md",
+        "docs/release-notes/v1.20.0-rc.1.md"
+      ],
+      "implementation": [
+        "src/ui/cabinet",
+        "src/data/cabiRepository.ts",
+        "src/domain/cabi.ts"
+      ],
+      "verification": "브라우저/저장소 자동 검사 대상. Windows/macOS 실제 설치·WebView 간 드래그는 실기 확인 필요.",
+      "reviewStatus": "미검토",
+      "reviewNote": "정식 도입 버전은 main 반영 때 확정.",
+      "lastChanged": "1.20.0-rc.1",
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
+    },
+    {
+      "id": "WJB-CABINET-016",
+      "area": "Cabi.NET",
+      "section": "블록 편집",
+      "kind": "제품 기능",
+      "name": "블록 단위 Markdown 노트 편집",
+      "description": "제목·목록·체크·표·코드·인용·이미지·링크·글자색과 블록 이동·복제·삭제를 제공한다.",
+      "entry": "Cabi.NET",
+      "introduced": null,
+      "preview": "1.20.0-rc.1",
+      "status": "active",
+      "platforms": [
+        "windows",
+        "macos"
+      ],
+      "platformSince": {
+        "windows": "1.20.0-rc.1",
+        "macos": "1.20.0-rc.1"
+      },
+      "history": [
+        {
+          "version": "1.20.0-rc.1",
+          "type": "added",
+          "description": "제목·목록·체크·표·코드·인용·이미지·링크·글자색과 블록 이동·복제·삭제를 제공한다.",
+          "source": "docs/cabinet-v2-spec.md"
+        }
+      ],
+      "sources": [
+        "docs/cabinet-v2-spec.md",
+        "docs/release-notes/v1.20.0-rc.1.md"
+      ],
+      "implementation": [
+        "src/ui/cabinet",
+        "src/data/cabiRepository.ts",
+        "src/domain/cabi.ts"
+      ],
+      "verification": "브라우저/저장소 자동 검사 대상. Windows/macOS 실제 설치·WebView 간 드래그는 실기 확인 필요.",
+      "reviewStatus": "미검토",
+      "reviewNote": "정식 도입 버전은 main 반영 때 확정.",
+      "lastChanged": "1.20.0-rc.1",
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
+    },
+    {
+      "id": "WJB-CABINET-017",
+      "area": "Cabi.NET",
+      "section": "가져오기·내보내기",
+      "kind": "제품 기능",
+      "name": "Markdown 가져오기와 Markdown/PDF 내보내기",
+      "description": "블록 구조·URL을 유지하고 선택한 상대 경로 이미지를 함께 가져온다. base64·실행 HTML·외부 이미지 자동 다운로드는 제외한다. 한글 PDF와 Markdown/이미지 묶음을 저장한다.",
+      "entry": "Cabi.NET",
+      "introduced": null,
+      "preview": "1.20.0-rc.1",
+      "status": "active",
+      "platforms": [
+        "windows",
+        "macos"
+      ],
+      "platformSince": {
+        "windows": "1.20.0-rc.1",
+        "macos": "1.20.0-rc.1"
+      },
+      "history": [
+        {
+          "version": "1.20.0-rc.1",
+          "type": "added",
+          "description": "블록 구조·URL을 유지하고 선택한 상대 경로 이미지를 함께 가져온다. base64·실행 HTML·외부 이미지 자동 다운로드는 제외한다. 한글 PDF와 Markdown/이미지 묶음을 저장한다.",
+          "source": "docs/cabinet-v2-spec.md"
+        }
+      ],
+      "sources": [
+        "docs/cabinet-v2-spec.md",
+        "docs/release-notes/v1.20.0-rc.1.md"
+      ],
+      "implementation": [
+        "src/ui/cabinet",
+        "src/data/cabiRepository.ts",
+        "src/domain/cabi.ts"
+      ],
+      "verification": "브라우저/저장소 자동 검사 대상. Windows/macOS 실제 설치·WebView 간 드래그는 실기 확인 필요.",
+      "reviewStatus": "미검토",
+      "reviewNote": "정식 도입 버전은 main 반영 때 확정.",
+      "lastChanged": "1.20.0-rc.1",
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
+    },
+    {
+      "id": "WJB-CABINET-018",
+      "area": "Cabi.NET",
+      "section": "업무 보드",
+      "kind": "제품 기능",
+      "name": "업무당 하나의 자유 메모보드",
+      "description": "주차와 분리된 업무 보드를 모달리스 창에서 열고 기존 보드 엔진·접이식/폭 조절 자료함을 사용한다.",
+      "entry": "Cabi.NET",
+      "introduced": null,
+      "preview": "1.20.0-rc.1",
+      "status": "active",
+      "platforms": [
+        "windows",
+        "macos"
+      ],
+      "platformSince": {
+        "windows": "1.20.0-rc.1",
+        "macos": "1.20.0-rc.1"
+      },
+      "history": [
+        {
+          "version": "1.20.0-rc.1",
+          "type": "added",
+          "description": "주차와 분리된 업무 보드를 모달리스 창에서 열고 기존 보드 엔진·접이식/폭 조절 자료함을 사용한다.",
+          "source": "docs/cabinet-v2-spec.md"
+        }
+      ],
+      "sources": [
+        "docs/cabinet-v2-spec.md",
+        "docs/release-notes/v1.20.0-rc.1.md"
+      ],
+      "implementation": [
+        "src/ui/cabinet",
+        "src/data/cabiRepository.ts",
+        "src/domain/cabi.ts"
+      ],
+      "verification": "브라우저/저장소 자동 검사 대상. Windows/macOS 실제 설치·WebView 간 드래그는 실기 확인 필요.",
+      "reviewStatus": "미검토",
+      "reviewNote": "정식 도입 버전은 main 반영 때 확정.",
+      "lastChanged": "1.20.0-rc.1",
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
+    },
+    {
+      "id": "WJB-CABINET-019",
+      "area": "Cabi.NET",
+      "section": "자료 연결",
+      "kind": "제품 기능",
+      "name": "폴더·링크·노트 원본 참조 카드",
+      "description": "기존 자료와 노트를 보드로 끌어 연결 카드로 배치한다. 카드 삭제는 원본을 삭제하지 않는다.",
+      "entry": "Cabi.NET",
+      "introduced": null,
+      "preview": "1.20.0-rc.1",
+      "status": "active",
+      "platforms": [
+        "windows",
+        "macos"
+      ],
+      "platformSince": {
+        "windows": "1.20.0-rc.1",
+        "macos": "1.20.0-rc.1"
+      },
+      "history": [
+        {
+          "version": "1.20.0-rc.1",
+          "type": "added",
+          "description": "기존 자료와 노트를 보드로 끌어 연결 카드로 배치한다. 카드 삭제는 원본을 삭제하지 않는다.",
+          "source": "docs/cabinet-v2-spec.md"
+        }
+      ],
+      "sources": [
+        "docs/cabinet-v2-spec.md",
+        "docs/release-notes/v1.20.0-rc.1.md"
+      ],
+      "implementation": [
+        "src/ui/cabinet",
+        "src/data/cabiRepository.ts",
+        "src/domain/cabi.ts"
+      ],
+      "verification": "브라우저/저장소 자동 검사 대상. Windows/macOS 실제 설치·WebView 간 드래그는 실기 확인 필요.",
+      "reviewStatus": "미검토",
+      "reviewNote": "정식 도입 버전은 main 반영 때 확정.",
+      "lastChanged": "1.20.0-rc.1",
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
+    },
+    {
+      "id": "WJB-CABINET-020",
+      "area": "Cabi.NET",
+      "section": "주간 메모 연동",
+      "kind": "제품 기능",
+      "name": "업무에 누적된 주간 메모 모아보기",
+      "description": "업무항목 연결을 기준으로 전체 기간에서 조회·중복 제거·검색하고 원본 연결 또는 사본으로 추가한다.",
+      "entry": "Cabi.NET",
+      "introduced": null,
+      "preview": "1.20.0-rc.1",
+      "status": "active",
+      "platforms": [
+        "windows",
+        "macos"
+      ],
+      "platformSince": {
+        "windows": "1.20.0-rc.1",
+        "macos": "1.20.0-rc.1"
+      },
+      "history": [
+        {
+          "version": "1.20.0-rc.1",
+          "type": "added",
+          "description": "업무항목 연결을 기준으로 전체 기간에서 조회·중복 제거·검색하고 원본 연결 또는 사본으로 추가한다.",
+          "source": "docs/cabinet-v2-spec.md"
+        }
+      ],
+      "sources": [
+        "docs/cabinet-v2-spec.md",
+        "docs/release-notes/v1.20.0-rc.1.md"
+      ],
+      "implementation": [
+        "src/ui/cabinet",
+        "src/data/cabiRepository.ts",
+        "src/domain/cabi.ts"
+      ],
+      "verification": "브라우저/저장소 자동 검사 대상. Windows/macOS 실제 설치·WebView 간 드래그는 실기 확인 필요.",
+      "reviewStatus": "미검토",
+      "reviewNote": "정식 도입 버전은 main 반영 때 확정.",
+      "lastChanged": "1.20.0-rc.1",
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
+    },
+    {
+      "id": "WJB-CABINET-021",
+      "area": "Cabi.NET",
+      "section": "보드 간 복제",
+      "kind": "제품 기능",
+      "name": "주간↔업무 보드 객체 복제",
+      "description": "복제 아이콘 드래그 또는 객체 복사/붙여넣기로 원본을 유지하며 새 객체·이미지 자산·내부 관계선을 만든다. 날짜별 업무항목 연결은 자동 복사하지 않는다.",
+      "entry": "Cabi.NET",
+      "introduced": null,
+      "preview": "1.20.0-rc.1",
+      "status": "active",
+      "platforms": [
+        "windows",
+        "macos"
+      ],
+      "platformSince": {
+        "windows": "1.20.0-rc.1",
+        "macos": "1.20.0-rc.1"
+      },
+      "history": [
+        {
+          "version": "1.20.0-rc.1",
+          "type": "added",
+          "description": "복제 아이콘 드래그 또는 객체 복사/붙여넣기로 원본을 유지하며 새 객체·이미지 자산·내부 관계선을 만든다. 날짜별 업무항목 연결은 자동 복사하지 않는다.",
+          "source": "docs/cabinet-v2-spec.md"
+        }
+      ],
+      "sources": [
+        "docs/cabinet-v2-spec.md",
+        "docs/release-notes/v1.20.0-rc.1.md"
+      ],
+      "implementation": [
+        "src/ui/cabinet",
+        "src/data/cabiRepository.ts",
+        "src/domain/cabi.ts"
+      ],
+      "verification": "브라우저/저장소 자동 검사 대상. Windows/macOS 실제 설치·WebView 간 드래그는 실기 확인 필요.",
+      "reviewStatus": "미검토",
+      "reviewNote": "정식 도입 버전은 main 반영 때 확정.",
+      "lastChanged": "1.20.0-rc.1",
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
+    },
+    {
+      "id": "WJB-CABINET-022",
+      "area": "Cabi.NET",
+      "section": "허브·검색",
+      "kind": "제품 기능",
+      "name": "목록·카드·보드 보기와 노트/보드 검색",
+      "description": "Cabi.NET 허브에서 여러 보기·검색·미리보기를 사용하고 전역 검색에서 노트·업무 보드를 연다.",
+      "entry": "Cabi.NET",
+      "introduced": null,
+      "preview": "1.20.0-rc.1",
+      "status": "active",
+      "platforms": [
+        "windows",
+        "macos"
+      ],
+      "platformSince": {
+        "windows": "1.20.0-rc.1",
+        "macos": "1.20.0-rc.1"
+      },
+      "history": [
+        {
+          "version": "1.20.0-rc.1",
+          "type": "added",
+          "description": "Cabi.NET 허브에서 여러 보기·검색·미리보기를 사용하고 전역 검색에서 노트·업무 보드를 연다.",
+          "source": "docs/cabinet-v2-spec.md"
+        }
+      ],
+      "sources": [
+        "docs/cabinet-v2-spec.md",
+        "docs/release-notes/v1.20.0-rc.1.md"
+      ],
+      "implementation": [
+        "src/ui/cabinet",
+        "src/data/cabiRepository.ts",
+        "src/domain/cabi.ts"
+      ],
+      "verification": "브라우저/저장소 자동 검사 대상. Windows/macOS 실제 설치·WebView 간 드래그는 실기 확인 필요.",
+      "reviewStatus": "미검토",
+      "reviewNote": "정식 도입 버전은 main 반영 때 확정.",
+      "lastChanged": "1.20.0-rc.1",
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
+    },
+    {
+      "id": "WJB-CABINET-023",
+      "area": "Cabi.NET",
+      "section": "저장·무결성",
+      "kind": "제품 기능",
+      "name": "멀티윈도 저장 확인과 충돌 방지",
+      "description": "메인 단일 writer·세션 epoch·문서 revision으로 저장하고 종료/공간 전환 전 자식 창 저장을 확인한다. DB v16 백업/복원에 새 콘텐츠를 포함한다.",
+      "entry": "Cabi.NET",
+      "introduced": null,
+      "preview": "1.20.0-rc.1",
+      "status": "active",
+      "platforms": [
+        "windows",
+        "macos"
+      ],
+      "platformSince": {
+        "windows": "1.20.0-rc.1",
+        "macos": "1.20.0-rc.1"
+      },
+      "history": [
+        {
+          "version": "1.20.0-rc.1",
+          "type": "added",
+          "description": "메인 단일 writer·세션 epoch·문서 revision으로 저장하고 종료/공간 전환 전 자식 창 저장을 확인한다. DB v16 백업/복원에 새 콘텐츠를 포함한다.",
+          "source": "docs/cabinet-v2-spec.md"
+        }
+      ],
+      "sources": [
+        "docs/cabinet-v2-spec.md",
+        "docs/release-notes/v1.20.0-rc.1.md"
+      ],
+      "implementation": [
+        "src/ui/cabinet",
+        "src/data/cabiRepository.ts",
+        "src/domain/cabi.ts"
+      ],
+      "verification": "브라우저/저장소 자동 검사 대상. Windows/macOS 실제 설치·WebView 간 드래그는 실기 확인 필요.",
+      "reviewStatus": "미검토",
+      "reviewNote": "정식 도입 버전은 main 반영 때 확정.",
+      "lastChanged": "1.20.0-rc.1",
+      "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     }
   ],
   "productId": "work-journey-board",

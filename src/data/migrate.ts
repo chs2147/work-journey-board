@@ -1,3 +1,4 @@
+import cabi0016 from "./migrations/0016_cabi_net.sql?raw";
 // 스키마 마이그레이션(data-spec 7-5): 번호 순 전진 전용, 기존 데이터가 있으면 직전 백업 후 단일 트랜잭션으로 적용.
 import { RECOMMENDED_BACKUP_POLICY } from "./backupPolicy";
 import type { SqlDriver, SqlStatement } from "./driver";
@@ -41,6 +42,7 @@ export const MIGRATIONS: Migration[] = [
   { version: 13, sql: dueDate0013 },
   { version: 14, sql: completion0014 },
   { version: 15, sql: noteLinks0015 },
+  { version: 16, sql: cabi0016 },
 ];
 
 export const LATEST_SCHEMA_VERSION = MIGRATIONS.at(-1)!.version;
@@ -138,6 +140,7 @@ export async function backupStructureMatches(driver: SqlDriver, version: number)
     [6, ["tag", "category_tag"]],
     [9, ["cabinet_item", "cabinet_link"]],
     [15, ["note_entry_link"]],
+    [16, ["cabi_note", "cabi_board", "cabi_asset", "cabi_entry_link"]],
     [11, ["universe_relation"]],
     [12, ["knowledge_card", "knowledge_card_category", "knowledge_card_source"]],
   ];
@@ -161,6 +164,19 @@ export async function backupStructureMatches(driver: SqlDriver, version: number)
       (await driver.select<{ name: string }>("PRAGMA table_info(note_entry_link)")).map((c) => c.name),
     );
     if (["note_week_id", "box_id", "entry_id", "created_at"].some((c) => !noteColumns.has(c))) return false;
+  }
+  if (version >= 16) {
+    for (const [table, requiredColumns] of [
+      ["cabi_note", ["id", "category_id", "title", "content", "plain_text", "format_version", "revision"]],
+      ["cabi_board", ["id", "category_id", "doc", "format_version", "revision"]],
+      ["cabi_asset", ["id", "owner_kind", "owner_id", "data", "mime"]],
+      ["cabi_entry_link", ["board_id", "box_id", "entry_id"]],
+    ] as const) {
+      const cols = new Set(
+        (await driver.select<{ name: string }>(`PRAGMA table_info(${table})`)).map((c) => c.name),
+      );
+      if (requiredColumns.some((c) => !cols.has(c))) return false;
+    }
   }
   const introduced: [number, string[]][] = [
     [2, ["flagged", "flag_done_at", "recurrence_id"]],

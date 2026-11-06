@@ -429,7 +429,7 @@ fn norm(p: &str) -> String {
 /// 윈도우 경로를 어느 플랫폼에서든 같게 다루려고 문자열로 본다(`\\`·`/` 모두 구분자).
 /// 내보낼 수 있는 확장자: 엑셀 + 메모 이미지 + 메모 보드 마크다운(CLAUDE.md 4-3 내보내기 예외, weekly-note-spec 11절 #3,
 /// features-1102-spec F4)
-const EXPORT_EXTS: [&str; 4] = [".xlsx", ".png", ".webp", ".md"];
+const EXPORT_EXTS: [&str; 5] = [".xlsx", ".png", ".webp", ".md", ".pdf"];
 /// 마크다운과 함께 쓰는 이미지 폴더(`<문서 이름>_images`) 안에서만 허용하는 원본 이미지 확장자
 const MD_IMAGE_EXTS: [&str; 5] = [".png", ".webp", ".jpg", ".jpeg", ".gif"];
 const MD_IMAGE_DIR_SUFFIX: &str = "_images";
@@ -449,7 +449,7 @@ fn export_path_allowed(path: &str, data_dir: Option<&str>) -> Result<(), String>
         .ends_with(MD_IMAGE_DIR_SUFFIX);
     if !has_ext(name, &EXPORT_EXTS) && !(in_md_images && has_ext(name, &MD_IMAGE_EXTS)) {
         return Err(format!(
-            "엑셀(.xlsx)·이미지(.png·.webp)·마크다운(.md) 파일로만 저장할 수 있습니다: {name}"
+            "엑셀(.xlsx)·이미지(.png·.webp)·마크다운(.md)·PDF(.pdf) 파일로만 저장할 수 있습니다: {name}"
         ));
     }
     if let Some(dir) = data_dir {
@@ -599,6 +599,10 @@ mod tests {
         ] {
             assert!(export_path_allowed(no, Some(dir)).is_err(), "{no}");
         }
+        assert!(export_path_allowed("D:\\보고\\가상노트.pdf", Some(dir)).is_ok());
+        assert!(
+            export_path_allowed("C:\\Users\\u\\WorkJourney\\backups\\노트.pdf", Some(dir)).is_err()
+        );
         // 메모 보드 마크다운(F4): .md + 같은 이름 _images 폴더 안 원본 이미지(jpg·gif 포함)
         assert!(export_path_allowed("D:\\보고\\메모보드_2026-W43.md", Some(dir)).is_ok());
         assert!(

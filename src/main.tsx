@@ -1,4 +1,5 @@
-import { StrictMode } from "react";
+import { CabiWindowLazy } from "./ui/cabinet/CabiWindowLazy";
+import { StrictMode, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import "./shared/fonts.css";
 import "./shared/tokens.css";
@@ -14,7 +15,17 @@ const win = new URLSearchParams(location.search).get("win");
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    {/* Cabinet 폴더 창(features-1102-spec F5) — 별도 OS 창이 같은 화면을 ?win=folder로 띄운다 */}
-    {win === "folder" ? <FolderWindowApp /> : win === "cabinet" ? <CabinetWindowApp /> : <App />}
+    <Suspense fallback={null}>
+      {/* Cabinet 폴더 창(features-1102-spec F5) — 별도 OS 창이 같은 화면을 ?win=folder로 띄운다 */}
+      {win === "cabi" ? (
+        <CabiWindowLazy />
+      ) : win === "folder" ? (
+        <FolderWindowApp />
+      ) : win === "cabinet" ? (
+        <CabinetWindowApp />
+      ) : (
+        <App />
+      )}
+    </Suspense>
   </StrictMode>,
 );

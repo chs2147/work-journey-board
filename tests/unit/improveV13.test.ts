@@ -269,6 +269,11 @@ describe("v13 실제 SQLite 백업 안전성", () => {
 it("v13 구형 구조 실제 복원 후 전진 마이그레이션, 원본 백업은 그대로", async () => {
   const { fs, db, repo } = await setup();
   await repo.createCategory("가상 복원 업무", "2026-W45");
+  await db.batch(
+    ["cabi_entry_link", "cabi_asset", "cabi_note", "cabi_board"].map((name) => ({
+      sql: `DROP TABLE ${name}`,
+    })),
+  );
   await db.execute("DROP TABLE note_entry_link");
   await db.execute("ALTER TABLE entry_item DROP COLUMN completion_was_flagged");
   await db.execute("UPDATE app_meta SET value='13' WHERE key='schema_version'");

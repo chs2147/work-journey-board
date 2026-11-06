@@ -1,6 +1,6 @@
 // 메모 판 그림 캐시(optimize-1031-plan O2): 지금 주의 표시용 사본(썸네일)만 ImageBitmap으로 들고, 주를 옮기면 모두 close()로 해제.
 // 썸네일이 없는 예전 이미지는 처음 읽을 때 만들어 저장한다.
-import type { JournalRepository } from "../../data/repository";
+import type { NoteRepository } from "./noteStore";
 import { decodeImage, makeThumb } from "./imageProcess";
 
 const cache = new Map<string, ImageBitmap>();
@@ -21,7 +21,7 @@ export const peekBitmap = (id: string) => cache.get(id);
 /** 캐시에 든 그림 수(측정·테스트용) */
 export const cachedImageCount = () => cache.size;
 
-export function loadDisplayBitmap(repo: JournalRepository, id: string): Promise<ImageBitmap | null> {
+export function loadDisplayBitmap(repo: NoteRepository, id: string): Promise<ImageBitmap | null> {
   const hit = cache.get(id);
   if (hit) return Promise.resolve(hit);
   const wait = pending.get(id);

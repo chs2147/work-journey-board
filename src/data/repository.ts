@@ -1,3 +1,4 @@
+import { CabiRepository } from "./cabiRepository";
 import { normalizeBackupPolicy } from "./backupPolicy";
 import { copyablePrevious } from "../domain/previousItems";
 // 영속 데이터 접근의 유일한 경로(CLAUDE.md 4-3). UI는 이 클래스만 쓰고 SQL을 직접 실행하지 않는다.
@@ -214,6 +215,7 @@ export interface DayMarkInfo {
 
 /** 직전 기록 가져오기의 원본(improve-1026-spec 3절) */
 export interface ItemRelations {
+  taskNotes?: { board_id: string; box_id: string; entry_id: string }[];
   notes: { note_week_id: string; box_id: string; entry_id: string; created_at: string }[];
   cabinet: { id: string; item_id: string; entry_id: string; created_at: string }[];
 }
@@ -495,6 +497,7 @@ export class JournalRepository {
   private onCorrupt: ((e: unknown) => void) | null = null;
 
   private readonly sourceDb: SqlDriver;
+  readonly cabi: CabiRepository;
   constructor(
     db: SqlDriver,
     private readonly clock: () => Date = () => new Date(),
@@ -535,6 +538,7 @@ export class JournalRepository {
       },
       close: () => db.close(),
     };
+    this.cabi = new CabiRepository(this.db, this, this.clock);
   }
 
   /** 지금까지의 쓰기 횟수(백업 판단용) */
@@ -803,6 +807,11 @@ export class JournalRepository {
   /** 기록이 한 건도 없는 업무만 실삭제(data-spec 6절). 삭제했으면 true. */
   async deleteCategoryIfEmpty(id: string): Promise<boolean> {
     if ((await this.countItems(id)) > 0) return false;
+    const [owned] = await this.db.select<{ n: number }>(
+      "SELECT (SELECT count(*) FROM cabi_note WHERE category_id=?) + (SELECT count(*) FROM cabi_board WHERE category_id=?) AS n",
+      [id, id],
+    );
+    if (owned?.n) return false;
     await this.db.batch([
       { sql: "DELETE FROM category_period WHERE category_id = ?", params: [id] },
       { sql: "DELETE FROM category WHERE id = ?", params: [id] },
@@ -1142,10 +1151,25 @@ export class JournalRepository {
   /** Global memo badges point to original objects, including objects owned by another week. */
   async linkedMemos(entryIds: string[]) {
     if (!entryIds.length) return [];
-    return this.db.select<{ entryId: string; weekId: WeekId; boxId: string }>(
-      `SELECT entry_id AS entryId, note_week_id AS weekId, box_id AS boxId FROM note_entry_link WHERE entry_id IN (${entryIds.map(() => "?").join(",")}) ORDER BY note_week_id, box_id`,
+    const weekly = await this.db.select<{
+      entryId: string;
+      weekId: WeekId;
+      boxId: string;
+      taskCategoryId?: string;
+    }>(
+      `SELECT entry_id AS entryId,note_week_id AS weekId,box_id AS boxId FROM note_entry_link WHERE entry_id IN (${entryIds.map(() => "?").join(",")}) ORDER BY note_week_id,box_id`,
       entryIds,
     );
+    const tasks = await this.db.select<{
+      entryId: string;
+      weekId: WeekId;
+      boxId: string;
+      taskCategoryId: string;
+    }>(
+      `SELECT l.entry_id AS entryId,'' AS weekId,l.box_id AS boxId,b.category_id AS taskCategoryId FROM cabi_entry_link l JOIN cabi_board b ON b.id=l.board_id WHERE l.entry_id IN (${entryIds.map(() => "?").join(",")}) ORDER BY b.category_id,l.box_id`,
+      entryIds,
+    );
+    return [...weekly, ...tasks];
   }
 
   /** 메모 이미지 넣기 — 문서보다 먼저 쓰고, 문서(자동 저장)가 이 id를 가리킨다 */
@@ -1238,7 +1262,7 @@ export class JournalRepository {
   /** 설정 > 백업의 용량 표시 */
   async noteAssetStats(): Promise<{ count: number; bytes: number }> {
     const [r] = await this.db.select<{ count: number; bytes: number | null }>(
-      "SELECT COUNT(*) AS count, SUM(bytes) AS bytes FROM note_asset",
+      "SELECT COUNT(*) AS count, SUM(bytes) AS bytes FROM (SELECT bytes FROM note_asset UNION ALL SELECT bytes FROM cabi_asset)",
     );
     return { count: r?.count ?? 0, bytes: r?.bytes ?? 0 };
   }
@@ -1383,7 +1407,7 @@ export class JournalRepository {
   async itemRelations(ids: string[]): Promise<ItemRelations> {
     if (!ids.length) return { notes: [], cabinet: [] };
     const marks = ids.map(() => "?").join(",");
-    const [notes, cabinet] = await Promise.all([
+    const [notes, cabinet, taskNotes] = await Promise.all([
       this.db.select<ItemRelations["notes"][number]>(
         `SELECT * FROM note_entry_link WHERE entry_id IN (${marks})`,
         ids,
@@ -1392,12 +1416,25 @@ export class JournalRepository {
         `SELECT id, item_id, entry_id, created_at FROM cabinet_link WHERE entry_id IN (${marks})`,
         ids,
       ),
+      this.db.select<NonNullable<ItemRelations["taskNotes"]>[number]>(
+        `SELECT board_id,box_id,entry_id FROM cabi_entry_link WHERE entry_id IN (${marks})`,
+        ids,
+      ),
     ]);
-    return { notes, cabinet };
+    return { notes, cabinet, ...(taskNotes.length ? { taskNotes } : {}) };
   }
 
   private relationStatements(links: ItemRelations, strict = false): SqlStatement[] {
     return [
+      ...(links.taskNotes ?? []).map((r) => ({
+        sql: strict
+          ? "INSERT INTO cabi_entry_link(board_id,box_id,entry_id) VALUES(?,?,?)"
+          : "INSERT OR IGNORE INTO cabi_entry_link(board_id,box_id,entry_id) SELECT ?,?,e.id FROM entry_item e WHERE e.id=? AND EXISTS(SELECT 1 FROM cabi_board n,json_each(n.doc,'$.boxes') b WHERE n.id=? AND json_extract(b.value,'$.id')=?)",
+        params: strict
+          ? [r.board_id, r.box_id, r.entry_id]
+          : [r.board_id, r.box_id, r.entry_id, r.board_id, r.box_id],
+      })),
+
       ...links.notes.map((r) => ({
         sql: strict
           ? "INSERT INTO note_entry_link (note_week_id, box_id, created_at, entry_id) VALUES (?, ?, ?, ?)"
@@ -1492,6 +1529,12 @@ export class JournalRepository {
     const original = await this.itemRelations(sourceIds);
     const relations: ItemRelations = { notes: [], cabinet: [] };
     for (const m of mapping) {
+      if (original.taskNotes?.length)
+        (relations.taskNotes ??= []).push(
+          ...original.taskNotes
+            .filter((r) => r.entry_id === m.source)
+            .map((r) => ({ ...r, entry_id: m.target })),
+        );
       relations.notes.push(
         ...original.notes
           .filter((r) => r.entry_id === m.source)

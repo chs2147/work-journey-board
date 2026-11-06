@@ -1,3 +1,4 @@
+import { listenCabi } from "./cabiService";
 // 실앱 Cabinet 별도 창(improve-1102-spec C1): 창 `cabinet`이 index.html?win=cabinet&t=<테마>&f=<처음 고를 업무·항목>으로 띄우는 화면.
 // 일지는 열지 않는다 — 메인 창이 보내는 자료(cabinet-sync)로 그리고, 등록·고치기는 메인 창에 부탁한다(cabinetStore remote).
 import { useEffect, useState } from "react";
@@ -18,6 +19,18 @@ function initialFocus(): CabinetFocus {
 }
 
 export function CabinetWindowApp() {
+  useEffect(() => {
+    let active = true,
+      off: (() => void) | undefined;
+    void listenCabi().then((f) => {
+      if (active) off = f;
+      else f();
+    });
+    return () => {
+      active = false;
+      off?.();
+    };
+  }, []);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {

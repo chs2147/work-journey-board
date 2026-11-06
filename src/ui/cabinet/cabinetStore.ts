@@ -1,3 +1,4 @@
+import { closeCabiWindows, startCabiHost } from "./cabiService";
 // Cabinet 화면 상태(features-1102-spec F5). 등록·연결은 일지(JournalRepository), 열린 창·하위 위치는 이 PC 설정(config.json `cabinet`).
 // 폴더 창: 실앱 = 별도 OS 창(Platform.folderWindows), 브라우저 모드 = 앱 안 떠 있는 창(같은 FolderView).
 import { create } from "zustand";
@@ -48,6 +49,7 @@ export interface CabinetState {
   categories: Category[];
   /** 진행 중(종료 안 된) 업무 id(improve-1102-spec C2) */
   activeIds: string[];
+  cabiCounts: Record<string, number>;
   /** 보드가 보는 주의 본 항목(항목 연결 고르기) — 메인 창이 채워 Cabinet 창에도 보낸다 */
   weekId: string;
   weekEntries: WeekEntry[];
@@ -81,6 +83,7 @@ export const useCabinet = create<CabinetState>(() => ({
   links: [],
   categories: [],
   activeIds: [],
+  cabiCounts: {},
   weekId: "",
   weekEntries: [],
   group: null,
@@ -151,14 +154,16 @@ export interface CabinetSnapshot {
   links: CabinetLink[];
   categories: Category[];
   activeIds: string[];
+  cabiCounts: Record<string, number>;
   weekId: string;
   weekEntries: WeekEntry[];
   folders: { id: string; sub: string }[];
 }
 
 export function snapshot(): CabinetSnapshot {
-  const { items, links, categories, activeIds, weekId, weekEntries, folders } = useCabinet.getState();
-  return { items, links, categories, activeIds, weekId, weekEntries, folders };
+  const { items, links, categories, activeIds, cabiCounts, weekId, weekEntries, folders } =
+    useCabinet.getState();
+  return { items, links, categories, activeIds, cabiCounts, weekId, weekEntries, folders };
 }
 
 export function applySnapshot(snap: unknown) {
@@ -170,13 +175,17 @@ export async function loadCabinet() {
   if (remote) return applySnapshot(await remote.call("snapshot", []));
   const r = localRepo();
   if (!r) return;
-  const [{ items, links }, { categories, periods }] = await Promise.all([
+  const [{ items, links }, { categories, periods }, notes, boards] = await Promise.all([
     r.listCabinet(),
     r.listCategories(),
+    r.cabi.listNotes(),
+    r.cabi.listBoards(),
   ]);
   const sorted = [...categories].sort((a, b) => a.sortOrder - b.sortOrder);
   const activeIds = [...new Set(periods.filter((p) => p.endDate === null).map((p) => p.categoryId))];
-  useCabinet.setState({ items, links, categories: sorted, activeIds });
+  const cabiCounts: Record<string, number> = {};
+  for (const d of [...notes, ...boards]) cabiCounts[d.categoryId] = (cabiCounts[d.categoryId] ?? 0) + 1;
+  useCabinet.setState({ items, links, categories: sorted, activeIds, cabiCounts });
   await app()
     .platform?.cabinetSetRoots(items.filter((i) => i.kind === "folder").map((i) => i.target))
     .catch(() => undefined);
@@ -186,13 +195,21 @@ export async function loadCabinet() {
   if (gone.length) useCabinet.setState((s) => ({ folders: s.folders.filter((f) => ids.has(f.id)) }));
 }
 
-export function groupsOf(s: Pick<CabinetState, "items" | "links" | "categories" | "activeIds">) {
-  return cabinetGroups(
+export function groupsOf(
+  s: Pick<CabinetState, "items" | "links" | "categories" | "activeIds"> & {
+    cabiCounts?: Record<string, number>;
+  },
+) {
+  const out = cabinetGroups(
     s.items,
     s.links,
     s.categories.map((c) => c.id),
     s.activeIds,
   );
+  for (const c of s.categories)
+    if (s.cabiCounts?.[c.id] && !out.some((g) => g.key === c.id))
+      out.push({ key: c.id, itemIds: [], ended: !s.activeIds.includes(c.id) });
+  return out;
 }
 
 /** 지금 보일 묶음 — 고른 게 없거나 사라졌으면 '전체' */
@@ -639,6 +656,7 @@ export async function closeFolder(id: string) {
 
 /** 앱을 켤 때: 이 PC 설정에 적힌 Cabinet 창·폴더 창을 다시 연다 + OS 창 알림 받기 */
 export async function restoreCabinet() {
+  await startCabiHost();
   const p = app().platform;
   if (!p) return;
   if (!listening) {
@@ -697,6 +715,7 @@ export async function shutdownCabinet() {
  * 다음 공간의 창 상태는 전환 뒤 restoreCabinet이 config.cabinet으로 다시 연다.
  */
 export async function suspendCabinet(): Promise<CabinetConfig> {
+  await closeCabiWindows();
   if (saveTimer) clearTimeout(saveTimer);
   const p = app().platform;
   const { open, folders } = useCabinet.getState();

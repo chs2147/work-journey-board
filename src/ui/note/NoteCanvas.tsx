@@ -1,3 +1,8 @@
+import { CabiDropGhost } from "../cabinet/CabiDropGhost";
+import { copyBoardObjects, pasteBoardObjects } from "../cabinet/boardTransfer";
+import { ResourceCard } from "../cabinet/ResourceCard";
+import { BoardCopyHandles } from "../cabinet/CabiDrag";
+import { handleCabiDrop } from "../cabinet/cabiDrop";
 // 메모 판(weekly-note-spec 4절, 시안 A): 점 격자 위 자유 배치 텍스트 상자. 빈 곳 클릭 = 새 상자, 위 막대 끌기 = 이동,
 // 오른쪽 손잡이 = 폭, Esc = 선택(방향키·Delete), 편집 중에는 서식 막대. 편집기(TipTap)는 이 조각과 함께 처음 열 때만 불러온다.
 import { createPortal } from "react-dom";
@@ -90,6 +95,17 @@ const ROOM = { right: 40, bottom: 160 };
 const isEditable = (el: Element | null) => !!el?.closest('input, textarea, select, [contenteditable="true"]');
 
 export default function NoteCanvas() {
+  useEffect(() => {
+    const key = (e: globalThis.KeyboardEvent) => {
+      if (!(e.ctrlKey || e.metaKey) || !e.altKey || e.isComposing) return;
+      if (e.code !== "KeyC" && e.code !== "KeyV") return;
+      e.preventDefault();
+      void (e.code === "KeyC" ? copyBoardObjects() : pasteBoardObjects()).catch(reportError);
+    };
+    window.addEventListener("keydown", key);
+    return () => window.removeEventListener("keydown", key);
+  }, []);
+
   useEffect(() => () => cancelNoteGesture(), []);
   const doc = useNote((s) => s.doc);
   const editingId = useNote((s) => s.editingId);
@@ -108,6 +124,7 @@ export default function NoteCanvas() {
   });
   const rowBox = rowBoxId ? doc.boxes.find((b) => b.id === rowBoxId) : undefined;
   const canvasRef = useRef<HTMLDivElement>(null);
+  const [cabiOver, setCabiOver] = useState<{ x: number; y: number } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [view, setView] = useState({ w: 0, h: 0 });
   /** Space를 누르고 있어 끌면 판이 움직이는 상태 / 지금 끌어 옮기는 중 */
@@ -429,6 +446,12 @@ export default function NoteCanvas() {
       : (singleUrl(e.dataTransfer.getData("text/uri-list").split("\n")[0] ?? "") ??
         singleUrl(e.dataTransfer.getData("text/plain")));
   const onDropCapture = (e: DragEvent<HTMLDivElement>) => {
+    setCabiOver(null);
+    const canvasRect = canvasRef.current!.getBoundingClientRect();
+    if (
+      handleCabiDrop(e, { x: (e.clientX - canvasRect.left) / zoom, y: (e.clientY - canvasRect.top) / zoom })
+    )
+      return;
     const url = droppedUrl(e);
     if (!hasFiles(e) && !url) return;
     e.preventDefault();
@@ -503,14 +526,20 @@ export default function NoteCanvas() {
             }}
             // 빈 곳 클릭의 기본 동작(포커스 옮기기)이 방금 커서를 넣은 새 상자를 빼앗지 않게
             onMouseDown={(e) => e.target === e.currentTarget && e.preventDefault()}
+            onDragLeaveCapture={(e) => {
+              if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setCabiOver(null);
+            }}
             onDragOverCapture={(e) => {
+              const r = canvasRef.current!.getBoundingClientRect();
+              setCabiOver({ x: (e.clientX - r.left) / zoom, y: (e.clientY - r.top) / zoom });
               const types = [...e.dataTransfer.types];
-              if (!hasFiles(e) && !types.includes("text/uri-list")) return;
+              if (!hasFiles(e) && !types.includes("text/uri-list") && !types.includes("text/plain")) return;
               e.preventDefault();
               e.dataTransfer.dropEffect = "copy";
             }}
             onDropCapture={onDropCapture}
           >
+            <CabiDropGhost at={cabiOver} />
             <EdgeLayer doc={doc} size={size} />
             {doc.boxes.map((b) =>
               b.kind === "image" ? (
@@ -522,6 +551,8 @@ export default function NoteCanvas() {
                 />
               ) : b.kind === "link" ? (
                 <LinkBoxView key={b.id} box={b} selected={b.id === selectedId} />
+              ) : b.resource ? (
+                <ResourceCard key={b.id} box={b} selected={b.id === selectedId} />
               ) : (
                 <TextBoxView
                   key={b.id}
@@ -533,6 +564,7 @@ export default function NoteCanvas() {
                 />
               ),
             )}
+            <BoardCopyHandles />
             {rowBox && rowItem && (
               <>
                 <span

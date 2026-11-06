@@ -1,3 +1,5 @@
+import { noteRepo, useNote } from "./noteStore";
+import { cabiCall, useCabiChange } from "../cabinet/cabiService";
 // 업무연계 오브젝트의 타이틀 띠(improve-1026v2-spec 6절 → multi-link-spec 1·4·5절): 연결된 항목 하나 = 한 줄
 // `● 업무명 · 10/22 (목) · 항목 글` + ✂(그 연결만 해제). 줄 순서는 보드 순서(업무 → 날짜 → 칸 안), 지워진 항목은 맨 아래.
 // 글은 저장하지 않고 늘 지금 보드의 항목에서 만든다 — 항목을 고치거나 옮기면 바로 따라 바뀐다.
@@ -76,13 +78,15 @@ function useLinkedLines(refs: BoxRef[]): LinkedLine[] {
   const missing = lines.filter((l) => !l.found).map((l) => l.item);
   const missingKey = missing.join("|");
   const journal = useAppStore((s) => s.journal);
+  const version = useCabiChange((s) => s.version);
   // 저장이 끝난 뒤에 찾는다 — 옮긴 직후(저장 전)에 찾으면 옛 날짜가 남는다
   const idle = useBoard((s) => s.saving === 0);
   const [elsewhere, setElsewhere] = useState<Record<string, NonNullable<LinkedLine["found"]>>>({});
   useEffect(() => {
-    if (!missingKey || journal.state !== "ready" || !idle) return;
+    const r = noteRepo();
+    if (!missingKey || !r || !idle) return;
     let alive = true;
-    void journal.repo
+    void r
       .getItemsByIds(missingKey.split("|"))
       .then((rows) => {
         if (!alive) return;
@@ -107,7 +111,7 @@ function useLinkedLines(refs: BoxRef[]): LinkedLine[] {
     return () => {
       alive = false;
     };
-  }, [missingKey, journal, idle]);
+  }, [missingKey, journal, idle, version]);
   return useMemo(
     () =>
       lines
@@ -218,7 +222,8 @@ export function LinkStrip({ boxId, refs }: { boxId: string; refs: BoxRef[] }) {
               aria-label={STR.linked.strip(it.catName, date, it.text)}
               onClick={() => {
                 hover(null);
-                void revealItem(it);
+                if (useNote.getState().task) void cabiCall("openEntry", it);
+                else void revealItem(it);
               }}
             >
               <b>{it.catName}</b> · {date} · {it.text}

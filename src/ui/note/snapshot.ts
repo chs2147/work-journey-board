@@ -13,7 +13,7 @@ import { CATEGORY_COLORS, type CategoryColorKey } from "../../shared/palette";
 import { STR } from "../../shared/strings";
 import { reportError, toast, useBoard } from "../board/boardStore";
 import { useAppStore } from "../common/appStore";
-import { useNote } from "./noteStore";
+import { useNote, noteExportContext, type NoteRepository } from "./noteStore";
 
 const colorOf = (key: string) => CATEGORY_COLORS[key as CategoryColorKey]?.light ?? CATEGORY_COLORS.c1.light;
 
@@ -27,7 +27,11 @@ function baseInput(weekId: WeekId, now: Date) {
 }
 
 /** Cross-week shared links use the original entry's current label in PNG/Excel, too. */
-async function linkedLines(repo: JournalRepository, doc: NoteDoc, lines: SnapshotInput["lines"]) {
+async function linkedLines(
+  repo: Pick<JournalRepository, "getItemsByIds">,
+  doc: NoteDoc,
+  lines: SnapshotInput["lines"],
+) {
   const missing = [...new Set(doc.boxes.flatMap((b) => b.refs?.map((r) => r.item) ?? []))].filter(
     (id) => !lines[id],
   );
@@ -45,13 +49,20 @@ async function linkedLines(repo: JournalRepository, doc: NoteDoc, lines: Snapsho
 }
 
 /** 지금 보고 있는 주의 메모(대기 상자 빼고) — 이미지는 원본을 이때만 읽는다(스토어는 크기만 들고 있음) */
-async function currentInput(repo: JournalRepository, now: Date): Promise<SnapshotInput> {
+async function currentInput(repo: NoteRepository, now: Date): Promise<SnapshotInput> {
   const { doc, pendingId, weekId } = useNote.getState();
   const assets = Object.fromEntries((await repo.getNoteAssets(weekId)).map(({ id, ...a }) => [id, a]));
   const { view, cells } = useBoard.getState();
   const categories = (view?.categories ?? []).map((c) => c.category);
   return {
-    ...baseInput(weekId, now),
+    ...(useNote.getState().task
+      ? {
+          title: useNote.getState().task!.title,
+          subtitle: STR.note.snapshotSub(localDate(now)),
+          goneText: STR.linked.gone,
+          moreText: (n: number) => STR.linked.more(n).replace(/^▾ /, ""),
+        }
+      : baseInput(weekId, now)),
     doc: { ...doc, boxes: doc.boxes.filter((b) => b.id !== pendingId) },
     images: assets,
     lines: await linkedLines(repo, doc, snapLines(categories, cells, colorOf, shortDateLabel)),
@@ -97,9 +108,9 @@ const empty = () => {
 
 /** [PNG 그림으로 저장…] */
 export async function saveSnapshot() {
-  const j = useAppStore.getState().journal;
+  const j = noteExportContext();
   const platform = useAppStore.getState().platform;
-  if (j.state !== "ready" || !platform) return;
+  if (!j || !platform) return;
   if (empty()) return toast(STR.note.snapshotEmpty);
   try {
     const settings = await j.repo.getSettings();
@@ -133,8 +144,8 @@ export async function saveSnapshot() {
 /** [그림으로 복사] — 메일·문서에 붙여넣기 */
 export async function copySnapshot() {
   const platform = useAppStore.getState().platform;
-  const j = useAppStore.getState().journal;
-  if (j.state !== "ready") return;
+  const j = noteExportContext();
+  if (!j) return;
   if (empty()) return toast(STR.note.snapshotEmpty);
   try {
     // ClipboardItem은 누른 즉시(사용자 동작 안에서) 만들고 그림은 Promise로 넘긴다 — 맥 WKWebView(WebKit)는

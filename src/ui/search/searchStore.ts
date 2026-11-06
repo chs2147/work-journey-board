@@ -1,3 +1,4 @@
+import type { CabiNoteSummary } from "../../domain/cabi";
 // 검색 상태(features-1102-spec F1): 검색어·결과·거르기·지금 결과. 결과가 있는 동안 "검색 결과 기준 보기"(띠)는
 // [검색 초기화] 전까지 유지 — 패널을 닫아도 남는다. 앱을 다시 켜면 처음부터.
 import { create } from "zustand";
@@ -23,6 +24,8 @@ interface SearchState {
   truncated: boolean;
   /** Cabinet 제목·주소에서 찾은 것(features-1102-spec F5 #7) — 목록 맨 위 따로, F3 이동 대상 아님 */
   cabinet: CabinetHit[];
+  cabiNotes: CabiNoteSummary[];
+  cabiBoards: { id: string; categoryId: string; title: string }[];
   /** 지식 카드(UV3) */
   cards: CardHit[];
   filter: SearchFilter;
@@ -42,6 +45,8 @@ export const useSearch = create<SearchState>(() => ({
   ran: "",
   hits: [],
   truncated: false,
+  cabiNotes: [],
+  cabiBoards: [],
   cabinet: [],
   cards: [],
   filter: "all",
@@ -90,7 +95,16 @@ export async function runSearch(query = get().query) {
   const j = useAppStore.getState().journal;
   if (j.state !== "ready") return;
   if (!searchTerms(query).length) {
-    set({ hits: [], cabinet: [], cards: [], truncated: false, index: -1, ran: query.trim() });
+    set({
+      hits: [],
+      cabinet: [],
+      cards: [],
+      cabiNotes: [],
+      cabiBoards: [],
+      truncated: false,
+      index: -1,
+      ran: query.trim(),
+    });
     return;
   }
   const my = ++seq;
@@ -100,12 +114,16 @@ export async function runSearch(query = get().query) {
     const { hits, truncated } = await j.repo.search(query, rangeFrom(get().range, today));
     const cabinet = await j.repo.searchCabinet(query);
     const cards = await j.repo.searchCards(query);
+    const cabiNotes = await j.repo.cabi.listNotes(undefined, query);
+    const cabiBoards = await j.repo.cabi.searchBoards(query);
     // 그사이 다시 찾았거나 다른 일지로 바뀌었으면 버린다(CLAUDE.md 4-7)
     if (my !== seq || useAppStore.getState().journal !== j) return;
     if (useSummary.getState().open) setSummaryOpen(false);
     set({
       hits,
       cabinet,
+      cabiNotes,
+      cabiBoards,
       cards,
       truncated,
       ran: query.trim(),
@@ -137,6 +155,8 @@ export function resetSearch() {
     query: "",
     ran: "",
     hits: [],
+    cabiNotes: [],
+    cabiBoards: [],
     cabinet: [],
     cards: [],
     truncated: false,

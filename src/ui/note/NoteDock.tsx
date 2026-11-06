@@ -1,3 +1,6 @@
+import { BoardClipboard } from "../cabinet/BoardClipboard";
+import { CABI } from "../../shared/cabiStrings";
+import { exportTaskBoard } from "../cabinet/cabiExport";
 // 주간 메모(weekly-note-spec 3절): 보드 아래 도크(경계선 끌어 높이 조절, 접기, 크게 보기) 또는
 // 데일리 뷰 왼쪽 판(improve-1026-spec 8-2, variant="side" — [크게 보기]는 improve-1101 #3). 머리 기능 단추는 아이콘(11-3), 배율은 값 표시(11-1).
 // 판(편집기 포함)은 늦게 불러온다.
@@ -136,7 +139,16 @@ function SnapshotButton({ empty }: { empty: boolean }) {
           <button type="button" role="menuitem" onClick={() => pick(copySnapshot)}>
             {STR.note.snapshotCopy}
           </button>
-          <button type="button" role="menuitem" onClick={() => pick(async () => openMdExport())}>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() =>
+              pick(async () => {
+                if (useNote.getState().task) await exportTaskBoard();
+                else openMdExport();
+              })
+            }
+          >
             {STR.mdExport.menu}
           </button>
           <span className={styles.snapHint}>{STR.note.snapshotHint}</span>
@@ -248,7 +260,8 @@ export function NoteDock({ variant = "dock" }: Props) {
           setDockAuto();
         }}
       >
-        <h2 className={styles.title}>{STR.note.title}</h2>
+        <h2 className={styles.title}>{useNote.getState().task ? CABI.boardOwner : STR.note.title}</h2>
+        <BoardClipboard />
         <span className={styles.counts} data-testid="note-counts">
           {STR.note.counts(boxes, images)}
         </span>

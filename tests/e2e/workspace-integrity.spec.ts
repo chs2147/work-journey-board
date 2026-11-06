@@ -48,6 +48,116 @@ const storedAssets = (page: Page) =>
     return w.__wjbApp.assetCount();
   });
 
+test("Cabi.NET 노트·이미지·업무 보드는 공간을 3회 왕복해도 보존된다", async ({ page }) => {
+  await page.keyboard.press("Alt+4");
+  await page.getByTestId("cabi-hub").waitFor();
+  await page.getByLabel("업무를 선택해 주세요", { exact: true }).selectOption({ index: 1 });
+  const notePromise = page.waitForEvent("popup");
+  await page.getByTestId("cabi-new-note").click();
+  const note = await notePromise;
+  await note.getByTestId("cabi-note-editor").waitFor();
+  await note.getByLabel("노트 제목", { exact: true }).fill("가상 공간 보존 노트");
+  await note.locator('[contenteditable="true"]').fill("가상 노트 본문 보존");
+  await note
+    .locator('input[type="file"][accept="image/png,image/jpeg,image/webp,image/gif"]')
+    .setInputFiles({ name: "가상.png", mimeType: "image/png", buffer: await makePng(page, "#5a8b6c") });
+  await expect(note.locator('[contenteditable="true"] img')).toHaveCount(1);
+  const boardPromise = page.waitForEvent("popup");
+  await page.getByTestId("cabi-open-board").click();
+  const board = await boardPromise;
+  await board.getByTestId("note-scroll").waitFor();
+  const counts = () =>
+    page.evaluate(async () => {
+      const w = globalThis as unknown as { __wjbApp: { journalCounts(): Promise<Record<string, number>> } };
+      return w.__wjbApp.journalCounts();
+    });
+  // Switch immediately: the workspace controller must flush both modeless windows first.
+  for (let round = 0; round < 3; round++) {
+    await switchTo(page, 2, "개인");
+    expect(await counts()).toMatchObject({ cabi_note: 0, cabi_board: 0, cabi_asset: 0 });
+    await switchTo(page, 1, "회사");
+    expect(await counts()).toMatchObject({ cabi_note: 1, cabi_board: 1, cabi_asset: 1 });
+  }
+  await expect.poll(() => note.isClosed()).toBe(true);
+  await expect.poll(() => board.isClosed()).toBe(true);
+  await expect(page.getByTestId("cabi-note-row")).toContainText("가상 공간 보존 노트");
+});
+
+test("Cabi.NET 복제 응답이 공간 전환 뒤 도착해도 새 공간에 이전 객체를 쓰지 않는다", async ({ page }) => {
+  await page.goto(`/?today=${TODAY}&sample=showcase&ws=2`);
+  await expect(page.getByTestId("week-title")).toContainText("2026-W43");
+  await page.keyboard.press("Alt+4");
+  await page.getByLabel("업무를 선택해 주세요", { exact: true }).selectOption({ index: 1 });
+  const popup = page.waitForEvent("popup");
+  await page.getByTestId("cabi-open-board").click();
+  const board = await popup;
+  await board.getByTestId("note-scroll").waitFor();
+  await board.getByRole("button", { name: "주간 메모", exact: true }).click();
+  const panel = board.getByTestId("cabi-weekly-panel");
+  await panel.locator('input[type="checkbox"]').nth(1).check();
+  await panel.getByRole("combobox").last().selectOption("copy");
+  await panel.getByRole("button", { name: "1개 보드에 추가", exact: true }).click();
+  await expect(board.getByTestId("note-box")).toHaveCount(1);
+  await board.evaluate(async () => {
+    const notes = (await import(
+      "../../src/ui/note/noteStore" + ".ts"
+    )) as typeof import("../../src/ui/note/noteStore");
+    notes.setMulti(notes.useNote.getState().doc.boxes.map((b) => b.id));
+    const transfer = (await import(
+      "../../src/ui/cabinet/boardTransfer" + ".ts"
+    )) as typeof import("../../src/ui/cabinet/boardTransfer");
+    await transfer.copyBoardObjects();
+  });
+  await page.evaluate(async () => {
+    const { useAppStore } = (await import(
+      "../../src/ui/common/appStore" + ".ts"
+    )) as typeof import("../../src/ui/common/appStore");
+    const j = useAppStore.getState().journal;
+    if (j.state !== "ready") throw Error("not ready");
+    const original = j.repo.cabi.copyOwnedAssets.bind(j.repo.cabi);
+    const state = globalThis as unknown as {
+      __cabiTransferEntered?: boolean;
+      __cabiTransferRelease?: () => void;
+    };
+    let release: () => void = () => undefined;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    state.__cabiTransferRelease = release;
+    j.repo.cabi.copyOwnedAssets = async (...args) => {
+      state.__cabiTransferEntered = true;
+      await gate;
+      return original(...args);
+    };
+  });
+  const pending = page.evaluate(async () => {
+    const { pasteBoardObjects } = (await import(
+      "../../src/ui/cabinet/boardTransfer" + ".ts"
+    )) as typeof import("../../src/ui/cabinet/boardTransfer");
+    try {
+      await pasteBoardObjects();
+      return "unexpected success";
+    } catch (e) {
+      return String(e);
+    }
+  });
+  await page.waitForFunction(
+    () => (globalThis as unknown as { __cabiTransferEntered?: boolean }).__cabiTransferEntered,
+  );
+  await switchTo(page, 2, "개인");
+  const before = await page.evaluate(() =>
+    (globalThis as unknown as { __wjbApp: { noteSnapshot(): Promise<unknown> } }).__wjbApp.noteSnapshot(),
+  );
+  await page.evaluate(() =>
+    (globalThis as unknown as { __cabiTransferRelease: () => void }).__cabiTransferRelease(),
+  );
+  expect(await pending).not.toBe("unexpected success");
+  const after = await page.evaluate(() =>
+    (globalThis as unknown as { __wjbApp: { noteSnapshot(): Promise<unknown> } }).__wjbApp.noteSnapshot(),
+  );
+  expect(after).toEqual(before);
+});
+
 test.beforeEach(async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto(`/?today=${TODAY}&ws=2`);

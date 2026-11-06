@@ -1,4 +1,4 @@
-// Cabinet E2E(features-1102-spec F5): 레일·Alt+4로 열기, 업무별 묶음·[전체·폴더·링크] 거르기, 폴더 창(이동·열기·숨김),
+// Cabi.NET E2E(features-1102-spec F5): 레일·Alt+4로 열기, 업무별 묶음·[전체·폴더·링크] 거르기, 폴더 창(이동·열기·숨김),
 // 링크 끌어 놓기 등록(브라우저가 준 제목·고치기), 폴더 끌어 놓기(파일은 거부), 제목 고치기(F2)·등록 해제·되돌리기, 보드 🗂 표시, 검색.
 // 브라우저 모드는 폴더 창을 앱 안 창으로, 파일 열기는 __wjb.cabinetCalls로 확인(실제로 열지 않음). 가상 샘플·가상 경로만.
 import { expect, test, type Page } from "@playwright/test";
@@ -87,7 +87,9 @@ test("Alt+4로 열기 → 업무별 묶음·거르기 → 폴더 창 이동·파
   await expect(cab).toHaveCount(0);
 });
 
-test("링크 끌어 놓기 → 브라우저가 준 제목(고치기) → Enter 등록 → 검색에 Cabinet · 링크", async ({ page }) => {
+test("링크 끌어 놓기 → 브라우저가 준 제목(고치기) → Enter 등록 → 검색에 Cabi.NET · 링크", async ({
+  page,
+}) => {
   await open(page);
   await page.getByTestId("rail-cabinet").click();
   await page.getByTestId("cabinet-group-cat-settle").click();
@@ -120,7 +122,7 @@ test("링크 끌어 놓기 → 브라우저가 준 제목(고치기) → Enter �
   await page.keyboard.press("Enter");
   const hit = page.getByTestId("search-cabinet-hit");
   await expect(hit).toHaveCount(1);
-  await expect(hit).toContainText("Cabinet · 링크");
+  await expect(hit).toContainText("Cabi.NET · 링크");
   await page.getByTestId("cabinet-close").click();
   await hit.click();
   await expect(page.getByTestId("cabinet")).toBeVisible();
@@ -135,7 +137,7 @@ test("폴더 끌어 놓기(파일은 거부) → F2 제목 고치기 → 연결 
   await drop(page, "cabinet-drop", {}, ["검증표.xlsx"]);
   await expect(page.getByText("‘검증표.xlsx’은(는) 파일이라 등록하지 않습니다 (폴더만)")).toBeVisible();
   await drop(page, "cabinet-drop", {}, ["2026-10 이관"]);
-  await expect(page.getByText("Cabinet에 1개 등록했습니다")).toBeVisible();
+  await expect(page.getByText("Cabi.NET에 1개 등록했습니다")).toBeVisible();
   const row = page.getByTestId("cabinet-row").filter({ hasText: "2026-10 이관" });
   await expect(row).toContainText("/demo/업무/정산/테스트/2026-10 이관");
 
@@ -166,7 +168,7 @@ test("폴더 끌어 놓기(파일은 거부) → F2 제목 고치기 → 연결 
   await expect(page.getByTestId("cabinet-row").filter({ hasText: "10월 이관 자료" })).toBeVisible();
 });
 
-test("보드: 연결된 항목 옆 🗂(여럿이면 Cabinet에서 강조) · 업무 머리 ⋯ › Cabinet 열기", async ({ page }) => {
+test("보드: 연결된 항목 옆 🗂(여럿이면 Cabi.NET에서 강조) · 업무 머리 ⋯ › Cabi.NET 열기", async ({ page }) => {
   await open(page);
   const review = page.locator('[data-item-id="it-review"]');
   await expect(review.getByTestId("cabinet-badge")).toBeVisible();
@@ -189,7 +191,7 @@ test("업무별 목록(전체·0개 업무)·줄을 업무에 끌어 연결·끌
   page,
 }) => {
   await open(page);
-  // 업무 이름 옆 🗄: 여럿이면 Cabinet을 그 업무로
+  // 업무 이름 옆 🗄: 여럿이면 Cabi.NET을 그 업무로
   const settleBadge = page.getByTestId("cabinet-cat-badge").first();
   await expect(settleBadge).toHaveText("5");
   await settleBadge.click();

@@ -1,3 +1,4 @@
+import { parseCabiReference, type CabiReference } from "./cabi";
 // 주간 메모(weekly-note-spec): 한 주에 문서 1개, 자유 배치 상자들. 순수 함수만(UI·저장소·플랫폼 import 금지).
 // 상자 안 글은 편집기(ProseMirror 계열)의 문서 JSON — 허용하는 노드·서식은 스펙 4-3 표뿐이고, 밖은 버린다.
 import { isOpenableUrl, LINK_TEXT_MAX, titleFromUrl } from "./links";
@@ -27,6 +28,8 @@ export interface BoxRef {
 export const LINK_MAX = 20;
 
 export interface TextBox {
+  /** Cabi.NET resource cards keep stable IDs; their content is a fallback, not the source. */
+  resource?: CabiReference;
   id: string;
   kind: "text";
   x: number;
@@ -445,6 +448,7 @@ export function parseNoteDoc(json: string | null | undefined): NoteDoc {
       ...(typeof b.h === "number" ? { h: b.h } : {}),
       bg: NOTE_BG.includes(b.bg as NoteBg) ? (b.bg as NoteBg) : null,
       content,
+      ...(parseCabiReference(b.resource) ? { resource: parseCabiReference(b.resource) } : {}),
       ...ref,
     });
   }

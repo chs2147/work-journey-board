@@ -1,3 +1,4 @@
+import { tauriCabiBridge } from "./tauriCabiBridge";
 import { invoke } from "@tauri-apps/api/core";
 import { emitTo, listen } from "@tauri-apps/api/event";
 import { homeDir } from "@tauri-apps/api/path";
@@ -5,7 +6,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { getAllWebviewWindows, WebviewWindow } from "@tauri-apps/api/webviewWindow";
 import Database from "@tauri-apps/plugin-sql";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
-import { open, save } from "@tauri-apps/plugin-dialog";
+import { open, save, message } from "@tauri-apps/plugin-dialog";
 import { quickCheck, readSchemaVersion, backupStructureMatches } from "../data/migrate";
 import type { BackupFs } from "../data/backup";
 import { openTauriSql } from "../data/drivers/tauriSql";
@@ -71,7 +72,7 @@ const folderWindows: FolderWindows = {
     const q = new URLSearchParams({ win: "folder", d: JSON.stringify(spec) });
     const w = new WebviewWindow(label, {
       url: `index.html?${q.toString()}`,
-      title: `${spec.title} — Cabinet`,
+      title: `${spec.title} — Cabi.NET`,
       width: 760,
       height: 520,
       minWidth: 460,
@@ -119,9 +120,9 @@ const cabinetWindow: CabinetWindowBridge = {
     const q = new URLSearchParams({ win: "cabinet", t: theme, f: JSON.stringify(focus ?? {}) });
     const w = new WebviewWindow(CABINET_LABEL, {
       url: `index.html?${q.toString()}`,
-      title: "Cabinet — 자주 쓰는 폴더·링크",
-      width: 880,
-      height: 600,
+      title: "Cabi.NET — 업무별 자료·노트·보드",
+      width: 1180,
+      height: 800,
       minWidth: 560,
       minHeight: 360,
       dragDropEnabled: false,
@@ -261,6 +262,7 @@ const backupFs: BackupFs = {
 
 export const tauriPlatform: Platform = {
   kind: "tauri",
+  cabi: tauriCabiBridge(),
   now: () => new Date(),
 
   async loadConfig() {
@@ -313,11 +315,13 @@ export const tauriPlatform: Platform = {
   writeClipboard: (text) => writeText(text),
   async pickSaveFile(title, defaultPath, kind = "xlsx") {
     const filters =
-      kind === "image"
-        ? [{ name: "이미지", extensions: ["png", "webp"] }]
-        : kind === "markdown"
-          ? [{ name: "Markdown", extensions: ["md"] }]
-          : [{ name: "Excel", extensions: ["xlsx"] }];
+      kind === "pdf"
+        ? [{ name: "PDF", extensions: ["pdf"] }]
+        : kind === "image"
+          ? [{ name: "이미지", extensions: ["png", "webp"] }]
+          : kind === "markdown"
+            ? [{ name: "Markdown", extensions: ["md"] }]
+            : [{ name: "Excel", extensions: ["xlsx"] }];
     const picked = await save({ title, defaultPath, filters });
     return picked ?? null;
   },
@@ -349,8 +353,13 @@ export const tauriPlatform: Platform = {
       event.preventDefault();
       try {
         await handler();
-      } finally {
         await win.destroy();
+      } catch (error) {
+        closing = false;
+        await message(error instanceof Error ? error.message : String(error), {
+          title: "Cabi.NET",
+          kind: "error",
+        });
       }
     });
   },

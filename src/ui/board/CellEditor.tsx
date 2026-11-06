@@ -1,3 +1,5 @@
+import { openCabi } from "../cabinet/cabiService";
+import { CABI } from "../../shared/cabiStrings";
 // 셀 하나의 개조식 입력기. 항목마다 <textarea> 1개(자동 높이) — contenteditable의 커서·IME 문제를 피한다(i-m1-plan 4절).
 // 키 동작은 overview 10-3절 표가 기준이다. 한글 조합 중(isComposing)에는 Enter·Tab 등을 처리하지 않는다.
 import {
@@ -123,13 +125,14 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
   const foreignMemos = useBoard((s) =>
     s.memoLinks
       .filter((l) => l.weekId !== s.weekId && items.some((i) => i.id === l.entryId))
-      .map((l) => `${l.entryId}:${l.weekId}:${l.boxId}`)
+      .map((l) => `${l.entryId}:${l.weekId}:${l.boxId}:${l.taskCategoryId ?? ""}`)
       .join(","),
   );
-  const foreignOf: Record<string, { weekId: string; boxId: string }[]> = {};
+  const foreignOf: Record<string, { weekId: string; boxId: string; taskCategoryId?: string }[]> = {};
   for (const value of foreignMemos.split(",")) {
-    const [id, weekId, boxId] = value.split(":");
-    if (id && weekId && boxId) (foreignOf[id] ??= []).push({ weekId, boxId });
+    const [id, weekId, boxId, taskCategoryId] = value.split(":");
+    if (id && (weekId || taskCategoryId) && boxId)
+      (foreignOf[id] ??= []).push({ weekId: weekId ?? "", boxId, taskCategoryId });
   }
   // Cabinet 연결(features-1102-spec F5) — 이 칸 항목에 연결된 폴더·링크 id(글자열로 골라 다시 그리기 줄임)
   const cabKey = useCabinet((st) => {
@@ -587,14 +590,19 @@ export function CellEditor({ cellKey, ariaLabel, showPlaceholder, nav, pullButto
                     const note = useNote.getState();
                     const first = note.doc.boxes.find((b) => b.refs?.some((r) => r.item === it.id));
                     const foreign = foreignOf[it.id]?.[0];
-                    if (foreign) void revealMemo(foreign.weekId, foreign.boxId);
+                    if (foreign?.taskCategoryId) void openCabi("board", foreign.taskCategoryId);
+                    else if (foreign) void revealMemo(foreign.weekId, foreign.boxId);
                     else if (first) void revealMemo(note.weekId, first.id);
                   }}
                 >
                   <IconNote />
                   {linkCount[it.id]}
                   {foreignOf[it.id]?.[0] && (
-                    <span className={styles.memoWeek}>{foreignOf[it.id]![0]!.weekId.slice(5)}</span>
+                    <span className={styles.memoWeek}>
+                      {foreignOf[it.id]![0]!.taskCategoryId
+                        ? CABI.name
+                        : foreignOf[it.id]![0]!.weekId.slice(5)}
+                    </span>
                   )}
                 </button>
               )}
