@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "product": "Work Journey Board",
-  "catalogVersion": "1.19.0-rc.2",
+  "catalogVersion": "1.19.0",
   "asOfDate": "2026-11-06",
   "baseRelease": "1.18.1",
-  "sourceCommit": "0acc6c7",
+  "sourceCommit": "c1ac7a8",
   "appSchemaVersion": 15,
   "versionDefinition": "최초 제공 = 비RC 출시 이력에서 기능 제공이 확인된 최초 버전(0.x 개발판 포함); RC는 preview로 별도 기록",
   "verificationScope": "문서·출시 이력·현행 소스 위치 대조. 기능별 실기 전수 검증을 뜻하지 않음.",
@@ -797,12 +797,19 @@
           "type": "changed",
           "description": "실제 추가하는 항목의 메모/Cabinet 연결도 복사하며 완료 묶음·중복 제외와 전체 실패 롤백을 유지한다.",
           "source": "docs/improve-1106v16-spec.md"
+        },
+        {
+          "version": "1.19.0",
+          "type": "changed",
+          "description": "RC2 검증 후 정식 반영: 실제 추가하는 항목의 메모/Cabinet 연결도 복사하며 완료 묶음·중복 제외와 전체 실패 롤백을 유지한다.",
+          "source": "docs/release-notes/v1.19.0.md"
         }
       ],
       "sources": [
         "docs/i-m1-plan.md",
         "README.md",
-        "docs/improve-1106v16-spec.md"
+        "docs/improve-1106v16-spec.md",
+        "docs/release-notes/v1.19.0.md"
       ],
       "implementation": [
         "src/ui/board"
@@ -811,7 +818,7 @@
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "제품 기능",
-      "lastChanged": "1.19.0-rc.1",
+      "lastChanged": "1.19.0",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
     },
     {
@@ -844,12 +851,19 @@
           "type": "changed",
           "description": "요일 전체 항목과 공유 연결을 한 트랜잭션으로 가져오고 한 번에 되돌린다.",
           "source": "docs/improve-1106v16-spec.md"
+        },
+        {
+          "version": "1.19.0",
+          "type": "changed",
+          "description": "RC2 검증 후 정식 반영: 요일 전체 항목과 공유 연결을 한 트랜잭션으로 가져오고 한 번에 되돌린다.",
+          "source": "docs/release-notes/v1.19.0.md"
         }
       ],
       "sources": [
         "docs/i-m1-plan.md",
         "README.md",
-        "docs/improve-1106v16-spec.md"
+        "docs/improve-1106v16-spec.md",
+        "docs/release-notes/v1.19.0.md"
       ],
       "implementation": [
         "src/ui/board"
@@ -858,7 +872,7 @@
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "제품 기능",
-      "lastChanged": "1.19.0-rc.1",
+      "lastChanged": "1.19.0",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
     },
     {
@@ -3202,12 +3216,19 @@
           "type": "changed",
           "description": "연결 없는 메모에 빈 띠를 표시하지 않고, 항목 삭제 전 연결 저장을 완료하여 삭제 취소 시 원래 연결을 복원한다.",
           "source": "docs/improve-1106v16-spec.md"
+        },
+        {
+          "version": "1.19.0",
+          "type": "changed",
+          "description": "RC2 검증 후 정식 반영: 주차를 넘어 같은 메모 객체를 공유하며 원본 주차 배지로 원본 객체를 연다. 정규 관계가 연결의 정본이다.",
+          "source": "docs/release-notes/v1.19.0.md"
         }
       ],
       "sources": [
         "docs/weekly-note-spec.md",
         "README.md",
-        "docs/improve-1106v16-spec.md"
+        "docs/improve-1106v16-spec.md",
+        "docs/release-notes/v1.19.0.md"
       ],
       "implementation": [
         "src/ui/note"
@@ -3216,7 +3237,7 @@
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "제품 기능",
-      "lastChanged": "1.19.0-rc.2",
+      "lastChanged": "1.19.0",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
     },
     {
@@ -3249,12 +3270,19 @@
           "type": "changed",
           "description": "복제 시 같은 메모의 연결만 추가하고 20개 한도 초과 시 전체 작업을 취소한다.",
           "source": "docs/improve-1106v16-spec.md"
+        },
+        {
+          "version": "1.19.0",
+          "type": "changed",
+          "description": "RC2 검증 후 정식 반영: 복제 시 같은 메모의 연결만 추가하고 20개 한도 초과 시 전체 작업을 취소한다.",
+          "source": "docs/release-notes/v1.19.0.md"
         }
       ],
       "sources": [
         "docs/weekly-note-spec.md",
         "README.md",
-        "docs/improve-1106v16-spec.md"
+        "docs/improve-1106v16-spec.md",
+        "docs/release-notes/v1.19.0.md"
       ],
       "implementation": [
         "src/ui/note"
@@ -3263,7 +3291,7 @@
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "제품 기능",
-      "lastChanged": "1.19.0-rc.1",
+      "lastChanged": "1.19.0",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
     },
     {
@@ -4792,12 +4820,19 @@
           "type": "changed",
           "description": "다른 주의 원본 메모도 연결된 업무 항목에 펼쳐 표시한다.",
           "source": "docs/improve-1106v16-spec.md"
+        },
+        {
+          "version": "1.19.0",
+          "type": "changed",
+          "description": "RC2 검증 후 정식 반영: 다른 주의 원본 메모도 연결된 업무 항목에 펼쳐 표시한다.",
+          "source": "docs/release-notes/v1.19.0.md"
         }
       ],
       "sources": [
         "docs/m3-s1-spec.md",
         "README.md",
-        "docs/improve-1106v16-spec.md"
+        "docs/improve-1106v16-spec.md",
+        "docs/release-notes/v1.19.0.md"
       ],
       "implementation": [
         "src/ui/insights"
@@ -4806,7 +4841,7 @@
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "제품 기능",
-      "lastChanged": "1.19.0-rc.1",
+      "lastChanged": "1.19.0",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
     },
     {
@@ -5177,12 +5212,19 @@
           "type": "changed",
           "description": "활동 히트맵의 기록 일수 제목·각 행의 표시 열을 제거하고 날짜 격자가 가용 폭을 사용한다.",
           "source": "docs/improve-1106v16-spec.md"
+        },
+        {
+          "version": "1.19.0",
+          "type": "changed",
+          "description": "RC2 검증 후 정식 반영: 전체 업무의 활동을 합계 행에 표시한다. 기록 일수 제목·표시 열은 두지 않는다.",
+          "source": "docs/release-notes/v1.19.0.md"
         }
       ],
       "sources": [
         "docs/m3-s1-spec.md",
         "README.md",
-        "docs/improve-1106v16-spec.md"
+        "docs/improve-1106v16-spec.md",
+        "docs/release-notes/v1.19.0.md"
       ],
       "implementation": [
         "src/ui/insights"
@@ -5191,7 +5233,7 @@
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "제품 기능",
-      "lastChanged": "1.19.0-rc.1",
+      "lastChanged": "1.19.0",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
     },
     {
@@ -5350,12 +5392,19 @@
           "type": "changed",
           "description": "좁은 창에서도 이름 열과 날짜 격자를 가용 폭에 맞춰 조절해 가로 스크롤 없이 함께 표시한다.",
           "source": "docs/improve-1106v16-spec.md"
+        },
+        {
+          "version": "1.19.0",
+          "type": "changed",
+          "description": "RC2 검증 후 정식 반영: 좁은 창에서도 이름 열과 날짜 격자를 가용 폭에 맞춰 조절해 가로 스크롤 없이 함께 표시한다.",
+          "source": "docs/release-notes/v1.19.0.md"
         }
       ],
       "sources": [
         "docs/m3-s1-spec.md",
         "README.md",
-        "docs/improve-1106v16-spec.md"
+        "docs/improve-1106v16-spec.md",
+        "docs/release-notes/v1.19.0.md"
       ],
       "implementation": [
         "src/ui/insights"
@@ -5364,7 +5413,7 @@
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "제품 기능",
-      "lastChanged": "1.19.0-rc.1",
+      "lastChanged": "1.19.0",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
     },
     {
@@ -5397,13 +5446,20 @@
           "type": "changed",
           "description": "이름 열이 넓어지는 만큼 날짜 칸이 유동적으로 줄고 늘며 헤더·모든 행의 열을 맞춘다.",
           "source": "docs/improve-1106v16-spec.md"
+        },
+        {
+          "version": "1.19.0",
+          "type": "changed",
+          "description": "RC2 검증 후 정식 반영: 이름 열이 넓어지는 만큼 날짜 칸이 유동적으로 줄고 늘며 헤더·모든 행의 열을 맞춘다.",
+          "source": "docs/release-notes/v1.19.0.md"
         }
       ],
       "sources": [
         "docs/m3-s1-spec.md",
         "README.md",
         "docs/release-notes/v1.18.0.md",
-        "docs/improve-1106v16-spec.md"
+        "docs/improve-1106v16-spec.md",
+        "docs/release-notes/v1.19.0.md"
       ],
       "implementation": [
         "src/ui/insights"
@@ -5412,7 +5468,7 @@
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "제품 기능",
-      "lastChanged": "1.19.0-rc.1",
+      "lastChanged": "1.19.0",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
     },
     {
@@ -9903,7 +9959,7 @@
       "name": "항목 날짜 지정 복제",
       "description": "주간/데일리 항목 ⋯ 메뉴에서 날짜를 지정하여 본·하위 항목과 공유 메모/Cabinet 연결을 새 항목으로 추가한다. 완료는 초기화하고 시각·마감일을 유지한다.",
       "entry": "항목 ⋯ 메뉴",
-      "introduced": null,
+      "introduced": "1.19.0",
       "preview": "1.19.0-rc.1",
       "status": "active",
       "platforms": [
@@ -9911,8 +9967,8 @@
         "macos"
       ],
       "platformSince": {
-        "windows": "1.19.0-rc.1",
-        "macos": "1.19.0-rc.1"
+        "windows": "1.19.0",
+        "macos": "1.19.0"
       },
       "history": [
         {
@@ -9920,19 +9976,26 @@
           "type": "added",
           "description": "주간/데일리 항목 ⋯ 메뉴에서 날짜를 지정하여 본·하위 항목과 공유 메모/Cabinet 연결을 새 항목으로 추가한다. 완료는 초기화하고 시각·마감일을 유지한다.",
           "source": "docs/improve-1106v16-spec.md"
+        },
+        {
+          "version": "1.19.0",
+          "type": "added",
+          "description": "RC2 검증 후 정식 제공: 주간/데일리 항목 ⋯ 메뉴에서 날짜를 지정하여 본·하위 항목과 공유 메모/Cabinet 연결을 새 항목으로 추가한다. 완료는 초기화하고 시각·마감일을 유지한다.",
+          "source": "docs/release-notes/v1.19.0.md"
         }
       ],
       "sources": [
-        "docs/improve-1106v16-spec.md"
+        "docs/improve-1106v16-spec.md",
+        "docs/release-notes/v1.19.0.md"
       ],
       "implementation": [
         "src/ui/board/CopyDateDialog.tsx"
       ],
       "verification": "단위·Chromium E2E·공간 3회 왕복 검증",
       "reviewStatus": "승인",
-      "reviewNote": "v16 추천 A안 및 동일 폭/스크롤 없는 유동 격자 승인. RC 제공만.",
+      "reviewNote": "v16 A안·기록 일수 제거 승인, RC2 검증 후 1.19.0 정식 제공.",
       "kind": "제품 기능",
-      "lastChanged": "1.19.0-rc.1",
+      "lastChanged": "1.19.0",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
     },
     {
@@ -9942,7 +10005,7 @@
       "name": "타임라인 업무 목록 너비 조절",
       "description": "업무 목록 오른쪽 경계를 드래그·키보드로 조절하며 공간별로 저장한다.",
       "entry": "인사이트",
-      "introduced": null,
+      "introduced": "1.19.0",
       "preview": "1.19.0-rc.1",
       "status": "active",
       "platforms": [
@@ -9950,8 +10013,8 @@
         "macos"
       ],
       "platformSince": {
-        "windows": "1.19.0-rc.1",
-        "macos": "1.19.0-rc.1"
+        "windows": "1.19.0",
+        "macos": "1.19.0"
       },
       "history": [
         {
@@ -9959,19 +10022,26 @@
           "type": "added",
           "description": "업무 목록 오른쪽 경계를 드래그·키보드로 조절하며 공간별로 저장한다.",
           "source": "docs/improve-1106v16-spec.md"
+        },
+        {
+          "version": "1.19.0",
+          "type": "added",
+          "description": "RC2 검증 후 정식 제공: 업무 목록 오른쪽 경계를 드래그·키보드로 조절하며 공간별로 저장한다.",
+          "source": "docs/release-notes/v1.19.0.md"
         }
       ],
       "sources": [
-        "docs/improve-1106v16-spec.md"
+        "docs/improve-1106v16-spec.md",
+        "docs/release-notes/v1.19.0.md"
       ],
       "implementation": [
         "src/ui/insights/useInsightWidth.tsx"
       ],
       "verification": "단위·Chromium E2E·공간 3회 왕복 검증",
       "reviewStatus": "승인",
-      "reviewNote": "v16 추천 A안 및 동일 폭/스크롤 없는 유동 격자 승인. RC 제공만.",
+      "reviewNote": "v16 A안·기록 일수 제거 승인, RC2 검증 후 1.19.0 정식 제공.",
       "kind": "제품 기능",
-      "lastChanged": "1.19.0-rc.1",
+      "lastChanged": "1.19.0",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
     },
     {
@@ -9981,7 +10051,7 @@
       "name": "활동 업무 이름 열 너비 조절",
       "description": "모든 업무·개별 업무 이름 열을 함께 조절하고 날짜 격자를 남은 폭에 맞춘다.",
       "entry": "인사이트",
-      "introduced": null,
+      "introduced": "1.19.0",
       "preview": "1.19.0-rc.1",
       "status": "active",
       "platforms": [
@@ -9989,8 +10059,8 @@
         "macos"
       ],
       "platformSince": {
-        "windows": "1.19.0-rc.1",
-        "macos": "1.19.0-rc.1"
+        "windows": "1.19.0",
+        "macos": "1.19.0"
       },
       "history": [
         {
@@ -9998,19 +10068,26 @@
           "type": "added",
           "description": "모든 업무·개별 업무 이름 열을 함께 조절하고 날짜 격자를 남은 폭에 맞춘다.",
           "source": "docs/improve-1106v16-spec.md"
+        },
+        {
+          "version": "1.19.0",
+          "type": "added",
+          "description": "RC2 검증 후 정식 제공: 모든 업무·개별 업무 이름 열을 함께 조절하고 날짜 격자를 남은 폭에 맞춘다.",
+          "source": "docs/release-notes/v1.19.0.md"
         }
       ],
       "sources": [
-        "docs/improve-1106v16-spec.md"
+        "docs/improve-1106v16-spec.md",
+        "docs/release-notes/v1.19.0.md"
       ],
       "implementation": [
         "src/ui/insights/ActivityHeatmap.tsx"
       ],
       "verification": "단위·Chromium E2E·공간 3회 왕복 검증",
       "reviewStatus": "승인",
-      "reviewNote": "v16 추천 A안 및 동일 폭/스크롤 없는 유동 격자 승인. RC 제공만.",
+      "reviewNote": "v16 A안·기록 일수 제거 승인, RC2 검증 후 1.19.0 정식 제공.",
       "kind": "제품 기능",
-      "lastChanged": "1.19.0-rc.1",
+      "lastChanged": "1.19.0",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v15"
     }
   ],
