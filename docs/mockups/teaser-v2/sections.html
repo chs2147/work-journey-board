@@ -1,0 +1,26 @@
+<section class="pv-universe" id="universe" aria-labelledby="universe-title">
+ <div class="pv-stars" aria-hidden="true"></div>
+ <div class="wrap pv-section-top"><p class="pv-kicker">05 / UNIVERSE <span>정식 제공 · 1.15에서 3D 개편</span></p><div class="pv-heading"><h2 id="universe-title">기록을 넘어,<br><em>연결을 발견하는 순간.</em></h2><p>흩어져 있던 업무, 메모, 자료.<br>은하를 돌아보고 하나의 기록에 다가가면<br>그 일이 이어진 맥락이 보입니다.</p></div></div>
+ <div class="wrap pv-galaxy" role="group" aria-label="Universe 연결 지도 모션 데모">
+  <canvas id="galaxy" aria-hidden="true"></canvas>
+  <div class="pv-map-top"><span><i></i> YOUR WORK UNIVERSE</span><div class="pv-segment"><button data-space="galaxy" aria-pressed="true">은하</button><button data-space="focus" aria-pressed="false">초점</button></div></div>
+  <div class="pv-orbit-label label-a">업무 기록 <b>정산 시스템</b></div><div class="pv-orbit-label label-b">지식 카드 <b>다음에도 쓸 해결법</b></div><div class="pv-orbit-label label-c">연결 메모 <b>결정의 근거</b></div>
+  <div class="pv-map-bottom"><span id="space-status" aria-live="polite">은하 · 전체 연결을 바라봅니다</span><span>드래그로 회전 · 초점 버튼으로 다가가기</span></div>
+ </div>
+ <div class="wrap pv-trio"><div><span>01 / EXPLORE</span><h3>살아 움직이는 맥락</h3><p>3D 은하와 초점, 정적 2D와 목록.<br>나에게 맞는 방식으로 탐색하세요.</p></div><div><span>02 / CONNECT</span><h3>기록 사이에 이유를 남기기</h3><p>주를 넘어 연결하고 지식 카드로 정리.<br>단순한 선보다 오래 남는 근거를 만듭니다.</p></div><div><span>03 / REVISIT</span><h3>언제든 원래 자리로</h3><p>필터와 상세 패널은 필요할 때만.<br>연결의 출처를 확인하고 원문으로 돌아갑니다.</p></div></div>
+ <p class="wrap pv-demo-caption">연결 구조와 모션을 설명하는 가상 그래픽입니다. 실제 앱에서는 마우스 휠 확대·축소에 따라 은하와 초점이 이어집니다.</p>
+ <details class="wrap pv-actual"><summary>실제 Universe 화면 보기 <span>＋</span></summary><img src="../../../site/guide/shots/14-universe.png" width="1440" height="1000" alt="실제 앱 Universe 화면 — 가상 업무 데이터" loading="lazy"></details>
+</section>
+<section class="pv-cabi" id="cabi" aria-labelledby="cabi-title">
+ <div class="wrap"><p class="pv-kicker">06 / CABI.NET <span class="pv-rc">1.20.0-rc.1 검증판</span></p><div class="pv-heading"><h2 id="cabi-title">날짜가 바뀌어도,<br><em>일의 맥락은 한곳에.</em></h2><p>폴더와 링크를 모으던 Cabinet에서<br>노트와 전용 보드를 갖춘 Cabi.NET으로.<br>매일의 기록 옆에 업무의 작업실을 엽니다.</p></div>
+ <div class="pv-cabi-stage" data-phase="0">
+  <div class="pv-workspace"><div class="pv-window-bar"><span class="pv-window-dots">● ● ●</span><b>Cabi.NET / 정산 시스템</b><small>가상 업무 공간</small></div><div class="pv-workspace-body"><aside><b>나의 업무</b><span class="pv-selected">◧ 정산 시스템</span><span>◧ 서비스 운영</span><span>◧ 다음 프로젝트</span><div class="pv-side-foot">폴더 · 링크 · 노트 · 보드</div></aside><div class="pv-workarea"><div class="pv-cabi-toolbar"><span id="cabi-stage-title">업무의 자료를 한곳에</span><small>업무별 작업 공간</small></div><div class="pv-card-grid"><div class="pv-resource"><span>▤</span><b>검토 방향과 결정 사항</b><small>블록 노트 · 날짜와 무관한 기록</small></div><div class="pv-resource"><span>▱</span><b>설계 문서</b><small>자주 쓰는 폴더</small></div><div class="pv-resource"><span>↗</span><b>운영 대시보드</b><small>업무에 연결한 링크</small></div></div><div class="pv-mini-board"><svg viewBox="0 0 600 160" preserveAspectRatio="none" aria-hidden="true"><path d="M100 60 C210 60 190 120 300 120 S430 50 510 50"/></svg><span>주간 메모</span><span>검토 노트</span><span>다음 결정</span></div></div></div></div>
+  <div class="pv-floating-note"><div class="pv-window-bar">▤ 업무 노트 <small>별도 창</small></div><h3>결정은 기록으로 남기고.</h3><p>이번 검토에서 확인한 내용</p><div class="pv-type-line"></div><div class="pv-type-line short"></div><span>✓ 주간 기록과 근거 확인</span><span>□ 다음 검토에 이어 기록</span><div class="pv-note-footer">Markdown 가져오기 · PDF 내보내기</div></div>
+  <div class="pv-transfer"><span>↗</span> 주간 메모 → 업무 보드 <small>독립 사본 · 원본 유지</small></div>
+ </div>
+ <div class="pv-cabi-steps" role="group" aria-label="Cabi.NET 시연 장면 선택"><button data-cabi="0" aria-pressed="true"><b>01</b> 모으고 <small>폴더·링크·여러 노트</small></button><button data-cabi="1" aria-pressed="false"><b>02</b> 기록하고 <small>별도 창에서 블록 편집</small></button><button data-cabi="2" aria-pressed="false"><b>03</b> 이어 붙이기 <small>주간 메모와 업무 보드 연결</small></button></div>
+ <div class="pv-cabi-footer"><p>업무당 여러 노트, 하나의 자유 보드.<br>누적 주간 메모를 찾아 연결하고, 두 보드 사이에서 객체와 이미지를 복제하세요.</p><a href="#cabi-screens" class="text-link">실제 구현 화면 살펴보기 ↓</a></div>
+ <p class="pv-demo-caption">위 모션은 동작 설명용 그래픽입니다. Cabi.NET V2는 검증판 기능으로 최신 정식 다운로드에 아직 포함되지 않습니다.</p>
+ <div class="pv-screens" id="cabi-screens"><figure><img src="../cabinet-v2/implemented/hub.png" alt="Cabi.NET 실제 업무 허브 카드 보기" width="1440" height="1000" loading="lazy"><figcaption>업무별 자료와 노트를 탐색하는 허브</figcaption></figure><figure><img src="../cabinet-v2/implemented/note.png" alt="Cabi.NET 실제 블록 노트 편집기" width="1180" height="820" loading="lazy"><figcaption>목차·표·체크 목록을 갖춘 블록 노트</figcaption></figure><figure><img src="../cabinet-v2/implemented/board.png" alt="Cabi.NET 실제 전용 보드와 누적 주간 메모 패널" width="1180" height="820" loading="lazy"><figcaption>주간 메모와 연결하는 업무 전용 보드</figcaption></figure></div>
+ </div>
+</section>

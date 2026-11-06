@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f7f2e9">
-  <meta name="description" content="매일의 짧은 기록이 한 주의 요약과 업무의 흐름이 되는 곳. Work Journey Board를 만나보세요.">
-  <title>Work Journey Board — 기록은 가볍게, 흐름은 선명하게</title>
+  <meta name="description" content="한 줄의 기록에서 주간 보고, Universe 연결 지도와 Cabi.NET 업무 작업 공간까지. Work Journey Board의 새로운 일하는 방식을 만나보세요.">
+  <title>Work Journey Board — 기록에서 업무 우주까지</title>
   <link rel="icon" type="image/svg+xml" href="./icon.svg">
   <link rel="canonical" href="https://chs2147.github.io/work-journey-board/">
   <link rel="apple-touch-icon" href="https://chs2147.github.io/work-journey-board/apple-touch-icon.png">
@@ -14,20 +14,20 @@
   <meta property="og:site_name" content="Work Journey Board">
   <meta property="og:locale" content="ko_KR">
   <meta property="og:url" content="https://chs2147.github.io/work-journey-board/">
-  <meta property="og:title" content="Work Journey Board — 기록은 가볍게, 흐름은 선명하게">
-  <meta property="og:description" content="매일의 짧은 기록이 한 주의 요약과 업무의 흐름이 되는 곳. Work Journey Board를 만나보세요.">
+  <meta property="og:title" content="Work Journey Board — 기록에서 업무 우주까지">
+  <meta property="og:description" content="한 줄의 기록에서 주간 보고, Universe 연결 지도와 Cabi.NET 업무 작업 공간까지. Work Journey Board의 새로운 일하는 방식을 만나보세요.">
   <meta property="og:image" content="https://chs2147.github.io/work-journey-board/og-image.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="Work Journey Board — 주간 보드와 메모 보드 화면">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Work Journey Board — 기록은 가볍게, 흐름은 선명하게">
-  <meta name="twitter:description" content="매일의 짧은 기록이 한 주의 요약과 업무의 흐름이 되는 곳. Work Journey Board를 만나보세요.">
+  <meta name="twitter:title" content="Work Journey Board — 기록에서 업무 우주까지">
+  <meta name="twitter:description" content="한 줄의 기록에서 주간 보고, Universe 연결 지도와 Cabi.NET 업무 작업 공간까지. Work Journey Board의 새로운 일하는 방식을 만나보세요.">
   <meta name="twitter:image" content="https://chs2147.github.io/work-journey-board/og-image.png">
   <link rel="preload" href="./gowun-dodum.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="./style.css">
   <script src="./motion.js" defer></script>
-</head>
+<link rel="stylesheet" href="./features.css"><script src="./features.js" defer></script></head>
 <body>
   <a class="skip-link" href="#main">본문으로 바로가기</a>
   <header class="site-header">
@@ -38,7 +38,7 @@
       </a>
       <nav class="header-nav" aria-label="주요 메뉴">
         <a class="nav-link" href="#how-it-works">이렇게 사용해요</a>
-        <a class="nav-link" href="#features">기능</a>
+        <a class="nav-link" href="#universe">Universe</a><a class="nav-link" href="#cabi">Cabi.NET</a>
         <a class="nav-link" href="#privacy">데이터 보관</a>
         <a class="nav-link" href="./guide/">이용 가이드</a>
         <a class="button button-small" href="https://github.com/chs2147/work-journey-board/releases/latest">다운로드 <span aria-hidden="true">↗</span></a>
@@ -54,7 +54,7 @@
       <li><a href="#journey" data-target="journey"><span class="si-label">03 업무 흐름</span><span class="si-dot"></span></a></li>
       <li><a href="#features" data-target="features"><span class="si-label">04 핵심 기능</span><span class="si-dot"></span></a></li>
       <li class="si-sub"><a href="#memo" data-target="memo"><span class="si-label">메모 보드</span><span class="si-dot"></span></a></li>
-      <li><a href="#privacy" data-target="privacy"><span class="si-label">05 기록 보관</span><span class="si-dot"></span></a></li>
+      <li><a href="#universe" data-target="universe"><span class="si-label">05 Universe</span><span class="si-dot"></span></a></li><li><a href="#cabi" data-target="cabi"><span class="si-label">06 Cabi.NET</span><span class="si-dot"></span></a></li><li><a href="#privacy" data-target="privacy"><span class="si-label">07 기록 보관</span><span class="si-dot"></span></a></li>
       <li><a href="#get" data-target="get"><span class="si-label">내려받기</span><span class="si-dot"></span></a></li>
     </ol>
   </nav>
@@ -62,13 +62,13 @@
   <main id="main">
     <section class="hero wrap" id="top">
       <div class="hero-copy">
-        <h1>하루의 기록이<br><em>일의 흐름</em>이 되도록.</h1>
-        <p class="hero-description">바쁜 하루, 업무를 짧게 적어두세요.<br>기록이 쌓이면 한 주의 요약과 지나온 과정이<br class="wide-only"> 자연스럽게 이어집니다.</p>
+        <h1>한 줄의 기록에서,<br><em>나만의 업무 우주까지.</em></h1>
+        <p class="hero-description">바쁜 하루, 업무를 짧게 적어두세요.<br>한 주의 보고, 업무별 작업 공간, 기록의 연결 지도까지.<br class="wide-only"> 쌓아둔 일에 다음 이야기가 생깁니다.</p>
         <div class="hero-actions">
           <a class="button button-primary" href="https://github.com/chs2147/work-journey-board/releases/latest">내려받기 (Windows · macOS) <span aria-hidden="true">↗</span></a>
           <a class="text-link" href="#how-it-works">어떻게 사용하는지 보기 <span aria-hidden="true">↓</span></a>
         </div>
-        <ul class="download-caption"><li>Windows 10·11 · macOS 13 이상</li><li>무료로 사용</li><li>같은 판·같은 기능</li></ul>
+        <div class="showcase-jump"><a href="#universe">✧ Universe <span>연결을 탐색하다</span></a><a href="#cabi">▤ Cabi.NET <span>업무의 작업실 · RC</span></a></div><ul class="download-caption"><li>Windows 10·11 · macOS 13 이상</li><li>무료로 사용</li><li>같은 판·같은 기능</li></ul>
       </div>
       <div class="hero-art" aria-label="가상 업무 기록을 활용한 주간 보드 화면 예시">
         <div class="hero-art-note top-note"><span class="handwritten">a little, every day</span><span class="hand-arrow" aria-hidden="true">↘</span></div>
@@ -114,8 +114,8 @@
     </section>
 
     <section class="feature-section wrap" id="features" aria-labelledby="features-title">
-      <div class="section-heading"><div><p class="eyebrow section-eyebrow"><span class="section-index">04</span> IN THE APP</p><h2 id="features-title">실제 화면으로<br><em>만나보세요.</em></h2></div><p class="section-description">Work Journey Board의 핵심 기능 네 가지입니다. 화면 속 기록은 모두 가상의 예시예요.</p></div>
-      <article class="feature-row"><div class="feature-copy"><span class="feature-num">01 · 기록</span><h3>매일 2분, 키보드만으로</h3><p>요일과 업무가 만나는 칸에 개조식으로 적습니다. Enter로 다음 줄, Tab으로 세부 항목, ↓로 다음 업무. 오늘 열은 늘 눈에 띄고, 비어 있는 칸은 직전 기록을 한 번에 가져올 수 있어요.</p><div class="benefit-line"><span>중요 표시</span><span>매주 반복</span><span>주간 메모 보드</span></div></div><figure class="feature-shot"><img src="./shots/board.webp" alt="주간 보드와 이번 주 메모 보드 — 업무 연결 메모·이미지 메모·관계선(시그니처 테마, 가상 기록)" width="1600" height="1111" loading="lazy"></figure></article>
+      <div class="section-heading"><div><p class="eyebrow section-eyebrow"><span class="section-index">04</span> IN THE APP</p><h2 id="features-title">실제 화면으로<br><em>만나보세요.</em></h2></div><p class="section-description">매일 쓰는 기록·요약·활동·메모의 기본기부터 살펴보세요. 화면 속 기록은 모두 가상의 예시예요.</p></div>
+      <article class="feature-row"><div class="feature-copy"><span class="feature-num">01 · 기록</span><h3>매일 2분, 키보드만으로</h3><p>요일과 업무가 만나는 칸에 개조식으로 적습니다. Enter로 다음 줄, Tab으로 세부 항목, ↓로 다음 업무. 주간·데일리 뷰를 오가며 마감일과 완료 상태를 관리하고, 날짜 지정 복제와 이전 기록 가져오기에서도 메모·자료 연결을 이어갑니다.</p><div class="benefit-line"><span>중요 표시</span><span>매주 반복</span><span>주간 메모 보드</span></div></div><figure class="feature-shot"><img src="./shots/board.webp" alt="주간 보드와 이번 주 메모 보드 — 업무 연결 메모·이미지 메모·관계선(시그니처 테마, 가상 기록)" width="1600" height="1111" loading="lazy"></figure></article>
       <article class="feature-row feature-row-flip"><div class="feature-copy"><span class="feature-num">02 · 정리</span><h3>쓰기만 하면 주간 보고가 나옵니다</h3><p>한 주의 기록이 업무별·요일별로 자동 정리됩니다. 그대로 복사하거나 고쳐 쓰고, 사내 AI 도구에 붙여 넣을 지시문도 함께. 여러 주를 엑셀 2시트로 한 번에 내보냅니다.</p><div class="benefit-line"><span>자동 집계</span><span>AI 다듬기 지시문</span><span>엑셀 내보내기</span></div></div><figure class="feature-shot"><img src="./shots/summary.webp" alt="주간 요약 패널 — 업무별·요일별 자동 집계(가상 기록)" width="1600" height="1000" loading="lazy"></figure></article>
       <article class="feature-row"><div class="feature-copy"><span class="feature-num">03 · 돌아보기</span><h3>지나온 일이 한눈에</h3><p>업무 하나를 고르면 시작부터 지금까지의 경과가 주 단위로 이어집니다. 경과 지도와 활동 히트맵으로 쉬었던 기간과 몰렸던 주가 보여요.</p><div class="benefit-line"><span>업무 타임라인</span><span>경과 지도</span><span>활동 히트맵</span></div></div><figure class="feature-shot"><img src="./shots/insights.webp" alt="인사이트 — 업무별 타임라인과 경과 지도(가상 기록)" width="1600" height="1000" loading="lazy"></figure></article>
       <article class="memo-feature" id="memo" aria-labelledby="memo-title">
@@ -130,12 +130,39 @@
       </article>
     </section>
 
-    <section class="privacy-section" id="privacy"><div class="wrap privacy-inner"><div class="privacy-symbol" aria-hidden="true"><span>⌂</span></div><div class="privacy-heading"><p class="eyebrow section-eyebrow"><span class="section-index">05</span> YOUR SPACE</p><h2>나의 기록은<br><em>나의 자리에서.</em></h2></div><div class="privacy-copy"><p>업무 기록과 메모는 직접 선택한 폴더의 로컬 파일에 저장됩니다. 자동 백업도 함께 준비해, 소중한 기록을 곁에 둘 수 있어요.</p><p class="privacy-detail">앱의 새 버전 확인과 다운로드에는 GitHub 연결을 사용하며, 업무 기록과 메모는 전송하지 않습니다.</p><span class="privacy-label">LOCAL FIRST &nbsp;·&nbsp; WINDOWS</span></div></div></section>
+    <section class="showcase-universe" id="universe" aria-labelledby="universe-title">
+ <div class="showcase-stars" aria-hidden="true"></div>
+ <div class="wrap showcase-section-top"><p class="showcase-kicker">05 / UNIVERSE <span>정식 제공 · 1.15에서 3D 개편</span></p><div class="showcase-heading"><h2 id="universe-title">기록을 넘어,<br><em>연결을 발견하는 순간.</em></h2><p>흩어져 있던 업무, 메모, 자료.<br>은하를 돌아보고 하나의 기록에 다가가면<br>그 일이 이어진 맥락이 보입니다.</p></div></div>
+ <div class="wrap showcase-galaxy" role="group" aria-label="Universe 연결 지도 모션 데모">
+  <canvas id="galaxy" aria-hidden="true"></canvas>
+  <div class="showcase-map-top"><span><i></i> YOUR WORK UNIVERSE</span><div class="showcase-segment"><button data-space="galaxy" aria-pressed="true">은하</button><button data-space="focus" aria-pressed="false">초점</button></div></div>
+  <div class="showcase-orbit-label label-a">업무 기록 <b>정산 시스템</b></div><div class="showcase-orbit-label label-b">지식 카드 <b>다음에도 쓸 해결법</b></div><div class="showcase-orbit-label label-c">연결 메모 <b>결정의 근거</b></div>
+  <div class="showcase-map-bottom"><span id="space-status" aria-live="polite">은하 · 전체 연결을 바라봅니다</span><span>드래그로 회전 · 초점 버튼으로 다가가기</span></div>
+ </div>
+ <div class="wrap showcase-trio"><div><span>01 / EXPLORE</span><h3>살아 움직이는 맥락</h3><p>3D 은하와 초점, 정적 2D와 목록.<br>나에게 맞는 방식으로 탐색하세요.</p></div><div><span>02 / CONNECT</span><h3>기록 사이에 이유를 남기기</h3><p>주를 넘어 연결하고 지식 카드로 정리.<br>단순한 선보다 오래 남는 근거를 만듭니다.</p></div><div><span>03 / REVISIT</span><h3>언제든 원래 자리로</h3><p>필터와 상세 패널은 필요할 때만.<br>연결의 출처를 확인하고 원문으로 돌아갑니다.</p></div></div>
+ <p class="wrap showcase-demo-caption">연결 구조와 모션을 설명하는 가상 그래픽입니다. 실제 앱에서는 마우스 휠 확대·축소에 따라 은하와 초점이 이어집니다.</p>
+ <details class="wrap showcase-actual"><summary>실제 Universe 화면 보기 <span>＋</span></summary><img src="./shots/universe.webp" width="1440" height="1000" alt="실제 앱 Universe 화면 — 가상 업무 데이터" loading="lazy"></details>
+</section>
+<section class="showcase-cabi" id="cabi" aria-labelledby="cabi-title">
+ <div class="wrap"><p class="showcase-kicker">06 / CABI.NET <span class="showcase-rc">1.20.0-rc.1 검증판</span></p><div class="showcase-heading"><h2 id="cabi-title">날짜가 바뀌어도,<br><em>일의 맥락은 한곳에.</em></h2><p>폴더와 링크를 모으던 Cabinet에서<br>노트와 전용 보드를 갖춘 Cabi.NET으로.<br>매일의 기록 옆에 업무의 작업실을 엽니다.</p></div>
+ <div class="showcase-cabi-stage" data-phase="0">
+  <div class="showcase-workspace"><div class="showcase-window-bar"><span class="showcase-window-dots">● ● ●</span><b>Cabi.NET / 정산 시스템</b><small>가상 업무 공간</small></div><div class="showcase-workspace-body"><aside><b>나의 업무</b><span class="showcase-selected">◧ 정산 시스템</span><span>◧ 서비스 운영</span><span>◧ 다음 프로젝트</span><div class="showcase-side-foot">폴더 · 링크 · 노트 · 보드</div></aside><div class="showcase-workarea"><div class="showcase-cabi-toolbar"><span id="cabi-stage-title">업무의 자료를 한곳에</span><small>업무별 작업 공간</small></div><div class="showcase-card-grid"><div class="showcase-resource"><span>▤</span><b>검토 방향과 결정 사항</b><small>블록 노트 · 날짜와 무관한 기록</small></div><div class="showcase-resource"><span>▱</span><b>설계 문서</b><small>자주 쓰는 폴더</small></div><div class="showcase-resource"><span>↗</span><b>운영 대시보드</b><small>업무에 연결한 링크</small></div></div><div class="showcase-mini-board"><svg viewBox="0 0 600 160" preserveAspectRatio="none" aria-hidden="true"><path d="M100 60 C210 60 190 120 300 120 S430 50 510 50"/></svg><span>주간 메모</span><span>검토 노트</span><span>다음 결정</span></div></div></div></div>
+  <div class="showcase-floating-note"><div class="showcase-window-bar">▤ 업무 노트 <small>별도 창</small></div><h3>결정은 기록으로 남기고.</h3><p>이번 검토에서 확인한 내용</p><div class="showcase-type-line"></div><div class="showcase-type-line short"></div><span>✓ 주간 기록과 근거 확인</span><span>□ 다음 검토에 이어 기록</span><div class="showcase-note-footer">Markdown 가져오기 · PDF 내보내기</div></div>
+  <div class="showcase-transfer"><span>↗</span> 주간 메모 → 업무 보드 <small>독립 사본 · 원본 유지</small></div>
+ </div>
+ <div class="showcase-cabi-steps" role="group" aria-label="Cabi.NET 시연 장면 선택"><button data-cabi="0" aria-pressed="true"><b>01</b> 모으고 <small>폴더·링크·여러 노트</small></button><button data-cabi="1" aria-pressed="false"><b>02</b> 기록하고 <small>별도 창에서 블록 편집</small></button><button data-cabi="2" aria-pressed="false"><b>03</b> 이어 붙이기 <small>주간 메모와 업무 보드 연결</small></button></div>
+ <div class="showcase-cabi-footer"><p>업무당 여러 노트, 하나의 자유 보드.<br>누적 주간 메모를 찾아 연결하고, 두 보드 사이에서 객체와 이미지를 복제하세요.</p><a href="#cabi-screens" class="text-link">실제 구현 화면 살펴보기 ↓</a></div>
+ <p class="showcase-demo-caption">위 모션은 동작 설명용 그래픽입니다. Cabi.NET V2는 검증판 기능으로 최신 정식 다운로드에 아직 포함되지 않습니다.</p>
+ <div class="showcase-screens" id="cabi-screens"><figure><img src="./shots/cabi-hub.webp" alt="Cabi.NET 실제 업무 허브 카드 보기" width="1440" height="1000" loading="lazy"><figcaption>업무별 자료와 노트를 탐색하는 허브</figcaption></figure><figure><img src="./shots/cabi-note.webp" alt="Cabi.NET 실제 블록 노트 편집기" width="1180" height="820" loading="lazy"><figcaption>목차·표·체크 목록을 갖춘 블록 노트</figcaption></figure><figure><img src="./shots/cabi-board.webp" alt="Cabi.NET 실제 전용 보드와 누적 주간 메모 패널" width="1180" height="820" loading="lazy"><figcaption>주간 메모와 연결하는 업무 전용 보드</figcaption></figure></div>
+ </div>
+</section>
+
+<section class="privacy-section" id="privacy"><div class="wrap privacy-inner"><div class="privacy-symbol" aria-hidden="true"><span>⌂</span></div><div class="privacy-heading"><p class="eyebrow section-eyebrow"><span class="section-index">07</span> YOUR SPACE</p><h2>나의 기록은<br><em>나의 자리에서.</em></h2></div><div class="privacy-copy"><p>업무 기록과 메모는 직접 선택한 폴더의 로컬 파일에 저장됩니다. 백업 당시 앱·DB 구조 버전을 확인하고, 보관 일수·용량 규칙으로 백업 파일을 정리하세요. 회사와 개인 기록은 워크스페이스로 나누어 보관합니다.</p><p class="privacy-detail">앱의 새 버전 확인과 다운로드에는 GitHub 연결을 사용하며, 업무 기록과 메모는 전송하지 않습니다.</p><span class="privacy-label">LOCAL FIRST &nbsp;·&nbsp; WINDOWS / macOS</span></div></div></section>
 
     <section class="closing wrap" id="get"><div class="closing-mark">✳</div><p class="eyebrow">FOR EVERYDAY WORK</p><h2>오늘의 한 줄부터,<br><em>나만의 여정을 시작하세요.</em></h2><p>매일 쓰는 기록이 내 일의 이야기가 되는 곳.</p><a class="button button-primary" href="https://github.com/chs2147/work-journey-board/releases/latest">내려받기 (Windows · macOS) <span aria-hidden="true">↗</span></a><span class="closing-caption">GitHub 릴리스 페이지에서 Windows 설치 파일(기본판·오프라인 설치판)과 macOS 디스크 이미지(DMG)를 받을 수 있습니다.</span><a class="text-link closing-guide" href="./guide/">빠른 이용 가이드 (HTML · PDF) <span aria-hidden="true">→</span></a></section>
     <section class="maker wrap" aria-label="만든 이"><div class="maker-copy"><span class="maker-label">MADE BY</span><img src="./brand/h1-en-color.svg" alt="sanbonjini" class="maker-h1" width="163" height="56"><p>상상을 작동시키다. — 생각을 실제로 작동하는 도구로 만듭니다.</p></div><a class="button button-quiet" href="https://sanbonjini.vercel.app">sanbonjini 브랜드 사이트 <span aria-hidden="true">↗</span></a></section>
   </main>
   <footer class="site-footer"><div class="footer-inner wrap"><a class="brand footer-brand" href="#top" aria-label="처음으로"><img src="./icon.svg" alt="" width="30" height="30"><img src="./wordmark.svg" alt="Work Journey Board" class="brand-wordmark"></a><p>기록은 가볍게, 흐름은 선명하게.</p><div class="footer-links"><a href="https://github.com/chs2147/work-journey-board">GitHub <span aria-hidden="true">↗</span></a><a href="./guide/">이용 가이드</a><a href="https://github.com/chs2147/work-journey-board/releases/latest">다운로드 <span aria-hidden="true">↗</span></a></div></div><div class="wrap footer-bottom"><img src="./brand/m1-en-color.svg" alt="sanbonjini" class="maker-m1" width="122" height="40"><span>Copyright 2026 sanbonjini</span></div></footer>
-</body>
+<div class="showcase-controls" aria-label="모션 설정"><button id="site-motion" aria-pressed="false">Ⅱ 모션 정지</button></div></body>
 </html>
 

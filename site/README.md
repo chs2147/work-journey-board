@@ -7,9 +7,12 @@ Work Journey Board 소개를 위한 정적 사이트입니다.
 - `index.html`: 사이트 메인 페이지
 - `style.css`: 화면 스타일과 반응형 디자인
 - `motion.js`: 화면 등장·업무 기록의 모션 효과
+- `features.css`, `features.js`: Universe 연결망·초점 전환과 Cabi.NET 작업 공간 모션, 반응형 표시·모션 정지 제어
 - `icon.svg`, `wordmark.svg`: 앱에서 사용하는 아이콘과 워드마크
 - `gowun-dodum.woff2`: 사이트에서 사용하는 고운돋움 서체
 - `font-license.txt`: 고운돋움의 SIL Open Font License 1.1 전문
+- `pretendard-regular.woff2`, `pretendard-license.txt`: 신규 소개 섹션의 Pretendard Regular 공식 글꼴과 SIL OFL 1.1 전문
+- `shots/universe.webp`, `shots/cabi-*.webp`: 실제 앱의 가상 데이터 화면(원본은 가이드 및 Cabi.NET 구현 검토 자료)
 
 ## 다른 프로젝트에 배포하기
 
@@ -29,3 +32,13 @@ Work Journey Board 소개를 위한 정적 사이트입니다.
 - 폰트를 함께 배포할 때 `font-license.txt`를 유지하세요.
 - 이 압축 파일은 정적 사이트 파일이며, 이전 사이트의 호스팅 설정과 접근 권한은 포함하지 않습니다.
 
+
+## Universe · Cabi.NET 소개 (승인 시안 A 반영)
+
+- 첫 화면과 내비게이션에서 두 기능을 바로 찾을 수 있으며, 메인 페이지에 각각 별도 소개 섹션을 제공합니다.
+- Universe: 독립 다크 배경의 연결망 회전·드래그와 은하/초점 전환. 모션 그래픽과 실제 앱 화면을 구분합니다.
+- Cabi.NET: 자료 허브 → 별도 노트 창 → 주간 메모 복제의 세 장면. 자동 전환 중 장면을 직접 고르면 해당 장면에 머뭅니다.
+- Cabi.NET V2는 1.20.0-rc.1 검증판임을 안내합니다. 정식 다운로드에 이미 포함된 기능으로 표시하지 않습니다.
+- 우측 아래 모션 정지/재생 버튼, OS 모션 줄이기 설정, 화면 밖/숨김 상태에서 연속 렌더링 중단을 지원합니다.
+- 신규 이미지·글꼴·스크립트는 모두 `site/` 내부 상대 경로로 제공하여 정적 배포에 저장소의 `docs/`나 `node_modules/`가 필요하지 않습니다.
+- Pages 자동 배포는 기존대로 main의 `site/` 변경 때 실행됩니다. 작업 브랜치 푸시는 실제 사이트 게시를 실행하지 않습니다.

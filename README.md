@@ -9,7 +9,7 @@
   </picture>
 </p>
 
-**오늘 한 일을, 한 줄씩.** 주간 요약 · 진행 경과 · 엑셀 보고서는 자동으로.
+**오늘 한 일을, 한 줄씩.** 주간 보고부터 업무별 작업 공간, 기록을 잇는 Universe까지.
 
 [최신 판 내려받기](https://github.com/chs2147/work-journey-board/releases/latest) · [소개 사이트](https://chs2147.github.io/work-journey-board/) · [Version History](#version-history)
 
@@ -22,15 +22,15 @@
 <p align="center"><sub>주간 보드 · 이번 주 메모(업무 연결 메모·이미지 메모·관계선) · 시그니처 테마 · 화면 속 기록은 모두 가상 예시</sub></p>
 
 ## 핵심 기능
-- **매일 2분, 키보드만으로** — 요일 × 업무 칸에 개조식 기록(Enter 다음 줄 · Tab 세부 항목 · ↓ 다음 업무), 오늘 열 강조, 직전 기록 가져오기, 중요 표시·매주 반복·연차, 주간 메모 보드
-- **쓰기만 하면 주간 보고** — 업무별·요일별 자동 집계, 수정본, 사내 AI 도구용 다듬기 지시문, 엑셀 2시트 · 메모 보드 그림
-- **지나온 일이 한눈에** — 업무별 업무 타임라인·경과 지도, 활동 히트맵, 연간 보기
-- **메모 보드로 맥락까지** — 업무 항목에 연결한 메모·이미지·링크 카드, 상자끼리 관계선, 선택 사각형으로 여러 상자 함께 옮기기, PNG·**마크다운**으로 내보내기
-- **Cabinet — 자주 쓰는 폴더·링크** — 업무별로 작업 폴더·위키·대시보드를 끌어 놓아 등록하고, 별도 창에서 폴더를 열어 파일을 바로 열기. 보드의 업무 이름·항목 옆 🗄로 한 번에 이동
-- **Universe — 기록과 지식의 연결 지도** — 기록·메모·폴더가 어떻게 이어지는지 한눈에 보고 원래 자리로(`Alt+5`). 주를 넘는 직접 연결, 해결법·배운 점을 남기는 지식 카드, 사내 AI에 붙여 넣을 근거 묶음
-- **워크스페이스로 회사·개인 따로** — 회사 업무와 개인 생활·공부를 각자의 일지 파일로 나눠 기록하고, 레일 맨 위 공간 단추(모노그램 아이콘)나 `Ctrl+Alt+1~9`로 오가기
-- **찾고 맞추기** — 업무 기록·메모·Cabinet 통합 검색(`Ctrl+Shift+F`), 대한민국 공휴일 자동 표시·회사 휴일·기타 휴가, 업무·요일 열 폭 조절
-- **빠른 이용 가이드** — 장면별 사용법을 [소개 사이트](https://chs2147.github.io/work-journey-board/guide/)에서 보거나 PDF로 내려받기
+- **매일 2분, 키보드만으로** — 주간·데일리 뷰에서 개조식 기록, 업무·태그 간편 추가, 마감일 컬러칩·중요 표시·완료/완료 취소·매주 반복. 날짜 지정 복제와 이전 기록 가져오기에서도 메모·자료 연결을 함께 유지
+- **쓰기만 하면 주간 보고** — 업무별·요일별 자동 집계, 수정본, 사내 AI 도구용 다듬기 지시문, 여러 주 엑셀 2시트 · 메모 보드 그림 내보내기
+- **지나온 일이 한눈에** — 년월→주차→업무 내역으로 이어지는 업무 타임라인, 유연한 열 너비의 활동 히트맵·habit tracker, 연간 보기
+- **메모 보드로 맥락까지** — 업무항목에 연결한 글·이미지·링크 카드와 관계선, 다중 선택·그룹 이동·글자색·Markdown 파일 드롭, PNG·Markdown 내보내기
+- **Universe — 기록이 살아 있는 연결 지도로** — 독립된 다크 우주에서 3D 회전·이동·확대/축소, 줌에 따라 이어지는 은하↔초점 탐색, 정적 2D·목록 보기. 접고 폭을 조절하는 필터·상세 패널, 시간 탐색·주를 넘는 직접 연결, 지식 카드·외부 AI에 붙여 넣을 근거 묶음 (`Alt+5`)
+- **Cabi.NET — 업무별 자료·노트·메모보드** — 기존 Cabinet의 폴더·링크 관리를 확장한 업무 작업 공간. **1.20.0-rc.1 검증판**에서 업무별 복수 블록 노트와 업무당 하나의 자유 보드를 별도 모달리스 창으로 제공. 누적 주간 메모 연결, 주간↔업무 보드 객체·이미지 복제, 목록·카드·보드 보기, Markdown 가져오기와 Markdown·한글 PDF 내보내기 ([실제 화면](docs/mockups/cabinet-v2/implemented/README.md))
+- **워크스페이스로 회사·개인 따로** — 공간마다 독립 일지 파일, 레일의 공간 아이콘과 `Ctrl+Alt+1~9`로 전환. 업무·메모·자료·지식의 맥락을 공간별로 보관
+- **찾고 맞추기** — 업무·메모·자료 통합 검색(`Ctrl+Shift+F`), Cabi.NET 노트·업무 보드 검색(RC), 대한민국 공휴일·회사 휴일·기타 휴가, 업무·요일 열 폭 조절
+- **빠른 이용 가이드** — 장면별 사용법을 [소개 사이트](https://chs2147.github.io/work-journey-board/guide/)에서 보거나 PDF로 내려받기. 최신 정식판은 Releases, Cabi.NET V2는 현재 RC 검증 단계
 
 | 주간 요약 | 인사이트 |
 |---|---|
@@ -52,7 +52,7 @@
 
 ## 기록과 개인정보
 - 기록은 **사용자가 고른 폴더의 SQLite 파일 1개**에만 저장하고, 기록·메모는 어디에도 보내지 않습니다(인터넷은 새 판 확인·내려받기에만 — 이 저장소의 GitHub Releases).
-- 자동 백업: 매일·매월 · 켜 둔 동안 2시간마다 · 보조 백업 위치(선택). 문제가 생기면 **앱 안에서 백업으로 복원**(지금 파일은 `_before-restore`로 보관, 되돌리기 가능) — 앱을 열 수 없을 때의 수동 절차는 [docs/restore-guide.md](docs/restore-guide.md).
+- 자동 백업: 매일·매월 · 켜 둔 동안 2시간마다 · 보조 백업 위치(선택). 백업 당시 앱·DB 구조 버전을 이력에 남기고, 보관 일수·용량 규칙으로 백업 파일을 정리합니다. 문제가 생기면 **앱 안에서 백업으로 복원**(지금 파일은 `_before-restore`로 보관, 되돌리기 가능) — 앱을 열 수 없을 때의 수동 절차는 [docs/restore-guide.md](docs/restore-guide.md).
 
 ## 문서
 | 문서 | 내용 |
@@ -72,7 +72,7 @@
 | [CLAUDE.md](CLAUDE.md) | 구현 규칙(외부 통신 0 · 실데이터 금지 · 데이터 파일 안전 · 기술 스택) |
 
 ## 기술 스택
-Tauri v2(NSIS per-user) · React 18 + Vite + TypeScript · SQLite(실앱 tauri-plugin-sql / 개발·테스트 sql.js) · ExcelJS · SVG + d3-scale · date-fns · Vitest + Playwright · GitHub Actions(ubuntu CI·macos Rust 검사 + windows-latest NSIS·macos-latest 유니버설 DMG 빌드)
+Tauri v2(NSIS per-user) · React 18 + Vite + TypeScript · SQLite(실앱 tauri-plugin-sql / 개발·테스트 sql.js) · ExcelJS · Three.js(Universe) · Tiptap(블록 편집) · pdf-lib(노트 PDF) · SVG + d3-scale · date-fns · Vitest + Playwright · GitHub Actions(ubuntu CI·macos Rust 검사 + windows-latest NSIS·macos-latest 유니버설 DMG 빌드)
 
 ## 사용한 글꼴
 - [Pretendard](https://github.com/orioncactus/pretendard) — 라이트·다크 테마 본문. SIL Open Font License 1.1, 공식 배포 파일을 수정 없이 포함 ([라이선스 전문](public/licenses/Pretendard-OFL-1.1.txt))
