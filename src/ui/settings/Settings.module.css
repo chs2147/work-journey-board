@@ -127,6 +127,7 @@
 
 /* 카드 = 제목 + 한 줄 설명 + 설정 행 */
 .card {
+  --settings-card-inset: var(--sp-5);
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -140,7 +141,7 @@
   flex-wrap: wrap;
   align-items: baseline;
   gap: var(--sp-1) 10px;
-  padding: 14px var(--sp-5) 10px;
+  padding: 14px var(--settings-card-inset, var(--sp-5)) 10px;
 }
 
 .cardHead h3 {
@@ -158,8 +159,13 @@
   display: flex;
   align-items: center;
   gap: var(--sp-5);
-  padding: var(--sp-4) var(--sp-5);
+  padding: var(--sp-4) var(--settings-card-inset, var(--sp-5));
   border-top: 1px solid var(--line);
+}
+
+/* 카드 하단 안내도 제목/설정 행과 같은 가로 기준선을 공유한다. */
+.cardMessage {
+  padding: 0 var(--settings-card-inset, var(--sp-5)) var(--sp-2);
 }
 
 .rowText {

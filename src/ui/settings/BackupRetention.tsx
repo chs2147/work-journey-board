@@ -13,7 +13,7 @@ import { useAppStore } from "../common/appStore";
 import { BackupDialog } from "../common/BackupDialog";
 import { backupBytes } from "../common/backupUi";
 import { IconTune, IconTrash, IconList, IconCompleteItem } from "../common/icons";
-import { Row } from "./SettingsCard";
+import { CardMessage, Row } from "./SettingsCard";
 import styles from "./BackupRetention.module.css";
 const B = STR.backupV13;
 export function BackupRetention({
@@ -106,20 +106,22 @@ export function BackupRetention({
           {B.clean}
         </button>
       </Row>
-      <div className={styles.hints}>
-        <p>{B.protectHint}</p>
-        {control?.paused && <p className={styles.warning}>{B.paused}</p>}
-        {control?.lastCleanup && (
-          <p>
-            {B.cleanupLast(
-              new Date(control.lastCleanup.at).toLocaleString(),
-              control.lastCleanup.deleted,
-              control.lastCleanup.failed,
-              backupBytes(control.lastCleanup.freed),
-            )}
-          </p>
-        )}
-      </div>
+      <CardMessage>
+        <div className={styles.hints}>
+          <p>{B.protectHint}</p>
+          {control?.paused && <p className={styles.warning}>{B.paused}</p>}
+          {control?.lastCleanup && (
+            <p>
+              {B.cleanupLast(
+                new Date(control.lastCleanup.at).toLocaleString(),
+                control.lastCleanup.deleted,
+                control.lastCleanup.failed,
+                backupBytes(control.lastCleanup.freed),
+              )}
+            </p>
+          )}
+        </div>
+      </CardMessage>
       {open && (
         <BackupDialog title={B.policy} busy={busy} onClose={() => setOpen(false)}>
           <p className={styles.muted}>

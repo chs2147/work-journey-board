@@ -51,3 +51,8 @@ export function Row({
     </div>
   );
 }
+
+/** 카드 내 안내/상태 문구: 기존 설정 행과 같은 좌우 여백을 사용한다. */
+export function CardMessage({ children }: { children: ReactNode }) {
+  return <div className={styles.cardMessage}>{children}</div>;
+}
