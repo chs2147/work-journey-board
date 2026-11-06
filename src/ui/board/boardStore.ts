@@ -1207,10 +1207,11 @@ export async function pullPreviousDay(date: DateStr) {
   await importPrevious(
     activeCategoryIds().map((id) => cellKey(date, id)),
     date,
+    true,
   );
 }
 
-async function importPrevious(keys: string[], date: DateStr) {
+async function importPrevious(keys: string[], date: DateStr, all = false) {
   await flushAll();
   const sourceRepo = requireRepo(),
     generation = loadSeq;
@@ -1240,12 +1241,14 @@ async function importPrevious(keys: string[], date: DateStr) {
     if (stale()) return;
     await acceptCopied(copied, sourceRepo);
     if (stale()) return;
-    if (keys.length === 1) {
+    if (!all) {
       const key = keys[0]!;
       set({ focus: { kind: "item", key, index: (get().cells[key]?.length ?? 1) - 1, caret: "end" } });
     } else setFocusDay(date);
     toast(
-      STR.pull.done(pullLabel(prev.date), mapping.length) +
+      (all
+        ? STR.pull.doneAll(pullLabel(prev.date), mapping.length, cells.length)
+        : STR.pull.done(pullLabel(prev.date), mapping.length)) +
         (prev.excluded ? ` · ${STR.itemCompletion.excluded(prev.excluded)}` : ""),
       { label: STR.toast.undo, run: () => void undo() },
     );
