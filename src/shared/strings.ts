@@ -479,8 +479,8 @@ export const STR_BASE = {
     rail: "인사이트 (Alt+3)",
     title: "인사이트",
     subtitle: "기록이 어떻게 흘러왔나",
-    timeline: "경과 타임라인",
-    open: "경과 타임라인 보기",
+    timeline: "업무 타임라인",
+    open: "업무 타임라인 보기",
     openKey: "Alt+3",
     period: "기간",
     periods: { "4w": "최근 4주", "12w": "최근 12주", year: "올해", all: "전체", custom: "직접 지정" },
@@ -566,9 +566,9 @@ export const STR_BASE = {
     mapTableHide: "표 닫기",
     mapTableHead: ["기간", "기록한 날", "항목"],
     thisWeekMark: "◀ 이번 주",
-    // S2 활동 개요(m3-s2-spec)
+    // S2 활동(m3-s2-spec)
     tabs: "인사이트 탭",
-    overview: "활동 개요",
+    overview: "활동",
     pick: "업무",
     pickAll: (n: number) => `업무: 전체 ${n}`,
     pickSome: (n: number) => `업무: ${n}개 골랐음`,
@@ -620,7 +620,7 @@ export const STR_BASE = {
     tipGoWeek: "누르면 보드의 그 주로",
     tipOutside: "업무 기간 밖",
     tipFuture: (unit: "day" | "week") => (unit === "day" ? "아직 오지 않은 날" : "아직 오지 않은 주"),
-    rowToTimeline: (name: string) => `${name} — 경과 타임라인으로`,
+    rowToTimeline: (name: string) => `${name} — 업무 타임라인으로`,
   },
   /** 업무연계 메모(improve-1026v2-spec 4~7절) */
   linked: {
@@ -849,7 +849,10 @@ export const STR_BASE = {
     // 관계선(note-relation-spec)
     deletedWithEdges: (n: number) => `메모 상자와 관계선 ${n}개를 지웠습니다`,
     deletedMany: (n: number) => `메모 상자 ${n}개를 지웠습니다`,
-    multiHint: (n: number) => `상자 ${n}개 선택 — 끌어서 함께 옮기기 · 방향키 · Delete · Esc 해제`,
+    groupCount: (n: number) => `${n}개 선택`,
+    groupMove: "함께 이동",
+    groupMoveHint: "선택한 메모 함께 이동",
+    multiHint: (n: number) => `상자 ${n}개 선택 — 어느 메모든 끌면 함께 이동 · 더블클릭 개별 편집 · Esc 해제`,
     edgeExists: "이미 이어져 있습니다",
     edgeRemoved: "관계선을 해제했습니다",
     edgesRemoved: (n: number) => `관계선 ${n}개를 해제했습니다`,

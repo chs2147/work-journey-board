@@ -22,6 +22,9 @@ import {
   clearMulti,
   moveBoxesLive,
   toggleMulti,
+  noteGestureGeneration,
+  registerNoteGesture,
+  cancelNoteGesture,
 } from "./noteStore";
 import styles from "./Note.module.css";
 
@@ -62,7 +65,7 @@ export function startBoxDrag(
     return;
   }
   const multi = useNote.getState().multi;
-  if (kind === "move" && multi.length > 1 && multi.includes(box.id)) return startGroupDrag(e, multi, onClick);
+  if (kind === "move" && multi.length > 1 && multi.includes(box.id)) return startGroupDrag(e, multi);
   if (multi.length) clearMulti();
   const el = e.currentTarget;
   el.setPointerCapture(e.pointerId);
@@ -141,48 +144,83 @@ export function startBoxDrag(
 }
 
 /** 함께 고른 상자들을 한꺼번에 끌기(improve-1102v7 K7) — 되돌리기 한 번, 항목 연결 끌기는 하지 않는다 */
-function startGroupDrag(e: PointerEvent<HTMLElement>, ids: string[], onClick?: () => void) {
+export function startGroupDrag(e: PointerEvent<HTMLElement>, ids: string[]) {
+  if (e.button !== 0) return;
+  cancelNoteGesture();
+  e.preventDefault();
+  e.stopPropagation();
   const el = e.currentTarget;
-  el.setPointerCapture(e.pointerId);
   const before = beginGesture();
+  const generation = noteGestureGeneration();
   const zoom = useNote.getState().zoom;
-  const origins = useNote
-    .getState()
-    .doc.boxes.filter((b) => ids.includes(b.id))
-    .map((b) => ({ id: b.id, x: b.x, y: b.y }));
+  const origins = before.boxes.filter((b) => ids.includes(b.id)).map((b) => ({ id: b.id, x: b.x, y: b.y }));
   const [sx, sy] = [e.clientX, e.clientY];
   let moved = false;
+  let lastClick: Event | null = null;
+  const valid = () =>
+    generation === noteGestureGeneration() &&
+    origins.every((o) => useNote.getState().doc.boxes.some((b) => b.id === o.id));
+  const swallowClick = (ev: Event) => {
+    lastClick = ev;
+    ev.preventDefault();
+    ev.stopImmediatePropagation();
+  };
   const move = (ev: globalThis.PointerEvent) => {
+    if (ev.pointerId !== e.pointerId) return;
+    if (!valid()) return done();
     if (!moved && Math.hypot(ev.clientX - sx, ev.clientY - sy) < DRAG_SLOP) return;
-    moved = true;
+    if (!moved) {
+      moved = true;
+      el.setPointerCapture(e.pointerId);
+      el.classList.add(styles.groupDragging!);
+    }
     moveBoxesLive(origins, (ev.clientX - sx) / zoom, (ev.clientY - sy) / zoom);
+  };
+  const cancel = () => {
+    const same = valid();
+    done();
+    if (same && moved) cancelGesture(before);
   };
   const key = (ev: globalThis.KeyboardEvent) => {
     if (ev.key !== "Escape") return;
     ev.preventDefault();
-    ev.stopPropagation();
-    done();
-    cancelGesture(before);
+    ev.stopImmediatePropagation();
+    cancel();
   };
   const done = () => {
-    el.removeEventListener("pointermove", move);
-    el.removeEventListener("pointerup", up);
-    el.removeEventListener("pointercancel", up);
+    window.removeEventListener("pointermove", move);
+    window.removeEventListener("pointerup", up);
+    window.removeEventListener("pointercancel", cancel);
     window.removeEventListener("keydown", key, true);
+    window.removeEventListener("blur", cancel);
+    unsubscribe();
+    unregister();
+    el.classList.remove(styles.groupDragging!);
     if (el.hasPointerCapture(e.pointerId)) el.releasePointerCapture(e.pointerId);
   };
-  const up = () => {
+  const up = (ev: globalThis.PointerEvent) => {
+    if (ev.pointerId !== e.pointerId) return;
+    const same = valid();
     done();
-    endGesture(before);
-    if (!moved) {
-      clearMulti();
-      onClick?.();
+    if (same && moved) endGesture(before);
+    // pointerup 뒤 합성 click이 링크/편집을 열지 않게 한다. 단순 클릭/더블클릭은 그대로.
+    if (moved) {
+      el.addEventListener("click", swallowClick, { capture: true, once: true });
+      window.setTimeout(() => {
+        if (!lastClick) el.removeEventListener("click", swallowClick, true);
+      }, 0);
     }
   };
-  el.addEventListener("pointermove", move);
-  el.addEventListener("pointerup", up);
-  el.addEventListener("pointercancel", up);
+  const unsubscribe = useNote.subscribe(() => {
+    if (!valid()) done();
+  });
+  const unregister = registerNoteGesture(cancel);
+  window.addEventListener("pointermove", move);
+  window.addEventListener("pointerup", up);
+  window.addEventListener("pointercancel", cancel);
+  // 캔버스의 다중 선택 키 처리보다 먼저 Esc를 소비한다.
   window.addEventListener("keydown", key, true);
+  window.addEventListener("blur", cancel);
 }
 
 /** 선택된 상자의 키. Enter는 상자마다 다르다(글 편집 / 설명 달기) */

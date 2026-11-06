@@ -408,3 +408,77 @@ test("v13 정책 창을 연 상태로 공간을 바꾸면 이전 공간의 창�
   await switchTo(page, 1, "회사");
   await expect(page.getByRole("dialog")).toHaveCount(0);
 });
+
+test("v14 묶음 이동 후 공간 3회 왕복: 글/이미지/위치 보존, 실행 취소 분리, 이동 중 전환 취소", async ({
+  page,
+}) => {
+  await addImage(page, "#337766", "v14-가상-묶음");
+  await page.getByRole("button", { name: "크게 보기", exact: true }).click();
+  const snapshot = () =>
+    page.evaluate(async () => {
+      const w = globalThis as unknown as {
+        __wjbApp: { noteSnapshot(): Promise<{ doc: { boxes: unknown[] }; canUndo: boolean }> };
+      };
+      const result = await w.__wjbApp.noteSnapshot();
+      return { boxes: result.doc.boxes, canUndo: result.canUndo };
+    });
+  const chooseGroup = async () => {
+    const c = (await page.getByTestId("note-canvas").boundingBox())!;
+    await page.mouse.move(c.x + 4, c.y + 4);
+    await page.mouse.down();
+    await page.mouse.move(c.x + 900, c.y + 500, { steps: 8 });
+    await page.mouse.up();
+    await expect(page.getByTestId("note-group-frame")).toBeVisible();
+  };
+  await chooseGroup();
+  const body = page.getByTestId("note-box").first().locator(".note-prose");
+  await body.scrollIntoViewIfNeeded();
+  const r = (await body.boundingBox())!;
+  await page.mouse.move(r.x + 60, r.y + 20);
+  await page.mouse.down();
+  await page.mouse.move(r.x + 100, r.y + 44, { steps: 5 });
+  await page.mouse.up();
+  await saved(page);
+  const expected = await page.locator('[data-testid="note-canvas"] > [data-box-id]').evaluateAll((ns) =>
+    ns.map((n) => ({
+      id: (n as HTMLElement).dataset.boxId,
+      x: parseFloat((n as HTMLElement).style.left),
+      y: parseFloat((n as HTMLElement).style.top),
+    })),
+  );
+  await expect
+    .poll(async () =>
+      ((await snapshot()).boxes as { id: string; x: number; y: number }[]).map((b) => ({
+        id: b.id,
+        x: b.x,
+        y: b.y,
+      })),
+    )
+    .toEqual(expected);
+  const company = (await snapshot()).boxes;
+  const assets = await storedAssets(page);
+  await switchTo(page, 2, "개인");
+  const personal = (await snapshot()).boxes;
+  for (let round = 0; round < 3; round++) {
+    await switchTo(page, 1, "회사");
+    expect((await snapshot()).boxes).toEqual(company);
+    expect((await snapshot()).canUndo).toBe(false);
+    expect(await storedAssets(page)).toBe(assets);
+    await switchTo(page, 2, "개인");
+    expect((await snapshot()).boxes).toEqual(personal);
+    expect((await snapshot()).canUndo).toBe(false);
+  }
+  await switchTo(page, 1, "회사");
+  await chooseGroup();
+  await body.scrollIntoViewIfNeeded();
+  const t = (await body.boundingBox())!;
+  await page.mouse.move(t.x + 60, t.y + 20);
+  await page.mouse.down();
+  await page.mouse.move(t.x + 110, t.y + 52, { steps: 5 });
+  await switchTo(page, 2, "개인");
+  await page.mouse.up();
+  expect((await snapshot()).boxes).toEqual(personal);
+  await switchTo(page, 1, "회사");
+  expect((await snapshot()).boxes).toEqual(company);
+  expect(await storedAssets(page)).toBe(assets);
+});

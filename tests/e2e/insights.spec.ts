@@ -48,7 +48,7 @@ test("레일로 열기 → 인사이트 모드 상단 바, 기본 최근 12주, 
   await expect(page.locator(":focus")).toHaveValue(FLAGGED);
 });
 
-test("Alt+3 = 커서가 있는 칸의 업무로, 다시 Alt+3 = 보드로 · 업무 머리 ⋯ [경과 타임라인 보기]", async ({
+test("Alt+3 = 커서가 있는 칸의 업무로, 다시 Alt+3 = 보드로 · 업무 머리 ⋯ [업무 타임라인 보기]", async ({
   page,
 }) => {
   await page.keyboard.press("Alt+Digit3");
@@ -57,7 +57,7 @@ test("Alt+3 = 커서가 있는 칸의 업무로, 다시 Alt+3 = 보드로 · 업
   await expect(insights(page)).toHaveCount(0);
 
   await page.getByRole("button", { name: `${B} 메뉴` }).click();
-  await page.getByRole("menuitem", { name: /경과 타임라인 보기/ }).click();
+  await page.getByRole("menuitem", { name: /업무 타임라인 보기/ }).click();
   await expect(page.getByTestId("insight-title")).toContainText(B);
   await expect(page.getByTestId("insight-meta")).toContainText("재개 1회");
 });

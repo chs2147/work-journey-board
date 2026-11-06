@@ -1829,3 +1829,63 @@ button.stripText:hover {
   background: var(--surface-card);
   color: var(--text-1);
 }
+
+/* v14: 선택된 어느 객체 본문에서도 함께 이동. 강조 띠/외곽은 직각. */
+.box[data-multi="1"],
+.box[data-multi="1"] :global(.note-prose) {
+  cursor: grab;
+}
+.box[data-multi="1"] .resize,
+.box[data-multi="1"] .resizeCorner,
+.box[data-multi="1"] [data-testid="edge-knob"] {
+  display: none;
+}
+.groupDragging,
+.groupDragging .box[data-multi="1"] {
+  cursor: grabbing;
+}
+.groupFrame {
+  position: absolute;
+  border: 1px dashed var(--accent);
+  border-radius: 0;
+  pointer-events: none;
+  z-index: 100001;
+}
+.groupTools {
+  position: absolute;
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 3px 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-card);
+  color: var(--text-1);
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+}
+.groupTools button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 2px 6px;
+  border: 1px solid var(--btn-line);
+  border-radius: var(--radius-sm);
+  background: var(--btn-bg);
+  color: inherit;
+  font: inherit;
+  cursor: grab;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.multiHint {
+  left: var(--sp-4);
+  right: var(--sp-4);
+  transform: none;
+  width: fit-content;
+  max-width: calc(100% - 32px);
+  border-radius: 0;
+  white-space: normal;
+}

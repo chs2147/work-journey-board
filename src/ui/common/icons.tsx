@@ -284,3 +284,32 @@ export const IconTune = () => (
     <path d="M2 4h12M2 8h12M2 12h12M5 2v4M11 6v4M6 10v4" />
   </Svg>
 );
+
+export const IconMoveGroup = () => (
+  <Svg>
+    <path d="M8 1.5v13M1.5 8h13M5.5 4 8 1.5 10.5 4M5.5 12 8 14.5 10.5 12M4 5.5 1.5 8 4 10.5M12 5.5 14.5 8 12 10.5" />
+  </Svg>
+);
+export const IconTimeline = () => (
+  <Svg>
+    <path d="M3 2v12M7 4h6M7 8h6M7 12h6" />
+    <circle cx="3" cy="4" r="1" />
+    <circle cx="3" cy="8" r="1" />
+  </Svg>
+);
+export const IconActivity = () => (
+  <Svg>
+    <path d="M2 14h12M4 10V7M8 10V2M12 10V5" />
+  </Svg>
+);
+export const IconTable = () => (
+  <Svg>
+    <rect x="2" y="2" width="12" height="12" />
+    <path d="M2 6h12M2 10h12M6 2v12M10 2v12" />
+  </Svg>
+);
+export const IconChevronRight = () => (
+  <Svg>
+    <path d="m6 3 5 5-5 5" />
+  </Svg>
+);

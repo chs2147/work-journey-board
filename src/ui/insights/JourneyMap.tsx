@@ -11,6 +11,7 @@ import {
   type WeekSpan,
 } from "../../domain/insights";
 import { weekRange } from "../../domain/week";
+import { IconTable } from "../common/icons";
 import { STR } from "../../shared/strings";
 import { jumpTo, setMapUnit } from "./insightsStore";
 import styles from "./Insights.module.css";
@@ -118,8 +119,16 @@ export function JourneyMap({ cells, unit, range, rangeLabel, visibleWeeks, ongoi
             {STR.insights.mapMonth}
           </button>
         </div>
-        <button type="button" className={styles.linkBtn} onClick={() => setTable((t) => !t)}>
-          {table ? STR.insights.mapTableHide : STR.insights.mapTable}
+        <button
+          type="button"
+          className={styles.iconBtn}
+          data-testid="map-table-toggle"
+          aria-pressed={table}
+          aria-label={table ? STR.insights.mapTableHide : STR.insights.mapTable}
+          title={table ? STR.insights.mapTableHide : STR.insights.mapTable}
+          onClick={() => setTable((t) => !t)}
+        >
+          <IconTable />
         </button>
       </div>
 
