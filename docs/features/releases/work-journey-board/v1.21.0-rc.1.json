@@ -8,7 +8,7 @@
   "asOfDate": "2026-11-07",
   "reconstructed": false,
   "baselineCommit": "58c19d0",
-  "catalogDigestAtCapture": "5e218dc5bd09e4c95a1106110d1a34785a01bf6aa6f2024038eb1318ff10fc10",
+  "catalogDigestAtCapture": "e33cc28a94db65df8817893a4fc06eb4b3f11df55e1b074bac6b0da59411d1f2",
   "artifactProfiles": [
     "windows-standard",
     "macos-universal"
@@ -471,11 +471,19 @@
           "type": "changed",
           "description": "저장됨 알약과 지연 저장 중 표시",
           "source": "docs/release-notes/v0.2.20.md"
+        },
+        {
+          "version": "1.21.0-rc.1",
+          "type": "changed",
+          "description": "메인·Cabi.NET 저장 상태를 공용 표시로 통일하고 최초 저장 시각이 없을 때에도 기본 저장 도움말을 유지한다. 토스트 알림 회귀 검사는 별도 알림 영역으로 구분한다.",
+          "source": "docs/improve-v17-spec.md"
         }
       ],
       "sources": [
         "docs/i-m1-plan.md",
-        "README.md"
+        "README.md",
+        "docs/improve-v17-spec.md",
+        "docs/release-notes/v1.21.0-rc.1.md"
       ],
       "implementation": [
         "src/ui/board"
@@ -484,7 +492,7 @@
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "제품 기능",
-      "lastChanged": "0.2.20",
+      "lastChanged": "1.21.0-rc.1",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v16",
       "availability": "included",
       "profiles": {

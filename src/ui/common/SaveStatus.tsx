@@ -35,7 +35,7 @@ export function SaveStatus({
       data-testid="save-state"
       data-state={pending ? "saving" : "saved"}
       data-idle={!saving}
-      title={savedAt ? STR.save.savedTitle(savedAt) : undefined}
+      title={STR.save.savedTitle(savedAt ?? null)}
     >
       <svg
         className={pending ? styles.spin : undefined}

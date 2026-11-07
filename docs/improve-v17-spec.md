@@ -254,3 +254,12 @@
 - 가이드 장면05·11·13, HTML/PDF·실제 가상 샘플 화면, Feature List 카탈로그·현재 문서·RC 스냅샷·검토용 Excel을 동반 갱신했다. 과거 정식 버전 스냅샷은 보존했다.
 
 [실제 위젯 화면](../site/guide/shots/11-cabi-live.png) · [실제 노트 화면](../site/guide/shots/11-cabi-note.png) · [검토용 Excel](features/exports/work-journey-board/Work-Journey-Board-Feature-List-v1.21.0-rc.1.xlsx)
+
+
+### 12-1. 최종 원격 CI 회귀 수정
+
+첫 원격 CI `42340857016`은 단위 519개·타입/린트/포맷·Rust 검사와 578개 E2E를 통과했지만, Chromium/WebKit의 8개 시나리오(총16건)가 실패했다. 공통 저장 표시의 새 `role=status`가 토스트의 같은 역할과 충돌한 선택자 7개와, 최초 저장 시각이 없을 때 기본 title을 생략한 저장 표시 1개가 원인이다.
+
+토스트 검사를 기존 알림 live region으로 한정해 메시지·실행 취소 검증을 유지했고, 저장 상태는 시각이 없어도 기존 기본 도움말을 제공하도록 복원했다. 앱의 저장/가져오기/삭제 데이터 동작을 우회하지 않는다. 같은 RC 버전에서 수정 후 재검증하며 설치판도 최신 소스로 다시 빌드한다.
+
+로컬 Chromium 관련 영역 38개 검사와 타입/린트 검사를 통과했다. 원격 전체 Chromium/WebKit 검증과 두 플랫폼 설치판 빌드를 새 커밋으로 다시 진행한다.

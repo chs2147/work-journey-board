@@ -142,7 +142,7 @@ test("항목 → 보드의 그 칸(커서) · Alt+3으로 같은 업무 복귀 �
 test("경과 복사 = 지금 기간 평문(자동 집계 표기, 연결 메모 [메모] 줄)", async ({ page }) => {
   await page.getByTestId("rail-insights").click();
   await page.getByTestId("insight-copy").click();
-  await expect(page.getByRole("status")).toContainText("경과를 복사했습니다");
+  await expect(page.locator('[role="status"][aria-live="polite"]')).toContainText("경과를 복사했습니다");
   const text = (await wjb<string>(page, "clipboard"))!;
   expect(text.split("\n")[0]).toBe(`[업무 경과] ${A}`);
   expect(text).toContain("기간 2026-W32 ~ 2026-W43");

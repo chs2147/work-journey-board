@@ -177,7 +177,9 @@ test.describe("T4 다른 날로 옮기기", () => {
     const pop = page.getByTestId("move-date-popover");
     await expect(pop).toContainText("세부 항목");
     await pop.getByRole("button", { name: /다음 주 같은 요일 · 10\/26/ }).click();
-    await expect(page.getByRole("status")).toContainText("10/26 (월)로 옮겼습니다");
+    await expect(page.locator('[role="status"][aria-live="polite"]')).toContainText(
+      "10/26 (월)로 옮겼습니다",
+    );
     await expect(src.locator("[data-item-index]")).toHaveCount(0);
     // 실행 취소 = 원래 칸·원래 자리
     await page.keyboard.press("Control+KeyZ");
@@ -187,7 +189,11 @@ test.describe("T4 다른 날로 옮기기", () => {
     await src.locator("textarea").first().focus();
     await page.keyboard.press("Alt+KeyD");
     await pop.getByRole("button", { name: /다음 주 같은 요일/ }).click();
-    await page.getByRole("status").getByRole("button", { name: "그 날로 가기" }).last().click();
+    await page
+      .locator('[role="status"][aria-live="polite"]')
+      .getByRole("button", { name: "그 날로 가기" })
+      .last()
+      .click();
     await expect(page.getByTestId("week-title")).toContainText("2026-W44");
     const dst = cell(page, SETTLE, "2026-10-26");
     // 받는 칸 맨 아래에 본 항목 + 세부 항목이 그대로 붙는다
@@ -207,7 +213,7 @@ test.describe("T4 다른 날로 옮기기", () => {
     await pop.getByRole("gridcell", { name: "11/04 (수)" }).click();
     await expect(pop.getByTestId("move-where")).toContainText("11/04 (수)");
     await pop.getByRole("button", { name: "옮기기" }).click();
-    await expect(page.getByRole("status")).toContainText("★ 항목 1개");
+    await expect(page.locator('[role="status"][aria-live="polite"]')).toContainText("★ 항목 1개");
     await page.keyboard.press("Alt+Digit2");
     const panel = page.getByTestId("important-panel");
     await expect(panel).toContainText(FIRST);
