@@ -2,7 +2,6 @@ import { SaveStatus } from "./SaveStatus";
 import { DAY_LABELS, dayIndex, weekTitle } from "../../domain/week";
 import { STR } from "../../shared/strings";
 import {
-  focusStartCell,
   goDay,
   goToday,
   goWeek,
@@ -24,7 +23,7 @@ import { IconCategoryAdd, IconSummaryDoc, IconExportFile, IconDayView, IconWeekV
 import { TagFilterMenu } from "./TagFilterMenu";
 import { SearchBox } from "../search/SearchViews";
 import { useInsights } from "../insights/insightsStore";
-import { closeUniverse, useUniverse } from "../universe/universeStore";
+import { useUniverse } from "../universe/universeStore";
 import { AddCategoryDialog } from "../board/AddCategoryDialog";
 import styles from "./TopBar.module.css";
 
@@ -91,17 +90,6 @@ export function TopBar() {
         )}
         {ready && journalReady && universe && (
           <div className={styles.insightTitle} data-testid="universe-title">
-            <button
-              type="button"
-              className={styles.textButton}
-              data-testid="universe-back"
-              onClick={() => {
-                closeUniverse();
-                focusStartCell();
-              }}
-            >
-              {STR.universe.back}
-            </button>
             <b>{STR.universe.title}</b>
             <span>{STR.universe.subtitle}</span>
           </div>

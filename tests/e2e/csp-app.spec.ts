@@ -1,6 +1,7 @@
 // 프로덕션 빌드를 실앱 CSP(+ Tauri처럼 nonce) 아래에서 띄워, 화면 전체·메모 편집기·메모 이미지·기존 일지 가져오기·엑셀 내보내기가 CSP를 어기지 않는지.
 // (vite.config.ts preview 헤더 = src-tauri/tauri.conf.json의 CSP + 가짜 nonce → 'unsafe-inline'이 무시되는 실앱과 같은 조건)
 import { expect, test, type Page } from "@playwright/test";
+import { checkPdfRendering } from "./pdf-render-helper";
 import { openSettings } from "./settings-helper";
 
 test("Cabi.NET 블록 노트와 한글 PDF 내보내기 — 실제 CSP 아래에서 외부 요청·정책 위반 없음", async ({
@@ -36,7 +37,7 @@ test("Cabi.NET 블록 노트와 한글 PDF 내보내기 — 실제 CSP 아래에
     name: "가상 문서.md",
     mimeType: "text/markdown",
     buffer: Buffer.from(
-      "# 가상 문서\n\n| 이름 | 값 |\n| --- | --- |\n| 가상 | 1 |\n\n[예시](https://example.com)",
+      "# 가상 문서\n\n본문 렌더링 검증: 한글 업무 기록과 영문 ABC, 숫자 123을 모두 포함합니다.\n\n| 이름 | 값 |\n| --- | --- |\n| 가상 | 1 |\n\n[예시](https://example.com)",
     ),
   });
   await note.getByRole("dialog").getByRole("button", { name: "현재 위치에 삽입", exact: true }).click();
@@ -54,6 +55,7 @@ test("Cabi.NET 블록 노트와 한글 PDF 내보내기 — 실제 CSP 아래에
   expect(bytes.subarray(0, 4).toString()).toBe("%PDF");
   const { PDFDocument } = await import("pdf-lib");
   expect((await PDFDocument.load(bytes)).getPageCount()).toBeGreaterThan(0);
+  checkPdfRendering(path!);
   const boardPromise = page.waitForEvent("popup");
   await page.getByTestId("cabi-open-board").click();
   const board = await boardPromise;
@@ -66,7 +68,7 @@ test("Cabi.NET 블록 노트와 한글 PDF 내보내기 — 실제 CSP 아래에
   board.on("dialog", (dialog) => void dialog.accept(dialog.defaultValue()));
   const pngFile = board.waitForEvent("download");
   await board.getByRole("button", { name: "내보내기", exact: true }).click();
-  await board.getByRole("button", { name: "이미지(.png)", exact: true }).click();
+  await board.getByRole("menuitem", { name: "이미지(.png)", exact: true }).click();
   const pngDownload = await pngFile;
   const png = await readFile((await pngDownload.path())!);
   expect([...png.subarray(0, 8)]).toEqual([137, 80, 78, 71, 13, 10, 26, 10]);

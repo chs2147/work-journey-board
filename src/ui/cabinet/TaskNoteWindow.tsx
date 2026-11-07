@@ -326,9 +326,16 @@ export function TaskNoteWindow({ noteId }: { noteId: string }) {
   const exportDoc = async (kind: "markdown" | "pdf") => {
     const n = current.current;
     if (!n) return;
+    const snapshot = { ...n, content: cleanCabiContent(editor?.getJSON() ?? n.content) };
     setMenu(false);
     const c = await cabiContext();
-    await writeCabiDocument(kind, n.title, n.content, (id) => cabiClient().asset(id), c.dataDir);
+    await writeCabiDocument(
+      kind,
+      snapshot.title,
+      snapshot.content,
+      (id) => cabiClient().asset(id),
+      c.dataDir,
+    );
   };
   const selectBlock = (kind: string) => {
     if (!editor) return;

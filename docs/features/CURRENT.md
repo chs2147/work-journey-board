@@ -1,10 +1,10 @@
-# 현재 Feature List — v1.22.1
+# 현재 Feature List — v1.23.0
 
-기준일 2026-11-07 · DB 구조 v18 · 활성 248개 · 제거/대체 3개 · 미제공/계획 3개
+기준일 2026-11-07 · DB 구조 v18 · 활성 249개 · 제거/대체 3개 · 미제공/계획 3개
 
 원본은 [catalog.json](catalog.json), 운영 규칙은 [README.md](README.md)입니다. 최초 제공 버전은 0.x 개발판을 포함한 비RC 출시 이력 기준이며 RC는 별도 필드입니다.
 
-[검토용 Excel](exports/work-journey-board/Work-Journey-Board-Feature-List-v1.22.1.xlsx) · [현재 스냅샷](releases/work-journey-board/v1.22.1.json)
+[검토용 Excel](exports/work-journey-board/Work-Journey-Board-Feature-List-v1.23.0.xlsx) · [현재 스냅샷](releases/work-journey-board/v1.23.0.json)
 
 ## 주간 보드·입력
 
@@ -220,8 +220,8 @@
 | WJB-CABINET-014 | Finder 드롭·별칭 지원 — macOS 폴더 드롭·별칭·숨김 파일 처리에 대응한다. | 1.6.0 | 1.20.0 | macos |
 | WJB-CABINET-015 | 업무별 여러 노트·모달리스 창 — 기존 업무 분류당 여러 노트를 날짜와 무관하게 작성하며 같은 노트 창을 재사용한다. | 1.20.0 | 1.21.0 | windows / macos |
 | WJB-CABINET-016 | 블록 단위 Markdown 노트 편집 — 제목·목록·체크·표·코드·인용·이미지·링크·글자색과 블록 이동·복제·삭제를 제공한다. | 1.20.0 | 1.22.0 | windows / macos |
-| WJB-CABINET-017 | Markdown 가져오기와 Markdown/PDF 내보내기 — 블록 구조·URL을 유지하고 선택한 상대 경로 이미지를 함께 가져온다. base64·실행 HTML·외부 이미지 자동 다운로드는 제외한다. 한글 PDF와 Markdown/이미지 묶음을 저장한다. | 1.20.0 | 1.20.0 | windows / macos |
-| WJB-CABINET-018 | 업무당 하나의 자유 메모보드 — 주차와 분리된 업무 보드를 모달리스 창에서 열고 기존 보드 엔진·접이식/폭 조절 자료함을 사용한다. | 1.20.0 | 1.22.0 | windows / macos |
+| WJB-CABINET-017 | Markdown 가져오기와 Markdown/PDF 내보내기 — 블록 구조·URL을 유지하고 선택한 상대 경로 이미지를 함께 가져온다. base64·실행 HTML·외부 이미지 자동 다운로드는 제외한다. 한글 PDF와 Markdown/이미지 묶음을 저장한다. | 1.20.0 | 1.23.0 | windows / macos |
+| WJB-CABINET-018 | 업무당 하나의 자유 메모보드 — 주차와 분리된 업무 보드를 모달리스 창에서 열고 기존 보드 엔진·접이식/폭 조절 자료함을 사용한다. | 1.20.0 | 1.23.0 | windows / macos |
 | WJB-CABINET-019 | 폴더·링크·노트 원본 참조 카드 — 기존 자료와 노트를 보드로 끌어 연결 카드로 배치한다. 카드 삭제는 원본을 삭제하지 않는다. | 1.20.0 | 1.21.0 | windows / macos |
 | WJB-CABINET-020 | 업무에 누적된 주간 메모 모아보기 — 업무항목 연결을 기준으로 전체 기간에서 조회·중복 제거·검색하고 원본 연결 또는 사본으로 추가한다. | 1.20.0 | 1.21.0 | windows / macos |
 | WJB-CABINET-021 | 주간↔업무 보드 객체 복제 — 복제 아이콘 드래그 또는 객체 복사/붙여넣기로 원본을 유지하며 새 객체·이미지 자산·내부 관계선을 만든다. 날짜별 업무항목 연결은 자동 복사하지 않는다. | 1.20.0 | 1.21.0 | windows / macos |
@@ -253,7 +253,7 @@
 | Feature ID | 기능 | 최초 제공 | 최근 개선 | 현재 제공 범위 |
 |---|---|---|---|---|
 | WJB-UNIVERSE-001 | 여러 종류 기록의 연결망 — 업무·항목·태그·메모·Cabi.NET·지식 카드를 연결해 본다. | 1.12.0 | 1.12.0 | windows / macos |
-| WJB-UNIVERSE-002 | 초점·은하·목록 보기 — 한 노드 중심의 초점, 전체 은하, 목록 보기를 전환한다. | 1.12.0 | 1.15.0 | windows / macos |
+| WJB-UNIVERSE-002 | 초점·은하·목록 보기 — 한 노드 중심의 초점, 전체 은하, 목록 보기를 전환한다. | 1.12.0 | 1.23.0 | windows / macos |
 | WJB-UNIVERSE-003 | 년→월→주→일 시간 탐색 — 시간 막대로 범위를 바꾸고 해당 시기의 기록을 탐색한다. | 1.12.0 | 1.12.0 | windows / macos |
 | WJB-UNIVERSE-004 | 연결 이유·원문 확인 — 선택한 노드와 관계가 이어진 근거 및 원문 정보를 본다. | 1.12.0 | 1.12.0 | windows / macos |
 | WJB-UNIVERSE-005 | 원본 자리로 열기 — 항목·메모·업무·Cabi.NET의 원래 화면으로 이동한다. | 1.12.0 | 1.12.0 | windows / macos |
@@ -333,6 +333,12 @@
 | WJB-DIST-009 | Windows 설치 파일 자동 빌드 — 코드 변경으로 Windows 검증용 설치 파일을 자동 생성한다. | 0.0.1 | 0.0.1 | windows / macos |
 | WJB-DIST-010 | 두 플랫폼 동시 정식 릴리스 — Windows·macOS 빌드가 모두 성공하면 같은 버전으로 게시한다. | 1.6.0 | 1.6.0 | windows / macos |
 | WJB-DIST-011 | 정식 Latest·체크섬 배포 — 정식 버전은 Latest로 표시하고 설치 파일과 체크섬을 함께 제공한다. | 1.0.0 | 1.0.0 | windows / macos |
+
+## Universe
+
+| Feature ID | 기능 | 최초 제공 | 최근 개선 | 현재 제공 범위 |
+|---|---|---|---|---|
+| WJB-UNIVERSE-024 | 자동 움직임 A/C 전환·재생/정지 — 3D 은하·포커스에서 미세 궤도/느린 순환을 모노그램으로 전환하고 자동 재생을 켜거나 끈다. 사용자 조작·모션 감소·비활성 창에서는 쉰다. | 1.23.0 | 1.23.0 | windows / macos |
 
 ## 현재 미제공
 

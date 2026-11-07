@@ -19,7 +19,7 @@ export async function cabiPdf(
   const data = fontData.slice(fontData.indexOf(",") + 1),
     font = await pdf.embedFont(
       Uint8Array.from(atob(data), (c) => c.charCodeAt(0)),
-      { subset: true },
+      { subset: false },
     );
   pdf.setTitle(title);
   pdf.setCreator("Work Journey Board · Cabi.NET");

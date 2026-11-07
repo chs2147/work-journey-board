@@ -18,6 +18,8 @@ export interface AppConfig {
   /** 화면 테마(improve-1027v5-spec 4-2) — 이 PC 취향이라 일지가 아니라 여기에. 없으면 시스템 설정 */
   theme?: ThemePref;
   universeMotion?: "dynamic" | "static";
+  universeAutoMotion?: boolean;
+  universeAutoStyle?: "drift" | "orbit";
   universePanelWidths?: { filter: number; detail: number };
   /** 보조 백업 위치(optimize-1031-plan B6) — 이 PC의 다른 폴더에 일일 사본을 하나 더. 없으면 끔 */
   backupMirror?: string | null;
@@ -251,6 +253,9 @@ export function parseConfig(raw: string | null): AppConfig | null {
           ]),
       );
     }
+    if (typeof c.universeAutoMotion === "boolean") out.universeAutoMotion = c.universeAutoMotion;
+    if (c.universeAutoStyle === "drift" || c.universeAutoStyle === "orbit")
+      out.universeAutoStyle = c.universeAutoStyle;
     if (c.universeMotion === "dynamic" || c.universeMotion === "static")
       out.universeMotion = c.universeMotion;
     if (

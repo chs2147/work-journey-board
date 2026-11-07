@@ -104,11 +104,25 @@ npm run tauri dev    # 실앱 모드(윈도우·맥 / 리눅스는 webkit2gtk-4.
 - 브라우저 모드 주소 옵션(E2E·시연): `?today=YYYY-MM-DD` 오늘 고정 · `?empty=1` 빈 일지 · `?fresh=1` 첫 실행 화면 · `?existing=/경로` 그 폴더에 샘플 일지 준비 · `?config=/경로` 설정 폴더 지정 · `?sample=year`(`year-img`) 가상 1년치 일지 · `?sample=showcase` README·소개 사이트 화면용 메모 보드 예시 · `?corrupt=1` 파손 일지
 - 설치 파일: `main`에 반영되면 *Build desktop installers*가 윈도우(NSIS)·맥(유니버설 DMG)을 나란히 만들고, **둘 다 성공해야** [Releases](https://github.com/chs2147/work-journey-board/releases)에 `v<버전>`으로 함께 올린다 — 0.x·`-rc`는 사전 릴리스, 1.0.0 이상 정식 판은 정식 릴리스. 윈도우 오프라인 설치판은 요청할 때만 Actions → *Build desktop installers* → Run workflow(main) → `offline`으로 그 판 릴리스에 더한다. 하나의 원본으로 두 플랫폼을 같은 판으로 운영한다([docs/macos-spec.md](docs/macos-spec.md)).
 
-현재 상세 기능과 도입 버전: [Feature List 운영 문서](docs/features/README.md) · [현재 목록](docs/features/CURRENT.md) · [검토용 Excel](docs/features/exports/work-journey-board/Work-Journey-Board-Feature-List-v1.22.1.xlsx)
+현재 상세 기능과 도입 버전: [Feature List 운영 문서](docs/features/README.md) · [현재 목록](docs/features/CURRENT.md) · [검토용 Excel](docs/features/exports/work-journey-board/Work-Journey-Board-Feature-List-v1.23.0.xlsx)
 
 ## Version History
 
 최근 5개 버전(정식·RC)을 표시합니다. [더 보기 — 전체 버전 히스토리](VERSION_HISTORY.md)
+
+### v1.23.0 (2026-11-07) — Universe A/C 자동 움직임·Cabi.NET 내보내기 개선
+
+- 다이나믹3D 은하/포커스에서 A 미세 궤도·C 느린 순환 모노그램 전환, 기본 자동 ON·재생/정지·PC 설정 보존.
+- 사용자 조작·노드 탐색·팝업·모션 감소·비활성 창에서 자동 움직임 일시정지. 상단 ‘주간 보드로’ 버튼 제거.
+- 업무 노트 PDF 빈 페이지/글자 누락 수정 및 실제 본문 렌더링 검사, 업무 보드 내보내기 팝업 메뉴 통일.
+- DB18 유지. 이전 main 1.22.1은 `release/v1.22.1`에 보존, Windows 기본판·macOS 유니버설 동시 빌드.
+
+### v1.23.0-rc.1 (2026-11-07) — Universe 자동 움직임·Cabi.NET 내보내기 개선
+
+- 다이나믹3D 은하/포커스에서 A 미세 궤도·C 느린 순환을 모노그램 아이콘으로 전환. 자동 움직임 기본 켜짐·재생/정지와 PC 설정 보존.
+- 사용자 조작·모달·노드 탐색·모션 감소·비활성 창에서 자동 움직임 일시정지. 상단 ‘주간 보드로’ 버튼 제거.
+- 업무 노트 PDF 빈 페이지/누락 글자 수정 및 실제 본문 렌더링 검사, 보드 내보내기 팝업 메뉴 통일.
+- improve-v19 검증판. DB18 유지, main 반영은 별도 승인.
 
 ### v1.22.1 (2026-11-07) — 메모보드 보기 도구·링크 모달 수정
 
@@ -129,19 +143,6 @@ npm run tauri dev    # 실앱 모드(윈도우·맥 / 리눅스는 webkit2gtk-4.
 - 업무 노트의 표 행/열 메뉴·계층 번호·명확한 이미지/가져오기·목차 아이콘.
 - 모든 보드 객체의 가로/세로 프레임 크기 저장·실행 취소, Universe 성운/별빛 배경. DB v18.
 - improve-v18 작업 브랜치 검증판. 정식 버전·main 반영은 별도 승인.
-
-### v1.21.0 (2026-11-07) — Cabi.NET Live Widget·노트 편집 개선
-
-- 업무 경과일·타임라인·중요 업무 Live Widget과 기록 목록·가로 마일스톤·주차 요약의 세 표현 제공.
-- 노트 블록 이끌이·이동·선택 서식·글자색, 저장 표시·연결점·내보내기·삭제 확인과 창 종료 개선.
-- CI 회귀 수정 후 전체 E2E 594개·단위 519개와 Windows/macOS 빌드 통과. DB v17.
-- 이전 main 1.20.0은 `release/v1.20.0`에 보존. Windows 기본 설치판·macOS 유니버설 DMG 동시 제공.
-
-### v1.21.0-rc.1 (2026-11-07) — Cabi.NET Live Widget·노트 편집 검증판
-
-- 업무 경과일·업무 타임라인·중요 업무 라이브 위젯. 타임라인은 기록 목록·가로 마일스톤·가로 주차 요약의 세 가지 표현 제공.
-- 노트 블록 이끌이·드래그 이동·선택 서식/글자색, 공통 저장 표시, 자료 카드 연결점과 삭제 확인/창 종료 개선.
-- DB v17. `improve-v17` 작업 브랜치 검증판이며 정식 main 반영·배포 전.
 
 [더 보기 — 전체 버전 히스토리](VERSION_HISTORY.md)
 

@@ -1,9 +1,10 @@
 import { flushSync } from "react-dom";
+import { CabiExportMenu } from "./CabiExportMenu";
 import { V17 } from "../../shared/v17Strings";
 import { SaveStatus } from "../common/SaveStatus";
 import { DeleteBoardDialog } from "./DeleteBoardDialog";
 import { saveSnapshot } from "../note/snapshot";
-import { IconExportFile, IconExpand } from "../common/icons";
+import { IconExpand } from "../common/icons";
 import { useEffect, useState } from "react";
 import type { WeeklyMemo } from "../../domain/cabi";
 import { referenceBox } from "../../domain/cabi";
@@ -100,7 +101,6 @@ export function TaskBoardWindow({ categoryId }: { categoryId: string }) {
     [notes, setNotes] = useState<{ id: string; title: string }[]>([]),
     [leftW, setLeftW] = useState(() => savedWidth("cabi-library-width", 260)),
     [deleteRevision, setDeleteRevision] = useState<number | null>(null),
-    [exportOpen, setExportOpen] = useState(false),
     [rightW, setRightW] = useState(() => savedWidth("cabi-weekly-width", 300));
   useEffect(() => {
     if (!title) return;
@@ -190,10 +190,12 @@ export function TaskBoardWindow({ categoryId }: { categoryId: string }) {
             <IconClock />
             {CABI.weekly}
           </button>
-          <button className={styles.button} onClick={() => setExportOpen(!exportOpen)}>
-            <IconExportFile />
-            {CABI.export}
-          </button>
+          <CabiExportMenu
+            items={[
+              { label: CABI.markdown, run: exportTaskBoard },
+              { label: V17.png, run: saveSnapshot },
+            ]}
+          />
           <button
             className={styles.icon}
             title={CABI.deleteBoard}
@@ -210,28 +212,6 @@ export function TaskBoardWindow({ categoryId }: { categoryId: string }) {
           </button>
         </div>
       </header>
-      {exportOpen && (
-        <div className={styles.toolbar}>
-          <button
-            className={styles.button}
-            onClick={() => {
-              setExportOpen(false);
-              void exportTaskBoard().catch(reportError);
-            }}
-          >
-            {CABI.markdown}
-          </button>
-          <button
-            className={styles.button}
-            onClick={() => {
-              setExportOpen(false);
-              void saveSnapshot().catch(reportError);
-            }}
-          >
-            {V17.png}
-          </button>
-        </div>
-      )}
       {deleteRevision !== null && (
         <DeleteBoardDialog
           title={title}

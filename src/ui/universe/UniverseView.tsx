@@ -93,6 +93,9 @@ import {
 } from "./universeStore";
 import { IconSpace3d, IconSpace2d, IconFocus, IconGalaxy, IconMap, IconList } from "../common/icons";
 import { ResizableUniversePanel } from "./ResizableUniversePanel";
+import { V19 } from "../../shared/v19Strings";
+import { V19Icon } from "../common/v19Icons";
+import { useAutoMotion } from "./useAutoMotion";
 import styles from "./Universe.module.css";
 
 const UniverseScene = lazy(() => import("./UniverseScene"));
@@ -101,6 +104,7 @@ const NOTE_FILL = "#e3c87a";
 
 export function UniverseView() {
   const s = useUniverse();
+  const autoMotion = useAutoMotion();
   const all = useMemo(() => combined(s), [s.graphs, s.wsOn]); // eslint-disable-line react-hooks/exhaustive-deps
   const filter = useMemo(() => effectiveFilter(s), [s.filter, s.time]); // eslint-disable-line react-hooks/exhaustive-deps
   const shown = useMemo(() => filterGraph(all, filter), [all, filter]);
@@ -302,6 +306,43 @@ export function UniverseView() {
           </button>
         )}
         <PackButton />
+        <div
+          className={`${styles.seg} ${styles.iconSeg} ${styles.motionControls}`}
+          role="group"
+          aria-label={V19.motion}
+        >
+          {(["drift", "orbit"] as const).map((style) => (
+            <button
+              key={style}
+              type="button"
+              aria-label={style === "drift" ? V19.drift : V19.orbit}
+              title={style === "drift" ? V19.drift : V19.orbit}
+              aria-pressed={autoMotion.style === style}
+              disabled={!dynamic || s.view !== "map"}
+              onClick={() => autoMotion.choose(style)}
+            >
+              <V19Icon kind={style} />
+            </button>
+          ))}
+          <button
+            type="button"
+            aria-label={autoMotion.enabled ? V19.pause : V19.play}
+            title={
+              autoMotion.reduced
+                ? V19.reduced
+                : !dynamic || s.view !== "map"
+                  ? V19.unavailable
+                  : autoMotion.enabled
+                    ? V19.pause
+                    : V19.play
+            }
+            aria-pressed={autoMotion.enabled}
+            disabled={!dynamic || s.view !== "map" || autoMotion.reduced}
+            onClick={autoMotion.toggle}
+          >
+            <V19Icon kind={autoMotion.enabled ? "pause" : "play"} />
+          </button>
+        </div>
         {s.loading && <span className={styles.muted}>{STR.universe.loading}</span>}
         {s.notices.map((n) => (
           <span key={n} className={styles.notice} role="status">
@@ -325,14 +366,31 @@ export function UniverseView() {
             <FilterPanel all={all} />
           </ResizableUniversePanel>
         )}
-        <div data-dynamic={dynamic} className={`${styles.center} ${s.view === "map" ? styles.space : ""}`}>
+        <div
+          data-dynamic={dynamic}
+          data-auto-motion={autoMotion.enabled && !autoMotion.reduced}
+          className={`${styles.center} ${s.view === "map" ? styles.space : ""}`}
+        >
           {all.nodes.length <= 1 && !s.loading ? (
             <p className={styles.empty}>{STR.universe.empty}</p>
           ) : s.view === "list" ? (
             <ListView graph={shown} selected={s.selected} />
           ) : dynamic ? (
             <Suspense fallback={<p className={styles.empty}>3D 지도 준비 중…</p>}>
-              <UniverseScene graph={shown} onFailure={failScene} />
+              <UniverseScene
+                graph={shown}
+                onFailure={failScene}
+                autoMotion={{
+                  enabled:
+                    autoMotion.enabled &&
+                    !autoMotion.reduced &&
+                    !s.linkDialog &&
+                    !s.cardEditor &&
+                    !s.draftPrompt &&
+                    !packOpen,
+                  style: autoMotion.style,
+                }}
+              />
             </Suspense>
           ) : s.mode === "focus" ? (
             <FocusMap all={all} shown={shown} />

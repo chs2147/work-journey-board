@@ -1009,3 +1009,14 @@
     animation: none !important;
   }
 }
+
+.space[data-auto-motion="false"] .stage::before,
+.space[data-auto-motion="false"] .stage::after,
+.space .stage[data-auto-playing="false"]::before,
+.space .stage[data-auto-playing="false"]::after {
+  animation-play-state: paused;
+}
+
+.motionControls {
+  margin-left: auto;
+}

@@ -10,6 +10,7 @@
   | 문서 | 내용 |
   |---|---|
   | `overview.md` | 요구사항·결정 이력·**10절 화면 구성**·**12절 인계 명세** |
+  | `improve-v19-spec.md` | v19 A/C 모노그램 자동 모션·재생/정지, Universe 복귀 버튼 제거, PDF 실제 렌더링 수정·보드 내보내기 팝업. improve-v19 구현 후 1.23.0 정식 main 반영 승인 / DB18 유지 |
   | `improve-v18-spec.md` | v18 C안 접이식 세로 팔레트 승인, 표/계층 번호·자유 프레임·Universe 배경. improve-v18 RC 검증 후 1.22.0 정식 main 반영 승인 / DB18 |
   | `improve-v17-spec.md` | v17 추천안 구현 승인 — `improve-v17`, Live Widget 세 종류·타임라인 세 표현·노트 이끌이/선택 서식·공통 저장 표시·삭제 보호, 1.21.0 정식 main 반영 승인 / DB v17 |
   | `cabinet-v2-spec.md` | Cabi.NET 개편 — 추천 A 조합 승인, `cabinet-v2` 브랜치, 1.20.0 정식 main 반영 승인 / DB v16, 업무 노트·업무 보드·원본 참조·주간 메모 연동·양방향 객체 복제 |
