@@ -1,3 +1,5 @@
+import type { LiveSnapshot, LiveEntry } from "../domain/liveWidget";
+import { weekIdOf } from "../domain/week";
 // Called exclusively through JournalRepository.cabi. Uses its guarded driver/backup gate.
 import type { SqlDriver, SqlStatement } from "./driver";
 import { uuidv7 } from "./ids";
@@ -200,7 +202,7 @@ export class CabiRepository {
       if (json.length > CABI_MAX) throw new Error("보드가 너무 큽니다.");
       const statements: SqlStatement[] = [
         {
-          sql: "UPDATE cabi_board SET doc=?,revision=?,updated_at=? WHERE id=?",
+          sql: "UPDATE cabi_board SET doc=?,revision=?,updated_at=?,format_version=2 WHERE id=?",
           params: [json, revision + 1, this.ts(), board.id],
         },
         {
@@ -235,6 +237,80 @@ export class CabiRepository {
       }
       return (await this.board(categoryId))!;
     });
+  }
+  async widgetSnapshot(
+    categoryId: string,
+    today: string,
+    since = "0000-01-01",
+    offset = 0,
+    ids: string[] = [],
+    query = "",
+  ): Promise<LiveSnapshot> {
+    if (
+      !/^\d{4}-\d{2}-\d{2}$/.test(today) ||
+      !/^\d{4}-\d{2}-\d{2}$/.test(since) ||
+      !Number.isSafeInteger(offset) ||
+      offset < 0
+    )
+      throw new Error("위젯 조회 범위가 올바르지 않습니다.");
+    const safe = [...new Set(ids.filter((id) => typeof id === "string" && id.length <= 64))].slice(0, 200);
+    // All source values share one SQLite read snapshot, including pagination counts.
+    const object = "json_object('id',id,'date',date,'text',text,'dueDate',dueDate,'doneAt',doneAt)";
+    const [row] = await this.db.select<{
+      title: string;
+      start: string | null;
+      recent: string | null;
+      recordCount: number;
+      importantCount: number;
+      records: string;
+      important: string;
+      selected: string;
+      days: string;
+    }>(
+      `
+      WITH args(categoryId,today,since,offset,ids,query) AS (VALUES(?,?,?,?,?,?)),
+      entries AS (SELECT e.id,e.date,e.text,e.seq,e.due_date AS dueDate,e.flag_done_at AS doneAt,e.flagged FROM entry_item e,args WHERE e.category_id=args.categoryId),
+      filtered AS (SELECT e.* FROM entries e,args WHERE date BETWEEN since AND today AND instr(lower(text),lower(query))>0),
+      records AS (SELECT * FROM filtered ORDER BY date DESC,seq DESC,id DESC LIMIT 40 OFFSET (SELECT offset FROM args)),
+      pending AS (SELECT * FROM entries WHERE flagged=1 AND doneAt IS NULL),
+      important AS (SELECT * FROM pending ORDER BY dueDate IS NULL,dueDate,date,seq,id LIMIT 20 OFFSET (SELECT offset FROM args)),
+      selected AS (SELECT * FROM entries WHERE id IN(SELECT value FROM json_each((SELECT ids FROM args))) ORDER BY date,seq,id),
+      days AS (SELECT date,COUNT(*) AS n,(SELECT text FROM filtered e2 WHERE e2.date=e.date ORDER BY seq DESC,id DESC LIMIT 1) AS text,(SELECT id FROM filtered e2 WHERE e2.date=e.date ORDER BY seq DESC,id DESC LIMIT 1) AS entryId FROM filtered e GROUP BY date ORDER BY date)
+      SELECT c.name AS title,(SELECT MIN(start_date) FROM category_period WHERE category_id=c.id) AS start,
+      (SELECT MAX(date) FROM entries WHERE date<=(SELECT today FROM args)) AS recent,
+      (SELECT COUNT(*) FROM filtered) AS recordCount,(SELECT COUNT(*) FROM pending) AS importantCount,
+      (SELECT json_group_array(${object}) FROM records) AS records,
+      (SELECT json_group_array(${object}) FROM important) AS important,
+      (SELECT json_group_array(${object}) FROM selected) AS selected,
+      (SELECT json_group_array(json_object('date',date,'n',n,'text',text,'entryId',entryId)) FROM days) AS days
+      FROM category c,args WHERE c.id=args.categoryId`,
+      [categoryId, today, since, offset, JSON.stringify(safe), query.slice(0, 500)],
+    );
+    if (!row) throw new Error("위젯의 업무가 삭제되었습니다.");
+    const weeks: LiveSnapshot["weeks"] = [];
+    for (const d of JSON.parse(row.days) as { date: string; n: number; text: string; entryId: string }[]) {
+      const weekId = weekIdOf(d.date),
+        old = weeks.find((w) => w.weekId === weekId);
+      if (old) {
+        old.count += d.n;
+        old.date = d.date;
+        old.text = d.text;
+        old.entryId = d.entryId;
+      } else weeks.push({ weekId, count: d.n, date: d.date, text: d.text, entryId: d.entryId });
+    }
+    return {
+      categoryId,
+      title: row.title,
+      today,
+      start: row.start,
+      recent: row.recent,
+      recordCount: row.recordCount,
+      importantCount: row.importantCount,
+      records: JSON.parse(row.records) as LiveEntry[],
+      important: JSON.parse(row.important) as LiveEntry[],
+      selected: JSON.parse(row.selected) as LiveEntry[],
+      weeks,
+    };
   }
   async weeklyMemos(categoryId: string, query = "", offset = 0, limit = 60): Promise<WeeklyMemo[]> {
     // Read relationships first, then each source document once. Never duplicate whole JSON per entry link.

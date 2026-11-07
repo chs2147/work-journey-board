@@ -54,6 +54,24 @@ test("Cabi.NET 블록 노트와 한글 PDF 내보내기 — 실제 CSP 아래에
   expect(bytes.subarray(0, 4).toString()).toBe("%PDF");
   const { PDFDocument } = await import("pdf-lib");
   expect((await PDFDocument.load(bytes)).getPageCount()).toBeGreaterThan(0);
+  const boardPromise = page.waitForEvent("popup");
+  await page.getByTestId("cabi-open-board").click();
+  const board = await boardPromise;
+  await board.getByTestId("note-scroll").waitFor();
+  for (const name of ["업무 경과일", "업무 타임라인"]) {
+    await board.getByRole("button", { name: "Live Widget", exact: true }).click();
+    await board.getByRole("button", { name, exact: true }).click();
+  }
+  await expect(board.getByTestId("live-widget")).toHaveCount(2);
+  await expect(board.locator('[data-widget="timeline"]')).not.toContainText("불러오는 중");
+  board.on("dialog", (dialog) => void dialog.accept(dialog.defaultValue()));
+  const pngFile = board.waitForEvent("download");
+  await board.getByRole("button", { name: "내보내기", exact: true }).click();
+  await board.getByRole("button", { name: "이미지(.png)", exact: true }).click();
+  const pngDownload = await pngFile;
+  const png = await readFile((await pngDownload.path())!);
+  expect([...png.subarray(0, 8)]).toEqual([137, 80, 78, 71, 13, 10, 26, 10]);
+  expect(await board.evaluate(() => (window as unknown as { __csp: string[] }).__csp)).toEqual([]);
   expect(external).toEqual([]);
   expect(await note.evaluate(() => (window as unknown as { __csp: string[] }).__csp)).toEqual([]);
 });

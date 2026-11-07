@@ -88,7 +88,7 @@ describe("Cabi.NET date-independent data", () => {
     let backup = false;
     await migrate(db, {
       beforeMigrate: async (from, to) => {
-        expect([from, to]).toEqual([15, 16]);
+        expect([from, to]).toEqual([15, 17]);
         backup = true;
       },
     });
@@ -100,7 +100,7 @@ describe("Cabi.NET date-independent data", () => {
     const bytes = (db as SqlJsDriver).exportBytes(),
       copy = await openSqlJs(undefined, bytes),
       restored = new JournalRepository(copy);
-    expect(await backupStructureMatches(copy, 16)).toBe(true);
+    expect(await backupStructureMatches(copy, 17)).toBe(true);
     expect(await restored.cabi.listNotes(c.id)).toHaveLength(1);
     expect(await restored.cabi.board(c.id)).not.toBeNull();
     await copy.close();

@@ -1,3 +1,4 @@
+import { SaveStatus } from "./SaveStatus";
 import { DAY_LABELS, dayIndex, weekTitle } from "../../domain/week";
 import { STR } from "../../shared/strings";
 import {
@@ -14,7 +15,7 @@ import {
 import { YearMinimap } from "../board/YearMinimap";
 import { toggleExport } from "../export/exportStore";
 import { toggleSummary, useSummary } from "../summary/summaryStore";
-import { useEffect, useState } from "react";
+
 import { leaveSettings } from "./appController";
 import { useAppStore } from "./appStore";
 import { BrandLockup } from "./Brand";
@@ -56,7 +57,7 @@ export function TopBar() {
   // Universe(universe-spec 4절): 인사이트처럼 보드 자리를 덮는다 — 주 단위 기능은 감춘다
   const universe = useUniverse((s) => s.open) && !settings;
   const week = !insights && !settings && !universe;
-  const showSaving = useSavingVisible(saving > 0);
+
   const savedAt = useBoard((s) => s.savedAt);
 
   return (
@@ -214,96 +215,18 @@ export function TopBar() {
             {STR.export.button}
           </button>
         )}
-        {ready &&
-          journalReady &&
-          (failed > 0 ? (
-            <button
-              type="button"
-              className={styles.saveFailed}
-              title={STR.save.failedTitle}
-              data-testid="save-failed"
-              onClick={() => void retryFailed()}
-            >
-              <IconAlert />
-              <span role="alert">{STR.save.failed}</span>
-            </button>
-          ) : showSaving ? (
-            <span
-              className={`${styles.savePill} ${styles.saving}`}
-              data-testid="save-state"
-              data-state="saving"
-            >
-              <IconSpin />
-              {STR.save.saving}
-            </span>
-          ) : (
-            // 저장됨(improve-1027v5-spec 2절): 초록 글자 + 초록 테두리 알약 + 체크 — 0.4초 안의 저장은 깜빡이지 않게 그대로
-            <span
-              className={`${styles.savePill} ${styles.saved}`}
-              data-testid="save-state"
-              data-state="saved"
-              // 짧은 저장 중에도 "저장됨"을 유지하므로, 실제로 쓰는 중인지는 따로 둔다(테스트가 저장 끝을 기다림)
-              data-idle={saving === 0 ? "true" : "false"}
-              title={STR.save.savedTitle(savedAt)}
-            >
-              <IconSaved />
-              {STR.save.saved}
-            </span>
-          ))}
+        {ready && journalReady && (
+          <SaveStatus
+            saving={saving > 0}
+            error={failed > 0 ? STR.save.failedTitle : undefined}
+            onRetry={() => void retryFailed()}
+            savedAt={savedAt}
+          />
+        )}
       </div>
     </header>
   );
 }
-
-/** 저장 중 표시는 0.4초 넘게 걸릴 때만(improve-1027v5-spec 2절) — 짧은 저장마다 깜빡이지 않게 */
-function useSavingVisible(saving: boolean): boolean {
-  const [late, setLate] = useState(false);
-  useEffect(() => {
-    if (!saving) return;
-    const t = setTimeout(() => setLate(true), SAVING_DELAY_MS);
-    return () => {
-      clearTimeout(t);
-      setLate(false);
-    };
-  }, [saving]);
-  return saving && late;
-}
-
-const SAVING_DELAY_MS = 400;
-
-const IconSaved = () => (
-  <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
-    <circle cx="7" cy="7" r="6.2" fill="none" stroke="currentColor" strokeWidth="1.4" />
-    <path
-      d="M4.2 7.2 6.1 9.1 9.9 5.2"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
-
-const IconSpin = () => (
-  <svg className={styles.spin} width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
-    <circle cx="7" cy="7" r="5.6" fill="none" stroke="var(--line)" strokeWidth="1.8" />
-    <path
-      d="M7 1.4a5.6 5.6 0 0 1 5.6 5.6"
-      fill="none"
-      stroke="var(--accent)"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-    />
-  </svg>
-);
-
-const IconAlert = () => (
-  <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
-    <circle cx="7" cy="7" r="6.2" fill="none" stroke="currentColor" strokeWidth="1.4" />
-    <path d="M7 3.8v3.8M7 9.6v.3" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-  </svg>
-);
 
 /** 상단 1줄 앱 이름 옆 지금 공간 이름(multi-board-spec 3-1) — 공간이 2개 이상일 때만 */
 function WorkspaceName() {

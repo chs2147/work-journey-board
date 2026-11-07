@@ -378,6 +378,7 @@ async function shots(base = "http://localhost:1420") {
             "가상 샘플 업무의 검토 방향과 결정 사항을 기록합니다.\n업무 자료와 주간 메모를 연결해 맥락을 이어 갑니다.",
           );
         await note.waitForTimeout(800);
+        await note.locator('[contenteditable="true"] p').first().hover();
         await note.screenshot({ path: join(OUT, "shots", "11-cabi-note.png") });
         const boardPromise = p.waitForEvent("popup");
         await p.getByTestId("cabi-open-board").click();
@@ -390,6 +391,35 @@ async function shots(base = "http://localhost:1420") {
         await board.getByTestId("note-box").waitFor();
         await board.waitForTimeout(700);
         await board.screenshot({ path: join(OUT, "shots", "11-cabi-board.png") });
+        await panel.getByRole("button", { name: "닫기", exact: true }).click();
+        for (const name of ["업무 경과일", "업무 타임라인", "중요 업무"]) {
+          await board.getByRole("button", { name: "Live Widget", exact: true }).click();
+          await board.getByRole("button", { name, exact: true }).click();
+        }
+        const timeline = board.locator('[data-widget="timeline"]');
+        await timeline.getByLabel("위젯 설정", { exact: true }).click();
+        await timeline.getByLabel("업무 타임라인", { exact: true }).selectOption("milestones");
+        await timeline.getByRole("button", { name: "마일스톤 관리", exact: true }).click();
+        const picker = timeline.getByRole("dialog");
+        const choices = picker.getByRole("checkbox");
+        await choices.first().waitFor();
+        for (let i = 0; i < Math.min(3, await choices.count()); i++) await choices.nth(i).check();
+        await picker.getByRole("button", { name: "적용", exact: true }).click();
+        await timeline.getByLabel("위젯 설정", { exact: true }).click();
+        await board.evaluate(async () => {
+          const { useNote, moveBoxLive, setZoom } = await import("/src/ui/note/noteStore.ts");
+          const boxes = useNote.getState().doc.boxes;
+          boxes.forEach((b) => moveBoxLive(b.id, b.kind === "text" && b.widget ? 24 : 760, b.y));
+          let y = 24;
+          for (const b of boxes.filter((b) => b.kind === "text" && b.widget)) {
+            moveBoxLive(b.id, 24, y);
+            y += (b.h ?? 200) + 24;
+          }
+          setZoom(0.65);
+        });
+        await board.getByTestId("live-widget").last().waitFor();
+        await board.waitForTimeout(800);
+        await board.screenshot({ path: join(OUT, "shots", "11-cabi-live.png") });
         await board.close();
         await note.close();
         await p.locator('[data-testid="cabinet-row"][data-kind="folder"]').nth(1).dblclick();

@@ -1,3 +1,4 @@
+import type { LiveWidgetConfig } from "../../domain/liveWidget";
 // 주간 메모 상태(weekly-note-spec 4절): 보드에서 보고 있는 주의 메모 문서 1개, 자동 저장, 상자 단위 실행 취소, 도크.
 // - 상자 안 글의 실행 취소는 편집기(상자마다)가, 상자 만들기·옮기기·크기·삭제는 여기의 메모 기록이 맡는다.
 // - 영속 데이터는 저장소만 거친다(CLAUDE.md 4-3). 저장한 적 없는 주의 예전 요일 메모는 처음 저장할 때 옮겨진다.
@@ -17,6 +18,7 @@ import {
   isNoteEmpty,
   noteAssetIds,
   positionBelow,
+  parseNoteDoc,
   readingOrder,
   snap,
   topZ,
@@ -1341,14 +1343,16 @@ export async function initTaskNote(r: NoteRepository, task: TaskNoteOwner) {
 export function importBoardObjects(incoming: NoteDoc) {
   const doc = get().doc,
     z = topZ(doc);
-  commit(
-    {
+  // Keep imported geometry/empty edge lists identical to their persisted representation.
+  // Otherwise link refresh can make an unchanged document appear dirty after a flush.
+  const next = parseNoteDoc(
+    JSON.stringify({
       ...doc,
       boxes: [...doc.boxes, ...incoming.boxes.map((b, i) => ({ ...b, z: z + i + 1 }))],
       edges: [...(doc.edges ?? []), ...(incoming.edges ?? [])],
-    },
-    true,
+    }),
   );
+  commit(next, true);
   setMulti(incoming.boxes.map((b) => b.id));
 }
 export async function refreshBoardAssetMeta() {
@@ -1372,4 +1376,19 @@ export function captureNoteScope() {
   const r = docRepo,
     generation = noteGeneration;
   return () => docRepo === r && r !== null && noteGeneration === generation;
+}
+
+export function setWidgetConfig(id: string, config: LiveWidgetConfig) {
+  if (!get().task) return;
+  commit(
+    mapBox(id, (b) => (b.kind === "text" && b.widget ? { ...b, widget: config } : b)),
+    true,
+  );
+}
+export function resizeWidgetLive(id: string, height: number) {
+  set({
+    doc: mapBox(id, (b) =>
+      b.kind === "text" && b.widget ? { ...b, h: Math.max(160, Math.min(1200, Math.round(height))) } : b,
+    ),
+  });
 }

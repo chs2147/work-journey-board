@@ -1,3 +1,4 @@
+import { LiveWidget } from "../cabinet/LiveWidget";
 import { CabiDropGhost } from "../cabinet/CabiDropGhost";
 import { copyBoardObjects, pasteBoardObjects } from "../cabinet/boardTransfer";
 import { ResourceCard } from "../cabinet/ResourceCard";
@@ -551,6 +552,8 @@ export default function NoteCanvas() {
                 />
               ) : b.kind === "link" ? (
                 <LinkBoxView key={b.id} box={b} selected={b.id === selectedId} />
+              ) : b.widget ? (
+                <LiveWidget key={b.id} box={b} selected={b.id === selectedId} />
               ) : b.resource ? (
                 <ResourceCard key={b.id} box={b} selected={b.id === selectedId} />
               ) : (

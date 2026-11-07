@@ -274,6 +274,8 @@ it("v13 구형 구조 실제 복원 후 전진 마이그레이션, 원본 백업
       sql: `DROP TABLE ${name}`,
     })),
   );
+  await db.execute("DROP INDEX ix_entry_widget_category_date");
+  await db.execute("DROP INDEX ix_entry_widget_important");
   await db.execute("DROP TABLE note_entry_link");
   await db.execute("ALTER TABLE entry_item DROP COLUMN completion_was_flagged");
   await db.execute("UPDATE app_meta SET value='13' WHERE key='schema_version'");
