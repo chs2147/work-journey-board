@@ -841,8 +841,38 @@
   color: #d9e7f1;
 }
 .space .stage {
-  background: #070d18;
+  background:
+    radial-gradient(ellipse at 35% 55%, #214f664f, transparent 55%),
+    radial-gradient(ellipse at 72% 25%, #65488c55, transparent 50%), #070d18;
 }
+.space .stage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle, #b9d6f499 1px, transparent 1.5px),
+    radial-gradient(circle, #c4afec66 0.7px, transparent 1.3px);
+  background-size:
+    113px 137px,
+    179px 193px;
+  opacity: 0.5;
+}
+.space[data-dynamic="true"] .stage::before {
+  animation: universe-stars 12s ease-in-out infinite alternate;
+}
+@keyframes universe-stars {
+  to {
+    opacity: 0.22;
+    transform: translate(3px, 2px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .space .stage::before {
+    animation: none !important;
+  }
+}
+
 .stage canvas {
   display: block;
 }
@@ -940,4 +970,42 @@
 
 .seg.iconSeg {
   border-radius: 0;
+}
+
+:global(html[data-universe-hidden="true"]) .space .stage::before {
+  animation-play-state: paused;
+}
+.space .stage::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 28% 62%, #2a698542, transparent 42%),
+    radial-gradient(ellipse at 72% 35%, #7955a34a, transparent 44%);
+  opacity: 0.7;
+}
+.space .stage > canvas {
+  position: relative;
+  z-index: 1;
+}
+.space .stage > svg {
+  z-index: 1;
+}
+.space[data-dynamic="true"] .stage::after {
+  animation: universe-nebula 20s ease-in-out infinite alternate;
+}
+@keyframes universe-nebula {
+  to {
+    transform: scale(1.08);
+    opacity: 0.4;
+  }
+}
+:global(html[data-universe-hidden="true"]) .space .stage::after {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .space .stage::after {
+    animation: none !important;
+  }
 }

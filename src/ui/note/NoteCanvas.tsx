@@ -835,7 +835,15 @@ function TextBoxView({
         </div>
       )}
       {!!box.refs?.length && <LinkStrip boxId={box.id} refs={box.refs} />}
-      <EditorContent editor={editor} className={styles.editor} />
+      <EditorContent
+        editor={editor}
+        className={styles.editor}
+        style={
+          box.frameH
+            ? { maxHeight: Math.max(30, box.frameH - (box.refs?.length ? 90 : 32)), overflowY: "auto" }
+            : undefined
+        }
+      />
       {/* 대기 상자의 안내 — 글자를 치면 사라진다(조합 중에도 같은 편집기를 그대로 쓰게 구조는 바꾸지 않는다) */}
       {pending && (
         <span className={styles.ghostHint} aria-hidden="true">

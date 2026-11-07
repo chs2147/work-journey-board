@@ -1,0 +1,2 @@
+/* global document */
+const workspace=document.querySelector('.workspace'),fold=document.querySelector('.fold');fold.onclick=()=>{const closed=workspace.classList.toggle('folded');fold.setAttribute('aria-expanded',String(!closed));fold.setAttribute('aria-label',closed?'도구 팔레트 펼치기':'도구 팔레트 접기');document.getElementById('object-tools').inert=closed};document.querySelectorAll('.tools button,.viewbar button').forEach(button=>button.onclick=()=>{document.getElementById('status').textContent='시안: '+button.getAttribute('aria-label')+' — '+button.dataset.hint+' (실제 기능 실행 없음)'});

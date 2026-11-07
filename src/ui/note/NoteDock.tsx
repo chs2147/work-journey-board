@@ -1,3 +1,5 @@
+import { V18 } from "../../shared/v18Strings";
+import { WidgetTools } from "../cabinet/WidgetTools";
 import { BoardClipboard } from "../cabinet/BoardClipboard";
 
 import { exportTaskBoard } from "../cabinet/cabiExport";
@@ -160,12 +162,23 @@ function SnapshotButton({ empty }: { empty: boolean }) {
 
 export function NoteDock({ variant = "dock" }: Props) {
   const side = variant === "side";
+  const viewHead = useRef<HTMLDivElement>(null);
+  const [viewHeight, setViewHeight] = useState(41);
+  useEffect(() => {
+    const el = viewHead.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setViewHeight(el.offsetHeight));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   // 대기 상자(글자를 치기 전 커서 자리)는 세지 않는다
   const boxes = useNote((s) => s.doc.boxes.filter((b) => b.id !== s.pendingId).length);
-  const images = useNote((s) => s.doc.boxes.filter((b) => b.kind === "image").length);
   const busy = useNote((s) => s.busy);
   const showEdges = useNote((s) => s.showEdges);
   const edgeCount = useNote((s) => s.doc.edges?.length ?? 0);
+  const [paletteFolded, setPaletteFolded] = useState(
+    () => localStorage.getItem("v18-palette-folded") === "true",
+  );
   const fileRef = useRef<HTMLInputElement>(null);
   const [linkOpen, setLinkOpen] = useState(false);
   const legacy = useNote((s) => s.legacy);
@@ -251,115 +264,72 @@ export function NoteDock({ variant = "dock" }: Props) {
           }}
         />
       )}
-      {/* 머리 빈 곳을 두 번 누르면 보드 우선 자동 높이로 */}
       <div
         className={styles.head}
-        title={collapsed || expanded || side ? undefined : STR.note.autoHeightHint}
+        ref={viewHead}
+        data-testid="note-view-bar"
         onDoubleClick={(e) => {
-          if ((e.target as Element).closest("button, input, select") || collapsed || expanded || side) return;
-          setDockAuto();
+          if (!collapsed && !expanded && !side && !(e.target as Element).closest("button,input,select"))
+            setDockAuto();
         }}
       >
-        {!useNote.getState().task && <h2 className={styles.title}>{STR.note.title}</h2>}
-        <BoardClipboard />
-        <span className={styles.counts} data-testid="note-counts">
-          {STR.note.counts(boxes, images)}
-        </span>
         {busy && (
           <span className={styles.busy} role="status">
             {STR.note.imageBusy}
           </span>
         )}
         {legacy && <span className={styles.legacy}>{STR.note.legacy}</span>}
-        <span className={styles.spacer} />
-        {!collapsed && (
-          <div className={styles.zoomGroup} role="group" aria-label={STR.note.zoomLevel}>
-            <IconButton label={STR.note.zoomOut} title={STR.note.zoomOutTitle} onClick={() => zoomStep(-1)}>
-              <IconMinus />
-            </IconButton>
-            <select
-              className={styles.zoomSelect}
-              aria-label={STR.note.zoomLevel}
-              title={STR.note.zoomLevelTitle}
-              value={String(zoom)}
-              data-testid="note-zoom"
-              onChange={(e) => setZoom(Number(e.target.value))}
-            >
-              {(ZOOM_STEPS.includes(zoom as (typeof ZOOM_STEPS)[number])
-                ? [...ZOOM_STEPS]
-                : [...ZOOM_STEPS, zoom].sort((a, b) => a - b)
-              ).map((z) => (
-                <option key={z} value={String(z)}>
-                  {STR.note.percent(z)}
-                </option>
-              ))}
-            </select>
-            <IconButton label={STR.note.zoomIn} title={STR.note.zoomInTitle} onClick={() => zoomStep(1)}>
-              <IconPlus />
-            </IconButton>
-          </div>
-        )}
-        {!collapsed && (
-          <IconButton label={STR.note.fit} title={STR.note.fitTitle} onClick={requestFit}>
-            <IconFit />
-          </IconButton>
-        )}
-        {!collapsed && <span className={styles.headSep} aria-hidden="true" />}
-        {!collapsed && (
-          <IconButton label={STR.note.addBox} title={STR.note.addBoxTitle} onClick={() => addBoxBelow()}>
-            <IconTextBox />
-          </IconButton>
-        )}
-        {!collapsed && (
-          <IconButton
-            label={STR.links.insert}
-            title={STR.links.insertTitle}
-            onClick={() => setLinkOpen(true)}
-          >
-            <IconLink />
-          </IconButton>
-        )}
-        {!collapsed && (
-          <IconButton label={STR.note.addImage} title={STR.note.addImageTitle} onClick={pickImage}>
-            <IconImage />
-          </IconButton>
-        )}
-        <input
-          ref={fileRef}
-          type="file"
-          className={styles.fileInput}
-          accept={ACCEPT_TYPES.join(",")}
-          multiple
-          tabIndex={-1}
-          aria-label={STR.note.addImage}
-          data-testid="note-image-input"
-          onChange={(e) => {
-            const files = [...(e.currentTarget.files ?? [])];
-            e.currentTarget.value = "";
-            if (files.length) void addImages(files, pastePlace());
-          }}
+        <span
+          className={styles.spacer}
+          data-testid="note-view-spacer"
+          style={{ alignSelf: "stretch", minWidth: 20 }}
         />
-        {!collapsed && (
-          <IconButton
-            label={STR.note.edgeShow}
-            title={STR.note.edgeShowTitle(showEdges)}
-            pressed={edgeCount > 0 && showEdges}
-            onClick={() => (edgeCount ? setShowEdges(!showEdges) : toast(STR.note.edgeShowEmpty))}
-          >
-            <IconRelation />
-          </IconButton>
-        )}
-        {!collapsed && <SnapshotButton empty={boxes === 0} />}
-        {!collapsed && (
-          <IconButton
-            label={expanded ? (side ? STR.note.shrinkDaily : STR.note.shrink) : STR.note.expand}
-            title={expanded ? (side ? STR.note.shrinkDaily : STR.note.shrink) : STR.note.expand}
-            onClick={() => setExpanded(!expanded)}
-            pressed={expanded}
-          >
-            {expanded ? <IconShrink /> : <IconExpand />}
-          </IconButton>
-        )}
+        <div className={styles.viewTools} role="group" aria-label={V18.view}>
+          {!collapsed && (
+            <div className={styles.zoomGroup} role="group" aria-label={STR.note.zoomLevel}>
+              <IconButton label={STR.note.zoomOut} title={STR.note.zoomOutTitle} onClick={() => zoomStep(-1)}>
+                <IconMinus />
+              </IconButton>
+              <select
+                className={styles.zoomSelect}
+                aria-label={STR.note.zoomLevel}
+                title={STR.note.zoomLevelTitle}
+                value={String(zoom)}
+                data-testid="note-zoom"
+                onChange={(e) => setZoom(Number(e.target.value))}
+              >
+                {(ZOOM_STEPS.includes(zoom as (typeof ZOOM_STEPS)[number])
+                  ? [...ZOOM_STEPS]
+                  : [...ZOOM_STEPS, zoom].sort((a, b) => a - b)
+                ).map((z) => (
+                  <option key={z} value={String(z)}>
+                    {STR.note.percent(z)}
+                  </option>
+                ))}
+              </select>
+              <IconButton label={STR.note.zoomIn} title={STR.note.zoomInTitle} onClick={() => zoomStep(1)}>
+                <IconPlus />
+              </IconButton>
+            </div>
+          )}
+          {!collapsed && (
+            <IconButton label={STR.note.fit} title={STR.note.fitTitle} onClick={requestFit}>
+              <IconFit />
+            </IconButton>
+          )}
+          {!collapsed && <span className={styles.headSep} aria-hidden="true" />}
+          {!collapsed && <SnapshotButton empty={boxes === 0} />}
+          {!collapsed && (
+            <IconButton
+              label={expanded ? (side ? STR.note.shrinkDaily : STR.note.shrink) : STR.note.expand}
+              title={expanded ? (side ? STR.note.shrinkDaily : STR.note.shrink) : STR.note.expand}
+              onClick={() => setExpanded(!expanded)}
+              pressed={expanded}
+            >
+              {expanded ? <IconShrink /> : <IconExpand />}
+            </IconButton>
+          )}
+        </div>
         {!side && (
           <button
             type="button"
@@ -373,9 +343,100 @@ export function NoteDock({ variant = "dock" }: Props) {
           </button>
         )}
       </div>
+      {!collapsed && (
+        <aside
+          className={`${styles.palette} ${paletteFolded ? styles.paletteFolded : ""}`}
+          aria-label="객체 도구 팔레트"
+          style={{ top: viewHeight + 2 }}
+        >
+          <button
+            className={styles.paletteHandle}
+            aria-label={paletteFolded ? V18.openPalette : V18.closePalette}
+            title={paletteFolded ? V18.openPalette : V18.closePalette}
+            aria-expanded={!paletteFolded}
+            onClick={() => {
+              setPaletteFolded(!paletteFolded);
+              localStorage.setItem("v18-palette-folded", String(!paletteFolded));
+            }}
+          >
+            <svg
+              width="10"
+              height="24"
+              viewBox="0 0 12 24"
+              aria-hidden="true"
+              style={{ transform: paletteFolded ? "rotate(180deg)" : undefined }}
+            >
+              <path
+                d="m7 8-4 4 4 4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+          <div className={styles.paletteStack}>
+            <div className={styles.paletteGroup} role="group" aria-label={V18.create}>
+              {!collapsed && (
+                <IconButton
+                  label={STR.note.addBox}
+                  title={STR.note.addBoxTitle}
+                  onClick={() => addBoxBelow()}
+                >
+                  <IconTextBox />
+                </IconButton>
+              )}
+              {!collapsed && (
+                <IconButton
+                  label={STR.links.insert}
+                  title={STR.links.insertTitle}
+                  onClick={() => setLinkOpen(true)}
+                >
+                  <IconLink />
+                </IconButton>
+              )}
+              {!collapsed && (
+                <IconButton label={STR.note.addImage} title={STR.note.addImageTitle} onClick={pickImage}>
+                  <IconImage />
+                </IconButton>
+              )}
+              <input
+                ref={fileRef}
+                type="file"
+                className={styles.fileInput}
+                accept={ACCEPT_TYPES.join(",")}
+                multiple
+                tabIndex={-1}
+                aria-label={STR.note.addImage}
+                data-testid="note-image-input"
+                onChange={(e) => {
+                  const files = [...(e.currentTarget.files ?? [])];
+                  e.currentTarget.value = "";
+                  if (files.length) void addImages(files, pastePlace());
+                }}
+              />
+              {!collapsed && (
+                <IconButton
+                  label={STR.note.edgeShow}
+                  title={STR.note.edgeShowTitle(showEdges)}
+                  pressed={edgeCount > 0 && showEdges}
+                  onClick={() => (edgeCount ? setShowEdges(!showEdges) : toast(STR.note.edgeShowEmpty))}
+                >
+                  <IconRelation />
+                </IconButton>
+              )}
+            </div>
+            <div className={styles.paletteGroup} role="group" aria-label={V18.clipboard}>
+              <BoardClipboard />
+            </div>
+            {useNote.getState().task && <WidgetTools />}
+          </div>
+        </aside>
+      )}
       {linkOpen && <LinkDialog onClose={() => setLinkOpen(false)} />}
       {!collapsed && (
-        <div className={styles.body}>
+        <div className={`${styles.body} ${paletteFolded ? styles.paletteBodyFolded : styles.paletteBody}`}>
           <Suspense fallback={<div className={styles.loading}>…</div>}>
             <NoteCanvas />
           </Suspense>

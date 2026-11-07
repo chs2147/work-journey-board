@@ -59,46 +59,53 @@ export function ResourceCard({ box, selected }: { box: TextBox; selected: boolea
       onDoubleClick={() => box.resource && void openCabiReference(box.resource).catch(reportError)}
     >
       {box.refs?.length ? <LinkStrip boxId={box.id} refs={box.refs} /> : null}
-      <header>
-        <IconNote />
-        {value?.missing ? CABI.missing : box.resource?.kind === "memo" ? CABI.weekly : CABI.source}
-      </header>
-      <h3>{value?.title ?? CABI.loading}</h3>
-      <p>{value?.text}</p>
-      {value?.image && (
-        <img
-          src={`data:${value.image.mime};base64,${value.image.data}`}
-          alt={value.title}
-          style={{ maxWidth: "100%", maxHeight: 170, objectFit: "contain" }}
-        />
-      )}
-      <footer>
-        <button
-          className={styles.icon}
-          title={CABI.openSource}
-          aria-label={CABI.openSource}
-          onClick={() => box.resource && void openCabiReference(box.resource).catch(reportError)}
-        >
-          <IconExpand />
-        </button>
-        <button
-          className={styles.icon}
-          title={CABI.removeCard}
-          aria-label={CABI.removeCard}
-          onClick={() => deleteBox(box.id)}
-        >
-          <IconTrash />
-        </button>
-        <button
-          className={styles.icon}
-          title={STR.linked.pick}
-          aria-label={STR.linked.pick}
-          onClick={() => openLinkPicker(box.id)}
-        >
-          <IconLink />
-        </button>
-      </footer>
-
+      <div
+        style={
+          box.frameH
+            ? { height: Math.max(30, box.frameH - (box.refs?.length ? 90 : 24)), overflowY: "auto" }
+            : undefined
+        }
+      >
+        <header>
+          <IconNote />
+          {value?.missing ? CABI.missing : box.resource?.kind === "memo" ? CABI.weekly : CABI.source}
+        </header>
+        <h3>{value?.title ?? CABI.loading}</h3>
+        <p>{value?.text}</p>
+        {value?.image && (
+          <img
+            src={`data:${value.image.mime};base64,${value.image.data}`}
+            alt={value.title}
+            style={{ maxWidth: "100%", maxHeight: 170, objectFit: "contain" }}
+          />
+        )}
+        <footer>
+          <button
+            className={styles.icon}
+            title={CABI.openSource}
+            aria-label={CABI.openSource}
+            onClick={() => box.resource && void openCabiReference(box.resource).catch(reportError)}
+          >
+            <IconExpand />
+          </button>
+          <button
+            className={styles.icon}
+            title={CABI.removeCard}
+            aria-label={CABI.removeCard}
+            onClick={() => deleteBox(box.id)}
+          >
+            <IconTrash />
+          </button>
+          <button
+            className={styles.icon}
+            title={STR.linked.pick}
+            aria-label={STR.linked.pick}
+            onClick={() => openLinkPicker(box.id)}
+          >
+            <IconLink />
+          </button>
+        </footer>
+      </div>
       <EdgeKnobs boxId={box.id} exposed={selected} />
       <button
         style={{

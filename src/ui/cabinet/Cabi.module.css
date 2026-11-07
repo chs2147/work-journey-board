@@ -763,3 +763,22 @@
   opacity: 0.4;
   cursor: default;
 }
+
+/* v18: hierarchical numbering belongs to the list structure, never the text. */
+.prose ol {
+  counter-reset: cabi-number;
+  list-style: none;
+}
+.prose ol > li {
+  counter-increment: cabi-number;
+  position: relative;
+}
+.prose ol > li::marker {
+  content: "";
+}
+.prose ol > li::before {
+  content: attr(data-cabi-number) " ";
+  position: absolute;
+  right: calc(100% + 7px);
+  white-space: nowrap;
+}

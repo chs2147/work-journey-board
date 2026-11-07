@@ -72,7 +72,7 @@ test("[이미지 넣기] → 큰 그림은 긴 변 1600px로 줄여 저장, 처�
     .getByTestId("note-image-input")
     .setInputFiles({ name: "가상.png", mimeType: "image/png", buffer: png });
   await expect(images(page)).toHaveCount(1);
-  await expect(page.getByTestId("note-counts")).toHaveText("상자 0개 · 이미지 1개");
+  await expect(page.getByTestId("note-box")).toHaveCount(0);
   const info = await assetInfo(page);
   expect([info?.w, info?.h]).toEqual([1600, 900]);
   // Chromium은 WebP로 바꿔 저장(WebKit처럼 WebP로 못 쓰는 엔진은 PNG)

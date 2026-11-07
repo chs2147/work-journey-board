@@ -41,6 +41,8 @@ export interface TextBox {
   z: number;
   /** 화면에서 잰 높이(새 상자 자리·판 높이 계산용, 저장은 참고값) */
   h?: number;
+  /** User frame height, independent of auto measured content. */
+  frameH?: number;
   bg: NoteBg | null;
   content: PMNode;
   /** 연결된 업무 항목(없으면 필드 없음) */
@@ -57,6 +59,8 @@ export interface ImageBox {
   w: number;
   z: number;
   h?: number;
+  /** User frame height, independent of auto measured content. */
+  frameH?: number;
   asset: string;
   /** 한 줄 설명(선택) — 자동 집계·엑셀에 `- (이미지) 설명`으로 들어간다 */
   caption: string;
@@ -76,6 +80,8 @@ export interface LinkBox {
   w: number;
   z: number;
   h?: number;
+  /** User frame height, independent of auto measured content. */
+  frameH?: number;
   url: string;
   title: string;
   note: string;
@@ -414,6 +420,9 @@ export function parseNoteDoc(json: string | null | undefined): NoteDoc {
         w: clampImageWidth(num(b.w, IMAGE_FIRST_W)),
         z: num(b.z, 0),
         ...(typeof b.h === "number" ? { h: b.h } : {}),
+        ...(typeof b.frameH === "number" && Number.isFinite(b.frameH)
+          ? { frameH: Math.max(80, Math.min(1200, Math.round(b.frameH))) }
+          : {}),
         asset: b.asset,
         caption: typeof b.caption === "string" ? b.caption.replace(/\s+/g, " ").slice(0, CAPTION_MAX) : "",
         ...ref,
@@ -430,6 +439,9 @@ export function parseNoteDoc(json: string | null | undefined): NoteDoc {
         w: clampLinkWidth(num(b.w, LINK_DEFAULT_W)),
         z: num(b.z, 0),
         ...(typeof b.h === "number" ? { h: b.h } : {}),
+        ...(typeof b.frameH === "number" && Number.isFinite(b.frameH)
+          ? { frameH: Math.max(80, Math.min(1200, Math.round(b.frameH))) }
+          : {}),
         url: b.url,
         title: cleanLine(b.title) || titleFromUrl(b.url),
         note: cleanLine(b.note),
@@ -449,6 +461,9 @@ export function parseNoteDoc(json: string | null | undefined): NoteDoc {
       w: clampWidth(num(b.w, BOX_DEFAULT_W)),
       z: num(b.z, 0),
       ...(typeof b.h === "number" ? { h: b.h } : {}),
+      ...(typeof b.frameH === "number" && Number.isFinite(b.frameH)
+        ? { frameH: Math.max(80, Math.min(1200, Math.round(b.frameH))) }
+        : {}),
       bg: NOTE_BG.includes(b.bg as NoteBg) ? (b.bg as NoteBg) : null,
       content,
       ...(parseWidget(b.widget) ? { widget: parseWidget(b.widget) } : {}),

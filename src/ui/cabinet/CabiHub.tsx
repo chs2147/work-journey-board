@@ -169,7 +169,6 @@ export function CabiHub({
             [
               ["list", CABI.list, IconList],
               ["cards", CABI.cards, IconTable],
-              ["board", CABI.boardView, IconMap],
             ] as const
           ).map(([key, label, Icon]) => (
             <button

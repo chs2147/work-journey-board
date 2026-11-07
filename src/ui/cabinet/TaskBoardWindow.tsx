@@ -2,7 +2,6 @@ import { flushSync } from "react-dom";
 import { V17 } from "../../shared/v17Strings";
 import { SaveStatus } from "../common/SaveStatus";
 import { DeleteBoardDialog } from "./DeleteBoardDialog";
-import { emptyContent, type TextBox } from "../../domain/note";
 import { saveSnapshot } from "../note/snapshot";
 import { IconExportFile, IconExpand } from "../common/icons";
 import { useEffect, useState } from "react";
@@ -101,7 +100,6 @@ export function TaskBoardWindow({ categoryId }: { categoryId: string }) {
     [notes, setNotes] = useState<{ id: string; title: string }[]>([]),
     [leftW, setLeftW] = useState(() => savedWidth("cabi-library-width", 260)),
     [deleteRevision, setDeleteRevision] = useState<number | null>(null),
-    [addWidget, setAddWidget] = useState(false),
     [exportOpen, setExportOpen] = useState(false),
     [rightW, setRightW] = useState(() => savedWidth("cabi-weekly-width", 300));
   useEffect(() => {
@@ -178,9 +176,6 @@ export function TaskBoardWindow({ categoryId }: { categoryId: string }) {
             error={saveError ?? undefined}
             onRetry={() => void flushNote(true, true).catch(reportError)}
           />
-          <button className={styles.button} aria-label={V17.add} onClick={() => setAddWidget(!addWidget)}>
-            + {V17.add}
-          </button>
           <button
             className={`${styles.button} ${library ? styles.active : ""}`}
             onClick={() => setLibrary((v) => !v)}
@@ -215,35 +210,6 @@ export function TaskBoardWindow({ categoryId }: { categoryId: string }) {
           </button>
         </div>
       </header>
-      {addWidget && (
-        <div className={styles.toolbar}>
-          {(["elapsed", "timeline", "important"] as const).map((type) => (
-            <button
-              className={styles.button}
-              key={type}
-              onClick={() => {
-                const doc = useNote.getState().doc;
-                const box: TextBox = {
-                  id: crypto.randomUUID(),
-                  kind: "text",
-                  x: 24,
-                  y: Math.max(24, ...doc.boxes.map((b) => b.y + (b.h ?? 100) + 24)),
-                  w: type === "elapsed" ? 300 : 640,
-                  h: type === "elapsed" ? 200 : 340,
-                  z: doc.boxes.length + 1,
-                  bg: null,
-                  content: emptyContent(),
-                  widget: { type, basis: "start", variant: "records", weeks: 8, milestoneEntryIds: [] },
-                };
-                importBoardObjects({ v: 1, boxes: [box] });
-                setAddWidget(false);
-              }}
-            >
-              {V17[type]}
-            </button>
-          ))}
-        </div>
-      )}
       {exportOpen && (
         <div className={styles.toolbar}>
           <button

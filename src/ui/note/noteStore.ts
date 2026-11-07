@@ -1012,7 +1012,7 @@ export function nudgeBox(id: string, dx: number, dy: number) {
 /** 화면에서 잰 높이 — 8px 넘게 달라졌을 때만 문서에 반영(저장은 하되 기록에는 넣지 않음) */
 export function measureBox(id: string, h: number) {
   const b = boxOf(id);
-  if (!b || Math.abs((b.h ?? 0) - h) < 8) return;
+  if (!b || b.frameH || Math.abs((b.h ?? 0) - h) < 8) return;
   set({ doc: mapBox(id, (x) => ({ ...x, h: Math.round(h) })) });
 }
 
@@ -1390,5 +1390,21 @@ export function resizeWidgetLive(id: string, height: number) {
     doc: mapBox(id, (b) =>
       b.kind === "text" && b.widget ? { ...b, h: Math.max(160, Math.min(1200, Math.round(height))) } : b,
     ),
+  });
+}
+
+export function resizeFrameLive(id: string, x: number, y: number, w: number, h: number) {
+  set({
+    doc: mapBox(id, (b) => {
+      const height = Math.max(b.kind === "text" && b.widget ? 160 : 80, Math.min(1200, Math.round(h)));
+      return {
+        ...b,
+        x: snap(x),
+        y: snap(y),
+        w: b.kind === "image" ? clampImageWidth(w) : b.kind === "link" ? clampLinkWidth(w) : clampWidth(w),
+        frameH: height,
+        h: height,
+      };
+    }),
   });
 }

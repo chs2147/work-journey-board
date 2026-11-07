@@ -31,7 +31,6 @@ async function board(page: Page) {
   return c;
 }
 async function add(c: Page, name: string) {
-  await c.getByRole("button", { name: "Live Widget", exact: true }).click();
   await c.getByRole("button", { name, exact: true }).click();
 }
 test("위젯 세 종류·타임라인 표현·마일스톤 저장·원본 완료/취소 연동", async ({ page }) => {

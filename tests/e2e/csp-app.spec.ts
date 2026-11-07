@@ -59,7 +59,6 @@ test("Cabi.NET 블록 노트와 한글 PDF 내보내기 — 실제 CSP 아래에
   const board = await boardPromise;
   await board.getByTestId("note-scroll").waitFor();
   for (const name of ["업무 경과일", "업무 타임라인"]) {
-    await board.getByRole("button", { name: "Live Widget", exact: true }).click();
     await board.getByRole("button", { name, exact: true }).click();
   }
   await expect(board.getByTestId("live-widget")).toHaveCount(2);

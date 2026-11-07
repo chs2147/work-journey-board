@@ -1,10 +1,10 @@
-# 현재 Feature List — v1.21.0
+# 현재 Feature List — v1.22.0
 
-기준일 2026-11-07 · DB 구조 v17 · 활성 244개 · 제거/대체 3개 · 미제공/계획 3개
+기준일 2026-11-07 · DB 구조 v18 · 활성 248개 · 제거/대체 3개 · 미제공/계획 3개
 
 원본은 [catalog.json](catalog.json), 운영 규칙은 [README.md](README.md)입니다. 최초 제공 버전은 0.x 개발판을 포함한 비RC 출시 이력 기준이며 RC는 별도 필드입니다.
 
-[검토용 Excel](exports/work-journey-board/Work-Journey-Board-Feature-List-v1.21.0.xlsx) · [현재 스냅샷](releases/work-journey-board/v1.21.0.json)
+[검토용 Excel](exports/work-journey-board/Work-Journey-Board-Feature-List-v1.22.0.xlsx) · [현재 스냅샷](releases/work-journey-board/v1.22.0.json)
 
 ## 주간 보드·입력
 
@@ -110,6 +110,8 @@
 | WJB-NOTE-032 | 메모 보드 PNG 저장·복사 — 전체 메모 판을 PNG로 저장하거나 이미지로 복사한다. | 0.2.17 | 1.6.0 | windows / macos |
 | WJB-NOTE-033 | 메모 Markdown 내보내기 — 주간 메모를 Markdown과 이미지 폴더로 저장하거나 복사한다. | 1.3.0 | 1.3.0 | windows / macos |
 | WJB-NOTE-034 | Markdown 파일 텍스트 드롭 — md 파일마다 텍스트 메모를 생성하고 URL 링크를 보존하며 이미지·base64는 제외한다. | 1.14.0 | 1.14.0 | windows / macos |
+| WJB-NOTE-035 | 접이식 세로 도구 팔레트 — 생성·클립보드·위젯을 명칭 없는 구분선과 1열 아이콘으로 제공하고 미니멀 손잡이로 접는다. 보기 도구는 상단에 유지한다. | 1.22.0 | 1.22.0 | windows / macos |
+| WJB-NOTE-036 | 객체 가로·세로 프레임 크기 — 자동 측정 높이와 별도로 사용자 높이를 저장하고 네 모서리와 변에서 조절·실행 취소한다. | 1.22.0 | 1.22.0 | windows / macos |
 
 ## 주간 요약
 
@@ -217,17 +219,19 @@
 | WJB-CABINET-013 | 바로가기·긴 경로 안내 — Windows 바로가기와 긴 폴더 경로를 처리하고 드롭 실패 이유를 안내한다. | 1.5.0 | 1.20.0 | windows |
 | WJB-CABINET-014 | Finder 드롭·별칭 지원 — macOS 폴더 드롭·별칭·숨김 파일 처리에 대응한다. | 1.6.0 | 1.20.0 | macos |
 | WJB-CABINET-015 | 업무별 여러 노트·모달리스 창 — 기존 업무 분류당 여러 노트를 날짜와 무관하게 작성하며 같은 노트 창을 재사용한다. | 1.20.0 | 1.21.0 | windows / macos |
-| WJB-CABINET-016 | 블록 단위 Markdown 노트 편집 — 제목·목록·체크·표·코드·인용·이미지·링크·글자색과 블록 이동·복제·삭제를 제공한다. | 1.20.0 | 1.21.0 | windows / macos |
+| WJB-CABINET-016 | 블록 단위 Markdown 노트 편집 — 제목·목록·체크·표·코드·인용·이미지·링크·글자색과 블록 이동·복제·삭제를 제공한다. | 1.20.0 | 1.22.0 | windows / macos |
 | WJB-CABINET-017 | Markdown 가져오기와 Markdown/PDF 내보내기 — 블록 구조·URL을 유지하고 선택한 상대 경로 이미지를 함께 가져온다. base64·실행 HTML·외부 이미지 자동 다운로드는 제외한다. 한글 PDF와 Markdown/이미지 묶음을 저장한다. | 1.20.0 | 1.20.0 | windows / macos |
-| WJB-CABINET-018 | 업무당 하나의 자유 메모보드 — 주차와 분리된 업무 보드를 모달리스 창에서 열고 기존 보드 엔진·접이식/폭 조절 자료함을 사용한다. | 1.20.0 | 1.21.0 | windows / macos |
+| WJB-CABINET-018 | 업무당 하나의 자유 메모보드 — 주차와 분리된 업무 보드를 모달리스 창에서 열고 기존 보드 엔진·접이식/폭 조절 자료함을 사용한다. | 1.20.0 | 1.22.0 | windows / macos |
 | WJB-CABINET-019 | 폴더·링크·노트 원본 참조 카드 — 기존 자료와 노트를 보드로 끌어 연결 카드로 배치한다. 카드 삭제는 원본을 삭제하지 않는다. | 1.20.0 | 1.21.0 | windows / macos |
 | WJB-CABINET-020 | 업무에 누적된 주간 메모 모아보기 — 업무항목 연결을 기준으로 전체 기간에서 조회·중복 제거·검색하고 원본 연결 또는 사본으로 추가한다. | 1.20.0 | 1.21.0 | windows / macos |
 | WJB-CABINET-021 | 주간↔업무 보드 객체 복제 — 복제 아이콘 드래그 또는 객체 복사/붙여넣기로 원본을 유지하며 새 객체·이미지 자산·내부 관계선을 만든다. 날짜별 업무항목 연결은 자동 복사하지 않는다. | 1.20.0 | 1.21.0 | windows / macos |
-| WJB-CABINET-022 | 목록·카드·보드 보기와 노트/보드 검색 — Cabi.NET 허브에서 여러 보기·검색·미리보기를 사용하고 전역 검색에서 노트·업무 보드를 연다. | 1.20.0 | 1.20.0 | windows / macos |
+| WJB-CABINET-022 | 목록·카드 보기와 노트/보드 검색 — 허브에서 목록·카드로 자료와 노트를 보고 업무 보드를 열며 노트/보드를 검색한다. 보드 미리보기 보기 단추는 제거했다. | 1.20.0 | 1.22.0 | windows / macos |
 | WJB-CABINET-023 | 멀티윈도 저장 확인과 충돌 방지 — 메인 단일 writer·세션 epoch·문서 revision으로 저장하고 종료/공간 전환 전 자식 창 저장을 확인한다. DB v16 백업/복원에 새 콘텐츠를 포함한다. | 1.20.0 | 1.21.0 | windows / macos |
 | WJB-CABINET-024 | Live Widget 업무 경과일 — 업무 시작일 또는 마지막 기록일로부터의 경과일을 기기 날짜 기준으로 갱신한다. | 1.21.0 | 1.21.0 | windows / macos |
-| WJB-CABINET-025 | Live Widget 업무 타임라인 세 표현 — 주간 업무 기록의 목록·수동 선택 가로 마일스톤·자동 가로 주차 요약을 제공하고 원본 날짜/텍스트 변경을 반영한다. | 1.21.0 | 1.21.0 | windows / macos |
+| WJB-CABINET-025 | Live Widget 업무 타임라인 세 표현 — 주간 업무 기록의 목록·수동 선택 가로 마일스톤·자동 가로 주차 요약을 제공하고 원본 날짜/텍스트 변경을 반영한다. | 1.21.0 | 1.22.0 | windows / macos |
 | WJB-CABINET-026 | Live Widget 미완료 중요 업무 — 해당 업무의 미완료 중요 항목을 모아 보고 원본 완료 처리·취소를 메인과 공유한다. | 1.21.0 | 1.21.0 | windows / macos |
+| WJB-CABINET-027 | 표 행·열 편집 메뉴 — 노트 표의 행/열 추가·삭제와 머리글 전환을 이끌이 메뉴로 제공한다. | 1.22.0 | 1.22.0 | windows / macos |
+| WJB-CABINET-028 | 중첩 순서 목록 계층 번호 — Tab/Shift+Tab으로 1.·1-1.·1-1-1. 번호를 표현하고 PDF에도 계층 구조를 반영한다. | 1.22.0 | 1.22.0 | windows / macos |
 
 ## 워크스페이스
 
@@ -266,7 +270,7 @@
 | WJB-UNIVERSE-016 | 기록·카드·지도에서 담기 — 참고할 근거를 묶음 서랍에 모은다. | 1.12.0 | 1.12.0 | windows / macos |
 | WJB-UNIVERSE-017 | 미리보기·외부 AI용 복사 — 범위·한도를 확인한 근거를 외부 AI에 붙일 텍스트로 복사한다. | 1.12.0 | 1.12.0 | windows / macos |
 | WJB-UNIVERSE-018 | Markdown·경로 제외·재검증 — Markdown 저장과 경로·주소 제외를 제공하고 복사 직전 근거를 확인한다. | 1.12.0 | 1.12.0 | windows / macos |
-| WJB-UNIVERSE-019 | 다이나믹 3D·정적 2D — 3차원 회전·이동·줌과 정적 2D 대체 모드를 제공한다. | 1.15.0 | 1.15.0 | windows / macos |
+| WJB-UNIVERSE-019 | 다이나믹 3D·정적 2D — 3차원 회전·이동·줌과 정적 2D 대체 모드를 제공한다. | 1.15.0 | 1.22.0 | windows / macos |
 | WJB-UNIVERSE-020 | 독립 다크 우주 배경 — 앱 테마와 별도로 어두운 우주 배경을 사용한다. | 1.15.0 | 1.15.0 | windows / macos |
 | WJB-UNIVERSE-021 | 줌에 따른 은하·초점 전환 — 확대·축소에 맞춰 모드를 자연스럽게 전환한다. | 1.15.0 | 1.15.1 | windows / macos |
 | WJB-UNIVERSE-022 | 필터·상세 패널 접기 — 필요할 때만 필터와 상세 패널을 표시한다. | 1.15.0 | 1.15.0 | windows / macos |

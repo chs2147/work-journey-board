@@ -170,7 +170,10 @@ export function LinkBoxView({ box, selected }: { box: LinkBox; selected: boolean
           if (f) void setLinkThumb(box.id, f);
         }}
       />
-      <div className={styles.linkMain}>
+      <div
+        className={styles.linkMain}
+        style={box.frameH ? { maxHeight: Math.max(35, box.frameH - 60), overflowY: "auto" } : undefined}
+      >
         {thumb ? (
           <NoteImageCanvas
             className={styles.linkThumb}
