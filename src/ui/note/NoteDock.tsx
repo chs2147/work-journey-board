@@ -318,6 +318,16 @@ export function NoteDock({ variant = "dock" }: Props) {
             </IconButton>
           )}
           {!collapsed && <span className={styles.headSep} aria-hidden="true" />}
+          {!collapsed && (
+            <IconButton
+              label={STR.note.edgeShow}
+              title={STR.note.edgeShowTitle(showEdges)}
+              pressed={edgeCount > 0 && showEdges}
+              onClick={() => (edgeCount ? setShowEdges(!showEdges) : toast(STR.note.edgeShowEmpty))}
+            >
+              <IconRelation />
+            </IconButton>
+          )}
           {!collapsed && <SnapshotButton empty={boxes === 0} />}
           {!collapsed && (
             <IconButton
@@ -416,16 +426,6 @@ export function NoteDock({ variant = "dock" }: Props) {
                   if (files.length) void addImages(files, pastePlace());
                 }}
               />
-              {!collapsed && (
-                <IconButton
-                  label={STR.note.edgeShow}
-                  title={STR.note.edgeShowTitle(showEdges)}
-                  pressed={edgeCount > 0 && showEdges}
-                  onClick={() => (edgeCount ? setShowEdges(!showEdges) : toast(STR.note.edgeShowEmpty))}
-                >
-                  <IconRelation />
-                </IconButton>
-              )}
             </div>
             <div className={styles.paletteGroup} role="group" aria-label={V18.clipboard}>
               <BoardClipboard />

@@ -1,12 +1,26 @@
 // [링크 넣기] 대화상자(improve-1026-spec 10-1): 주소(http/https)·제목(비우면 주소에서)·메모 → 링크 카드.
 // 앱은 그 주소에 접속하지 않는다 — 제목·메모는 사용자가 쓴 그대로(13절).
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import { createPortal } from "react-dom";
+import { isComposingKey } from "../board/helpers";
 import { isOpenableUrl } from "../../domain/links";
 import { STR } from "../../shared/strings";
 import { addLinkBox, pastePlace } from "./noteStore";
 import styles from "./Note.module.css";
 
 export function LinkDialog({ onClose }: { onClose(): void }) {
+  const modalRef = useRef<HTMLDialogElement>(null);
+  const returnFocus = useRef(document.activeElement as HTMLElement | null);
+  useEffect(() => {
+    const modal = modalRef.current!;
+    // Native top layer covers every toolbar and makes the rest of this window inert.
+    modal.showModal();
+    const back = returnFocus.current;
+    return () => {
+      modal.close();
+      if (back?.isConnected) back.focus();
+    };
+  }, []);
   const [url, setUrl] = useState("");
   const [title, setTitle] = useState("");
   const [note, setNote] = useState("");
@@ -20,32 +34,46 @@ export function LinkDialog({ onClose }: { onClose(): void }) {
     onClose();
   };
 
-  return (
-    <div
+  return createPortal(
+    <dialog
+      ref={modalRef}
       className={styles.linkDialogBackdrop}
+      role="dialog"
+      aria-modal="true"
+      aria-label={STR.links.dialogTitle}
+      data-testid="link-dialog"
       onMouseDown={(e) => e.target === e.currentTarget && onClose()}
+      onCancel={(e) => {
+        e.preventDefault();
+        onClose();
+      }}
       onKeyDown={(e) => {
+        // Portal events still bubble through NoteDock: keep zoom/board shortcuts out.
+        e.stopPropagation();
+        if (e.key === "Tab") {
+          const controls = [...e.currentTarget.querySelectorAll<HTMLElement>("input, button")];
+          const first = controls[0],
+            last = controls.at(-1);
+          if (e.shiftKey && document.activeElement === first) {
+            e.preventDefault();
+            last?.focus();
+          } else if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first?.focus();
+          }
+        }
         if (e.key === "Escape") {
           e.preventDefault();
-          e.stopPropagation();
-          onClose();
+          if (!isComposingKey(e)) onClose();
         }
       }}
     >
-      <form
-        className={styles.linkDialog}
-        role="dialog"
-        aria-modal="true"
-        aria-label={STR.links.dialogTitle}
-        data-testid="link-dialog"
-        onSubmit={submit}
-      >
+      <form className={styles.linkDialog} onSubmit={submit}>
         <h3>{STR.links.dialogTitle}</h3>
         <label>
           {STR.links.url}
           <input
             value={url}
-            autoFocus
             inputMode="url"
             placeholder="https://"
             maxLength={2048}
@@ -79,6 +107,7 @@ export function LinkDialog({ onClose }: { onClose(): void }) {
           </button>
         </div>
       </form>
-    </div>
+    </dialog>,
+    document.body,
   );
 }

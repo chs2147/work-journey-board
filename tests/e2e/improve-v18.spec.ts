@@ -18,7 +18,12 @@ test("C 팔레트 접기/복귀·위젯 크기 조절·재열기 보존", async 
     .locator("button:not([aria-expanded])")
     .evaluateAll((es) => es.map((e) => e.getBoundingClientRect().x));
   expect(Math.max(...xs) - Math.min(...xs)).toBeLessThan(1);
-  await expect(palette.getByRole("button", { name: "관계선 보기", exact: true })).toHaveCount(1);
+  await expect(palette.getByRole("button", { name: "관계선 보기", exact: true })).toHaveCount(0);
+  await expect(
+    c
+      .getByRole("group", { name: "보기", exact: true })
+      .getByRole("button", { name: "관계선 보기", exact: true }),
+  ).toBeVisible();
   await expect(c.getByRole("group", { name: "보기", exact: true }).getByTestId("note-zoom")).toBeVisible();
   await c.setViewportSize({ width: 640, height: 820 });
   const barBox = await c.getByTestId("note-view-bar").boundingBox(),

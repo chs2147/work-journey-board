@@ -153,6 +153,7 @@ export default function NoteCanvas() {
   useEffect(() => {
     if (!multi.length) return;
     const onKey = (e: globalThis.KeyboardEvent) => {
+      if ((e.target as Element | null)?.closest("dialog[open]")) return;
       if (e.isComposing || isEditable(document.activeElement) || isNoteGestureActive()) return;
       const ids = useNote.getState().multi;
       const step = e.shiftKey ? 32 : 8;
@@ -233,6 +234,7 @@ export default function NoteCanvas() {
     // 처음엔 가장 가까운 상자
     if (!st().linking?.target) setLinkTarget(list()[0]?.id ?? null);
     const onKey = (e: globalThis.KeyboardEvent) => {
+      if ((e.target as Element | null)?.closest("dialog[open]")) return;
       if (e.isComposing || isEditable(document.activeElement) || isNoteGestureActive()) return;
       const cands = list();
       const cur = cands.findIndex((b) => b.id === st().linking?.target);

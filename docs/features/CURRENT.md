@@ -1,10 +1,10 @@
-# 현재 Feature List — v1.22.0
+# 현재 Feature List — v1.22.1
 
 기준일 2026-11-07 · DB 구조 v18 · 활성 248개 · 제거/대체 3개 · 미제공/계획 3개
 
 원본은 [catalog.json](catalog.json), 운영 규칙은 [README.md](README.md)입니다. 최초 제공 버전은 0.x 개발판을 포함한 비RC 출시 이력 기준이며 RC는 별도 필드입니다.
 
-[검토용 Excel](exports/work-journey-board/Work-Journey-Board-Feature-List-v1.22.0.xlsx) · [현재 스냅샷](releases/work-journey-board/v1.22.0.json)
+[검토용 Excel](exports/work-journey-board/Work-Journey-Board-Feature-List-v1.22.1.xlsx) · [현재 스냅샷](releases/work-journey-board/v1.22.1.json)
 
 ## 주간 보드·입력
 
@@ -91,7 +91,7 @@
 | WJB-NOTE-013 | 비율 유지 크기·설명 — 그림 크기와 위치를 조절하고 설명을 입력한다. | 0.2.2 | 0.2.2 | windows / macos |
 | WJB-NOTE-014 | 크게 보기·PNG/WebP 저장 — 이미지를 개별 확대하고 파일로 저장한다. | 0.2.2 | 0.2.2 | windows / macos |
 | WJB-NOTE-015 | 보드 캡처 붙여넣기 안내 — 업무 입력 중 캡처를 붙이면 메모에 넣는 조작을 안내한다. | 0.2.3 | 0.2.3 | windows / macos |
-| WJB-NOTE-016 | 링크 카드 생성 — 주소 붙여넣기·드롭·버튼으로 제목과 메모를 가진 카드를 만든다. | 0.2.8 | 0.2.8 | windows / macos |
+| WJB-NOTE-016 | 링크 카드 생성 — 주소 붙여넣기·드롭·버튼으로 제목과 메모를 가진 카드를 만든다. | 0.2.8 | 1.22.1 | windows / macos |
 | WJB-NOTE-017 | 링크 카드 도메인·썸네일 — 도메인 글자나 사용자가 붙인 썸네일을 표시하며 사이트를 자동 조회하지 않는다. | 0.2.8 | 0.2.8 | windows / macos |
 | WJB-NOTE-018 | 메모 안 URL 열기 — 글 속 링크를 Ctrl/Command 클릭으로 연다. | 0.2.8 | 1.1.0 | windows / macos |
 | WJB-NOTE-019 | 메모 확대·축소·맞춤 — 25~200% 배율, 단축키·휠·화면 맞춤을 제공한다. | 0.2.7 | 0.2.7 | windows / macos |
@@ -110,7 +110,7 @@
 | WJB-NOTE-032 | 메모 보드 PNG 저장·복사 — 전체 메모 판을 PNG로 저장하거나 이미지로 복사한다. | 0.2.17 | 1.6.0 | windows / macos |
 | WJB-NOTE-033 | 메모 Markdown 내보내기 — 주간 메모를 Markdown과 이미지 폴더로 저장하거나 복사한다. | 1.3.0 | 1.3.0 | windows / macos |
 | WJB-NOTE-034 | Markdown 파일 텍스트 드롭 — md 파일마다 텍스트 메모를 생성하고 URL 링크를 보존하며 이미지·base64는 제외한다. | 1.14.0 | 1.14.0 | windows / macos |
-| WJB-NOTE-035 | 접이식 세로 도구 팔레트 — 생성·클립보드·위젯을 명칭 없는 구분선과 1열 아이콘으로 제공하고 미니멀 손잡이로 접는다. 보기 도구는 상단에 유지한다. | 1.22.0 | 1.22.0 | windows / macos |
+| WJB-NOTE-035 | 접이식 세로 도구 팔레트 — 생성·클립보드·위젯을 명칭 없는 구분선과 1열 아이콘으로 제공하고 미니멀 손잡이로 접는다. 관계선 보기/숨김과 확대 등 보기 도구는 상단에 유지한다. | 1.22.0 | 1.22.1 | windows / macos |
 | WJB-NOTE-036 | 객체 가로·세로 프레임 크기 — 자동 측정 높이와 별도로 사용자 높이를 저장하고 네 모서리와 변에서 조절·실행 취소한다. | 1.22.0 | 1.22.0 | windows / macos |
 
 ## 주간 요약

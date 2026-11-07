@@ -104,11 +104,17 @@ npm run tauri dev    # 실앱 모드(윈도우·맥 / 리눅스는 webkit2gtk-4.
 - 브라우저 모드 주소 옵션(E2E·시연): `?today=YYYY-MM-DD` 오늘 고정 · `?empty=1` 빈 일지 · `?fresh=1` 첫 실행 화면 · `?existing=/경로` 그 폴더에 샘플 일지 준비 · `?config=/경로` 설정 폴더 지정 · `?sample=year`(`year-img`) 가상 1년치 일지 · `?sample=showcase` README·소개 사이트 화면용 메모 보드 예시 · `?corrupt=1` 파손 일지
 - 설치 파일: `main`에 반영되면 *Build desktop installers*가 윈도우(NSIS)·맥(유니버설 DMG)을 나란히 만들고, **둘 다 성공해야** [Releases](https://github.com/chs2147/work-journey-board/releases)에 `v<버전>`으로 함께 올린다 — 0.x·`-rc`는 사전 릴리스, 1.0.0 이상 정식 판은 정식 릴리스. 윈도우 오프라인 설치판은 요청할 때만 Actions → *Build desktop installers* → Run workflow(main) → `offline`으로 그 판 릴리스에 더한다. 하나의 원본으로 두 플랫폼을 같은 판으로 운영한다([docs/macos-spec.md](docs/macos-spec.md)).
 
-현재 상세 기능과 도입 버전: [Feature List 운영 문서](docs/features/README.md) · [현재 목록](docs/features/CURRENT.md) · [검토용 Excel](docs/features/exports/work-journey-board/Work-Journey-Board-Feature-List-v1.22.0.xlsx)
+현재 상세 기능과 도입 버전: [Feature List 운영 문서](docs/features/README.md) · [현재 목록](docs/features/CURRENT.md) · [검토용 Excel](docs/features/exports/work-journey-board/Work-Journey-Board-Feature-List-v1.22.1.xlsx)
 
 ## Version History
 
 최근 5개 버전(정식·RC)을 표시합니다. [더 보기 — 전체 버전 히스토리](VERSION_HISTORY.md)
+
+### v1.22.1 (2026-11-07) — 메모보드 보기 도구·링크 모달 수정
+
+- 관계선 보기/숨김 버튼을 주간·업무 메모보드 상단 오른쪽 보기 툴바로 이동.
+- 링크 넣기 팝업의 배경 전체 흐림·클릭/포커스 차단, Tab 이동·닫기 후 포커스 복귀 개선.
+- main 직접 패치. DB v18 유지, Windows 기본판·macOS 유니버설 동시 빌드.
 
 ### v1.22.0 (2026-11-07) — Cabi.NET 편집·메모 팔레트·Universe 개선
 
@@ -136,12 +142,6 @@ npm run tauri dev    # 실앱 모드(윈도우·맥 / 리눅스는 webkit2gtk-4.
 - 업무 경과일·업무 타임라인·중요 업무 라이브 위젯. 타임라인은 기록 목록·가로 마일스톤·가로 주차 요약의 세 가지 표현 제공.
 - 노트 블록 이끌이·드래그 이동·선택 서식/글자색, 공통 저장 표시, 자료 카드 연결점과 삭제 확인/창 종료 개선.
 - DB v17. `improve-v17` 작업 브랜치 검증판이며 정식 main 반영·배포 전.
-
-### v1.20.0 (2026-11-07) — Cabi.NET 업무 작업 공간·Universe 소개 개편
-- 업무별 복수 블록 노트와 단일 전용 메모보드, 별도 모달리스 창·자료 원본 카드·누적 주간 메모 연동.
-- 주간↔업무 보드 객체·이미지·관계선 복제, Markdown 가져오기 및 Markdown·한글 PDF 내보내기, 전역 검색·저장 안정성 보강.
-- README 기능 소개와 티저의 Universe·Cabi.NET 전용 모션 섹션 갱신. main 게시 시 Cabi.NET RC 표시 제거.
-- DB v16, 이전 직전 백업. 기존 main 1.19.0은 `release/v1.19.0`에 보존. Windows 기본 설치판·macOS 유니버설 DMG 동시 제공.
 
 [더 보기 — 전체 버전 히스토리](VERSION_HISTORY.md)
 
