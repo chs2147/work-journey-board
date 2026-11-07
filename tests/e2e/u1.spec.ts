@@ -77,15 +77,23 @@ test("Alt+P: 칸 안에서 그 업무의 직전 기록일 내역을 끝에 · �
     "테스트 데이터 이관 스크립트 작성 착수",
     "설계안 팀 리뷰, 수정 의견 5건 반영 중",
   ]);
-  await expect(page.getByRole("status")).toContainText("10/21(수) 항목 1개를 가져왔습니다");
+  await expect(page.locator('[role="status"][aria-live="polite"]')).toContainText(
+    "10/21(수) 항목 1개를 가져왔습니다",
+  );
   await expect(page.locator(":focus")).toHaveValue("설계안 팀 리뷰, 수정 의견 5건 반영 중");
   await saved(page);
   // 한 번 더 → 이미 있음
   await page.keyboard.press("Alt+KeyP");
-  await expect(page.getByRole("status")).toContainText("10/21(수) 내역은 이미 모두 들어 있습니다");
+  await expect(page.locator('[role="status"][aria-live="polite"]')).toContainText(
+    "10/21(수) 내역은 이미 모두 들어 있습니다",
+  );
   await expect(cell).toHaveCount(2);
   // 되돌리기
-  await page.getByRole("status").getByRole("button", { name: "되돌리기" }).first().click();
+  await page
+    .locator('[role="status"][aria-live="polite"]')
+    .getByRole("button", { name: "되돌리기" })
+    .first()
+    .click();
   await expect(cell).toHaveCount(1);
 });
 
@@ -122,7 +130,9 @@ test("Alt+Shift+P · 요일 머리 메뉴: 직전 기록일 업무 전체 — �
   await page.keyboard.press("Escape");
 
   await page.locator(":focus").press("Alt+Shift+KeyP");
-  await expect(page.getByRole("status")).toContainText("10/20(화) 업무 2개 · 항목 3개를 가져왔습니다");
+  await expect(page.locator('[role="status"][aria-live="polite"]')).toContainText(
+    "10/20(화) 업무 2개 · 항목 3개를 가져왔습니다",
+  );
   await expect(cellTexts(page, "차세대 정산 시스템 구축", TODAY)).toHaveText([
     "테스트 데이터 이관 스크립트 작성 착수",
     "배치 스케줄러 설계안 작성",

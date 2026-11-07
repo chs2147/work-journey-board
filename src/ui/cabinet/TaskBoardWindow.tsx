@@ -1,10 +1,17 @@
+import { flushSync } from "react-dom";
+import { V17 } from "../../shared/v17Strings";
+import { SaveStatus } from "../common/SaveStatus";
+import { DeleteBoardDialog } from "./DeleteBoardDialog";
+import { emptyContent, type TextBox } from "../../domain/note";
+import { saveSnapshot } from "../note/snapshot";
+import { IconExportFile, IconExpand } from "../common/icons";
 import { useEffect, useState } from "react";
 import type { WeeklyMemo } from "../../domain/cabi";
 import { referenceBox } from "../../domain/cabi";
 import type { NoteDoc } from "../../domain/note";
 import type { CabinetItem } from "../../domain/cabinet";
 import { CABI } from "../../shared/cabiStrings";
-import { IconNote, IconClock, IconTune, IconPlus, IconTrash, IconChevronRight } from "../common/icons";
+import { IconNote, IconClock, IconPlus, IconTrash, IconChevronRight } from "../common/icons";
 import { useAppStore } from "../common/appStore";
 import { NoteDock } from "../note/NoteDock";
 import {
@@ -93,6 +100,9 @@ export function TaskBoardWindow({ categoryId }: { categoryId: string }) {
     [resources, setResources] = useState<CabinetItem[]>([]),
     [notes, setNotes] = useState<{ id: string; title: string }[]>([]),
     [leftW, setLeftW] = useState(() => savedWidth("cabi-library-width", 260)),
+    [deleteRevision, setDeleteRevision] = useState<number | null>(null),
+    [addWidget, setAddWidget] = useState(false),
+    [exportOpen, setExportOpen] = useState(false),
     [rightW, setRightW] = useState(() => savedWidth("cabi-weekly-width", 300));
   useEffect(() => {
     if (!title) return;
@@ -161,10 +171,16 @@ export function TaskBoardWindow({ categoryId }: { categoryId: string }) {
       <header className={styles.header}>
         <div>
           <h1>{title || CABI.board}</h1>
-          <p>{CABI.boardOwner}</p>
         </div>
         <div className={styles.actions}>
-          <span className={styles.muted}>{useBoard((s) => s.saving) > 0 ? CABI.saving : CABI.saved}</span>
+          <SaveStatus
+            saving={useBoard((s) => s.saving) > 0}
+            error={saveError ?? undefined}
+            onRetry={() => void flushNote(true, true).catch(reportError)}
+          />
+          <button className={styles.button} aria-label={V17.add} onClick={() => setAddWidget(!addWidget)}>
+            + {V17.add}
+          </button>
           <button
             className={`${styles.button} ${library ? styles.active : ""}`}
             onClick={() => setLibrary((v) => !v)}
@@ -179,9 +195,9 @@ export function TaskBoardWindow({ categoryId }: { categoryId: string }) {
             <IconClock />
             {CABI.weekly}
           </button>
-          <button className={styles.button} onClick={() => void exportTaskBoard().catch(reportError)}>
-            <IconTune />
-            {CABI.markdown}
+          <button className={styles.button} onClick={() => setExportOpen(!exportOpen)}>
+            <IconExportFile />
+            {CABI.export}
           </button>
           <button
             className={styles.icon}
@@ -189,12 +205,9 @@ export function TaskBoardWindow({ categoryId }: { categoryId: string }) {
             aria-label={CABI.deleteBoard}
             onClick={() =>
               void (async () => {
-                if (!window.confirm(CABI.deleteBoardConfirm)) return;
                 await flushNote(true, true);
                 const b = await cabiClient().board(categoryId);
-                if (b) await cabiClient().removeBoard(categoryId, b.revision);
-                detachNote();
-                await useAppStore.getState().platform?.cabi.closeSelf();
+                if (b) setDeleteRevision(b.revision);
               })().catch(reportError)
             }
           >
@@ -202,6 +215,75 @@ export function TaskBoardWindow({ categoryId }: { categoryId: string }) {
           </button>
         </div>
       </header>
+      {addWidget && (
+        <div className={styles.toolbar}>
+          {(["elapsed", "timeline", "important"] as const).map((type) => (
+            <button
+              className={styles.button}
+              key={type}
+              onClick={() => {
+                const doc = useNote.getState().doc;
+                const box: TextBox = {
+                  id: crypto.randomUUID(),
+                  kind: "text",
+                  x: 24,
+                  y: Math.max(24, ...doc.boxes.map((b) => b.y + (b.h ?? 100) + 24)),
+                  w: type === "elapsed" ? 300 : 640,
+                  h: type === "elapsed" ? 200 : 340,
+                  z: doc.boxes.length + 1,
+                  bg: null,
+                  content: emptyContent(),
+                  widget: { type, basis: "start", variant: "records", weeks: 8, milestoneEntryIds: [] },
+                };
+                importBoardObjects({ v: 1, boxes: [box] });
+                setAddWidget(false);
+              }}
+            >
+              {V17[type]}
+            </button>
+          ))}
+        </div>
+      )}
+      {exportOpen && (
+        <div className={styles.toolbar}>
+          <button
+            className={styles.button}
+            onClick={() => {
+              setExportOpen(false);
+              void exportTaskBoard().catch(reportError);
+            }}
+          >
+            {CABI.markdown}
+          </button>
+          <button
+            className={styles.button}
+            onClick={() => {
+              setExportOpen(false);
+              void saveSnapshot().catch(reportError);
+            }}
+          >
+            {V17.png}
+          </button>
+        </div>
+      )}
+      {deleteRevision !== null && (
+        <DeleteBoardDialog
+          title={title}
+          count={useNote.getState().doc.boxes.length}
+          onCancel={() => setDeleteRevision(null)}
+          onDelete={async () => {
+            await flushNote(true, true);
+            await cabiClient().removeBoard(categoryId, deleteRevision);
+            // Dismiss the native modal before closing its modeless window.
+            flushSync(() => {
+              setDeleteRevision(null);
+              setReady(false);
+            });
+            detachNote();
+            await useAppStore.getState().platform?.cabi.closeSelf();
+          }}
+        />
+      )}
       {(error || saveError || disconnected) && (
         <p className={`${styles.message} ${styles.error}`} role="alert">
           {error || saveError || (disconnected ? CABI.disconnected : "")}{" "}
@@ -381,7 +463,7 @@ function WeeklyPanel({
       </header>
       <div className={styles.scroll}>
         {shown.map((m) => (
-          <label className={styles.memo} key={key(m)}>
+          <article className={styles.memo} key={key(m)}>
             <header>
               <span>{m.weekId}</span>
               <input
@@ -400,17 +482,24 @@ function WeeklyPanel({
             </header>
             <strong>{m.title}</strong>
             <p>{CABI.linkedItems(m.entryIds.length)}</p>
-            {linked(m) && <span className={styles.tag}>{CABI.linked}</span>}
-            <button
-              className={styles.button}
-              onClick={(e) => {
-                e.preventDefault();
-                void openCabiReference({ kind: "memo", weekId: m.weekId, boxId: m.boxId }).catch(reportError);
-              }}
-            >
-              {CABI.openSource}
-            </button>
-          </label>
+            <footer className={styles.memoActions}>
+              {linked(m) ? <span className={styles.tag}>{CABI.linked}</span> : <span />}
+              <button
+                className={styles.icon}
+                title={CABI.openSource}
+                aria-label={CABI.openSource}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  void openCabiReference({ kind: "memo", weekId: m.weekId, boxId: m.boxId }).catch(
+                    reportError,
+                  );
+                }}
+              >
+                <IconExpand />
+              </button>
+            </footer>
+          </article>
         ))}
         {!shown.length && <p className={styles.message}>{CABI.emptyWeekly}</p>}
         {memos.length >= limit && (

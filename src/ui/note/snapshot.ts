@@ -50,7 +50,12 @@ async function linkedLines(
 
 /** 지금 보고 있는 주의 메모(대기 상자 빼고) — 이미지는 원본을 이때만 읽는다(스토어는 크기만 들고 있음) */
 async function currentInput(repo: NoteRepository, now: Date): Promise<SnapshotInput> {
-  const { doc, pendingId, weekId } = useNote.getState();
+  const { doc, pendingId, weekId, task } = useNote.getState();
+  const frozen = task
+    ? await (
+        await import("../cabinet/liveWidgetModel")
+      ).rasterizeWidgets(doc, task.categoryId, localDate(now))
+    : { doc, images: {} };
   const assets = Object.fromEntries((await repo.getNoteAssets(weekId)).map(({ id, ...a }) => [id, a]));
   const { view, cells } = useBoard.getState();
   const categories = (view?.categories ?? []).map((c) => c.category);
@@ -63,8 +68,8 @@ async function currentInput(repo: NoteRepository, now: Date): Promise<SnapshotIn
           moreText: (n: number) => STR.linked.more(n).replace(/^▾ /, ""),
         }
       : baseInput(weekId, now)),
-    doc: { ...doc, boxes: doc.boxes.filter((b) => b.id !== pendingId) },
-    images: assets,
+    doc: { ...frozen.doc, boxes: frozen.doc.boxes.filter((b) => b.id !== pendingId) },
+    images: { ...assets, ...frozen.images },
     lines: await linkedLines(repo, doc, snapLines(categories, cells, colorOf, shortDateLabel)),
   };
 }

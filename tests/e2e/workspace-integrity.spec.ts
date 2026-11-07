@@ -52,6 +52,7 @@ test("Cabi.NET 노트·이미지·업무 보드는 공간을 3회 왕복해도 �
   await page.keyboard.press("Alt+4");
   await page.getByTestId("cabi-hub").waitFor();
   await page.getByLabel("업무를 선택해 주세요", { exact: true }).selectOption({ index: 1 });
+  const ownerId = await page.getByLabel("업무를 선택해 주세요", { exact: true }).inputValue();
   const notePromise = page.waitForEvent("popup");
   await page.getByTestId("cabi-new-note").click();
   const note = await notePromise;
@@ -66,6 +67,9 @@ test("Cabi.NET 노트·이미지·업무 보드는 공간을 3회 왕복해도 �
   await page.getByTestId("cabi-open-board").click();
   const board = await boardPromise;
   await board.getByTestId("note-scroll").waitFor();
+  await board.getByRole("button", { name: "Live Widget", exact: true }).click();
+  await board.getByRole("button", { name: "업무 경과일", exact: true }).click();
+  await expect(board.getByTestId("live-widget")).toHaveCount(1);
   const counts = () =>
     page.evaluate(async () => {
       const w = globalThis as unknown as { __wjbApp: { journalCounts(): Promise<Record<string, number>> } };
@@ -81,6 +85,22 @@ test("Cabi.NET 노트·이미지·업무 보드는 공간을 3회 왕복해도 �
   await expect.poll(() => note.isClosed()).toBe(true);
   await expect.poll(() => board.isClosed()).toBe(true);
   await expect(page.getByTestId("cabi-note-row")).toContainText("가상 공간 보존 노트");
+  await page.getByLabel("업무를 선택해 주세요", { exact: true }).selectOption(ownerId);
+  const reopen = page.waitForEvent("popup");
+  await page.getByTestId("cabi-open-board").click();
+  const restoredBoard = await reopen;
+  await expect(restoredBoard.getByTestId("live-widget")).toHaveCount(1);
+  expect(
+    await restoredBoard.evaluate(async () => {
+      const { useNote } = (await import(
+        "../../src/ui/note/noteStore" + ".ts"
+      )) as typeof import("../../src/ui/note/noteStore");
+      const s = useNote.getState();
+      return s.doc.boxes
+        .filter((b) => b.kind === "text" && b.widget)
+        .map((b) => (b.kind === "text" ? b.widget : null));
+    }),
+  ).toEqual([expect.objectContaining({ type: "elapsed" })]);
 });
 
 test("Cabi.NET 복제 응답이 공간 전환 뒤 도착해도 새 공간에 이전 객체를 쓰지 않는다", async ({ page }) => {

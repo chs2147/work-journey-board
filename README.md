@@ -91,9 +91,22 @@ npm run tauri dev    # 실앱 모드(윈도우·맥 / 리눅스는 webkit2gtk-4.
 - 브라우저 모드 주소 옵션(E2E·시연): `?today=YYYY-MM-DD` 오늘 고정 · `?empty=1` 빈 일지 · `?fresh=1` 첫 실행 화면 · `?existing=/경로` 그 폴더에 샘플 일지 준비 · `?config=/경로` 설정 폴더 지정 · `?sample=year`(`year-img`) 가상 1년치 일지 · `?sample=showcase` README·소개 사이트 화면용 메모 보드 예시 · `?corrupt=1` 파손 일지
 - 설치 파일: `main`에 반영되면 *Build desktop installers*가 윈도우(NSIS)·맥(유니버설 DMG)을 나란히 만들고, **둘 다 성공해야** [Releases](https://github.com/chs2147/work-journey-board/releases)에 `v<버전>`으로 함께 올린다 — 0.x·`-rc`는 사전 릴리스, 1.0.0 이상 정식 판은 정식 릴리스. 윈도우 오프라인 설치판은 요청할 때만 Actions → *Build desktop installers* → Run workflow(main) → `offline`으로 그 판 릴리스에 더한다. 하나의 원본으로 두 플랫폼을 같은 판으로 운영한다([docs/macos-spec.md](docs/macos-spec.md)).
 
-현재 상세 기능과 도입 버전: [Feature List 운영 문서](docs/features/README.md) · [현재 목록](docs/features/CURRENT.md) · [검토용 Excel](docs/features/exports/work-journey-board/Work-Journey-Board-Feature-List-v1.20.0.xlsx)
+현재 상세 기능과 도입 버전: [Feature List 운영 문서](docs/features/README.md) · [현재 목록](docs/features/CURRENT.md) · [검토용 Excel](docs/features/exports/work-journey-board/Work-Journey-Board-Feature-List-v1.21.0.xlsx)
 
 ## Version History
+
+### v1.21.0 (2026-11-07) — Cabi.NET Live Widget·노트 편집 개선
+
+- 업무 경과일·타임라인·중요 업무 Live Widget과 기록 목록·가로 마일스톤·주차 요약의 세 표현 제공.
+- 노트 블록 이끌이·이동·선택 서식·글자색, 저장 표시·연결점·내보내기·삭제 확인과 창 종료 개선.
+- CI 회귀 수정 후 전체 E2E 594개·단위 519개와 Windows/macOS 빌드 통과. DB v17.
+- 이전 main 1.20.0은 `release/v1.20.0`에 보존. Windows 기본 설치판·macOS 유니버설 DMG 동시 제공.
+
+### v1.21.0-rc.1 (2026-11-07) — Cabi.NET Live Widget·노트 편집 검증판
+
+- 업무 경과일·업무 타임라인·중요 업무 라이브 위젯. 타임라인은 기록 목록·가로 마일스톤·가로 주차 요약의 세 가지 표현 제공.
+- 노트 블록 이끌이·드래그 이동·선택 서식/글자색, 공통 저장 표시, 자료 카드 연결점과 삭제 확인/창 종료 개선.
+- DB v17. `improve-v17` 작업 브랜치 검증판이며 정식 main 반영·배포 전.
 
 ### v1.20.0 (2026-11-07) — Cabi.NET 업무 작업 공간·Universe 소개 개편
 - 업무별 복수 블록 노트와 단일 전용 메모보드, 별도 모달리스 창·자료 원본 카드·누적 주간 메모 연동.

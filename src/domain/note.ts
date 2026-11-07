@@ -1,3 +1,4 @@
+import { parseWidget, type LiveWidgetConfig } from "./liveWidget";
 import { parseCabiReference, type CabiReference } from "./cabi";
 // 주간 메모(weekly-note-spec): 한 주에 문서 1개, 자유 배치 상자들. 순수 함수만(UI·저장소·플랫폼 import 금지).
 // 상자 안 글은 편집기(ProseMirror 계열)의 문서 JSON — 허용하는 노드·서식은 스펙 4-3 표뿐이고, 밖은 버린다.
@@ -28,6 +29,8 @@ export interface BoxRef {
 export const LINK_MAX = 20;
 
 export interface TextBox {
+  /** Cabi.NET live view, geometry shared with text cards; source state is never stored here. */
+  widget?: LiveWidgetConfig;
   /** Cabi.NET resource cards keep stable IDs; their content is a fallback, not the source. */
   resource?: CabiReference;
   id: string;
@@ -448,12 +451,13 @@ export function parseNoteDoc(json: string | null | undefined): NoteDoc {
       ...(typeof b.h === "number" ? { h: b.h } : {}),
       bg: NOTE_BG.includes(b.bg as NoteBg) ? (b.bg as NoteBg) : null,
       content,
+      ...(parseWidget(b.widget) ? { widget: parseWidget(b.widget) } : {}),
       ...(parseCabiReference(b.resource) ? { resource: parseCabiReference(b.resource) } : {}),
       ...ref,
     });
   }
   // 글이 없는 텍스트 상자는 남기지 않는다(improve-1026-spec 2-2) — 어떤 길로 편집을 떠나도 빈 상자가 쌓이지 않게
-  const kept = boxes.filter((b) => b.kind !== "text" || boxText(b) !== "");
+  const kept = boxes.filter((b) => b.kind !== "text" || !!b.widget || boxText(b) !== "");
   return withEdges({ v: 1, boxes: kept }, parseEdges(raw.edges, new Set(kept.map((b) => b.id))));
 }
 
@@ -520,6 +524,12 @@ export function readingOrder(boxes: NoteBox[]): NoteBox[] {
 export function boxText(b: NoteBox): string {
   if (b.kind === "image") return b.caption.trim() ? `- (이미지) ${b.caption.trim()}` : "";
   if (b.kind === "link") return `- (링크) ${b.title} — ${b.url}`;
+  if (b.widget)
+    return b.widget.type === "elapsed"
+      ? "업무 경과일"
+      : b.widget.type === "timeline"
+        ? "업무 타임라인"
+        : "중요 업무";
   return blockLines(b.content.content, "").join("\n");
 }
 

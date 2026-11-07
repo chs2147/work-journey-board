@@ -1082,6 +1082,8 @@ export class JournalRepository {
   /** 메모 문서 저장(통째로). 비어도 행을 남긴다 — 예전 요일 메모가 다시 보이지 않게 */
   /** Apply only ref changes since the caller's baseline. External copy links survive stale content saves. */
   async saveWeekNote(weekId: WeekId, doc: NoteDoc, baseline?: NoteDoc): Promise<void> {
+    if (doc.boxes.some((b) => b.kind === "text" && b.widget))
+      throw new ValidationError("라이브 위젯은 주간 보드에 사본으로 변환한 뒤 저장해 주세요.");
     const clean = parseNoteDoc(JSON.stringify(doc));
     const before = baseline ?? (await this.getWeekNote(weekId)).doc;
     const stored = {

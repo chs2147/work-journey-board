@@ -1,3 +1,4 @@
+import { materializeWidgets } from "./liveWidgetModel";
 import { CABI } from "../../shared/cabiStrings";
 import { exportCabiMarkdown } from "../../domain/cabiMarkdown";
 import { cabiText } from "../../domain/cabi";
@@ -65,9 +66,10 @@ export async function exportTaskBoard() {
   const current = noteExportContext(),
     s = useNote.getState();
   if (!current) return;
+  const doc = s.task ? await materializeWidgets(s.doc, s.task.categoryId) : s.doc;
   const content: PMNode = {
     type: "doc",
-    content: readingOrder(s.doc.boxes).flatMap((b): PMNode[] => {
+    content: readingOrder(doc.boxes).flatMap((b): PMNode[] => {
       if (b.kind === "text") return b.content.content ?? [];
       if (b.kind === "image") return [{ type: "image", attrs: { asset: b.asset, alt: b.caption } }];
       return [

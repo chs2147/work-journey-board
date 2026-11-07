@@ -1,24 +1,18 @@
+import { V17 } from "../../shared/v17Strings";
+import { SaveStatus } from "../common/SaveStatus";
+import { NoteBlockControls } from "./NoteBlockControls";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAppStore } from "../common/appStore";
 import { EditorContent, useEditor, type Editor } from "@tiptap/react";
-import { NodeSelection } from "@tiptap/pm/state";
+
 import type { PMNode } from "../../domain/note";
-import { TEXT_COLORS } from "../../domain/note";
+
 import { cabiText, cabiAssetIds, cleanCabiContent, type CabiNote } from "../../domain/cabi";
 import { importCabiMarkdown } from "../../domain/cabiMarkdown";
 import { MARKDOWN_MAX_BYTES } from "../../domain/markdownNote";
 import { CABI } from "../../shared/cabiStrings";
 import { STR } from "../../shared/strings";
-import {
-  IconNote,
-  IconExportFile,
-  IconPlus,
-  IconTune,
-  IconChevronUp,
-  IconChevronDown,
-  IconCopyItem,
-  IconTrash,
-} from "../common/icons";
+import { IconNote, IconExportFile, IconPlus, IconTune, IconTrash } from "../common/icons";
 import { reportError, toast } from "../board/boardStore";
 import { prepareImage, type PreparedImage } from "../note/imageProcess";
 import { cabiClient, cabiContext, registerCabiFlush, useCabiChange } from "./cabiService";
@@ -53,7 +47,15 @@ export function TaskNoteWindow({ noteId }: { noteId: string }) {
     timer = useRef<ReturnType<typeof setTimeout> | null>(null),
     queue = useRef<Promise<void>>(Promise.resolve()),
     generation = useRef(0),
-    editorRef = useRef<Editor | null>(null);
+    editorRef = useRef<Editor | null>(null),
+    operations = useRef(new Set<Promise<unknown>>());
+  const deleted = useCabiChange((s) => s.deletedNotes.includes(noteId));
+  const locked = useCabiChange((s) => s.locked);
+  const trackOperation = (p: Promise<unknown>) => {
+    operations.current.add(p);
+    void p.finally(() => operations.current.delete(p)).catch(() => undefined);
+    return p;
+  };
   const save = useCallback(async () => {
     if (timer.current) {
       clearTimeout(timer.current);
@@ -101,6 +103,7 @@ export function TaskNoteWindow({ noteId }: { noteId: string }) {
     document.body.dataset.cabiDirty = "true";
     schedule();
   };
+  const closeBlockMenu = useCallback(() => setBlockMenu(false), []);
   const editor = useEditor(
     {
       extensions: cabiEditorExtensions(),
@@ -119,7 +122,7 @@ export function TaskNoteWindow({ noteId }: { noteId: string }) {
           const files = [...(event.dataTransfer?.files ?? [])];
           if (!files.length) return false;
           event.preventDefault();
-          void importFiles(files);
+          void trackOperation(importFiles(files));
           return true;
         },
         handlePaste: (_view, event, slice) => {
@@ -128,11 +131,11 @@ export function TaskNoteWindow({ noteId }: { noteId: string }) {
             const nodes = slice.content.toJSON() as PMNode[] | undefined;
             if (!nodes?.length || !cabiAssetIds({ type: "doc", content: nodes }).length) return false;
             event.preventDefault();
-            void pasteImageBlocks(nodes).catch(reportError);
+            void trackOperation(pasteImageBlocks(nodes)).catch(reportError);
             return true;
           }
           event.preventDefault();
-          void addImages(files);
+          void trackOperation(addImages(files));
           return true;
         },
       },
@@ -168,7 +171,10 @@ export function TaskNoteWindow({ noteId }: { noteId: string }) {
         editorRef.current?.commands.setContent(n.content, { emitUpdate: false });
       })
       .catch((e) => setError(String(e)));
-    const unregister = registerCabiFlush(save);
+    const unregister = registerCabiFlush(async () => {
+      await Promise.all([...operations.current]);
+      await save();
+    });
     const blur = () => void save().catch(() => undefined);
     window.addEventListener("blur", blur);
     return () => {
@@ -180,8 +186,20 @@ export function TaskNoteWindow({ noteId }: { noteId: string }) {
     };
   }, [noteId, save]);
   useEffect(() => {
-    editor?.setEditable(!disconnected);
-  }, [editor, disconnected]);
+    editor?.setEditable(!disconnected && !locked && !deleted);
+  }, [editor, disconnected, locked, deleted]);
+  useEffect(() => {
+    if (!deleted) return;
+    generation.current++;
+    if (timer.current) clearTimeout(timer.current);
+    dirty.current = false;
+    current.current = null;
+    document.body.dataset.cabiDirty = "false";
+    void useAppStore
+      .getState()
+      .platform?.cabi.closeSelf()
+      .catch((e) => setError(String(e)));
+  }, [deleted]);
   async function addImages(files: File[]) {
     if (!current.current || !editor) return;
     const owner = current.current.id;
@@ -340,31 +358,19 @@ export function TaskNoteWindow({ noteId }: { noteId: string }) {
     );
     return () => clearTimeout(timer);
   }, [title, note, tasks]);
-  const alterBlock = (action: "up" | "down" | "copy" | "delete") => {
-    if (!editor) return;
-    const { state } = editor;
-    const pos =
-        state.selection instanceof NodeSelection
-          ? state.selection.from
-          : state.selection.$from.depth
-            ? state.selection.$from.before(1)
-            : 0,
-      node = state.doc.nodeAt(pos);
-    if (!node) return;
-    const index = state.doc.resolve(pos).index(),
-      tr = state.tr;
-    if (action === "copy") tr.insert(pos + node.nodeSize, node);
-    else if (action === "delete") tr.delete(pos, pos + node.nodeSize);
-    else if (action === "up" && index > 0) {
-      const previous = state.doc.child(index - 1);
-      tr.delete(pos, pos + node.nodeSize).insert(pos - previous.nodeSize, node);
-    } else if (action === "down" && index < state.doc.childCount - 1) {
-      const next = state.doc.child(index + 1);
-      tr.delete(pos, pos + node.nodeSize).insert(pos + next.nodeSize, node);
-    } else return;
-    editor.view.dispatch(tr);
-    editor.commands.focus();
-  };
+  if (deleted)
+    return (
+      <div className={styles.window}>
+        <p className={styles.message}>{V17.removed}</p>
+        {error && <p role="alert">{error}</p>}
+        <button
+          className={styles.button}
+          onClick={() => void useAppStore.getState().platform?.cabi.closeSelf()}
+        >
+          {V17.reopen}
+        </button>
+      </div>
+    );
   if (!note)
     return (
       <div className={styles.window}>
@@ -387,9 +393,20 @@ export function TaskNoteWindow({ noteId }: { noteId: string }) {
           </span>
         </div>
         <div className={styles.actions}>
-          <span className={styles.muted} role="status">
-            {error ? CABI.saveFailed : saving ? CABI.saving : CABI.saved}
-          </span>
+          <SaveStatus
+            saving={saving}
+            error={error || undefined}
+            onRetry={() => void save().catch(() => undefined)}
+            savedAt={note.updatedAt}
+          />
+          <button
+            className={styles.icon}
+            aria-label={CABI.image}
+            title={CABI.image}
+            onClick={() => imageRef.current?.click()}
+          >
+            <IconPlus />
+          </button>
           <button className={styles.button} onClick={() => fileRef.current?.click()}>
             <IconPlus />
             {CABI.import}
@@ -486,91 +503,13 @@ export function TaskNoteWindow({ noteId }: { noteId: string }) {
           </button>
         </div>
       )}
-      <div className={styles.format}>
-        <button className={styles.button} aria-expanded={blockMenu} onClick={() => setBlockMenu((v) => !v)}>
-          {CABI.blockMenu}
-        </button>
-        {[
-          ["bold", CABI.bold, "B"],
-          ["italic", CABI.italic, "I"],
-          ["strike", CABI.strike, "S"],
-          ["code", CABI.code, "<>"],
-        ].map(([command, label, text]) => (
-          <button
-            key={command}
-            className={styles.icon}
-            aria-label={label}
-            title={label}
-            onClick={() => {
-              if (!editor) return;
-              if (command === "bold") editor.chain().focus().toggleBold().run();
-              if (command === "italic") editor.chain().focus().toggleItalic().run();
-              if (command === "strike") editor.chain().focus().toggleStrike().run();
-              if (command === "code") editor.chain().focus().toggleCode().run();
-            }}
-          >
-            {text}
-          </button>
-        ))}
-        <select
-          aria-label={CABI.textColor}
-          onChange={(e) => {
-            if (e.target.value) editor?.chain().focus().setMark("textColor", { color: e.target.value }).run();
-            else editor?.chain().focus().unsetMark("textColor").run();
-          }}
-        >
-          <option value="">{STR.note.colors.default}</option>
-          {TEXT_COLORS.map((c) => (
-            <option key={c} value={c}>
-              {STR.note.colors[c]}
-            </option>
-          ))}
-        </select>
-        <button
-          className={styles.button}
-          onClick={() => {
-            const href = window.prompt(CABI.linkPrompt, "https://");
-            if (href && /^https?:\/\//i.test(href))
-              editor?.chain().focus().extendMarkRange("link").setLink({ href }).run();
-          }}
-        >
-          {CABI.addLink}
-        </button>
-        <button
-          className={styles.icon}
-          title={CABI.image}
-          aria-label={CABI.image}
-          onClick={() => imageRef.current?.click()}
-        >
-          <IconPlus />
-        </button>
-        {(
-          [
-            ["up", CABI.moveUp, IconChevronUp],
-            ["down", CABI.moveDown, IconChevronDown],
-            ["copy", CABI.duplicateBlock, IconCopyItem],
-            ["delete", CABI.deleteBlock, IconTrash],
-          ] as const
-        ).map(([action, label, Icon]) => (
-          <button
-            key={String(action)}
-            className={styles.icon}
-            title={String(label)}
-            aria-label={String(label)}
-            onClick={() => alterBlock(action as "up" | "down" | "copy" | "delete")}
-          >
-            {typeof Icon !== "string" && <Icon />}
-          </button>
-        ))}
-      </div>
-      {blockMenu && (
-        <div className={styles.toolbar} role="menu" aria-label={CABI.blockMenu}>
-          {Object.entries(CABI.blocks).map(([key, label]) => (
-            <button className={styles.button} key={key} role="menuitem" onClick={() => selectBlock(key)}>
-              {label}
-            </button>
-          ))}
-        </div>
+      {editor && (
+        <NoteBlockControls
+          editor={editor}
+          slashOpen={blockMenu}
+          onCloseSlash={closeBlockMenu}
+          selectBlock={selectBlock}
+        />
       )}
       <div className={styles.docBody}>
         <div className={styles.editorScroll}>
@@ -619,7 +558,7 @@ export function TaskNoteWindow({ noteId }: { noteId: string }) {
         multiple
         hidden
         onChange={(e) => {
-          void importFiles([...(e.target.files ?? [])]);
+          void trackOperation(importFiles([...(e.target.files ?? [])]));
           e.target.value = "";
         }}
       />
@@ -630,7 +569,7 @@ export function TaskNoteWindow({ noteId }: { noteId: string }) {
         multiple
         hidden
         onChange={(e) => {
-          void addImages([...(e.target.files ?? [])]);
+          void trackOperation(addImages([...(e.target.files ?? [])]));
           e.target.value = "";
         }}
       />
@@ -645,12 +584,12 @@ export function TaskNoteWindow({ noteId }: { noteId: string }) {
               <button className={styles.button} onClick={() => setPreview(null)}>
                 {CABI.cancel}
               </button>
-              <button className={styles.button} onClick={() => void confirmImport("insert")}>
+              <button className={styles.button} onClick={() => void trackOperation(confirmImport("insert"))}>
                 {CABI.importInsert}
               </button>
               <button
                 className={`${styles.button} ${styles.primary}`}
-                onClick={() => void confirmImport("new")}
+                onClick={() => void trackOperation(confirmImport("new"))}
               >
                 {CABI.importNew}
               </button>

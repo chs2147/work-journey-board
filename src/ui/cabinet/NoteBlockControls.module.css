@@ -1,0 +1,140 @@
+.grip {
+  position: fixed;
+  z-index: 45;
+  background: transparent;
+  color: var(--text-3);
+  border: 0;
+  width: 25px;
+  height: 27px;
+  font-size: 22px;
+  cursor: grab;
+  padding: 0;
+  line-height: 1;
+}
+.grip:hover {
+  background: var(--surface-sub);
+  color: var(--text-1);
+}
+.grip:active {
+  cursor: grabbing;
+}
+.menu,
+.bubble {
+  position: fixed;
+  z-index: 80;
+  background: var(--surface-card);
+  color: var(--text-1);
+  border: 1px solid var(--line-strong);
+  box-shadow: 0 6px 25px #0002;
+  border-radius: 5px;
+  font-size: 13px;
+}
+.menu {
+  width: 220px;
+  max-height: 460px;
+  overflow: auto;
+  padding: 7px;
+}
+.menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 7px 12px;
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.menu button:hover {
+  background: var(--surface-sub);
+}
+.menu hr {
+  border: 0;
+  border-top: 1px solid var(--line);
+}
+.bubble {
+  display: flex;
+  padding: 4px;
+  gap: 2px;
+}
+.bubble > button {
+  width: 31px;
+  height: 29px;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+.bubble > button:hover,
+.bubble > button[aria-pressed="true"] {
+  background: var(--surface-sub);
+}
+.colorButton {
+  text-decoration: underline;
+  text-decoration-thickness: 3px;
+  text-underline-offset: 5px;
+}
+.colors,
+.link {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  background: var(--surface-card);
+  color: var(--text-1);
+  border: 1px solid var(--line-strong);
+  box-shadow: 0 4px 15px #0002;
+  padding: 8px;
+  display: flex;
+  gap: 5px;
+}
+.colors button {
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--line);
+  border-bottom: 4px solid currentColor;
+  background: var(--surface-card);
+  border-radius: 0;
+  cursor: pointer;
+}
+.colors button[aria-pressed="true"] {
+  outline: 2px solid var(--accent);
+}
+.link {
+  width: 260px;
+  flex-wrap: wrap;
+}
+.link input {
+  width: 100%;
+  padding: 6px;
+  border: 1px solid var(--line-strong);
+  background: var(--surface-card);
+  color: var(--text-1);
+  font: inherit;
+}
+.link button {
+  border: 1px solid var(--line);
+  background: var(--surface-card);
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  padding: 4px 8px;
+}
+.link p {
+  font-size: 11px;
+  margin: 0;
+}
+.drop {
+  position: fixed;
+  height: 2px;
+  background: var(--accent);
+  pointer-events: none;
+  z-index: 90;
+}
+
+.bubble[data-below="true"] .colors,
+.bubble[data-below="true"] .link {
+  bottom: auto;
+  top: calc(100% + 8px);
+}

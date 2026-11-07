@@ -1,7 +1,13 @@
+import { V17 } from "../../shared/v17Strings";
 import { create } from "zustand";
 import type { CabiRepository } from "../../data/cabiRepository";
 import type { JournalRepository } from "../../data/repository";
-import { cloneBoardSelection, type BoardOwner, type CabiReference } from "../../domain/cabi";
+import {
+  cloneBoardSelection,
+  CabiConflictError,
+  type BoardOwner,
+  type CabiReference,
+} from "../../domain/cabi";
 import { boxText, noteAssetIds, type NoteDoc } from "../../domain/note";
 import type { Category } from "../../domain/types";
 import type { Settings } from "../../data/settings";
@@ -33,6 +39,7 @@ const METHODS = [
   "setThumb",
   "pruneAssets",
   "removeBoard",
+  "widgetSnapshot",
 ] as const;
 type Method = (typeof METHODS)[number];
 export type CabiClient = Pick<CabiRepository, Method>;
@@ -51,11 +58,13 @@ export const useCabiChange = create<{
   version: number;
   disconnected: boolean;
   locked: boolean;
+  deletedNotes: string[];
   dragPreview: { count: number; resource: boolean } | null;
 }>(() => ({
   version: 0,
   disconnected: false,
   locked: false,
+  deletedNotes: [],
   dragPreview: null,
 }));
 let context: CabiContext | null = null,
@@ -63,6 +72,7 @@ let context: CabiContext | null = null,
   epoch = "",
   bridge: CabiBridge | null = null,
   hostStarted = false;
+let widgetWrites: Promise<unknown> = Promise.resolve();
 let childFlush: (() => Promise<void>) | null = null;
 const flushWaiters = new Map<
   string,
@@ -110,7 +120,7 @@ function detachCabi() {
   }
   flushWaiters.clear();
   void bridge?.publish({ type: "detach" });
-  useCabiChange.setState({ dragPreview: null });
+  useCabiChange.setState({ dragPreview: null, deletedNotes: [] });
   bump();
 }
 onDetach(detachCabi);
@@ -131,7 +141,7 @@ export async function startCabiHost() {
   hostStarted = true;
   await b.serve(async (name, args, sender) => handle(name, args, sender));
   useBoard.subscribe((s, prev) => {
-    if (s.saving === 0 && prev.saving > 0) {
+    if ((s.saving === 0 && prev.saving > 0) || s.important !== prev.important) {
       void b.publish({ type: "changed" }).catch(() => undefined);
       bump();
     }
@@ -177,6 +187,8 @@ export const cabiClient = (): CabiClient =>
   ) as unknown as CabiClient;
 export async function listenCabi() {
   return (await getBridge()).listen((m) => {
+    if (m.type === "documentRemoved" && m.kind === "note" && m.epoch === context?.epoch)
+      useCabiChange.setState((s) => ({ deletedNotes: [...s.deletedNotes, String(m.id)].slice(-100) }));
     if (m.type === "changed") bump();
     if (m.type === "dragPreview")
       useCabiChange.setState({ dragPreview: m.preview as { count: number; resource: boolean } | null });
@@ -206,9 +218,9 @@ export function registerCabiFlush(fn: () => Promise<void>) {
     if (childFlush === fn) childFlush = null;
   };
 }
-export async function flushCabiWindows(lock = false) {
+export async function flushCabiWindows(lock = false, noteId?: string) {
   if (!isMain() || !bridge) return;
-  const targets = await bridge.opened();
+  const targets = (await bridge.opened()).filter((label) => !noteId || label === `cabi-note-${noteId}`);
   if (!targets.length) return;
   const id = crypto.randomUUID();
   await new Promise<void>((resolve, reject) => {
@@ -252,7 +264,18 @@ export async function receiveCabiDrag(
   owner: BoardOwner,
   at: { x: number; y: number },
 ): Promise<NoteDoc> {
-  return cabiCall("dragReceive", token, owner, at);
+  const info = await cabiCall<{ widgets: boolean; source: BoardOwner | null }>("dragInfo", token);
+  let accepted = false;
+  if (
+    info.widgets &&
+    owner.kind === "task" &&
+    info.source?.kind === "task" &&
+    info.source.categoryId !== owner.categoryId
+  ) {
+    accepted = window.confirm(V17.copyTask);
+    if (!accepted) throw new Error(V17.cancel);
+  }
+  return cabiCall("dragReceive", token, owner, at, accepted);
 }
 export async function resolveCabiReference(
   reference: CabiReference,
@@ -296,8 +319,28 @@ async function handle(name: string, args: unknown[], sender: string): Promise<un
   if (name === "repo") {
     const method = a[0] as Method;
     if (!(METHODS as readonly unknown[]).includes(method)) throw new Error("허용되지 않은 문서 요청입니다.");
+    if (method === "removeNote") {
+      try {
+        const before = await r.note(String(a[1]));
+        assertCurrent();
+        if (before.revision !== Number(a[2])) throw new CabiConflictError();
+        await flushCabiWindows(true, String(a[1]));
+        assertCurrent();
+        const saved = await r.note(String(a[1]));
+        assertCurrent();
+        await r.removeNote(saved.id, saved.revision);
+        assertCurrent();
+        await (await getBridge()).publish({ type: "documentRemoved", kind: "note", id: a[1], epoch });
+        await loadCabinet();
+        await (await getBridge()).publish({ type: "changed", epoch });
+        bump();
+        return null;
+      } finally {
+        await (await getBridge()).publish({ type: "unlock" }, `cabi-note-${String(a[1])}`);
+      }
+    }
     const fn = r[method] as (...v: unknown[]) => Promise<unknown>;
-    if (method === "removeNote" || method === "removeBoard") await flushCabiWindows();
+    if (method === "removeBoard") await flushCabiWindows();
     const out = await fn.apply(r, a.slice(1));
     assertCurrent();
     if (method === "saveBoard" || method === "removeBoard") {
@@ -313,6 +356,7 @@ async function handle(name: string, args: unknown[], sender: string): Promise<un
         "referenceCount",
         "listBoards",
         "weeklyMemos",
+        "widgetSnapshot",
         "assets",
         "assetMeta",
         "asset",
@@ -353,6 +397,47 @@ async function handle(name: string, args: unknown[], sender: string): Promise<un
     return a.length
       ? j.repo.updateSettings(a[0] as Parameters<JournalRepository["updateSettings"]>[0])
       : j.repo.getSettings();
+  if (name === "widgetComplete" || name === "widgetUndo") {
+    const [categoryId, id, expectedAt] = a as [string, string, string | undefined];
+    const run = widgetWrites.then(async () => {
+      assertCurrent();
+      const { flushAll, completeImportant, undoImportant } = await import("../board/boardStore");
+      await flushAll();
+      assertCurrent();
+      const [item] = await j.repo.getItemsByIds([id]);
+      assertCurrent();
+      if (!item || item.categoryId !== categoryId) throw new Error("위젯 원본 업무항목을 찾을 수 없습니다.");
+      if (name === "widgetUndo") {
+        if (!expectedAt || item.flagDoneAt !== expectedAt)
+          throw new Error("원본 상태가 변경되어 완료를 되돌릴 수 없습니다.");
+        await undoImportant(id, true);
+        assertCurrent();
+      } else {
+        if (item.flagDoneAt) return { id, at: item.flagDoneAt, already: true };
+        if (!item.flagged) throw new Error("중요 표시가 해제된 항목입니다.");
+        const done = await completeImportant(id, true);
+        assertCurrent();
+        if (!done) throw new Error("완료를 저장하지 못했습니다.");
+        await (await getBridge()).publish({ type: "changed", epoch });
+        bump();
+        return { id, at: done.at, already: false };
+      }
+      await (await getBridge()).publish({ type: "changed", epoch });
+      bump();
+      return null;
+    });
+    widgetWrites = run.catch(() => undefined);
+    return run;
+  }
+  if (name === "widgetOpen") {
+    const [categoryId, id] = a as [string, string];
+    const [item] = await j.repo.getItemsByIds([id]);
+    assertCurrent();
+    if (!item || item.categoryId !== categoryId) throw new Error("원본 항목이 삭제되었습니다.");
+    const { revealItem } = await import("../board/boardStore");
+    await revealItem(item);
+    return null;
+  }
   if (name === "items") return j.repo.getItemsByIds(a[0] as string[]);
   if (name === "snapshot") {
     await loadCabinet();
@@ -491,6 +576,16 @@ async function handle(name: string, args: unknown[], sender: string): Promise<un
     drags.set(token, { ...clipboard, owner: null });
     return token;
   }
+  if (name === "dragInfo") {
+    let d = drags.get(String(a[0]));
+    for (let tries = 0; !d && tries < 20; tries++) {
+      await new Promise((resolve) => setTimeout(resolve, 25));
+      d = drags.get(String(a[0]));
+    }
+    assertCurrent();
+    if (!d || d.epoch !== epoch || d.expires < Date.now()) throw new Error("끌기 시간이 만료되었습니다.");
+    return { widgets: d.doc.boxes.some((b) => b.kind === "text" && b.widget), source: d.source };
+  }
   if (name === "dragReceive") {
     const [token, owner, at] = a as [string, BoardOwner, { x: number; y: number }];
     let drag = drags.get(token);
@@ -515,8 +610,24 @@ async function handle(name: string, args: unknown[], sender: string): Promise<un
     assertCurrent();
     const map = drag.source ? await r.copyOwnedAssets(drag.source, owner, noteAssetIds(drag.doc)) : {};
     assertCurrent();
+    let incoming = drag.doc;
+    if (drag.source?.kind === "task" && incoming.boxes.some((b) => b.kind === "text" && b.widget)) {
+      if (owner.kind === "week") {
+        const { materializeWidgets } = await import("./liveWidgetModel");
+        incoming = await materializeWidgets(incoming, drag.source.categoryId);
+        assertCurrent();
+      } else if (owner.categoryId !== drag.source.categoryId) {
+        if (a[3] !== true) throw new Error(V17.copyTask);
+        incoming = {
+          ...incoming,
+          boxes: incoming.boxes.map((b) =>
+            b.kind === "text" && b.widget ? { ...b, widget: { ...b.widget, milestoneEntryIds: [] } } : b,
+          ),
+        };
+      }
+    }
     const result = cloneBoardSelection(
-      drag.doc,
+      incoming,
       drag.doc.boxes.map((b) => b.id),
       () => crypto.randomUUID(),
       at,

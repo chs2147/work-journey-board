@@ -1,15 +1,16 @@
+import { Extension } from "@tiptap/core";
+import { Plugin } from "@tiptap/pm/state";
+import { openLink } from "../common/openLink";
 import "../note/prosemirror.css";
 import { CabiImageView } from "./CabiImageView";
-import { Extension, Node, mergeAttributes } from "@tiptap/core";
+import { Node, mergeAttributes } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import { TaskItem, TaskList } from "@tiptap/extension-list";
 import { TableKit } from "@tiptap/extension-table";
 import { ReactNodeViewRenderer } from "@tiptap/react";
-import { Plugin, NodeSelection } from "@tiptap/pm/state";
-import { Decoration, DecorationSet } from "@tiptap/pm/view";
+
 import { TextColor, LinkOpener } from "../note/editorExtensions";
-import { CABI } from "../../shared/cabiStrings";
-import { openLink } from "../common/openLink";
+
 const CabiImage = Node.create({
   name: "image",
   group: "block",
@@ -31,55 +32,6 @@ const CabiImage = Node.create({
     return ReactNodeViewRenderer(CabiImageView);
   },
 });
-const BlockGrips = Extension.create({
-  name: "cabiBlockGrips",
-  addProseMirrorPlugins() {
-    return [
-      new Plugin({
-        props: {
-          decorations(state) {
-            const handles: Decoration[] = [];
-            state.doc.forEach((_node, pos) =>
-              handles.push(
-                Decoration.widget(
-                  pos,
-                  () => {
-                    const el = document.createElement("span");
-                    el.className = "cabi-block-grip";
-                    el.textContent = "⋮⋮";
-                    el.draggable = true;
-                    el.contentEditable = "false";
-                    el.dataset.cabiBlock = String(pos);
-                    el.title = CABI.moveUp + " / " + CABI.moveDown;
-                    return el;
-                  },
-                  { side: -1, ignoreSelection: true },
-                ),
-              ),
-            );
-            return DecorationSet.create(state.doc, handles);
-          },
-          handleDOMEvents: {
-            dragstart(view, event) {
-              const handle = (event.target as Element).closest<HTMLElement>("[data-cabi-block]");
-              if (!handle) return false;
-              const pos = Number(handle.dataset.cabiBlock);
-              view.dispatch(view.state.tr.setSelection(NodeSelection.create(view.state.doc, pos)));
-              return false;
-            },
-            click(_view, event) {
-              const a = (event.target as Element).closest("a[href]");
-              if (!a) return false;
-              event.preventDefault();
-              if (event.ctrlKey || event.metaKey) void openLink(a.getAttribute("href") ?? "");
-              return true;
-            },
-          },
-        },
-      }),
-    ];
-  },
-});
 export function cabiEditorExtensions() {
   return [
     StarterKit.configure({
@@ -98,6 +50,25 @@ export function cabiEditorExtensions() {
     TextColor,
     LinkOpener,
     CabiImage,
-    BlockGrips,
+    Extension.create({
+      name: "cabiLinkGuard",
+      addProseMirrorPlugins() {
+        return [
+          new Plugin({
+            props: {
+              handleDOMEvents: {
+                click(_view, event) {
+                  const a = (event.target as Element).closest("a[href]");
+                  if (!a) return false;
+                  event.preventDefault();
+                  if (event.ctrlKey || event.metaKey) void openLink(a.getAttribute("href") ?? "");
+                  return true;
+                },
+              },
+            },
+          }),
+        ];
+      },
+    }),
   ];
 }

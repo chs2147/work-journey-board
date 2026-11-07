@@ -1,3 +1,4 @@
+import live0017 from "./migrations/0017_live_widgets.sql?raw";
 import cabi0016 from "./migrations/0016_cabi_net.sql?raw";
 // 스키마 마이그레이션(data-spec 7-5): 번호 순 전진 전용, 기존 데이터가 있으면 직전 백업 후 단일 트랜잭션으로 적용.
 import { RECOMMENDED_BACKUP_POLICY } from "./backupPolicy";
@@ -43,6 +44,7 @@ export const MIGRATIONS: Migration[] = [
   { version: 14, sql: completion0014 },
   { version: 15, sql: noteLinks0015 },
   { version: 16, sql: cabi0016 },
+  { version: 17, sql: live0017 },
 ];
 
 export const LATEST_SCHEMA_VERSION = MIGRATIONS.at(-1)!.version;

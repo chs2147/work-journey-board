@@ -673,7 +673,7 @@ function patchLocalItem(
 }
 
 /** 목록에서 체크 = 처리 완료(강조 해제). 토스트로 되돌리기. */
-export async function completeImportant(id: string) {
+export async function completeImportant(id: string, strict = false) {
   const r = requireRepo();
   await flushAll();
   if (repo !== r) return;
@@ -681,6 +681,7 @@ export async function completeImportant(id: string) {
   try {
     completion = await track(() => r.completeFlag(id));
   } catch (e) {
+    if (strict) throw e;
     reportError(e);
     return;
   }
@@ -693,9 +694,10 @@ export async function completeImportant(id: string) {
   await refreshImportant();
   void refreshPrevDates();
   toast(STR.important.completed, { label: STR.toast.undo, run: () => void undoImportant(id) });
+  return completion;
 }
 
-export async function undoImportant(id: string) {
+export async function undoImportant(id: string, strict = false) {
   const r = requireRepo();
   await flushAll();
   if (repo !== r) return;
@@ -703,6 +705,7 @@ export async function undoImportant(id: string) {
   try {
     wasImportant = await track(() => r.undoComplete(id));
   } catch (e) {
+    if (strict) throw e;
     reportError(e);
     return;
   }

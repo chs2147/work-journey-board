@@ -52,11 +52,13 @@ test("항목 메뉴 [삭제]: ⋮⋮를 눌러 연 메뉴의 삭제에 올리면
   await del.hover();
   await expect(c.locator('[class*="deleting"]')).toHaveCount(3);
   await del.click();
-  await expect(page.getByRole("status")).toContainText("항목 3개를 지웠습니다(세부 2개 포함)");
+  await expect(page.locator('[role="status"][aria-live="polite"]')).toContainText(
+    "항목 3개를 지웠습니다(세부 2개 포함)",
+  );
   expect(await values(page)).toEqual([FIRST]);
   await saved(page);
 
-  await page.getByRole("status").getByRole("button", { name: "되돌리기" }).click();
+  await page.locator('[role="status"][aria-live="polite"]').getByRole("button", { name: "되돌리기" }).click();
   await expect
     .poll(() => values(page))
     .toEqual([FIRST, "배포 리허설 결과 정리", "롤백 소요 시간 기록", "점검표 갱신"]);
@@ -69,7 +71,7 @@ test("Alt+Delete: 세부 항목은 그 항목만 지우고 커서는 위 항목 
   await typeGroup(page);
   // 지금 커서 = 마지막 세부 항목 "점검표 갱신"
   await page.keyboard.press("Alt+Delete");
-  await expect(page.getByRole("status")).toContainText("항목 1개를 지웠습니다");
+  await expect(page.locator('[role="status"][aria-live="polite"]')).toContainText("항목 1개를 지웠습니다");
   expect(await values(page)).toEqual([FIRST, "배포 리허설 결과 정리", "롤백 소요 시간 기록"]);
   const focused = page.locator(":focus");
   await expect(focused).toHaveValue("롤백 소요 시간 기록");
@@ -81,7 +83,9 @@ test("Alt+Delete: 세부 항목은 그 항목만 지우고 커서는 위 항목 
   await page.keyboard.press("ArrowUp");
   await expect(focused).toHaveValue("배포 리허설 결과 정리");
   await page.keyboard.press("Alt+Delete");
-  await expect(page.getByRole("status")).toContainText("항목 2개를 지웠습니다(세부 1개 포함)");
+  await expect(page.locator('[role="status"][aria-live="polite"]')).toContainText(
+    "항목 2개를 지웠습니다(세부 1개 포함)",
+  );
   expect(await values(page)).toEqual([FIRST]);
   await expect(focused).toHaveValue(FIRST);
 

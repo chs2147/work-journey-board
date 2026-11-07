@@ -38,6 +38,7 @@ export function ResourceCard({ box, selected }: { box: TextBox; selected: boolea
   return (
     <div
       ref={ref}
+      data-cabi-card="true"
       className={`${styles.reference} ${selected || multi ? styles.selected : ""}`}
       style={{ left: box.x, top: box.y, width: box.w, zIndex: box.z }}
       tabIndex={0}
@@ -98,7 +99,7 @@ export function ResourceCard({ box, selected }: { box: TextBox; selected: boolea
         </button>
       </footer>
 
-      <EdgeKnobs boxId={box.id} />
+      <EdgeKnobs boxId={box.id} exposed={selected} />
       <button
         style={{
           position: "absolute",
