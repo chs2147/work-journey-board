@@ -118,6 +118,17 @@ export function UniverseView() {
   const packOpen = usePack((p) => p.open);
   const [filterOpen, setFilterOpen] = useState(panelSession.filter);
   const [detailOpen, setDetailOpen] = useState(panelSession.detail);
+  useEffect(() => {
+    const sync = () => {
+      document.documentElement.dataset.universeHidden = String(document.hidden);
+    };
+    sync();
+    document.addEventListener("visibilitychange", sync);
+    return () => {
+      document.removeEventListener("visibilitychange", sync);
+      delete document.documentElement.dataset.universeHidden;
+    };
+  }, []);
   const [dynamic, setDynamic] = useState(() => !matchMedia("(prefers-reduced-motion: reduce)").matches);
   const [failed, setFailed] = useState(false);
   const motionTouched = useRef(false);
@@ -314,7 +325,7 @@ export function UniverseView() {
             <FilterPanel all={all} />
           </ResizableUniversePanel>
         )}
-        <div className={`${styles.center} ${s.view === "map" ? styles.space : ""}`}>
+        <div data-dynamic={dynamic} className={`${styles.center} ${s.view === "map" ? styles.space : ""}`}>
           {all.nodes.length <= 1 && !s.loading ? (
             <p className={styles.empty}>{STR.universe.empty}</p>
           ) : s.view === "list" ? (

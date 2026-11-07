@@ -1889,3 +1889,118 @@ button.stripText:hover {
   border-radius: 0;
   white-space: normal;
 }
+
+/* C refinement: only creation tools live in the single-column palette. */
+.palette {
+  position: absolute;
+  left: 0;
+  top: 43px;
+  bottom: 0;
+  width: 58px;
+  z-index: 40;
+  overflow: visible;
+  background: var(--surface-card);
+  border-right: 1px solid var(--line);
+  padding: 10px 8px;
+}
+.paletteStack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  height: 100%;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+.paletteGroup,
+.widgetTools {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 5px;
+  width: 100%;
+}
+.paletteGroup {
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+}
+.widgetGroup {
+  width: 100%;
+}
+.palette .iconButton {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+}
+.paletteBody {
+  margin-left: 68px;
+}
+.paletteBodyFolded {
+  margin-left: 22px;
+}
+.paletteFolded {
+  width: 14px;
+  padding: 0;
+}
+.paletteFolded .paletteStack {
+  display: none;
+}
+.paletteHandle {
+  position: absolute;
+  left: calc(100% - 11px);
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 5;
+  width: 24px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  color: var(--text-3);
+  cursor: pointer;
+}
+.paletteHandle::before {
+  content: "";
+  position: absolute;
+  left: 8px;
+  top: 9px;
+  bottom: 9px;
+  width: 7px;
+  border-radius: 4px;
+  background: var(--line);
+  z-index: -1;
+}
+.paletteHandle:hover,
+.paletteHandle:focus-visible {
+  color: var(--text-1);
+}
+.paletteHandle:hover::before,
+.paletteHandle:focus-visible::before {
+  background: var(--line-strong);
+}
+.paletteHandle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.viewTools {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.dock:not(.dockExpanded) {
+  position: relative;
+  isolation: isolate;
+}
+.palette .iconButton {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+.palette .iconButton:hover {
+  background: var(--surface-sub);
+}

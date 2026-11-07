@@ -183,3 +183,69 @@ img.ProseMirror-separator {
   background: var(--mark);
   color: inherit;
 }
+
+.note-frame-grip {
+  position: absolute;
+  z-index: 25;
+  width: 10px;
+  height: 10px;
+  padding: 0;
+  border: 1px solid var(--accent);
+  border-radius: 0;
+  background: var(--surface-card);
+  opacity: 0;
+  touch-action: none;
+}
+[data-box-id]:hover > .note-frame-grip,
+[data-box-id]:focus-within > .note-frame-grip {
+  opacity: 1;
+}
+.note-frame-nw {
+  left: 0;
+  top: 0;
+  cursor: nwse-resize;
+}
+.note-frame-ne {
+  right: 0;
+  top: 0;
+  cursor: nesw-resize;
+}
+.note-frame-sw {
+  left: 0;
+  bottom: 0;
+  cursor: nesw-resize;
+}
+.note-frame-se {
+  right: 0;
+  bottom: 0;
+  cursor: nwse-resize;
+}
+.note-frame-n {
+  top: 0;
+  left: calc(25% - 5px);
+  cursor: ns-resize;
+}
+.note-frame-s {
+  bottom: 0;
+  left: calc(25% - 5px);
+  cursor: ns-resize;
+}
+.note-frame-w {
+  left: 0;
+  top: calc(25% - 5px);
+  cursor: ew-resize;
+}
+.note-frame-e {
+  right: 0;
+  top: calc(25% - 5px);
+  cursor: ew-resize;
+}
+[data-fixed-frame] img {
+  max-height: calc(100% - 38px);
+  object-fit: contain;
+}
+
+[data-fixed-frame] canvas {
+  max-height: calc(100% - 38px);
+  object-fit: contain;
+}

@@ -393,7 +393,6 @@ async function shots(base = "http://localhost:1420") {
         await board.screenshot({ path: join(OUT, "shots", "11-cabi-board.png") });
         await panel.getByRole("button", { name: "닫기", exact: true }).click();
         for (const name of ["업무 경과일", "업무 타임라인", "중요 업무"]) {
-          await board.getByRole("button", { name: "Live Widget", exact: true }).click();
           await board.getByRole("button", { name, exact: true }).click();
         }
         const timeline = board.locator('[data-widget="timeline"]');

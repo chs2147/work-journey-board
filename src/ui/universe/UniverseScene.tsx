@@ -16,13 +16,13 @@ export default function UniverseScene({ graph, onFailure }: { graph: UGraph; onF
     if (!el) return;
     let renderer: T.WebGLRenderer;
     try {
-      renderer = new T.WebGLRenderer({ antialias: true });
+      renderer = new T.WebGLRenderer({ antialias: true, alpha: true });
     } catch {
       onFailure();
       return;
     }
     renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
-    renderer.setClearColor("#070d18");
+    renderer.setClearColor("#070d18", 0);
     const cv = renderer.domElement;
     cv.tabIndex = 0;
     cv.setAttribute(

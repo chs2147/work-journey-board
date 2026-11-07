@@ -67,9 +67,17 @@ test("Cabi.NET 노트·이미지·업무 보드는 공간을 3회 왕복해도 �
   await page.getByTestId("cabi-open-board").click();
   const board = await boardPromise;
   await board.getByTestId("note-scroll").waitFor();
-  await board.getByRole("button", { name: "Live Widget", exact: true }).click();
   await board.getByRole("button", { name: "업무 경과일", exact: true }).click();
   await expect(board.getByTestId("live-widget")).toHaveCount(1);
+  await board.evaluate(async () => {
+    const { useNote, resizeFrameLive, beginGesture, endGesture } = (await import(
+      "../../src/ui/note/noteStore" + ".ts"
+    )) as typeof import("../../src/ui/note/noteStore");
+    const b = useNote.getState().doc.boxes[0]!;
+    const before = beginGesture();
+    resizeFrameLive(b.id, b.x, b.y, 360, 320);
+    endGesture(before);
+  });
   const counts = () =>
     page.evaluate(async () => {
       const w = globalThis as unknown as { __wjbApp: { journalCounts(): Promise<Record<string, number>> } };
@@ -90,6 +98,9 @@ test("Cabi.NET 노트·이미지·업무 보드는 공간을 3회 왕복해도 �
   await page.getByTestId("cabi-open-board").click();
   const restoredBoard = await reopen;
   await expect(restoredBoard.getByTestId("live-widget")).toHaveCount(1);
+  expect(
+    await restoredBoard.getByTestId("live-widget").evaluate((el) => el.getBoundingClientRect().height),
+  ).toBe(320);
   expect(
     await restoredBoard.evaluate(async () => {
       const { useNote } = (await import(

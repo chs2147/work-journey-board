@@ -97,7 +97,7 @@ describe("v17 live widget data integrity", () => {
     let backup = false;
     await migrate(db, {
       beforeMigrate: async (from, to) => {
-        expect([from, to]).toEqual([16, 17]);
+        expect([from, to]).toEqual([16, 18]);
         backup = true;
       },
     });
@@ -122,7 +122,7 @@ describe("v17 live widget data integrity", () => {
     ).toBe(2);
     const copy = await openSqlJs(undefined, (db as SqlJsDriver).exportBytes()),
       restored = new JournalRepository(copy);
-    expect(await backupStructureMatches(copy, 17)).toBe(true);
+    expect(await backupStructureMatches(copy, 18)).toBe(true);
     expect((await restored.cabi.board(c.id))?.doc.boxes[0]).toMatchObject({ widget: { type: "elapsed" } });
     await expect(migrate(copy, { migrations: MIGRATIONS.filter((m) => m.version <= 16) })).rejects.toThrow();
     await copy.close();

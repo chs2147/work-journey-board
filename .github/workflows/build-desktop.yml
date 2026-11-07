@@ -22,6 +22,7 @@ on:
         "improve-v14",
         "improve-v16",
         "improve-v17",
+        "improve-v18",
         "cabinet-v2",
       ]
     paths:

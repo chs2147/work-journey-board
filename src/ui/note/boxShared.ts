@@ -1,6 +1,14 @@
+import { V18 } from "../../shared/v18Strings";
 // 텍스트·이미지 상자가 함께 쓰는 동작: 끌어 옮기기·폭 조절, 선택 상태의 키(방향키·Delete·Ctrl+Z·Esc), 높이 재기.
 import { useEffect, useLayoutEffect, type KeyboardEvent, type PointerEvent, type RefObject } from "react";
-import { boxName, isLinkedTo, type NoteBox } from "../../domain/note";
+import {
+  boxName,
+  isLinkedTo,
+  clampWidth,
+  clampImageWidth,
+  clampLinkWidth,
+  type NoteBox,
+} from "../../domain/note";
 import { STR } from "../../shared/strings";
 import { itemAtPoint, useLinkDrop } from "../board/rowDrag";
 import {
@@ -16,6 +24,8 @@ import {
   nudgeBox,
   redoNote,
   resizeBoxLive,
+  resizeFrameLive,
+  selectBox,
   startLinking,
   undoNote,
   useNote,
@@ -24,6 +34,7 @@ import {
   toggleMulti,
   noteGestureGeneration,
   registerNoteGesture,
+  captureNoteScope,
   cancelNoteGesture,
 } from "./noteStore";
 import styles from "./Note.module.css";
@@ -244,7 +255,7 @@ export function onSelectedBoxKey(e: KeyboardEvent<HTMLDivElement>, id: string, o
     e.preventDefault();
     if (e.shiftKey) cycleBoxEdges(id);
     else startLinking(id, "keys");
-  } else if (e.key.startsWith("Arrow")) {
+  } else if (e.key.startsWith("Arrow") && !e.altKey && !mod) {
     e.preventDefault();
     const [dx, dy] = {
       ArrowLeft: [-step, 0],
@@ -270,6 +281,132 @@ export function useBoxFrame(ref: RefObject<HTMLDivElement | null>, id: string, s
   useEffect(() => {
     if (selected) ref.current?.focus();
   }, [selected, ref]);
+
+  const frameH = useNote((s) => s.doc.boxes.find((b) => b.id === id)?.frameH);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (frameH) {
+      el.style.height = frameH + "px";
+      el.style.overflow = "visible";
+      el.dataset.fixedFrame = "true";
+    } else {
+      const b = useNote.getState().doc.boxes.find((b) => b.id === id);
+      if (b?.kind === "text" && b.widget) el.style.height = (b.h ?? 250) + "px";
+      else el.style.removeProperty("height");
+      el.style.removeProperty("overflow");
+      delete el.dataset.fixedFrame;
+    }
+  }, [frameH, ref, id]);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const cleanups: (() => void)[] = [];
+    const cancels = new Set<() => void>();
+    for (const side of ["nw", "n", "ne", "e", "se", "s", "sw", "w"]) {
+      const grip = document.createElement("button");
+      grip.type = "button";
+      grip.className = "note-frame-grip note-frame-" + side;
+      grip.setAttribute("aria-label", V18.frame(side));
+      grip.title = V18.frameHint;
+      grip.dataset.frameGrip = side;
+      const down = (e: globalThis.PointerEvent) => {
+        if (e.button !== 0) return;
+        e.preventDefault();
+        e.stopPropagation();
+        const box = useNote.getState().doc.boxes.find((b) => b.id === id);
+        if (!box) return;
+        selectBox(id);
+        el.focus({ preventScroll: true });
+        let active = true;
+        const current = captureNoteScope();
+        const before = beginGesture(),
+          zoom = useNote.getState().zoom,
+          ox = e.clientX,
+          oy = e.clientY,
+          h = box.frameH ?? el.offsetHeight;
+        grip.setPointerCapture(e.pointerId);
+        const move = (ev: globalThis.PointerEvent) => {
+          if (!active || !current()) return;
+          const dx = (ev.clientX - ox) / zoom,
+            dy = (ev.clientY - oy) / zoom;
+          const clamp =
+            box.kind === "image" ? clampImageWidth : box.kind === "link" ? clampLinkWidth : clampWidth;
+          let w = clamp(box.w + (side.includes("w") ? -dx : side.includes("e") ? dx : 0)),
+            nh = Math.max(80, Math.min(1200, h + (side.includes("n") ? -dy : side.includes("s") ? dy : 0)));
+          if (ev.shiftKey && side.length === 2) nh = Math.max(80, Math.min(1200, (h * w) / box.w));
+          if (side === "s" || side === "n") w = box.w;
+          resizeFrameLive(
+            id,
+            side.includes("w") ? box.x + box.w - w : box.x,
+            side.includes("n") ? box.y + h - nh : box.y,
+            w,
+            nh,
+          );
+        };
+        const done = () => {
+          if (!active) return;
+          active = false;
+          grip.removeEventListener("pointermove", move);
+          grip.removeEventListener("pointerup", done);
+          grip.removeEventListener("pointercancel", cancel);
+          window.removeEventListener("keydown", key, true);
+          unregister();
+          cancels.delete(cancel);
+          if (current()) endGesture(before);
+        };
+        const cancel = () => {
+          if (!active) return;
+          if (current()) cancelGesture(before);
+          done();
+        };
+        const key = (ev: globalThis.KeyboardEvent) => {
+          if (ev.key === "Escape") {
+            ev.preventDefault();
+            ev.stopPropagation();
+            cancel();
+          }
+        };
+        const unregister = registerNoteGesture(cancel);
+        cancels.add(cancel);
+        grip.addEventListener("pointermove", move);
+        grip.addEventListener("pointerup", done);
+        grip.addEventListener("pointercancel", cancel);
+        window.addEventListener("keydown", key, true);
+      };
+      const resizeKey = (ev: globalThis.KeyboardEvent) => {
+        if (ev.altKey || ev.ctrlKey || ev.metaKey) return;
+        if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(ev.key)) return;
+        ev.preventDefault();
+        ev.stopPropagation();
+        const b = useNote.getState().doc.boxes.find((b) => b.id === id);
+        if (!b) return;
+        const step = ev.shiftKey ? 32 : 8,
+          before = beginGesture(),
+          h = b.frameH ?? el.offsetHeight;
+        resizeFrameLive(
+          id,
+          b.x,
+          b.y,
+          b.w + (ev.key === "ArrowRight" ? step : ev.key === "ArrowLeft" ? -step : 0),
+          h + (ev.key === "ArrowDown" ? step : ev.key === "ArrowUp" ? -step : 0),
+        );
+        endGesture(before);
+      };
+      grip.addEventListener("keydown", resizeKey);
+      grip.addEventListener("pointerdown", down);
+      el.append(grip);
+      cleanups.push(() => {
+        grip.removeEventListener("keydown", resizeKey);
+        grip.removeEventListener("pointerdown", down);
+        grip.remove();
+      });
+    }
+    return () => {
+      for (const cancel of cancels) cancel();
+      cleanups.forEach((f) => f());
+    };
+  }, [id, ref]);
 
   // 보드 배지로 찾아옴(improve-1026v2-spec 6-2) — 이미 선택돼 있어도 포커스·화면 안으로
   const reveal = useNote((s) => (s.revealRequest?.id === id ? s.revealRequest.n : 0));

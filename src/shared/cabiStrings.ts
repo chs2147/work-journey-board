@@ -122,7 +122,7 @@ export const CABI = localizeTree({
   modified: "수정",
   task: "소속 업무",
   noteOwner: "날짜와 무관한 업무 노트",
-  boardOwner: "업무당 하나의 자유 메모보드",
+  boardOwner: "업무 메모보드",
   referenceHelp: "자료를 보드로 끌어 놓으면 원본 연결 카드가 만들어집니다.",
   deleteBoard: "업무 보드 삭제",
   deleteBoardConfirm:

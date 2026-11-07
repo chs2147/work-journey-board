@@ -104,11 +104,18 @@ npm run tauri dev    # 실앱 모드(윈도우·맥 / 리눅스는 webkit2gtk-4.
 - 브라우저 모드 주소 옵션(E2E·시연): `?today=YYYY-MM-DD` 오늘 고정 · `?empty=1` 빈 일지 · `?fresh=1` 첫 실행 화면 · `?existing=/경로` 그 폴더에 샘플 일지 준비 · `?config=/경로` 설정 폴더 지정 · `?sample=year`(`year-img`) 가상 1년치 일지 · `?sample=showcase` README·소개 사이트 화면용 메모 보드 예시 · `?corrupt=1` 파손 일지
 - 설치 파일: `main`에 반영되면 *Build desktop installers*가 윈도우(NSIS)·맥(유니버설 DMG)을 나란히 만들고, **둘 다 성공해야** [Releases](https://github.com/chs2147/work-journey-board/releases)에 `v<버전>`으로 함께 올린다 — 0.x·`-rc`는 사전 릴리스, 1.0.0 이상 정식 판은 정식 릴리스. 윈도우 오프라인 설치판은 요청할 때만 Actions → *Build desktop installers* → Run workflow(main) → `offline`으로 그 판 릴리스에 더한다. 하나의 원본으로 두 플랫폼을 같은 판으로 운영한다([docs/macos-spec.md](docs/macos-spec.md)).
 
-현재 상세 기능과 도입 버전: [Feature List 운영 문서](docs/features/README.md) · [현재 목록](docs/features/CURRENT.md) · [검토용 Excel](docs/features/exports/work-journey-board/Work-Journey-Board-Feature-List-v1.21.0.xlsx)
+현재 상세 기능과 도입 버전: [Feature List 운영 문서](docs/features/README.md) · [현재 목록](docs/features/CURRENT.md) · [검토용 Excel](docs/features/exports/work-journey-board/Work-Journey-Board-Feature-List-v1.22.0-rc.1.xlsx)
 
 ## Version History
 
 최근 5개 버전(정식·RC)을 표시합니다. [더 보기 — 전체 버전 히스토리](VERSION_HISTORY.md)
+
+### v1.22.0-rc.1 (2026-11-07) — 접이식 세로 팔레트·표 편집·객체 크기 개선
+
+- C안 접이식 세로 도구 팔레트와 위젯 그룹·복사/붙여넣기 아이콘. 불필요한 고정 문구·보드 미리보기 제거.
+- 업무 노트의 표 행/열 메뉴·계층 번호·명확한 이미지/가져오기·목차 아이콘.
+- 모든 보드 객체의 가로/세로 프레임 크기 저장·실행 취소, Universe 성운/별빛 배경. DB v18.
+- improve-v18 작업 브랜치 검증판. 정식 버전·main 반영은 별도 승인.
 
 ### v1.21.0 (2026-11-07) — Cabi.NET Live Widget·노트 편집 개선
 
@@ -135,12 +142,6 @@ npm run tauri dev    # 실앱 모드(윈도우·맥 / 리눅스는 webkit2gtk-4.
 - 자료 원본 카드·누적 주간 메모 연결/사본·주간↔업무 보드 객체 복제, 목록/카드/보드 보기와 전역 검색.
 - DB v16, 마이그레이션 전 백업. 단일 저장 주체·세션/리비전 검증·공간 전환 전 자식 창 저장 확인.
 - 작업 브랜치 검증판. Windows/macOS 실제 창 간 드래그와 설치 확인은 실기 검증 대상.
-
-### v1.19.0 (2026-11-06) — 날짜 복제·공유 연결·인사이트 개선
-- RC2 검증 완료 후 정식 반영. 주간/데일리 날짜 지정 복제와 메모·Cabinet 원본 공유, 이전 내역 연결 가져오기.
-- 타임라인 목록·활동 이름 열 너비 조절·저장, 가로 스크롤 없는 유동 격자·기록 일수 열 제거.
-- 빈 메모 연결 띠 제거·항목 삭제 취소의 연결 복원·현재 DB 구조 백업 검증. DB v15, 이전 직전 자동 백업.
-- 기능 목록·검토용 Excel·가이드·릴리스 노트 동반 갱신. 기존 main 1.18.1은 `release/v1.18.1`에 보존.
 
 [더 보기 — 전체 버전 히스토리](VERSION_HISTORY.md)
 

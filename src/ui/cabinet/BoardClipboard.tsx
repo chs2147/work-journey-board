@@ -1,6 +1,6 @@
 import { copyBoardObjects, pasteBoardObjects } from "./boardTransfer";
 import { CABI } from "../../shared/cabiStrings";
-import { IconCopyItem, IconPlus } from "../common/icons";
+import { V18Icon } from "../common/v18Icons";
 import { reportError } from "../board/boardStore";
 import styles from "../note/Note.module.css";
 export function BoardClipboard() {
@@ -13,7 +13,7 @@ export function BoardClipboard() {
         aria-label={CABI.copyObjects}
         onClick={() => void copyBoardObjects().catch(reportError)}
       >
-        <IconCopyItem />
+        <V18Icon kind="copy" />
       </button>
       <button
         type="button"
@@ -22,7 +22,7 @@ export function BoardClipboard() {
         aria-label={CABI.pasteObjects}
         onClick={() => void pasteBoardObjects().catch(reportError)}
       >
-        <IconPlus />
+        <V18Icon kind="paste" />
       </button>
     </>
   );

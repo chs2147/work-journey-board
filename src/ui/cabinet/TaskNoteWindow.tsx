@@ -1,3 +1,6 @@
+import { V18 } from "../../shared/v18Strings";
+import { NoteTableControls } from "./NoteTableControls";
+import { V18Icon } from "../common/v18Icons";
 import { V17 } from "../../shared/v17Strings";
 import { SaveStatus } from "../common/SaveStatus";
 import { NoteBlockControls } from "./NoteBlockControls";
@@ -12,7 +15,7 @@ import { importCabiMarkdown } from "../../domain/cabiMarkdown";
 import { MARKDOWN_MAX_BYTES } from "../../domain/markdownNote";
 import { CABI } from "../../shared/cabiStrings";
 import { STR } from "../../shared/strings";
-import { IconNote, IconExportFile, IconPlus, IconTune, IconTrash } from "../common/icons";
+import { IconNote, IconExportFile, IconTrash } from "../common/icons";
 import { reportError, toast } from "../board/boardStore";
 import { prepareImage, type PreparedImage } from "../note/imageProcess";
 import { cabiClient, cabiContext, registerCabiFlush, useCabiChange } from "./cabiService";
@@ -400,15 +403,15 @@ export function TaskNoteWindow({ noteId }: { noteId: string }) {
             savedAt={note.updatedAt}
           />
           <button
-            className={styles.icon}
+            className={styles.button}
             aria-label={CABI.image}
             title={CABI.image}
             onClick={() => imageRef.current?.click()}
           >
-            <IconPlus />
+            <V18Icon kind="image" /> {V18.image}
           </button>
-          <button className={styles.button} onClick={() => fileRef.current?.click()}>
-            <IconPlus />
+          <button className={styles.button} title={V18.importHint} onClick={() => fileRef.current?.click()}>
+            <V18Icon kind="import" />
             {CABI.import}
           </button>
           <button className={styles.button} onClick={() => setMenu((v) => !v)}>
@@ -418,10 +421,11 @@ export function TaskNoteWindow({ noteId }: { noteId: string }) {
           <button
             className={styles.icon}
             aria-label={CABI.toc}
+            aria-expanded={toc}
             title={CABI.toc}
             onClick={() => setToc((v) => !v)}
           >
-            <IconTune />
+            <V18Icon kind="toc" />
           </button>
           <button
             className={styles.icon}
@@ -511,10 +515,10 @@ export function TaskNoteWindow({ noteId }: { noteId: string }) {
           selectBlock={selectBlock}
         />
       )}
+      {editor && <NoteTableControls editor={editor} />}
       <div className={styles.docBody}>
         <div className={styles.editorScroll}>
           <div className={styles.page}>
-            <span className={styles.muted}>{CABI.noteOwner}</span>
             <input
               ref={titleRef}
               className={styles.title}

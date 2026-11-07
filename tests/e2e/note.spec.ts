@@ -84,7 +84,7 @@ test("빈 곳 클릭 → 그 자리(8px 칸)에 상자, 글을 쓰면 저장되�
   await newBoxInW44(page, 203, 61);
   await page.keyboard.type("가상 확인 사항");
   expect(await geom(boxes(page).first())).toEqual({ x: 200, y: 64, w: 320 }); // 가까운 8px 칸
-  await expect(page.getByTestId("note-counts")).toHaveText("상자 1개");
+  await expect(boxes(page)).toHaveCount(1);
   await page.keyboard.press("Escape"); // 편집 끝 → 상자 선택
   await saved(page);
   await goWeek(page, "Alt+ArrowLeft", "2026-W43");
@@ -295,7 +295,7 @@ test("보드 우선 자동 높이: 작은 화면에서도 업무 행에 접근�
   await expect(dock).toHaveAttribute("data-dock-mode", "fixed");
   await expect.poll(async () => Math.round(h0 - (await box()).height)).toBe(80);
   // 머리 빈 곳 두 번 누르기 → 자동으로
-  await page.getByTestId("note-counts").dblclick();
+  await page.getByTestId("note-view-spacer").dblclick();
   await expect(dock).toHaveAttribute("data-dock-mode", "auto");
   await expect.poll(async () => Math.round((await box()).height)).toBe(Math.round(h0));
 });

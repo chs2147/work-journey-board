@@ -1,3 +1,4 @@
+import { CabiNumbering } from "./cabiNumbering";
 import { Extension } from "@tiptap/core";
 import { Plugin } from "@tiptap/pm/state";
 import { openLink } from "../common/openLink";
@@ -50,6 +51,22 @@ export function cabiEditorExtensions() {
     TextColor,
     LinkOpener,
     CabiImage,
+    CabiNumbering,
+    Extension.create({
+      name: "cabiOrderedIndent",
+      addKeyboardShortcuts() {
+        return {
+          Tab: () =>
+            this.editor.isActive("table")
+              ? false
+              : this.editor.isActive("orderedList") && this.editor.commands.sinkListItem("listItem"),
+          "Shift-Tab": () =>
+            this.editor.isActive("table")
+              ? false
+              : this.editor.isActive("orderedList") && this.editor.commands.liftListItem("listItem"),
+        };
+      },
+    }),
     Extension.create({
       name: "cabiLinkGuard",
       addProseMirrorPlugins() {

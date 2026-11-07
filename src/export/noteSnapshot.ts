@@ -414,8 +414,15 @@ export function layoutSnapshot(input: SnapshotInput, measure: Measure): Snapshot
     } else if (box.kind === "image") {
       const img = input.images[box.asset];
       const pad = 4;
-      const iw = inner - pad * 2;
-      const ih = img ? Math.round((iw * img.height) / Math.max(1, img.width)) : 60;
+      let iw = inner - pad * 2;
+      let ih = img ? Math.round((iw * img.height) / Math.max(1, img.width)) : 60;
+      if (box.frameH && img) {
+        const maxH = Math.max(20, box.frameH - top - pad * 2 - (box.caption.trim() ? 28 : 0));
+        if (ih > maxH) {
+          iw = (iw * maxH) / ih;
+          ih = maxH;
+        }
+      }
       let y = top + pad;
       if (img) L.image = { asset: box.asset, x: 1 + pad, y, w: iw, h: ih, radius: 4 };
       else
@@ -492,7 +499,7 @@ export function layoutSnapshot(input: SnapshotInput, measure: Measure): Snapshot
       L.ops.push({ ...textOp(url, 13, mainBottom + 6 + 8, 11, SNAP_THEME.text3), w: measure(url, font) });
       h = mainBottom + 6 + 16 + 6 + 1;
     }
-    L.rect.h = Math.ceil(h);
+    L.rect.h = Math.ceil(box.frameH ?? h);
     boxes.push(L);
   }
 

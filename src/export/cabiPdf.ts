@@ -74,9 +74,9 @@ export async function cabiPdf(
   };
   draw(title, 23);
   y -= 15;
-  const render = async (n: PMNode, indent = 0): Promise<void> => {
+  const render = async (n: PMNode, indent = 0, numberPath: number[] = []): Promise<void> => {
     if (n.type === "doc") {
-      for (const child of n.content ?? []) await render(child, indent);
+      for (const child of n.content ?? []) await render(child, indent, numberPath);
       return;
     }
     if (n.type === "heading") {
@@ -93,7 +93,7 @@ export async function cabiPdf(
       for (const [i, item] of (n.content ?? []).entries()) {
         const prefix =
           n.type === "orderedList"
-            ? `${i + Number(n.attrs?.start ?? 1)}. `
+            ? `${[...numberPath, i + Number(n.attrs?.start ?? 1)].join("-")}. `
             : n.type === "taskList"
               ? item.attrs?.checked
                 ? "☑ "
@@ -101,7 +101,12 @@ export async function cabiPdf(
               : "• ";
         const [first, ...rest] = item.content ?? [];
         if (first) draw(prefix + cabiText(first).trim(), 11, indent + 12);
-        for (const child of rest) await render(child, indent + 18);
+        for (const child of rest)
+          await render(
+            child,
+            indent + 18,
+            n.type === "orderedList" ? [...numberPath, i + Number(n.attrs?.start ?? 1)] : [],
+          );
       }
       y -= 6;
       return;
@@ -179,7 +184,7 @@ export async function cabiPdf(
       return;
     }
     if (n.type === "blockquote") {
-      for (const c of n.content ?? []) await render(c, indent + 18);
+      for (const c of n.content ?? []) await render(c, indent + 18, numberPath);
       return;
     }
     draw(cabiText(n).trim(), n.type === "codeBlock" ? 10 : 11, indent, n.type === "codeBlock");

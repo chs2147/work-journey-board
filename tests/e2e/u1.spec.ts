@@ -157,7 +157,7 @@ test("메모: 빈 곳 클릭은 커서 자리만 — 글자를 쳐야 상자, �
   await expect(page.getByTestId("note-ghost")).toHaveCount(1);
   await expect(page.getByTestId("note-box")).toHaveCount(0);
   await expect(page.getByTestId("note-toolbar")).toHaveCount(0);
-  await expect(page.getByTestId("note-counts")).toHaveText("비어 있음");
+  await expect(page.getByTestId("note-counts")).toHaveCount(0);
   // 클릭만 하고 다른 주에 다녀오면 아무것도 없다
   await page.keyboard.press("Alt+ArrowLeft");
   await expect(page.getByTestId("week-title")).toContainText("2026-W43");

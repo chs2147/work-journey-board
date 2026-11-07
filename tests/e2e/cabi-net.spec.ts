@@ -161,8 +161,7 @@ test("업무당 보드 하나·누적 메모 원본 연결·주간 메모 사본
   });
   expect(before).toBe(1);
   await page.getByLabel("업무를 선택해 주세요", { exact: true }).selectOption("");
-  await page.getByRole("button", { name: "보드 미리보기", exact: true }).click();
-  await expect(page.getByTestId("cabi-board-preview")).toHaveCount(1);
+  await expect(page.getByRole("button", { name: "보드 미리보기", exact: true })).toHaveCount(0);
 });
 
 test("창 간 복제는 토큰으로 양방향 전달하고 원본 객체·이미지를 보존한다", async ({ page }) => {
