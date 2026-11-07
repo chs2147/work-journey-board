@@ -36,6 +36,9 @@ jobs:
       - name: Feature catalog and review workbook check
         run: node scripts/features/generate.mjs check
 
+      - name: Install PDF rendering checker
+        run: sudo apt-get update && sudo apt-get install -y poppler-utils
+
       - name: Install Playwright browsers (Chromium, WebKit)
         run: npx playwright install --with-deps chromium webkit
       - run: npm run e2e

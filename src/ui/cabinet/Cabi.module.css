@@ -782,3 +782,17 @@
   right: calc(100% + 7px);
   white-space: nowrap;
 }
+
+.exportWrap {
+  position: relative;
+  display: inline-flex;
+}
+.menu.exportMenu {
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: min(240px, calc(100vw - 24px));
+  max-width: calc(100vw - 24px);
+}
+.exportMenu button {
+  width: 100%;
+}

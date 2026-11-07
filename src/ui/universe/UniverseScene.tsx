@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { autoMotionDelta, type AutoMotionStyle } from "../../domain/universeAutoMotion";
 import * as T from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { layoutUniverse3d } from "../../domain/universeLayout3d";
@@ -8,7 +9,19 @@ import styles from "./Universe.module.css";
 
 let poseCache: { key: string; position: number[]; target: number[] } | null = null;
 /** Local WebGL only. No loaders, textures, URLs or network services. */
-export default function UniverseScene({ graph, onFailure }: { graph: UGraph; onFailure: () => void }) {
+export default function UniverseScene({
+  graph,
+  onFailure,
+  autoMotion,
+}: {
+  graph: UGraph;
+  onFailure: () => void;
+  autoMotion: { enabled: boolean; style: AutoMotionStyle };
+}) {
+  const motion = useRef(autoMotion);
+  useEffect(() => {
+    motion.current = autoMotion;
+  }, [autoMotion]);
   const host = useRef<HTMLDivElement>(null);
   const api = useRef<{ zoom: (k: number) => void; fit: () => void } | null>(null);
   useEffect(() => {
@@ -131,6 +144,7 @@ export default function UniverseScene({ graph, onFailure }: { graph: UGraph; onF
     const labels = new Map<string, HTMLSpanElement>();
     const labelLayer = document.createElement("div");
     labelLayer.className = styles.spaceLabels ?? "";
+    labelLayer.dataset.testid = "universe-3d-labels";
     el.append(labelLayer);
     graph.nodes
       .filter((n) => n.kind === "category" || n.kind === "workspace")
@@ -161,7 +175,41 @@ export default function UniverseScene({ graph, onFailure }: { graph: UGraph; onF
     let gate = 0,
       pointerStart: { x: number; y: number } | null = null;
     const reduced = matchMedia("(prefers-reduced-motion: reduce)");
+    let autoTime = 0,
+      lastFrame = performance.now(),
+      resumeAt = lastFrame + 3000;
+    let strength = 0,
+      interacting = false,
+      hovering = false,
+      focused = document.hasFocus();
+    let lastStyle = motion.current.style;
+    const pauseAuto = () => {
+      autoTime = 0;
+      strength = 0;
+      resumeAt = performance.now() + 3000;
+    };
+    const startAutoPause = () => {
+      interacting = true;
+      pauseAuto();
+    };
+    const endAutoPause = () => {
+      interacting = false;
+      pauseAuto();
+    };
+    controls.addEventListener("start", startAutoPause);
+    controls.addEventListener("end", endAutoPause);
+    const focusWindow = () => {
+      focused = true;
+      pauseAuto();
+    };
+    const blurWindow = () => {
+      focused = false;
+      strength = 0;
+    };
+    window.addEventListener("focus", focusWindow);
+    window.addEventListener("blur", blurWindow);
     const fly = (target: T.Vector3, pos: T.Vector3) => {
+      pauseAuto();
       flight = {
         from: camera.position.clone(),
         to: pos,
@@ -176,6 +224,7 @@ export default function UniverseScene({ graph, onFailure }: { graph: UGraph; onF
       fly(center.clone(), center.clone().add(new T.Vector3(0, radius * 0.3, fitDistance)));
     };
     const zoom = (k: number) => {
+      pauseAuto();
       zoomIntent = true;
       flight = null;
       camera.position.sub(controls.target).multiplyScalar(k).add(controls.target);
@@ -194,6 +243,7 @@ export default function UniverseScene({ graph, onFailure }: { graph: UGraph; onF
       return h?.instanceId !== undefined ? graph.nodes[h.instanceId]?.id : undefined;
     };
     const down = (e: PointerEvent) => {
+      pauseAuto();
       cv.focus({ preventScroll: true });
       pointerStart = { x: e.clientX, y: e.clientY };
       flight = null;
@@ -211,6 +261,7 @@ export default function UniverseScene({ graph, onFailure }: { graph: UGraph; onF
       if (id) focusOn(id);
     };
     const wheel = (e: WheelEvent) => {
+      pauseAuto();
       zoomIntent = true;
       if (e.deltaY < 0) {
         const id = hit(e.clientX, e.clientY);
@@ -224,6 +275,7 @@ export default function UniverseScene({ graph, onFailure }: { graph: UGraph; onF
       )
         return;
       e.preventDefault();
+      pauseAuto();
       if (e.key === "Home") fit();
       else if (e.key === "Escape") setMode("galaxy");
       else if (e.key === "+" || e.key === "=") zoom(0.85);
@@ -245,6 +297,17 @@ export default function UniverseScene({ graph, onFailure }: { graph: UGraph; onF
         controls.update();
       }
     };
+    const hoverNode = (e: PointerEvent) => {
+      hovering = !interacting && !!hit(e.clientX, e.clientY);
+    };
+    const leaveNode = () => {
+      hovering = false;
+    };
+    const cancelPointer = () => {
+      pointerStart = null;
+      interacting = false;
+      pauseAuto();
+    };
     const lost = (e: Event) => {
       e.preventDefault();
       onFailure();
@@ -258,6 +321,10 @@ export default function UniverseScene({ graph, onFailure }: { graph: UGraph; onF
     resize.observe(el);
     cv.addEventListener("pointerdown", down, true);
     cv.addEventListener("pointerup", up);
+    cv.addEventListener("pointermove", hoverNode);
+    cv.addEventListener("pointerleave", leaveNode);
+    cv.addEventListener("pointercancel", cancelPointer);
+    cv.addEventListener("lostpointercapture", cancelPointer);
     cv.addEventListener("dblclick", dbl);
     cv.addEventListener("wheel", wheel, { passive: true });
     cv.addEventListener("keydown", key);
@@ -291,6 +358,38 @@ export default function UniverseScene({ graph, onFailure }: { graph: UGraph; onF
         if (p === 1) flight = null;
       }
       controls.update();
+      const dt = Math.min(0.05, Math.max(0, (now - lastFrame) / 1000));
+      lastFrame = now;
+      if (lastStyle !== motion.current.style) {
+        lastStyle = motion.current.style;
+        autoTime = 0;
+        strength = 0;
+      }
+      const playing =
+        motion.current.enabled &&
+        !reduced.matches &&
+        focused &&
+        !interacting &&
+        !hovering &&
+        !flight &&
+        now > resumeAt &&
+        !document.querySelector('[role="dialog"], [role="menu"], dialog[open]');
+      el.dataset.autoPlaying = String(playing);
+      cv.dataset.autoPlaying = String(playing);
+      if (playing) {
+        strength = Math.min(1, strength + dt / 1.2);
+        const step = autoMotionDelta(lastStyle, autoTime, dt);
+        autoTime = step.time;
+        const off = new T.Spherical().setFromVector3(camera.position.clone().sub(controls.target));
+        off.theta += step.theta * strength;
+        off.phi = T.MathUtils.clamp(
+          off.phi + step.phi * strength,
+          controls.minPolarAngle,
+          controls.maxPolarAngle,
+        );
+        camera.position.copy(controls.target).add(new T.Vector3().setFromSpherical(off));
+        controls.update();
+      } else strength = 0;
       if (zoomIntent && now > gate && !flight) {
         const ratio = camera.position.distanceTo(controls.target) / fitDistance;
         if (state.mode === "galaxy" && ratio < 0.42 && state.selected && index.has(state.selected)) {
@@ -352,6 +451,8 @@ export default function UniverseScene({ graph, onFailure }: { graph: UGraph; onF
       renderer.render(scene, camera);
     };
     const visibility = () => {
+      lastFrame = performance.now();
+      strength = 0;
       cancelAnimationFrame(frame);
       if (!document.hidden && !disposed) frame = requestAnimationFrame(render);
     };
@@ -359,6 +460,14 @@ export default function UniverseScene({ graph, onFailure }: { graph: UGraph; onF
     frame = requestAnimationFrame(render);
     return () => {
       document.removeEventListener("visibilitychange", visibility);
+      window.removeEventListener("focus", focusWindow);
+      window.removeEventListener("blur", blurWindow);
+      controls.removeEventListener("start", startAutoPause);
+      controls.removeEventListener("end", endAutoPause);
+      cv.removeEventListener("pointermove", hoverNode);
+      cv.removeEventListener("pointerleave", leaveNode);
+      cv.removeEventListener("pointercancel", cancelPointer);
+      cv.removeEventListener("lostpointercapture", cancelPointer);
       poseCache = { key: poseKey, position: camera.position.toArray(), target: controls.target.toArray() };
       disposed = true;
       cancelAnimationFrame(frame);
