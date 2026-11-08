@@ -1,0 +1,463 @@
+{
+  "observed_at": "2026-11-08T13:28:34.483894+00:00",
+  "scope": "Local PostgreSQL SQL authorization/transaction slice; Auth gateway is a test stub; no cloud writes",
+  "extended": true,
+  "image": "postgres@sha256:665dc7b37ac52a17e298511414c21d23ffa4e6a6ef6225b3e5d59c7afb35e994",
+  "postgres_version": "17.11 (Debian 17.11-1.pgdg12+2)",
+  "tests": [
+    {
+      "name": "create returns decimal string versions",
+      "status": "PASS",
+      "ms": 85
+    },
+    {
+      "name": "owner sees own workspace only",
+      "status": "PASS",
+      "ms": 84
+    },
+    {
+      "name": "other account cannot read record",
+      "status": "PASS",
+      "ms": 104
+    },
+    {
+      "name": "other account cannot read change log",
+      "status": "PASS",
+      "ms": 100
+    },
+    {
+      "name": "cross workspace command rejected without effects",
+      "status": "PASS",
+      "ms": 301
+    },
+    {
+      "name": "forged device rejected without effects",
+      "status": "PASS",
+      "ms": 315
+    },
+    {
+      "name": "wrong auth session rejected",
+      "status": "PASS",
+      "ms": 368
+    },
+    {
+      "name": "missing auth session rejected",
+      "status": "PASS",
+      "ms": 322
+    },
+    {
+      "name": "unauthenticated subject rejected",
+      "status": "PASS",
+      "ms": 296
+    },
+    {
+      "name": "wrong generation rejected",
+      "status": "PASS",
+      "ms": 298
+    },
+    {
+      "name": "duplicate operation returns same result",
+      "status": "PASS",
+      "ms": 82
+    },
+    {
+      "name": "duplicate does not add log or operation",
+      "status": "PASS",
+      "ms": 198
+    },
+    {
+      "name": "same key changed body rejected",
+      "status": "PASS",
+      "ms": 299
+    },
+    {
+      "name": "same key changed target rejected",
+      "status": "PASS",
+      "ms": 320
+    },
+    {
+      "name": "same key changed base rejected",
+      "status": "PASS",
+      "ms": 283
+    },
+    {
+      "name": "stale revision rejected",
+      "status": "PASS",
+      "ms": 307
+    },
+    {
+      "name": "new record requires revision zero",
+      "status": "PASS",
+      "ms": 291
+    },
+    {
+      "name": "null body rejected",
+      "status": "PASS",
+      "ms": 284
+    },
+    {
+      "name": "oversized utf8 body rejected",
+      "status": "PASS",
+      "ms": 274
+    },
+    {
+      "name": "negative revision rejected",
+      "status": "PASS",
+      "ms": 281
+    },
+    {
+      "name": "direct table insert forbidden",
+      "status": "PASS",
+      "ms": 97
+    },
+    {
+      "name": "direct table update forbidden",
+      "status": "PASS",
+      "ms": 91
+    },
+    {
+      "name": "direct log delete forbidden",
+      "status": "PASS",
+      "ms": 98
+    },
+    {
+      "name": "operation ledger not visible",
+      "status": "PASS",
+      "ms": 95
+    },
+    {
+      "name": "device sessions not visible",
+      "status": "PASS",
+      "ms": 80
+    },
+    {
+      "name": "anonymous function denied",
+      "status": "PASS",
+      "ms": 86
+    },
+    {
+      "name": "unbound session sees no rows",
+      "status": "PASS",
+      "ms": 90
+    },
+    {
+      "name": "update accepted at correct revision",
+      "status": "PASS",
+      "ms": 102
+    },
+    {
+      "name": "old ack replay after newer edit is unchanged",
+      "status": "PASS",
+      "ms": 99
+    },
+    {
+      "name": "revocation blocks reads and cached retry",
+      "status": "PASS",
+      "ms": 512
+    },
+    {
+      "name": "failure after record and log rolls back every write",
+      "status": "PASS",
+      "ms": 606
+    },
+    {
+      "name": "caller rollback preserves cursor and allows retry",
+      "status": "PASS",
+      "ms": 423
+    },
+    {
+      "name": "concurrent duplicate applies once",
+      "status": "PASS",
+      "ms": 282
+    },
+    {
+      "name": "concurrent same-base edits have one winner",
+      "status": "PASS",
+      "ms": 283
+    },
+    {
+      "name": "workspace lock enforces commit ordered cursors",
+      "status": "PASS",
+      "ms": 3277
+    },
+    {
+      "name": "other owner writes isolated workspace",
+      "status": "PASS",
+      "ms": 92
+    },
+    {
+      "name": "all accepted writes have one log and ledger row",
+      "status": "PASS",
+      "ms": 207
+    },
+    {
+      "name": "all tables enable RLS",
+      "status": "PASS",
+      "ms": 85
+    },
+    {
+      "name": "definer functions owned by non-superuser",
+      "status": "PASS",
+      "ms": 90
+    },
+    {
+      "name": "verified local signed principal registers own device",
+      "status": "PASS",
+      "ms": 166
+    },
+    {
+      "name": "device registration retry idempotent",
+      "status": "PASS",
+      "ms": 85
+    },
+    {
+      "name": "other user cannot claim device id",
+      "status": "PASS",
+      "ms": 86
+    },
+    {
+      "name": "new session cannot silently rebind device",
+      "status": "PASS",
+      "ms": 86
+    },
+    {
+      "name": "registration requires session uuid",
+      "status": "PASS",
+      "ms": 84
+    },
+    {
+      "name": "registration requires user",
+      "status": "PASS",
+      "ms": 83
+    },
+    {
+      "name": "anonymous registration denied",
+      "status": "PASS",
+      "ms": 86
+    },
+    {
+      "name": "reserve object starts private",
+      "status": "PASS",
+      "ms": 97
+    },
+    {
+      "name": "reservation retry idempotent",
+      "status": "PASS",
+      "ms": 82
+    },
+    {
+      "name": "reservation payload substitution rejected",
+      "status": "PASS",
+      "ms": 267
+    },
+    {
+      "name": "pending metadata not visible even to owner",
+      "status": "PASS",
+      "ms": 79
+    },
+    {
+      "name": "missing uploaded bytes cannot finalize",
+      "status": "PASS",
+      "ms": 255
+    },
+    {
+      "name": "untrusted caller cannot stage object bytes",
+      "status": "PASS",
+      "ms": 326
+    },
+    {
+      "name": "worker uploads exact private bytes",
+      "status": "PASS",
+      "ms": 96
+    },
+    {
+      "name": "worker upload retry with same bytes succeeds",
+      "status": "PASS",
+      "ms": 103
+    },
+    {
+      "name": "pending bytes not visible even to owner",
+      "status": "PASS",
+      "ms": 90
+    },
+    {
+      "name": "stored upload cannot be overwritten",
+      "status": "PASS",
+      "ms": 269
+    },
+    {
+      "name": "other workspace cannot finalize upload",
+      "status": "PASS",
+      "ms": 249
+    },
+    {
+      "name": "wrong device cannot finalize upload",
+      "status": "PASS",
+      "ms": 251
+    },
+    {
+      "name": "valid bytes finalize ready",
+      "status": "PASS",
+      "ms": 85
+    },
+    {
+      "name": "finalize retry returns ready",
+      "status": "PASS",
+      "ms": 80
+    },
+    {
+      "name": "owner reads finalized bytes intact",
+      "status": "PASS",
+      "ms": 88
+    },
+    {
+      "name": "other account sees no finalized bytes",
+      "status": "PASS",
+      "ms": 92
+    },
+    {
+      "name": "other account sees no finalized metadata",
+      "status": "PASS",
+      "ms": 88
+    },
+    {
+      "name": "ready object cannot be canceled",
+      "status": "PASS",
+      "ms": 242
+    },
+    {
+      "name": "direct asset state update denied",
+      "status": "PASS",
+      "ms": 417
+    },
+    {
+      "name": "direct object insert denied",
+      "status": "PASS",
+      "ms": 411
+    },
+    {
+      "name": "wrong generation cannot reserve",
+      "status": "PASS",
+      "ms": 431
+    },
+    {
+      "name": "invalid hash cannot reserve",
+      "status": "PASS",
+      "ms": 357
+    },
+    {
+      "name": "oversized reservation denied",
+      "status": "PASS",
+      "ms": 381
+    },
+    {
+      "name": "zero size reservation denied",
+      "status": "PASS",
+      "ms": 275
+    },
+    {
+      "name": "actual size mismatch remains private",
+      "status": "PASS",
+      "ms": 572
+    },
+    {
+      "name": "actual hash mismatch remains private",
+      "status": "PASS",
+      "ms": 516
+    },
+    {
+      "name": "cancel pending removes staged bytes",
+      "status": "PASS",
+      "ms": 166
+    },
+    {
+      "name": "canceled asset id not silently reused",
+      "status": "PASS",
+      "ms": 264
+    },
+    {
+      "name": "canceled asset cannot finalize",
+      "status": "PASS",
+      "ms": 241
+    },
+    {
+      "name": "expired pending upload cannot finalize",
+      "status": "PASS",
+      "ms": 547
+    },
+    {
+      "name": "expired reservation retry fails closed",
+      "status": "PASS",
+      "ms": 253
+    },
+    {
+      "name": "expired reservation can be explicitly canceled",
+      "status": "PASS",
+      "ms": 84
+    },
+    {
+      "name": "generation change hides old ready bytes and rejects ack",
+      "status": "PASS",
+      "ms": 514
+    },
+    {
+      "name": "failed finalize never exposes bytes and can retry",
+      "status": "PASS",
+      "ms": 764
+    },
+    {
+      "name": "concurrent registration and revoke cannot resurrect session",
+      "status": "PASS",
+      "ms": 282
+    },
+    {
+      "name": "pending bytes reserve quota and cancel releases quota",
+      "status": "PASS",
+      "ms": 1860
+    },
+    {
+      "name": "concurrent reservations cannot exceed quota",
+      "status": "PASS",
+      "ms": 216
+    },
+    {
+      "name": "app session revoke blocks reregistration and private reads",
+      "status": "PASS",
+      "ms": 707
+    },
+    {
+      "name": "session revocation retry is safe",
+      "status": "PASS",
+      "ms": 85
+    },
+    {
+      "name": "different account session remains active",
+      "status": "PASS",
+      "ms": 87
+    },
+    {
+      "name": "fresh auth session can register a new device",
+      "status": "PASS",
+      "ms": 84
+    },
+    {
+      "name": "blocked session ledger cannot be read by client",
+      "status": "PASS",
+      "ms": 82
+    }
+  ],
+  "files": {
+    "001-text-command.sql": "85c42fb348eede4a2b9c5e3ed578b090b833017cd37c8849fa73041324ec14ae",
+    "002-session-assets.sql": "bafe9f6dfa5de0f623756939c9f2b70fd6f80165f8c9638d1fb7b58b89b6978d",
+    "bootstrap-local.sql": "900aca394d78d99a56d09668571e2437bf8eaed6d8e4165fe7da281afd431a19",
+    "run-local.py": "63259ba92d987c3bc101cd5871780a514d092e3d67dde41dbec6a9d31e428745",
+    "session_asset_tests.py": "3e4a2bccbbf6c5c79472d873db78d0f5e1d155ea6c08b2a02731f457b9e09e4a"
+  },
+  "auth_files": {
+    "package-lock.json": "8cdd791117b009e455df7336fb5d80d2b96de21ce4e01d35bf0bb33c3c966d59",
+    "package.json": "3f826df14eca28c2ecd0c8dd6a1926bb94c41f3a8fd0a858b48b978422d58f7b",
+    "principal-fixture.mjs": "c0f2a2d91b095895f14cae98e0f1d22c64713862ced5da1cfc6e88bebfc26c5f",
+    "verifier.mjs": "033d0eb4e0ff1770c9f5084f65cc295d65aefba61fda37b945b900c266a0da12",
+    "verifier.test.mjs": "106fcad8960d28535e05799d3fd74e015d6d7585f29a6b6a5ba602c16c4dbb2d"
+  }
+}

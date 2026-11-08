@@ -14,6 +14,8 @@
 
 다음 단계의 로컬 PostgreSQL 최소 스키마·권한·원자성 시험은 **39개 성공**이다([33. 결과](33-local-postgres-results.md)). Auth는 시험 stub이며 실제 클라우드 쓰기/제품 통합은 미착수다.
 
+인증·자산의 후속 로컬 시험은 [34. 결과](34-auth-private-assets-results.md)를 따른다. 가상 ES256 서명 검증28개와 PostgreSQL88개(기존39+신규49)가 통과했다. 실제 공개 JWKS 조회는 성공했으며, 실제 사용자 인증/Storage 쓰기는 아직 수행하지 않았다.
+
 ## 문서 지도
 
 | 문서 | 논의 내용 |
@@ -40,6 +42,7 @@
 | [Supabase 신규 계정·Keep Alive](20-supabase-keepalive.md) | 신규 계정 전제 갱신·Supabase 채택 시 하루1회 기본·휴면/복구 검증 |
 | [Supabase 프로젝트 구성안](21-supabase-project-blueprint.md) | 운영1개/로컬 개발·공식 SMTP/리전 조건·설정/비용 관문 |
 | [DB·권한·동기화 계약](22-db-permission-sync-contract.md) | 논리 테이블·tenant scope·원자적 push·커밋 순서 cursor·private 자산 |
+| [인증·기기 회수·비공개 자산](34-auth-private-assets-results.md) | 공개 JWKS 확인·가상 서명28개·SQL88개·실제 Auth/Storage와의 경계 |
 | [로컬 PostgreSQL 최소 서버 시험](33-local-postgres-results.md) | 실험용 SQL·계정 RLS/명령/rollback/동시성39개 성공·실제 Auth와의 경계 |
 | [실제 Supabase 점검 결과](32-cloud-readonly-results.md) | 접속 성공·도쿄 정상·조직 조회403·SMTP/Storage 실측·최소 서버 적용 순서 |
 | [무료 운영 조건·PoC 준비 판정](23-supabase-free-tier-readiness.md) | 공식 고정 소스의 무료 한도·아시아·SMTP, 용량/교체 피크·백업 분할·남은 계정 확인 |

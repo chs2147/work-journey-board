@@ -21,3 +21,7 @@ python3 poc/v2-postgres/run-local.py
 범위 밖: 전체 업무 도메인·삭제/복원/로그 보관·멤버십 협업·실제 Auth/PKCE·HTTP/RPC 배포·Storage RLS/파일 전송·네이티브 어댑터·클라우드 성능·비용 검증. 기존 SQLite214개 시험과 이 PostgreSQL39개 시험은 서로 다른 구현 범위다. 전체 P01~P22 통과로 합산하지 않는다.
 
 결과와 다음 단계는 [33. 로컬 PostgreSQL 결과](../../docs/v2-design/33-local-postgres-results.md)를 따른다.
+
+## 세션·자산 확장 시험
+
+`npm ci --prefix poc/v2-auth --ignore-scripts --no-audit --no-fund` 후 `PYTHONDONTWRITEBYTECODE=1 python3 poc/v2-postgres/run-local.py --extended`를 실행하면 기본39개 뒤에002 SQL과49개 시험을 추가한다(총88개). 별도 Auth 소스/lockfile hash도 결과에 포함한다. 가상 서명 principal을 통한 기기 등록·앱 세션 회수·비공개 자산 예약/확정/취소·실제 bytes hash/크기·RLS·quota 경합을 검증한다. 자산 bytes는 로컬 bytea 시험 테이블이며 Supabase Storage가 아니다. 실제 Auth 상태 확인·클라우드 Storage·문서 참조/자산 GC는 후속이다. [34문서](../../docs/v2-design/34-auth-private-assets-results.md)를 따른다.

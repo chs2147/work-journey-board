@@ -1,0 +1,128 @@
+{
+  "observed_at": "2026-11-08T13:30:23.703569+00:00",
+  "scope": "Local generated ES256 keys/tokens, mock live-session adapter; no Supabase user login or cloud writes",
+  "node_version": "v24.22.1",
+  "jose_version": "6.2.15",
+  "tests": [
+    {
+      "name": "signed ES256 token returns only verified principal",
+      "status": "PASS"
+    },
+    {
+      "name": "tampered payload fails signature",
+      "status": "PASS"
+    },
+    {
+      "name": "different signing key rejected",
+      "status": "PASS"
+    },
+    {
+      "name": "unsigned token rejected",
+      "status": "PASS"
+    },
+    {
+      "name": "HMAC algorithm confusion rejected",
+      "status": "PASS"
+    },
+    {
+      "name": "wrong project issuer rejected",
+      "status": "PASS"
+    },
+    {
+      "name": "wrong audience rejected",
+      "status": "PASS"
+    },
+    {
+      "name": "expired token rejected",
+      "status": "PASS"
+    },
+    {
+      "name": "future issued token rejected",
+      "status": "PASS"
+    },
+    {
+      "name": "not-before enforced",
+      "status": "PASS"
+    },
+    {
+      "name": "excess token lifetime rejected",
+      "status": "PASS"
+    },
+    {
+      "name": "missing expiration rejected",
+      "status": "PASS"
+    },
+    {
+      "name": "missing issued time rejected",
+      "status": "PASS"
+    },
+    {
+      "name": "missing session rejected",
+      "status": "PASS"
+    },
+    {
+      "name": "invalid subject UUID rejected",
+      "status": "PASS"
+    },
+    {
+      "name": "invalid session UUID rejected",
+      "status": "PASS"
+    },
+    {
+      "name": "service role rejected",
+      "status": "PASS"
+    },
+    {
+      "name": "anonymous authenticated account rejected",
+      "status": "PASS"
+    },
+    {
+      "name": "unknown key id fails closed",
+      "status": "PASS"
+    },
+    {
+      "name": "token supplied key URL rejected",
+      "status": "PASS"
+    },
+    {
+      "name": "token embedded key rejected",
+      "status": "PASS"
+    },
+    {
+      "name": "wrong token type rejected",
+      "status": "PASS"
+    },
+    {
+      "name": "malformed and excessive tokens rejected",
+      "status": "PASS"
+    },
+    {
+      "name": "live session revoked despite valid signature",
+      "status": "PASS"
+    },
+    {
+      "name": "session verification failure fails closed",
+      "status": "PASS"
+    },
+    {
+      "name": "session checker runs only after signature and claims pass",
+      "status": "PASS"
+    },
+    {
+      "name": "rotation accepts trusted new kid, rejects removed old kid",
+      "status": "PASS"
+    },
+    {
+      "name": "trusted configuration rejects private or duplicate keys",
+      "status": "PASS"
+    }
+  ],
+  "files": {
+    "package-lock.json": "8cdd791117b009e455df7336fb5d80d2b96de21ce4e01d35bf0bb33c3c966d59",
+    "package.json": "3f826df14eca28c2ecd0c8dd6a1926bb94c41f3a8fd0a858b48b978422d58f7b",
+    "principal-fixture.mjs": "c0f2a2d91b095895f14cae98e0f1d22c64713862ced5da1cfc6e88bebfc26c5f",
+    "verifier.mjs": "033d0eb4e0ff1770c9f5084f65cc295d65aefba61fda37b945b900c266a0da12",
+    "verifier.test.mjs": "106fcad8960d28535e05799d3fd74e015d6d7585f29a6b6a5ba602c16c4dbb2d"
+  },
+  "raw_log_sha256": "d222b1202c0c1b46fc6a98e3a7b6160df208938cf0ad05930a8eb1a5fc4d9858"
+}

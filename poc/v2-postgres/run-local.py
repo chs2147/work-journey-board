@@ -7,6 +7,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 import time
 import uuid
@@ -247,11 +248,20 @@ try:
     test('all accepted writes have one log and ledger row', lambda: equal(count('change_log'),count('applied_operation')))
     test('all tables enable RLS', lambda: equal(scalar("SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='wjb_v2' AND c.relkind='r' AND c.relrowsecurity"),'5'))
     test('definer functions owned by non-superuser', lambda: equal(scalar("SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace JOIN pg_roles r ON r.oid=p.proowner WHERE n.nspname='wjb_v2' AND p.prosecdef AND NOT r.rolsuper AND NOT r.rolbypassrls"),'2'))
+    if '--extended' in sys.argv:
+        sql((ROOT/'002-session-assets.sql').read_text())
+        from session_asset_tests import run
+        run(globals())
 finally:
     evidence = {'observed_at':datetime.datetime.now(datetime.timezone.utc).isoformat(),
                 'scope':'Local PostgreSQL SQL authorization/transaction slice; Auth gateway is a test stub; no cloud writes',
+                'extended':'--extended' in sys.argv,
                 'image':IMAGE,'postgres_version':locals().get('version'), 'tests':RESULTS,
                 'files':{p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(ROOT.iterdir()) if p.suffix in ('.py','.sql')}}
+    if '--extended' in sys.argv:
+        auth_root = ROOT.parent/'v2-auth'
+        evidence['auth_files'] = {p.name:hashlib.sha256(p.read_bytes()).hexdigest()
+            for p in sorted(auth_root.iterdir()) if p.suffix in ('.mjs','.json')}
     (OUT/'results.json').write_text(json.dumps(evidence,indent=2)+'\n')
     if created:
         docker('rm','-f','-v',NAME,check=False)

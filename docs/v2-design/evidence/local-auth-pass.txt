@@ -1,0 +1,36 @@
+✔ signed ES256 token returns only verified principal (5.854544ms)
+✔ tampered payload fails signature (1.438463ms)
+✔ different signing key rejected (1.56288ms)
+✔ unsigned token rejected (0.241973ms)
+✔ HMAC algorithm confusion rejected (0.841345ms)
+✔ wrong project issuer rejected (1.002607ms)
+✔ wrong audience rejected (0.748215ms)
+✔ expired token rejected (0.709817ms)
+✔ future issued token rejected (0.916578ms)
+✔ not-before enforced (1.169759ms)
+✔ excess token lifetime rejected (0.814244ms)
+✔ missing expiration rejected (1.686436ms)
+✔ missing issued time rejected (0.863329ms)
+✔ missing session rejected (1.185493ms)
+✔ invalid subject UUID rejected (0.615866ms)
+✔ invalid session UUID rejected (0.581915ms)
+✔ service role rejected (0.535155ms)
+✔ anonymous authenticated account rejected (0.819552ms)
+✔ unknown key id fails closed (0.511419ms)
+✔ token supplied key URL rejected (0.293ms)
+✔ token embedded key rejected (0.353802ms)
+✔ wrong token type rejected (0.597007ms)
+✔ malformed and excessive tokens rejected (0.190897ms)
+✔ live session revoked despite valid signature (0.75797ms)
+✔ session verification failure fails closed (0.739321ms)
+✔ session checker runs only after signature and claims pass (1.332173ms)
+✔ rotation accepts trusted new kid, rejects removed old kid (1.667598ms)
+✔ trusted configuration rejects private or duplicate keys (0.301113ms)
+ℹ tests 28
+ℹ suites 0
+ℹ pass 28
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 35.601605

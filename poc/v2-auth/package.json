@@ -1,0 +1,11 @@
+{
+  "name": "wjb-v2-auth-poc",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node verifier.test.mjs"
+  },
+  "dependencies": {
+    "jose": "6.2.15"
+  }
+}
