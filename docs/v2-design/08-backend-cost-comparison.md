@@ -6,11 +6,14 @@
 
 **최신 우선 기준:** [16 저비용 재검토](16-low-cost-review.md). AWS 직접 구성은 제외하며5명 소규모 시험을 비용 검증 기준으로 한다. 아래100/1,000/10,000명 표는 확장 민감도 자료다.
 
+**후속 제약:** Supabase 신규 무료 프로젝트를 가정하지 않는다. [17 Neon 검토](17-neon-option.md)를 후보 순위/역할 분리의 최신 기준으로 적용한다.
+
 ## 8.1 후보 구성
 
 | 안 | 구성 후보 | 현재 앱과의 적합성 | 주의·추가 작업 | 판단 |
 |---|---|---|---|---|
-| **A. Supabase 중심 관리형** | Auth + PostgreSQL + Storage, Sync API 실행 환경은 기능 제약에 따라 분리 | SQL 관계·revision·명령 검증과 친화적. 개인 서비스 초기 운영 부담이 비교적 작음 | DB CRUD/Realtime만으로 SQLite outbox 동기화가 완성되지는 않음. 세션 회수·메일·PITR·리전·백업 과금 확인 | **1차 PoC 추천** |
+| **A. Neon 중심 조합** | Neon PostgreSQL + 검증된 Auth/API/blob 후보 | SQL 관계·명령 계약 유지, Supabase 새 무료 프로젝트 불필요 | 연산/휴면·Auth·객체 저장·API 합산 비용·리전/정합성 확인 | **우선 비교 추천** |
+| B. Supabase 최소 유료 구성 | Auth/PostgreSQL/Storage + Sync API | 구성 수를 줄일 수 있음 | 사용자 무료 프로젝트 여유 없음. 실제 추가 프로젝트 비용 확인 | 유료 총비용 비교 후보 |
 | C. Firebase 중심 | Auth + Firestore + Cloud Storage + Functions/Cloud Run | 웹/모바일 SDK·알림 활용이 쉬운 편 | 기존 SQL 관계·정합성 단위를 문서 모델로 다시 매핑. SDK 오프라인 기능이 기존 SQLite와 자동 연동되는 것은 아님. 읽기/쓰기/리스너 비용 측정 필요 | 초기 SQL 모델 재사용 관점에서는 우선순위 낮음 |
 
 공통: 서버가 업무 명령·공간 권한·baseRevision·generation을 검증하고 데이터/로그를 원자적으로 커밋해야 한다. 클라이언트가 공급자 DB를 직접 무제한 수정하는 방식은 채택하지 않는다. 핵심 계약을 `contracts/sync-core`에 두고 인증·blob·알림 제공자는 어댑터로 분리한다.
@@ -53,6 +56,7 @@ A를 검증 기준으로 쓰되 사업자를 확정한 것은 아니다. 특히 
 
 | 후보 | 확인할 공식 자료 | 확정 전 필요한 답 |
 |---|---|---|
+| Neon | https://neon.com/pricing · https://neon.com/docs | 연산/저장·휴면·리전·프로젝트/branch·Auth·연결/복원 조건 |
 | Supabase | https://supabase.com/pricing · https://supabase.com/docs | 프로젝트/DB·Auth·Storage 리전, 메일 제한/전용 SMTP, 세션 회수, PITR·egress·실시간 한도/추가 요금 |
 | Firebase | https://firebase.google.com/pricing · https://firebase.google.com/docs | 문서 읽기/쓰기·리스너·Auth 메일·Storage/Functions·리전·복원/백업 한도 |
 
@@ -62,7 +66,7 @@ A를 검증 기준으로 쓰되 사업자를 확정한 것은 아니다. 특히 
 
 1. A를 기준으로 가상 공간1개/기기2개에 대한 명령·revision·outbox·실제 이미지 전송 계약을 설계한다. 이는 실행 승인 전의 검증 계획이다.
 2. 계정 전환·기기 회수·메일 전달·지정 리전·서명 URL·PDF/이미지 원본 저장 및 복원 가능성을 확인한다.
-3. Supabase가 무료/개인 예산·리전·정합성 조건을 충족하지 못하면 범위/용량 또는 다른 저비용 후보를 재검토한다. AWS 직접 구성으로 자동 전환하지 않는다.
+3. Neon 조합이 무료/개인 예산·리전·정합성 조건을 충족하지 못하면 범위/용량 또는 다른 저비용 후보를 재검토한다. AWS 직접 구성으로 자동 전환하지 않는다.
 4. 선택 기준은 데이터/복구 조건 충족 → 정합성 → 운영 가능성 → 정상 운영 비용 → 이식성 순서다. 언어/도메인 코드를 공급자 SDK에 종속시키지 않는다.
 
 다음 결정: 예상 월 사용자 규모와 공간당 이미지 용량, 첫 리전, 암호화 A/B, A 우선 PoC 여부. 어느 것도 실제 유료 자원 생성의 승인을 대신하지 않는다.
