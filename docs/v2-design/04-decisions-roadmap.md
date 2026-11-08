@@ -244,3 +244,7 @@ Neon 중심 검토는 유지하되 woori 운영을 유지한 로컬 개발 대�
 ## 4.37 HTTP gateway·Storage REST 계약·로컬 장애 시험
 
 사용자의 커밋/푸시 후 다음 진행 요청으로 기존 원격 반영을 확인했다. JWT/서버 세션 RPC를 사용하는 Web handler, 고정 프로젝트/bucket REST 어댑터, 제한된 bytes/시간 읽기와 로컬 HTTP host를 구현했다. 실제 loopback61개 시험에서 전송·재시도·권한 변경·cleanup/quota·상류 redirect/오류를 확인했다. [36문서](36-http-gateway-storage-results.md)에 실제 Storage 대체 서버/메모리 metadata의 한계와 다음 영속 SQL 통합 단계를 기록했다. 실제 Supabase·Usage/준비 판정·환경 게시·제품/DB18·main은 유지했다.
+
+## 4.38 PostgreSQL 영속 metadata·실제 프로세스 재시작
+
+사용자의 다음 진행 요청으로 기존 커밋 원격 반영을 확인하고 SQL schema/RPC·metadata adapter를 추가했다. HTTP→실제 PostgreSQL→Storage 대체 서버로 통합25개, adapter12개, HTTP61개가 통과했다. 실제 gateway SIGKILL·PostgreSQL 재시작·두 worker의 lease/fence 경합·늦은 I/O와 cleanup epoch를 검증했다. [37문서](37-durable-gateway-metadata-results.md)에 미확정 요청을 추측해 해제하지 않는 제한과 후속 복구 worker를 기록했다. 실제 Supabase·제품/DB18·main·환경 게시·준비 true flag는 유지했다.

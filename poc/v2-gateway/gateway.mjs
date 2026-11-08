@@ -122,10 +122,13 @@ export function createGateway({ verifyAccessToken, metadata, storage }) {
         verifyBytes(bytes, ctx.row);
         if (ctx.row.state === "ready") return response({ assetId, state: "ready" });
         await ctx.recheck();
+        await ctx.beginStorageWrite?.();
         try {
           await storage.putIfAbsent(scope, bytes);
+          await ctx.settleStorageWrite?.();
         } catch (e) {
           if (e?.code !== "OBJECT_EXISTS") throw e;
+          await ctx.settleStorageWrite?.();
           const existing = await storage.get(scope, ctx.row.bytes);
           verifyBytes(existing, ctx.row);
         }

@@ -25,3 +25,9 @@ handler는 Origin 요청을 기본 거절하고 cookie를 인증 수단으로 �
 메타데이터 adapter는 예약 용량을 원자적으로 관리하고, asset의 쓰기·취소와 상태 확정을 직렬화하며, 대기 작업 뒤 권한/generation을 재검사해야 한다. 현재 fixture의 메모리 잠금은 다중 프로세스·재시작·장애 복구를 보장하지 않는다. 실제 PostgreSQL command/RPC·lease/fence와 연계하기 전에는 운영에 연결하지 않는다. 실제 bucket 정책/가용량 검증도 남아 있으므로 클라우드 준비 상태는 계속 BLOCKED다.
 
 상태와 HTTP 계약·실행 증거는 [36문서](../../docs/v2-design/36-http-gateway-storage-results.md)를 따른다.
+
+## PostgreSQL 영속 metadata 후속
+
+`node poc/v2-gateway/postgres-metadata.test.mjs`는 adapter12개, `node poc/v2-gateway/durable.test.mjs`는 실제 로컬 SQL/두 gateway/Storage 대체 서버 통합25개를 실행한다. Docker 로컬 소켓과127.0.0.1 listen이 필요하며, PostgreSQL 고정 이미지와 실행별 전용 volume을 사용한다. 테스트 종료 때 자기 label을 확인한 컨테이너/volume만 지운다. 실제 Supabase credentials는 시험 환경에서 제거한다.
+
+`postgres-metadata.sql`은 별도 검토 후보이며 cloud에 적용하지 않았다. C1 session guard와 서버 전용 RPC 역할을 전제로 한다. `postgres-metadata.mjs`는 짧은 명령으로 reservation/quota와30초 lease/fence, I/O intent/cleanup epoch를 관리한다. 불명확한 저장은 추측해 quota를 해제하지 않는다. 프로세스가 영구히 종료된 intent의 정리 worker는 후속이며, prototype의 경우 취소가 계속 CLEANUP_UNCERTAIN일 수 있다. 자산256개·intent64개 제한은 PoC용이다. [37문서](../../docs/v2-design/37-durable-gateway-metadata-results.md)에 상태·장애·실제 DB/Storage와의 경계를 기록했다.

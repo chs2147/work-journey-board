@@ -2,6 +2,8 @@
 
 2026-11-08 · `v2-design` · 앱1.23.0 / DB18 유지
 
+**후속:** PostgreSQL 영속 metadata와 실제 프로세스 재시작/경합 시험은 [37문서](37-durable-gateway-metadata-results.md)를 따른다. 아래61개는 메모리 metadata를 쓴 앞 단계 결과다.
+
 ## 진행 결과
 
 사용자의 커밋/푸시 후 다음 진행 요청으로 `31b85e4`의 원격 반영을 확인한 뒤 [독립 gateway PoC](../../poc/v2-gateway/README.md)를 구현했다. **실제 로컬 HTTP 서버2개를 사용하는61개 시험이 통과**했다. 하나는 gateway, 다른 하나는 Supabase 형태의 시험 REST 서버다. 실제 Supabase Auth/Storage나 영속 PostgreSQL과 한 흐름으로 연결한 시험은 아니다.

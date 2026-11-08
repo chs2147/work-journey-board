@@ -1,0 +1,34 @@
+# PostgreSQL 17.11 (Debian 17.11-1.pgdg12+2)
+✔ HTTP gateway to real SQL and Storage fixture round trip (9500.79631ms)
+✔ gateway SIGKILL and restart preserves committed ready bytes (1976.699419ms)
+✔ reservation retry after gateway restart charges quota once (825.958535ms)
+✔ PostgreSQL container restart preserves metadata and quota (1987.775547ms)
+✔ two gateway processes cannot hold one write lease (1687.821765ms)
+✔ expired old worker cannot publish or erase new lease (2864.061136ms)
+✔ late write after cleanup does not release quota prematurely (3150.963255ms)
+✔ SIGKILL after object put recovers via immutable retry (2051.573351ms)
+✔ SIGKILL after intent before put preserves conservative accounting (1883.399552ms)
+✔ provider logout during upload prevents SQL ready publication (1318.949333ms)
+✔ metadata transaction failure retains private bytes and can retry (2312.51182ms)
+✔ lost committed ready RPC response replays without duplicate write (1548.075678ms)
+✔ delete failure persists cleanup across process restart (1902.646297ms)
+✔ unknown upload outcome cannot be canceled by guessing absence (1603.003374ms)
+✔ generation change during I/O blocks final SQL mutation (1333.236872ms)
+✔ another account cannot read private asset through SQL (1477.752922ms)
+✔ separate processes reserve quota atomically (725.162794ms)
+✔ client roles cannot execute metadata command or read tables (318.608891ms)
+✔ SQL cannot publish ready without settled storage intent (381.643916ms)
+✔ stale lease release never clears newer owner (651.603776ms)
+✔ cleanup epoch detects settlement after absence observation (959.827733ms)
+✔ canceled asset survives restart and cannot be reused (1350.856162ms)
+✔ reserve insertion failure rolls quota increment back (839.252522ms)
+✔ asset registry limit also counts canceled identifiers (572.536399ms)
+✔ partial lease tuple is rejected atomically by schema (438.424749ms)
+ℹ tests 25
+ℹ suites 0
+ℹ pass 25
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 44014.293816

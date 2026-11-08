@@ -105,25 +105,71 @@ export function createSupabaseRest({ projectRef, serviceRoleKey, fetchTransport 
       },
     },
     async callServerRpc(name, args) {
-      if (
-        name !== "wjb_v2_session_active" ||
-        !uuid.test(args?.p_user) ||
-        !uuid.test(args?.p_session) ||
-        Object.keys(args).sort().join(",") !== "p_session,p_user"
-      )
-        throw new GatewayError("INVALID_RPC");
-      const res = await request("/rest/v1/rpc/wjb_v2_session_active", {
+      if (name === "wjb_v2_session_active") {
+        if (
+          !uuid.test(args?.p_user) ||
+          !uuid.test(args?.p_session) ||
+          Object.keys(args).sort().join(",") !== "p_session,p_user"
+        )
+          throw new GatewayError("INVALID_RPC");
+      } else if (name === "wjb_v2_asset_command") {
+        if (
+          !args?.p_request ||
+          Object.keys(args).join(",") !== "p_request" ||
+          JSON.stringify(args).length > 4096
+        )
+          throw new GatewayError("INVALID_RPC");
+      } else throw new GatewayError("INVALID_RPC");
+      const res = await request(`/rest/v1/rpc/${name}`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify(args),
       });
       if (!res.ok) {
+        if (name === "wjb_v2_asset_command") {
+          const allowed = new Set([
+            "ACCESS_DENIED",
+            "ACCESS_REVOKED",
+            "GENERATION_CHANGED",
+            "IDEMPOTENCY_KEY_REUSED",
+            "ASSET_CANCELED",
+            "CLEANUP_PENDING",
+            "UPLOAD_EXPIRED",
+            "QUOTA_EXCEEDED",
+            "ASSET_NOT_FOUND",
+            "LEASE_BUSY",
+            "LEASE_LOST",
+            "ASSET_NOT_PENDING",
+            "ASSET_ALREADY_READY",
+            "CLEANUP_CHANGED",
+            "CLEANUP_UNCERTAIN",
+            "STORAGE_NOT_CONFIRMED",
+            "INTENT_LIMIT",
+            "ASSET_LIMIT",
+          ]);
+          let code;
+          try {
+            const data = JSON.parse((await readLimited(res, 4096)).toString("utf8"));
+            if (data.code === "P0001" && allowed.has(data.message)) code = data.message;
+          } catch {
+            /* unknown stays unavailable */
+          }
+          if (code) throw new GatewayError(code, 409);
+          throw new GatewayError("METADATA_UNAVAILABLE", 503);
+        }
         await res.body?.cancel();
         throw new GatewayError("AUTH_UNAVAILABLE", 503);
       }
       try {
-        const result = JSON.parse((await readLimited(res, 128)).toString("utf8"));
-        if (typeof result !== "boolean") throw new Error();
+        const result = JSON.parse(
+          (await readLimited(res, name === "wjb_v2_session_active" ? 128 : 4096)).toString("utf8"),
+        );
+        if (name === "wjb_v2_session_active" && typeof result !== "boolean") throw new Error();
+        if (
+          name === "wjb_v2_asset_command" &&
+          (!result || Array.isArray(result) || typeof result !== "object")
+        )
+          throw new Error();
         return result;
       } catch {
         void res.body?.cancel().catch(() => {});
