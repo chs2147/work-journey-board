@@ -55,3 +55,14 @@ node poc/v2-sync/run-local.mjs   # 현재 30+19+28+38개 전체 증거
 ```
 
 `cells.mjs`의 `applyCommand`는 patch-entry/move-subtree를, `receiveBatches`는 원자적 entry-batch 수신을 제공한다. 활성화한 workspace의 항목 쓰기는 범용 accept로 우회하지 않는다. 현재 tick/applyPage와의 자동 혼합 연결은 미구현이므로 별도 어댑터로 시험한다. 구 어댑터는 새 배치를 명시적으로 거절한다. [28문서](../../docs/v2-design/28-atomic-cell-move-results.md)에 시험 결과·수정 전 잠금 실패·제약을 기록했다.
+
+## 통합 전송 경로
+
+```sh
+node poc/v2-sync/integrated.test.mjs  # 신규37개
+node poc/v2-sync/run-local.mjs        # 현재 전체152개와 실행 증거 수집
+```
+
+`integrated.mjs`에서 항목은 enqueuePatch/enqueueMove, 노트 등 일반 문서는 기존 enqueue로 대기시킨 후 integratedTick으로 전송한다. applyMixed가 혼합 이벤트 페이지와 명령 완료 상태를 원자적으로 적용한다. 기존 tick/applyPage와 호출 경로를 혼용하지 않는다. 예전 entry_item 대기/이벤트를 자동 변환하지 않고 보존·거절하며, typed 이동은 workspace당 미해결1개로 제한한다.
+
+[29문서](../../docs/v2-design/29-integrated-move-queue-results.md)에 검증 범위·수정 전 실패·제약을 기록했다. 현재 실험용 입력/SQLite 서버 모형이며 실제 앱/서버 인증·네트워크가 아니다.

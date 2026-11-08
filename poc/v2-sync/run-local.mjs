@@ -15,6 +15,7 @@ for (const [file, expected] of [
   ["db18.test.mjs", 19],
   ["queue.test.mjs", 28],
   ["cells.test.mjs", 38],
+  ["integrated.test.mjs", 37],
 ]) {
   const run = spawnSync(process.execPath, [fileURLToPath(new URL(file, here))], {
     encoding: "utf8",

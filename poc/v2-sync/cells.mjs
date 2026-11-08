@@ -83,18 +83,7 @@ export function applyCommand(db, account, cmd, fault = () => {}) {
       const r = record(db, cmd.scope, cmd.id);
       if (!r || r.body.table !== "entry_item") throw Error("ENTRY_REQUIRED");
       if (contentVersion(db, cmd.scope, cmd.id) !== cmd.contentVersion) throw Error("CONTENT_CONFLICT");
-      const keys = Object.keys(cmd.patch);
-      if (!keys.length || keys.some((k) => !["text", "flagged", "flag_done_at"].includes(k)))
-        throw Error("PATCH_FIELDS");
-      const next = { ...r.body.row, ...cmd.patch };
-      if (
-        typeof next.text !== "string" ||
-        next.text.length < 1 ||
-        next.text.length > 2000 ||
-        ![0, 1].includes(next.flagged) ||
-        (next.flag_done_at !== null && typeof next.flag_done_at !== "string")
-      )
-        throw Error("PATCH_VALUE");
+      const next = patchRow(r.body.row, cmd.patch);
       const result = { id: r.id, rev: r.rev + 1, body: { table: "entry_item", row: next } };
       commitRow(db, cmd.scope, result, rows);
       db.prepare("UPDATE content_versions SET rev=rev+1 WHERE scope=? AND g=? AND id=?").run(
@@ -105,57 +94,22 @@ export function applyCommand(db, account, cmd, fault = () => {}) {
       contents.push({ id: cmd.id, rev: cmd.contentVersion + 1 });
       fault("after-patch");
     } else if (cmd.kind === "move-subtree") {
-      const from = cellKey(cmd.from.date, cmd.from.categoryId),
+      const plan = planMove(db, cmd),
+        from = cellKey(cmd.from.date, cmd.from.categoryId),
         to = cellKey(cmd.to.date, cmd.to.categoryId);
-      if (
-        cellVersion(db, cmd.scope, from) !== cmd.from.version ||
-        cellVersion(db, cmd.scope, to) !== cmd.to.version
-      )
-        throw Error("CELL_CONFLICT");
-      if (!record(db, cmd.scope, rowId("category", [cmd.to.categoryId]))) throw Error("CATEGORY_REQUIRED");
-      if (
-        !/^\d{4}-\d{2}-\d{2}$/.test(cmd.to.date) ||
-        !Number.isFinite(Date.parse(cmd.to.date + "T00:00:00Z")) ||
-        new Date(cmd.to.date + "T00:00:00Z").toISOString().slice(0, 10) !== cmd.to.date
-      )
-        throw Error("DATE_REQUIRED");
-      const source = cellRows(db, cmd.scope, from),
-        start = source.findIndex((r) => r.id === cmd.id);
-      if (start < 0 || source[start].body.row.depth !== 0) throw Error("ROOT_REQUIRED");
-      let end = start + 1;
-      while (end < source.length && source[end].body.row.depth === 1) end++;
-      const moved = source.slice(start, end),
-        remaining = [...source.slice(0, start), ...source.slice(end)];
-      const target = from === to ? remaining : cellRows(db, cmd.scope, to);
-      const position = cmd.beforeId == null ? target.length : target.findIndex((r) => r.id === cmd.beforeId);
-      if (position < 0 || (position < target.length && target[position].body.row.depth !== 0))
-        throw Error("DESTINATION_REQUIRED");
-      const combined = [...target.slice(0, position), ...moved, ...target.slice(position)];
-      function save(list, date, category) {
-        for (const [i, r] of list.entries()) {
-          const body = {
-            table: "entry_item",
-            row: { ...r.body.row, date, category_id: category, seq: i + 1 },
-          };
-          if (hash(body) !== hash(r.body)) commitRow(db, cmd.scope, { id: r.id, rev: r.rev + 1, body }, rows);
-        }
-      }
-      if (from !== to) {
-        save(remaining, cmd.from.date, cmd.from.categoryId);
-        fault("after-source");
-      }
-      save(combined, cmd.to.date, cmd.to.categoryId);
+      const source = plan.rows.filter(
+        (r) => from !== to && cellKey(r.body.row.date, r.body.row.category_id) === from,
+      );
+      for (const r of source) commitRow(db, cmd.scope, r, rows);
+      if (from !== to) fault("after-source");
+      for (const r of plan.rows.filter((r) => !source.includes(r))) commitRow(db, cmd.scope, r, rows);
       fault("after-target");
-      for (const key of new Set([from, to])) {
-        // Read old version before UPDATE; empty new cells must advance from 0, not derived membership.
-        const expected = key === from ? cmd.from.version : cmd.to.version;
-        const next = expected + 1;
+      for (const c of plan.cells)
         db.prepare(
           "INSERT INTO cell_versions VALUES(?,?,?,?) ON CONFLICT(scope,g,id) DO UPDATE SET rev=excluded.rev",
-        ).run(cmd.scope, st.generation, key, next);
-        cells.push({ id: key, rev: next });
-      }
-      for (const r of rows) contents.push({ id: r.id, rev: contentVersion(db, cmd.scope, r.id) });
+        ).run(cmd.scope, st.generation, c.id, c.rev);
+      cells.push(...plan.cells);
+      contents.push(...plan.contents);
     } else throw Error("COMMAND_KIND");
     const result = {
       kind: "entry-batch",
@@ -222,4 +176,79 @@ export function receiveBatches(db, scope, generation, batches, fault = () => {})
     }
   });
   fault("after-commit");
+}
+
+export function planMove(db, cmd) {
+  initCells(db);
+  if (epoch(db, cmd.scope).generation !== cmd.generation) throw Error("GENERATION_CHANGED");
+  const rows = [],
+    cells = [],
+    contents = [];
+
+  const from = cellKey(cmd.from.date, cmd.from.categoryId),
+    to = cellKey(cmd.to.date, cmd.to.categoryId);
+  if (
+    cellVersion(db, cmd.scope, from) !== cmd.from.version ||
+    cellVersion(db, cmd.scope, to) !== cmd.to.version
+  )
+    throw Error("CELL_CONFLICT");
+  if (!record(db, cmd.scope, rowId("category", [cmd.to.categoryId]))) throw Error("CATEGORY_REQUIRED");
+  if (
+    !/^\d{4}-\d{2}-\d{2}$/.test(cmd.to.date) ||
+    !Number.isFinite(Date.parse(cmd.to.date + "T00:00:00Z")) ||
+    new Date(cmd.to.date + "T00:00:00Z").toISOString().slice(0, 10) !== cmd.to.date
+  )
+    throw Error("DATE_REQUIRED");
+  const source = cellRows(db, cmd.scope, from),
+    start = source.findIndex((r) => r.id === cmd.id);
+  if (start < 0 || source[start].body.row.depth !== 0) throw Error("ROOT_REQUIRED");
+  let end = start + 1;
+  while (end < source.length && source[end].body.row.depth === 1) end++;
+  const moved = source.slice(start, end),
+    remaining = [...source.slice(0, start), ...source.slice(end)];
+  const target = from === to ? remaining : cellRows(db, cmd.scope, to);
+  const position = cmd.beforeId == null ? target.length : target.findIndex((r) => r.id === cmd.beforeId);
+  if (position < 0 || (position < target.length && target[position].body.row.depth !== 0))
+    throw Error("DESTINATION_REQUIRED");
+  const combined = [...target.slice(0, position), ...moved, ...target.slice(position)];
+  function save(list, date, category) {
+    for (const [i, r] of list.entries()) {
+      const body = {
+        table: "entry_item",
+        row: { ...r.body.row, date, category_id: category, seq: i + 1 },
+      };
+      if (hash(body) !== hash(r.body)) rows.push({ id: r.id, rev: r.rev + 1, body });
+    }
+  }
+  if (from !== to) {
+    save(remaining, cmd.from.date, cmd.from.categoryId);
+  }
+  save(combined, cmd.to.date, cmd.to.categoryId);
+
+  for (const key of new Set([from, to])) {
+    // Read old version before UPDATE; empty new cells must advance from 0, not derived membership.
+    const expected = key === from ? cmd.from.version : cmd.to.version;
+    const next = expected + 1;
+    cells.push({ id: key, rev: next });
+  }
+  for (const r of rows) contents.push({ id: r.id, rev: contentVersion(db, cmd.scope, r.id) });
+
+  return { rows, cells, contents };
+}
+
+export function patchRow(row, patch) {
+  const keys = Object.keys(patch);
+  if (!keys.length || keys.some((k) => !["text", "flagged", "flag_done_at"].includes(k)))
+    throw Error("PATCH_FIELDS");
+  const next = { ...row, ...patch };
+  if (
+    typeof next.text !== "string" ||
+    next.text.length < 1 ||
+    next.text.length > 2000 ||
+    ![0, 1].includes(next.flagged) ||
+    (next.flag_done_at !== null && typeof next.flag_done_at !== "string")
+  )
+    throw Error("PATCH_VALUE");
+
+  return next;
 }

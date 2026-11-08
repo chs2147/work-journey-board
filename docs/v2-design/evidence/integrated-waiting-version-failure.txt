@@ -1,0 +1,175 @@
+✔ integrated/17: optimistic subtree, immutable lost-ack job and restart (134.142738ms)
+✖ integrated/17: move plus successive edits survive ack loss and coalescing (116.054381ms)
+✔ integrated/17: remote move-first rebases only independent fields (142.299382ms)
+✔ integrated/17: remote patch-first rebases only independent fields (132.819383ms)
+✖ integrated/17: typed move, legacy note and patch share mixed pages (87.790683ms)
+✔ integrated/17: competing moves retain proposal and independent work continues (123.727553ms)
+✔ integrated/17: mixed page failure rolls back data and own ack completion (98.278531ms)
+✔ integrated/41: optimistic subtree, immutable lost-ack job and restart (94.308241ms)
+✖ integrated/41: move plus successive edits survive ack loss and coalescing (99.417016ms)
+✔ integrated/41: remote move-first rebases only independent fields (119.954337ms)
+✔ integrated/41: remote patch-first rebases only independent fields (125.270007ms)
+✖ integrated/41: typed move, legacy note and patch share mixed pages (82.105009ms)
+✔ integrated/41: competing moves retain proposal and independent work continues (127.639753ms)
+✔ integrated/41: mixed page failure rolls back data and own ack completion (98.953884ms)
+✔ integrated/73: optimistic subtree, immutable lost-ack job and restart (99.159155ms)
+✖ integrated/73: move plus successive edits survive ack loss and coalescing (112.067214ms)
+✔ integrated/73: remote move-first rebases only independent fields (169.367649ms)
+✔ integrated/73: remote patch-first rebases only independent fields (118.570368ms)
+✖ integrated/73: typed move, legacy note and patch share mixed pages (80.288423ms)
+✔ integrated/73: competing moves retain proposal and independent work continues (128.885218ms)
+✔ integrated/73: mixed page failure rolls back data and own ack completion (101.872785ms)
+✔ integrated conflicting content is not automatically overwritten (111.64152ms)
+✔ integrated foreign edit after own ack conflicts with follow-up draft (113.178336ms)
+✔ integrated generation/account failure retains complete request and projection (97.679289ms)
+✖ integrated refuses overlapping move, invalid patch and legacy pending collision (93.840436ms)
+✔ integrated same-cell reorder keeps pending child edit (101.347184ms)
+✔ integrated SIGKILL move after-job (129.845797ms)
+✔ integrated SIGKILL move after-projection (146.086635ms)
+✔ integrated SIGKILL move after-queued (174.789876ms)
+✔ integrated SIGKILL frozen patch persists exact command (148.462994ms)
+✔ integrated SIGKILL sync after-sent (151.995364ms)
+✔ integrated SIGKILL sync after-server (160.950375ms)
+✔ integrated SIGKILL sync after-row (173.883522ms)
+✔ integrated SIGKILL sync after-event (185.383063ms)
+✔ integrated SIGKILL sync after-apply (166.012961ms)
+ℹ tests 35
+ℹ suites 0
+ℹ pass 28
+ℹ fail 7
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4356.139592
+
+✖ failing tests:
+
+test at poc/v2-sync/integrated.test.mjs:101:3
+✖ integrated/17: move plus successive edits survive ack loss and coalescing (116.054381ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  'conflict' !== 'idle'
+
+      at TestContext.<anonymous> (file:///workspace/work-journey-board/poc/v2-sync/integrated.test.mjs:113:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'conflict',
+    expected: 'idle',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at poc/v2-sync/integrated.test.mjs:140:3
+✖ integrated/17: typed move, legacy note and patch share mixed pages (87.790683ms)
+  Error: Unknown named parameter 'scope'
+      at draft (file:///workspace/work-journey-board/poc/v2-sync/queue.mjs:9:68)
+      at file:///workspace/work-journey-board/poc/v2-sync/queue.mjs:25:15
+      at transaction (file:///workspace/work-journey-board/poc/v2-sync/model.mjs:38:15)
+      at enqueue (file:///workspace/work-journey-board/poc/v2-sync/queue.mjs:24:3)
+      at TestContext.<anonymous> (file:///workspace/work-journey-board/poc/v2-sync/integrated.test.mjs:144:5)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12) {
+    code: 'ERR_INVALID_STATE'
+  }
+
+test at poc/v2-sync/integrated.test.mjs:101:3
+✖ integrated/41: move plus successive edits survive ack loss and coalescing (99.417016ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  'conflict' !== 'idle'
+
+      at TestContext.<anonymous> (file:///workspace/work-journey-board/poc/v2-sync/integrated.test.mjs:113:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'conflict',
+    expected: 'idle',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at poc/v2-sync/integrated.test.mjs:140:3
+✖ integrated/41: typed move, legacy note and patch share mixed pages (82.105009ms)
+  Error: Unknown named parameter 'scope'
+      at draft (file:///workspace/work-journey-board/poc/v2-sync/queue.mjs:9:68)
+      at file:///workspace/work-journey-board/poc/v2-sync/queue.mjs:25:15
+      at transaction (file:///workspace/work-journey-board/poc/v2-sync/model.mjs:38:15)
+      at enqueue (file:///workspace/work-journey-board/poc/v2-sync/queue.mjs:24:3)
+      at TestContext.<anonymous> (file:///workspace/work-journey-board/poc/v2-sync/integrated.test.mjs:144:5)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12) {
+    code: 'ERR_INVALID_STATE'
+  }
+
+test at poc/v2-sync/integrated.test.mjs:101:3
+✖ integrated/73: move plus successive edits survive ack loss and coalescing (112.067214ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  'conflict' !== 'idle'
+
+      at TestContext.<anonymous> (file:///workspace/work-journey-board/poc/v2-sync/integrated.test.mjs:113:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'conflict',
+    expected: 'idle',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at poc/v2-sync/integrated.test.mjs:140:3
+✖ integrated/73: typed move, legacy note and patch share mixed pages (80.288423ms)
+  Error: Unknown named parameter 'scope'
+      at draft (file:///workspace/work-journey-board/poc/v2-sync/queue.mjs:9:68)
+      at file:///workspace/work-journey-board/poc/v2-sync/queue.mjs:25:15
+      at transaction (file:///workspace/work-journey-board/poc/v2-sync/model.mjs:38:15)
+      at enqueue (file:///workspace/work-journey-board/poc/v2-sync/queue.mjs:24:3)
+      at TestContext.<anonymous> (file:///workspace/work-journey-board/poc/v2-sync/integrated.test.mjs:144:5)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12) {
+    code: 'ERR_INVALID_STATE'
+  }
+
+test at poc/v2-sync/integrated.test.mjs:227:1
+✖ integrated refuses overlapping move, invalid patch and legacy pending collision (93.840436ms)
+  Error: Unknown named parameter 'scope'
+      at draft (file:///workspace/work-journey-board/poc/v2-sync/queue.mjs:9:68)
+      at file:///workspace/work-journey-board/poc/v2-sync/queue.mjs:25:15
+      at transaction (file:///workspace/work-journey-board/poc/v2-sync/model.mjs:38:15)
+      at enqueue (file:///workspace/work-journey-board/poc/v2-sync/queue.mjs:24:3)
+      at TestContext.<anonymous> (file:///workspace/work-journey-board/poc/v2-sync/integrated.test.mjs:235:3)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12) {
+    code: 'ERR_INVALID_STATE'
+  }

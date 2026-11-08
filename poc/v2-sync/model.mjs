@@ -32,13 +32,17 @@ export function open(path) {
   return db;
 }
 export function transaction(db, fn) {
-  db.exec("BEGIN IMMEDIATE");
+  const point = db.isTransaction ? "poc_" + randomUUID().replaceAll("-", "") : null;
+  db.exec(point ? `SAVEPOINT ${point}` : "BEGIN IMMEDIATE");
   try {
     const r = fn();
-    db.exec("COMMIT");
+    db.exec(point ? `RELEASE ${point}` : "COMMIT");
     return r;
   } catch (e) {
-    db.exec("ROLLBACK");
+    if (point) {
+      db.exec(`ROLLBACK TO ${point}`);
+      db.exec(`RELEASE ${point}`);
+    } else db.exec("ROLLBACK");
     throw e;
   }
 }
