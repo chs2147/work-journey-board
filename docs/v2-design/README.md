@@ -31,6 +31,7 @@
 | [Supabase 프로젝트 구성안](21-supabase-project-blueprint.md) | 운영1개/로컬 개발·공식 SMTP/리전 조건·설정/비용 관문 |
 | [DB·권한·동기화 계약](22-db-permission-sync-contract.md) | 논리 테이블·tenant scope·원자적 push·커밋 순서 cursor·private 자산 |
 | [무료 운영 조건·PoC 준비 판정](23-supabase-free-tier-readiness.md) | 공식 고정 소스의 무료 한도·아시아·SMTP, 용량/교체 피크·백업 분할·남은 계정 확인 |
+| [권장 구성·로컬 PoC 검토안](24-local-poc-review-package.md) | 복구 제한·첫 구현 범위·서버 기준/편집 사본·연속 편집·셀 동시성·장애8개 |
 | [번역 후보 CSV](i18n-inventory.csv) / [집계 JSON](inventory-summary.json) | 현재 소스의 번역 후보 조사. 번역 완료/정제된 키 목록이 아님 |
 
 **현재 후보:** 사용자가 Supabase 신규 계정을 생성했다. Supabase 통합 구성과 Neon 조합을 다시 비교하며, Supabase 채택 시 Keep Alive 기본 포함을 요구한다([20문서](20-supabase-keepalive.md)). 실제 프로젝트/한도·리전·최종 제공자는 아직 검증/확정 전이다.
