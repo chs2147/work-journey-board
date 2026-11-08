@@ -1,0 +1,12 @@
+✔ stress F1: source, staging, assets, snapshot and sync sample (731.939767ms)
+ℹ {"case":"F1","entries":1000,"images":20,"binaryBytes":1390,"sourceBytes":565248,"stageBytes":364544,"elapsedMs":728,"maxRSSKiB":111920,"sourceHash":"6b96b3854afae5814364f6091090dd5d980d7da991a2607048c504677a3b7914","snapshotHash":"9a2fbace1d38cb1db6a29a764c080062ef00d2197d9e9b4d793136cb7ab29ba4","status":"PASS","payload":"synthetic PNG-prefix bytes; storage/hash test, not image rendering"}
+✔ stress F2: source, staging, assets, snapshot and sync sample (72838.179212ms)
+ℹ {"case":"F2","entries":100000,"images":200,"binaryBytes":52428800,"sourceBytes":92688384,"stageBytes":84267008,"elapsedMs":72817,"maxRSSKiB":1776020,"sourceHash":"7bf897c7515e422c4b52383a64559126d089b366ea58134281149e7fc1260ef7","snapshotHash":"7c4585bf4e77352f594a5e318efa0c2913437360a12894eabda42581fafb3f32","status":"PASS","payload":"synthetic PNG-prefix bytes; storage/hash test, not image rendering"}
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 73577.669558

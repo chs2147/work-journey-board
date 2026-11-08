@@ -39,6 +39,7 @@ export function transaction(db, fn) {
     db.exec(point ? `RELEASE ${point}` : "COMMIT");
     return r;
   } catch (e) {
+    if (!db.isTransaction) throw e;
     if (point) {
       db.exec(`ROLLBACK TO ${point}`);
       db.exec(`RELEASE ${point}`);
@@ -72,6 +73,7 @@ export function operation(db, scope, id, body, opId = randomUUID()) {
     opId,
     generation: state(db, scope).generation,
     base: record(db, scope, id)?.rev ?? 0,
+    baseCursor: state(db, scope).cursor,
     body,
   };
 }
@@ -111,6 +113,18 @@ export function accept(db, account, op) {
       db.prepare("SELECT 1 FROM cell_versions WHERE scope=?").get(op.scope)
     )
       throw Error("TYPED_ENTRY_REQUIRED");
+    if (db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='sync_retention'").get()) {
+      const floor = db.prepare("SELECT floor FROM sync_retention WHERE scope=?").get(op.scope)?.floor ?? 0;
+      if (floor > 0 && (!Number.isSafeInteger(op.baseCursor) || op.baseCursor < floor))
+        throw Error("RESYNC_REQUIRED");
+    }
+    if (
+      db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='compound_documents'").get() &&
+      db.prepare("SELECT 1 FROM compound_documents WHERE scope=? AND id=?").get(op.scope, op.id)
+    )
+      throw Error("COMPOUND_DOCUMENT_REQUIRED");
+    if (["note_entry_link", "cabi_entry_link", "cabinet_link"].includes(op.body?.table))
+      throw Error("COMPOUND_DOCUMENT_REQUIRED");
     const before = record(db, op.scope, op.id);
     if ((before?.rev ?? 0) !== op.base) throw Error("CONFLICT");
     const rev = op.base + 1,

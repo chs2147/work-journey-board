@@ -3,6 +3,8 @@ import { rowId } from "./stage-import.mjs";
 export const cellKey = (date, categoryId) => JSON.stringify([date, categoryId]);
 export function initCells(db) {
   db.exec(`PRAGMA busy_timeout=2000;
+CREATE TABLE IF NOT EXISTS tombstones(scope TEXT,g INTEGER,id TEXT,rev INTEGER,seq INTEGER,payload TEXT,PRIMARY KEY(scope,g,id));
+CREATE TABLE IF NOT EXISTS retired_ids(scope TEXT,g INTEGER,id TEXT,PRIMARY KEY(scope,g,id));
 CREATE TABLE IF NOT EXISTS cell_versions(scope TEXT,g INTEGER,id TEXT,rev INTEGER,PRIMARY KEY(scope,g,id));
 CREATE TABLE IF NOT EXISTS content_versions(scope TEXT,g INTEGER,id TEXT,rev INTEGER,PRIMARY KEY(scope,g,id));`);
 }
@@ -45,6 +47,9 @@ export function cellRows(db, scope, key) {
   const list = entries(db, scope)
     .filter((r) => cellKey(r.body.row.date, r.body.row.category_id) === key)
     .sort((a, b) => a.body.row.seq - b.body.row.seq);
+  return validateCellRows(list);
+}
+export function validateCellRows(list) {
   for (const [i, r] of list.entries())
     if (
       r.id !== rowId("entry_item", [r.body.row.id]) ||
@@ -74,6 +79,11 @@ export function applyCommand(db, account, cmd, fault = () => {}) {
     if (previous) {
       if (previous.request !== hash(cmd)) throw Error("IDEMPOTENCY_KEY_REUSED");
       return JSON.parse(previous.result);
+    }
+    if (db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='sync_retention'").get()) {
+      const floor = db.prepare("SELECT floor FROM sync_retention WHERE scope=?").get(cmd.scope)?.floor ?? 0;
+      if (floor > 0 && (!Number.isSafeInteger(cmd.baseCursor) || cmd.baseCursor < floor))
+        throw Error("RESYNC_REQUIRED");
     }
     bootstrap(db, cmd.scope, st.generation);
     const rows = [],
@@ -163,6 +173,29 @@ export function receiveBatches(db, scope, generation, batches, fault = () => {})
           "INSERT INTO records VALUES(?,?,?,?) ON CONFLICT(scope,id) DO UPDATE SET rev=excluded.rev,body=excluded.body",
         ).run(scope, r.id, r.rev, JSON.stringify(r.body));
         fault("after-row");
+      }
+      for (const d of batch.deletes ?? []) {
+        const old = record(db, scope, d.id),
+          dirty = db.prepare("SELECT 1 FROM working WHERE scope=? AND id=?").get(scope, d.id);
+        if (dirty)
+          db.prepare(
+            "INSERT INTO conflicts VALUES(?,?,?) ON CONFLICT(scope,id) DO UPDATE SET body=excluded.body",
+          ).run(
+            scope,
+            d.id,
+            JSON.stringify({
+              base: old,
+              local: working(db, scope, d.id),
+              remote: d,
+              reason: "ENTRY_DELETED",
+            }),
+          );
+        db.prepare("DELETE FROM records WHERE scope=? AND id=?").run(scope, d.id);
+        db.prepare(
+          "INSERT INTO tombstones VALUES(?,?,?,?,?,?) ON CONFLICT(scope,g,id) DO UPDATE SET rev=excluded.rev,seq=excluded.seq,payload=excluded.payload",
+        ).run(scope, generation, d.id, d.rev, batch.seq, JSON.stringify(old));
+        db.prepare("INSERT OR IGNORE INTO retired_ids VALUES(?,?,?)").run(scope, generation, d.id);
+        fault("after-delete");
       }
       for (const [table, values] of [
         ["cell_versions", batch.cells],

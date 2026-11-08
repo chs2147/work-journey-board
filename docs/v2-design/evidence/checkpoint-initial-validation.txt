@@ -1,0 +1,73 @@
+✖ completion legacy never-sent content converts with explicit choice and archive (114.434495ms)
+✔ completion frozen legacy request stays immutable until archive/reconcile (156.371991ms)
+✖ completion legacy structural draft is never silently converted (120.907155ms)
+✔ completion dependent move is blocked after predecessor conflict (165.632573ms)
+✔ completion keep-server archives failed move and cancels its projection (151.325377ms)
+✔ completion document conflict resolves using fresh revision and validated links (146.205875ms)
+✔ completion physical SQLite file quota rolls snapshot back (175.383433ms)
+✔ completion compacted operations cannot replay even if their content revision matches (133.105626ms)
+✔ completion server SIGKILL save-document/after-links (169.365223ms)
+✔ completion server SIGKILL save-document/after-document (159.58403ms)
+✔ completion server SIGKILL save-document/after-commit (163.007083ms)
+✔ completion server SIGKILL delete-subtree/after-delete (164.445782ms)
+✔ completion server SIGKILL delete-subtree/after-commit (161.922917ms)
+✔ completion restore SIGKILL after-clear (176.544487ms)
+✔ completion restore SIGKILL before-commit (177.841316ms)
+✔ completion restore SIGKILL after-commit (184.329627ms)
+✔ completion receiver SIGKILL delete after-delete (186.280729ms)
+✔ completion receiver SIGKILL delete after-apply (164.915623ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 16
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2878.394788
+
+✖ failing tests:
+
+test at poc/v2-sync/completion.test.mjs:31:1
+✖ completion legacy never-sent content converts with explicit choice and archive (114.434495ms)
+  ReferenceError: hash is not defined
+      at file:///workspace/work-journey-board/poc/v2-sync/integrated.mjs:607:15
+      at transaction (file:///workspace/work-journey-board/poc/v2-sync/model.mjs:38:15)
+      at upgradeLegacyDraft (file:///workspace/work-journey-board/poc/v2-sync/integrated.mjs:601:10)
+      at TestContext.<anonymous> (file:///workspace/work-journey-board/poc/v2-sync/completion.test.mjs:37:3)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+
+test at poc/v2-sync/completion.test.mjs:68:1
+✖ completion legacy structural draft is never silently converted (120.907155ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /ARCHIVE_REQUIRED/. Input:
+
+  'ReferenceError: hash is not defined'
+
+      at TestContext.<anonymous> (file:///workspace/work-journey-board/poc/v2-sync/completion.test.mjs:73:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: ReferenceError: hash is not defined
+        at file:///workspace/work-journey-board/poc/v2-sync/integrated.mjs:607:15
+        at transaction (file:///workspace/work-journey-board/poc/v2-sync/model.mjs:38:15)
+        at upgradeLegacyDraft (file:///workspace/work-journey-board/poc/v2-sync/integrated.mjs:601:10)
+        at file:///workspace/work-journey-board/poc/v2-sync/completion.test.mjs:74:11
+        at getActual (node:assert:611:5)
+        at strict.throws (node:assert:759:24)
+        at TestContext.<anonymous> (file:///workspace/work-journey-board/poc/v2-sync/completion.test.mjs:73:10)
+        at Test.runInAsyncScope (node:async_hooks:227:14)
+        at Test.run (node:internal/test_runner/test:1402:25)
+        at Test.processPendingSubtests (node:internal/test_runner/test:974:18),
+    expected: /ARCHIVE_REQUIRED/,
+    operator: 'throws',
+    diff: 'simple'
+  }

@@ -63,6 +63,7 @@ export function prepare(db, scope, id, fault = () => {}) {
       opId: randomUUID(),
       generation: state(db, scope).generation,
       base: r.rev,
+      baseCursor: state(db, scope).cursor,
       body: JSON.parse(d.body),
     };
     db.prepare("INSERT INTO pending VALUES(?,?,?)").run(scope, op.opId, JSON.stringify(op));

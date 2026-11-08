@@ -66,3 +66,19 @@ node poc/v2-sync/run-local.mjs        # 현재 전체152개와 실행 증거 수
 `integrated.mjs`에서 항목은 enqueuePatch/enqueueMove, 노트 등 일반 문서는 기존 enqueue로 대기시킨 후 integratedTick으로 전송한다. applyMixed가 혼합 이벤트 페이지와 명령 완료 상태를 원자적으로 적용한다. 기존 tick/applyPage와 호출 경로를 혼용하지 않는다. 예전 entry_item 대기/이벤트를 자동 변환하지 않고 보존·거절하며, typed 이동은 workspace당 미해결1개로 제한한다.
 
 [29문서](../../docs/v2-design/29-integrated-move-queue-results.md)에 검증 범위·수정 전 실패·제약을 기록했다. 현재 실험용 입력/SQLite 서버 모형이며 실제 앱/서버 인증·네트워크가 아니다.
+
+## 로컬 체크포인트: 삭제·복원·장기 오프라인
+
+```sh
+node poc/v2-sync/lifecycle.test.mjs  # 삭제/문서+링크21개
+node poc/v2-sync/recovery.test.mjs   # 복원/만료/GC/충돌/이동 의존성18개
+node poc/v2-sync/completion.test.mjs # 변환/용량/SIGKILL/경합21개
+node poc/v2-sync/stress.test.mjs     # F1/F2 기능/용량2개
+node poc/v2-sync/run-local.mjs       # 현재 전체214개
+```
+
+[lifecycle.mjs](lifecycle.mjs)는 삭제/자식 생성·문서/링크 복합 명령을 처리한다. enqueueLifecycle로 대기시켜 integratedTick을 사용한다. [recovery.mjs](recovery.mjs)는 자산 포함 snapshot·복원 전 사본·cursor 보관 하한·명시적 아카이브/재동기화·보관 미리보기/GC를 제공한다.
+
+충돌 선택은 resolveConflict, 연속 이동은 enqueueMoveAfter, 구 초안 변환은 upgradeLegacyDraft, 아카이브의 명시적 재입력은 recoverArchivedEdit을 사용한다. 모두 독립 모형의 API다. 자동 서버 복구·범용 SQL 동기화·실제 인증·UI를 제공하지 않는다. 삭제된 항목의 복구 사본은 로컬 검토용이며 자동 부활시키지 않는다.
+
+[30문서](../../docs/v2-design/30-local-checkpoint-results.md)에 전체 결과·실행 증거와 대용량 메모리 한계를 기록했다. 단일 stress 시험은 10만 항목/50MiB 표본을 실제로 생성하므로 실행 중 임시 디스크와 메모리를 사용하고, 시험 종료 후 직접 만든 디렉터리를 정리한다. 원본 사용자 파일은 열지 않는다.

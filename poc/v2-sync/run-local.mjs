@@ -16,11 +16,15 @@ for (const [file, expected] of [
   ["queue.test.mjs", 28],
   ["cells.test.mjs", 38],
   ["integrated.test.mjs", 37],
+  ["lifecycle.test.mjs", 21],
+  ["recovery.test.mjs", 18],
+  ["completion.test.mjs", 21],
+  ["stress.test.mjs", 2],
 ]) {
   const run = spawnSync(process.execPath, [fileURLToPath(new URL(file, here))], {
     encoding: "utf8",
     cwd: fileURLToPath(root),
-    timeout: 30000,
+    timeout: file === "stress.test.mjs" ? 90000 : 30000,
     maxBuffer: 2 * 1024 * 1024,
   });
   const log = (run.stdout ?? "") + (run.stderr ?? "");
@@ -39,6 +43,10 @@ for (const [file, expected] of [
     status:
       !run.error && !run.signal && run.status === 0 && count === expected && failures === 0 ? "PASS" : "FAIL",
     cases: log.split("\n").filter((l) => /^[✔✖]/u.test(l)),
+    measurements: log
+      .split("\n")
+      .filter((l) => l.includes('"case":"F1"') || l.includes('"case":"F2"'))
+      .map((l) => JSON.parse(l.slice(l.indexOf("{")))),
     fixtures: log
       .split("\n")
       .filter((l) => l.includes('"case":"DB18/'))
