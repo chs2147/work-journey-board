@@ -136,3 +136,18 @@ test("storage intent ID is identical in begin and settlement", async () => {
   assert.equal(begin.params.intent, settle.params.intent);
   assert.equal(begin.params.token, settle.params.token);
 });
+
+test("numeric IO version is rejected instead of rounded", async () => {
+  const f = fixture({ reserve: (_r, row) => ({ ...row, ioVersion: 9007199254740992 }) });
+  await assert.rejects(
+    () => f.meta.reserve(principal, scope, {}),
+    (e) => e.code === "METADATA_UNAVAILABLE",
+  );
+});
+test("numeric lease fence is rejected instead of rounded", async () => {
+  const f = fixture({ acquire: (r, row) => ({ ...row, leaseToken: r.params.token, fence: 1 }) });
+  await assert.rejects(
+    () => f.meta.withAsset(principal, scope, "read", async () => {}),
+    (e) => e.code === "METADATA_UNAVAILABLE",
+  );
+});

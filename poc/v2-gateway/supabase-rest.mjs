@@ -112,7 +112,7 @@ export function createSupabaseRest({ projectRef, serviceRoleKey, fetchTransport 
           Object.keys(args).sort().join(",") !== "p_session,p_user"
         )
           throw new GatewayError("INVALID_RPC");
-      } else if (name === "wjb_v2_asset_command") {
+      } else if (["wjb_v2_asset_command", "wjb_v2_recovery_catalog"].includes(name)) {
         if (
           !args?.p_request ||
           Object.keys(args).join(",") !== "p_request" ||
@@ -126,7 +126,7 @@ export function createSupabaseRest({ projectRef, serviceRoleKey, fetchTransport 
         body: JSON.stringify(args),
       });
       if (!res.ok) {
-        if (name === "wjb_v2_asset_command") {
+        if (["wjb_v2_asset_command", "wjb_v2_recovery_catalog"].includes(name)) {
           const allowed = new Set([
             "ACCESS_DENIED",
             "ACCESS_REVOKED",
@@ -166,7 +166,7 @@ export function createSupabaseRest({ projectRef, serviceRoleKey, fetchTransport 
         );
         if (name === "wjb_v2_session_active" && typeof result !== "boolean") throw new Error();
         if (
-          name === "wjb_v2_asset_command" &&
+          name !== "wjb_v2_session_active" &&
           (!result || Array.isArray(result) || typeof result !== "object")
         )
           throw new Error();

@@ -31,3 +31,9 @@ handler는 Origin 요청을 기본 거절하고 cookie를 인증 수단으로 �
 `node poc/v2-gateway/postgres-metadata.test.mjs`는 adapter12개, `node poc/v2-gateway/durable.test.mjs`는 실제 로컬 SQL/두 gateway/Storage 대체 서버 통합25개를 실행한다. Docker 로컬 소켓과127.0.0.1 listen이 필요하며, PostgreSQL 고정 이미지와 실행별 전용 volume을 사용한다. 테스트 종료 때 자기 label을 확인한 컨테이너/volume만 지운다. 실제 Supabase credentials는 시험 환경에서 제거한다.
 
 `postgres-metadata.sql`은 별도 검토 후보이며 cloud에 적용하지 않았다. C1 session guard와 서버 전용 RPC 역할을 전제로 한다. `postgres-metadata.mjs`는 짧은 명령으로 reservation/quota와30초 lease/fence, I/O intent/cleanup epoch를 관리한다. 불명확한 저장은 추측해 quota를 해제하지 않는다. 프로세스가 영구히 종료된 intent의 정리 worker는 후속이며, prototype의 경우 취소가 계속 CLEANUP_UNCERTAIN일 수 있다. 자산256개·intent64개 제한은 PoC용이다. [37문서](../../docs/v2-design/37-durable-gateway-metadata-results.md)에 상태·장애·실제 DB/Storage와의 경계를 기록했다.
+
+## 보수적 복구 worker
+
+`node poc/v2-gateway/recovery.test.mjs`는 복구25개, `node poc/v2-gateway/postgres-metadata.test.mjs`는 확장 adapter14개, `node poc/v2-gateway/durable.test.mjs`는 기존25개를 포함한 영속/복구41개를 실행한다. setup은 matching `postgres-metadata.sql`과 `recovery.sql`을 순서대로 설치하며 실제 Supabase에는 적용하지 않는다. 앞 단계의 개수는 해당 시점 기록이다.
+
+`createRecoveryWorker`는 명시적인 `preview`와 `apply`만 제공하며 cron/실제 앱 UI를 설치하지 않는다. 최대8개/회 미리보기 후 같은 계획 hash/작업을 전달해야 실행한다. matching 파일은 미확정 intent를 보존한 채 ready 복구할 수 있다. 미확정 요청이 없는 경우에만 cleanup과 부재 재확인 후 quota를 반환한다. 불명확한 missing/corrupt/장애·다른 generation은 보류한다. 운영자 확인만으로 intent를 강제 settled로 바꾸지 않는다. SQL 완료 기록으로 응답 유실/worker 재시작의 중복 실행을 막는다. [38문서](../../docs/v2-design/38-recovery-worker-results.md)에 UI 계약과 제한을 기록했다.

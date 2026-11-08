@@ -1,0 +1,33 @@
+✔ classification: busy (2.510943ms)
+✔ classification: old generation (0.101001ms)
+✔ classification: finished ready (0.090475ms)
+✔ classification: corrupt bytes (0.152338ms)
+✔ classification: unavailable storage (0.106069ms)
+✔ classification: missing uncertain (0.097897ms)
+✔ classification: valid uncertain (0.161212ms)
+✔ classification: valid settled (0.11998ms)
+✔ classification: cleanup settled (0.182093ms)
+✔ classification: cleanup uncertain (0.198768ms)
+✔ preview reads only and caps one page (1.424345ms)
+✔ busy row does not read storage (0.271427ms)
+✔ corrupt file is retained without an action (0.236995ms)
+✔ bad catalog shape fails closed (0.623123ms)
+✔ missing review confirmation prevents acquisition (0.621932ms)
+✔ expired review rejected before mutation (0.372438ms)
+✔ changed IO epoch requires a new review (0.408282ms)
+✔ storage change after preview prevents cancellation (0.470705ms)
+✔ valid uncertain bytes can recover without quota release (0.433861ms)
+✔ unknown missing request cannot be forced through changed plan (0.409553ms)
+✔ settled missing asset can cancel and record completion (0.337246ms)
+✔ replayed completed plan returns receipt without extra delete (0.430775ms)
+✔ delete failure retains cleanup and quota (0.414542ms)
+✔ lost publication does not fabricate completion receipt (0.241211ms)
+✔ revocation after inspection prevents restore (0.396605ms)
+ℹ tests 25
+ℹ suites 0
+ℹ pass 25
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 22.129092

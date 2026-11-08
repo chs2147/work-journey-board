@@ -248,3 +248,7 @@ Neon 중심 검토는 유지하되 woori 운영을 유지한 로컬 개발 대�
 ## 4.38 PostgreSQL 영속 metadata·실제 프로세스 재시작
 
 사용자의 다음 진행 요청으로 기존 커밋 원격 반영을 확인하고 SQL schema/RPC·metadata adapter를 추가했다. HTTP→실제 PostgreSQL→Storage 대체 서버로 통합25개, adapter12개, HTTP61개가 통과했다. 실제 gateway SIGKILL·PostgreSQL 재시작·두 worker의 lease/fence 경합·늦은 I/O와 cleanup epoch를 검증했다. [37문서](37-durable-gateway-metadata-results.md)에 미확정 요청을 추측해 해제하지 않는 제한과 후속 복구 worker를 기록했다. 실제 Supabase·제품/DB18·main·환경 게시·준비 true flag는 유지했다.
+
+## 4.39 보수적 복구 worker·검토 후 실행·완료 기록
+
+사용자의 커밋/푸시 후 다음 단계 요청으로 이전 원격 반영을 확인했다. 읽기 전용 catalog/미리보기, 재검사·새 recovery lease, matching 파일 복구/확실한 정리, atomic audit·재시도 완료 조회를 구현했다. 복구25·metadata14·HTTP61·영속/복구41개가 통과했다. [38문서](38-recovery-worker-results.md)에 앱 UI 미구현 계약·미확정 요청 강제 해제 금지와 후속 전체 적용/rollback 검토를 기록했다. 실제 Supabase/제품·DB18·main·환경 게시·준비 flag는 유지했다.

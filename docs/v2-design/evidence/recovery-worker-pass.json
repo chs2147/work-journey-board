@@ -1,0 +1,620 @@
+{
+  "observed_at": "2026-11-08T23:10:25.816830+00:00",
+  "scope": "Local generated JWT/HTTP/PostgreSQL recovery worker; provider-shaped Auth/REST/Storage fixtures, no cloud calls or writes",
+  "node_version": "v24.22.1",
+  "postgres_version": "17.11 (Debian 17.11-1.pgdg12+2)",
+  "groups": {
+    "recovery_unit": {
+      "count": 25,
+      "tests": [
+        {
+          "name": "classification: busy",
+          "status": "PASS"
+        },
+        {
+          "name": "classification: old generation",
+          "status": "PASS"
+        },
+        {
+          "name": "classification: finished ready",
+          "status": "PASS"
+        },
+        {
+          "name": "classification: corrupt bytes",
+          "status": "PASS"
+        },
+        {
+          "name": "classification: unavailable storage",
+          "status": "PASS"
+        },
+        {
+          "name": "classification: missing uncertain",
+          "status": "PASS"
+        },
+        {
+          "name": "classification: valid uncertain",
+          "status": "PASS"
+        },
+        {
+          "name": "classification: valid settled",
+          "status": "PASS"
+        },
+        {
+          "name": "classification: cleanup settled",
+          "status": "PASS"
+        },
+        {
+          "name": "classification: cleanup uncertain",
+          "status": "PASS"
+        },
+        {
+          "name": "preview reads only and caps one page",
+          "status": "PASS"
+        },
+        {
+          "name": "busy row does not read storage",
+          "status": "PASS"
+        },
+        {
+          "name": "corrupt file is retained without an action",
+          "status": "PASS"
+        },
+        {
+          "name": "bad catalog shape fails closed",
+          "status": "PASS"
+        },
+        {
+          "name": "missing review confirmation prevents acquisition",
+          "status": "PASS"
+        },
+        {
+          "name": "expired review rejected before mutation",
+          "status": "PASS"
+        },
+        {
+          "name": "changed IO epoch requires a new review",
+          "status": "PASS"
+        },
+        {
+          "name": "storage change after preview prevents cancellation",
+          "status": "PASS"
+        },
+        {
+          "name": "valid uncertain bytes can recover without quota release",
+          "status": "PASS"
+        },
+        {
+          "name": "unknown missing request cannot be forced through changed plan",
+          "status": "PASS"
+        },
+        {
+          "name": "settled missing asset can cancel and record completion",
+          "status": "PASS"
+        },
+        {
+          "name": "replayed completed plan returns receipt without extra delete",
+          "status": "PASS"
+        },
+        {
+          "name": "delete failure retains cleanup and quota",
+          "status": "PASS"
+        },
+        {
+          "name": "lost publication does not fabricate completion receipt",
+          "status": "PASS"
+        },
+        {
+          "name": "revocation after inspection prevents restore",
+          "status": "PASS"
+        }
+      ],
+      "raw_log_sha256": "cc3e643ac3c01223ea63dedcca45f84598317bbb8d81c50b970d43ea6374bf99"
+    },
+    "metadata_adapter": {
+      "count": 14,
+      "tests": [
+        {
+          "name": "explicit server transport required",
+          "status": "PASS"
+        },
+        {
+          "name": "reserve forwards only trusted identity and fixed RPC",
+          "status": "PASS"
+        },
+        {
+          "name": "invalid scope never reaches backend",
+          "status": "PASS"
+        },
+        {
+          "name": "wrong workspace response fails closed",
+          "status": "PASS"
+        },
+        {
+          "name": "unknown backend errors do not leak details",
+          "status": "PASS"
+        },
+        {
+          "name": "known access rejection maps to forbidden",
+          "status": "PASS"
+        },
+        {
+          "name": "busy lease is returned as retryable conflict",
+          "status": "PASS"
+        },
+        {
+          "name": "lease token mismatch fails closed",
+          "status": "PASS"
+        },
+        {
+          "name": "callback error still releases exact acquired lease",
+          "status": "PASS"
+        },
+        {
+          "name": "release outage cannot alter successful committed result",
+          "status": "PASS"
+        },
+        {
+          "name": "cleanup keeps original IO epoch despite later recheck",
+          "status": "PASS"
+        },
+        {
+          "name": "storage intent ID is identical in begin and settlement",
+          "status": "PASS"
+        },
+        {
+          "name": "numeric IO version is rejected instead of rounded",
+          "status": "PASS"
+        },
+        {
+          "name": "numeric lease fence is rejected instead of rounded",
+          "status": "PASS"
+        }
+      ],
+      "raw_log_sha256": "b8562e8df0b1fca615a5bd70125929017326d158d026f80433348d76d9d6ec55"
+    },
+    "http_regression": {
+      "count": 61,
+      "tests": [
+        {
+          "name": "real HTTP reserve/upload/download round trip",
+          "status": "PASS"
+        },
+        {
+          "name": "missing bearer rejected before backend",
+          "status": "PASS"
+        },
+        {
+          "name": "invalid signed token rejected before backend",
+          "status": "PASS"
+        },
+        {
+          "name": "live session revoked rejects valid bearer",
+          "status": "PASS"
+        },
+        {
+          "name": "session RPC outage fails closed and hides details",
+          "status": "PASS"
+        },
+        {
+          "name": "other account cannot reserve another workspace",
+          "status": "PASS"
+        },
+        {
+          "name": "another session cannot spoof device binding",
+          "status": "PASS"
+        },
+        {
+          "name": "request body principal spoofing is not accepted",
+          "status": "PASS"
+        },
+        {
+          "name": "request body path injection is not accepted",
+          "status": "PASS"
+        },
+        {
+          "name": "unknown route and query parameters rejected",
+          "status": "PASS"
+        },
+        {
+          "name": "browser origin denied by default",
+          "status": "PASS"
+        },
+        {
+          "name": "unsupported HTTP method rejected",
+          "status": "PASS"
+        },
+        {
+          "name": "reservation replay idempotent",
+          "status": "PASS"
+        },
+        {
+          "name": "reservation changes cannot reuse asset id",
+          "status": "PASS"
+        },
+        {
+          "name": "pending asset cannot download",
+          "status": "PASS"
+        },
+        {
+          "name": "upload without reservation rejected",
+          "status": "PASS"
+        },
+        {
+          "name": "upload content type enforced",
+          "status": "PASS"
+        },
+        {
+          "name": "actual payload hash must match reservation",
+          "status": "PASS"
+        },
+        {
+          "name": "larger body rejected before object write",
+          "status": "PASS"
+        },
+        {
+          "name": "short body rejected before object write",
+          "status": "PASS"
+        },
+        {
+          "name": "storage upload failure leaves pending and quota held",
+          "status": "PASS"
+        },
+        {
+          "name": "lost storage ack retries without overwriting",
+          "status": "PASS"
+        },
+        {
+          "name": "same existing private bytes can reconcile pending upload",
+          "status": "PASS"
+        },
+        {
+          "name": "different existing bytes never overwritten or exposed",
+          "status": "PASS"
+        },
+        {
+          "name": "metadata finalize failure preserves private object",
+          "status": "PASS"
+        },
+        {
+          "name": "lost metadata ack returns prior committed ready on retry",
+          "status": "PASS"
+        },
+        {
+          "name": "revocation during upload prevents ready publication",
+          "status": "PASS"
+        },
+        {
+          "name": "generation change during upload prevents publication",
+          "status": "PASS"
+        },
+        {
+          "name": "expiry during upload prevents publication",
+          "status": "PASS"
+        },
+        {
+          "name": "another account cannot download finalized object",
+          "status": "PASS"
+        },
+        {
+          "name": "same owner with second valid device can download",
+          "status": "PASS"
+        },
+        {
+          "name": "second device cannot replace reserved upload",
+          "status": "PASS"
+        },
+        {
+          "name": "corrupted finalized bytes never returned",
+          "status": "PASS"
+        },
+        {
+          "name": "revocation during download denies response bytes",
+          "status": "PASS"
+        },
+        {
+          "name": "generation change during download denies response",
+          "status": "PASS"
+        },
+        {
+          "name": "ready asset cannot be canceled",
+          "status": "PASS"
+        },
+        {
+          "name": "pending cancellation confirms absence before quota release",
+          "status": "PASS"
+        },
+        {
+          "name": "delete error keeps cleanup pending and quota held",
+          "status": "PASS"
+        },
+        {
+          "name": "successful delete response without absence is not completion",
+          "status": "PASS"
+        },
+        {
+          "name": "cancel metadata error retains quota and can retry",
+          "status": "PASS"
+        },
+        {
+          "name": "cancel replay is safe and id cannot be reused",
+          "status": "PASS"
+        },
+        {
+          "name": "expired reservation can be canceled",
+          "status": "PASS"
+        },
+        {
+          "name": "concurrent uploads serialize without duplicate object",
+          "status": "PASS"
+        },
+        {
+          "name": "concurrent reservations cannot exceed quota",
+          "status": "PASS"
+        },
+        {
+          "name": "cancel racing upload never exposes unverified bytes",
+          "status": "PASS"
+        },
+        {
+          "name": "server credential never appears in gateway JSON",
+          "status": "PASS"
+        },
+        {
+          "name": "adapter rejects another target project",
+          "status": "PASS"
+        },
+        {
+          "name": "adapter rejects object path traversal before transport",
+          "status": "PASS"
+        },
+        {
+          "name": "server RPC allowlist rejects arbitrary function",
+          "status": "PASS"
+        },
+        {
+          "name": "transport failure hides original details",
+          "status": "PASS"
+        },
+        {
+          "name": "chunked source without content length has bounded read",
+          "status": "PASS"
+        },
+        {
+          "name": "stalled source times out and cancels",
+          "status": "PASS"
+        },
+        {
+          "name": "invalid declared length rejected",
+          "status": "PASS"
+        },
+        {
+          "name": "gateway rejects malformed JSON without leaking internals",
+          "status": "PASS"
+        },
+        {
+          "name": "oversized JSON rejected before metadata mutation",
+          "status": "PASS"
+        },
+        {
+          "name": "unsafe generation integer rejected before metadata",
+          "status": "PASS"
+        },
+        {
+          "name": "real HTTP chunked upload is bounded without declared length",
+          "status": "PASS"
+        },
+        {
+          "name": "provider redirect is not followed with server credentials",
+          "status": "PASS"
+        },
+        {
+          "name": "oversized provider bytes rejected with bounded read",
+          "status": "PASS"
+        },
+        {
+          "name": "HTTP RPC string true is not a verified session",
+          "status": "PASS"
+        },
+        {
+          "name": "revocation during delete retains cleanup and quota",
+          "status": "PASS"
+        }
+      ],
+      "raw_log_sha256": "c6b12160f67127980e11dc7647a6d1a7c2cdfa1399fe1c6e72bde5ec41c3560d"
+    },
+    "durable_recovery": {
+      "count": 41,
+      "tests": [
+        {
+          "name": "HTTP gateway to real SQL and Storage fixture round trip",
+          "status": "PASS"
+        },
+        {
+          "name": "gateway SIGKILL and restart preserves committed ready bytes",
+          "status": "PASS"
+        },
+        {
+          "name": "reservation retry after gateway restart charges quota once",
+          "status": "PASS"
+        },
+        {
+          "name": "PostgreSQL container restart preserves metadata and quota",
+          "status": "PASS"
+        },
+        {
+          "name": "two gateway processes cannot hold one write lease",
+          "status": "PASS"
+        },
+        {
+          "name": "expired old worker cannot publish or erase new lease",
+          "status": "PASS"
+        },
+        {
+          "name": "late write after cleanup does not release quota prematurely",
+          "status": "PASS"
+        },
+        {
+          "name": "SIGKILL after object put recovers via immutable retry",
+          "status": "PASS"
+        },
+        {
+          "name": "SIGKILL after intent before put preserves conservative accounting",
+          "status": "PASS"
+        },
+        {
+          "name": "provider logout during upload prevents SQL ready publication",
+          "status": "PASS"
+        },
+        {
+          "name": "metadata transaction failure retains private bytes and can retry",
+          "status": "PASS"
+        },
+        {
+          "name": "lost committed ready RPC response replays without duplicate write",
+          "status": "PASS"
+        },
+        {
+          "name": "delete failure persists cleanup across process restart",
+          "status": "PASS"
+        },
+        {
+          "name": "unknown upload outcome cannot be canceled by guessing absence",
+          "status": "PASS"
+        },
+        {
+          "name": "generation change during I/O blocks final SQL mutation",
+          "status": "PASS"
+        },
+        {
+          "name": "another account cannot read private asset through SQL",
+          "status": "PASS"
+        },
+        {
+          "name": "separate processes reserve quota atomically",
+          "status": "PASS"
+        },
+        {
+          "name": "client roles cannot execute metadata command or read tables",
+          "status": "PASS"
+        },
+        {
+          "name": "SQL cannot publish ready without settled storage intent",
+          "status": "PASS"
+        },
+        {
+          "name": "stale lease release never clears newer owner",
+          "status": "PASS"
+        },
+        {
+          "name": "cleanup epoch detects settlement after absence observation",
+          "status": "PASS"
+        },
+        {
+          "name": "canceled asset survives restart and cannot be reused",
+          "status": "PASS"
+        },
+        {
+          "name": "reserve insertion failure rolls quota increment back",
+          "status": "PASS"
+        },
+        {
+          "name": "asset registry limit also counts canceled identifiers",
+          "status": "PASS"
+        },
+        {
+          "name": "partial lease tuple is rejected atomically by schema",
+          "status": "PASS"
+        },
+        {
+          "name": "recovery preview is read-only and keeps pending quota",
+          "status": "PASS"
+        },
+        {
+          "name": "recovery restores valid orphan bytes without settling crashed intent",
+          "status": "PASS"
+        },
+        {
+          "name": "recovery never treats missing crashed I/O as settled",
+          "status": "PASS"
+        },
+        {
+          "name": "recovery cancels quiescent missing asset and saves receipt atomically",
+          "status": "PASS"
+        },
+        {
+          "name": "recovery refuses tampered confirmation before mutation",
+          "status": "PASS"
+        },
+        {
+          "name": "recovery rejects stale IO snapshot",
+          "status": "PASS"
+        },
+        {
+          "name": "recovery preserves cleanup with valid bytes and unknown IO",
+          "status": "PASS"
+        },
+        {
+          "name": "recovery can inspect expired reservation without reviving upload lease",
+          "status": "PASS"
+        },
+        {
+          "name": "recovery rejects other account and provider logout",
+          "status": "PASS"
+        },
+        {
+          "name": "new valid owner device can recover lost creator device asset",
+          "status": "PASS"
+        },
+        {
+          "name": "recovery catalog is bounded and paginated",
+          "status": "PASS"
+        },
+        {
+          "name": "busy recovery candidate offers no mutation",
+          "status": "PASS"
+        },
+        {
+          "name": "recovery audit failure rolls cancellation and quota back",
+          "status": "PASS"
+        },
+        {
+          "name": "recovery receipt survives gateway restart",
+          "status": "PASS"
+        },
+        {
+          "name": "client role cannot inspect recovery catalog or audit",
+          "status": "PASS"
+        },
+        {
+          "name": "recovery worker SIGKILL after delete resumes from fresh review",
+          "status": "PASS"
+        }
+      ],
+      "raw_log_sha256": "9a60ef22f4146684f0be912abf4b18b9e060433552d306e7fa1cc41d406c6e6d"
+    }
+  },
+  "files": {
+    "poc/v2-auth/package-lock.json": "8cdd791117b009e455df7336fb5d80d2b96de21ce4e01d35bf0bb33c3c966d59",
+    "poc/v2-auth/package.json": "f18a789a005385991e4d44d906beabff270c0c8d33d3cdc7541938cb7f92bc4f",
+    "poc/v2-auth/session-adapter.mjs": "a2021c5c06a6d54d491cea7ed994ecbc15d511e7d98a22d896bf34405ba4ab25",
+    "poc/v2-auth/test-jose.mjs": "f607d9b5c21ce65d5cd24620ca5673f38a15ddbdca67971b094a075c6fd3815d",
+    "poc/v2-auth/verifier.mjs": "033d0eb4e0ff1770c9f5084f65cc295d65aefba61fda37b945b900c266a0da12",
+    "poc/v2-cloud/session-guard.sql": "3be17e719a5a5c8cf91268c46b2ce99aeff3c6127b5b43bd8b8f250467a374c9",
+    "poc/v2-gateway/durable-worker.mjs": "67e69667e05d8b1f3944bbff2bff3195ac5111077d153f14dd9ceffd682cb2fe",
+    "poc/v2-gateway/durable.test.mjs": "dd7fc1fe768057c9c817d9be120adb86f9e0946f5711a96fbfd70e3e17453fe7",
+    "poc/v2-gateway/fixtures.mjs": "93d18089eca782e136293bf90135a5dc28abcd52d13f88e55601ecb820f09e73",
+    "poc/v2-gateway/gateway.mjs": "b161bb8703b6e278f1b8859e01fb698f3137a10eae919c01afa7cde1372040eb",
+    "poc/v2-gateway/gateway.test.mjs": "559ff5019b4ee7b5c25d7d23950f362dd2e03df0814564f23fc8c9b3226c814e",
+    "poc/v2-gateway/io.mjs": "e9c74691df3ced7a32ca589cf8ebe6fc0fc8aa15bc586da7ff44c69805cfecac",
+    "poc/v2-gateway/node-server.mjs": "088f71b560a0892baf80477ca45e38aea091b65f6ce6041df45acdadd0a6d178",
+    "poc/v2-gateway/postgres-metadata.mjs": "8dd9ab05a39ef92ad50a200ebb0d0eb749565b48829593f4626430bf690705aa",
+    "poc/v2-gateway/postgres-metadata.sql": "b8d789769cf529456757092ef59ac484dda451686bf8ca2139895b79fabe9bda",
+    "poc/v2-gateway/postgres-metadata.test.mjs": "4a6ba05065f00b24df2b24fe679019e36940b7946a766d2a166e8a5a6a1dd96d",
+    "poc/v2-gateway/recovery.mjs": "48ae3a80480447839e80f5a25251d64efe1fed91a815dcf09f4321896e3330f3",
+    "poc/v2-gateway/recovery.sql": "bf9e474bbda8a3af4eb4602f83b70cf6605d416befb3e6bf809d172a9f3aca54",
+    "poc/v2-gateway/recovery.test.mjs": "769b3a6742a87a366a1d506995358e520795176162d4d2371e8c1e0bc179c683",
+    "poc/v2-gateway/supabase-rest.mjs": "3a89a712cd5a435ef26e8da65ae2723033b9a962483cf5ead81de8a1ee5c376d"
+  },
+  "production_readiness_updated": false,
+  "unresolved_storage_outcomes": "Preserved; never force-settled or charged quota released based on absence alone"
+}

@@ -2,6 +2,8 @@
 
 2026-11-08 · `v2-design` · 앱1.23.0 / DB18 유지
 
+**후속:** 보수적 복구 worker·검토 계약·감사 기록은 [38문서](38-recovery-worker-results.md)에 기록했다. 아래25개 통합 시험은 최초 영속 metadata 단계 결과다.
+
 ## 이번 구현
 
 사용자의 커밋/푸시 후 다음 진행 요청으로 `8091f85`의 원격 반영을 확인한 뒤, 메모리 fixture와 별개인 PostgreSQL metadata adapter를 추가했다. **gateway HTTP → 가상 PostgREST 형태 서버 → 실제 PostgreSQL → Storage 형태 대체 서버**의 로컬 흐름을 연결했다. 실제 Supabase에는 적용하지 않았다.

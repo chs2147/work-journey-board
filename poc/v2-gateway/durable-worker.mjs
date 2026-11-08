@@ -7,8 +7,24 @@ import { createNodeServer } from "./node-server.mjs";
 import { createSessionVerifier } from "../v2-auth/session-adapter.mjs";
 import { once } from "node:events";
 import { URL } from "node:url";
+import { createRecoveryWorker } from "./recovery.mjs";
+let recovery;
 let resume;
 process.on("message", async (message) => {
+  if (["recovery-preview", "recovery-apply"].includes(message.type)) {
+    try {
+      const method = message.type === "recovery-preview" ? "preview" : "apply";
+      const result = await recovery[method](message.input);
+      process.send({ type: "recovery-result", id: message.id, result });
+    } catch (e) {
+      process.send({
+        type: "recovery-result",
+        id: message.id,
+        error: { code: e.code || "RECOVERY_UNAVAILABLE" },
+      });
+    }
+    return;
+  }
   if (message.type === "resume") {
     resume?.();
     resume = null;
@@ -41,8 +57,23 @@ process.on("message", async (message) => {
       await base.putIfAbsent(scope, bytes);
       await pause("after-put");
     },
+    async remove(scope) {
+      await pause("before-delete");
+      await base.remove(scope);
+      await pause("after-delete");
+    },
   };
   const metadata = createPostgresMetadata({ callServerRpc: rest.callServerRpc });
+  recovery = createRecoveryWorker({
+    metadata,
+    storage,
+    callServerRpc: rest.callServerRpc,
+    verifyAccessToken: createSessionVerifier({
+      projectRef: "hutqsfftioxtredcjhsy",
+      jwks: config.jwks,
+      callServerRpc: rest.callServerRpc,
+    }),
+  });
   const server = createNodeServer(
     createGateway({
       metadata,

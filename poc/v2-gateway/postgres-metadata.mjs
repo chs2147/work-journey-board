@@ -34,6 +34,7 @@ export function createPostgresMetadata({ callServerRpc, onReleaseError = () => {
       row.bytes < 1 ||
       row.bytes > 65536 ||
       !["reserved", "ready", "cleanup", "canceled"].includes(row.state) ||
+      typeof row.ioVersion !== "string" ||
       !/^[0-9]+$/.test(row.ioVersion)
     )
       throw new GatewayError("METADATA_UNAVAILABLE", 503);
@@ -66,7 +67,7 @@ export function createPostgresMetadata({ callServerRpc, onReleaseError = () => {
     async withAsset(principal, scope, mode, fn) {
       const token = randomUUID();
       const row = validateRow(await command(principal, scope, "acquire", { token, mode }), scope);
-      if (row.leaseToken !== token || !/^[1-9][0-9]*$/.test(row.fence))
+      if (row.leaseToken !== token || typeof row.fence !== "string" || !/^[1-9][0-9]*$/.test(row.fence))
         throw new GatewayError("METADATA_UNAVAILABLE", 503);
       const fence = row.fence,
         intent = randomUUID();
@@ -86,11 +87,14 @@ export function createPostgresMetadata({ callServerRpc, onReleaseError = () => {
           beginStorageWrite: () => update("begin_io", { intent }),
           settleStorageWrite: () => update("settle_io", { intent }),
           markReady: () => update("mark_ready"),
+          recoverReady: (proof) => update("recover_ready", proof),
           async markCleanup() {
             await update("mark_cleanup");
             cleanupVersion = row.ioVersion;
           },
           markCanceled: () => update("mark_canceled", { ioVersion: cleanupVersion }),
+          recoverCancel: ({ decisionId, reviewHash }) =>
+            update("mark_canceled", { ioVersion: cleanupVersion, decisionId, reviewHash }),
         });
       } finally {
         try {

@@ -22,6 +22,8 @@ HTTP gateway와 고정 목적지 Storage REST 어댑터를 구현하고 실제 �
 
 PostgreSQL 영속 metadata를 HTTP 흐름에 연결했고 통합25개·adapter12개·HTTP61개가 통과했다([37. 결과](37-durable-gateway-metadata-results.md)). 실제 SIGKILL/DB 재시작·lease 경합·늦은 I/O를 시험했으며, 미확정 요청의 자동 정리와 실제 Storage 검증은 남아 있다.
 
+보수적 복구 worker·검토 후 실행·완료 기록을 추가했다([38. 결과](38-recovery-worker-results.md)). 복구 단위25개·metadata14개·HTTP61개·영속/복구41개가 통과했다. 정상 파일 복구와 확실한 정리는 지원하되, 미확정 요청이 남은 정리는 보류하며 실제 클라우드 적용은 하지 않았다.
+
 ## 문서 지도
 
 | 문서 | 논의 내용 |
@@ -48,6 +50,7 @@ PostgreSQL 영속 metadata를 HTTP 흐름에 연결했고 통합25개·adapter12
 | [Supabase 신규 계정·Keep Alive](20-supabase-keepalive.md) | 신규 계정 전제 갱신·Supabase 채택 시 하루1회 기본·휴면/복구 검증 |
 | [Supabase 프로젝트 구성안](21-supabase-project-blueprint.md) | 운영1개/로컬 개발·공식 SMTP/리전 조건·설정/비용 관문 |
 | [DB·권한·동기화 계약](22-db-permission-sync-contract.md) | 논리 테이블·tenant scope·원자적 push·커밋 순서 cursor·private 자산 |
+| [보수적 복구 worker·검토 계약](38-recovery-worker-results.md) | bounded 미리보기·검토 hash·재검사·새 기기 복구·audit/replay·미확정 보류 |
 | [영속 metadata·gateway 재시작](37-durable-gateway-metadata-results.md) | 실제 SQL·두 gateway·SIGKILL/DB 재시작·lease/fence·불명확한 I/O 보수적 보존 |
 | [HTTP gateway·Storage 계약 구현](36-http-gateway-storage-results.md) | 실제 loopback HTTP61개·인증/전송/재시도/정리 실패·영속 metadata 미연계 |
 | [클라우드 적용·복구 검토안](35-cloud-application-review.md) | 고정 대상·C1 SQL/rollback·서버 세션 어댑터·준비 검사·C2 저장소 계약 |

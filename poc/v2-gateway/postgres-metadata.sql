@@ -19,7 +19,7 @@ CREATE TABLE wjb_gateway.asset (
  lease_token uuid,lease_fence bigint NOT NULL DEFAULT 0 CHECK(lease_fence>=0),lease_expires timestamptz,lease_mode text,
  io_version bigint NOT NULL DEFAULT 0 CHECK(io_version>=0),
  CHECK((lease_token IS NULL AND lease_expires IS NULL AND lease_mode IS NULL) OR
-  (lease_token IS NOT NULL AND lease_expires IS NOT NULL AND lease_mode IS NOT NULL AND lease_mode IN ('read','write','cancel'))),
+  (lease_token IS NOT NULL AND lease_expires IS NOT NULL AND lease_mode IS NOT NULL AND lease_mode IN ('read','write','cancel','recover'))),
  PRIMARY KEY(workspace_id,id)
 );
 CREATE TABLE wjb_gateway.io_intent (
@@ -54,7 +54,7 @@ DECLARE
  v_intent wjb_gateway.io_intent%ROWTYPE; v_created boolean:=false; v_mode text:=v_params->>'mode';
  v_bytes integer; v_hash text; v_io uuid:=(v_params->>'intent')::uuid;
 BEGIN
- IF v_action IS NULL OR v_action NOT IN ('reserve','acquire','recheck','mark_ready','mark_cleanup','mark_canceled','release','begin_io','settle_io') THEN
+ IF v_action IS NULL OR v_action NOT IN ('reserve','acquire','recheck','mark_ready','mark_cleanup','mark_canceled','release','begin_io','settle_io','recover_ready') THEN
   RAISE EXCEPTION 'INVALID_ACTION'; END IF;
  IF v_user IS NULL OR v_session IS NULL OR v_ws IS NULL OR v_id IS NULL OR v_device IS NULL OR v_generation IS NULL OR v_generation<1 THEN
   RAISE EXCEPTION 'INVALID_SCOPE'; END IF;
@@ -102,9 +102,9 @@ BEGIN
   RETURN jsonb_build_object('released',FOUND);
  END IF;
  IF v_action='acquire' THEN
-  IF v_token IS NULL OR v_mode IS NULL OR v_mode NOT IN ('read','write','cancel') THEN RAISE EXCEPTION 'INVALID_LEASE'; END IF;
-  IF v_mode<>'read' AND v_row.device_id<>v_device THEN RAISE EXCEPTION 'ACCESS_DENIED'; END IF;
-  IF v_mode<>'cancel' AND v_row.state='reserved' AND v_row.expires_at<=clock_timestamp() THEN RAISE EXCEPTION 'UPLOAD_EXPIRED'; END IF;
+  IF v_token IS NULL OR v_mode IS NULL OR v_mode NOT IN ('read','write','cancel','recover') THEN RAISE EXCEPTION 'INVALID_LEASE'; END IF;
+  IF v_mode NOT IN ('read','recover') AND v_row.device_id<>v_device THEN RAISE EXCEPTION 'ACCESS_DENIED'; END IF;
+  IF v_mode NOT IN ('cancel','recover') AND v_row.state='reserved' AND v_row.expires_at<=clock_timestamp() THEN RAISE EXCEPTION 'UPLOAD_EXPIRED'; END IF;
   IF v_row.lease_token=v_token AND v_row.lease_expires>clock_timestamp() THEN
    IF v_row.lease_mode<>v_mode THEN RAISE EXCEPTION 'INVALID_LEASE'; END IF;
    RETURN wjb_gateway.asset_json(v_row); END IF;
@@ -115,8 +115,8 @@ BEGIN
  END IF;
  IF v_token IS NULL OR v_fence IS NULL OR v_row.lease_token IS DISTINCT FROM v_token OR v_row.lease_fence<>v_fence
   OR v_row.lease_expires IS NULL OR v_row.lease_expires<=clock_timestamp() THEN RAISE EXCEPTION 'LEASE_LOST'; END IF;
- IF v_row.lease_mode<>'read' AND v_row.device_id<>v_device THEN RAISE EXCEPTION 'ACCESS_DENIED'; END IF;
- IF v_row.lease_mode<>'cancel' AND v_row.state='reserved' AND v_row.expires_at<=clock_timestamp() THEN RAISE EXCEPTION 'UPLOAD_EXPIRED'; END IF;
+ IF v_row.lease_mode NOT IN ('read','recover') AND v_row.device_id<>v_device THEN RAISE EXCEPTION 'ACCESS_DENIED'; END IF;
+ IF v_row.lease_mode NOT IN ('cancel','recover') AND v_row.state='reserved' AND v_row.expires_at<=clock_timestamp() THEN RAISE EXCEPTION 'UPLOAD_EXPIRED'; END IF;
  IF v_action='recheck' THEN RETURN wjb_gateway.asset_json(v_row); END IF;
  IF v_action='begin_io' THEN
   IF v_row.lease_mode<>'write' OR v_row.state<>'reserved' OR v_io IS NULL THEN RAISE EXCEPTION 'ASSET_NOT_PENDING'; END IF;
@@ -132,13 +132,27 @@ BEGIN
   IF v_row.lease_mode<>'write' OR v_row.state<>'reserved' THEN RAISE EXCEPTION 'ASSET_NOT_PENDING'; END IF;
   IF NOT EXISTS(SELECT 1 FROM wjb_gateway.io_intent WHERE workspace_id=v_ws AND asset_id=v_id AND lease_token=v_token AND lease_fence=v_fence AND settled) THEN RAISE EXCEPTION 'STORAGE_NOT_CONFIRMED'; END IF;
   UPDATE wjb_gateway.asset SET state='ready' WHERE workspace_id=v_ws AND id=v_id RETURNING * INTO v_row;
+ ELSIF v_action='recover_ready' THEN
+  IF v_row.lease_mode<>'recover' OR v_row.state<>'reserved' THEN RAISE EXCEPTION 'ASSET_NOT_PENDING'; END IF;
+  IF (v_params->>'ioVersion') IS NULL OR (v_params->>'ioVersion')::bigint<>v_row.io_version THEN RAISE EXCEPTION 'CLEANUP_CHANGED'; END IF;
+  IF v_params->>'sha256' IS DISTINCT FROM v_row.sha256 OR (v_params->>'bytes') IS NULL OR (v_params->>'bytes')::integer<>v_row.bytes THEN RAISE EXCEPTION 'STORAGE_NOT_CONFIRMED'; END IF;
+  IF (v_params->>'decisionId') IS NULL OR coalesce(v_params->>'reviewHash','') !~ '^[0-9a-f]{64}$' THEN RAISE EXCEPTION 'INVALID_REQUEST'; END IF;
+  INSERT INTO wjb_gateway.recovery_audit(decision_id,workspace_id,asset_id,user_id,device_id,review_hash,action,io_version,result_state)
+   VALUES((v_params->>'decisionId')::uuid,v_ws,v_id,v_user,v_device,v_params->>'reviewHash','RESTORE_READY',v_row.io_version,'ready');
+  UPDATE wjb_gateway.asset SET state='ready' WHERE workspace_id=v_ws AND id=v_id RETURNING * INTO v_row;
  ELSIF v_action='mark_cleanup' THEN
-  IF v_row.lease_mode<>'cancel' OR v_row.state='ready' THEN RAISE EXCEPTION 'ASSET_ALREADY_READY'; END IF;
+  IF v_row.lease_mode NOT IN ('cancel','recover') OR v_row.state='ready' THEN RAISE EXCEPTION 'ASSET_ALREADY_READY'; END IF;
+  IF v_row.lease_mode='recover' AND EXISTS(SELECT 1 FROM wjb_gateway.io_intent WHERE workspace_id=v_ws AND asset_id=v_id AND NOT settled) THEN RAISE EXCEPTION 'CLEANUP_UNCERTAIN'; END IF;
   IF v_row.state<>'canceled' THEN UPDATE wjb_gateway.asset SET state='cleanup' WHERE workspace_id=v_ws AND id=v_id RETURNING * INTO v_row; END IF;
  ELSIF v_action='mark_canceled' THEN
-  IF v_row.lease_mode<>'cancel' OR v_row.state<>'cleanup' THEN RAISE EXCEPTION 'ASSET_NOT_PENDING'; END IF;
+  IF v_row.lease_mode NOT IN ('cancel','recover') OR v_row.state<>'cleanup' THEN RAISE EXCEPTION 'ASSET_NOT_PENDING'; END IF;
   IF (v_params->>'ioVersion') IS NULL OR (v_params->>'ioVersion')::bigint<>v_row.io_version THEN RAISE EXCEPTION 'CLEANUP_CHANGED'; END IF;
   IF EXISTS(SELECT 1 FROM wjb_gateway.io_intent WHERE workspace_id=v_ws AND asset_id=v_id AND NOT settled) THEN RAISE EXCEPTION 'CLEANUP_UNCERTAIN'; END IF;
+  IF v_row.lease_mode='recover' THEN
+   IF (v_params->>'decisionId') IS NULL OR coalesce(v_params->>'reviewHash','') !~ '^[0-9a-f]{64}$' THEN RAISE EXCEPTION 'INVALID_REQUEST'; END IF;
+   INSERT INTO wjb_gateway.recovery_audit(decision_id,workspace_id,asset_id,user_id,device_id,review_hash,action,io_version,result_state)
+    VALUES((v_params->>'decisionId')::uuid,v_ws,v_id,v_user,v_device,v_params->>'reviewHash','CANCEL',v_row.io_version,'canceled');
+  END IF;
   UPDATE wjb_gateway.asset SET state='canceled' WHERE workspace_id=v_ws AND id=v_id RETURNING * INTO v_row;
   UPDATE wjb_gateway.workspace SET used_bytes=used_bytes-v_row.bytes WHERE id=v_ws;
  ELSE RAISE EXCEPTION 'INVALID_ACTION';

@@ -171,6 +171,18 @@ async function providerHandler(req, res) {
       }
       return reply(res, 200, value);
     }
+    if (path === "/rest/v1/rpc/wjb_v2_recovery_catalog") {
+      const args = JSON.parse((await requestBody(req)).toString());
+      return reply(
+        res,
+        200,
+        JSON.parse(
+          await sql(`SELECT public.wjb_v2_recovery_catalog(${literal(args.p_request)})`, {
+            role: "service_role",
+          }),
+        ),
+      );
+    }
     const prefix = "/storage/v1/object/wjb-v2-poc-private";
     const getPrefix = "/storage/v1/object/authenticated/wjb-v2-poc-private/";
     if (req.method === "POST" && path.startsWith(prefix + "/")) {
@@ -325,6 +337,7 @@ before(async () => {
     CREATE TABLE auth.sessions(id uuid PRIMARY KEY,user_id uuid NOT NULL REFERENCES auth.users(id),not_after timestamptz);`);
   await sql(readFileSync(new URL("../v2-cloud/session-guard.sql", import.meta.url), "utf8"));
   await sql(readFileSync(new URL("./postgres-metadata.sql", import.meta.url), "utf8"));
+  await sql(readFileSync(new URL("./recovery.sql", import.meta.url), "utf8"));
   process.stdout.write("# PostgreSQL " + (await sql("SHOW server_version")) + "\n");
   provider = createServer((req, res) => {
     const job = providerHandler(req, res);
@@ -341,7 +354,7 @@ beforeEach(async () => {
   objects.clear();
   faults = {};
   hooks = {};
-  await sql(`TRUNCATE wjb_gateway.io_intent,wjb_gateway.asset,wjb_gateway.device,wjb_gateway.workspace,wjb_v2_cloud.blocked_session,auth.sessions,auth.users;
+  await sql(`TRUNCATE wjb_gateway.recovery_audit,wjb_gateway.io_intent,wjb_gateway.asset,wjb_gateway.device,wjb_gateway.workspace,wjb_v2_cloud.blocked_session,auth.sessions,auth.users;
     INSERT INTO auth.users(id)VALUES('${A}'),('${B}');INSERT INTO auth.sessions(id,user_id)VALUES('${SA}','${A}'),('${SB}','${B}');
     INSERT INTO wjb_gateway.workspace(id,owner_id,generation)VALUES('${WA}','${A}',1),('${WB}','${B}',1);
     INSERT INTO wjb_gateway.device(id,user_id,session_id)VALUES('${DA}','${A}','${SA}'),('${DB}','${B}','${SB}');`);
@@ -367,6 +380,46 @@ after(async () => {
     await docker(["volume", "rm", volume]);
   }
 });
+
+async function recover(w, type, input) {
+  const requestId = randomUUID();
+  return new Promise((resolve, reject) => {
+    function cleanup() {
+      clearTimeout(timer);
+      w.child.off("message", listener);
+      w.child.off("exit", exited);
+    }
+    function exited() {
+      cleanup();
+      const e = new Error("Recovery worker exited");
+      e.code = "WORKER_EXITED";
+      reject(e);
+    }
+    function listener(message) {
+      if (message.type !== "recovery-result" || message.id !== requestId) return;
+      cleanup();
+      if (message.error) {
+        const e = new Error(message.error.code);
+        e.code = message.error.code;
+        reject(e);
+      } else resolve(message.result);
+    }
+    const timer = setTimeout(() => {
+      cleanup();
+      reject(new Error("Recovery IPC timeout"));
+    }, 15000);
+    w.child.on("message", listener);
+    w.child.once("exit", exited);
+    w.child.send({ type, id: requestId, input });
+  });
+}
+const preview = (w) =>
+  recover(w, "recovery-preview", {
+    token: bearer,
+    scope: { workspaceId: WA, deviceId: DA, generation: "1" },
+  });
+const applyPlan = (w, plan, action) =>
+  recover(w, "recovery-apply", { token: bearer, plan, reviewHash: plan.reviewHash, action });
 
 test("HTTP gateway to real SQL and Storage fixture round trip", async () => {
   const w = await startWorker();
@@ -626,4 +679,248 @@ test("partial lease tuple is rejected atomically by schema", async () => {
   );
   assert.equal((await row()).leaseToken, null);
   assert.equal(await used(), bytes.length);
+});
+
+test("recovery preview is read-only and keeps pending quota", async () => {
+  const w = await startWorker();
+  await reserve(w);
+  const p = await preview(w);
+  assert.equal(p.readOnly, true);
+  assert.equal(p.plans[0].status, "CLEANABLE");
+  assert.equal((await row()).state, "reserved");
+  assert.equal(await used(), bytes.length);
+  assert.equal(await sql("SELECT count(*) FROM wjb_gateway.recovery_audit"), "0");
+});
+test("recovery restores valid orphan bytes without settling crashed intent", async () => {
+  const a = await startWorker("after-put");
+  await reserve(a);
+  const pending = upload(a).catch(() => null);
+  await paused(a);
+  await stopWorker(a, "SIGKILL");
+  await pending;
+  await expire();
+  const b = await startWorker();
+  const plan = (await preview(b)).plans[0];
+  assert.deepEqual(plan.actions, ["RESTORE_READY"]);
+  const result = await applyPlan(b, plan, "RESTORE_READY");
+  assert.equal(result.state, "ready");
+  assert.equal(await sql("SELECT count(*) FROM wjb_gateway.io_intent WHERE NOT settled"), "1");
+  assert.equal(await used(), bytes.length);
+  assert.equal((await download(b)).status, 200);
+  assert.equal((await applyPlan(b, plan, "RESTORE_READY")).status, "ALREADY_APPLIED");
+});
+test("recovery never treats missing crashed I/O as settled", async () => {
+  const a = await startWorker("before-put");
+  await reserve(a);
+  const pending = upload(a).catch(() => null);
+  await paused(a);
+  await stopWorker(a, "SIGKILL");
+  await pending;
+  await expire();
+  const b = await startWorker();
+  const plan = (await preview(b)).plans[0];
+  assert.equal(plan.status, "UNCERTAIN_IO");
+  assert.deepEqual(plan.actions, []);
+  await assert.rejects(
+    () => applyPlan(b, plan, "CANCEL"),
+    (e) => e.code === "REVIEW_REQUIRED",
+  );
+  assert.equal(await used(), bytes.length);
+});
+test("recovery cancels quiescent missing asset and saves receipt atomically", async () => {
+  const w = await startWorker();
+  await reserve(w);
+  const plan = (await preview(w)).plans[0];
+  assert.equal((await applyPlan(w, plan, "CANCEL")).state, "canceled");
+  assert.equal(await used(), 0);
+  assert.equal(await sql("SELECT count(*) FROM wjb_gateway.recovery_audit"), "1");
+  assert.equal((await applyPlan(w, plan, "CANCEL")).status, "ALREADY_APPLIED");
+});
+test("recovery refuses tampered confirmation before mutation", async () => {
+  const w = await startWorker();
+  await reserve(w);
+  const plan = (await preview(w)).plans[0];
+  await assert.rejects(
+    () => recover(w, "recovery-apply", { token: bearer, plan, reviewHash: "bad", action: "CANCEL" }),
+    (e) => e.code === "REVIEW_REQUIRED",
+  );
+  assert.equal((await row()).state, "reserved");
+});
+test("recovery rejects stale IO snapshot", async () => {
+  const w = await startWorker();
+  await reserve(w);
+  const plan = (await preview(w)).plans[0],
+    token = randomUUID(),
+    intent = randomUUID();
+  const lease = await command("acquire", 100, { token, mode: "write" });
+  await command("begin_io", 100, { token, fence: lease.fence, intent });
+  await command("settle_io", 100, { token, fence: lease.fence, intent });
+  await command("release", 100, { token, fence: lease.fence });
+  await assert.rejects(
+    () => applyPlan(w, plan, "CANCEL"),
+    (e) => e.code === "RECOVERY_CHANGED",
+  );
+  assert.equal(await used(), bytes.length);
+});
+test("recovery preserves cleanup with valid bytes and unknown IO", async () => {
+  const w = await startWorker();
+  await reserve(w);
+  const token = randomUUID(),
+    intent = randomUUID(),
+    lease = await command("acquire", 100, { token, mode: "write" });
+  await command("begin_io", 100, { token, fence: lease.fence, intent });
+  await command("release", 100, { token, fence: lease.fence });
+  await sql(`UPDATE wjb_gateway.asset SET state='cleanup' WHERE id='${id(100)}'`);
+  objects.set(`${WA}/${id(100)}`, bytes);
+  const plan = (await preview(w)).plans[0];
+  assert.equal(plan.status, "UNCERTAIN_IO");
+  assert.deepEqual(plan.actions, []);
+  assert.equal(objects.size, 1);
+});
+test("recovery can inspect expired reservation without reviving upload lease", async () => {
+  const w = await startWorker();
+  await reserve(w);
+  objects.set(`${WA}/${id(100)}`, bytes);
+  await sql(`UPDATE wjb_gateway.asset SET expires_at=now()-interval '1 second' WHERE id='${id(100)}'`);
+  const plan = (await preview(w)).plans[0];
+  assert.ok(plan.actions.includes("RESTORE_READY"));
+  assert.equal((await applyPlan(w, plan, "RESTORE_READY")).state, "ready");
+});
+test("recovery rejects other account and provider logout", async () => {
+  const w = await startWorker();
+  await reserve(w);
+  await assert.rejects(
+    () =>
+      recover(w, "recovery-preview", {
+        token: bearerB,
+        scope: { workspaceId: WA, deviceId: DB, generation: "1" },
+      }),
+    (e) => e.code === "ACCESS_DENIED",
+  );
+  const plan = (await preview(w)).plans[0];
+  await sql(`DELETE FROM auth.sessions WHERE id='${SA}'`);
+  await assert.rejects(
+    () => applyPlan(w, plan, "CANCEL"),
+    (e) => e.code === "ACCESS_REVOKED",
+  );
+});
+test("new valid owner device can recover lost creator device asset", async () => {
+  const w = await startWorker();
+  await reserve(w);
+  objects.set(`${WA}/${id(100)}`, bytes);
+  const newSession = id(900),
+    newDevice = id(901);
+  await sql(
+    `INSERT INTO auth.sessions(id,user_id)VALUES('${newSession}','${A}');INSERT INTO wjb_gateway.device(id,user_id,session_id)VALUES('${newDevice}','${A}','${newSession}');UPDATE wjb_gateway.device SET revoked=true WHERE id='${DA}'`,
+  );
+  const token = await sign(A, newSession);
+  const p = await recover(w, "recovery-preview", {
+    token,
+    scope: { workspaceId: WA, deviceId: newDevice, generation: "1" },
+  });
+  const plan = p.plans[0];
+  assert.equal(
+    (
+      await recover(w, "recovery-apply", {
+        token,
+        plan,
+        reviewHash: plan.reviewHash,
+        action: "RESTORE_READY",
+      })
+    ).state,
+    "ready",
+  );
+  assert.equal(await sql("SELECT device_id FROM wjb_gateway.recovery_audit"), newDevice);
+  assert.equal((await row()).deviceId, DA);
+});
+test("recovery catalog is bounded and paginated", async () => {
+  const w = await startWorker();
+  for (let n = 100; n < 110; n++) await command("reserve", n, { sha256: hash, bytes: bytes.length });
+  const first = await preview(w);
+  assert.equal(first.plans.length, 8);
+  assert.equal(first.hasMore, true);
+  const second = await recover(w, "recovery-preview", {
+    token: bearer,
+    scope: { workspaceId: WA, deviceId: DA, generation: "1" },
+    after: first.nextCursor,
+  });
+  assert.equal(second.plans.length, 2);
+  assert.equal(second.hasMore, false);
+  assert.equal((await applyPlan(w, second.plans[1], "CANCEL")).state, "canceled");
+  assert.equal(await used(), bytes.length * 9);
+});
+test("busy recovery candidate offers no mutation", async () => {
+  const w = await startWorker();
+  await reserve(w);
+  await command("acquire", 100, { token: randomUUID(), mode: "write" });
+  const plan = (await preview(w)).plans[0];
+  assert.equal(plan.status, "BUSY");
+  assert.deepEqual(plan.actions, []);
+});
+test("recovery audit failure rolls cancellation and quota back", async () => {
+  const w = await startWorker();
+  await reserve(w);
+  const plan = (await preview(w)).plans[0];
+  await sql(
+    "CREATE FUNCTION wjb_gateway.audit_failure()RETURNS trigger LANGUAGE plpgsql AS $$BEGIN RAISE EXCEPTION 'PRIVATE_FAILURE';END$$;CREATE TRIGGER audit_failure BEFORE INSERT ON wjb_gateway.recovery_audit FOR EACH ROW EXECUTE FUNCTION wjb_gateway.audit_failure();",
+  );
+  try {
+    await assert.rejects(
+      () => applyPlan(w, plan, "CANCEL"),
+      (e) => e.code === "METADATA_UNAVAILABLE",
+    );
+    assert.equal((await row()).state, "cleanup");
+    assert.equal(await used(), bytes.length);
+    assert.equal(await sql("SELECT count(*) FROM wjb_gateway.recovery_audit"), "0");
+  } finally {
+    await sql(
+      "DROP TRIGGER audit_failure ON wjb_gateway.recovery_audit;DROP FUNCTION wjb_gateway.audit_failure()",
+    );
+  }
+  const refreshed = (await preview(w)).plans[0];
+  assert.equal((await applyPlan(w, refreshed, "CANCEL")).state, "canceled");
+});
+test("recovery receipt survives gateway restart", async () => {
+  let w = await startWorker();
+  await reserve(w);
+  const plan = (await preview(w)).plans[0];
+  await applyPlan(w, plan, "CANCEL");
+  await stopWorker(w, "SIGKILL");
+  w = await startWorker();
+  assert.equal((await applyPlan(w, plan, "CANCEL")).status, "ALREADY_APPLIED");
+  assert.equal(await used(), 0);
+});
+test("client role cannot inspect recovery catalog or audit", async () => {
+  const args = literal({
+    userId: A,
+    sessionId: SA,
+    scope: { workspaceId: WA, deviceId: DA, generation: "1" },
+    limit: 8,
+  });
+  await assert.rejects(() =>
+    sql(`SELECT public.wjb_v2_recovery_catalog(${args})`, { role: "authenticated" }),
+  );
+  await assert.rejects(() => sql("SELECT * FROM wjb_gateway.recovery_audit", { role: "service_role" }));
+});
+
+test("recovery worker SIGKILL after delete resumes from fresh review", async () => {
+  const a = await startWorker("after-delete");
+  await reserve(a);
+  const plan = (await preview(a)).plans[0];
+  const pending = applyPlan(a, plan, "CANCEL").catch((e) => e.code);
+  await paused(a);
+  assert.equal((await row()).state, "cleanup");
+  assert.equal(await used(), bytes.length);
+  await stopWorker(a, "SIGKILL");
+  assert.equal(await pending, "WORKER_EXITED");
+  await expire();
+  const b = await startWorker();
+  await assert.rejects(
+    () => applyPlan(b, plan, "CANCEL"),
+    (e) => e.code === "RECOVERY_CHANGED",
+  );
+  const fresh = (await preview(b)).plans[0];
+  assert.equal((await applyPlan(b, fresh, "CANCEL")).state, "canceled");
+  assert.equal(await used(), 0);
+  assert.equal(await sql("SELECT count(*) FROM wjb_gateway.recovery_audit"), "1");
 });
