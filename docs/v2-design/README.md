@@ -10,7 +10,7 @@
 
 현재 실행 상태는 [25. 로컬 모형 첫 시험](25-local-model-first-run.md)과 [26. DB18 전환·왕복 복원 결과](26-db18-staging-results.md), [27. 영속 전송 대기](27-durable-queue-results.md), [28. 원자적 셀 이동](28-atomic-cell-move-results.md), [29. 영속 큐 통합](29-integrated-move-queue-results.md), [30. 요청1~3 체크포인트](30-local-checkpoint-results.md)를 따른다. 기존 문서의 미착수 표시는 작성 시점의 상태이며, 요청1~3의 로컬 기능 검증을 정리했으며, 대용량 최적화·제품/클라우드/실기 검증은 남아 있다.
 
-실제 클라우드 준비의 최신 상태는 [31. Supabase 프로젝트·월 0원 검증 준비](31-cloud-readiness.md)를 따른다. 사용자 제공 프로젝트는 `hutqsfftioxtredcjhsy`, 초기 월 비용 상한은 **0원**이다. 게시된 환경의 실제 연결·인증과 도쿄 리전 정상 상태를 확인했다. [32. 읽기 전용 점검 결과](32-cloud-readonly-results.md)에 성공/403 응답과 다음 최소 적용 묶음을 정리했다. 조직 Free 플랜·잔여량은 확인 대기다.
+실제 클라우드 준비의 최신 상태는 [31. Supabase 프로젝트·월 0원 검증 준비](31-cloud-readiness.md)를 따른다. 사용자 제공 프로젝트는 `hutqsfftioxtredcjhsy`, 초기 월 비용 상한은 **0원**이다. 게시된 환경의 실제 연결·인증과 도쿄 리전 정상 상태를 확인했다. [32. 읽기 전용 점검 결과](32-cloud-readonly-results.md)에 성공/403 응답과 다음 최소 적용 묶음을 정리했다. 조직 Free 플랜은 사용자 대시보드 확인 완료이며, 무료 잔여량은 미확인이다.
 
 ## 문서 지도
 
@@ -43,7 +43,7 @@
 | [권장 구성·로컬 PoC 검토안](24-local-poc-review-package.md) | 복구 제한·상태/명령 계약·장애8개, 24.9~24.10 첫 구현 묶음·시험 자료·증거/완료 기준 |
 | [번역 후보 CSV](i18n-inventory.csv) / [집계 JSON](inventory-summary.json) | 현재 소스의 번역 후보 조사. 번역 완료/정제된 키 목록이 아님 |
 
-**현재 검증 대상:** 사용자 제공 Supabase 프로젝트 `hutqsfftioxtredcjhsy`. 초기 월 상한은 **0원**이며, Keep Alive 기본 요구를 유지한다([20문서](20-supabase-keepalive.md)). 도쿄 리전·기본 SMTP 설정은 실제 조회했고, 조직 플랜/한도는 403으로 미확인이다([32문서](32-cloud-readonly-results.md)).
+**현재 검증 대상:** 사용자 제공 Supabase 프로젝트 `hutqsfftioxtredcjhsy`. 초기 월 상한은 **0원**이며, Keep Alive 기본 요구를 유지한다([20문서](20-supabase-keepalive.md)). 도쿄 리전·기본 SMTP 설정은 실제 조회했고, 조직 플랜 API는 403이지만 Free 여부는 사용자가 확인했다. 계정별 한도·잔여량은 미확인이다([32문서](32-cloud-readonly-results.md)).
 
 **최신 운영 원칙:** AWS 직접 구성/운영은 제외하고 무료 또는 개인 요금제 수준을 목표로 한다. [16문서](16-low-cost-review.md)가 기존 상시 실시간·백업 보관·PITR/규모 추천에 우선한다. [23문서](23-supabase-free-tier-readiness.md)에서 공식 공개 소스의 무료 한도·아시아 리전 목록·메일 제한을 확인했다. 실제 신규 계정의 플랜/잔여량·리전 선택·총비용은 미확인이다.
 
