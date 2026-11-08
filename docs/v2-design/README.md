@@ -12,6 +12,8 @@
 
 실제 클라우드 준비의 최신 상태는 [31. Supabase 프로젝트·월 0원 검증 준비](31-cloud-readiness.md)를 따른다. 사용자 제공 프로젝트는 `hutqsfftioxtredcjhsy`, 초기 월 비용 상한은 **0원**이다. 게시된 환경의 실제 연결·인증과 도쿄 리전 정상 상태를 확인했다. [32. 읽기 전용 점검 결과](32-cloud-readonly-results.md)에 성공/403 응답과 다음 최소 적용 묶음을 정리했다. 조직 Free 플랜은 사용자 대시보드 확인 완료이며, 무료 잔여량은 미확인이다.
 
+다음 단계의 로컬 PostgreSQL 최소 스키마·권한·원자성 시험은 **39개 성공**이다([33. 결과](33-local-postgres-results.md)). Auth는 시험 stub이며 실제 클라우드 쓰기/제품 통합은 미착수다.
+
 ## 문서 지도
 
 | 문서 | 논의 내용 |
@@ -38,6 +40,7 @@
 | [Supabase 신규 계정·Keep Alive](20-supabase-keepalive.md) | 신규 계정 전제 갱신·Supabase 채택 시 하루1회 기본·휴면/복구 검증 |
 | [Supabase 프로젝트 구성안](21-supabase-project-blueprint.md) | 운영1개/로컬 개발·공식 SMTP/리전 조건·설정/비용 관문 |
 | [DB·권한·동기화 계약](22-db-permission-sync-contract.md) | 논리 테이블·tenant scope·원자적 push·커밋 순서 cursor·private 자산 |
+| [로컬 PostgreSQL 최소 서버 시험](33-local-postgres-results.md) | 실험용 SQL·계정 RLS/명령/rollback/동시성39개 성공·실제 Auth와의 경계 |
 | [실제 Supabase 점검 결과](32-cloud-readonly-results.md) | 접속 성공·도쿄 정상·조직 조회403·SMTP/Storage 실측·최소 서버 적용 순서 |
 | [무료 운영 조건·PoC 준비 판정](23-supabase-free-tier-readiness.md) | 공식 고정 소스의 무료 한도·아시아·SMTP, 용량/교체 피크·백업 분할·남은 계정 확인 |
 | [권장 구성·로컬 PoC 검토안](24-local-poc-review-package.md) | 복구 제한·상태/명령 계약·장애8개, 24.9~24.10 첫 구현 묶음·시험 자료·증거/완료 기준 |

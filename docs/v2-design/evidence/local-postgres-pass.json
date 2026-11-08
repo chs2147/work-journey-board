@@ -1,0 +1,208 @@
+{
+  "observed_at": "2026-11-08T13:14:45.474695+00:00",
+  "scope": "Local PostgreSQL SQL authorization/transaction slice; Auth gateway is a test stub; no cloud writes",
+  "image": "postgres@sha256:665dc7b37ac52a17e298511414c21d23ffa4e6a6ef6225b3e5d59c7afb35e994",
+  "postgres_version": "17.11 (Debian 17.11-1.pgdg12+2)",
+  "tests": [
+    {
+      "name": "create returns decimal string versions",
+      "status": "PASS",
+      "ms": 97
+    },
+    {
+      "name": "owner sees own workspace only",
+      "status": "PASS",
+      "ms": 89
+    },
+    {
+      "name": "other account cannot read record",
+      "status": "PASS",
+      "ms": 88
+    },
+    {
+      "name": "other account cannot read change log",
+      "status": "PASS",
+      "ms": 86
+    },
+    {
+      "name": "cross workspace command rejected without effects",
+      "status": "PASS",
+      "ms": 283
+    },
+    {
+      "name": "forged device rejected without effects",
+      "status": "PASS",
+      "ms": 266
+    },
+    {
+      "name": "wrong auth session rejected",
+      "status": "PASS",
+      "ms": 266
+    },
+    {
+      "name": "missing auth session rejected",
+      "status": "PASS",
+      "ms": 261
+    },
+    {
+      "name": "unauthenticated subject rejected",
+      "status": "PASS",
+      "ms": 275
+    },
+    {
+      "name": "wrong generation rejected",
+      "status": "PASS",
+      "ms": 267
+    },
+    {
+      "name": "duplicate operation returns same result",
+      "status": "PASS",
+      "ms": 98
+    },
+    {
+      "name": "duplicate does not add log or operation",
+      "status": "PASS",
+      "ms": 173
+    },
+    {
+      "name": "same key changed body rejected",
+      "status": "PASS",
+      "ms": 261
+    },
+    {
+      "name": "same key changed target rejected",
+      "status": "PASS",
+      "ms": 306
+    },
+    {
+      "name": "same key changed base rejected",
+      "status": "PASS",
+      "ms": 333
+    },
+    {
+      "name": "stale revision rejected",
+      "status": "PASS",
+      "ms": 306
+    },
+    {
+      "name": "new record requires revision zero",
+      "status": "PASS",
+      "ms": 282
+    },
+    {
+      "name": "null body rejected",
+      "status": "PASS",
+      "ms": 274
+    },
+    {
+      "name": "oversized utf8 body rejected",
+      "status": "PASS",
+      "ms": 297
+    },
+    {
+      "name": "negative revision rejected",
+      "status": "PASS",
+      "ms": 261
+    },
+    {
+      "name": "direct table insert forbidden",
+      "status": "PASS",
+      "ms": 81
+    },
+    {
+      "name": "direct table update forbidden",
+      "status": "PASS",
+      "ms": 82
+    },
+    {
+      "name": "direct log delete forbidden",
+      "status": "PASS",
+      "ms": 133
+    },
+    {
+      "name": "operation ledger not visible",
+      "status": "PASS",
+      "ms": 99
+    },
+    {
+      "name": "device sessions not visible",
+      "status": "PASS",
+      "ms": 97
+    },
+    {
+      "name": "anonymous function denied",
+      "status": "PASS",
+      "ms": 87
+    },
+    {
+      "name": "unbound session sees no rows",
+      "status": "PASS",
+      "ms": 98
+    },
+    {
+      "name": "update accepted at correct revision",
+      "status": "PASS",
+      "ms": 90
+    },
+    {
+      "name": "old ack replay after newer edit is unchanged",
+      "status": "PASS",
+      "ms": 95
+    },
+    {
+      "name": "revocation blocks reads and cached retry",
+      "status": "PASS",
+      "ms": 549
+    },
+    {
+      "name": "failure after record and log rolls back every write",
+      "status": "PASS",
+      "ms": 533
+    },
+    {
+      "name": "caller rollback preserves cursor and allows retry",
+      "status": "PASS",
+      "ms": 362
+    },
+    {
+      "name": "concurrent duplicate applies once",
+      "status": "PASS",
+      "ms": 265
+    },
+    {
+      "name": "concurrent same-base edits have one winner",
+      "status": "PASS",
+      "ms": 262
+    },
+    {
+      "name": "workspace lock enforces commit ordered cursors",
+      "status": "PASS",
+      "ms": 3300
+    },
+    {
+      "name": "other owner writes isolated workspace",
+      "status": "PASS",
+      "ms": 83
+    },
+    {
+      "name": "all accepted writes have one log and ledger row",
+      "status": "PASS",
+      "ms": 189
+    },
+    {
+      "name": "all tables enable RLS",
+      "status": "PASS",
+      "ms": 84
+    },
+    {
+      "name": "definer functions owned by non-superuser",
+      "status": "PASS",
+      "ms": 84
+    }
+  ],
+  "files": {
+    "001-text-command.sql": "85c42fb348eede4a2b9c5e3ed578b090b833017cd37c8849fa73041324ec14ae",
+    "bootstrap-local.sql": "900aca394d78d99a56d09668571e2437bf8eaed6d8e4165fe7da281afd431a19",
+    "run-local.py": "cbadd50319dfabe58d7f7b921e62aaef9b4144bf723a3c87587a2eb7afd693b5"
+  }
+}
