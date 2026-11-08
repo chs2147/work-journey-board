@@ -35,3 +35,14 @@ node poc/v2-sync/run-db18.mjs
 ```
 
 추가19개 시험 결과와 재현/제약은 [26문서](../../docs/v2-design/26-db18-staging-results.md)를 따른다. 위 표의 L01 중 DB18 표본/문서·이미지·링크 manifest와 왕복 검증을 보완했으며, 최종 도메인 매핑은 남아 있다. 수집기는 새 임시 폴더에 원시 시험 로그와 JSON 증거를 보관한다. 자식 프로세스 실행 제한이 있으면 오류를 기록하고 실패로 종료한다.
+
+## 전환본 연결과 영속 대기 증분
+
+```sh
+node poc/v2-sync/queue.test.mjs  # 신규28개
+node poc/v2-sync/run-local.mjs   # 30+19+28개, 새 임시 폴더에 전체 증거 수집
+```
+
+`stage-import.mjs`는 DB18 전환본을 행 wrapper와 scope별 이미지 캐시로 옮긴다. `queue.mjs`는 초안/고정 명령·수신 cursor를 파일 DB에 보존하고 `tick`으로 진행한다. 큐는 기존 `edit/receive` 경로와 섞어서 호출하지 않는다. 타이머·실제 네트워크·제품의 도메인 검증기는 아니다. 새 시험은 직접 생성한 가상 DB만 사용한다.
+
+상세 결과/다음 범위는 [27문서](../../docs/v2-design/27-durable-queue-results.md)를 따른다. 위 초기 표 중 L03의 기본 영속 대기/후속 편집 처리, L04의 페이지 중복·순서 누락, L05의 문서 사본 보존을 보완했다. 전체 사례 완료를 뜻하지 않는다.
