@@ -1,0 +1,15 @@
+{
+  "commit": "6bb2e4c360767bef715955e2ba25dfc45c0f0af7",
+  "paths": [
+    "src/http/routes/object/createObject.ts",
+    "src/http/routes/object/deleteObject.ts",
+    "src/http/routes/object/deleteObjects.ts",
+    "src/http/routes/object/getObject.ts",
+    "src/http/routes/object/getObjectInfo.ts"
+  ],
+  "read_files_sha256": {
+    "wjb-storage-deleteObjects.ts": "ab5ff4b86991f52f78baabb7ddba904211bdb11df0a59bf53d513ab71e310cff",
+    "wjb-storage-getObject.ts": "3f3ab65fb722053b74a7d023599df907a23dc5bf93ae60c8666b4e3ea7fb6a82",
+    "wjb-storage-createObject.ts": "6fce387ef8021d9b6f6a48665410f74cad5cfc7a98c0bbf818572f16fa60863a"
+  }
+}

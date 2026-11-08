@@ -240,3 +240,7 @@ Neon 중심 검토는 유지하되 woori 운영을 유지한 로컬 개발 대�
 ## 4.36 클라우드 적용 검토 묶음·준비 검사·복구
 
 사용자의 커밋/푸시 후 다음 단계 요청으로 이전 커밋의 원격 반영을 확인했다. 공식 Auth 고정 소스와 프로젝트 세션 정책 GET을 확인하고, C1 서버 전용 guard/revoke SQL·수동 rollback·어댑터·범위 manifest/준비 검사·C2 private bucket/proxy 계약을 작성했다. 준비23개·어댑터11개·기존JWT28개·SQL127개가 성공했다. [35문서](35-cloud-application-review.md)에 실제 스키마/소유자·Usage·gateway/Storage 미확인과 복구 절차를 기록했다. 현재 준비 판정은 BLOCKED이며 실제 SQL/버킷/사용자·환경 게시·제품/DB18·main은 변경하지 않았다.
+
+## 4.37 HTTP gateway·Storage REST 계약·로컬 장애 시험
+
+사용자의 커밋/푸시 후 다음 진행 요청으로 기존 원격 반영을 확인했다. JWT/서버 세션 RPC를 사용하는 Web handler, 고정 프로젝트/bucket REST 어댑터, 제한된 bytes/시간 읽기와 로컬 HTTP host를 구현했다. 실제 loopback61개 시험에서 전송·재시도·권한 변경·cleanup/quota·상류 redirect/오류를 확인했다. [36문서](36-http-gateway-storage-results.md)에 실제 Storage 대체 서버/메모리 metadata의 한계와 다음 영속 SQL 통합 단계를 기록했다. 실제 Supabase·Usage/준비 판정·환경 게시·제품/DB18·main은 유지했다.

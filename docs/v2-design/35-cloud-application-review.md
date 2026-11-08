@@ -2,6 +2,8 @@
 
 2026-11-08 · `v2-design` · 대상 `hutqsfftioxtredcjhsy` · 월0원
 
+**후속:** HTTP gateway/Storage REST 계약 구현과 로컬61개 시험은 [36문서](36-http-gateway-storage-results.md)를 따른다. 실제 영속 metadata/Storage 검증은 남아 있다.
+
 ## 이번 진행
 
 사용자의 커밋/푸시 후 다음 단계 요청으로 `1e8cd16`의 원격 반영을 확인하고 적용 검토 묶음을 준비했다. [파일 안내](../../poc/v2-cloud/README.md)에 대상/범위 manifest, 사전 확인 SQL, C1 세션 guard 후보 SQL, 수동 rollback, 준비 상태 도구와 시험을 모았다. **실제 Supabase에는 SQL·버킷·함수·사용자·배포를 적용하지 않았다.**

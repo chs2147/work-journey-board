@@ -1,0 +1,272 @@
+{
+  "observed_at": "2026-11-08T21:54:03.150972+00:00",
+  "node_version": "v24.22.1",
+  "scope": "Real loopback HTTP gateway and provider-shaped fixture; generated ES256 keys/tokens, in-memory metadata; no cloud calls/writes",
+  "tests": [
+    {
+      "name": "real HTTP reserve/upload/download round trip",
+      "status": "PASS"
+    },
+    {
+      "name": "missing bearer rejected before backend",
+      "status": "PASS"
+    },
+    {
+      "name": "invalid signed token rejected before backend",
+      "status": "PASS"
+    },
+    {
+      "name": "live session revoked rejects valid bearer",
+      "status": "PASS"
+    },
+    {
+      "name": "session RPC outage fails closed and hides details",
+      "status": "PASS"
+    },
+    {
+      "name": "other account cannot reserve another workspace",
+      "status": "PASS"
+    },
+    {
+      "name": "another session cannot spoof device binding",
+      "status": "PASS"
+    },
+    {
+      "name": "request body principal spoofing is not accepted",
+      "status": "PASS"
+    },
+    {
+      "name": "request body path injection is not accepted",
+      "status": "PASS"
+    },
+    {
+      "name": "unknown route and query parameters rejected",
+      "status": "PASS"
+    },
+    {
+      "name": "browser origin denied by default",
+      "status": "PASS"
+    },
+    {
+      "name": "unsupported HTTP method rejected",
+      "status": "PASS"
+    },
+    {
+      "name": "reservation replay idempotent",
+      "status": "PASS"
+    },
+    {
+      "name": "reservation changes cannot reuse asset id",
+      "status": "PASS"
+    },
+    {
+      "name": "pending asset cannot download",
+      "status": "PASS"
+    },
+    {
+      "name": "upload without reservation rejected",
+      "status": "PASS"
+    },
+    {
+      "name": "upload content type enforced",
+      "status": "PASS"
+    },
+    {
+      "name": "actual payload hash must match reservation",
+      "status": "PASS"
+    },
+    {
+      "name": "larger body rejected before object write",
+      "status": "PASS"
+    },
+    {
+      "name": "short body rejected before object write",
+      "status": "PASS"
+    },
+    {
+      "name": "storage upload failure leaves pending and quota held",
+      "status": "PASS"
+    },
+    {
+      "name": "lost storage ack retries without overwriting",
+      "status": "PASS"
+    },
+    {
+      "name": "same existing private bytes can reconcile pending upload",
+      "status": "PASS"
+    },
+    {
+      "name": "different existing bytes never overwritten or exposed",
+      "status": "PASS"
+    },
+    {
+      "name": "metadata finalize failure preserves private object",
+      "status": "PASS"
+    },
+    {
+      "name": "lost metadata ack returns prior committed ready on retry",
+      "status": "PASS"
+    },
+    {
+      "name": "revocation during upload prevents ready publication",
+      "status": "PASS"
+    },
+    {
+      "name": "generation change during upload prevents publication",
+      "status": "PASS"
+    },
+    {
+      "name": "expiry during upload prevents publication",
+      "status": "PASS"
+    },
+    {
+      "name": "another account cannot download finalized object",
+      "status": "PASS"
+    },
+    {
+      "name": "same owner with second valid device can download",
+      "status": "PASS"
+    },
+    {
+      "name": "second device cannot replace reserved upload",
+      "status": "PASS"
+    },
+    {
+      "name": "corrupted finalized bytes never returned",
+      "status": "PASS"
+    },
+    {
+      "name": "revocation during download denies response bytes",
+      "status": "PASS"
+    },
+    {
+      "name": "generation change during download denies response",
+      "status": "PASS"
+    },
+    {
+      "name": "ready asset cannot be canceled",
+      "status": "PASS"
+    },
+    {
+      "name": "pending cancellation confirms absence before quota release",
+      "status": "PASS"
+    },
+    {
+      "name": "delete error keeps cleanup pending and quota held",
+      "status": "PASS"
+    },
+    {
+      "name": "successful delete response without absence is not completion",
+      "status": "PASS"
+    },
+    {
+      "name": "cancel metadata error retains quota and can retry",
+      "status": "PASS"
+    },
+    {
+      "name": "cancel replay is safe and id cannot be reused",
+      "status": "PASS"
+    },
+    {
+      "name": "expired reservation can be canceled",
+      "status": "PASS"
+    },
+    {
+      "name": "concurrent uploads serialize without duplicate object",
+      "status": "PASS"
+    },
+    {
+      "name": "concurrent reservations cannot exceed quota",
+      "status": "PASS"
+    },
+    {
+      "name": "cancel racing upload never exposes unverified bytes",
+      "status": "PASS"
+    },
+    {
+      "name": "server credential never appears in gateway JSON",
+      "status": "PASS"
+    },
+    {
+      "name": "adapter rejects another target project",
+      "status": "PASS"
+    },
+    {
+      "name": "adapter rejects object path traversal before transport",
+      "status": "PASS"
+    },
+    {
+      "name": "server RPC allowlist rejects arbitrary function",
+      "status": "PASS"
+    },
+    {
+      "name": "transport failure hides original details",
+      "status": "PASS"
+    },
+    {
+      "name": "chunked source without content length has bounded read",
+      "status": "PASS"
+    },
+    {
+      "name": "stalled source times out and cancels",
+      "status": "PASS"
+    },
+    {
+      "name": "invalid declared length rejected",
+      "status": "PASS"
+    },
+    {
+      "name": "gateway rejects malformed JSON without leaking internals",
+      "status": "PASS"
+    },
+    {
+      "name": "oversized JSON rejected before metadata mutation",
+      "status": "PASS"
+    },
+    {
+      "name": "unsafe generation integer rejected before metadata",
+      "status": "PASS"
+    },
+    {
+      "name": "real HTTP chunked upload is bounded without declared length",
+      "status": "PASS"
+    },
+    {
+      "name": "provider redirect is not followed with server credentials",
+      "status": "PASS"
+    },
+    {
+      "name": "oversized provider bytes rejected with bounded read",
+      "status": "PASS"
+    },
+    {
+      "name": "HTTP RPC string true is not a verified session",
+      "status": "PASS"
+    },
+    {
+      "name": "revocation during delete retains cleanup and quota",
+      "status": "PASS"
+    }
+  ],
+  "files": {
+    "poc/v2-auth/package-lock.json": "8cdd791117b009e455df7336fb5d80d2b96de21ce4e01d35bf0bb33c3c966d59",
+    "poc/v2-auth/package.json": "f18a789a005385991e4d44d906beabff270c0c8d33d3cdc7541938cb7f92bc4f",
+    "poc/v2-auth/session-adapter.mjs": "a2021c5c06a6d54d491cea7ed994ecbc15d511e7d98a22d896bf34405ba4ab25",
+    "poc/v2-auth/test-jose.mjs": "f607d9b5c21ce65d5cd24620ca5673f38a15ddbdca67971b094a075c6fd3815d",
+    "poc/v2-auth/verifier.mjs": "033d0eb4e0ff1770c9f5084f65cc295d65aefba61fda37b945b900c266a0da12",
+    "poc/v2-gateway/fixtures.mjs": "93d18089eca782e136293bf90135a5dc28abcd52d13f88e55601ecb820f09e73",
+    "poc/v2-gateway/gateway.mjs": "42722899fe0da0f19d623ec710aae9ec2e5205b850abc223a59153fde30d8afe",
+    "poc/v2-gateway/gateway.test.mjs": "559ff5019b4ee7b5c25d7d23950f362dd2e03df0814564f23fc8c9b3226c814e",
+    "poc/v2-gateway/io.mjs": "e9c74691df3ced7a32ca589cf8ebe6fc0fc8aa15bc586da7ff44c69805cfecac",
+    "poc/v2-gateway/node-server.mjs": "088f71b560a0892baf80477ca45e38aea091b65f6ce6041df45acdadd0a6d178",
+    "poc/v2-gateway/supabase-rest.mjs": "b71b11aadbfc1b00fec177c9b5cc4d1c8e3b4a4303ad9fe6bbfb3067c066f71d"
+  },
+  "raw_log_sha256": "052875b4ad0746e8ae41001ce8da160eca6e8000ce7b5f35779aa14c1cb0a871",
+  "initial_attempt": {
+    "result": "ENVIRONMENT_BLOCKED",
+    "code": "EPERM",
+    "operation": "listen 127.0.0.1",
+    "log": "/tmp/wjb-gateway-first.log"
+  },
+  "production_readiness_updated": false
+}
