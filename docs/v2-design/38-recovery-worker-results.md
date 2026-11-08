@@ -2,6 +2,8 @@
 
 2026-11-08 · `v2-design` · 실제 Supabase 변경 없음
 
+**후속:** 전체 적용/권한/자료 보존형 중단·제거 파일과 실제 읽기 점검은 [39문서](39-full-bundle-review.md)를 따른다.
+
 ## 이번 진행
 
 사용자의 커밋/푸시 후 다음 단계 요청으로 `96d6899`의 원격 반영을 확인한 뒤, [recovery worker](../../poc/v2-gateway/recovery.mjs)와 [SQL catalog/처리 기록](../../poc/v2-gateway/recovery.sql)을 추가했다. 적용한 앱 UI나 자동 운영 cron은 없으며, 명시적으로 호출하는 로컬 PoC다.

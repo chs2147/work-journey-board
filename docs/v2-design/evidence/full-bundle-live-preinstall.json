@@ -1,0 +1,58 @@
+{
+  "observed_at": "2026-11-08T23:44:22.917790+00:00",
+  "http_status": 201,
+  "project_ref": "hutqsfftioxtredcjhsy",
+  "endpoint": "/database/query/read-only",
+  "read_only": true,
+  "query_sha256": "29c3e08cced7364e5701b56a284342c9f923d36d3ba2ede9fd505cead03c1ad9",
+  "summary": [
+    {
+      "inspection": {
+        "auth_columns": [
+          {
+            "type": "uuid",
+            "table": "sessions",
+            "column": "id"
+          },
+          {
+            "type": "timestamp with time zone",
+            "table": "sessions",
+            "column": "not_after"
+          },
+          {
+            "type": "uuid",
+            "table": "sessions",
+            "column": "user_id"
+          },
+          {
+            "type": "timestamp with time zone",
+            "table": "users",
+            "column": "banned_until"
+          },
+          {
+            "type": "timestamp with time zone",
+            "table": "users",
+            "column": "deleted_at"
+          },
+          {
+            "type": "uuid",
+            "table": "users",
+            "column": "id"
+          }
+        ],
+        "target_bucket": [],
+        "inspection_role": "supabase_read_only_user",
+        "postgres_version": "17.11",
+        "guard_schema_exists": false,
+        "storage_known_bytes": 0,
+        "storage_objects_rls": true,
+        "storage_object_count": 0,
+        "storage_policy_count": 0,
+        "metadata_schema_exists": false,
+        "public_name_collisions": [],
+        "physical_database_bytes": 10917555,
+        "storage_unknown_size_count": 0
+      }
+    }
+  ]
+}

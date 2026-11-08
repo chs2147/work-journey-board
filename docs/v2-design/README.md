@@ -24,6 +24,8 @@ PostgreSQL 영속 metadata를 HTTP 흐름에 연결했고 통합25개·adapter12
 
 보수적 복구 worker·검토 후 실행·완료 기록을 추가했다([38. 결과](38-recovery-worker-results.md)). 복구 단위25개·metadata14개·HTTP61개·영속/복구41개가 통과했다. 정상 파일 복구와 확실한 정리는 지원하되, 미확정 요청이 남은 정리는 보류하며 실제 클라우드 적용은 하지 않았다.
 
+전체 SQL/권한/중지·재개/빈 설치 제거 묶음을 생성하고 검증했다([39. 전체 검토안](39-full-bundle-review.md)). 단위29·기존준비23·SQL73개가 성공했고, 실제 read-only SQL로 Auth 구조/충돌 없음·DB17.11·Storage0개를 확인했다. DB-only 설치와 후속 cloud 검증을 분리했으며 두 준비 상태는 BLOCKED다. 실제 설치/파일 전송/환경 게시는 하지 않았다.
+
 ## 문서 지도
 
 | 문서 | 논의 내용 |
@@ -50,6 +52,7 @@ PostgreSQL 영속 metadata를 HTTP 흐름에 연결했고 통합25개·adapter12
 | [Supabase 신규 계정·Keep Alive](20-supabase-keepalive.md) | 신규 계정 전제 갱신·Supabase 채택 시 하루1회 기본·휴면/복구 검증 |
 | [Supabase 프로젝트 구성안](21-supabase-project-blueprint.md) | 운영1개/로컬 개발·공식 SMTP/리전 조건·설정/비용 관문 |
 | [DB·권한·동기화 계약](22-db-permission-sync-contract.md) | 논리 테이블·tenant scope·원자적 push·커밋 순서 cursor·private 자산 |
+| [전체 SQL/권한/되돌리기 묶음](39-full-bundle-review.md) | 단일 transaction·source/hash·ACL·자료 보존 pause·empty-only uninstall·실제 읽기 점검 |
 | [보수적 복구 worker·검토 계약](38-recovery-worker-results.md) | bounded 미리보기·검토 hash·재검사·새 기기 복구·audit/replay·미확정 보류 |
 | [영속 metadata·gateway 재시작](37-durable-gateway-metadata-results.md) | 실제 SQL·두 gateway·SIGKILL/DB 재시작·lease/fence·불명확한 I/O 보수적 보존 |
 | [HTTP gateway·Storage 계약 구현](36-http-gateway-storage-results.md) | 실제 loopback HTTP61개·인증/전송/재시도/정리 실패·영속 metadata 미연계 |

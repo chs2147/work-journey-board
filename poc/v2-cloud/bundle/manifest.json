@@ -1,0 +1,134 @@
+{
+  "planVersion": 2,
+  "projectRef": "hutqsfftioxtredcjhsy",
+  "region": "ap-northeast-1",
+  "monthlyBudgetKRW": 0,
+  "autoApply": false,
+  "schema": "wjb_v2_cloud",
+  "bucket": "wjb-v2-poc-private",
+  "bucketPublic": false,
+  "transport": "server-proxy",
+  "signedUploadURLs": false,
+  "signedDownloadURLs": false,
+  "sample": {
+    "users": 2,
+    "assets": 2,
+    "bytesPerAsset": 4096
+  },
+  "sessionPolicy": {
+    "timeboxSeconds": 0,
+    "inactivitySeconds": 0,
+    "singleSession": false
+  },
+  "requiredRemainingBytes": {
+    "database": 10485760,
+    "storage": 1048576,
+    "egress": 10485760
+  },
+  "scope": "review-candidate-not-deployed",
+  "generatorSha256": "9c8e6df19d2f3d49b6b7034bd1d53d8acca0b4e3faee2a2ae538882cdf81b2a1",
+  "metadataSchema": "wjb_gateway",
+  "sources": [
+    {
+      "path": "poc/v2-cloud/session-guard.sql",
+      "sha256": "3be17e719a5a5c8cf91268c46b2ce99aeff3c6127b5b43bd8b8f250467a374c9"
+    },
+    {
+      "path": "poc/v2-gateway/postgres-metadata.sql",
+      "sha256": "b8d789769cf529456757092ef59ac484dda451686bf8ca2139895b79fabe9bda"
+    },
+    {
+      "path": "poc/v2-gateway/recovery.sql",
+      "sha256": "bf9e474bbda8a3af4eb4602f83b70cf6605d416befb3e6bf809d172a9f3aca54"
+    }
+  ],
+  "templates": [
+    {
+      "path": "poc/v2-cloud/templates/rollback.sql",
+      "sha256": "4a0dd7df0b81593ab21e91e626e8de634ee39c7740da5ea70a34b76a2e52e3a6"
+    },
+    {
+      "path": "poc/v2-cloud/templates/pause.sql",
+      "sha256": "6d6382b918ae29164ce45788b3553de2261e6e4b9f828e65ca763cf41df0cbe5"
+    },
+    {
+      "path": "poc/v2-cloud/templates/resume.sql",
+      "sha256": "cd43f341c316e72f88e3892bffa630e643beffe5e8dcf9400087cb1b3ba11833"
+    },
+    {
+      "path": "poc/v2-cloud/templates/verify.sql",
+      "sha256": "be15494f16ddc9c39067436c071431973e60090e8e79af446c3c0d3c5647cab9"
+    },
+    {
+      "path": "poc/v2-cloud/templates/preinstall.sql",
+      "sha256": "29c3e08cced7364e5701b56a284342c9f923d36d3ba2ede9fd505cead03c1ad9"
+    }
+  ],
+  "objects": {
+    "schemas": [
+      "wjb_v2_cloud",
+      "wjb_gateway"
+    ],
+    "tables": [
+      "wjb_v2_cloud.blocked_session",
+      "wjb_gateway.workspace",
+      "wjb_gateway.device",
+      "wjb_gateway.asset",
+      "wjb_gateway.io_intent",
+      "wjb_gateway.recovery_audit"
+    ],
+    "publicFunctions": [
+      "wjb_v2_session_active(uuid,uuid)",
+      "wjb_v2_revoke_session(uuid,uuid)",
+      "wjb_v2_asset_command(jsonb)",
+      "wjb_v2_recovery_catalog(jsonb)"
+    ],
+    "privateFunctions": [
+      "wjb_v2_cloud.session_active(uuid,uuid)",
+      "wjb_v2_cloud.revoke_session(uuid,uuid)",
+      "wjb_gateway.asset_json(wjb_gateway.asset)"
+    ]
+  },
+  "expectedVerification": {
+    "schemaCount": 2,
+    "tableCount": 6,
+    "rlsEnabledCount": 6,
+    "functionCount": 7,
+    "publicRpcCount": 4,
+    "unsafeSearchPaths": 0,
+    "clientExecutableCount": 0,
+    "publicExecutableCount": 0,
+    "servicePublicExecutableCount": 4,
+    "serviceDirectTableAccessCount": 0
+  },
+  "ownerModel": "reviewed-migration-executor-not-yet-approved",
+  "rollbackMode": "empty-only",
+  "phases": [
+    {
+      "id": "sql-install",
+      "excludes": [
+        "bucket",
+        "runtime",
+        "auth-users",
+        "data-migration"
+      ]
+    },
+    {
+      "id": "cloud-validation",
+      "requires": [
+        "sql-install",
+        "private-storage",
+        "gateway",
+        "org-usage"
+      ]
+    }
+  ],
+  "artifactSha256": {
+    "install.sql": "9a77e28de82583cee850afa5015ddd0007ff515c57a77b63f2ae5e7227a97e4a",
+    "rollback.sql": "4a0dd7df0b81593ab21e91e626e8de634ee39c7740da5ea70a34b76a2e52e3a6",
+    "pause.sql": "6d6382b918ae29164ce45788b3553de2261e6e4b9f828e65ca763cf41df0cbe5",
+    "resume.sql": "cd43f341c316e72f88e3892bffa630e643beffe5e8dcf9400087cb1b3ba11833",
+    "verify.sql": "be15494f16ddc9c39067436c071431973e60090e8e79af446c3c0d3c5647cab9",
+    "preinstall.sql": "29c3e08cced7364e5701b56a284342c9f923d36d3ba2ede9fd505cead03c1ad9"
+  }
+}

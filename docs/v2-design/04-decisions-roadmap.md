@@ -252,3 +252,7 @@ Neon 중심 검토는 유지하되 woori 운영을 유지한 로컬 개발 대�
 ## 4.39 보수적 복구 worker·검토 후 실행·완료 기록
 
 사용자의 커밋/푸시 후 다음 단계 요청으로 이전 원격 반영을 확인했다. 읽기 전용 catalog/미리보기, 재검사·새 recovery lease, matching 파일 복구/확실한 정리, atomic audit·재시도 완료 조회를 구현했다. 복구25·metadata14·HTTP61·영속/복구41개가 통과했다. [38문서](38-recovery-worker-results.md)에 앱 UI 미구현 계약·미확정 요청 강제 해제 금지와 후속 전체 적용/rollback 검토를 기록했다. 실제 Supabase/제품·DB18·main·환경 게시·준비 flag는 유지했다.
+
+## 4.40 전체 적용·권한·자료 보존형 중단/제거 묶음
+
+사용자의 커밋/푸시 후 다음 진행 요청으로 이전 원격 반영을 확인했다. 세션/metadata/recovery를 atomic install로 묶고 source/생성기/출력 hash, ACL 확인, pause/resume, empty-only rollback과 단계별 준비 검사를 작성했다. 단위29·기존준비23·SQL73개가 성공했다. 실제 프로젝트는 공식 read-only API의 SELECT로 Auth6컬럼·PostgreSQL17.11·새 이름 충돌 없음·물리DB 약10.9MB·프로젝트 Storage0개를 확인했다. [39문서](39-full-bundle-review.md)에 공식 잔여량/설치 역할/최종검토 미완료와 DB-only 설치/후속검증 구분을 기록했다. cloud DDL/DML·버킷/사용자 생성·앱/DB18·main·환경 게시는 수행하지 않았다.

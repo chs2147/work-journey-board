@@ -8,15 +8,27 @@
     "storage": null,
     "egress": null
   },
-  "sessionPolicyObservedAt": "2026-11-08T21:11:49.639770+00:00",
+  "sessionPolicyObservedAt": "2026-11-08T23:35:33.597105+00:00",
   "sessionPolicy": {
     "timeboxSeconds": 0,
     "inactivitySeconds": 0,
     "singleSession": false
   },
-  "authSchemaVerified": false,
+  "authSchemaVerified": true,
   "migrationOwnerReviewed": false,
   "gatewayVerified": false,
   "privateStorageVerified": false,
-  "rollbackReviewed": false
+  "rollbackReviewed": false,
+  "targetInspectedAt": "2026-11-08T23:44:22.917790+00:00",
+  "deploymentCollisionFree": true,
+  "dataApiPrivateSchemasHidden": true,
+  "bundleReviewed": false,
+  "bundleManifestSha256": null,
+  "inspectionRole": "supabase_read_only_user",
+  "measurements": {
+    "physicalDatabaseBytes": 10917555,
+    "projectStorageObjectCount": 0,
+    "projectStorageKnownBytes": 0,
+    "billingOrOrgQuotaVerified": false
+  }
 }

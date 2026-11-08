@@ -252,6 +252,12 @@ try:
         sql((ROOT/'002-session-assets.sql').read_text())
         from session_asset_tests import run
         run(globals())
+    if '--bundle' in sys.argv:
+        import importlib.util
+        spec = importlib.util.spec_from_file_location('bundle_sql_tests', ROOT.parent/'v2-cloud'/'bundle_sql_tests.py')
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        module.run(globals())
     if '--cloud' in sys.argv:
         import importlib.util
         spec = importlib.util.spec_from_file_location('cloud_sql_tests', ROOT.parent/'v2-cloud'/'sql_tests.py')
@@ -261,17 +267,21 @@ try:
 finally:
     evidence = {'observed_at':datetime.datetime.now(datetime.timezone.utc).isoformat(),
                 'scope':'Local PostgreSQL SQL authorization/transaction slice; Auth gateway is a test stub; no cloud writes',
-                'extended':'--extended' in sys.argv, 'cloud_candidate':'--cloud' in sys.argv,
+                'extended':'--extended' in sys.argv, 'cloud_candidate':'--cloud' in sys.argv, 'full_bundle':'--bundle' in sys.argv,
                 'image':IMAGE,'postgres_version':locals().get('version'), 'tests':RESULTS,
                 'files':{p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(ROOT.iterdir()) if p.suffix in ('.py','.sql')}}
     if '--extended' in sys.argv:
         auth_root = ROOT.parent/'v2-auth'
         evidence['auth_files'] = {p.name:hashlib.sha256(p.read_bytes()).hexdigest()
             for p in sorted(auth_root.iterdir()) if p.suffix in ('.mjs','.json')}
-    if '--cloud' in sys.argv:
+    if '--cloud' in sys.argv or '--bundle' in sys.argv:
         cloud_root = ROOT.parent/'v2-cloud'
         evidence['cloud_files'] = {p.name:hashlib.sha256(p.read_bytes()).hexdigest()
             for p in sorted(cloud_root.iterdir()) if p.suffix in ('.py','.sql','.mjs','.json')}
+    if '--bundle' in sys.argv:
+        evidence['bundle_artifacts'] = {str(p.relative_to(ROOT.parent.parent)):hashlib.sha256(p.read_bytes()).hexdigest()
+            for folder in [ROOT.parent/'v2-cloud'/'bundle', ROOT.parent/'v2-cloud'/'templates']
+            for p in sorted(folder.iterdir()) if p.is_file()}
     (OUT/'results.json').write_text(json.dumps(evidence,indent=2)+'\n')
     if created:
         docker('rm','-f','-v',NAME,check=False)

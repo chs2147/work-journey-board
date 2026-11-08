@@ -1,0 +1,87 @@
+{
+  "observed_at": "2026-11-08T23:35:33.597105+00:00",
+  "project_ref": "hutqsfftioxtredcjhsy",
+  "read_only": true,
+  "checks": {
+    "project": {
+      "http_status": 200,
+      "summary": {
+        "ref": "hutqsfftioxtredcjhsy",
+        "region": "ap-northeast-1",
+        "status": "ACTIVE_HEALTHY"
+      }
+    },
+    "postgrest": {
+      "http_status": 200,
+      "summary": {
+        "db_schema": "public,graphql_public",
+        "db_extra_search_path": "public, extensions",
+        "max_rows": 1000
+      }
+    },
+    "auth_policy": {
+      "http_status": 200,
+      "summary": {
+        "sessions_timebox": 0,
+        "sessions_inactivity_timeout": 0,
+        "sessions_single_per_user": false
+      }
+    },
+    "addons": {
+      "http_status": 200,
+      "summary": {
+        "selected_addon_types": []
+      }
+    },
+    "database_metadata": {
+      "http_status": 201,
+      "summary": [
+        {
+          "inspection": {
+            "auth_columns": [
+              {
+                "type": "uuid",
+                "table": "sessions",
+                "column": "id"
+              },
+              {
+                "type": "timestamp with time zone",
+                "table": "sessions",
+                "column": "not_after"
+              },
+              {
+                "type": "uuid",
+                "table": "sessions",
+                "column": "user_id"
+              },
+              {
+                "type": "timestamp with time zone",
+                "table": "users",
+                "column": "banned_until"
+              },
+              {
+                "type": "timestamp with time zone",
+                "table": "users",
+                "column": "deleted_at"
+              },
+              {
+                "type": "uuid",
+                "table": "users",
+                "column": "id"
+              }
+            ],
+            "inspection_role": "supabase_read_only_user",
+            "guard_rpc_exists": false,
+            "postgres_version": "17.11",
+            "revoke_rpc_exists": false,
+            "guard_schema_exists": false,
+            "metadata_rpc_exists": false,
+            "recovery_rpc_exists": false,
+            "metadata_schema_exists": false,
+            "physical_database_bytes": 10917555
+          }
+        }
+      ]
+    }
+  }
+}
