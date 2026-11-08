@@ -1,0 +1,82 @@
+✔ cells/17: parent and children move once, ids/assets/links unchanged (129.140173ms)
+✔ cells/17: patch-first preserves content and membership independently (94.813565ms)
+✔ cells/17: move-first preserves content and membership independently (110.959508ms)
+✔ cells/17: independent entry patches avoid cell-wide conflicts (87.457005ms)
+✔ cells/17: competing source/destination order version rolls everything back (81.900389ms)
+✔ cells/17: receive rollback on missing batch sequence, conservative dirty preservation (110.844895ms)
+✔ cells/41: parent and children move once, ids/assets/links unchanged (117.753632ms)
+✔ cells/41: patch-first preserves content and membership independently (116.2585ms)
+✔ cells/41: move-first preserves content and membership independently (100.380912ms)
+✔ cells/41: independent entry patches avoid cell-wide conflicts (83.210536ms)
+✔ cells/41: competing source/destination order version rolls everything back (79.098325ms)
+✔ cells/41: receive rollback on missing batch sequence, conservative dirty preservation (98.796744ms)
+✔ cells/73: parent and children move once, ids/assets/links unchanged (94.84469ms)
+✔ cells/73: patch-first preserves content and membership independently (93.306715ms)
+✔ cells/73: move-first preserves content and membership independently (100.259357ms)
+✔ cells/73: independent entry patches avoid cell-wide conflicts (86.355762ms)
+✔ cells/73: competing source/destination order version rolls everything back (95.424787ms)
+✔ cells/73: receive rollback on missing batch sequence, conservative dirty preservation (92.725667ms)
+✔ cells refuses child as root (65.900449ms)
+✔ cells refuses destination inside subtree (88.662212ms)
+✔ cells refuses invalid date (73.780191ms)
+✔ cells refuses unknown category (77.269682ms)
+✔ cells refuses stale source (66.845416ms)
+✔ cells refuses foreign account (75.362852ms)
+✔ cells refuses wrong generation (117.348127ms)
+✔ cells refuses structure via patch (79.045857ms)
+✔ cells new generation starts fresh structure/content counters (89.412256ms)
+✔ cells server SIGKILL after-source (195.870159ms)
+✔ cells server SIGKILL after-target (135.77755ms)
+✔ cells server SIGKILL before-commit (127.178003ms)
+✔ cells server SIGKILL after-commit (141.62795ms)
+✔ cells receiver SIGKILL after-row (143.743383ms)
+✔ cells receiver SIGKILL after-commit (141.149727ms)
+✔ cells insert subtree before existing root without breaking target hierarchy (115.70887ms)
+✔ cells refuses destination inside another parent children (80.968775ms)
+✔ cells typed mode rejects legacy whole-row entry writes (94.13956ms)
+✖ cells independent patches from two server processes both commit (134.008471ms)
+✖ cells competing moves from two server processes accept exactly one (166.038612ms)
+ℹ tests 38
+ℹ suites 0
+ℹ pass 36
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4001.204185
+
+✖ failing tests:
+
+test at poc/v2-sync/cells.test.mjs:330:1
+✖ cells independent patches from two server processes both commit (134.008471ms)
+  Error: file:///workspace/work-journey-board/poc/v2-sync/model.mjs:24
+    db.exec(`PRAGMA journal_mode=DELETE; PRAGMA synchronous=FULL;
+       ^
+
+  Error: database is locked
+      at open (file:///workspace/work-journey-board/poc/v2-sync/model.mjs:24:6)
+      at file:///workspace/work-journey-board/poc/v2-sync/cells-race.mjs:6:8
+      at ModuleJob.run (node:internal/modules/esm/module_job:561:25)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async node:internal/modules/esm/loader:647:26
+      at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+    code: 'ERR_SQLITE_ERROR',
+    errcode: 5,
+    errstr: 'database is locked'
+  }
+
+  Node.js v24.22.1
+
+      at ChildProcess.<anonymous> (file:///workspace/work-journey-board/poc/v2-sync/cells.test.mjs:318:36)
+      at ChildProcess.emit (node:events:514:28)
+      at maybeClose (node:internal/child_process:1172:16)
+      at ChildProcess._handle.onexit (node:internal/child_process:335:5)
+
+test at poc/v2-sync/cells.test.mjs:340:1
+✖ cells competing moves from two server processes accept exactly one (166.038612ms)
+  SyntaxError: Unexpected end of JSON input
+      at JSON.parse (<anonymous>)
+      at ChildProcess.<anonymous> (file:///workspace/work-journey-board/poc/v2-sync/cells.test.mjs:321:30)
+      at ChildProcess.emit (node:events:514:28)
+      at maybeClose (node:internal/child_process:1172:16)
+      at ChildProcess._handle.onexit (node:internal/child_process:335:5)

@@ -78,6 +78,7 @@ export function applyPage(db, scope, generation, batch) {
   transaction(db, () => {
     if (state(db, scope).generation !== generation) throw Error("GENERATION_CHANGED");
     for (const c of batch) {
+      if (c.kind === "entry-batch") throw Error("BATCH_ADAPTER_REQUIRED");
       if (c.scope !== scope || c.generation !== generation) throw Error("SCOPE_MISMATCH");
       const cursor = state(db, scope).cursor;
       if (c.seq <= cursor) continue;

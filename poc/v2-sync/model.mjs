@@ -20,7 +20,7 @@ function canonical(value) {
 export function open(path) {
   const target = resolve(path);
   if (!existsSync(resolve(dirname(target), ".v2-poc-only"))) throw Error("POC_DIRECTORY_REQUIRED");
-  const db = new DatabaseSync(target);
+  const db = new DatabaseSync(target, { timeout: 2000 });
   db.exec(`PRAGMA journal_mode=DELETE; PRAGMA synchronous=FULL;
     CREATE TABLE IF NOT EXISTS records(scope TEXT,id TEXT,rev INTEGER,body TEXT,PRIMARY KEY(scope,id));
     CREATE TABLE IF NOT EXISTS state(scope TEXT PRIMARY KEY,generation INTEGER DEFAULT 1,cursor INTEGER DEFAULT 0);
@@ -101,6 +101,12 @@ export function accept(db, account, op) {
       if (old.request !== canonical(op)) throw Error("IDEMPOTENCY_KEY_REUSED");
       return JSON.parse(old.result);
     }
+    if (
+      op.body?.table === "entry_item" &&
+      db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='cell_versions'").get() &&
+      db.prepare("SELECT 1 FROM cell_versions WHERE scope=?").get(op.scope)
+    )
+      throw Error("TYPED_ENTRY_REQUIRED");
     const before = record(db, op.scope, op.id);
     if ((before?.rev ?? 0) !== op.base) throw Error("CONFLICT");
     const rev = op.base + 1,

@@ -46,3 +46,12 @@ node poc/v2-sync/run-local.mjs   # 30+19+28개, 새 임시 폴더에 전체 증�
 `stage-import.mjs`는 DB18 전환본을 행 wrapper와 scope별 이미지 캐시로 옮긴다. `queue.mjs`는 초안/고정 명령·수신 cursor를 파일 DB에 보존하고 `tick`으로 진행한다. 큐는 기존 `edit/receive` 경로와 섞어서 호출하지 않는다. 타이머·실제 네트워크·제품의 도메인 검증기는 아니다. 새 시험은 직접 생성한 가상 DB만 사용한다.
 
 상세 결과/다음 범위는 [27문서](../../docs/v2-design/27-durable-queue-results.md)를 따른다. 위 초기 표 중 L03의 기본 영속 대기/후속 편집 처리, L04의 페이지 중복·순서 누락, L05의 문서 사본 보존을 보완했다. 전체 사례 완료를 뜻하지 않는다.
+
+## 셀 구조/내용 버전과 원자적 이동 증분
+
+```sh
+node poc/v2-sync/cells.test.mjs  # 신규38개
+node poc/v2-sync/run-local.mjs   # 현재 30+19+28+38개 전체 증거
+```
+
+`cells.mjs`의 `applyCommand`는 patch-entry/move-subtree를, `receiveBatches`는 원자적 entry-batch 수신을 제공한다. 활성화한 workspace의 항목 쓰기는 범용 accept로 우회하지 않는다. 현재 tick/applyPage와의 자동 혼합 연결은 미구현이므로 별도 어댑터로 시험한다. 구 어댑터는 새 배치를 명시적으로 거절한다. [28문서](../../docs/v2-design/28-atomic-cell-move-results.md)에 시험 결과·수정 전 잠금 실패·제약을 기록했다.
