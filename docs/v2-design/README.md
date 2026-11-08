@@ -30,11 +30,12 @@
 | [Supabase 신규 계정·Keep Alive](20-supabase-keepalive.md) | 신규 계정 전제 갱신·Supabase 채택 시 하루1회 기본·휴면/복구 검증 |
 | [Supabase 프로젝트 구성안](21-supabase-project-blueprint.md) | 운영1개/로컬 개발·공식 SMTP/리전 조건·설정/비용 관문 |
 | [DB·권한·동기화 계약](22-db-permission-sync-contract.md) | 논리 테이블·tenant scope·원자적 push·커밋 순서 cursor·private 자산 |
+| [무료 운영 조건·PoC 준비 판정](23-supabase-free-tier-readiness.md) | 공식 고정 소스의 무료 한도·아시아·SMTP, 용량/교체 피크·백업 분할·남은 계정 확인 |
 | [번역 후보 CSV](i18n-inventory.csv) / [집계 JSON](inventory-summary.json) | 현재 소스의 번역 후보 조사. 번역 완료/정제된 키 목록이 아님 |
 
 **현재 후보:** 사용자가 Supabase 신규 계정을 생성했다. Supabase 통합 구성과 Neon 조합을 다시 비교하며, Supabase 채택 시 Keep Alive 기본 포함을 요구한다([20문서](20-supabase-keepalive.md)). 실제 프로젝트/한도·리전·최종 제공자는 아직 검증/확정 전이다.
 
-**최신 운영 원칙:** AWS 직접 구성/운영은 제외하고 무료 또는 개인 요금제 수준을 목표로 한다. [16문서](16-low-cost-review.md)가 기존 상시 실시간·백업 보관·PITR/규모 추천에 우선한다. 최신 가격/무료 제한은 아직 검증되지 않았다.
+**최신 운영 원칙:** AWS 직접 구성/운영은 제외하고 무료 또는 개인 요금제 수준을 목표로 한다. [16문서](16-low-cost-review.md)가 기존 상시 실시간·백업 보관·PITR/규모 추천에 우선한다. [23문서](23-supabase-free-tier-readiness.md)에서 공식 공개 소스의 무료 한도·아시아 리전 목록·메일 제한을 확인했다. 실제 신규 계정의 플랜/잔여량·리전 선택·총비용은 미확인이다.
 
 ## 우선 추천
 

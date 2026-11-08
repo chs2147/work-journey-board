@@ -67,6 +67,8 @@ batch는 하나의 업무 명령의 정합성 단위다. 보드 JSON/연결 테�
 
 snapshot manifest에는 앱/DB/protocol/문서/백업 포맷 버전, generation/checkpoint, entity hash와 blob hash·크기를 담는다. DB만 되돌리고 파일이 없는 복원을 완료 처리하지 않는다. 전체 복원은 보존본 생성과 새 generation 공개의 별도 명령이며 기존 op를 새 generation에 재적용하지 않는다.
 
+[23문서](23-supabase-free-tier-readiness.md)의 Free 단일 파일50MB 공개 기준을 반영해 큰 백업은 chunk/manifest로 저장한다(10MiB chunk 추천·실제 설정 검증 전). 제한된 직접 Storage 전송·업로드 bytes 예약·불완전본 비공개·모든 chunk/전체 hash 검증이 필요하다. 정상 자동본과 신규 후보본이 교체 중 공존하는 공간까지 확보하며, 부족하면 이전 정상본을 유지한다.
+
 ## 22.7 오류·호환성
 
 `AUTH_REQUIRED`, `ACCESS_REVOKED`, `CONFLICT`, `QUOTA_EXCEEDED`, `CURSOR_EXPIRED`, `GENERATION_CHANGED`, `FORMAT_UNSUPPORTED`, `UPGRADE_REQUIRED`, `IDEMPOTENCY_KEY_REUSED` 등 code/args를 사용한다. 앱에서 ko/en으로 표시하고 서버 원문/SQL 상세·비밀값을 그대로 고객에게 내보내지 않는다.

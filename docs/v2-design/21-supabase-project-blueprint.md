@@ -32,13 +32,13 @@
 | 기본 SMTP | 공식 문서상 프로젝트 팀에 속한 사전 승인 주소로 제한, 비운영/시험 목적·전달 SLA 없음 |
 | 외부 사용자 OTP | 사용자에게 메일을 보내려면 custom SMTP 구성 필요. 무료 발송량·발신 도메인·도메인 비용·rate limit 별도 확인 |
 | 리전 | 프로젝트는 primary region1개. 일반 지역 선택은 그 범위의 사용 가능한 실제 리전에 배정되므로 특정 국가 보장이 아님 |
-| DB/Storage/egress·함수·실시간 실제 quota | 현재 계정/플랜 대시보드 확인 전. 특정 무료 숫자나 무과금 보장 없음 |
+| DB/Storage/egress·함수·실시간 실제 quota | 현재 계정/플랜 대시보드 확인 전. 후속23문서에 공식 공개 기준을 추가했으며 계정 실측/무과금 보장과 구분 |
 | Keep Alive | 기존 woori 코드 참고. 플랫폼 휴면 방지 효과는 미검증이며 복구/로컬 보존 필요 |
 | 브랜치 과금 |19문서에서 별도 사용량 청구·Spend Cap 제외 확인. 기본 개발은 로컬 추천 |
 
 근거: [SMTP](https://github.com/supabase/supabase/blob/master/apps/docs/content/guides/auth/auth-smtp.mdx), [Auth limits](https://github.com/supabase/supabase/blob/master/apps/docs/content/guides/auth/rate-limits.mdx), [Regions](https://github.com/supabase/supabase/blob/master/apps/docs/content/guides/platform/regions.mdx).
 
-리전의 구체 목록·정확한 이메일/저장 한도는 동적 컴포넌트/플랜 참조를 포함하므로 추측으로 채우지 않았다. 외부 메일 수신자를 조직 관리자/개발자로 초대해 시험용 제한을 피하는 방식은 제품의 가입 흐름으로 쓰지 않는다.
+후속 [23문서](23-supabase-free-tier-readiness.md)에서 동적 컴포넌트가 참조하는 공식 설정 소스까지 확인해 리전 목록·공개 이메일/저장 한도를 보완했다. 실제 계정 선택 가능 상태는 별도다. 외부 메일 수신자를 조직 관리자/개발자로 초대해 시험용 제한을 피하는 방식은 제품의 가입 흐름으로 쓰지 않는다.
 
 ## 21.4 인증과 개발/운영 경계
 
