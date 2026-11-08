@@ -21,6 +21,8 @@
 | [플랫폼 지원 기능표](11-platform-matrix.md) | Desktop/Web/Mobile 1차 범위와 현재 활성249개 Feature ID별 검토표 |
 | [MVP 범위 통합안](12-mvp-scope.md) | 확정/추천·필수/후속 범위·G0~G5·구현 전 결정 |
 | [PoC 검증 명세](13-poc-spec.md) | fixture·장애22개·성능/비용 측정·증거·통과 기준(미실행) |
+| [G0 설계 결정표](14-design-decision-pack.md) | 암호화·첫 플랫폼·백엔드 후보 선택과 나머지 미정 사항 |
+| [PoC 작업 계획](15-poc-work-plan.md) | W01~W12·시나리오22개·환경별 증거 레지스터 |
 | [번역 후보 CSV](i18n-inventory.csv) / [집계 JSON](inventory-summary.json) | 현재 소스의 번역 후보 조사. 번역 완료/정제된 키 목록이 아님 |
 
 ## 우선 추천
