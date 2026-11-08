@@ -17,6 +17,8 @@
 | [인증·기기 연결 상세](07-auth-flows.md) | 이메일 OTP·세션 식별·추가 기기·회수·계정 복구 |
 | [백엔드·비용 비교](08-backend-cost-comparison.md) | 관리형 후보3개·100/1,000/10,000명 용량·부하 모델·견적 확인표 |
 | [전환·충돌·복원 화면 흐름](09-migration-conflict-screens.md) | 원본 보존·초기 업로드·새 기기·충돌 비교·복원 영향 와이어프레임 |
+| [다국어 키·용어집 계약](10-i18n-contract.md) | namespace·치환 타입·이전 순서·배포 검증, ko/en 예시와 용어집 |
+| [플랫폼 지원 기능표](11-platform-matrix.md) | Desktop/Web/Mobile 1차 범위와 현재 활성249개 Feature ID별 검토표 |
 | [번역 후보 CSV](i18n-inventory.csv) / [집계 JSON](inventory-summary.json) | 현재 소스의 번역 후보 조사. 번역 완료/정제된 키 목록이 아님 |
 
 ## 우선 추천

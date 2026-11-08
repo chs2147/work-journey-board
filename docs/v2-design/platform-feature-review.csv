@@ -1,0 +1,250 @@
+﻿featureId,nameKo,baselineVersion,currentPlatforms,desktopV2,webProposal,mobileProposal,basis,status
+WJB-BOARD-001,ISO 주간 보드,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 주간 보드·입력,design-only-not-shipped
+WJB-BOARD-002,ISO 주차·연도 경계,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 주간 보드·입력,design-only-not-shipped
+WJB-BOARD-003,이전·다음 주·오늘 이동,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 주간 보드·입력,design-only-not-shipped
+WJB-BOARD-004,연간 기록 미니맵,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 주간 보드·입력,design-only-not-shipped
+WJB-BOARD-005,개조식 본 항목 입력,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 주간 보드·입력,design-only-not-shipped
+WJB-BOARD-006,하위 항목 들여쓰기,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 주간 보드·입력,design-only-not-shipped
+WJB-BOARD-007,키보드 항목 순서·칸 이동,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 주간 보드·입력,design-only-not-shipped
+WJB-BOARD-008,여러 줄 붙여넣기,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 주간 보드·입력,design-only-not-shipped
+WJB-BOARD-009,한글 조합 입력 보호,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 주간 보드·입력,design-only-not-shipped
+WJB-BOARD-010,자동 저장·저장 상태,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 주간 보드·입력,design-only-not-shipped
+WJB-BOARD-011,실행 취소·다시 실행,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 주간 보드·입력,design-only-not-shipped
+WJB-BOARD-012,본·하위 항목 묶음 삭제,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 주간 보드·입력,design-only-not-shipped
+WJB-BOARD-013,드래그 순서·칸 이동,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 주간 보드·입력,design-only-not-shipped
+WJB-BOARD-014,항목 손잡이·우클릭 메뉴,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 주간 보드·입력,design-only-not-shipped
+WJB-BOARD-015,오늘·선택 요일 구분,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 주간 보드·입력,design-only-not-shipped
+WJB-BOARD-016,주간 업무·요일 열 폭 조절,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 주간 보드·입력,design-only-not-shipped
+WJB-BOARD-017,하루 업무 카드 보기,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 주간 보드·입력,design-only-not-shipped
+WJB-BOARD-018,주간·데일리 전환 기억,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 주간 보드·입력,design-only-not-shipped
+WJB-BOARD-019,이전 업무 항목 가져오기,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 주간 보드·입력,design-only-not-shipped
+WJB-BOARD-020,모든 업무 일괄 가져오기,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 주간 보드·입력,design-only-not-shipped
+WJB-BOARD-021,항목 시작 시각,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 주간 보드·입력,design-only-not-shipped
+WJB-BOARD-022,항목 다른 날로 이동,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 주간 보드·입력,design-only-not-shipped
+WJB-BOARD-023,항목 마감일,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 주간 보드·입력,design-only-not-shipped
+WJB-BOARD-024,모든 항목 완료·완료 취소,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 주간 보드·입력,design-only-not-shipped
+WJB-BOARD-025,업무 기록 URL 링크,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 주간 보드·입력,design-only-not-shipped
+WJB-TASK-001,업무 생성·이름·색,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 업무·태그 관리,design-only-not-shipped
+WJB-TASK-002,업무 행 순서 조절,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 업무·태그 관리,design-only-not-shipped
+WJB-TASK-003,진행 업무 자동 이월,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 업무·태그 관리,design-only-not-shipped
+WJB-TASK-004,업무 종료·빈 업무 삭제,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 업무·태그 관리,design-only-not-shipped
+WJB-TASK-005,종료 업무 재시작,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 업무·태그 관리,design-only-not-shipped
+WJB-TASK-006,무기록 종료 제안,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 업무·태그 관리,design-only-not-shipped
+WJB-TASK-007,업무 다중 태그,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 업무·태그 관리,design-only-not-shipped
+WJB-TASK-008,태그 이름·순서·삭제,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 업무·태그 관리,design-only-not-shipped
+WJB-TASK-009,태그 필터·태그 없음,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 업무·태그 관리,design-only-not-shipped
+WJB-TASK-010,필터 상태 기억·해제,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 업무·태그 관리,design-only-not-shipped
+WJB-TASK-011,필터 안에서 업무 생성,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 업무·태그 관리,design-only-not-shipped
+WJB-IMPORTANT-001,별표 중요 표시,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 중요 업무·반복,design-only-not-shipped
+WJB-IMPORTANT-002,중요 업무 패널,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 중요 업무·반복,design-only-not-shipped
+WJB-IMPORTANT-003,중요 개수·지난 업무 표시,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 중요 업무·반복,design-only-not-shipped
+WJB-IMPORTANT-004,중요 업무 완료·취소,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 중요 업무·반복,design-only-not-shipped
+WJB-IMPORTANT-005,이 주 완료 목록,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 중요 업무·반복,design-only-not-shipped
+WJB-IMPORTANT-006,중요 패널 너비 조절,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 중요 업무·반복,design-only-not-shipped
+WJB-IMPORTANT-007,마감 업무 별도 목록,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 중요 업무·반복,design-only-not-shipped
+WJB-IMPORTANT-008,마감 임박도 컬러칩,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 중요 업무·반복,design-only-not-shipped
+WJB-IMPORTANT-009,중요 강조 띠 기본 여백,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 중요 업무·반복,design-only-not-shipped
+WJB-IMPORTANT-010,항목 매주 반복 설정,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 중요 업무·반복,design-only-not-shipped
+WJB-IMPORTANT-011,이번 주 반복 자동 생성,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 중요 업무·반복,design-only-not-shipped
+WJB-IMPORTANT-012,미래 반복 예정 보기,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 중요 업무·반복,design-only-not-shipped
+WJB-IMPORTANT-013,반복 관리·이번 주만 제외,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 중요 업무·반복,design-only-not-shipped
+WJB-IMPORTANT-014,무기록 판정 구분,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 중요 업무·반복,design-only-not-shipped
+WJB-NOTE-001,주간 메모 도크,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 메모 보드,design-only-not-shipped
+WJB-NOTE-002,접기·크게 보기·높이 조절,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 메모 보드,design-only-not-shipped
+WJB-NOTE-003,보드 우선 자동 높이,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 메모 보드,design-only-not-shipped
+WJB-NOTE-004,자유 배치 텍스트 메모,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 메모 보드,design-only-not-shipped
+WJB-NOTE-005,리치 텍스트 서식,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 메모 보드,design-only-not-shipped
+WJB-NOTE-006,글머리·번호·체크 목록,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 메모 보드,design-only-not-shipped
+WJB-NOTE-007,글자색 팔레트,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 메모 보드,design-only-not-shipped
+WJB-NOTE-008,배경색·형광펜,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 메모 보드,design-only-not-shipped
+WJB-NOTE-009,복제·앞뒤 순서·삭제,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 메모 보드,design-only-not-shipped
+WJB-NOTE-010,메모 실행 취소·다시 실행,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 메모 보드,design-only-not-shipped
+WJB-NOTE-011,붙여넣기·파일·드롭 이미지,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 메모 보드,design-only-not-shipped
+WJB-NOTE-012,이미지 축소·일지 내 저장,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 메모 보드,design-only-not-shipped
+WJB-NOTE-013,비율 유지 크기·설명,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 메모 보드,design-only-not-shipped
+WJB-NOTE-014,크게 보기·PNG/WebP 저장,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 메모 보드,design-only-not-shipped
+WJB-NOTE-015,보드 캡처 붙여넣기 안내,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 메모 보드,design-only-not-shipped
+WJB-NOTE-016,링크 카드 생성,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 메모 보드,design-only-not-shipped
+WJB-NOTE-017,링크 카드 도메인·썸네일,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 메모 보드,design-only-not-shipped
+WJB-NOTE-018,메모 안 URL 열기,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 메모 보드,design-only-not-shipped
+WJB-NOTE-019,메모 확대·축소·맞춤,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 메모 보드,design-only-not-shipped
+WJB-NOTE-020,판 패닝·미니맵,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 메모 보드,design-only-not-shipped
+WJB-NOTE-021,사각 선택·키보드 일괄 조작,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 메모 보드,design-only-not-shipped
+WJB-NOTE-022,모든 객체 본문 그룹 이동,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 메모 보드,design-only-not-shipped
+WJB-NOTE-023,그룹 외곽·보조 이동 버튼,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 메모 보드,design-only-not-shipped
+WJB-NOTE-024,클릭 유지·개별 편집 전환,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 메모 보드,design-only-not-shipped
+WJB-NOTE-025,그룹 취소·경계·공간 안전,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 메모 보드,design-only-not-shipped
+WJB-NOTE-026,항목과 메모 연결,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 메모 보드,design-only-not-shipped
+WJB-NOTE-027,한 메모 여러 항목 연결,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 메모 보드,design-only-not-shipped
+WJB-NOTE-028,많은 연결 접기·선택 목록,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 메모 보드,design-only-not-shipped
+WJB-NOTE-029,메모 객체 관계선,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 메모 보드,design-only-not-shipped
+WJB-NOTE-030,방향·선·이름표 편집,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 메모 보드,design-only-not-shipped
+WJB-NOTE-031,관계선 보기·미니맵 연동,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 메모 보드,design-only-not-shipped
+WJB-NOTE-032,메모 보드 PNG 저장·복사,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 메모 보드,design-only-not-shipped
+WJB-NOTE-033,메모 Markdown 내보내기,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 메모 보드,design-only-not-shipped
+WJB-NOTE-034,Markdown 파일 텍스트 드롭,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 메모 보드,design-only-not-shipped
+WJB-SUMMARY-001,업무별 주간 자동 요약,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 주간 요약,design-only-not-shipped
+WJB-SUMMARY-002,메모 포함 선택,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 주간 요약,design-only-not-shipped
+WJB-SUMMARY-003,수정본 작성·자동 저장,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 주간 요약,design-only-not-shipped
+WJB-SUMMARY-004,기록 변경 감지·비교,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 주간 요약,design-only-not-shipped
+WJB-SUMMARY-005,다시 만들기·삭제·되돌리기,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 주간 요약,design-only-not-shipped
+WJB-SUMMARY-006,최종본 클립보드 복사,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 주간 요약,design-only-not-shipped
+WJB-SUMMARY-007,요약 패널·좁은 창 대응,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 주간 요약,design-only-not-shipped
+WJB-SUMMARY-008,휴가 요약 주석,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 주간 요약,design-only-not-shipped
+WJB-EXPORT-001,주·기간·전체 내보내기,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 엑셀 내보내기,design-only-not-shipped
+WJB-EXPORT-002,주간보고 시트,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 엑셀 내보내기,design-only-not-shipped
+WJB-EXPORT-003,원장 시트,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 엑셀 내보내기,design-only-not-shipped
+WJB-EXPORT-004,시트 선택·인쇄 설정,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 엑셀 내보내기,design-only-not-shipped
+WJB-EXPORT-005,메모 보드 이미지 시트,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 엑셀 내보내기,design-only-not-shipped
+WJB-EXPORT-006,저장 위치·파일 열기,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 엑셀 내보내기,design-only-not-shipped
+WJB-EXPORT-007,워크스페이스 파일명,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 엑셀 내보내기,design-only-not-shipped
+WJB-IMPORT-001,엑셀·CSV·표 붙여넣기,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 기존 일지 가져오기,design-only-not-shipped
+WJB-IMPORT-002,양식과 사내 AI 지시문,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 기존 일지 가져오기,design-only-not-shipped
+WJB-IMPORT-003,주별 가져오기 미리보기,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 기존 일지 가져오기,design-only-not-shipped
+WJB-IMPORT-004,병합·덮어쓰기·건너뛰기,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 기존 일지 가져오기,design-only-not-shipped
+WJB-IMPORT-005,업무·주간 메모 매핑,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 기존 일지 가져오기,design-only-not-shipped
+WJB-IMPORT-006,가져오기 전 백업·이력·취소,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 기존 일지 가져오기,design-only-not-shipped
+WJB-INSIGHT-001,업무별 타임라인 열기,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 인사이트,design-only-not-shipped
+WJB-INSIGHT-002,타임라인 기간·종료 업무,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 인사이트,design-only-not-shipped
+WJB-INSIGHT-003,월·주차·상세 업무 위계,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 인사이트,design-only-not-shipped
+WJB-INSIGHT-004,월 아래·주 사이 직각 구분선,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 인사이트,design-only-not-shipped
+WJB-INSIGHT-005,오래된 월·무기록 묶음 접기,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 인사이트,design-only-not-shipped
+WJB-INSIGHT-006,시작·종료·재개 구간,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 인사이트,design-only-not-shipped
+WJB-INSIGHT-007,기록 표시·보드 바로가기,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 인사이트,design-only-not-shipped
+WJB-INSIGHT-008,연결 메모 펼치기,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 인사이트,design-only-not-shipped
+WJB-INSIGHT-009,업무 안 검색·강조,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 인사이트,design-only-not-shipped
+WJB-INSIGHT-010,경과 텍스트 복사,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 인사이트,design-only-not-shipped
+WJB-INSIGHT-011,업무 생애 히트맵,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 인사이트,design-only-not-shipped
+WJB-INSIGHT-012,지도 선택·주차 이동,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 인사이트,design-only-not-shipped
+WJB-INSIGHT-013,표 보기,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 인사이트,design-only-not-shipped
+WJB-INSIGHT-014,업무 다중 선택·탭 기억,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 인사이트,design-only-not-shipped
+WJB-INSIGHT-015,최근 12주 일별 히트맵,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 인사이트,design-only-not-shipped
+WJB-INSIGHT-016,연간 주별 히트맵,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 인사이트,design-only-not-shipped
+WJB-INSIGHT-017,모든 업무 합계 행,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 인사이트,design-only-not-shipped
+WJB-INSIGHT-018,오늘·휴가·미래·기간 밖,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 인사이트,design-only-not-shipped
+WJB-INSIGHT-019,툴팁·기록 바로가기,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 인사이트,design-only-not-shipped
+WJB-INSIGHT-020,키보드 격자·표 보기,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 인사이트,design-only-not-shipped
+WJB-INSIGHT-021,좁은 창 유동 활동 격자,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 인사이트,design-only-not-shipped
+WJB-INSIGHT-022,창 너비를 채우는 활동 격자,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 인사이트,design-only-not-shipped
+WJB-SEARCH-001,기록·메모 통합 검색,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 통합 검색,design-only-not-shipped
+WJB-SEARCH-002,결과 종류·문맥 표시,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 통합 검색,design-only-not-shipped
+WJB-SEARCH-003,원본 바로가기,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 통합 검색,design-only-not-shipped
+WJB-SEARCH-004,보드 결과 띠·다음 결과,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 통합 검색,design-only-not-shipped
+WJB-SEARCH-005,검색 초기화,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 통합 검색,design-only-not-shipped
+WJB-CALENDAR-001,연차·오전/오후 반차,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 달력·휴일,design-only-not-shipped
+WJB-CALENDAR-002,휴가 요약·엑셀 반영,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 달력·휴일,design-only-not-shipped
+WJB-CALENDAR-003,휴가와 종료 제안 구분,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 달력·휴일,design-only-not-shipped
+WJB-CALENDAR-004,사용자 공휴일,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 달력·휴일,design-only-not-shipped
+WJB-CALENDAR-005,기타 휴가,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 달력·휴일,design-only-not-shipped
+WJB-CALENDAR-006,대한민국 공휴일 내장 표,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 달력·휴일,design-only-not-shipped
+WJB-CALENDAR-007,달력·휴일 관리,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 달력·휴일,design-only-not-shipped
+WJB-CABINET-001,업무별 폴더·링크 등록,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: Cabi.NET,design-only-not-shipped
+WJB-CABINET-002,폴더 내용 탐색,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: Cabi.NET,design-only-not-shipped
+WJB-CABINET-003,읽기·열기 중심 탐색,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: Cabi.NET,design-only-not-shipped
+WJB-CABINET-004,별도 Cabi.NET 창,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: Cabi.NET,design-only-not-shipped
+WJB-CABINET-005,전체·진행 업무 목록,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: Cabi.NET,design-only-not-shipped
+WJB-CABINET-006,등록 항목 순서·업무 이동,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: Cabi.NET,design-only-not-shipped
+WJB-CABINET-007,브라우저 주소 아이콘 드롭,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: Cabi.NET,design-only-not-shipped
+WJB-CABINET-008,폴더 안 탐색기·Finder 열기,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: Cabi.NET,design-only-not-shipped
+WJB-CABINET-009,업무 머리 Cabi.NET 바로가기,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: Cabi.NET,design-only-not-shipped
+WJB-CABINET-010,폴더 확인·경로 다시 지정,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: Cabi.NET,design-only-not-shipped
+WJB-CABINET-011,새로고침·폴더 자동 반영,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: Cabi.NET,design-only-not-shipped
+WJB-CABINET-012,Cabi.NET 목록 폭 조절,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: Cabi.NET,design-only-not-shipped
+WJB-CABINET-013,바로가기·긴 경로 안내,1.23.0,windows,candidate-review,staged-review,staged-review,영역 기반 1차 검토: Cabi.NET,design-only-not-shipped
+WJB-CABINET-014,Finder 드롭·별칭 지원,1.23.0,macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: Cabi.NET,design-only-not-shipped
+WJB-SPACE-001,공간별 독립 일지,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 워크스페이스,design-only-not-shipped
+WJB-SPACE-002,4단계 공간 만들기,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 워크스페이스,design-only-not-shipped
+WJB-SPACE-003,레일 공간 선택기,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 워크스페이스,design-only-not-shipped
+WJB-SPACE-004,공간 전환 단축키,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 워크스페이스,design-only-not-shipped
+WJB-SPACE-005,이름·색·아이콘·순서,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 워크스페이스,design-only-not-shipped
+WJB-SPACE-006,기존 폴더 공간 추가,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 워크스페이스,design-only-not-shipped
+WJB-SPACE-007,공간 목록에서 제거,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 워크스페이스,design-only-not-shipped
+WJB-SPACE-008,설정 선택 복사·직렬 저장,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 워크스페이스,design-only-not-shipped
+WJB-SPACE-009,공간 전환 데이터 무결성,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 워크스페이스,design-only-not-shipped
+WJB-SPACE-010,업데이트 전 전체 공간 백업,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 워크스페이스,design-only-not-shipped
+WJB-UNIVERSE-001,여러 종류 기록의 연결망,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: Universe·지식,design-only-not-shipped
+WJB-UNIVERSE-002,초점·은하·목록 보기,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: Universe·지식,design-only-not-shipped
+WJB-UNIVERSE-003,년→월→주→일 시간 탐색,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: Universe·지식,design-only-not-shipped
+WJB-UNIVERSE-004,연결 이유·원문 확인,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: Universe·지식,design-only-not-shipped
+WJB-UNIVERSE-005,원본 자리로 열기,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: Universe·지식,design-only-not-shipped
+WJB-UNIVERSE-006,여러 공간 읽기 전용 지도,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: Universe·지식,design-only-not-shipped
+WJB-UNIVERSE-007,주를 넘는 직접 연결,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: Universe·지식,design-only-not-shipped
+WJB-UNIVERSE-008,관계 문구·방향·편집·해제,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: Universe·지식,design-only-not-shipped
+WJB-UNIVERSE-009,Universe 실행 취소,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: Universe·지식,design-only-not-shipped
+WJB-UNIVERSE-010,지식 카드 종류·본문,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: Universe·지식,design-only-not-shipped
+WJB-UNIVERSE-011,출처·관련 업무 관리,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: Universe·지식,design-only-not-shipped
+WJB-UNIVERSE-012,당시 발췌·근거 변경 상태,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: Universe·지식,design-only-not-shipped
+WJB-UNIVERSE-013,발췌 비교·다시 확인,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: Universe·지식,design-only-not-shipped
+WJB-UNIVERSE-014,초안·검토함·보관·임시본,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: Universe·지식,design-only-not-shipped
+WJB-UNIVERSE-015,보드 표시·통합 검색,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: Universe·지식,design-only-not-shipped
+WJB-UNIVERSE-016,기록·카드·지도에서 담기,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: Universe·지식,design-only-not-shipped
+WJB-UNIVERSE-017,미리보기·외부 AI용 복사,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: Universe·지식,design-only-not-shipped
+WJB-UNIVERSE-018,Markdown·경로 제외·재검증,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: Universe·지식,design-only-not-shipped
+WJB-UNIVERSE-019,다이나믹 3D·정적 2D,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: Universe·지식,design-only-not-shipped
+WJB-UNIVERSE-020,독립 다크 우주 배경,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: Universe·지식,design-only-not-shipped
+WJB-UNIVERSE-021,줌에 따른 은하·초점 전환,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: Universe·지식,design-only-not-shipped
+WJB-UNIVERSE-022,필터·상세 패널 접기,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: Universe·지식,design-only-not-shipped
+WJB-UNIVERSE-023,패널 폭 조절·기억,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: Universe·지식,design-only-not-shipped
+WJB-BACKUP-001,새 일지·기존 일지 첫 실행,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 저장·백업·복원,design-only-not-shipped
+WJB-BACKUP-002,폴더 이상·동기화 안내,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 저장·백업·복원,design-only-not-shipped
+WJB-BACKUP-003,일지 위치 변경·옮기기,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 저장·백업·복원,design-only-not-shipped
+WJB-BACKUP-004,SQLite 일지·트랜잭션,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 저장·백업·복원,design-only-not-shipped
+WJB-BACKUP-005,자동 구조 이전·직전 백업,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 저장·백업·복원,design-only-not-shipped
+WJB-BACKUP-006,시작·종료 일일·월간 백업,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 저장·백업·복원,design-only-not-shipped
+WJB-BACKUP-007,지금 백업·마지막 백업,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 저장·백업·복원,design-only-not-shipped
+WJB-BACKUP-008,사용 중 2시간 주기 백업,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 저장·백업·복원,design-only-not-shipped
+WJB-BACKUP-009,사용 중 파손 감지·월간 검사,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 저장·백업·복원,design-only-not-shipped
+WJB-BACKUP-010,선택적 보조 백업 위치,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 저장·백업·복원,design-only-not-shipped
+WJB-BACKUP-011,일지·메모 이미지 용량,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 저장·백업·복원,design-only-not-shipped
+WJB-BACKUP-012,앱 안 백업 복원,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 저장·백업·복원,design-only-not-shipped
+WJB-BACKUP-013,복원 전 원본 보관·되돌리기,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 저장·백업·복원,design-only-not-shipped
+WJB-BACKUP-014,백업 파일 앱·DB 버전,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 저장·백업·복원,design-only-not-shipped
+WJB-BACKUP-015,백업 이력 버전·종류·상태,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 저장·백업·복원,design-only-not-shipped
+WJB-BACKUP-016,실제 구조·호환성 사전 검사,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 저장·백업·복원,design-only-not-shipped
+WJB-BACKUP-017,구형 백업 이름 지원,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 저장·백업·복원,design-only-not-shipped
+WJB-BACKUP-018,기간·개수·용량 목표,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 저장·백업·복원,design-only-not-shipped
+WJB-BACKUP-019,정리 미리보기·변경 재확인,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 저장·백업·복원,design-only-not-shipped
+WJB-BACKUP-020,보호 사본·최신 정상 사본 유지,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 저장·백업·복원,design-only-not-shipped
+WJB-BACKUP-021,보관 정책 유지·안전 보류,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 저장·백업·복원,design-only-not-shipped
+WJB-BACKUP-022,보관 안내·정리 이력,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 저장·백업·복원,design-only-not-shipped
+WJB-SETTINGS-001,설정 전체 화면·분류,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 설정·표현,design-only-not-shipped
+WJB-SETTINGS-002,라이트·다크·시스템 테마,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 설정·표현,design-only-not-shipped
+WJB-SETTINGS-003,시그니처 테마,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 설정·표현,design-only-not-shipped
+WJB-SETTINGS-004,앱 색상 레일 직선화,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 설정·표현,design-only-not-shipped
+WJB-SETTINGS-005,설정 설명 한 줄 배치,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 설정·표현,design-only-not-shipped
+WJB-SETTINGS-006,앱 진단 정보,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 설정·표현,design-only-not-shipped
+WJB-SETTINGS-007,정보 카드·오픈소스 라이선스,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 설정·표현,design-only-not-shipped
+WJB-SETTINGS-008,빠른 이용 가이드 HTML·PDF,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 설정·표현,design-only-not-shipped
+WJB-SETTINGS-009,별도 스플래시 창,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 설정·표현,design-only-not-shipped
+WJB-SETTINGS-010,앱 아이콘·워드마크,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 설정·표현,design-only-not-shipped
+WJB-DIST-001,현재 사용자 설치·WebView2,1.23.0,windows,candidate-review,native-only-review,native-only-review,영역 기반 1차 검토: 플랫폼·배포,design-only-not-shipped
+WJB-DIST-002,오프라인 WebView2 설치판,1.23.0,windows,candidate-review,native-only-review,native-only-review,영역 기반 1차 검토: 플랫폼·배포,design-only-not-shipped
+WJB-DIST-003,유니버설 DMG,1.23.0,macos,candidate-review,native-only-review,native-only-review,영역 기반 1차 검토: 플랫폼·배포,design-only-not-shipped
+WJB-DIST-004,맥 메뉴·안전 종료·키 표기,1.23.0,macos,candidate-review,native-only-review,native-only-review,영역 기반 1차 검토: 플랫폼·배포,design-only-not-shipped
+WJB-DIST-005,단일 실행·창 상태 기억,1.23.0,windows;macos,candidate-review,native-only-review,native-only-review,영역 기반 1차 검토: 플랫폼·배포,design-only-not-shipped
+WJB-DIST-006,새 판 확인·릴리스 안내,1.23.0,windows;macos,candidate-review,native-only-review,native-only-review,영역 기반 1차 검토: 플랫폼·배포,design-only-not-shipped
+WJB-DIST-007,다운로드·체크섬·설치,1.23.0,windows;macos,candidate-review,native-only-review,native-only-review,영역 기반 1차 검토: 플랫폼·배포,design-only-not-shipped
+WJB-DIST-008,CI 자동 검사,1.23.0,windows;macos,candidate-review,native-only-review,native-only-review,영역 기반 1차 검토: 플랫폼·배포,design-only-not-shipped
+WJB-DIST-009,Windows 설치 파일 자동 빌드,1.23.0,windows;macos,candidate-review,native-only-review,native-only-review,영역 기반 1차 검토: 플랫폼·배포,design-only-not-shipped
+WJB-DIST-010,두 플랫폼 동시 정식 릴리스,1.23.0,windows;macos,candidate-review,native-only-review,native-only-review,영역 기반 1차 검토: 플랫폼·배포,design-only-not-shipped
+WJB-DIST-011,정식 Latest·체크섬 배포,1.23.0,windows;macos,candidate-review,native-only-review,native-only-review,영역 기반 1차 검토: 플랫폼·배포,design-only-not-shipped
+WJB-BOARD-026,항목 날짜 지정 복제,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 주간 보드·입력,design-only-not-shipped
+WJB-INSIGHT-023,타임라인 업무 목록 너비 조절,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 인사이트,design-only-not-shipped
+WJB-INSIGHT-024,활동 업무 이름 열 너비 조절,1.23.0,windows;macos,candidate-review,candidate-review,candidate-review,영역 기반 1차 검토: 인사이트,design-only-not-shipped
+WJB-CABINET-015,업무별 여러 노트·모달리스 창,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: Cabi.NET,design-only-not-shipped
+WJB-CABINET-016,블록 단위 Markdown 노트 편집,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: Cabi.NET,design-only-not-shipped
+WJB-CABINET-017,Markdown 가져오기와 Markdown/PDF 내보내기,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: Cabi.NET,design-only-not-shipped
+WJB-CABINET-018,업무당 하나의 자유 메모보드,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: Cabi.NET,design-only-not-shipped
+WJB-CABINET-019,폴더·링크·노트 원본 참조 카드,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: Cabi.NET,design-only-not-shipped
+WJB-CABINET-020,업무에 누적된 주간 메모 모아보기,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: Cabi.NET,design-only-not-shipped
+WJB-CABINET-021,주간↔업무 보드 객체 복제,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: Cabi.NET,design-only-not-shipped
+WJB-CABINET-022,목록·카드 보기와 노트/보드 검색,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: Cabi.NET,design-only-not-shipped
+WJB-CABINET-023,멀티윈도 저장 확인과 충돌 방지,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: Cabi.NET,design-only-not-shipped
+WJB-CABINET-024,Live Widget 업무 경과일,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: Cabi.NET,design-only-not-shipped
+WJB-CABINET-025,Live Widget 업무 타임라인 세 표현,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: Cabi.NET,design-only-not-shipped
+WJB-CABINET-026,Live Widget 미완료 중요 업무,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: Cabi.NET,design-only-not-shipped
+WJB-CABINET-027,표 행·열 편집 메뉴,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: Cabi.NET,design-only-not-shipped
+WJB-CABINET-028,중첩 순서 목록 계층 번호,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: Cabi.NET,design-only-not-shipped
+WJB-NOTE-035,접이식 세로 도구 팔레트,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 메모 보드,design-only-not-shipped
+WJB-NOTE-036,객체 가로·세로 프레임 크기,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: 메모 보드,design-only-not-shipped
+WJB-UNIVERSE-024,자동 움직임 A/C 전환·재생/정지,1.23.0,windows;macos,candidate-review,staged-review,staged-review,영역 기반 1차 검토: Universe,design-only-not-shipped

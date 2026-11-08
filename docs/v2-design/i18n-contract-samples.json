@@ -1,0 +1,56 @@
+{
+  "status": "design-samples-not-runtime",
+  "contractRevision": 1,
+  "locales": [
+    "ko",
+    "en"
+  ],
+  "messages": {
+    "common.saved": {
+      "args": {},
+      "ko": "저장됨",
+      "en": "Saved"
+    },
+    "sync.status.pending": {
+      "args": {
+        "count": "number"
+      },
+      "ko": "전송 대기 {count}건",
+      "en": "{count, plural, one {# change waiting} other {# changes waiting}}"
+    },
+    "sync.conflict.keepBoth": {
+      "args": {},
+      "ko": "둘 다 보존",
+      "en": "Keep both"
+    },
+    "auth.otp.sent": {
+      "args": {
+        "email": "escapedText"
+      },
+      "ko": "{email}로 인증번호를 보냈습니다.",
+      "en": "We sent a verification code to {email}."
+    },
+    "workspace.connect.title": {
+      "args": {
+        "workspaceName": "escapedText"
+      },
+      "ko": "{workspaceName} 온라인 연결",
+      "en": "Connect {workspaceName} online"
+    },
+    "cabi.export.pdf": {
+      "args": {},
+      "ko": "PDF로 내보내기",
+      "en": "Export as PDF"
+    },
+    "universe.motion.drift": {
+      "args": {},
+      "ko": "미세 궤도",
+      "en": "Gentle drift"
+    },
+    "errors.sync.quotaExceeded": {
+      "args": {},
+      "ko": "온라인 저장 한도에 도달했습니다. 변경 내용은 이 기기에 저장됩니다.",
+      "en": "Your online storage limit has been reached. Changes are saved on this device."
+    }
+  }
+}
