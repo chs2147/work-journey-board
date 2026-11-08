@@ -27,9 +27,10 @@
 | [Neon 중심 대안 검토](17-neon-option.md) | Supabase 무료 프로젝트 소진 반영·DB/Auth/blob/API 분리·절전/합산 비용 검증 |
 | [기존 프로젝트 실제 사례 분석](18-existing-project-analysis.md) | Neon/Blob/브랜치 운영·용량 절감·인증/공개 파일의 적용 경계 |
 | [Supabase 환경 통합 검토](19-supabase-env-consolidation.md) | 브랜치 공식 과금 조건·로컬 개발 대체·슬롯 회수의 검증/전환 절차 |
+| [Supabase 신규 계정·Keep Alive](20-supabase-keepalive.md) | 신규 계정 전제 갱신·Supabase 채택 시 하루1회 기본·휴면/복구 검증 |
 | [번역 후보 CSV](i18n-inventory.csv) / [집계 JSON](inventory-summary.json) | 현재 소스의 번역 후보 조사. 번역 완료/정제된 키 목록이 아님 |
 
-**현재 후보:** Supabase 무료 프로젝트 여유가 없다는 사용자 환경을 반영해 [17문서](17-neon-option.md)의 Neon 중심 조합을 우선 비교한다. 사업자 선정이나 무료 사용 가능성의 검증 완료가 아니다. 사용자 기존 프로젝트를 분석한 [18·19문서](18-existing-project-analysis.md)에서 Neon 운영 경험과 Supabase 슬롯 회수의 조건부 가능성을 재검토했다.
+**현재 후보:** 사용자가 Supabase 신규 계정을 생성했다. Supabase 통합 구성과 Neon 조합을 다시 비교하며, Supabase 채택 시 Keep Alive 기본 포함을 요구한다([20문서](20-supabase-keepalive.md)). 실제 프로젝트/한도·리전·최종 제공자는 아직 검증/확정 전이다.
 
 **최신 운영 원칙:** AWS 직접 구성/운영은 제외하고 무료 또는 개인 요금제 수준을 목표로 한다. [16문서](16-low-cost-review.md)가 기존 상시 실시간·백업 보관·PITR/규모 추천에 우선한다. 최신 가격/무료 제한은 아직 검증되지 않았다.
 

@@ -1,5 +1,7 @@
 # 17. Supabase 프로젝트 여유 없음에 따른 Neon 중심 재검토
 
+**후속 전제 갱신:** 사용자가 Supabase 신규 계정을 생성해 신규 계정 기준의 여유/비용 검토가 다시 가능해졌다. 실제 프로젝트/한도는 미확인이다. Supabase 선택 시 Keep Alive를 기본 포함한다([20문서](20-supabase-keepalive.md)). 아래 기존 계정 소진 기록은 당시 조건이다.
+
 2026-11-08 (KST) · 설계만 진행 · AWS 직접 운영 제외·무료/개인 요금·아시아 원칙 유지
 
 **실제 사례 후속:** [18문서](18-existing-project-analysis.md)에 my-money-note의 구현/운영 기록을 분석했고 [19문서](19-supabase-env-consolidation.md)에 woori 개발 환경 대체와 Supabase branch 과금 조건을 확인했다. 현재 슬롯이 소진된 사실과 조건부 회수 가능성을 구분한다.
