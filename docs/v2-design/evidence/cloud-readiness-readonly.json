@@ -1,0 +1,78 @@
+{
+  "observed_at": "2026-11-08T12:32:19.433694+00:00",
+  "project_ref": "hutqsfftioxtredcjhsy",
+  "method": "GET only; allowlisted response fields; no SQL or data writes",
+  "project": {
+    "region": "ap-northeast-1",
+    "status": "ACTIVE_HEALTHY"
+  },
+  "checks": {
+    "organization": {
+      "http_status": 403
+    },
+    "entitlements": {
+      "http_status": 403
+    },
+    "addons": {
+      "http_status": 200,
+      "summary": {
+        "selected_addons": []
+      }
+    },
+    "auth": {
+      "http_status": 200,
+      "summary": {
+        "site_url": "http://localhost:3000",
+        "disable_signup": false,
+        "mailer_autoconfirm": false,
+        "external_email_enabled": true,
+        "rate_limit_email_sent": 2,
+        "security_captcha_enabled": false,
+        "jwt_exp": 3600,
+        "password_min_length": 6,
+        "mfa_totp_enroll_enabled": true,
+        "mfa_totp_verify_enabled": true,
+        "custom_smtp_host_configured": false,
+        "smtp_password_configured": false
+      }
+    },
+    "storage": {
+      "http_status": 200,
+      "summary": {
+        "fileSizeLimit": 52428800,
+        "features": {
+          "imageTransformation": {
+            "enabled": false
+          },
+          "s3Protocol": {
+            "enabled": true
+          },
+          "purgeCache": {
+            "enabled": false
+          },
+          "icebergCatalog": {
+            "enabled": false,
+            "maxNamespaces": 10,
+            "maxTables": 10,
+            "maxCatalogs": 2
+          },
+          "vectorBuckets": {
+            "enabled": false,
+            "maxBuckets": 10,
+            "maxIndexes": 5
+          }
+        },
+        "capabilities": {
+          "list_v2": true,
+          "iceberg_catalog": true,
+          "object_versioning": false
+        }
+      }
+    }
+  },
+  "api_schema_source": {
+    "url": "https://raw.githubusercontent.com/supabase/supabase/master/apps/docs/spec/api_v1_openapi.json",
+    "sha256": "bf364f16be3122c698ea3a76837637c9071bc6149897f15f59d0581f6f286b28",
+    "note": "Retrieved at inspection time; mutable master URL, hash identifies inspected downloaded JSON serialization."
+  }
+}
