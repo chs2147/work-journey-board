@@ -1,0 +1,76 @@
+{
+  "runId": "2026-11-08T09:59:27.649Z",
+  "target": "LOCAL_MODEL_DB18_STAGING",
+  "runtime": "v24.22.1",
+  "platform": "linux",
+  "arch": "x64",
+  "tests": 19,
+  "failures": 0,
+  "spawnError": null,
+  "signal": null,
+  "status": "PASS",
+  "fixtureCases": [
+    {
+      "case": "DB18/17",
+      "sourceHash": "45d164925f97e83da7ab47847e8198d8398009284dfa19ceb172484c6b24b739",
+      "fixtureHash": "ea361a1da5309b0761c832735344e1dfc6016d3325e9c53b5b31ae67df3c2958",
+      "manifestHash": "8c5dfd082c5bc200268546908d8a367bf4e0f70aaafcfd5bf8eb5f2846f83034",
+      "tables": 26,
+      "entries": 8,
+      "assets": 2,
+      "uniqueBlobs": 1,
+      "status": "PASS"
+    },
+    {
+      "case": "DB18/41",
+      "sourceHash": "71bf1419d6fdc8ce49aa1360efdbf6034d64bbddb5ee9b4b4fa24a8d407d0f0d",
+      "fixtureHash": "b9042ef05986c5c9379cbeeeb8b5a7629fa5c1f88fcf921c6004a1aa63cdbd04",
+      "manifestHash": "80fc5b0c9305996fcc04ee424d811ad4023266dc6ced5788b453401b70c6f2c5",
+      "tables": 26,
+      "entries": 8,
+      "assets": 2,
+      "uniqueBlobs": 1,
+      "status": "PASS"
+    },
+    {
+      "case": "DB18/73",
+      "sourceHash": "5305093e385ceb8f79eb95352b693ec1fb02ea46024c9b7894866887c87cd771",
+      "fixtureHash": "07262bed794c4d6e83fe787cd8c4afac6f2d67db1407fd6a9cdf74257373c4ac",
+      "manifestHash": "6e0f6aa9860c7dc6fd1f2176a81ec26b2e1432ef6919f3dd3d01ca4aaffa6470",
+      "tables": 26,
+      "entries": 8,
+      "assets": 2,
+      "uniqueBlobs": 1,
+      "status": "PASS"
+    }
+  ],
+  "codeHashes": {
+    "crash-worker.mjs": "82ecb513a7df3ebfefd534d6d17734d9cdf06e63cf5121b10e6a1dd93e2afd3a",
+    "db18.mjs": "93c5252058751504a87b8da56d4ad109886bc93ab8eaf7e90648fbb04380c533",
+    "db18.test.mjs": "f9ceca6f3f4648644160a20fd018462307d7952786ba77f3219133a7682751ab",
+    "fixture18.mjs": "8c4328e05646ac0c55b4882a8ac57f1ad4499da404971a30c1a9bb5c560e89ff",
+    "model.mjs": "d5eec5f243b52542495becea1c20c2f80e7cc3052b988fe6b021b81881df92d3",
+    "model.test.mjs": "946fbb6ddd5137dff63a194a7d491b1673db82b6aed5e1761936cab66af63248",
+    "run-db18.mjs": "4feccaa5c2bc770351f8047d417adf85cdd8be459c52c29c7a02e0ce70a5fb29"
+  },
+  "migrationHashes": {
+    "0001_init.sql": "c8febf1077d605ab4d00b2cbb95c87d1f2b6139f5e7071dbe231155185fc7f7c",
+    "0002_important_repeat.sql": "1a595f2d7cdec76bf8b10ea8926383b0e1d07ec272d10be9adb655acdc1e32c4",
+    "0003_week_note.sql": "057c16a4c19b75614dcb40a2480f3d9a6127b6b9d89fadf7df6906821af5eba3",
+    "0004_import.sql": "1b21ef813684d0e632b49928399f72aa60014c5fa9b7295ba13e6f1ca182e39b",
+    "0005_day_mark.sql": "73910e184921c3bc6a0f6c0c54c86d80c0c41b4f99d68e72ab43598dae5a0f73",
+    "0006_tags.sql": "bfab1765e6f8ea239870a3ee14d10b66c9a1781d6e54ff9f7d511eb19cc1b778",
+    "0007_note_thumb.sql": "560814a3b8d5b1ee5b4670982bbc31407365514b5402ed1ab61ba03d256b2817",
+    "0008_day_mark_ext.sql": "81b6199ff400dfab408ad826e3368c5babb7146b84aa0fc2f4f911fa5de77eaa",
+    "0009_cabinet.sql": "dcc62cdfd63ce5601db136428321d473a23ede7876f5d79c10db2490f4f79e75",
+    "0010_start_time.sql": "54434455207fe3d8b8f618ba346d94580dce2f74af4b8801032367cbc9a061c7",
+    "0011_universe_relation.sql": "9fdf68437a742c26925f5e961fe8a3e90234cb9ad4913a38eb27c80f5aecdf91",
+    "0012_knowledge_card.sql": "3d8466bd755e5091c48212d0351491c521ce3312ecd55adaf1081dbbf8a959b2",
+    "0013_due_date.sql": "3a5767ecbe114e3b231eba2cec156b5e1674fe6c435bcac3769c3e49b467eb2d",
+    "0014_completion_origin.sql": "5d342f13b0b3d0d96729e18e264a4e5186e739a64a62bf2c78477809117beac0",
+    "0015_note_entry_link.sql": "6ad195347094edb5ba4799ecfd93da7b1de2ff5fabc04e831bb1cefc2e70ced7",
+    "0016_cabi_net.sql": "ce1ca86966f0b1024c2979f9b380dffd9dff056a52c724e63d42639467b34f95",
+    "0017_live_widgets.sql": "018d59a4990fb363f0042c1a332f1dff3d5bcc1ba723e2e8fb10816abd53a5e3",
+    "0018_note_frames.sql": "f885a9dce9fe021b5bdd11e4950681f1a78dc4f9ad362d317dec47544c9bb86a"
+  }
+}

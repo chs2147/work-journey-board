@@ -24,3 +24,14 @@ node poc/v2-sync/model.test.mjs
 | L08 | 계정/공간 scope 거절·늦은 응답 혼입 방지 | 실제 Auth 세션/기기 회수·RLS/Storage |
 
 모형 입력은 가상 테스트가 만든 신뢰된 데이터다. 범용 문서 포맷/참조 검증기·클라우드 보안 경계·제품 migration이 아니다. DB 경로의 표시 파일 검사는 실수 방지용이며 제품의 파일 접근 정책을 대신하지 않는다.
+
+## DB18 표본 전환 증분
+
+`fixture18.mjs`는 기존 migration18개로 가상 DB18을 만든다. `db18.mjs`는 실험용 보존 포맷으로 전환·검증하고 새 DB18로 왕복 복원한다. 최종 V2 도메인 스키마로의 migration은 아니다.
+
+```sh
+node poc/v2-sync/db18.test.mjs
+node poc/v2-sync/run-db18.mjs
+```
+
+추가19개 시험 결과와 재현/제약은 [26문서](../../docs/v2-design/26-db18-staging-results.md)를 따른다. 위 표의 L01 중 DB18 표본/문서·이미지·링크 manifest와 왕복 검증을 보완했으며, 최종 도메인 매핑은 남아 있다. 수집기는 새 임시 폴더에 원시 시험 로그와 JSON 증거를 보관한다. 자식 프로세스 실행 제한이 있으면 오류를 기록하고 실패로 종료한다.
