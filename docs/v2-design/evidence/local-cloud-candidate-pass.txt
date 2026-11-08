@@ -1,0 +1,129 @@
+PASS create returns decimal string versions
+PASS owner sees own workspace only
+PASS other account cannot read record
+PASS other account cannot read change log
+PASS cross workspace command rejected without effects
+PASS forged device rejected without effects
+PASS wrong auth session rejected
+PASS missing auth session rejected
+PASS unauthenticated subject rejected
+PASS wrong generation rejected
+PASS duplicate operation returns same result
+PASS duplicate does not add log or operation
+PASS same key changed body rejected
+PASS same key changed target rejected
+PASS same key changed base rejected
+PASS stale revision rejected
+PASS new record requires revision zero
+PASS null body rejected
+PASS oversized utf8 body rejected
+PASS negative revision rejected
+PASS direct table insert forbidden
+PASS direct table update forbidden
+PASS direct log delete forbidden
+PASS operation ledger not visible
+PASS device sessions not visible
+PASS anonymous function denied
+PASS unbound session sees no rows
+PASS update accepted at correct revision
+PASS old ack replay after newer edit is unchanged
+PASS revocation blocks reads and cached retry
+PASS failure after record and log rolls back every write
+PASS caller rollback preserves cursor and allows retry
+PASS concurrent duplicate applies once
+PASS concurrent same-base edits have one winner
+PASS workspace lock enforces commit ordered cursors
+PASS other owner writes isolated workspace
+PASS all accepted writes have one log and ledger row
+PASS all tables enable RLS
+PASS definer functions owned by non-superuser
+PASS verified local signed principal registers own device
+PASS device registration retry idempotent
+PASS other user cannot claim device id
+PASS new session cannot silently rebind device
+PASS registration requires session uuid
+PASS registration requires user
+PASS anonymous registration denied
+PASS reserve object starts private
+PASS reservation retry idempotent
+PASS reservation payload substitution rejected
+PASS pending metadata not visible even to owner
+PASS missing uploaded bytes cannot finalize
+PASS untrusted caller cannot stage object bytes
+PASS worker uploads exact private bytes
+PASS worker upload retry with same bytes succeeds
+PASS pending bytes not visible even to owner
+PASS stored upload cannot be overwritten
+PASS other workspace cannot finalize upload
+PASS wrong device cannot finalize upload
+PASS valid bytes finalize ready
+PASS finalize retry returns ready
+PASS owner reads finalized bytes intact
+PASS other account sees no finalized bytes
+PASS other account sees no finalized metadata
+PASS ready object cannot be canceled
+PASS direct asset state update denied
+PASS direct object insert denied
+PASS wrong generation cannot reserve
+PASS invalid hash cannot reserve
+PASS oversized reservation denied
+PASS zero size reservation denied
+PASS actual size mismatch remains private
+PASS actual hash mismatch remains private
+PASS cancel pending removes staged bytes
+PASS canceled asset id not silently reused
+PASS canceled asset cannot finalize
+PASS expired pending upload cannot finalize
+PASS expired reservation retry fails closed
+PASS expired reservation can be explicitly canceled
+PASS generation change hides old ready bytes and rejects ack
+PASS failed finalize never exposes bytes and can retry
+PASS concurrent registration and revoke cannot resurrect session
+PASS pending bytes reserve quota and cancel releases quota
+PASS concurrent reservations cannot exceed quota
+PASS app session revoke blocks reregistration and private reads
+PASS session revocation retry is safe
+PASS different account session remains active
+PASS fresh auth session can register a new device
+PASS blocked session ledger cannot be read by client
+PASS C1 refuses missing server role
+PASS C1 refuses unsupported Auth schema before changes
+PASS schema failure leaves no package objects
+PASS C1 candidate applies to supported local schema
+PASS active bound user and session accepted
+PASS different user bound to same session rejected
+PASS missing provider session rejected
+PASS null identity rejected
+PASS null session rejected
+PASS expired provider session rejected
+PASS future provider session accepted
+PASS currently banned user rejected
+PASS expired ban does not reject valid session
+PASS soft deleted user rejected
+PASS authenticated cannot call public guard
+PASS anon cannot call public guard
+PASS authenticated cannot call private helper
+PASS authenticated cannot call revoke
+PASS service transport cannot read Auth tables directly
+PASS service transport cannot read private revocation rows
+PASS local signed token reaches actual local SQL guard
+PASS repeat apply refuses collisions without replacement
+PASS failed repeat apply preserves live guard
+PASS provider logout deletion denies still-signed token
+PASS server subject mismatch cannot revoke another user
+PASS app session revocation accepted
+PASS app revoked session rejected despite provider row
+PASS signed token blocked by app revocation ledger
+PASS repeat revoke idempotent
+PASS one revocation row retained
+PASS other user session still accepted
+PASS guard and revoke never mutate Auth rows
+PASS rollback requires explicit marker
+PASS refused rollback retains package
+PASS unexpected dependency aborts entire rollback
+PASS explicit local rollback removes candidate objects
+PASS rollback leaves no RPC or private schema
+PASS rollback preserves all Auth fixture rows
+PASS rollback preserves earlier workspace data
+Evidence: /tmp/wjb-v2-postgres-za5naibb/results.json
+127 tests PASS

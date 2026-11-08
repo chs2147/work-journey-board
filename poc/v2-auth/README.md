@@ -17,3 +17,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 poc/v2-postgres/run-local.py --extended
 반환값은 최소 principal이고 오류는 고정 code만 포함한다. 토큰·서명 키·원래 예외 상세는 반환/로그에 넣지 않는다. 공개 JWKS를 조회한 사실과 로컬 가상 토큰 검증 결과는 별도 증거다. 실제 메일·PKCE/native callback·refresh 저장소·Auth 서버 연결·클라우드 배포는 범위 밖이다.
 
 상세 결과와 남은 인증 경계는 [34문서](../../docs/v2-design/34-auth-private-assets-results.md)를 따른다.
+
+## 서버 세션 어댑터
+
+`npm test --prefix poc/v2-auth`는 기존 서명28개와 추가 어댑터11개를 실행한다. `session-adapter.mjs`는 검증 principal의 두 UUID만 고정 서버 RPC에 넘기고 boolean true만 수락한다. 실제 HTTP transport/서버 credential은 아직 연결하지 않았다. `session-guard-fixture.mjs`는 로컬 Docker 소켓의 임시 PostgreSQL에만 연결해 가상 서명→실제 로컬 SQL→회수 거절을 시험한다. 클라우드 적용/권한 경계는 [35문서](../../docs/v2-design/35-cloud-application-review.md)를 따른다.

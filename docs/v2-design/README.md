@@ -16,6 +16,8 @@
 
 인증·자산의 후속 로컬 시험은 [34. 결과](34-auth-private-assets-results.md)를 따른다. 가상 ES256 서명 검증28개와 PostgreSQL88개(기존39+신규49)가 통과했다. 실제 공개 JWKS 조회는 성공했으며, 실제 사용자 인증/Storage 쓰기는 아직 수행하지 않았다.
 
+클라우드 적용 검토 묶음은 [35. 적용·복구안](35-cloud-application-review.md)에 정리했다. 준비 점검23개·서버 세션 어댑터11개·JWT28개·SQL127개가 통과했으며 실제 적용 준비 상태는 **BLOCKED**다. Usage·실제 gateway/Storage 등의 확인이 남아 있고 클라우드는 변경하지 않았다.
+
 ## 문서 지도
 
 | 문서 | 논의 내용 |
@@ -42,6 +44,7 @@
 | [Supabase 신규 계정·Keep Alive](20-supabase-keepalive.md) | 신규 계정 전제 갱신·Supabase 채택 시 하루1회 기본·휴면/복구 검증 |
 | [Supabase 프로젝트 구성안](21-supabase-project-blueprint.md) | 운영1개/로컬 개발·공식 SMTP/리전 조건·설정/비용 관문 |
 | [DB·권한·동기화 계약](22-db-permission-sync-contract.md) | 논리 테이블·tenant scope·원자적 push·커밋 순서 cursor·private 자산 |
+| [클라우드 적용·복구 검토안](35-cloud-application-review.md) | 고정 대상·C1 SQL/rollback·서버 세션 어댑터·준비 검사·C2 저장소 계약 |
 | [인증·기기 회수·비공개 자산](34-auth-private-assets-results.md) | 공개 JWKS 확인·가상 서명28개·SQL88개·실제 Auth/Storage와의 경계 |
 | [로컬 PostgreSQL 최소 서버 시험](33-local-postgres-results.md) | 실험용 SQL·계정 RLS/명령/rollback/동시성39개 성공·실제 Auth와의 경계 |
 | [실제 Supabase 점검 결과](32-cloud-readonly-results.md) | 접속 성공·도쿄 정상·조직 조회403·SMTP/Storage 실측·최소 서버 적용 순서 |

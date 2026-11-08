@@ -25,3 +25,7 @@ python3 poc/v2-postgres/run-local.py
 ## 세션·자산 확장 시험
 
 `npm ci --prefix poc/v2-auth --ignore-scripts --no-audit --no-fund` 후 `PYTHONDONTWRITEBYTECODE=1 python3 poc/v2-postgres/run-local.py --extended`를 실행하면 기본39개 뒤에002 SQL과49개 시험을 추가한다(총88개). 별도 Auth 소스/lockfile hash도 결과에 포함한다. 가상 서명 principal을 통한 기기 등록·앱 세션 회수·비공개 자산 예약/확정/취소·실제 bytes hash/크기·RLS·quota 경합을 검증한다. 자산 bytes는 로컬 bytea 시험 테이블이며 Supabase Storage가 아니다. 실제 Auth 상태 확인·클라우드 Storage·문서 참조/자산 GC는 후속이다. [34문서](../../docs/v2-design/34-auth-private-assets-results.md)를 따른다.
+
+## 클라우드 후보 SQL·복구 시험
+
+`PYTHONDONTWRITEBYTECODE=1 python3 poc/v2-postgres/run-local.py --extended --cloud`는 기존88개 뒤에 C1 후보39개를 실행한다(총127개). Auth 테이블은 로컬 fixture이며 실제 managed Auth가 아니다. 후보/복구 SQL·readiness 소스 hash도 증거에 포함한다. 대상 프로젝트에는 적용하지 않는다. [클라우드 검토 묶음](../v2-cloud/README.md)을 따른다.

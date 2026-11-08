@@ -1,0 +1,14 @@
+{
+  "projectRef": "hutqsfftioxtredcjhsy",
+  "plan": "free",
+  "planSource": "user-dashboard",
+  "usageObservedAt": null,
+  "remainingBytes": { "database": null, "storage": null, "egress": null },
+  "sessionPolicyObservedAt": null,
+  "sessionPolicy": { "timeboxSeconds": 0, "inactivitySeconds": 0, "singleSession": false },
+  "authSchemaVerified": false,
+  "migrationOwnerReviewed": false,
+  "gatewayVerified": false,
+  "privateStorageVerified": false,
+  "rollbackReviewed": false
+}

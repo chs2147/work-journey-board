@@ -1,0 +1,304 @@
+{
+  "observed_at": "2026-11-08T21:20:14.746655+00:00",
+  "scope": "Offline review gate and local service RPC adapter/SQL fixtures; no cloud SQL or Storage writes",
+  "unit_tests": {
+    "preflight": {
+      "count": 23,
+      "tests": [
+        {
+          "name": "complete operator review returns ready but never auto-applies",
+          "status": "PASS"
+        },
+        {
+          "name": "actual unknown example is blocked",
+          "status": "PASS"
+        },
+        {
+          "name": "wrong project",
+          "status": "PASS"
+        },
+        {
+          "name": "paid plan",
+          "status": "PASS"
+        },
+        {
+          "name": "unknown plan source",
+          "status": "PASS"
+        },
+        {
+          "name": "stale usage",
+          "status": "PASS"
+        },
+        {
+          "name": "future usage",
+          "status": "PASS"
+        },
+        {
+          "name": "invalid usage date",
+          "status": "PASS"
+        },
+        {
+          "name": "missing session inspection",
+          "status": "PASS"
+        },
+        {
+          "name": "unsupported inactivity",
+          "status": "PASS"
+        },
+        {
+          "name": "unreviewed rollback",
+          "status": "PASS"
+        },
+        {
+          "name": "unverified storage",
+          "status": "PASS"
+        },
+        {
+          "name": "database missing or low headroom blocks",
+          "status": "PASS"
+        },
+        {
+          "name": "storage missing or low headroom blocks",
+          "status": "PASS"
+        },
+        {
+          "name": "egress missing or low headroom blocks",
+          "status": "PASS"
+        },
+        {
+          "name": "auto apply cannot be enabled",
+          "status": "PASS"
+        },
+        {
+          "name": "budget cannot be raised",
+          "status": "PASS"
+        },
+        {
+          "name": "bucket cannot be public",
+          "status": "PASS"
+        },
+        {
+          "name": "bucket cannot be replaced",
+          "status": "PASS"
+        },
+        {
+          "name": "signed urls not enabled",
+          "status": "PASS"
+        },
+        {
+          "name": "scope cannot be expanded",
+          "status": "PASS"
+        },
+        {
+          "name": "floors cannot be relaxed",
+          "status": "PASS"
+        },
+        {
+          "name": "invalid input fails closed without outputting supplied data",
+          "status": "PASS"
+        }
+      ],
+      "raw_log_sha256": "95be2da3fac432ad9571fdc4b724a37f0545a69f2b6860d2b29d6c2a14d3de45"
+    },
+    "jwt_and_session_adapter": {
+      "count": 39,
+      "tests": [
+        {
+          "name": "signed ES256 token returns only verified principal",
+          "status": "PASS"
+        },
+        {
+          "name": "tampered payload fails signature",
+          "status": "PASS"
+        },
+        {
+          "name": "different signing key rejected",
+          "status": "PASS"
+        },
+        {
+          "name": "unsigned token rejected",
+          "status": "PASS"
+        },
+        {
+          "name": "HMAC algorithm confusion rejected",
+          "status": "PASS"
+        },
+        {
+          "name": "wrong project issuer rejected",
+          "status": "PASS"
+        },
+        {
+          "name": "wrong audience rejected",
+          "status": "PASS"
+        },
+        {
+          "name": "expired token rejected",
+          "status": "PASS"
+        },
+        {
+          "name": "future issued token rejected",
+          "status": "PASS"
+        },
+        {
+          "name": "not-before enforced",
+          "status": "PASS"
+        },
+        {
+          "name": "excess token lifetime rejected",
+          "status": "PASS"
+        },
+        {
+          "name": "missing expiration rejected",
+          "status": "PASS"
+        },
+        {
+          "name": "missing issued time rejected",
+          "status": "PASS"
+        },
+        {
+          "name": "missing session rejected",
+          "status": "PASS"
+        },
+        {
+          "name": "invalid subject UUID rejected",
+          "status": "PASS"
+        },
+        {
+          "name": "invalid session UUID rejected",
+          "status": "PASS"
+        },
+        {
+          "name": "service role rejected",
+          "status": "PASS"
+        },
+        {
+          "name": "anonymous authenticated account rejected",
+          "status": "PASS"
+        },
+        {
+          "name": "unknown key id fails closed",
+          "status": "PASS"
+        },
+        {
+          "name": "token supplied key URL rejected",
+          "status": "PASS"
+        },
+        {
+          "name": "token embedded key rejected",
+          "status": "PASS"
+        },
+        {
+          "name": "wrong token type rejected",
+          "status": "PASS"
+        },
+        {
+          "name": "malformed and excessive tokens rejected",
+          "status": "PASS"
+        },
+        {
+          "name": "live session revoked despite valid signature",
+          "status": "PASS"
+        },
+        {
+          "name": "session verification failure fails closed",
+          "status": "PASS"
+        },
+        {
+          "name": "session checker runs only after signature and claims pass",
+          "status": "PASS"
+        },
+        {
+          "name": "rotation accepts trusted new kid, rejects removed old kid",
+          "status": "PASS"
+        },
+        {
+          "name": "trusted configuration rejects private or duplicate keys",
+          "status": "PASS"
+        },
+        {
+          "name": "only signed principal and fixed RPC reach server transport",
+          "status": "PASS"
+        },
+        {
+          "name": "non-boolean-true RPC result rejected: false",
+          "status": "PASS"
+        },
+        {
+          "name": "non-boolean-true RPC result rejected: null",
+          "status": "PASS"
+        },
+        {
+          "name": "non-boolean-true RPC result rejected: undefined",
+          "status": "PASS"
+        },
+        {
+          "name": "non-boolean-true RPC result rejected: \"true\"",
+          "status": "PASS"
+        },
+        {
+          "name": "non-boolean-true RPC result rejected: 1",
+          "status": "PASS"
+        },
+        {
+          "name": "non-boolean-true RPC result rejected: {}",
+          "status": "PASS"
+        },
+        {
+          "name": "non-boolean-true RPC result rejected: [true]",
+          "status": "PASS"
+        },
+        {
+          "name": "server RPC outage fails closed without leaking original error",
+          "status": "PASS"
+        },
+        {
+          "name": "invalid token never reaches service transport",
+          "status": "PASS"
+        },
+        {
+          "name": "service transport is mandatory",
+          "status": "PASS"
+        }
+      ],
+      "raw_log_sha256": "9db7e276825ac17eb66023d2aa14802c8fe34493c01122f4edac18665f448d44"
+    }
+  },
+  "postgres_tests": 127,
+  "current_readiness": {
+    "status": "BLOCKED",
+    "projectRef": "hutqsfftioxtredcjhsy",
+    "autoApply": false,
+    "blocked": [
+      "USAGE_STALE_OR_MISSING",
+      "INSUFFICIENT_DATABASE_HEADROOM",
+      "INSUFFICIENT_STORAGE_HEADROOM",
+      "INSUFFICIENT_EGRESS_HEADROOM",
+      "AUTH_SCHEMA_VERIFIED_REQUIRED",
+      "MIGRATION_OWNER_REVIEWED_REQUIRED",
+      "GATEWAY_VERIFIED_REQUIRED",
+      "PRIVATE_STORAGE_VERIFIED_REQUIRED",
+      "ROLLBACK_REVIEWED_REQUIRED"
+    ]
+  },
+  "auth_files": {
+    "package-lock.json": "8cdd791117b009e455df7336fb5d80d2b96de21ce4e01d35bf0bb33c3c966d59",
+    "package.json": "f18a789a005385991e4d44d906beabff270c0c8d33d3cdc7541938cb7f92bc4f",
+    "principal-fixture.mjs": "c0f2a2d91b095895f14cae98e0f1d22c64713862ced5da1cfc6e88bebfc26c5f",
+    "session-adapter.mjs": "a2021c5c06a6d54d491cea7ed994ecbc15d511e7d98a22d896bf34405ba4ab25",
+    "session-adapter.test.mjs": "bdf678b76ff13ecb59e46a1ccfb1cacc161b969233b0221e916c65efb7787118",
+    "session-guard-fixture.mjs": "969cf0d49e9bdeaaa2731aa496117542d4b0ae4c681594a0ca6a0ed590c4d078",
+    "verifier.mjs": "033d0eb4e0ff1770c9f5084f65cc295d65aefba61fda37b945b900c266a0da12",
+    "verifier.test.mjs": "106fcad8960d28535e05799d3fd74e015d6d7585f29a6b6a5ba602c16c4dbb2d"
+  },
+  "cloud_files": {
+    "inspect-target.sql": "ba7de923ebd2428f7fab1d0e611d6cf9581e538e144a7831b47ad1844c227db0",
+    "observations.current.json": "7483d3a8f67c30aad78f95f79325fae95015e36739b3164135566dc902e27e83",
+    "observations.example.json": "ff2408c85fda1736fb18a72366c1dd9fbae2c970a4c2e8618dc68f39850bea3f",
+    "plan.json": "94859b5cf5785cb8892f2d1abb684287540eca426cdba517b0954252af6724ee",
+    "preflight.mjs": "1ec388c84d014d2ea4dda56bd2e7eae302fcfb1fc5c9d630245d222cc6dc6247",
+    "preflight.test.mjs": "accb544f4591f22b3ff10b0a1dbc25dd647675f70799b73e9c0c98b9f080ca88",
+    "rollback-session-guard.sql": "d5722e2569522429d221698edd6f24bd51678a3bf08444338a3dd41d90ba95ad",
+    "session-guard.sql": "3be17e719a5a5c8cf91268c46b2ce99aeff3c6127b5b43bd8b8f250467a374c9",
+    "sql_tests.py": "7f2a79316b1e00920839aa519c0f2368cd1c3adbab60873162bfbe21b3b987fe"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "planVersion": 1,
+  "projectRef": "hutqsfftioxtredcjhsy",
+  "region": "ap-northeast-1",
+  "monthlyBudgetKRW": 0,
+  "autoApply": false,
+  "schema": "wjb_v2_cloud",
+  "bucket": "wjb-v2-poc-private",
+  "bucketPublic": false,
+  "transport": "server-proxy",
+  "signedUploadURLs": false,
+  "signedDownloadURLs": false,
+  "sample": { "users": 2, "assets": 2, "bytesPerAsset": 4096 },
+  "sessionPolicy": { "timeboxSeconds": 0, "inactivitySeconds": 0, "singleSession": false },
+  "requiredRemainingBytes": { "database": 10485760, "storage": 1048576, "egress": 10485760 }
+}

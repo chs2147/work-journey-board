@@ -236,3 +236,7 @@ Neon 중심 검토는 유지하되 woori 운영을 유지한 로컬 개발 대�
 ## 4.35 인증·기기 회수·비공개 자산 로컬 확장
 
 사용자의 다음 단계 요청으로 프로젝트 공개 JWKS GET200/ES256을 확인하고 독립 jose6.2.15 검증기를 추가했다. 가상 서명28개, 기존39개를 포함한 PostgreSQL88개 시험이 성공했다. 등록/회수 경합·회수 세션 재등록 차단·자산 예약/실제 bytes hash/크기 확정·RLS·동시 quota·확정 rollback을 시험했다. [34문서](34-auth-private-assets-results.md)에 증거와 실제 Auth/Storage 어댑터가 남은 경계를 기록했다. 실제 로그인·메일·클라우드 쓰기·앱·DB18·P레지스터는 유지했다.
+
+## 4.36 클라우드 적용 검토 묶음·준비 검사·복구
+
+사용자의 커밋/푸시 후 다음 단계 요청으로 이전 커밋의 원격 반영을 확인했다. 공식 Auth 고정 소스와 프로젝트 세션 정책 GET을 확인하고, C1 서버 전용 guard/revoke SQL·수동 rollback·어댑터·범위 manifest/준비 검사·C2 private bucket/proxy 계약을 작성했다. 준비23개·어댑터11개·기존JWT28개·SQL127개가 성공했다. [35문서](35-cloud-application-review.md)에 실제 스키마/소유자·Usage·gateway/Storage 미확인과 복구 절차를 기록했다. 현재 준비 판정은 BLOCKED이며 실제 SQL/버킷/사용자·환경 게시·제품/DB18·main은 변경하지 않았다.

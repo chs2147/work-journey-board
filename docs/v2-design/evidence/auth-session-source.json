@@ -1,0 +1,24 @@
+{
+  "commit": "35307ce6c1ca59016fd820f1d77d9b6201dc2e15",
+  "paths": [
+    "internal/api/logout.go",
+    "internal/models/sessions.go",
+    "migrations/20220811173540_add_sessions_table.up.sql",
+    "migrations/20221003041400_add_aal_and_factor_id_to_sessions.up.sql",
+    "migrations/20221020193600_add_sessions_user_id_index.up.sql",
+    "migrations/20221021073300_add_refresh_tokens_session_id_revoked_index.up.sql",
+    "migrations/20221114143122_add_session_not_after_column.up.sql",
+    "migrations/20221215195900_remove_sso_sessions.up.sql",
+    "migrations/20231027141322_add_session_refresh_columns.up.sql",
+    "migrations/20231114161723_add_sessions_tag.up.sql",
+    "migrations/20250904133000_add_oauth_client_id_to_session.up.sql",
+    "migrations/20251007112900_add_session_refresh_token_columns.up.sql",
+    "migrations/20251111201300_add_scopes_to_sessions.up.sql"
+  ],
+  "read_files_sha256": {
+    "wjb-auth-20221114143122_add_session_not_after_column.up.sql": "7bf30a94308028f0c8140166e9a6f3d77356daa1147e5740a27cc983e39b854c",
+    "wjb-auth-logout.go": "de117309d7e81c12cc4ee8152060bc3b5e8d8279e7f3dd6faa6b72fd8c4c3c76",
+    "wjb-auth-20220811173540_add_sessions_table.up.sql": "840c19639d972143bc3fc05a16e77da45c076edcba229c94b019a2db1f0eb192",
+    "wjb-auth-sessions.go": "955c8cc20bd534973a6b5dcce9bffa06886fc931331a199755bf9cad43f51ab0"
+  }
+}

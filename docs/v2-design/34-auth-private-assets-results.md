@@ -2,6 +2,8 @@
 
 2026-11-08 · `v2-design` · 실제 클라우드 쓰기 없음
 
+**후속:** 적용 검토 묶음과 준비/세션 guard/rollback 시험은 [35문서](35-cloud-application-review.md)를 따른다. 아래는 앞 단계 결과다.
+
 ## 수행 결과
 
 사용자의 다음 단계 요청으로 [33문서](33-local-postgres-results.md)의 최소 서버 SQL을 확장했다. 기존 앱1.23.0·DB18·main·Supabase 설정은 유지했다.

@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node verifier.test.mjs"
+    "test": "node verifier.test.mjs && node session-adapter.test.mjs"
   },
   "dependencies": {
     "jose": "6.2.15"
