@@ -19,6 +19,8 @@
 | [전환·충돌·복원 화면 흐름](09-migration-conflict-screens.md) | 원본 보존·초기 업로드·새 기기·충돌 비교·복원 영향 와이어프레임 |
 | [다국어 키·용어집 계약](10-i18n-contract.md) | namespace·치환 타입·이전 순서·배포 검증, ko/en 예시와 용어집 |
 | [플랫폼 지원 기능표](11-platform-matrix.md) | Desktop/Web/Mobile 1차 범위와 현재 활성249개 Feature ID별 검토표 |
+| [MVP 범위 통합안](12-mvp-scope.md) | 확정/추천·필수/후속 범위·G0~G5·구현 전 결정 |
+| [PoC 검증 명세](13-poc-spec.md) | fixture·장애22개·성능/비용 측정·증거·통과 기준(미실행) |
 | [번역 후보 CSV](i18n-inventory.csv) / [집계 JSON](inventory-summary.json) | 현재 소스의 번역 후보 조사. 번역 완료/정제된 키 목록이 아님 |
 
 ## 우선 추천
