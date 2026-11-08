@@ -8,6 +8,8 @@
 
 **후속 제약:** Supabase 신규 무료 프로젝트를 가정하지 않는다. [17 Neon 검토](17-neon-option.md)를 후보 순위/역할 분리의 최신 기준으로 적용한다.
 
+**실제 사례 반영:** [18문서](18-existing-project-analysis.md)의 Neon/Vercel Blob 운영 경험을 적용한다. Supabase는 [19문서](19-supabase-env-consolidation.md)의 로컬 개발 대체/브랜치 비용 검증 후 슬롯 여유가 실제 확인되면 무료 프로젝트 후보로 다시 비교할 수 있다. 현재 여유가 있다고 가정하지 않는다.
+
 ## 8.1 후보 구성
 
 | 안 | 구성 후보 | 현재 앱과의 적합성 | 주의·추가 작업 | 판단 |
