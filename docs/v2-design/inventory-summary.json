@@ -1,0 +1,44 @@
+{
+  "baseline": "bfbc98f / 1.23.0 / DB18",
+  "method": "TypeScript AST Korean string/template/JSX text candidates; counts are not approved translation units",
+  "groups": {
+    "domain-export": {
+      "occurrences": 294,
+      "uniqueTexts": 184,
+      "files": 20,
+      "sourceChars": 1789
+    },
+    "ui-inline": {
+      "occurrences": 105,
+      "uniqueTexts": 92,
+      "files": 26,
+      "sourceChars": 1404
+    },
+    "other": {
+      "occurrences": 104,
+      "uniqueTexts": 98,
+      "files": 11,
+      "sourceChars": 1509
+    },
+    "central-resources": {
+      "occurrences": 2117,
+      "uniqueTexts": 1710,
+      "files": 5,
+      "sourceChars": 24659
+    },
+    "platform": {
+      "occurrences": 60,
+      "uniqueTexts": 55,
+      "files": 6,
+      "sourceChars": 1061
+    }
+  },
+  "counts": {
+    "guideChapters": 15,
+    "guideScreenshots": 19,
+    "releaseNotes": 48,
+    "markdownDocs": 140,
+    "siteHtml": 2,
+    "sourceTs": 217
+  }
+}
