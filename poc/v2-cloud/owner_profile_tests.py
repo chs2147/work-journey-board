@@ -29,13 +29,19 @@ def run(c):
     test('non-superuser can remove own empty bundle',lambda:as_owner(marker+rollback))
     # Local administrator models the already-existing provider postgres profile.
     # This ALTER ROLE is never part of the generated bundle or a remote request.
-    sql('ALTER ROLE '+role+' BYPASSRLS')
+    sql('ALTER ROLE '+role+' BYPASSRLS; ALTER ROLE service_role BYPASSRLS')
     test('non-superuser bypass profile installs complete bundle',lambda:as_owner(install))
     test('definer owner is non-superuser and matches inspected bypass profile',lambda:(equal(proof()['owners'][0]['role'],role),equal(proof()['owners'][0]['superuser'],False),equal(proof()['owners'][0]['bypassRls'],True)))
     def exact_acl():
         p=proof()
         for name,value in expected.items():equal(p[name],value)
     test('scoped owner retains exact restricted ACL/RLS matrix',exact_acl)
+    def bypass_service_denied():
+        equal(scalar("SELECT rolbypassrls FROM pg_roles WHERE rolname='service_role'"),'t')
+        for table in json.loads((root/'manifest.json').read_text())['objects']['tables']:
+            r=sql('SET ROLE service_role; SELECT * FROM '+table,check=False)
+            assert r.returncode!=0 and 'permission denied' in r.stderr,(table,r.stderr)
+    test('realistic bypass service role still cannot directly read any managed table',bypass_service_denied)
     test('guard reads required Auth columns through actual RLS profile',lambda:equal(active(),'t'))
     test('bypass does not grant unlisted Auth column read',lambda:failed('SELECT private_fixture FROM auth.users','permission denied'))
     test('bypass does not grant Auth data update',lambda:failed('UPDATE auth.users SET banned_until=now()','permission denied'))

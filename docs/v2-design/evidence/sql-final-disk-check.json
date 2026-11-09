@@ -1,0 +1,15 @@
+{
+  "observedAt": "2026-11-09T00:21:53.695263+00:00",
+  "projectRef": "hutqsfftioxtredcjhsy",
+  "method": "GET",
+  "path": "/v1/projects/hutqsfftioxtredcjhsy/config/disk/util",
+  "writes": false,
+  "officialQuotaVerified": false,
+  "httpStatus": 200,
+  "metricsTimestamp": "2026-11-09T00:21:54Z",
+  "filesystemMetrics": {
+    "fs_size_bytes": 2077073408,
+    "fs_avail_bytes": 1791406080,
+    "fs_used_bytes": 285667328
+  }
+}

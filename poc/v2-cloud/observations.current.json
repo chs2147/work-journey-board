@@ -18,12 +18,12 @@
   "migrationOwnerReviewed": true,
   "gatewayVerified": false,
   "privateStorageVerified": false,
-  "rollbackReviewed": false,
+  "rollbackReviewed": true,
   "targetInspectedAt": "2026-11-08T23:44:22.917790+00:00",
   "deploymentCollisionFree": true,
   "dataApiPrivateSchemasHidden": true,
-  "bundleReviewed": false,
-  "bundleManifestSha256": null,
+  "bundleReviewed": true,
+  "bundleManifestSha256": "6ace6c937126d792660580a7f253e11db631b8ed56ffe9d9f1e43fdcdfa946ad",
   "inspectionRole": "supabase_read_only_user",
   "measurements": {
     "physicalDatabaseBytes": 10917555,
@@ -42,5 +42,12 @@
     "missing": [],
     "evidenceObservedAt": "2026-11-09T00:01:01.775264+00:00",
     "querySha256": "f2dddb4ccf0935cfa30e0ab34527f984150843873dff18ec2ec63b4c44af6df4"
+  },
+  "bundleTechnicalReview": {
+    "reviewedAt": "2026-11-09T00:24:01.956071+00:00",
+    "manifestSha256": "6ace6c937126d792660580a7f253e11db631b8ed56ffe9d9f1e43fdcdfa946ad",
+    "reportSha256": "cc36aed8e55fc7b9341aa66c0260b26a63c3fdc431f0b0860ee42650161e8f16",
+    "installationAuthorized": false,
+    "writeCredentialVerified": false
   }
 }

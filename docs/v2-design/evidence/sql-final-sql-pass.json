@@ -1,0 +1,486 @@
+{
+  "observed_at": "2026-11-09T00:23:03.296839+00:00",
+  "scope": "Local PostgreSQL SQL authorization/transaction slice; Auth gateway is a test stub; no cloud writes",
+  "extended": false,
+  "cloud_candidate": false,
+  "full_bundle": true,
+  "owner_profile": true,
+  "image": "postgres@sha256:665dc7b37ac52a17e298511414c21d23ffa4e6a6ef6225b3e5d59c7afb35e994",
+  "postgres_version": "17.11 (Debian 17.11-1.pgdg12+2)",
+  "tests": [
+    {
+      "name": "create returns decimal string versions",
+      "status": "PASS",
+      "ms": 131
+    },
+    {
+      "name": "owner sees own workspace only",
+      "status": "PASS",
+      "ms": 98
+    },
+    {
+      "name": "other account cannot read record",
+      "status": "PASS",
+      "ms": 97
+    },
+    {
+      "name": "other account cannot read change log",
+      "status": "PASS",
+      "ms": 107
+    },
+    {
+      "name": "cross workspace command rejected without effects",
+      "status": "PASS",
+      "ms": 296
+    },
+    {
+      "name": "forged device rejected without effects",
+      "status": "PASS",
+      "ms": 291
+    },
+    {
+      "name": "wrong auth session rejected",
+      "status": "PASS",
+      "ms": 336
+    },
+    {
+      "name": "missing auth session rejected",
+      "status": "PASS",
+      "ms": 430
+    },
+    {
+      "name": "unauthenticated subject rejected",
+      "status": "PASS",
+      "ms": 512
+    },
+    {
+      "name": "wrong generation rejected",
+      "status": "PASS",
+      "ms": 421
+    },
+    {
+      "name": "duplicate operation returns same result",
+      "status": "PASS",
+      "ms": 118
+    },
+    {
+      "name": "duplicate does not add log or operation",
+      "status": "PASS",
+      "ms": 229
+    },
+    {
+      "name": "same key changed body rejected",
+      "status": "PASS",
+      "ms": 316
+    },
+    {
+      "name": "same key changed target rejected",
+      "status": "PASS",
+      "ms": 282
+    },
+    {
+      "name": "same key changed base rejected",
+      "status": "PASS",
+      "ms": 287
+    },
+    {
+      "name": "stale revision rejected",
+      "status": "PASS",
+      "ms": 303
+    },
+    {
+      "name": "new record requires revision zero",
+      "status": "PASS",
+      "ms": 350
+    },
+    {
+      "name": "null body rejected",
+      "status": "PASS",
+      "ms": 433
+    },
+    {
+      "name": "oversized utf8 body rejected",
+      "status": "PASS",
+      "ms": 330
+    },
+    {
+      "name": "negative revision rejected",
+      "status": "PASS",
+      "ms": 300
+    },
+    {
+      "name": "direct table insert forbidden",
+      "status": "PASS",
+      "ms": 110
+    },
+    {
+      "name": "direct table update forbidden",
+      "status": "PASS",
+      "ms": 94
+    },
+    {
+      "name": "direct log delete forbidden",
+      "status": "PASS",
+      "ms": 91
+    },
+    {
+      "name": "operation ledger not visible",
+      "status": "PASS",
+      "ms": 93
+    },
+    {
+      "name": "device sessions not visible",
+      "status": "PASS",
+      "ms": 95
+    },
+    {
+      "name": "anonymous function denied",
+      "status": "PASS",
+      "ms": 94
+    },
+    {
+      "name": "unbound session sees no rows",
+      "status": "PASS",
+      "ms": 109
+    },
+    {
+      "name": "update accepted at correct revision",
+      "status": "PASS",
+      "ms": 98
+    },
+    {
+      "name": "old ack replay after newer edit is unchanged",
+      "status": "PASS",
+      "ms": 89
+    },
+    {
+      "name": "revocation blocks reads and cached retry",
+      "status": "PASS",
+      "ms": 628
+    },
+    {
+      "name": "failure after record and log rolls back every write",
+      "status": "PASS",
+      "ms": 561
+    },
+    {
+      "name": "caller rollback preserves cursor and allows retry",
+      "status": "PASS",
+      "ms": 383
+    },
+    {
+      "name": "concurrent duplicate applies once",
+      "status": "PASS",
+      "ms": 378
+    },
+    {
+      "name": "concurrent same-base edits have one winner",
+      "status": "PASS",
+      "ms": 294
+    },
+    {
+      "name": "workspace lock enforces commit ordered cursors",
+      "status": "PASS",
+      "ms": 3309
+    },
+    {
+      "name": "other owner writes isolated workspace",
+      "status": "PASS",
+      "ms": 91
+    },
+    {
+      "name": "all accepted writes have one log and ledger row",
+      "status": "PASS",
+      "ms": 309
+    },
+    {
+      "name": "all tables enable RLS",
+      "status": "PASS",
+      "ms": 113
+    },
+    {
+      "name": "definer functions owned by non-superuser",
+      "status": "PASS",
+      "ms": 101
+    },
+    {
+      "name": "full bundle rejects unsupported Auth without partial schemas",
+      "status": "PASS",
+      "ms": 193
+    },
+    {
+      "name": "read-only preinstall reports no bundle collisions",
+      "status": "PASS",
+      "ms": 103
+    },
+    {
+      "name": "early schema collision preserves original objects and rolls back guard",
+      "status": "PASS",
+      "ms": 485
+    },
+    {
+      "name": "late RPC collision rolls back all newly created modules",
+      "status": "PASS",
+      "ms": 457
+    },
+    {
+      "name": "full atomic installation succeeds",
+      "status": "PASS",
+      "ms": 105
+    },
+    {
+      "name": "full-bundle verification schemaCount",
+      "status": "PASS",
+      "ms": 87
+    },
+    {
+      "name": "full-bundle verification tableCount",
+      "status": "PASS",
+      "ms": 188
+    },
+    {
+      "name": "full-bundle verification rlsEnabledCount",
+      "status": "PASS",
+      "ms": 93
+    },
+    {
+      "name": "full-bundle verification functionCount",
+      "status": "PASS",
+      "ms": 103
+    },
+    {
+      "name": "full-bundle verification publicRpcCount",
+      "status": "PASS",
+      "ms": 98
+    },
+    {
+      "name": "full-bundle verification unsafeSearchPaths",
+      "status": "PASS",
+      "ms": 97
+    },
+    {
+      "name": "full-bundle verification clientExecutableCount",
+      "status": "PASS",
+      "ms": 92
+    },
+    {
+      "name": "full-bundle verification publicExecutableCount",
+      "status": "PASS",
+      "ms": 92
+    },
+    {
+      "name": "full-bundle verification servicePublicExecutableCount",
+      "status": "PASS",
+      "ms": 94
+    },
+    {
+      "name": "full-bundle verification serviceDirectTableAccessCount",
+      "status": "PASS",
+      "ms": 89
+    },
+    {
+      "name": "preinstall now finds all four public RPC names",
+      "status": "PASS",
+      "ms": 90
+    },
+    {
+      "name": "reapply refuses existing bundle without replacement",
+      "status": "PASS",
+      "ms": 92
+    },
+    {
+      "name": "service role can call guarded RPC",
+      "status": "PASS",
+      "ms": 89
+    },
+    {
+      "name": "pause removes service RPC access without deleting objects",
+      "status": "PASS",
+      "ms": 275
+    },
+    {
+      "name": "paused service invocation is denied",
+      "status": "PASS",
+      "ms": 94
+    },
+    {
+      "name": "resume requires explicit review marker",
+      "status": "PASS",
+      "ms": 100
+    },
+    {
+      "name": "reviewed resume restores exact server RPC access",
+      "status": "PASS",
+      "ms": 274
+    },
+    {
+      "name": "uninstall requires explicit marker",
+      "status": "PASS",
+      "ms": 85
+    },
+    {
+      "name": "guard revocation data prevents uninstall",
+      "status": "PASS",
+      "ms": 467
+    },
+    {
+      "name": "data/uncertain I/O/audit survive refused uninstall and pause/resume",
+      "status": "PASS",
+      "ms": 785
+    },
+    {
+      "name": "unexpected dependency aborts entire empty uninstall",
+      "status": "PASS",
+      "ms": 446
+    },
+    {
+      "name": "empty-only full uninstall succeeds",
+      "status": "PASS",
+      "ms": 92
+    },
+    {
+      "name": "both bundle namespaces removed",
+      "status": "PASS",
+      "ms": 88
+    },
+    {
+      "name": "uninstall preserves original Auth fixtures",
+      "status": "PASS",
+      "ms": 98
+    },
+    {
+      "name": "uninstall preserves original app data",
+      "status": "PASS",
+      "ms": 209
+    },
+    {
+      "name": "uninstall preserves unrelated public data",
+      "status": "PASS",
+      "ms": 96
+    },
+    {
+      "name": "uninstall preserves unrelated Storage metadata",
+      "status": "PASS",
+      "ms": 82
+    },
+    {
+      "name": "read-only inspection remains usable after uninstall",
+      "status": "PASS",
+      "ms": 92
+    },
+    {
+      "name": "clean reinstall after empty uninstall succeeds",
+      "status": "PASS",
+      "ms": 192
+    },
+    {
+      "name": "non-superuser can install with only declared creation/column capabilities",
+      "status": "PASS",
+      "ms": 99
+    },
+    {
+      "name": "without Auth bypass missing RLS permission fails closed",
+      "status": "PASS",
+      "ms": 85
+    },
+    {
+      "name": "non-superuser can remove own empty bundle",
+      "status": "PASS",
+      "ms": 89
+    },
+    {
+      "name": "non-superuser bypass profile installs complete bundle",
+      "status": "PASS",
+      "ms": 101
+    },
+    {
+      "name": "definer owner is non-superuser and matches inspected bypass profile",
+      "status": "PASS",
+      "ms": 262
+    },
+    {
+      "name": "scoped owner retains exact restricted ACL/RLS matrix",
+      "status": "PASS",
+      "ms": 82
+    },
+    {
+      "name": "realistic bypass service role still cannot directly read any managed table",
+      "status": "PASS",
+      "ms": 651
+    },
+    {
+      "name": "guard reads required Auth columns through actual RLS profile",
+      "status": "PASS",
+      "ms": 83
+    },
+    {
+      "name": "bypass does not grant unlisted Auth column read",
+      "status": "PASS",
+      "ms": 82
+    },
+    {
+      "name": "bypass does not grant Auth data update",
+      "status": "PASS",
+      "ms": 80
+    },
+    {
+      "name": "owner does not need role creation authority",
+      "status": "PASS",
+      "ms": 80
+    },
+    {
+      "name": "scoped owner can pause and reviewed resume",
+      "status": "PASS",
+      "ms": 333
+    },
+    {
+      "name": "scoped owner empty uninstall succeeds",
+      "status": "PASS",
+      "ms": 94
+    },
+    {
+      "name": "Auth fixtures unchanged by scoped execution",
+      "status": "PASS",
+      "ms": 89
+    }
+  ],
+  "files": {
+    "001-text-command.sql": "85c42fb348eede4a2b9c5e3ed578b090b833017cd37c8849fa73041324ec14ae",
+    "002-session-assets.sql": "bafe9f6dfa5de0f623756939c9f2b70fd6f80165f8c9638d1fb7b58b89b6978d",
+    "bootstrap-local.sql": "900aca394d78d99a56d09668571e2437bf8eaed6d8e4165fe7da281afd431a19",
+    "run-local.py": "6d687b2a22ffb1fa5518ebdf33b7193de61957ab9e8890e41a0a524df447fa72",
+    "session_asset_tests.py": "3e4a2bccbbf6c5c79472d873db78d0f5e1d155ea6c08b2a02731f457b9e09e4a"
+  },
+  "cloud_files": {
+    "bundle.mjs": "9c8e6df19d2f3d49b6b7034bd1d53d8acca0b4e3faee2a2ae538882cdf81b2a1",
+    "bundle.test.mjs": "7008c002472935c898b9f2881e047a023eab80a228f740e3d3bf87a66143dcba",
+    "bundle_sql_tests.py": "e0fbf415d89315ddd66745415e9de8a34a90537c40ebe99eb0ee13a1eb6b5fc4",
+    "inspect-owner.sql": "f2dddb4ccf0935cfa30e0ab34527f984150843873dff18ec2ec63b4c44af6df4",
+    "inspect-target.sql": "ba7de923ebd2428f7fab1d0e611d6cf9581e538e144a7831b47ad1844c227db0",
+    "observations.current.json": "23b8921711bcc3c87275f89acfb60bd66578e9c2a30132a3cfa14473e306ac7c",
+    "observations.example.json": "c85290cf6bb09a5e9bdc65a197aa0de62796f3013ea962195d2c349a8b433d79",
+    "owner-review.mjs": "6587f6af4a9ed0b48e2af7e0358cd5a160c09aed85d76100b641b20afe071ee1",
+    "owner-review.test.mjs": "2ef9866f0b00d2212c029b2bba7b3156c3adb461f9e8c54b5c537e55831b5780",
+    "owner_profile_tests.py": "cd8cf84dfac4c829014e24c8d1febeb15033f8412b39d7ca4648ffb14f1c90fa",
+    "plan.json": "94859b5cf5785cb8892f2d1abb684287540eca426cdba517b0954252af6724ee",
+    "preflight.mjs": "849ceacc17cb8bcbfb8858b4f1c28f3d9d35a4a8c87eed9c78f8ea52a0fe4d5b",
+    "preflight.test.mjs": "accb544f4591f22b3ff10b0a1dbc25dd647675f70799b73e9c0c98b9f080ca88",
+    "rollback-session-guard.sql": "d5722e2569522429d221698edd6f24bd51678a3bf08444338a3dd41d90ba95ad",
+    "session-guard.sql": "3be17e719a5a5c8cf91268c46b2ce99aeff3c6127b5b43bd8b8f250467a374c9",
+    "sql_tests.py": "7f2a79316b1e00920839aa519c0f2368cd1c3adbab60873162bfbe21b3b987fe"
+  },
+  "bundle_artifacts": {
+    "poc/v2-cloud/bundle/install.sql": "9a77e28de82583cee850afa5015ddd0007ff515c57a77b63f2ae5e7227a97e4a",
+    "poc/v2-cloud/bundle/manifest.json": "6ace6c937126d792660580a7f253e11db631b8ed56ffe9d9f1e43fdcdfa946ad",
+    "poc/v2-cloud/bundle/pause.sql": "6d6382b918ae29164ce45788b3553de2261e6e4b9f828e65ca763cf41df0cbe5",
+    "poc/v2-cloud/bundle/preinstall.sql": "29c3e08cced7364e5701b56a284342c9f923d36d3ba2ede9fd505cead03c1ad9",
+    "poc/v2-cloud/bundle/resume.sql": "cd43f341c316e72f88e3892bffa630e643beffe5e8dcf9400087cb1b3ba11833",
+    "poc/v2-cloud/bundle/rollback.sql": "4a0dd7df0b81593ab21e91e626e8de634ee39c7740da5ea70a34b76a2e52e3a6",
+    "poc/v2-cloud/bundle/verify.sql": "be15494f16ddc9c39067436c071431973e60090e8e79af446c3c0d3c5647cab9",
+    "poc/v2-cloud/templates/pause.sql": "6d6382b918ae29164ce45788b3553de2261e6e4b9f828e65ca763cf41df0cbe5",
+    "poc/v2-cloud/templates/preinstall.sql": "29c3e08cced7364e5701b56a284342c9f923d36d3ba2ede9fd505cead03c1ad9",
+    "poc/v2-cloud/templates/resume.sql": "cd43f341c316e72f88e3892bffa630e643beffe5e8dcf9400087cb1b3ba11833",
+    "poc/v2-cloud/templates/rollback.sql": "4a0dd7df0b81593ab21e91e626e8de634ee39c7740da5ea70a34b76a2e52e3a6",
+    "poc/v2-cloud/templates/verify.sql": "be15494f16ddc9c39067436c071431973e60090e8e79af446c3c0d3c5647cab9"
+  }
+}

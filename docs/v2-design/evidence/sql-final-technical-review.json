@@ -1,0 +1,50 @@
+{
+  "reviewedAt": "2026-11-09T00:24:01.956071+00:00",
+  "reviewType": "technical review; not user authorization or cloud installation",
+  "baseCommit": "8621d06a7b02a6487ec491798be891516f9297a5",
+  "projectRef": "hutqsfftioxtredcjhsy",
+  "manifestSha256": "6ace6c937126d792660580a7f253e11db631b8ed56ffe9d9f1e43fdcdfa946ad",
+  "status": "TECHNICALLY_REVIEWED",
+  "bundleReviewed": true,
+  "rollbackReviewed": true,
+  "installationAuthorized": false,
+  "writeCredentialVerified": false,
+  "cloudWrites": false,
+  "autoApply": false,
+  "unitTests": {
+    "bundle": {
+      "count": 29,
+      "logSha256": "4d078c433d5333aaada3b2298181fcc2774b96ea9961dcd2908f422fe056c5d6"
+    },
+    "preflight": {
+      "count": 23,
+      "logSha256": "cabac787672d918434903579329709f50fc2e7308b5c122e017a6e56ccee7a82"
+    }
+  },
+  "sqlTests": 87,
+  "sqlEvidenceSha256": "5ecc4d38d5e74f4a2cf35cd296e6ff7e245ecc8e718e2064c0b63ee76faf2bad",
+  "reviewedFiles": {
+    "poc/v2-cloud/bundle/manifest.json": "6ace6c937126d792660580a7f253e11db631b8ed56ffe9d9f1e43fdcdfa946ad",
+    "poc/v2-cloud/bundle.mjs": "9c8e6df19d2f3d49b6b7034bd1d53d8acca0b4e3faee2a2ae538882cdf81b2a1",
+    "poc/v2-cloud/owner_profile_tests.py": "cd8cf84dfac4c829014e24c8d1febeb15033f8412b39d7ca4648ffb14f1c90fa",
+    "poc/v2-cloud/session-guard.sql": "3be17e719a5a5c8cf91268c46b2ce99aeff3c6127b5b43bd8b8f250467a374c9",
+    "poc/v2-gateway/postgres-metadata.sql": "b8d789769cf529456757092ef59ac484dda451686bf8ca2139895b79fabe9bda",
+    "poc/v2-gateway/recovery.sql": "bf9e474bbda8a3af4eb4602f83b70cf6605d416befb3e6bf809d172a9f3aca54",
+    "poc/v2-cloud/templates/rollback.sql": "4a0dd7df0b81593ab21e91e626e8de634ee39c7740da5ea70a34b76a2e52e3a6",
+    "poc/v2-cloud/templates/pause.sql": "6d6382b918ae29164ce45788b3553de2261e6e4b9f828e65ca763cf41df0cbe5",
+    "poc/v2-cloud/templates/resume.sql": "cd43f341c316e72f88e3892bffa630e643beffe5e8dcf9400087cb1b3ba11833",
+    "poc/v2-cloud/templates/verify.sql": "be15494f16ddc9c39067436c071431973e60090e8e79af446c3c0d3c5647cab9",
+    "poc/v2-cloud/templates/preinstall.sql": "29c3e08cced7364e5701b56a284342c9f923d36d3ba2ede9fd505cead03c1ad9",
+    "poc/v2-cloud/bundle/install.sql": "9a77e28de82583cee850afa5015ddd0007ff515c57a77b63f2ae5e7227a97e4a",
+    "poc/v2-cloud/bundle/rollback.sql": "4a0dd7df0b81593ab21e91e626e8de634ee39c7740da5ea70a34b76a2e52e3a6",
+    "poc/v2-cloud/bundle/pause.sql": "6d6382b918ae29164ce45788b3553de2261e6e4b9f828e65ca763cf41df0cbe5",
+    "poc/v2-cloud/bundle/resume.sql": "cd43f341c316e72f88e3892bffa630e643beffe5e8dcf9400087cb1b3ba11833",
+    "poc/v2-cloud/bundle/verify.sql": "be15494f16ddc9c39067436c071431973e60090e8e79af446c3c0d3c5647cab9",
+    "poc/v2-cloud/bundle/preinstall.sql": "29c3e08cced7364e5701b56a284342c9f923d36d3ba2ede9fd505cead03c1ad9"
+  },
+  "remaining": [
+    "official Database Size usage/limit/timestamp",
+    "actual DB-only installation scope decision"
+  ],
+  "evidenceNote": "SQL proof hashes capture observations before final technical review flags; implementation and SQL bytes verified unchanged."
+}

@@ -260,3 +260,7 @@ Neon 중심 검토는 유지하되 woori 운영을 유지한 로컬 개발 대�
 ## 4.41 SQL 실행 역할·Auth RLS 검토
 
 사용자의 커밋/푸시 후 다음 진행 요청으로 `3ddfc8f`의 원격 반영을 확인했다. 실제 프로젝트는 공식 read-only API로 postgres의 비 superuser/BYPASSRLS·생성/필수 Auth6컬럼 조회 권한과 Auth RLS를 확인했다. 같은 핵심 권한 조건을 로컬 역할에 재현해 SQL86개, 검토 도구15개가 성공했다. [40문서](40-sql-executor-review.md)에 기술 검토와 실제 쓰기 자격증명/설치 승인 구분을 기록했다. 실행 소유자 기술 검토만 갱신했고 공식 잔여량·묶음/rollback 최종 검토는 미확인으로 유지한다. 실제 클라우드 DDL/DML·역할 변경·제품/DB18·main·환경 게시는 수행하지 않았다.
+
+## 4.42 SQL 묶음 최종 기술 검토·적용 절차
+
+사용자의 커밋/푸시 후 다음 단계 요청으로 `8621d06`의 원격 반영을 확인했다. 설치/ACL/pause/resume/empty-only rollback을 해시·시험과 교차 검토하고, 실제처럼 BYPASSRLS인 service_role의6개 table 직접 조회 거절 시험을 추가했다. SQL87개·bundle29개·기존준비23개가 성공했다. [41문서](41-sql-final-review-runbook.md)에 검토 기록·응답 유실 시 읽기 확인·설치/복구 절차를 정리했다. 실제 디스크 지표GET200은 무료 DB 한도가 아니므로 잔여량으로 사용하지 않았다. bundle/rollback 기술 검토만 완료 처리하고 실제 쓰기 자격증명/설치 승인과 구분했다. cloud DDL/DML·앱/DB18·main·환경 게시·배포는 수행하지 않았다.

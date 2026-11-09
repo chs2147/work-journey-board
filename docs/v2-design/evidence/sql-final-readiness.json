@@ -1,0 +1,15 @@
+{
+  "status": "BLOCKED",
+  "projectRef": "hutqsfftioxtredcjhsy",
+  "autoApply": false,
+  "phase": "sql-install",
+  "deferred": [
+    "GATEWAY_RUNTIME_VALIDATION",
+    "PRIVATE_STORAGE_VALIDATION",
+    "ORG_STORAGE_EGRESS_USAGE"
+  ],
+  "blocked": [
+    "USAGE_STALE_OR_MISSING",
+    "INSUFFICIENT_DATABASE_HEADROOM"
+  ]
+}

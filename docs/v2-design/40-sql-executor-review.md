@@ -48,3 +48,5 @@ PYTHONDONTWRITEBYTECODE=1 python3 poc/v2-postgres/run-local.py --bundle --owner
 SQL 설치 단계는 여전히 **BLOCKED / autoApply=false**다. 공식 DB 한도/잔여량 확인, 정확한 묶음/rollback 최종 검토, 실제 DB-only 설치 여부 결정이 남았다. Database Size 한도500MB 여부는 사용자에게 확인을 요청했으며 아직 답변이 없어 추정 잔여량을 공식 관측으로 기록하지 않았다. Storage/Egress 잔여량과 gateway/private Storage 실검증은 후속 cloud-validation 단계 조건이다.
 
 다음은 이 조건들을 충족한 뒤 **DB-only 묶음의 실제 적용 범위를 확정**하는 단계다. 설치 SQL은 버킷·사용자·seed·파일 전송·Keep Alive·SMTP·gateway 배포를 생성하지 않는다. 현재까지 실제 클라우드 DDL/DML·역할 변경·앱 통합·main 반영·환경 게시는 수행하지 않았다.
+
+후속 묶음/rollback 기술 검토와 실제 BYPASSRLS service-role 재현은 [41문서](41-sql-final-review-runbook.md)에 기록했다. 위 미완료 항목/86개 수치는 이 문서 작성 당시 상태다.
