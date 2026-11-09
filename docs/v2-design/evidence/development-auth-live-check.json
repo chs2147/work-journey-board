@@ -1,0 +1,94 @@
+{
+  "target": "vsphftnmfzfoufasjttd",
+  "startedAt": "2026-11-09T21:19:55.782081+00:00",
+  "checks": [
+    {
+      "name": "trusted_dev_jwks",
+      "passed": true
+    },
+    {
+      "name": "create_confirmed_fixture_0",
+      "passed": true
+    },
+    {
+      "name": "password_login_0",
+      "passed": true
+    },
+    {
+      "name": "real_es256_token_verifier_0",
+      "passed": true
+    },
+    {
+      "name": "token_subject_0",
+      "passed": true
+    },
+    {
+      "name": "live_session_0",
+      "passed": true
+    },
+    {
+      "name": "authenticated_client_cannot_call_server_rpc_0",
+      "passed": true
+    },
+    {
+      "name": "create_confirmed_fixture_1",
+      "passed": true
+    },
+    {
+      "name": "password_login_1",
+      "passed": true
+    },
+    {
+      "name": "real_es256_token_verifier_1",
+      "passed": true
+    },
+    {
+      "name": "token_subject_1",
+      "passed": true
+    },
+    {
+      "name": "live_session_1",
+      "passed": true
+    },
+    {
+      "name": "authenticated_client_cannot_call_server_rpc_1",
+      "passed": true
+    },
+    {
+      "name": "cross_subject_session_denied",
+      "passed": true
+    },
+    {
+      "name": "owner_metadata_reserve",
+      "passed": true
+    },
+    {
+      "name": "other_owner_workspace_denied",
+      "passed": true
+    },
+    {
+      "name": "server_session_revocation",
+      "passed": true
+    },
+    {
+      "name": "revoked_session_inactive",
+      "passed": true
+    },
+    {
+      "name": "other_user_session_preserved",
+      "passed": true
+    },
+    {
+      "name": "revoked_session_metadata_denied",
+      "passed": true
+    }
+  ],
+  "cleanup": {
+    "metadataEmpty": true,
+    "authUsersAbsent": true
+  },
+  "mailSent": false,
+  "blobWrites": false,
+  "passed": true,
+  "finishedAt": "2026-11-09T21:20:08.941436+00:00"
+}

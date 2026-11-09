@@ -62,3 +62,7 @@ Supabase 프로젝트의 API Keys 화면에서 legacy service_role을 확인해 
 사용자가 HTTP 시크릿을 저장했고 실행 환경 revision2/current, running, network enforced 및 DEV_SERVICE_ROLE_KEY ready를 확인했다. U08의 비밀 등록/환경 적용은 완료이며 실제 서버 RPC 검증은 다음 단계다. 비밀값은 출력하거나 Git에 기록하지 않았다. 저장 직후 pending은 과거 상태이며 재입력/재게시가 필요하다는 뜻이 아니다.
 
 앞으로 사용자 설정 안내는 입력 위치(일반 환경변수/HTTP 시크릿), 정확한 이름, 값 출처, 허용 도메인, 추가/수정 여부, 저장 후 검증 방법을 구분한다. 게시 버튼이 없는 UI에서는 게시를 요구하지 않는다. 작업 종료 시 완료/미해결/다음 단계를 함께 안내한다.
+
+## 후속 실제 검증 완료
+
+[52문서](52-development-auth-live-results.md)에서 U08 서버 키 실제 RPC 검증과 개발 Auth2계정/세션/공간 격리 검증을 완료했다. 이 문서의 키 미설정·Auth 미실행은 이전 체크포인트다. 임시 데이터는 정리했고 실제 Blob 전송/공개 gateway 검증은 여전히 남아 있다.

@@ -84,3 +84,7 @@ main CI42585959844의 실제 실패는 Chromium 표 이동 undo 시 표 전체�
 ## 개발 gateway/Auth 연결 구성(최신)
 
 [51문서](51-development-gateway-auth-wiring.md)에 dev factory·issuer/REST 연결과 신규HTTP10/기존gateway61/metadata14/recovery25/Auth28+11 검증을 기록했다. 공개 DEV JWKS는 ES256이다. DEV_SERVICE_ROLE_KEY가 없어 실제 Auth/RPC/Storage 전체 검증은 아직이며 새 Secret 요구만 초안 저장했다. 사용자가 개발 legacy service_role을 설정/적용·게시하면 확인 후 실제 서버 RPC/인증 검증을 진행한다. Blob 공급자/버킷은 미선정·미생성이고 운영/KeepAlive/앱/main은 변경하지 않았다.
+
+## 실제 개발 인증 검증 완료(2026-11-10 KST, 최신)
+
+[52문서](52-development-auth-live-results.md)의 서버 RPC/실제 로그인·서명/세션 회수/계정 간 공간 격리20검사와 시험 데이터 정리 확인이 통과했다. HTTP 시크릿 ready 및 U08 완료, 키 재입력/게시 요구 없음. 임시 Auth 계정2개는 삭제 후404, metadata/차단 행은 잔여0이다. 비밀/토큰은 보존하지 않았다. Blob 공급자·버킷·파일 전송·공개 gateway는 미완료이며 다음은 private Blob 비교/선택안 확정이다. U07 개발 Free/Usage 및 V1/V2 배포/저장 경계는 계속 남는다. install.sql 재실행 금지, main/로컬 앱 변경 없음.

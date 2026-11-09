@@ -1,0 +1,22 @@
+{
+  "checkedAt": "2026-11-09T21:18:14.104811+00:00",
+  "target": "vsphftnmfzfoufasjttd",
+  "checks": [
+    {
+      "authenticated": false,
+      "http": 401,
+      "result": {
+        "code": null
+      },
+      "passed": true
+    },
+    {
+      "authenticated": true,
+      "http": 200,
+      "result": false,
+      "passed": true
+    }
+  ],
+  "databaseWrites": false,
+  "secretRecorded": false
+}

@@ -312,3 +312,7 @@ V2 체크포인트52ff622를 푸시한 뒤 사용자 요청의 캐비넷/노트 
 ## 4.54 개발 Auth/gateway 조합·runtime Secret 준비
 
 다음 단계 요청으로 dev 전용 구성 factory와 등록 ref REST 지원을 구현했다. 로컬 실제HTTP 신규10개·기존gateway61/metadata14/recovery25/Auth28+11이 통과하고 실제 dev 공개 JWKS ES256 GET200을 확인했다. [51문서](51-development-gateway-auth-wiring.md)에 가상 시험/실제 로그인 미완료를 구분했다. DEV_SERVICE_ROLE_KEY 없음 확인 후 개발 호스트에만 전달할 새 사용자 Secret 요구를 초안 저장했다. 키 입력/적용·게시/계정/버킷/파일·gateway 배포/운영 변경은 하지 않았다.
+
+## 4.55 개발 서버 키 적용·실제 인증/공간 격리
+
+사용자가 개발 HTTP 시크릿을 저장한 뒤 revision2/ready/enforced와 실제 RPC200/미등록 세션false, 무인증401을 확인했다. [52문서](52-development-auth-live-results.md)의 실제 Auth2계정·ES256·세션 회수·공간 소유권20검사 및 cleanup이 통과했다. 임시 계정/metadata는 제거했고 메일/Blob/호스팅은 사용하지 않았다. U08 완료이며 U07 Free/Usage와 Blob 공급자 선택/실제 파일 전송, V1/V2 격리는 남아 있다. main/제품/로컬 DB18 변경은 없다.

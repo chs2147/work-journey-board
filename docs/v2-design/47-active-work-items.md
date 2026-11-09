@@ -1,5 +1,7 @@
 # 47. V2 진행 항목·사용자 직접 설정·재개 순서
 
+**최신 체크포인트(2026-11-10 KST):** [52문서](52-development-auth-live-results.md) 참조. U08 HTTP 시크릿 ready 및 실제 서버 RPC 검증 완료. 개발 Auth 임시계정2개/ES256/세션 회수/공간 소유자 격리20검사와 잔여0 정리 확인 완료. A05는 Auth/metadata까지 완료이며 Blob·공개 gateway/실기·메일 흐름은 미완료다. U07 개발 Free/Usage는 남아 있다. 아래의 과거 상태는 당시 기록이며 이 체크포인트가 우선한다.
+
 2026-11-09 UTC · v2-design · 현재 실행 환경과 저장 초안을 구분한다. 과거 결과/관측을 덮어쓰지 않는다.
 
 ## 환경변수 운영 규칙
@@ -41,7 +43,7 @@ A01의 명시적 환경 선택기를 cloud-environment.mjs로 구현하고10개 
 | U05 | 허용 호스트 vsphftnmfzfoufasjttd.supabase.co 추가, 기존 api.supabase.com/GitHub/패키지 호스트 유지 | 현재 network policy enforced에 개발 호스트 포함 | 미반영 |
 | U06 | 설정 검토·저장·게시 후 적용 사실 알림. 비밀값은 채팅에 보내지 않음 | 새 revision/current readiness 확인 가능 | 대기 |
 | U07 | 개발/운영 Free 상태와 Usage 확인, 실제 token 권한 UI에서 접근 범위 확인 | 제공자/사용자 근거와 확인 시각 기록 | 운영 Free/Usage만 이전 확인, 개발 미확인 |
-| U08 | DEV_SERVICE_ROLE_KEY에 개발 legacy service_role Secret 입력·적용/게시 | 새 binding ready 및 실제 서버 RPC 권한 검증 | 요구 초안 저장, 값 미입력 |
+| U08 | HTTP 시크릿 DEV_SERVICE_ROLE_KEY에 개발 legacy service_role 저장 | 새 binding ready 및 실제 서버 RPC 권한 검증 | 완료: 52문서. 게시 버튼이 없으면 저장만 진행 |
 
 토큰 UI가 세부 scope를 지원하지 않거나 기존 비밀의 이름 편집이 안 되면 그 UI의 지원 범위를 확인해 전환 방법을 정한다. 환경 도구가 새 이름으로 값을 자동 복사할 수 있다고 가정하지 않는다. 개발용 서버 키·사용자 공개 키·migration DB URL은 해당 단계에서 필요할 때만 추가한다.
 
