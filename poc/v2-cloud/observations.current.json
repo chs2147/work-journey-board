@@ -2,9 +2,9 @@
   "projectRef": "hutqsfftioxtredcjhsy",
   "plan": "free",
   "planSource": "user-dashboard",
-  "usageObservedAt": null,
+  "usageObservedAt": "2026-11-09T01:54:30.551713+00:00",
   "remainingBytes": {
-    "database": null,
+    "database": 474000000,
     "storage": null,
     "egress": null
   },
@@ -49,5 +49,17 @@
     "reportSha256": "cc36aed8e55fc7b9341aa66c0260b26a63c3fdc431f0b0860ee42650161e8f16",
     "installationAuthorized": false,
     "writeCredentialVerified": false
+  },
+  "databaseUsageEvidence": {
+    "source": "user-dashboard-report",
+    "reportedValue": "0.026 GB",
+    "recordedAt": "2026-11-09T01:54:30.551713+00:00",
+    "interpretedUsedBytes": 26000000,
+    "limitBytes": 500000000,
+    "limitSource": "official-public-Free-default; user previously confirmed Free plan",
+    "limitReference": "https://github.com/supabase/supabase/blob/dc73b346c1f37eaae9e529fae81a4307b78fefe6/apps/docs/content/guides/platform/billing-on-supabase.mdx",
+    "remainingBytesBasis": "derived estimate from displayed rounded usage and standard Free limit; not an org entitlements API response",
+    "accountSpecificLimitIndependentlyVerified": false,
+    "unitConvention": "decimal GB/MB; displayed usage may be rounded"
   }
 }
