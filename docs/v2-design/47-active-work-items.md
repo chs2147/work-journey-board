@@ -39,11 +39,16 @@ Management token은 api.supabase.com에만 전달한다. 서버용 service key/D
 | A05 | 가상 Auth/private Storage/gateway 실검증·메일/Keep Alive | A04/비용 확인 | 미실행. 계정·파일 전송 범위/실측 증거 분리 |
 | A06 | V1/V2 앱 ID·설정·업데이트 채널·복사 전환 설계 잠금 | 46문서 | 미구현. V1 자동 교체/원본 수정/계정 의존 없음 |
 | A07 | 온라인 binary AssetStore·blob/reference/variant·quota/GC 설계/PoC | A06 | 새 schema 미구현. 현재64KiB/assetId PoC는 hash dedup 완성 아님 |
+| A11 | Blob 공급자 무료 용량·전송·지역·과금 차단 비교 | 48문서 | R2 공식10GB-month 확인. B2/Vercel 현행 요금·계정/지역 조건 및 공급자 선택 미완료 |
 | A08 | 가독성/해상도·압축 시안과 OS별 실측 | A07 | 사진/한글 표·스크린샷/투명도/GIF 비교 후 기본값 확정 |
 | A09 | 실제 기기 동기화·충돌/복원·오프라인 통합 | A05/A07/A08 | 미완료. 로컬 모형 PASS로 대체 안 함 |
 | A10 | ko/en 앱/사이트/가이드/출력 이행·Win/macOS 실기·출시 | A06/A09 | 미구현. 로컬 기존 기능/배포 채널 회귀 관문 포함 |
 
 A06~A08은 **설계/화질 검토를 먼저 진행**하고 제품 DB/이미지 처리 코드는 별도 구현 단계에서 반영한다. 신규 dedup schema/한도 확대는 기존 DB-only 설치 SQL에 자동 포함하지 않는다. U항목 대기 중에도 설계/로컬 가상 비교 작업은 가능하나 실제 cloud 접근 성공으로 보고하지 않는다.
+
+## Blob 저장소 추가 검토
+
+온라인 실물은 private Blob에 저장하고 공급자는 별도 선택한다. [48문서](48-blob-storage-provider-review.md)와 A11에서 Supabase1GB 대비 R2 Standard10GB-month·전송/연산비·아시아 보장·월0원 조건을 검토한다. 새 bucket/결제수단/구독 활성화는 하지 않았다. 저장소 용량이 크다는 이유로 공개 URL이나 기존 로컬 모델 변경을 선택하지 않는다.
 
 ## 바로 다음 진행
 

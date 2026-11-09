@@ -98,3 +98,5 @@ EXIF 방향을 적용하고 불필요한 위치/카메라 메타데이터를 제
 - 새 blob/reference/variant schema·quota/GC는 별도 migration/PoC 검토 후 구현. 현재 검토된 DB-only 패키지/기존 사용자 승인 범위에 자동 포함하지 않음.
 
 추천 확정 순서: **환경/개발 접근 → 로컬 무영향 배포·저장 경계 → 자산/중복·quota schema → 품질 비교 시안/측정 → 개발 PoC → 실제 앱 통합**. 앱/사이트/가이드 다국어는 공통 언어 리소스로 관리하되 V1 저장 계약을 바꾸는 이유로 사용하지 않는다.
+
+공급자별 무료 용량·비공개 접근·지역·전송 비용은 [48문서](48-blob-storage-provider-review.md)에서 별도로 비교한다. Blob 저장소는 Supabase Storage에 고정하지 않으며, provider 선택 전 해당 API의 멱등/권한/복구 계약을 재검증한다.

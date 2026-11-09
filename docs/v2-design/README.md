@@ -54,6 +54,7 @@ PostgreSQL 영속 metadata를 HTTP 흐름에 연결했고 통합25개·adapter12
 | [Supabase 신규 계정·Keep Alive](20-supabase-keepalive.md) | 신규 계정 전제 갱신·Supabase 채택 시 하루1회 기본·휴면/복구 검증 |
 | [Supabase 프로젝트 구성안](21-supabase-project-blueprint.md) | 운영1개/로컬 개발·공식 SMTP/리전 조건·설정/비용 관문 |
 | [DB·권한·동기화 계약](22-db-permission-sync-contract.md) | 논리 테이블·tenant scope·원자적 push·커밋 순서 cursor·private 자산 |
+| [Blob 무료 용량·공급자 비교](48-blob-storage-provider-review.md) | R2/Supabase 공식 무료 한도·B2/Vercel 조사 대기·과금/아시아 조건·공급자 분리 |
 | [현재 진행 항목·직접 설정 목록](47-active-work-items.md) | U01~U07 사용자 환경 설정·A01~A10 에이전트 작업·완료 기준/미완료 상태 |
 | [로컬 무영향·이미지 저장 설계](46-local-compatibility-image-storage.md) | 앱/업데이트/DB 격리·온라인 binary 자산·workspace 중복 제거·가독성/용량 정책·누락 검토 |
 | [개발·운영 환경변수 계약](45-environment-variable-contract.md) | DEV/PROD 접두어·명시적 환경 선택·공통 변수 전환·토큰/서버/마이그레이션 분리 |

@@ -46,6 +46,10 @@
 
 [46문서](46-local-compatibility-image-storage.md)에 기존 로컬 모델 무영향 점검을 보완했다. V2 별도 앱/설정/업데이트 피드, V1 사본 전환, 로컬-only 무계정, 온라인 공간의 DB 밖 이미지·완전 오프라인 자산/패키지 백업을 구분한다. 실제 PoC는 hash dedup이 없고64KiB 제한이다. 새 workspace별 immutable blob 공유/논리 참조·COW/GC/해상도·품질 수치는 설계 제안이며 아직 구현/성능 실증하지 않았다. 기존 V1 DB/base64/1600px 처리 코드는 유지한다.
 
+## Blob 공급자 검토 추가
+
+[48문서](48-blob-storage-provider-review.md)에 온라인 private Blob 공급자 비교를 추가했다. R2 Standard 공식10GB-month·A100만/B1,000만·인터넷egress 무료를 확인했지만 초과 과금/checkout·아시아 위치 힌트 보장 한계를 함께 기록했다. Supabase Free Storage1GB는 비교 기준이며 B2/Vercel 현행 조건은 추가 확인이 남았다. 공급자를 선택/가입/활성화하지 않았다. 47문서 A11에서 계속 관리한다.
+
 ## 재개 순서
 
 1. **완료:** main 1.23.1 업무 메모보드 바로가기 패치(`d11a0ca`)를 v2-design에 충돌 없이 병합했다. 앱 기준은1.23.1/DB18이다. V2 설계/PoC를 main에 병합하지 않았고 클라우드 적용도 수행하지 않았다. 다음 재개는2번부터 진행한다.

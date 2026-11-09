@@ -1,0 +1,49 @@
+{
+  "observedAt": "2026-11-09T06:31:04.941820+00:00",
+  "scope": "official public pricing/source research; no account creation or upload",
+  "sources": [
+    {
+      "url": "https://raw.githubusercontent.com/cloudflare/cloudflare-docs/production/src/content/docs/r2/pricing.mdx",
+      "httpStatus": 200,
+      "bodySha256": "6b4e4b98e64b6edb38e894ee699b63ebff51d87c68571eeb0d13d4c4899113aa",
+      "excerpts": [
+        "10 GB-month / month",
+        "1 million requests / month",
+        "10 million requests / month"
+      ]
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cloudflare/cloudflare-docs/production/src/content/docs/r2/reference/data-location.mdx",
+      "httpStatus": 200,
+      "bodySha256": "2efcd824885ced99e92acc11946d9a48411724cfcf07b0e3d9daae8e59e5e60c",
+      "excerpts": [
+        "Location Hints are a best effort and not a guarantee"
+      ]
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cloudflare/cloudflare-docs/production/src/content/docs/r2/get-started/index.mdx",
+      "httpStatus": 200,
+      "bodySha256": "ffb287008b69281745100aa9c4bbcd1294dd4b838ae46ce739e24ec1f8464e30",
+      "excerpts": [
+        "Complete the checkout flow"
+      ]
+    },
+    {
+      "url": "https://raw.githubusercontent.com/supabase/supabase/master/apps/docs/content/guides/platform/billing-on-supabase.mdx",
+      "httpStatus": 200,
+      "bodySha256": "e31b40311d8057bb7c6db1e1b51d1b3d999b59abad598d1968739cce358239cb",
+      "excerpts": [
+        "Storage Size",
+        "1 GB",
+        "5 GB"
+      ]
+    },
+    {
+      "url": "https://www.backblaze.com/cloud-storage/pricing",
+      "status": "PROXY_TUNNEL_403",
+      "pricingVerified": false
+    }
+  ],
+  "accountEntitlementsVerified": false,
+  "selectedProvider": null
+}
