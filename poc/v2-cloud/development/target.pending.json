@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "configurationStatus": "PENDING_ENVIRONMENT_ACCESS",
+  "development": {
+    "projectRef": "vsphftnmfzfoufasjttd",
+    "url": "https://vsphftnmfzfoufasjttd.supabase.co",
+    "designationSource": "user-provided-development-project-url",
+    "region": null,
+    "plan": null,
+    "accessHttpStatus": 403,
+    "sqlWriteCapability": "NOT_VERIFIED"
+  },
+  "productionCandidate": {
+    "projectRef": "hutqsfftioxtredcjhsy",
+    "url": "https://hutqsfftioxtredcjhsy.supabase.co",
+    "defaultWritesAllowed": false
+  },
+  "observedRuntimeProjectRef": "hutqsfftioxtredcjhsy",
+  "currentSqlBundleTarget": "hutqsfftioxtredcjhsy",
+  "developmentBundlePrepared": false,
+  "executionEnabled": false,
+  "note": "Designation and access record only; current PoC does not consume this file. No SQL executed against development."
+}

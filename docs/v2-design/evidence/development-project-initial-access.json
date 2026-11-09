@@ -1,0 +1,14 @@
+{
+  "observedAt": "2026-11-09T05:01:59.629347+00:00",
+  "projectRef": "vsphftnmfzfoufasjttd",
+  "userProvidedUrl": "https://vsphftnmfzfoufasjttd.supabase.co",
+  "queriesReadOnly": true,
+  "writes": false,
+  "environmentProjectRefMatchesDev": false,
+  "checks": {
+    "project": {
+      "httpStatus": 403,
+      "summary": null
+    }
+  }
+}
