@@ -1,6 +1,6 @@
 # 개선 v20 — 업무노트 삭제 잠금·삭제 확인·복제 · 노트 표 이동/열 조절/이동 표시선 · 새 판 확인 403 대응
 
-> 상태: **검토 대기**(2026-11-09) — 결정 항목 8절. 승인 뒤 작업 브랜치 `improve-v20`에서 구현 → 검증판 `1.24.0-rc.1` 실기 확인 → main.
+> 상태: **승인**(2026-11-09, D1~D9 추천안 — D8 대체 경로 포함) · 작업 브랜치 `improve-v20` 구현(10절) → 검증판 `1.24.0-rc.1` 실기 확인 → main.
 > 기준: main `v1.23.3`(구조 v18). 시안: `docs/mockups/v20/`(①~⑤).
 
 ## 0. 요청(2026-11-09, 사용자)
@@ -133,3 +133,13 @@
 | V20-3 | 표 손잡이 재배치(표/행/열)·표 전체 끌기·열 조절 커서·행/열 이동 표시선과 앞/뒤 판정 |
 | V20-4 | `update.rs` ETag 캐시·오류 판정·[릴리스 페이지 열기]·(D8 승인 시) `releases/latest` 대체 경로 + `cargo test` |
 | V20-5 | e2e(잠금·삭제 확인·복제·표 끌기·표시선·커서)·전환 무결성·가이드 11·Feature List·확인표·릴리스 노트 → 검증판 `1.24.0-rc.1`(윈도우 기본판 + 맥 DMG) |
+
+## 10. 구현 기록 (2026-11-09, `1.24.0-rc.1` 검증용)
+- **데이터**: `0019_note_delete_lock.sql`(구조 v19 — `delete_locked` + revision 트리거를 본문 열로 한정) · `CabiRepository.setNoteDeleteLock`·`duplicateNote`(`copyTitle`·`remapAssets`, 이미지 새 id 한 batch)·`removeNote` 잠금 재검사(`CabiLockedError`) · RPC 허용 목록에 두 메서드.
+- **화면**: `TaskNoteWindow` 자물쇠(`aria-pressed`)·메뉴 [노트 복제]/[노트 삭제](잠기면 흐림+안내) · `DeleteNoteDialog`(보드 삭제 창과 같은 틀, 처음 초점 취소) · `CabiHub` 줄 단추 `⠿ ⧉ ↗ 🗑|🔒`·복제 알림 [열기]·새 줄 잠깐 강조.
+- **손잡이**: 공용 `IconGrip`(주간 보드 항목 ⋮⋮와 같은 6점)·`IconGripCopy`(⠿+) — `CabiDragGrip`(목록·업무 보드 자료 서랍·보드 객체 끌어 복제), 노트 블록 손잡이.
+- **표**: `NoteTableControls` 행 이끌이 = 왼쪽 테두리 세로 알약 ⋮, 열 = 위 테두리 가로 알약 ⋯(블록 손잡이 ⠿와 겹치지 않음) · 끄는 동안 원래 행/열 바탕(`table-drag-source`)·경계 선(`table-drop-line`)·절반 판정·Esc 취소·놓은 뒤 0.6초 강조 · 블록 끌기 중 원래 블록 반투명 · 열 커서 = `.prose:global(.resize-cursor)` + 자식까지(글자 위 I 커서 방지).
+- **새 판 확인**: `update_policy.rs`(std만 — 응답 머리 판정·꼬리표 글·`releases/latest` 이동 주소 해석, `rustc --test`로도 시험) · `update.rs` ETag 캐시(`updates/releases-cache.json`, 깨지면 무시)·한도 초과 때만 대체 경로(리디렉션 따라가지 않음, 설치는 SHA256 확인 그대로) · `updateStore.parseCheckError`·설정 안내(`update-fail-help`)·다시 시각까지 단추 잠금·[릴리스 페이지 열기]·노트 없는 판 안내.
+- **설계와 다르게 한 것**: 없음. 오류 종류는 Rust가 글 앞에 `[update:rate:<초>]`·`[update:blocked]`·`[update:other]` 꼬리표를 붙여 넘기고 화면이 떼어 쓴다(명령 반환형을 바꾸지 않음).
+- **시험**: 단위 `improveV20.test.ts`(제목·자산 다시 매기기·잠금·복제·v18→v19) · Rust `update_policy` 4 + `update.rs` 대체 후보·캐시 2 · e2e `improve-v20.spec.ts` 7(목록·잠금·확인 창·표 손잡이/표시선/Esc·커서/표 전체 끌기·업데이트 한도/차단/노트 없음) + 전환 무결성 1 · 기존 `cabi-table-editing` 놓는 자리를 절반 판정에 맞춤 · 확인표 7-43.
+

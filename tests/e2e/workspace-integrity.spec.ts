@@ -663,3 +663,44 @@ test("v16 다른 주 복제 후 공간 3회 왕복: 원본 메모·이미지·Ca
     await expect(missing(page)).toHaveCount(0);
   }
 });
+
+test("v20 노트 삭제 잠금·복제 후 공간 3회 왕복: 사본·이미지·잠금이 그 공간에만 그대로(CLAUDE.md 4-7)", async ({
+  page,
+}) => {
+  await page.keyboard.press("Alt+4");
+  await page.getByTestId("cabi-hub").waitFor();
+  await page.getByLabel("업무를 선택해 주세요", { exact: true }).selectOption({ index: 1 });
+  const notePromise = page.waitForEvent("popup");
+  await page.getByTestId("cabi-new-note").click();
+  const note = await notePromise;
+  await note.getByTestId("cabi-note-editor").waitFor();
+  await note.getByLabel("노트 제목", { exact: true }).fill("가상 v20 잠금 노트");
+  await note.locator('[contenteditable="true"]').fill("가상 v20 본문");
+  await note
+    .locator('input[type="file"][accept="image/png,image/jpeg,image/webp,image/gif"]')
+    .setInputFiles({ name: "가상.png", mimeType: "image/png", buffer: await makePng(page, "#8a5a2c") });
+  await expect(note.locator('[contenteditable="true"] img')).toHaveCount(1);
+  await note.getByTestId("note-delete-lock").click();
+  await expect(note.getByTestId("note-delete-lock")).toHaveAttribute("aria-pressed", "true");
+  await note.evaluate(async () => {
+    const { flushCabiDocument } = await import("../../src/ui/cabinet/cabiService" + ".ts");
+    await flushCabiDocument();
+  });
+  const row = (title: string) =>
+    page.getByTestId("cabi-note-row").filter({ has: page.getByText(title, { exact: true }) });
+  await row("가상 v20 잠금 노트").getByTestId("cabi-note-duplicate").click();
+  await expect(row("가상 v20 잠금 노트 (사본)")).toHaveCount(1);
+  const company = await journalCounts(page);
+  expect(company).toMatchObject({ cabi_note: 2, cabi_asset: 2 });
+  for (let round = 0; round < 3; round++) {
+    await switchTo(page, 2, "개인");
+    expect(await journalCounts(page)).toMatchObject({ cabi_note: 0, cabi_asset: 0 });
+    await switchTo(page, 1, "회사");
+    expect(await journalCounts(page)).toMatchObject({ cabi_note: 2, cabi_asset: 2 });
+  }
+  if (!(await page.getByTestId("cabi-hub").isVisible())) await page.keyboard.press("Alt+4");
+  await page.getByTestId("cabi-hub").waitFor();
+  await page.getByLabel("업무를 선택해 주세요", { exact: true }).selectOption({ index: 1 });
+  await expect(row("가상 v20 잠금 노트").getByTestId("cabi-note-locked")).toBeVisible();
+  await expect(row("가상 v20 잠금 노트 (사본)").getByTestId("cabi-note-delete")).toBeVisible();
+});
