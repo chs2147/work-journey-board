@@ -44,7 +44,7 @@ npm test --prefix poc/v2-auth
 | Secret source | 사용자 비밀 입력(user_provided) |
 | 제공하면 안 되는 대체값 | anon/publishable 키, Management PAT, 운영 service_role, DB 비밀번호 |
 
-Supabase 프로젝트의 API Keys 화면에서 legacy service_role을 확인해 환경 설정의 Secret 입력에 저장하고 적용/게시 후 알려준다. 키는 채팅·Git·앱 번들에 넣지 않는다. 새 sb_secret_ 방식은 현재 어댑터의 Authorization 처리와 다르므로 몰래 호환된다고 간주하지 않는다. legacy 키를 사용할 수 없다면 새 키 transport를 별도 검증한 뒤 입력 계약을 조정한다. 운영 runtime Secret은 요청하지 않았다.
+Supabase 프로젝트의 API Keys 화면에서 legacy service_role을 확인해 환경 설정의 **HTTP 시크릿** 입력에 저장한다. 게시 버튼이 없는 화면에서는 저장까지만 진행한다. 적용 여부는 에이전트가 runtime readiness와 실제 요청으로 확인한다. 키는 채팅·Git·앱 번들에 넣지 않는다. 새 sb_secret_ 방식은 현재 어댑터의 Authorization 처리와 다르므로 몰래 호환된다고 간주하지 않는다. legacy 키를 사용할 수 없다면 새 키 transport를 별도 검증한 뒤 입력 계약을 조정한다. 운영 runtime Secret은 요청하지 않았다.
 
 현재 factory는 호출자가 명시적으로 설정을 공급한다. 이 Secret만 등록한다고 gateway가 자동 배포되거나 인터넷에 공개되지 않는다. 실제 transport/JWKS 재조회·키 rotation/native 로그인·호스팅은 남은 단계다.
 
@@ -56,3 +56,9 @@ Supabase 프로젝트의 API Keys 화면에서 legacy service_role을 확인해 
 4. Blob 공급자는48문서에 따라 별도로 선택한다. 이번 Supabase REST 계약 fixture 지원이 Supabase Storage 최종 채택을 뜻하지 않는다. 실제 bucket/파일은 공급자/무료 잔여량·시험 범위를 확정한 뒤 만든다.
 
 현재 최소 자산 PoC는64KiB·assetId 경로/전용 테스트 bucket 계약이다.46문서의 제품용 이미지 최적화/공유 blob/dedup가 구현됐다는 뜻이 아니다. 현재 키 미설정 상태에서 실제 cloud auth/file 검증을 완료로 올리지 않는다.
+
+## 서버 키 저장·환경 적용 확인(2026-11-10 KST)
+
+사용자가 HTTP 시크릿을 저장했고 실행 환경 revision2/current, running, network enforced 및 DEV_SERVICE_ROLE_KEY ready를 확인했다. U08의 비밀 등록/환경 적용은 완료이며 실제 서버 RPC 검증은 다음 단계다. 비밀값은 출력하거나 Git에 기록하지 않았다. 저장 직후 pending은 과거 상태이며 재입력/재게시가 필요하다는 뜻이 아니다.
+
+앞으로 사용자 설정 안내는 입력 위치(일반 환경변수/HTTP 시크릿), 정확한 이름, 값 출처, 허용 도메인, 추가/수정 여부, 저장 후 검증 방법을 구분한다. 게시 버튼이 없는 UI에서는 게시를 요구하지 않는다. 작업 종료 시 완료/미해결/다음 단계를 함께 안내한다.
