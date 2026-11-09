@@ -284,3 +284,7 @@ Neon 중심 검토는 유지하되 woori 운영을 유지한 로컬 개발 대�
 ## 4.47 개발 프로젝트 URL 지정·접근 확인
 
 사용자가 개발 프로젝트 vsphftnmfzfoufasjttd URL을 제공했다. 현재 토큰으로 새 프로젝트GET403을 확인했고 실제 SQL/리전/Free 상태는 미확인으로 남겼다. 환경 ref는 기존 대상이며 새 프로젝트 호스트가 허용 목록에 없어 [44문서](44-development-project-access.md)에 ref/Secret/호스트 변경값을 정리했다. 기록용 target.pending.json은 실행에 연결하지 않았고 개발용 SQL 묶음 재구성은 접근 설정 후 진행한다. 토큰/환경/프로젝트 권한·SQL·운영/main 변경은 수행하지 않았다.
+
+## 4.48 개발·운영 환경변수 명칭 정리
+
+사용자 제안에 따라 [45문서](45-environment-variable-contract.md)와 비밀 없는 environment.example에 DEV/PROD_PROJECT_REF·MANAGEMENT_TOKEN, WJB_CLOUD_ENV 명시 선택과 자동 fallback 금지 계약을 정리했다. Management PAT/서버 키/공개 키/SQL migration 자격증명은 용도별 분리하고 운영 쓰기 연결은 평상시 개발 환경에서 제외한다. 기존 공통 변수 전환 순서와 이름 분리≠IAM 권한 분리를 명시했다. 실제 환경 설정/비밀·실행기·SQL/제품/main은 변경하지 않았다.

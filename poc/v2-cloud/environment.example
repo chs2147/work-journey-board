@@ -1,0 +1,15 @@
+# Configuration contract only; not automatically loaded by the current PoC.
+# Enter real credentials through the cloud environment Secret UI, never Git.
+WJB_CLOUD_ENV=development
+WJB_SUPABASE_DEV_PROJECT_REF=vsphftnmfzfoufasjttd
+WJB_SUPABASE_PROD_PROJECT_REF=hutqsfftioxtredcjhsy
+
+# Required Secret for development management/SQL work:
+# WJB_SUPABASE_DEV_MANAGEMENT_TOKEN=<enter in Secret UI>
+
+# Optional Secret for production inspection only:
+# WJB_SUPABASE_PROD_MANAGEMENT_TOKEN=<enter in Secret UI>
+
+# Legacy unscoped variables must not be used as automatic fallbacks:
+# WJB_SUPABASE_PROJECT_REF
+# WJB_SUPABASE_MANAGEMENT_TOKEN

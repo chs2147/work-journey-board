@@ -36,6 +36,10 @@
 
 사용자가 본격 개발을 위해 개발 DB를 운영 예정 DB와 분리하고 읽기 전용 연결/권한 재구성 절차를 요청했다. [43문서](43-dev-prod-database-setup.md)의 **별도 Free 프로젝트 운영1+개발1**을 추천했다. 사용자가 개발 URL을 제공해 dev ref는 vsphftnmfzfoufasjttd로 지정했다. 운영 예정 ref는 hutqsfftioxtredcjhsy로 분리한다. 현재 토큰은 dev 프로젝트GET403이며 환경 ref/개발 호스트 설정도 미반영이다. [44문서](44-development-project-access.md)에 정확한 변경값과 접근 증거를 기록했다. 관리형 branch는 무료로 간주하지 않는다. 현재 SQL 설치를 기존 대상에 재시도하지 않고, 개발 식별자/연결 확정→dev 전용 묶음 재검토→권한/설치 검증 순으로 진행한다. 기존 대상 고정 manifest를 그대로 dev로 실행하지 않는다. 프로젝트/토큰/권한 변경은 아직 수행하지 않았다.
 
+## 환경변수 분리(최신 안내)
+
+사용자 요청으로 [45문서](45-environment-variable-contract.md)에 WJB_CLOUD_ENV=development와 DEV/PROD_PROJECT_REF·MANAGEMENT_TOKEN 분리 계약을 작성했다. 기존 공통 변수 교체 안내에 우선하며, 새 이름은 아직 실제 환경에 적용/연결하지 않았다. 새 개발 토큰의 접근 검증과 개발 bundle/실행 경계 구성은 남아 있다. 현재 변수/비밀을 자동 변경하거나 제거하지 않았다.
+
 ## 재개 순서
 
 1. **완료:** main 1.23.1 업무 메모보드 바로가기 패치(`d11a0ca`)를 v2-design에 충돌 없이 병합했다. 앱 기준은1.23.1/DB18이다. V2 설계/PoC를 main에 병합하지 않았고 클라우드 적용도 수행하지 않았다. 다음 재개는2번부터 진행한다.
