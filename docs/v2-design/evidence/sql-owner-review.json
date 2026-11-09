@@ -1,0 +1,10 @@
+{
+  "status": "TECHNICALLY_REVIEWED",
+  "candidateRole": "postgres",
+  "bundleManifestSha256": "6ace6c937126d792660580a7f253e11db631b8ed56ffe9d9f1e43fdcdfa946ad",
+  "checkedAt": "2026-11-09T00:04:59.008Z",
+  "writeCredentialVerified": false,
+  "installationAuthorized": false,
+  "scope": "candidate SQL executor and fixed server-only definer functions",
+  "missing": []
+}

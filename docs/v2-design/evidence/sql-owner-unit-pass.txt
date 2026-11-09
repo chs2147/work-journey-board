@@ -1,0 +1,23 @@
+✔ verified capabilities pass technical review without authorizing installation (1.321558ms)
+✔ wrong target rejected (0.196876ms)
+✔ stale and future evidence rejected (0.243866ms)
+✔ not read-only evidence rejected (0.118017ms)
+✔ missing hash rejected (0.186941ms)
+✔ missing create_schema rejected (0.228985ms)
+✔ missing public_create rejected (0.182895ms)
+✔ missing public_usage rejected (0.12671ms)
+✔ missing auth_usage rejected (0.132839ms)
+✔ missing plpgsql_usage rejected (0.163265ms)
+✔ superuser or missing bypass profile needs review (0.194733ms)
+✔ one missing column privilege rejected (0.165199ms)
+✔ duplicate column cannot replace a required column (0.143305ms)
+✔ client bypass or schema create rejected (0.154532ms)
+✔ changed Auth RLS profile needs explicit review (0.102204ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 11.00178

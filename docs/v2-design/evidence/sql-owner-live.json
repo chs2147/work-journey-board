@@ -1,0 +1,97 @@
+{
+  "observed_at": "2026-11-09T00:01:01.775264+00:00",
+  "project_ref": "hutqsfftioxtredcjhsy",
+  "read_only": true,
+  "http_status": 201,
+  "query_sha256": "f2dddb4ccf0935cfa30e0ab34527f984150843873dff18ec2ec63b4c44af6df4",
+  "summary": [
+    {
+      "owner_inspection": {
+        "auth_rls": [
+          {
+            "owner": "supabase_auth_admin",
+            "table": "sessions",
+            "forced": false,
+            "enabled": true,
+            "candidateHasOwnerPrivileges": false
+          },
+          {
+            "owner": "supabase_auth_admin",
+            "table": "users",
+            "forced": false,
+            "enabled": true,
+            "candidateHasOwnerPrivileges": false
+          }
+        ],
+        "api_roles": [
+          {
+            "role": "anon",
+            "bypassRls": false,
+            "superuser": false,
+            "publicCreate": false
+          },
+          {
+            "role": "authenticated",
+            "bypassRls": false,
+            "superuser": false,
+            "publicCreate": false
+          },
+          {
+            "role": "service_role",
+            "bypassRls": true,
+            "superuser": false,
+            "publicCreate": false
+          }
+        ],
+        "candidate": {
+          "exists": true,
+          "canLogin": true,
+          "inherits": true,
+          "bypassRls": true,
+          "superuser": false
+        },
+        "auth_usage": true,
+        "auth_columns": [
+          {
+            "table": "sessions",
+            "column": "id",
+            "select": true
+          },
+          {
+            "table": "sessions",
+            "column": "not_after",
+            "select": true
+          },
+          {
+            "table": "sessions",
+            "column": "user_id",
+            "select": true
+          },
+          {
+            "table": "users",
+            "column": "banned_until",
+            "select": true
+          },
+          {
+            "table": "users",
+            "column": "deleted_at",
+            "select": true
+          },
+          {
+            "table": "users",
+            "column": "id",
+            "select": true
+          }
+        ],
+        "public_usage": true,
+        "create_schema": true,
+        "plpgsql_usage": true,
+        "public_create": true,
+        "candidate_role": "postgres",
+        "inspection_role": "supabase_read_only_user",
+        "postgres_version": "17.11",
+        "physical_database_bytes": 10917555
+      }
+    }
+  ]
+}

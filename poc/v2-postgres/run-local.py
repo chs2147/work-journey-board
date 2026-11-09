@@ -258,6 +258,12 @@ try:
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
         module.run(globals())
+    if '--owner' in sys.argv:
+        import importlib.util
+        spec = importlib.util.spec_from_file_location('owner_profile_tests', ROOT.parent/'v2-cloud'/'owner_profile_tests.py')
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        module.run(globals())
     if '--cloud' in sys.argv:
         import importlib.util
         spec = importlib.util.spec_from_file_location('cloud_sql_tests', ROOT.parent/'v2-cloud'/'sql_tests.py')
@@ -267,7 +273,7 @@ try:
 finally:
     evidence = {'observed_at':datetime.datetime.now(datetime.timezone.utc).isoformat(),
                 'scope':'Local PostgreSQL SQL authorization/transaction slice; Auth gateway is a test stub; no cloud writes',
-                'extended':'--extended' in sys.argv, 'cloud_candidate':'--cloud' in sys.argv, 'full_bundle':'--bundle' in sys.argv,
+                'extended':'--extended' in sys.argv, 'cloud_candidate':'--cloud' in sys.argv, 'full_bundle':'--bundle' in sys.argv, 'owner_profile':'--owner' in sys.argv,
                 'image':IMAGE,'postgres_version':locals().get('version'), 'tests':RESULTS,
                 'files':{p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(ROOT.iterdir()) if p.suffix in ('.py','.sql')}}
     if '--extended' in sys.argv:

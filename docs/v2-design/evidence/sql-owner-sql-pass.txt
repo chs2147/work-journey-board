@@ -1,0 +1,88 @@
+PASS create returns decimal string versions
+PASS owner sees own workspace only
+PASS other account cannot read record
+PASS other account cannot read change log
+PASS cross workspace command rejected without effects
+PASS forged device rejected without effects
+PASS wrong auth session rejected
+PASS missing auth session rejected
+PASS unauthenticated subject rejected
+PASS wrong generation rejected
+PASS duplicate operation returns same result
+PASS duplicate does not add log or operation
+PASS same key changed body rejected
+PASS same key changed target rejected
+PASS same key changed base rejected
+PASS stale revision rejected
+PASS new record requires revision zero
+PASS null body rejected
+PASS oversized utf8 body rejected
+PASS negative revision rejected
+PASS direct table insert forbidden
+PASS direct table update forbidden
+PASS direct log delete forbidden
+PASS operation ledger not visible
+PASS device sessions not visible
+PASS anonymous function denied
+PASS unbound session sees no rows
+PASS update accepted at correct revision
+PASS old ack replay after newer edit is unchanged
+PASS revocation blocks reads and cached retry
+PASS failure after record and log rolls back every write
+PASS caller rollback preserves cursor and allows retry
+PASS concurrent duplicate applies once
+PASS concurrent same-base edits have one winner
+PASS workspace lock enforces commit ordered cursors
+PASS other owner writes isolated workspace
+PASS all accepted writes have one log and ledger row
+PASS all tables enable RLS
+PASS definer functions owned by non-superuser
+PASS full bundle rejects unsupported Auth without partial schemas
+PASS read-only preinstall reports no bundle collisions
+PASS early schema collision preserves original objects and rolls back guard
+PASS late RPC collision rolls back all newly created modules
+PASS full atomic installation succeeds
+PASS full-bundle verification schemaCount
+PASS full-bundle verification tableCount
+PASS full-bundle verification rlsEnabledCount
+PASS full-bundle verification functionCount
+PASS full-bundle verification publicRpcCount
+PASS full-bundle verification unsafeSearchPaths
+PASS full-bundle verification clientExecutableCount
+PASS full-bundle verification publicExecutableCount
+PASS full-bundle verification servicePublicExecutableCount
+PASS full-bundle verification serviceDirectTableAccessCount
+PASS preinstall now finds all four public RPC names
+PASS reapply refuses existing bundle without replacement
+PASS service role can call guarded RPC
+PASS pause removes service RPC access without deleting objects
+PASS paused service invocation is denied
+PASS resume requires explicit review marker
+PASS reviewed resume restores exact server RPC access
+PASS uninstall requires explicit marker
+PASS guard revocation data prevents uninstall
+PASS data/uncertain I/O/audit survive refused uninstall and pause/resume
+PASS unexpected dependency aborts entire empty uninstall
+PASS empty-only full uninstall succeeds
+PASS both bundle namespaces removed
+PASS uninstall preserves original Auth fixtures
+PASS uninstall preserves original app data
+PASS uninstall preserves unrelated public data
+PASS uninstall preserves unrelated Storage metadata
+PASS read-only inspection remains usable after uninstall
+PASS clean reinstall after empty uninstall succeeds
+PASS non-superuser can install with only declared creation/column capabilities
+PASS without Auth bypass missing RLS permission fails closed
+PASS non-superuser can remove own empty bundle
+PASS non-superuser bypass profile installs complete bundle
+PASS definer owner is non-superuser and matches inspected bypass profile
+PASS scoped owner retains exact restricted ACL/RLS matrix
+PASS guard reads required Auth columns through actual RLS profile
+PASS bypass does not grant unlisted Auth column read
+PASS bypass does not grant Auth data update
+PASS owner does not need role creation authority
+PASS scoped owner can pause and reviewed resume
+PASS scoped owner empty uninstall succeeds
+PASS Auth fixtures unchanged by scoped execution
+Evidence: /tmp/wjb-v2-postgres-7c61yg8r/results.json
+86 tests PASS

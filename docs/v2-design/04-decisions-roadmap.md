@@ -256,3 +256,7 @@ Neon 중심 검토는 유지하되 woori 운영을 유지한 로컬 개발 대�
 ## 4.40 전체 적용·권한·자료 보존형 중단/제거 묶음
 
 사용자의 커밋/푸시 후 다음 진행 요청으로 이전 원격 반영을 확인했다. 세션/metadata/recovery를 atomic install로 묶고 source/생성기/출력 hash, ACL 확인, pause/resume, empty-only rollback과 단계별 준비 검사를 작성했다. 단위29·기존준비23·SQL73개가 성공했다. 실제 프로젝트는 공식 read-only API의 SELECT로 Auth6컬럼·PostgreSQL17.11·새 이름 충돌 없음·물리DB 약10.9MB·프로젝트 Storage0개를 확인했다. [39문서](39-full-bundle-review.md)에 공식 잔여량/설치 역할/최종검토 미완료와 DB-only 설치/후속검증 구분을 기록했다. cloud DDL/DML·버킷/사용자 생성·앱/DB18·main·환경 게시는 수행하지 않았다.
+
+## 4.41 SQL 실행 역할·Auth RLS 검토
+
+사용자의 커밋/푸시 후 다음 진행 요청으로 `3ddfc8f`의 원격 반영을 확인했다. 실제 프로젝트는 공식 read-only API로 postgres의 비 superuser/BYPASSRLS·생성/필수 Auth6컬럼 조회 권한과 Auth RLS를 확인했다. 같은 핵심 권한 조건을 로컬 역할에 재현해 SQL86개, 검토 도구15개가 성공했다. [40문서](40-sql-executor-review.md)에 기술 검토와 실제 쓰기 자격증명/설치 승인 구분을 기록했다. 실행 소유자 기술 검토만 갱신했고 공식 잔여량·묶음/rollback 최종 검토는 미확인으로 유지한다. 실제 클라우드 DDL/DML·역할 변경·제품/DB18·main·환경 게시는 수행하지 않았다.

@@ -101,3 +101,5 @@ node poc/v2-cloud/preflight.mjs --bundle poc/v2-cloud/observations.current.json
 ## 다음 진행
 
 실행할 역할/권한과 공식 DB 잔여량을 확인하고, 이 **DB-only 설치 범위**를 검토한 뒤 실제 적용 여부를 결정한다. 후속 단계의 버킷·시험 계정/공간·파일 전송·gateway는 별도 범위다. 제품 코드/DB18·main·배포·환경 설정 게시·실제 클라우드 DDL/DML은 변경하지 않았다.
+
+후속 실행 역할 기술 검토와 비 superuser 재현 시험은 [40문서](40-sql-executor-review.md)에 기록했다. 위 표/판정은 이 문서를 작성한 시점의 관측이며, 최신 준비 상태는 observations.current.json과 40문서를 함께 확인한다.

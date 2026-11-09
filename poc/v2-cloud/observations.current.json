@@ -15,7 +15,7 @@
     "singleSession": false
   },
   "authSchemaVerified": true,
-  "migrationOwnerReviewed": false,
+  "migrationOwnerReviewed": true,
   "gatewayVerified": false,
   "privateStorageVerified": false,
   "rollbackReviewed": false,
@@ -30,5 +30,17 @@
     "projectStorageObjectCount": 0,
     "projectStorageKnownBytes": 0,
     "billingOrOrgQuotaVerified": false
+  },
+  "ownerReview": {
+    "status": "TECHNICALLY_REVIEWED",
+    "candidateRole": "postgres",
+    "bundleManifestSha256": "6ace6c937126d792660580a7f253e11db631b8ed56ffe9d9f1e43fdcdfa946ad",
+    "checkedAt": "2026-11-09T00:04:59.008Z",
+    "writeCredentialVerified": false,
+    "installationAuthorized": false,
+    "scope": "candidate SQL executor and fixed server-only definer functions",
+    "missing": [],
+    "evidenceObservedAt": "2026-11-09T00:01:01.775264+00:00",
+    "querySha256": "f2dddb4ccf0935cfa30e0ab34527f984150843873dff18ec2ec63b4c44af6df4"
   }
 }
