@@ -85,3 +85,7 @@ storeId는 서버에서 등록한 공급자/개발·운영 대상에만 매핑�
 R2를 선택하면 추가로 Cloudflare 구독 조건 검토, DEV/PROD bucket 분리와 최소 권한, exact endpoint HTTP 시크릿 또는 Workers binding, Worker runtime CPU/JWT/메모리/재시도 시험이 필요하다. 아직 존재하지 않는 계정/endpoint/Secret을 미리 설정하라고 요청하지 않는다.
 
 이번 단계의 완료는 **공식 조건 재검증·추천안·계산·시험 범위 정리**다. 공급자 선택과 실제 파일 종단간 검증은 완료로 표시하지 않는다.
+
+## 사용자 확정 후 상태
+
+사용자가 Supabase를 우선 선택했다. [54문서](54-supabase-storage-decision.md)의 결정이 이 문서의 공급자 미선정/지역 답변 대기보다 우선한다. Supabase private Storage로 실제 시험을 준비하며 Pro 결제는 하지 않는다. U07 개발 실제 플랜/Usage와 파일 전송 검증은 남아 있다.

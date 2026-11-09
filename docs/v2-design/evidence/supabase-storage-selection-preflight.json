@@ -1,0 +1,26 @@
+{
+  "checkedAt": "2026-11-09T21:35:01.788258+00:00",
+  "target": "vsphftnmfzfoufasjttd",
+  "operation": "read-only storage preflight",
+  "providerSelected": "supabase",
+  "writes": false,
+  "actualOrganizationFreeAndUsageVerified": false,
+  "bucketApi": {
+    "http": 200,
+    "bucketCount": 0,
+    "plannedBucketCollision": false
+  },
+  "storageCatalog": {
+    "http": 201,
+    "result": [
+      {
+        "bucket_count": 0,
+        "object_count": 0,
+        "object_metadata_bytes": "0",
+        "objects_rls": true,
+        "object_policy_count": 0
+      }
+    ]
+  },
+  "usageCaveat": "Project storage catalog bytes are not organization billing Usage, remaining quota or plan proof. No repeat of unchanged organization API 403."
+}

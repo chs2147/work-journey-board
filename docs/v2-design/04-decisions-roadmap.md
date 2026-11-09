@@ -320,3 +320,7 @@ V2 체크포인트52ff622를 푸시한 뒤 사용자 요청의 캐비넷/노트 
 ## 4.56 Blob 무료 운영 선택안/검증 계획
 
 [53문서](53-blob-selection-and-verification-plan.md)에 Supabase Free 과금 없음/Spend Cap Pro 전용, R2 포함량 초과 과금/아시아 힌트, Workers Free CPU/일별 요청 조건을 공식 원문으로 확인했다. 초기 월0원·아시아 유지 후보는 Supabase private Storage, 큰 용량 후보는 R2이며 최종 미선정이다. 이미지/전송 계획 예산은 실측이 아니고 기존64KiB PoC/dedup 미구현 경계를 유지한다. 사용자 지역 조건 답변과 개발 실제 Free/Usage 이후 private 파일 검증으로 이어간다. 계정/유료/환경/버킷/파일/제품 변경은 없다.
+
+## 4.57 초기 Blob 공급자 Supabase 확정
+
+사용자가 Supabase로 우선 확정했다. [54문서](54-supabase-storage-decision.md)에 private Storage·기존 월0원·지역·V1 무영향과 U07 확인/실제 파일 시험 범위를 기록했다. 개발 Storage API200/bucket0/object0/RLS true를 읽기 확인했다. Pro 결제 승인으로 해석하지 않으며 실제 조직 Free/Usage는 아직 확인 대기다. R2 위치 힌트 질문은 현재 진행의 선행 조건에서 해소했다. 버킷/파일/유료/환경/제품/main 변경은 없다.

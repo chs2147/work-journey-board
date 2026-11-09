@@ -92,3 +92,7 @@ main CI42585959844의 실제 실패는 Chromium 표 이동 undo 시 표 전체�
 ## Blob 선택안 정리(2026-11-10 KST, 최신)
 
 [53문서](53-blob-selection-and-verification-plan.md)의 무료/지역/전송 비용 검토와 계획 예산을 정리했다. Supabase Free 과금 없음·R2 초과 과금/아시아 보장 미확인·Workers Free10ms 조건을 구분했다. 초기 Supabase private Storage안을 제안했으나 공급자는 미선정이며 아시아 힌트 허용 여부 답변/U07 Free·Usage 확인이 남는다. 다음은 답변을 반영한 공급자 확정→DEV private 가상 표본 전송/정리 검증이다. 52문서 Auth20검사/cleanup 완료 상태를 유지하며 환경/계정/구독/버킷/실제 파일/제품/main은 변경하지 않았다.
+
+## Supabase Storage 확정(2026-11-10 KST, 최신)
+
+사용자가 초기 Blob 공급자를 Supabase로 확정했다. [54문서](54-supabase-storage-decision.md)가 최신 결정이다. 월0원은 유지하고 Pro 업그레이드는 승인받은 것으로 해석하지 않는다. 개발 Storage 읽기 API200/bucket0/object0/RLS true를 확인했으나 개발 조직 플랜/청구 Usage(U07)는 대시보드 확인이 남아 있다. 다음은 U07→DEV private 제한 표본 gateway 전송/조회/삭제·격리/회수·cleanup 시험이다. R2 관련 질문/가입은 진행 선행 조건에서 제외했다. 현재 실제 파일/버킷/정책 생성·환경/제품/main 변경은 없다.

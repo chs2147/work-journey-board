@@ -64,3 +64,7 @@ R2의 S3-compatible API 사용은 AWS 직접 인프라 운영을 뜻하지 않�
 ## 후속 비용/지역 판단(2026-11-10 KST)
 
 [53문서](53-blob-selection-and-verification-plan.md)에서 공식 cost-control/regions/Workers 문서를 추가 확인했다. Supabase Free는 과금하지 않으며 Spend Cap은 Pro 전용이다. 기존 용량 우선 R2 후보와 구분해 월0원·아시아 유지 초기안은 Supabase private Storage를 제안한다. R2는 아시아 힌트 허용 여부/초과 과금 조건 결정 전 미선정이다. 현재 DEV/운영 예정 조직은 서로 달라 포함량을 무조건 합산하지 않는다. 실제 계정 Free/Usage·공급자 선택·파일 전송은 남는다.
+
+## 최종 초기 공급자 결정
+
+사용자 선택으로 초기 Blob 공급자는 **Supabase private Storage**로 확정했다. [54문서](54-supabase-storage-decision.md)를 따른다. 이 문서의 R2 우선 후보/미선정 표시는 비교 당시 기록이며 현재 선택이 아니다. 기존 월0원·V1 무영향은 유지하고 Pro 업그레이드는 별도 결정한다.
