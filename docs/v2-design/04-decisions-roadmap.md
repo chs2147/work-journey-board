@@ -276,3 +276,7 @@ Neon 중심 검토는 유지하되 woori 운영을 유지한 로컬 개발 대�
 ## 4.45 승인된 실제 SQL 설치 시도·읽기 전용 실행 차단
 
 사용자가 DB-only 적용을 승인했다. 실제 대상/Auth/충돌/후보 권한을 재조회한 뒤 검토된 install.sql을1회 요청했지만 HTTP400/25006으로 실패했다. read_only:false를 명시한 요청도 실제 supabase_read_only_user·transaction/default read_only=on으로 실행됨을 SELECT로 확인했다. 후속 verify는 schema/table/function0개다. [42문서](42-cloud-sql-install-attempt.md)에 요청/검증/진단 증거와 쓰기 연결 또는 소유자 SQL Editor 재개 절차를 기록했다. 승인 자체는 유지하며 재승인하지 않는다. 알려진 읽기 전용 실행을 준비 검사 차단 조건으로 추가했다. bucket/Auth사용자/파일/gateway·제품/main·환경 게시는 변경하지 않았다.
+
+## 4.46 개발·운영 DB 분리와 권한 재구성 안내
+
+사용자가 개발 우선 DB 준비와 분리/권한 절차를 요청했다. [43문서](43-dev-prod-database-setup.md)에 월0원 기준 별도 Free 프로젝트2개 추천, 관리형 branch 과금 구분, PAT/마이그레이션/서버/사용자 권한 분리, 현재 환경 입력명과 새 dev ref 고정·기존 PoC 재구성·적용 순서를 정리했다. 운영 예정/개발 프로젝트 배정은 추천이며 실제 dev ref·프로젝트/토큰 생성·권한 확대·SQL 설치는 수행하지 않았다. 현재 설치 재시도보다 개발 대상과 쓰기 연결 준비를 먼저 진행한다.
