@@ -1,0 +1,54 @@
+# 47. V2 진행 항목·사용자 직접 설정·재개 순서
+
+2026-11-09 UTC · v2-design · 현재 실행 환경과 저장 초안을 구분한다. 과거 결과/관측을 덮어쓰지 않는다.
+
+## 환경변수 운영 규칙
+
+[45 환경변수 계약](45-environment-variable-contract.md)을 정본으로 유지한다. WJB_CLOUD_ENV=development를 명시하고 DEV/PROD ref와 Secret을 분리한다. 선택 환경의 값이 없으면 중단하며 기존 공통 변수/다른 환경으로 자동 fallback하지 않는다. PAT 이름 분리가 실제 IAM 격리를 보장하지 않으므로 대상·토큰 접근·SQL 실행 역할을 각각 확인한다. 운영 쓰기 자격증명은 개발 환경 기본값으로 제공하지 않는다.
+
+Management token은 api.supabase.com에만 전달한다. 서버용 service key/DB 비밀번호는 PAT 대체물이 아니며 앱 번들·VITE_ 변수·Git·로그에 포함하지 않는다. 키 변경은 검증 후 구 키 정리 순서로 하고 현재 동작 중인 바인딩을 먼저 폐기하지 않는다. dev/prod 관측·Usage·검토 hash·설치 증거도 분리한다.
+
+## 현재 확인된 환경 상태
+
+환경 status는 기존 WJB_SUPABASE_PROJECT_REF와 WJB_SUPABASE_MANAGEMENT_TOKEN만 ready로 보고한다. 저장 초안 revision2에는 WJB_SUPABASE_PROD_PROJECT_REF=hutqsfftioxtredcjhsy 제안이 pending이다. 기존 Secret의 변수 대상 이름 변경은 설정 도구가 충돌로 거절했으며 **자동 이름 변경/값 이동/새 Secret 복제는 하지 않았다.** 초안 저장은 실제 적용/게시 완료가 아니다.
+
+새 개발 ref는 vsphftnmfzfoufasjttd, 운영 예정 ref는 hutqsfftioxtredcjhsy다. 마지막 개발 프로젝트GET은403, 운영 예정 SQL 설치 요청은readonly 오류/생성 객체0개였다. 개발 SQL 쓰기 능력·플랜/리전은 미확인이다. 실제 환경이 이후 변경되면 status/새 연결로 재확인해야 한다.
+
+## 사용자가 직접 설정할 항목
+
+| ID | 직접 할 작업 | 완료 기준 | 현재 상태 |
+|---|---|---|---|
+| U01 | 기존 비밀 항목의 **환경변수 이름** WJB_SUPABASE_MANAGEMENT_TOKEN → WJB_SUPABASE_PROD_MANAGEMENT_TOKEN 편집. api.supabase.com 대상/기존 값 유지 | 신규 PROD 바인딩 ready, 값 노출/중복 Secret 생성 없음 | 직접 편집 대기 |
+| U02 | 초안 PROD_PROJECT_REF 값 확인. 새 PROD 변수 적용 후 기존 WJB_SUPABASE_PROJECT_REF 정리 | PROD_REF=hutqsfftioxtredcjhsy, 구 이름은 전환 검증 뒤 제거 | 새 항목 초안만 저장 |
+| U03 | 일반 변수 WJB_CLOUD_ENV=development, WJB_SUPABASE_DEV_PROJECT_REF=vsphftnmfzfoufasjttd 설정 | 실제 실행 환경에서 두 값이 일치 | 미설정 |
+| U04 | 새 개발 프로젝트가 보이는 계정에서 발급한 접근/승인된 SQL 쓰기용 Management token을 DEV_MANAGEMENT_TOKEN Secret에 입력 | DEV_PROJECT GET200. 쓰기 역할은 에이전트가 별도 검증 | 현재 토큰 GET403 |
+| U05 | 허용 호스트 vsphftnmfzfoufasjttd.supabase.co 추가, 기존 api.supabase.com/GitHub/패키지 호스트 유지 | 현재 network policy enforced에 개발 호스트 포함 | 미반영 |
+| U06 | 설정 검토·저장·게시 후 적용 사실 알림. 비밀값은 채팅에 보내지 않음 | 새 revision/current readiness 확인 가능 | 대기 |
+| U07 | 개발/운영 Free 상태와 Usage 확인, 실제 token 권한 UI에서 접근 범위 확인 | 제공자/사용자 근거와 확인 시각 기록 | 운영 Free/Usage만 이전 확인, 개발 미확인 |
+
+토큰 UI가 세부 scope를 지원하지 않거나 기존 비밀의 이름 편집이 안 되면 그 UI의 지원 범위를 확인해 전환 방법을 정한다. 환경 도구가 새 이름으로 값을 자동 복사할 수 있다고 가정하지 않는다. 개발용 서버 키·사용자 공개 키·migration DB URL은 해당 단계에서 필요할 때만 추가한다.
+
+## 에이전트 진행 항목
+
+| ID | 작업 | 선행 | 상태/완료 기준 |
+|---|---|---|---|
+| A01 | DEV/PROD 명시 선택기·새 변수 읽기 경계 연결 | U03/U04 | 미구현. 누락/혼합/잘못된 ref·운영 fallback 거절 |
+| A02 | 개발 접근/리전/Free/실행 역할/readonly 재점검 | U03~U07 | 대기. 과거403/readonly 결과를 새 성공으로 재사용하지 않음 |
+| A03 | dev 전용 SQL manifest/marker/Auth issuer/gateway/관측 구성 | A01/A02 | 기존 ref 고정 PoC 유지 중. 운영 묶음 증거 보존하며 분리 |
+| A04 | 개발 DB-only 설치/ACL·소유자 검증 | A03 | 미설치. 응답 유실 시 verify 우선, 같은 묶음 중복 적용 금지 |
+| A05 | 가상 Auth/private Storage/gateway 실검증·메일/Keep Alive | A04/비용 확인 | 미실행. 계정·파일 전송 범위/실측 증거 분리 |
+| A06 | V1/V2 앱 ID·설정·업데이트 채널·복사 전환 설계 잠금 | 46문서 | 미구현. V1 자동 교체/원본 수정/계정 의존 없음 |
+| A07 | 온라인 binary AssetStore·blob/reference/variant·quota/GC 설계/PoC | A06 | 새 schema 미구현. 현재64KiB/assetId PoC는 hash dedup 완성 아님 |
+| A08 | 가독성/해상도·압축 시안과 OS별 실측 | A07 | 사진/한글 표·스크린샷/투명도/GIF 비교 후 기본값 확정 |
+| A09 | 실제 기기 동기화·충돌/복원·오프라인 통합 | A05/A07/A08 | 미완료. 로컬 모형 PASS로 대체 안 함 |
+| A10 | ko/en 앱/사이트/가이드/출력 이행·Win/macOS 실기·출시 | A06/A09 | 미구현. 로컬 기존 기능/배포 채널 회귀 관문 포함 |
+
+A06~A08은 **설계/화질 검토를 먼저 진행**하고 제품 DB/이미지 처리 코드는 별도 구현 단계에서 반영한다. 신규 dedup schema/한도 확대는 기존 DB-only 설치 SQL에 자동 포함하지 않는다. U항목 대기 중에도 설계/로컬 가상 비교 작업은 가능하나 실제 cloud 접근 성공으로 보고하지 않는다.
+
+## 바로 다음 진행
+
+1. 사용자 U01~U06 설정. 에이전트는 적용 후 새 status/실제 접속으로 확인한다.
+2. A01~A04의 개발 우선 경계를 구성한다. 기존 운영 예정 대상의 설치를 계속 재시도하지 않는다.
+3. [46문서](46-local-compatibility-image-storage.md)의 로컬 무영향/이미지 정책을 검토하고 A06~A08 구현 명세·품질 비교를 확정한다.
+
+이미 확정된 ko/en·개인 여러 기기·Win/macOS·TLS/서버 암호화·월0원 원칙은 유지한다. 작업 브랜치는 v2-design이고 main 제품·기존 로컬 DB18·설치판에는 이번 문서 작업을 반영하지 않는다.

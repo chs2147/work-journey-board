@@ -40,6 +40,12 @@
 
 사용자 요청으로 [45문서](45-environment-variable-contract.md)에 WJB_CLOUD_ENV=development와 DEV/PROD_PROJECT_REF·MANAGEMENT_TOKEN 분리 계약을 작성했다. 기존 공통 변수 교체 안내에 우선하며, 새 이름은 아직 실제 환경에 적용/연결하지 않았다. 새 개발 토큰의 접근 검증과 개발 bundle/실행 경계 구성은 남아 있다. 현재 변수/비밀을 자동 변경하거나 제거하지 않았다.
 
+## 최신 진행 목록·로컬/이미지 설계
+
+[47문서](47-active-work-items.md)가 현재 사용자 직접 설정(U01~U07)과 에이전트 작업(A01~A10)의 정본이다. 운영 ref만 초안 revision2에 pending이고 Secret 이름 변경/실제 실행 환경 전환은 미완료다. 기존 순서보다 **DEV 변수/쓰기 접근 구성→개발용 bundle 분리**를 먼저 진행한다.
+
+[46문서](46-local-compatibility-image-storage.md)에 기존 로컬 모델 무영향 점검을 보완했다. V2 별도 앱/설정/업데이트 피드, V1 사본 전환, 로컬-only 무계정, 온라인 공간의 DB 밖 이미지·완전 오프라인 자산/패키지 백업을 구분한다. 실제 PoC는 hash dedup이 없고64KiB 제한이다. 새 workspace별 immutable blob 공유/논리 참조·COW/GC/해상도·품질 수치는 설계 제안이며 아직 구현/성능 실증하지 않았다. 기존 V1 DB/base64/1600px 처리 코드는 유지한다.
+
 ## 재개 순서
 
 1. **완료:** main 1.23.1 업무 메모보드 바로가기 패치(`d11a0ca`)를 v2-design에 충돌 없이 병합했다. 앱 기준은1.23.1/DB18이다. V2 설계/PoC를 main에 병합하지 않았고 클라우드 적용도 수행하지 않았다. 다음 재개는2번부터 진행한다.

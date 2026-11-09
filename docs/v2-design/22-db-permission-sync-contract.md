@@ -84,3 +84,7 @@ snapshot manifest에는 앱/DB/protocol/문서/백업 포맷 버전, generation/
 도메인별 aggregate/FK·정렬·문서/링크 계약, 동시 op/cursor 커밋 순서, JSON 포맷 정규화, 세션 회수·RPC/RLS·Storage 직접 접근, fixture count/hash·복원, 무료 플랜의 함수/트랜잭션/메일 한도를 확인한다.
 
 현재는 논리 구조와 처리 계약이다. 실제 migration·RLS policy·함수·서버 endpoint·앱 저장소를 생성하거나 시험하지 않았다.
+
+## 22.9 후속 이미지·로컬 호환 설계
+
+[46문서](46-local-compatibility-image-storage.md)는 기존 로컬 모델을 보존하면서 신규 V2 온라인 자산을 DB 밖 binary로 저장하고, 독립 logical asset과 workspace 범위 immutable blob을 분리하는 최신 요구/설계다. 현재 gateway assetId 기반 PoC에 hash 중복 제거가 구현됐다는 뜻이 아니다. 새 schema/한도/참조 GC·품질 검토 후 별도 migration을 작성하며 기존 DB-only 묶음을 덮어쓰지 않는다.

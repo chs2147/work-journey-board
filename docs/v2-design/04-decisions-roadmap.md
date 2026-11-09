@@ -288,3 +288,7 @@ Neon 중심 검토는 유지하되 woori 운영을 유지한 로컬 개발 대�
 ## 4.48 개발·운영 환경변수 명칭 정리
 
 사용자 제안에 따라 [45문서](45-environment-variable-contract.md)와 비밀 없는 environment.example에 DEV/PROD_PROJECT_REF·MANAGEMENT_TOKEN, WJB_CLOUD_ENV 명시 선택과 자동 fallback 금지 계약을 정리했다. Management PAT/서버 키/공개 키/SQL migration 자격증명은 용도별 분리하고 운영 쓰기 연결은 평상시 개발 환경에서 제외한다. 기존 공통 변수 전환 순서와 이름 분리≠IAM 권한 분리를 명시했다. 실제 환경 설정/비밀·실행기·SQL/제품/main은 변경하지 않았다.
+
+## 4.49 사용자 직접 환경 설정 목록·로컬 보호·이미지 전략 보완
+
+사용자 요청으로 [47문서](47-active-work-items.md)에 변수 운영 규칙·현재 초안/실행 차이·U01~U07 직접 설정과 A01~A10 진행/완료 기준을 정리했다. [46문서](46-local-compatibility-image-storage.md)는 소스/기존 문서 점검으로 V2 배포 피드/설정 격리·오프라인 자산/백업·DB 포함 초안 충돌·현재 PoC dedup 미구현/64KiB 한도 등 누락을 명시했다. V1 로컬 계약은 유지하고 신규 온라인 공간만 binary AssetStore/독립 logical reference와 workspace scoped immutable blob·COW/보존 참조 GC로 설계했다. 해상도/용량 값은 화질·OS 실측 전 후보이며 코드·DB·환경·main 변경/실제 절감 실증은 수행하지 않았다.
