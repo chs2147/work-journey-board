@@ -104,11 +104,17 @@ npm run tauri dev    # 실앱 모드(윈도우·맥 / 리눅스는 webkit2gtk-4.
 - 브라우저 모드 주소 옵션(E2E·시연): `?today=YYYY-MM-DD` 오늘 고정 · `?empty=1` 빈 일지 · `?fresh=1` 첫 실행 화면 · `?existing=/경로` 그 폴더에 샘플 일지 준비 · `?config=/경로` 설정 폴더 지정 · `?sample=year`(`year-img`) 가상 1년치 일지 · `?sample=showcase` README·소개 사이트 화면용 메모 보드 예시 · `?corrupt=1` 파손 일지
 - 설치 파일: `main`에 반영되면 *Build desktop installers*가 윈도우(NSIS)·맥(유니버설 DMG)을 나란히 만들고, **둘 다 성공해야** [Releases](https://github.com/chs2147/work-journey-board/releases)에 `v<버전>`으로 함께 올린다 — 0.x·`-rc`는 사전 릴리스, 1.0.0 이상 정식 판은 정식 릴리스. 윈도우 오프라인 설치판은 요청할 때만 Actions → *Build desktop installers* → Run workflow(main) → `offline`으로 그 판 릴리스에 더한다. 하나의 원본으로 두 플랫폼을 같은 판으로 운영한다([docs/macos-spec.md](docs/macos-spec.md)).
 
-현재 상세 기능과 도입 버전: [Feature List 운영 문서](docs/features/README.md) · [현재 목록](docs/features/CURRENT.md) · [검토용 Excel](docs/features/exports/work-journey-board/Work-Journey-Board-Feature-List-v1.23.1.xlsx)
+현재 상세 기능과 도입 버전: [Feature List 운영 문서](docs/features/README.md) · [현재 목록](docs/features/CURRENT.md) · [검토용 Excel](docs/features/exports/work-journey-board/Work-Journey-Board-Feature-List-v1.23.2.xlsx)
 
 ## Version History
 
 최근 5개 버전(정식·RC)을 표시합니다. [더 보기 — 전체 버전 히스토리](VERSION_HISTORY.md)
+
+### v1.23.2 (2026-11-09) — Cabi.NET 목록 정렬·표 편집 개선
+
+- 캐비넷 목록에서 노트와 폴더·링크의 아이콘/본문 시작선 정렬 통일.
+- 업무 노트 표 열 너비 조절과 행·열 이끌이 드래그 이동, 바깥 클릭 메뉴 닫기 지원.
+- 블록 메뉴 내부 스크롤 시 메뉴가 닫히던 오류 수정. DB18 유지.
 
 ### v1.23.1 (2026-11-09) — 업무 메모보드 바로가기
 
@@ -135,13 +141,6 @@ npm run tauri dev    # 실앱 모드(윈도우·맥 / 리눅스는 webkit2gtk-4.
 - 관계선 보기/숨김 버튼을 주간·업무 메모보드 상단 오른쪽 보기 툴바로 이동.
 - 링크 넣기 팝업의 배경 전체 흐림·클릭/포커스 차단, Tab 이동·닫기 후 포커스 복귀 개선.
 - main 직접 패치. DB v18 유지, Windows 기본판·macOS 유니버설 동시 빌드.
-
-### v1.22.0 (2026-11-07) — Cabi.NET 편집·메모 팔레트·Universe 개선
-
-- 명칭 없는 1열 아이콘 팔레트·미니멀 접기 손잡이, 보기 도구는 기존 상단 오른쪽에 유지.
-- 업무 노트 표 행/열 메뉴·계층 번호·가져오기/목차 아이콘, 모든 메모 객체의 가로/세로 프레임과 실행 취소 개선.
-- Universe 성운·별빛 배경, 정적 모드·모션 감소 지원. DB v18, 전진 마이그레이션 직전 자동 백업.
-- RC CI·Windows/macOS 빌드 및 사용자 배포 확인 후 main 반영 승인. 이전 main은 `release/v1.21.0`에 보존.
 
 [더 보기 — 전체 버전 히스토리](VERSION_HISTORY.md)
 

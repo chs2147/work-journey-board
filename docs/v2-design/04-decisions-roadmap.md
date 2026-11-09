@@ -296,3 +296,7 @@ Neon 중심 검토는 유지하되 woori 운영을 유지한 로컬 개발 대�
 ## 4.50 온라인 private Blob 공급자 무료 용량 검토
 
 사용자 요청으로 [48문서](48-blob-storage-provider-review.md)에 R2/Supabase 공식 공개 소스를 조회·비교하고 원문 hash/발췌를 기록했다. R2 Standard10GB-month 무료는 우선 검증 후보지만 과금 cap/지역 보장 검증 전 채택하지 않는다. B2 공식 사이트는proxy403으로 현행 요금 미확인, Vercel은 기존 경험 기반 재검증 대상으로 남긴다. Supabase DB/Auth와 private Blob adapter를 분리하고 gateway 전체 전송비/로컬 보호를 유지한다. A11에 후속 검토를 추가했다. 계정/카드/버킷/환경/제품/main 변경은 없다.
+
+## 4.51 main 1.23.2 편집기 패치 후 복귀
+
+V2 체크포인트52ff622를 푸시한 뒤 사용자 요청의 캐비넷/노트 편집기 수정을 main6250ecd(1.23.2)에 반영했다. 검증된 main 패치를 v2-design으로 병합해 복귀했다. V2 설계/PoC는 main에 포함하지 않았고 환경 변수/접근/SQL 설치 상태도 유지한다.

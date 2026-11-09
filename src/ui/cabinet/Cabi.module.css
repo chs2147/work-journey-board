@@ -292,7 +292,7 @@
 .prose table {
   border-collapse: collapse;
   table-layout: fixed;
-  width: 100%;
+  width: auto;
 }
 .prose td,
 .prose th {
@@ -795,4 +795,24 @@
 }
 .exportMenu button {
   width: 100%;
+}
+
+.prose :global(.tableWrapper) {
+  overflow-x: auto;
+}
+.list > .row {
+  padding: var(--sp-2) var(--sp-4);
+  min-height: 52px;
+  gap: var(--sp-3);
+}
+.list > .row > svg {
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  padding: 6px;
+  box-sizing: border-box;
+  background: var(--surface-sub);
+}
+.list .rowMain small {
+  margin-top: 0;
 }

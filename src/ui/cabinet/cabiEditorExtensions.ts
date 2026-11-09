@@ -47,7 +47,7 @@ export function cabiEditorExtensions() {
     }),
     TaskList,
     TaskItem.configure({ nested: true }),
-    TableKit.configure({ table: { resizable: true } }),
+    TableKit.configure({ table: { resizable: true, cellMinWidth: 60, handleWidth: 6 } }),
     TextColor,
     LinkOpener,
     CabiImage,
