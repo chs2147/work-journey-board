@@ -50,6 +50,7 @@ export interface CabinetState {
   /** 진행 중(종료 안 된) 업무 id(improve-1102-spec C2) */
   activeIds: string[];
   cabiCounts: Record<string, number>;
+  cabiBoardIds: string[];
   /** 보드가 보는 주의 본 항목(항목 연결 고르기) — 메인 창이 채워 Cabinet 창에도 보낸다 */
   weekId: string;
   weekEntries: WeekEntry[];
@@ -84,6 +85,7 @@ export const useCabinet = create<CabinetState>(() => ({
   categories: [],
   activeIds: [],
   cabiCounts: {},
+  cabiBoardIds: [],
   weekId: "",
   weekEntries: [],
   group: null,
@@ -155,15 +157,16 @@ export interface CabinetSnapshot {
   categories: Category[];
   activeIds: string[];
   cabiCounts: Record<string, number>;
+  cabiBoardIds: string[];
   weekId: string;
   weekEntries: WeekEntry[];
   folders: { id: string; sub: string }[];
 }
 
 export function snapshot(): CabinetSnapshot {
-  const { items, links, categories, activeIds, cabiCounts, weekId, weekEntries, folders } =
+  const { items, links, categories, activeIds, cabiCounts, cabiBoardIds, weekId, weekEntries, folders } =
     useCabinet.getState();
-  return { items, links, categories, activeIds, cabiCounts, weekId, weekEntries, folders };
+  return { items, links, categories, activeIds, cabiCounts, cabiBoardIds, weekId, weekEntries, folders };
 }
 
 export function applySnapshot(snap: unknown) {
@@ -185,7 +188,14 @@ export async function loadCabinet() {
   const activeIds = [...new Set(periods.filter((p) => p.endDate === null).map((p) => p.categoryId))];
   const cabiCounts: Record<string, number> = {};
   for (const d of [...notes, ...boards]) cabiCounts[d.categoryId] = (cabiCounts[d.categoryId] ?? 0) + 1;
-  useCabinet.setState({ items, links, categories: sorted, activeIds, cabiCounts });
+  useCabinet.setState({
+    items,
+    links,
+    categories: sorted,
+    activeIds,
+    cabiCounts,
+    cabiBoardIds: boards.map((b) => b.categoryId),
+  });
   await app()
     .platform?.cabinetSetRoots(items.filter((i) => i.kind === "folder").map((i) => i.target))
     .catch(() => undefined);

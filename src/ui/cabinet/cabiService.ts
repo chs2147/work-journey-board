@@ -451,6 +451,7 @@ async function handle(name: string, args: unknown[], sender: string): Promise<un
     if (kind === "note") title = (await r.note(id)).title;
     else if (kind === "board") {
       await r.board(id, true);
+      await loadCabinet();
       title = (await j.repo.listCategories()).categories.find((c) => c.id === id)?.name ?? "업무 보드";
     } else throw new Error("창 종류가 올바르지 않습니다.");
     assertCurrent();

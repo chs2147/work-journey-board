@@ -104,11 +104,17 @@ npm run tauri dev    # 실앱 모드(윈도우·맥 / 리눅스는 webkit2gtk-4.
 - 브라우저 모드 주소 옵션(E2E·시연): `?today=YYYY-MM-DD` 오늘 고정 · `?empty=1` 빈 일지 · `?fresh=1` 첫 실행 화면 · `?existing=/경로` 그 폴더에 샘플 일지 준비 · `?config=/경로` 설정 폴더 지정 · `?sample=year`(`year-img`) 가상 1년치 일지 · `?sample=showcase` README·소개 사이트 화면용 메모 보드 예시 · `?corrupt=1` 파손 일지
 - 설치 파일: `main`에 반영되면 *Build desktop installers*가 윈도우(NSIS)·맥(유니버설 DMG)을 나란히 만들고, **둘 다 성공해야** [Releases](https://github.com/chs2147/work-journey-board/releases)에 `v<버전>`으로 함께 올린다 — 0.x·`-rc`는 사전 릴리스, 1.0.0 이상 정식 판은 정식 릴리스. 윈도우 오프라인 설치판은 요청할 때만 Actions → *Build desktop installers* → Run workflow(main) → `offline`으로 그 판 릴리스에 더한다. 하나의 원본으로 두 플랫폼을 같은 판으로 운영한다([docs/macos-spec.md](docs/macos-spec.md)).
 
-현재 상세 기능과 도입 버전: [Feature List 운영 문서](docs/features/README.md) · [현재 목록](docs/features/CURRENT.md) · [검토용 Excel](docs/features/exports/work-journey-board/Work-Journey-Board-Feature-List-v1.23.0.xlsx)
+현재 상세 기능과 도입 버전: [Feature List 운영 문서](docs/features/README.md) · [현재 목록](docs/features/CURRENT.md) · [검토용 Excel](docs/features/exports/work-journey-board/Work-Journey-Board-Feature-List-v1.23.1.xlsx)
 
 ## Version History
 
 최근 5개 버전(정식·RC)을 표시합니다. [더 보기 — 전체 버전 히스토리](VERSION_HISTORY.md)
+
+### v1.23.1 (2026-11-09) — 업무 메모보드 바로가기
+
+- 주간·데일리 뷰의 업무 이름 옆에 기존 업무 메모보드를 바로 여는 모노그램 아이콘 제공.
+- 실제 보드가 있는 업무에만 표시하고, 보드 생성·삭제 시 바로가기 상태를 갱신.
+- main 직접 패치. DB18 유지, Windows 기본판·macOS 유니버설 함께 빌드.
 
 ### v1.23.0 (2026-11-07) — Universe A/C 자동 움직임·Cabi.NET 내보내기 개선
 
@@ -136,13 +142,6 @@ npm run tauri dev    # 실앱 모드(윈도우·맥 / 리눅스는 webkit2gtk-4.
 - 업무 노트 표 행/열 메뉴·계층 번호·가져오기/목차 아이콘, 모든 메모 객체의 가로/세로 프레임과 실행 취소 개선.
 - Universe 성운·별빛 배경, 정적 모드·모션 감소 지원. DB v18, 전진 마이그레이션 직전 자동 백업.
 - RC CI·Windows/macOS 빌드 및 사용자 배포 확인 후 main 반영 승인. 이전 main은 `release/v1.21.0`에 보존.
-
-### v1.22.0-rc.1 (2026-11-07) — 접이식 세로 팔레트·표 편집·객체 크기 개선
-
-- C안 접이식 세로 도구 팔레트와 위젯 그룹·복사/붙여넣기 아이콘. 불필요한 고정 문구·보드 미리보기 제거.
-- 업무 노트의 표 행/열 메뉴·계층 번호·명확한 이미지/가져오기·목차 아이콘.
-- 모든 보드 객체의 가로/세로 프레임 크기 저장·실행 취소, Universe 성운/별빛 배경. DB v18.
-- improve-v18 작업 브랜치 검증판. 정식 버전·main 반영은 별도 승인.
 
 [더 보기 — 전체 버전 히스토리](VERSION_HISTORY.md)
 
