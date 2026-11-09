@@ -1,23 +1,25 @@
 {
   "schemaVersion": 1,
-  "configurationStatus": "PENDING_ENVIRONMENT_ACCESS",
+  "configurationStatus": "ACCESS_VERIFIED_BUNDLE_PENDING",
   "development": {
     "projectRef": "vsphftnmfzfoufasjttd",
     "url": "https://vsphftnmfzfoufasjttd.supabase.co",
     "designationSource": "user-provided-development-project-url",
-    "region": null,
+    "region": "ap-northeast-2",
     "plan": null,
-    "accessHttpStatus": 403,
-    "sqlWriteCapability": "NOT_VERIFIED"
+    "accessHttpStatus": 200,
+    "sqlWriteCapability": "READ_WRITE_SESSION_OBSERVED_DDL_NOT_TESTED"
   },
   "productionCandidate": {
     "projectRef": "hutqsfftioxtredcjhsy",
     "url": "https://hutqsfftioxtredcjhsy.supabase.co",
     "defaultWritesAllowed": false
   },
-  "observedRuntimeProjectRef": "hutqsfftioxtredcjhsy",
+  "observedRuntimeProjectRef": null,
   "currentSqlBundleTarget": "hutqsfftioxtredcjhsy",
   "developmentBundlePrepared": false,
   "executionEnabled": false,
-  "note": "Designation and access record only; current PoC does not consume this file. No SQL executed against development."
+  "note": "New environment settings applied by user; development access and read-write session verified. No DDL executed. Existing SQL bundle still targets production candidate.",
+  "selectedRuntimeEnvironment": "development",
+  "runtimeSelector": "WJB_CLOUD_ENV + DEV-prefixed variables"
 }

@@ -55,3 +55,7 @@ URL은 project ref에서 `https://<ref>.supabase.co`로 만든다. 같은 주소
 ## 최신 설정 진행 상태
 
 운영 ref 새 항목만 초안 revision2로 저장됐고 실제 실행 환경은 기존 공통 변수 이름을 유지한다. Secret 이름 자동 변경은 도구의 기존 바인딩 충돌 제한으로 거절됐다. 사용자가 직접 해야 할 이름 편집·개발 토큰 입력·호스트 추가·저장/게시와 에이전트 후속 작업은 [47 진행 항목](47-active-work-items.md)에 U01~U07/A01~A10으로 관리한다.
+
+## 게시 후 연결 검증
+
+사용자 게시 후 DEV/PROD 신규 변수·Secret/개발 호스트 적용을 확인했고 [49문서](49-published-environment-validation.md)에 재검증 결과를 기록했다. 명시 선택기는 cloud-environment.mjs로 구현했다. 기존 고정 SQL/gateway 전체가 전환됐다는 뜻은 아니며, 기존 공통 ref가 있어도 선택기는 자동 fallback하지 않는다.

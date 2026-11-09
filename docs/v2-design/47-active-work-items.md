@@ -14,6 +14,14 @@ Management token은 api.supabase.com에만 전달한다. 서버용 service key/D
 
 새 개발 ref는 vsphftnmfzfoufasjttd, 운영 예정 ref는 hutqsfftioxtredcjhsy다. 마지막 개발 프로젝트GET은403, 운영 예정 SQL 설치 요청은readonly 오류/생성 객체0개였다. 개발 SQL 쓰기 능력·플랜/리전은 미확인이다. 실제 환경이 이후 변경되면 status/새 연결로 재확인해야 한다.
 
+## 게시 후 재검증(최신)
+
+사용자가 환경 저장/게시를 완료해 새 런타임에서 DEV/PROD Secret과 ref, WJB_CLOUD_ENV=development, 개발 호스트 enforced를 확인했다. 개발 GET200/ACTIVE_HEALTHY, 서울 ap-northeast-2, 실제 SQL 조회 postgres/transaction_read_only=off를 확인했다. DDL은 아직 실행하지 않았다. 기존 공통 ref도 남아 있지만 새 선택기는 이를 읽지 않는다.
+
+U01/U03/U05/U06은 적용 확인 완료다. U02는 새 PROD ref 확인 완료·기존 공통 ref 정리 보류다. U04는 개발 접근/읽기쓰기 세션 확인 완료이며 실제 DDL 권한은 설치 단계에서 최종 확인한다. U07의 **개발 Free/Usage**는 미확인이다. 아래 표의 이전403/설정 대기 기록은 변경 전 상태이며 이 절이 최신 결과에 우선한다.
+
+A01의 명시적 환경 선택기를 cloud-environment.mjs로 구현하고10개 검사를 통과했다. A02의 접근/리전/SQL 세션 재점검은 완료했으나 Free/Usage는 남았다. A03 dev 전용 묶음/issuer/gateway 연결과 A04 설치는 미완료다. 운영 연결/기존 고정 bundle을 dev로 자동 대체하지 않는다. [49 재개 결과](49-published-environment-validation.md)를 참조한다.
+
 ## 사용자가 직접 설정할 항목
 
 | ID | 직접 할 작업 | 완료 기준 | 현재 상태 |

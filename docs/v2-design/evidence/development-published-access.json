@@ -1,0 +1,93 @@
+{
+  "observedAt": "2026-11-09T13:32:19.584219+00:00",
+  "projectRef": "vsphftnmfzfoufasjttd",
+  "selectedEnvironment": "development",
+  "queriesReadOnly": true,
+  "writes": false,
+  "checks": {
+    "project": {
+      "httpStatus": 200,
+      "summary": {
+        "id": "vsphftnmfzfoufasjttd",
+        "name": "WJB DB DEV",
+        "region": "ap-northeast-2",
+        "status": "ACTIVE_HEALTHY",
+        "organization_slug": "eiwuipccqtdqajvnuewx"
+      }
+    },
+    "executor": {
+      "httpStatus": 201,
+      "summary": [
+        {
+          "execution_role": "postgres",
+          "transaction_read_only": "off",
+          "default_transaction_read_only": "off",
+          "in_recovery": false
+        }
+      ],
+      "queryReadOnly": true,
+      "requestReadOnlyFlag": false
+    },
+    "schema": {
+      "httpStatus": 201,
+      "summary": [
+        {
+          "inspection": {
+            "auth_columns": [
+              {
+                "type": "uuid",
+                "table": "sessions",
+                "column": "id"
+              },
+              {
+                "type": "timestamp with time zone",
+                "table": "sessions",
+                "column": "not_after"
+              },
+              {
+                "type": "uuid",
+                "table": "sessions",
+                "column": "user_id"
+              },
+              {
+                "type": "timestamp with time zone",
+                "table": "users",
+                "column": "banned_until"
+              },
+              {
+                "type": "timestamp with time zone",
+                "table": "users",
+                "column": "deleted_at"
+              },
+              {
+                "type": "uuid",
+                "table": "users",
+                "column": "id"
+              }
+            ],
+            "target_bucket": [],
+            "inspection_role": "supabase_read_only_user",
+            "postgres_version": "17.11",
+            "guard_schema_exists": false,
+            "storage_known_bytes": 0,
+            "storage_objects_rls": true,
+            "storage_object_count": 0,
+            "storage_policy_count": 0,
+            "metadata_schema_exists": false,
+            "public_name_collisions": [],
+            "physical_database_bytes": 10909363,
+            "storage_unknown_size_count": 0
+          }
+        }
+      ]
+    },
+    "auth": {
+      "httpStatus": 200,
+      "summary": {
+        "sessions_timebox": 0,
+        "sessions_inactivity_timeout": 0,
+        "sessions_single_per_user": false
+      }
+    }
+  }
+}
