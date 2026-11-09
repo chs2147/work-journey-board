@@ -1,0 +1,64 @@
+{
+  "projectRef": "vsphftnmfzfoufasjttd",
+  "startedAt": "2026-11-09T13:46:06.605561+00:00",
+  "dailyBefore": {
+    "rls": true,
+    "jobs": [
+      {
+        "name": "keepalive_ping",
+        "jobid": 1,
+        "active": true,
+        "command": "\n INSERT INTO public.keepalive_pings(id,pinged_at) VALUES(1,now())\n ON CONFLICT(id) DO UPDATE SET pinged_at=excluded.pinged_at;\n DELETE FROM cron.job_run_details\n WHERE jobid IN(SELECT jobid FROM cron.job WHERE jobname='keepalive_ping' AND username=current_user)\n AND end_time < now()-interval '14 days';\n",
+        "schedule": "0 3 * * *",
+        "username": "postgres"
+      }
+    ],
+    "lastPing": "2026-11-09T13:45:29.760484+00:00",
+    "recentRuns": [],
+    "cronVersion": "1.6.4",
+    "cronTimeZone": "GMT",
+    "executionRole": "postgres",
+    "heartbeatRows": 1,
+    "clientTableAccess": false,
+    "serviceTableAccess": false
+  },
+  "probeCreated": true,
+  "schedulerSuccess": true,
+  "probeRemoved": true,
+  "probeJobId": 2,
+  "runs": [
+    {
+      "status": "succeeded",
+      "return_message": "DELETE 0",
+      "start_time": "2026-11-09 13:46:14.070437+00",
+      "end_time": "2026-11-09 13:46:14.074886+00"
+    }
+  ],
+  "unscheduleResponse": [
+    {
+      "unscheduled": true
+    }
+  ],
+  "dailyAfter": {
+    "rls": true,
+    "jobs": [
+      {
+        "name": "keepalive_ping",
+        "jobid": 1,
+        "active": true,
+        "command": "\n INSERT INTO public.keepalive_pings(id,pinged_at) VALUES(1,now())\n ON CONFLICT(id) DO UPDATE SET pinged_at=excluded.pinged_at;\n DELETE FROM cron.job_run_details\n WHERE jobid IN(SELECT jobid FROM cron.job WHERE jobname='keepalive_ping' AND username=current_user)\n AND end_time < now()-interval '14 days';\n",
+        "schedule": "0 3 * * *",
+        "username": "postgres"
+      }
+    ],
+    "lastPing": "2026-11-09T13:46:14.070458+00:00",
+    "recentRuns": [],
+    "cronVersion": "1.6.4",
+    "cronTimeZone": "GMT",
+    "executionRole": "postgres",
+    "heartbeatRows": 1,
+    "clientTableAccess": false,
+    "serviceTableAccess": false
+  },
+  "finishedAt": "2026-11-09T13:46:18.590192+00:00"
+}

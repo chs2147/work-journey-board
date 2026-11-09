@@ -1,0 +1,20 @@
+{
+  "startedAt": "2026-11-09T13:45:28.095650+00:00",
+  "projectRef": "vsphftnmfzfoufasjttd",
+  "scope": "development DB-only modules + woori-style pg_cron singleton KeepAlive",
+  "authorization": "user: 다음단계 진행시 KeepAlive 동일 방식 적용",
+  "manifestSha256": "08f946640f5c4578ede887640bca1010e9b798afb7a046afa8b49dcd37d2f7b0",
+  "querySha256": "7e0fd34113d999c5d2393c0dacecc8cc4cd49be9c9cb2cd5b504c1338cc80f41",
+  "requestCount": 1,
+  "retry": false,
+  "state": "RESPONSE_RECEIVED_VERIFY_REQUIRED",
+  "freePlanIndependentlyVerified": false,
+  "existingPaidSettingsChanged": false,
+  "httpStatus": 201,
+  "response": [
+    {
+      "schedule": 1
+    }
+  ],
+  "finishedAt": "2026-11-09T13:45:30.267337+00:00"
+}

@@ -1,0 +1,36 @@
+{
+  "observedAt": "2026-11-09T13:46:04.892839+00:00",
+  "projectRef": "vsphftnmfzfoufasjttd",
+  "verification": {
+    "owners": [
+      {
+        "role": "postgres",
+        "bypassRls": true,
+        "superuser": false
+      }
+    ],
+    "tableCount": 6,
+    "schemaCount": 2,
+    "functionCount": 7,
+    "publicRpcCount": 4,
+    "rlsEnabledCount": 6,
+    "unsafeSearchPaths": 0,
+    "clientExecutableCount": 0,
+    "publicExecutableCount": 0,
+    "servicePublicExecutableCount": 4,
+    "serviceDirectTableAccessCount": 0
+  },
+  "expectedVerification": {
+    "schemaCount": 2,
+    "tableCount": 6,
+    "rlsEnabledCount": 6,
+    "functionCount": 7,
+    "publicRpcCount": 4,
+    "unsafeSearchPaths": 0,
+    "clientExecutableCount": 0,
+    "publicExecutableCount": 0,
+    "servicePublicExecutableCount": 4,
+    "serviceDirectTableAccessCount": 0
+  },
+  "mismatches": {}
+}

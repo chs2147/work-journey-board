@@ -1,0 +1,18 @@
+{
+  "referenceRepository": "chs2147/woori-bldg",
+  "referenceCommit": "a8fdf4733987e77ddce359b4caf4d4642d8ebae5",
+  "referencePath": "supabase/migrations/0012_keepalive.sql",
+  "referenceSha256": "5370e7cdea3783582561ae6d888cda53ecd36e47834a44ae73cd7294813c2e1e",
+  "matchedMechanism": [
+    "pg_cron",
+    "daily 03:00 UTC / 12:00 KST",
+    "singleton heartbeat upsert",
+    "RLS enabled"
+  ],
+  "additions": [
+    "explicit revoke from client/service API roles",
+    "collision refusal",
+    "own daily job log retention 14 days"
+  ],
+  "scope": "development project only; production candidate unchanged"
+}

@@ -304,3 +304,7 @@ V2 체크포인트52ff622를 푸시한 뒤 사용자 요청의 캐비넷/노트 
 ## 4.52 게시 후 개발 접근 복구·명시 환경 선택기
 
 사용자 설정 게시 후 새 런타임에서 DEV/PROD 변수·Secret·호스트를 확인했다. DEV GET200/서울/ap-northeast-2·postgres read_write 세션·기존 새 객체 없음/Auth 타입·정책 일치를 관측했다. [49문서](49-published-environment-validation.md)에 증거와 DDL/플랜 검증 미완료를 구분했다. 환경 선택기10검사를 통과했고 운영/legacy fallback을 차단했다. 개발 Free/Usage/묶음·실제 설치는 남았으며 운영/환경/제품/main 변경은 하지 않았다.
+
+## 4.53 개발 DB-only 설치·건물수첩 KeepAlive 적용
+
+사용자의 다음 단계/같은 KeepAlive 방식 요청으로 dev vsphftnmfzfoufasjttd만 적용했다. 기존 모듈 source와 운영 예정 bundle을 보존한 개발 generator8검사를 통과했고 실제 SQL 모듈 검증값이 일치했다. public heartbeat1행·pg_cron 일일03UTC/12KST를 등록하고 동일command 임시probe 성공/시각증가/제거를 확인했다. [50문서](50-development-database-keepalive.md)에 모든 요청/검증·중단/rollback 범위와 정규job첫실행/개발FreeUsage 미완료를 기록했다. 운영·환경·제품/main 변경은 없다.

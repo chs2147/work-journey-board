@@ -1,0 +1,75 @@
+{
+  "profile": "development",
+  "projectRef": "vsphftnmfzfoufasjttd",
+  "region": "ap-northeast-2",
+  "autoApply": false,
+  "monthlyBudgetKRW": 0,
+  "baseManifestSha256": "6ace6c937126d792660580a7f253e11db631b8ed56ffe9d9f1e43fdcdfa946ad",
+  "baseSources": [
+    {
+      "path": "poc/v2-cloud/session-guard.sql",
+      "sha256": "3be17e719a5a5c8cf91268c46b2ce99aeff3c6127b5b43bd8b8f250467a374c9"
+    },
+    {
+      "path": "poc/v2-gateway/postgres-metadata.sql",
+      "sha256": "b8d789769cf529456757092ef59ac484dda451686bf8ca2139895b79fabe9bda"
+    },
+    {
+      "path": "poc/v2-gateway/recovery.sql",
+      "sha256": "bf9e474bbda8a3af4eb4602f83b70cf6605d416befb3e6bf809d172a9f3aca54"
+    }
+  ],
+  "baseTemplates": [
+    {
+      "path": "poc/v2-cloud/templates/rollback.sql",
+      "sha256": "4a0dd7df0b81593ab21e91e626e8de634ee39c7740da5ea70a34b76a2e52e3a6"
+    },
+    {
+      "path": "poc/v2-cloud/templates/pause.sql",
+      "sha256": "6d6382b918ae29164ce45788b3553de2261e6e4b9f828e65ca763cf41df0cbe5"
+    },
+    {
+      "path": "poc/v2-cloud/templates/resume.sql",
+      "sha256": "cd43f341c316e72f88e3892bffa630e643beffe5e8dcf9400087cb1b3ba11833"
+    },
+    {
+      "path": "poc/v2-cloud/templates/verify.sql",
+      "sha256": "be15494f16ddc9c39067436c071431973e60090e8e79af446c3c0d3c5647cab9"
+    },
+    {
+      "path": "poc/v2-cloud/templates/preinstall.sql",
+      "sha256": "29c3e08cced7364e5701b56a284342c9f923d36d3ba2ede9fd505cead03c1ad9"
+    }
+  ],
+  "expectedVerification": {
+    "schemaCount": 2,
+    "tableCount": 6,
+    "rlsEnabledCount": 6,
+    "functionCount": 7,
+    "publicRpcCount": 4,
+    "unsafeSearchPaths": 0,
+    "clientExecutableCount": 0,
+    "publicExecutableCount": 0,
+    "servicePublicExecutableCount": 4,
+    "serviceDirectTableAccessCount": 0
+  },
+  "keepalive": {
+    "name": "keepalive_ping",
+    "scheduleUTC": "0 3 * * *",
+    "scheduleKST": "daily 12:00",
+    "singletonTable": "public.keepalive_pings",
+    "logRetentionDays": 14,
+    "sourceSha256": "b74de496e3c4cc6c31db6b76b63c17f17bb7b4407415af5ff17b214b474aa993"
+  },
+  "rollbackScope": "module empty-only uninstall leaves heartbeat; do not drop pg_cron",
+  "generatorSha256": "f821fb4b973535fa4d2687830325f7ecc84ed6cb63aa021418731b7b99a10ecc",
+  "artifacts": {
+    "install.sql": "7e0fd34113d999c5d2393c0dacecc8cc4cd49be9c9cb2cd5b504c1338cc80f41",
+    "rollback.sql": "3b95f0bb6ebf4e83062ceefd52467c532e9f1408cc337bdd465bb52b77d07c46",
+    "pause.sql": "6d6382b918ae29164ce45788b3553de2261e6e4b9f828e65ca763cf41df0cbe5",
+    "resume.sql": "c43b58a092e232c6cb099003b7435d41f8be99dbb2e3703da6d612d039020e38",
+    "verify.sql": "be15494f16ddc9c39067436c071431973e60090e8e79af446c3c0d3c5647cab9",
+    "preinstall.sql": "29c3e08cced7364e5701b56a284342c9f923d36d3ba2ede9fd505cead03c1ad9",
+    "keepalive-verify.sql": "ab473a4b67ed6dd654db2d4ac172b4e5dc3f9a7c189717d454c19d60926eb123"
+  }
+}

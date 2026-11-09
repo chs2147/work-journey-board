@@ -22,6 +22,10 @@ U01/U03/U05/U06은 적용 확인 완료다. U02는 새 PROD ref 확인 완료·�
 
 A01의 명시적 환경 선택기를 cloud-environment.mjs로 구현하고10개 검사를 통과했다. A02의 접근/리전/SQL 세션 재점검은 완료했으나 Free/Usage는 남았다. A03 dev 전용 묶음/issuer/gateway 연결과 A04 설치는 미완료다. 운영 연결/기존 고정 bundle을 dev로 자동 대체하지 않는다. [49 재개 결과](49-published-environment-validation.md)를 참조한다.
 
+## 개발 설치·KeepAlive 적용(최신)
+
+[50문서](50-development-database-keepalive.md)에 따라 A03의 개발 전용 DB SQL 묶음 구성과 A04의 실제 설치/ACL 검증을 완료했다. gateway/Auth issuer의 개발 설정 전환은 아직 별도 작업으로 남는다. A05 중 KeepAlive만 건물수첩 방식(pg_cron/매일12:00 KST/단일행)으로 적용했고 동일 명령의 임시 scheduler probe 성공·제거를 확인했다. 정규 일일 job 첫 실행, 실제 Auth 사용자/private bucket/파일/gateway 검증은 미완료다. 개발 Free/Usage 조회는403이며 U07 대시보드 확인은 남아 있다. 실제 생성·권한을 증거로 기록했고 이전 미설치/접근대기 표는 당시 상태로 보존한다. 운영 예정 프로젝트는 변경하지 않았다.
+
 ## 사용자가 직접 설정할 항목
 
 | ID | 직접 할 작업 | 완료 기준 | 현재 상태 |

@@ -1,0 +1,105 @@
+{
+  "observedAt": "2026-11-09T13:42:01.289477+00:00",
+  "projectRef": "vsphftnmfzfoufasjttd",
+  "readOnlyQueries": true,
+  "writes": false,
+  "checks": {
+    "organization": {
+      "httpStatus": 403,
+      "keys": null,
+      "plan": null
+    },
+    "entitlements": {
+      "httpStatus": 403,
+      "keys": null,
+      "plan": null
+    },
+    "sql": {
+      "httpStatus": 201,
+      "summary": [
+        {
+          "role": "postgres",
+          "read_only": "off",
+          "cron_available": "1.6.4",
+          "cron_installed": null,
+          "existing_table": null,
+          "public_create": true,
+          "physical_database_bytes": 10909363
+        }
+      ]
+    },
+    "preinstall": {
+      "httpStatus": 201,
+      "summary": [
+        {
+          "inspection": {
+            "auth_columns": [
+              {
+                "type": "uuid",
+                "table": "sessions",
+                "column": "id"
+              },
+              {
+                "type": "timestamp with time zone",
+                "table": "sessions",
+                "column": "not_after"
+              },
+              {
+                "type": "uuid",
+                "table": "sessions",
+                "column": "user_id"
+              },
+              {
+                "type": "timestamp with time zone",
+                "table": "users",
+                "column": "banned_until"
+              },
+              {
+                "type": "timestamp with time zone",
+                "table": "users",
+                "column": "deleted_at"
+              },
+              {
+                "type": "uuid",
+                "table": "users",
+                "column": "id"
+              }
+            ],
+            "target_bucket": [],
+            "inspection_role": "supabase_read_only_user",
+            "postgres_version": "17.11",
+            "guard_schema_exists": false,
+            "storage_known_bytes": 0,
+            "storage_objects_rls": true,
+            "storage_object_count": 0,
+            "storage_policy_count": 0,
+            "metadata_schema_exists": false,
+            "public_name_collisions": [],
+            "physical_database_bytes": 10909363,
+            "storage_unknown_size_count": 0
+          }
+        }
+      ]
+    },
+    "auth": {
+      "httpStatus": 200,
+      "summary": {
+        "sessions_timebox": 0,
+        "sessions_inactivity_timeout": 0,
+        "sessions_single_per_user": false
+      }
+    },
+    "postgrest": {
+      "httpStatus": 200,
+      "summary": {
+        "db_schema": "public,graphql_public"
+      }
+    }
+  },
+  "project": {
+    "id": "vsphftnmfzfoufasjttd",
+    "region": "ap-northeast-2",
+    "status": "ACTIVE_HEALTHY",
+    "organization_slug": "eiwuipccqtdqajvnuewx"
+  }
+}

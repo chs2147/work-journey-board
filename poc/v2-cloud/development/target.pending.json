@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "configurationStatus": "ACCESS_VERIFIED_BUNDLE_PENDING",
+  "configurationStatus": "DATABASE_AND_KEEPALIVE_VERIFIED",
   "development": {
     "projectRef": "vsphftnmfzfoufasjttd",
     "url": "https://vsphftnmfzfoufasjttd.supabase.co",
@@ -8,7 +8,7 @@
     "region": "ap-northeast-2",
     "plan": null,
     "accessHttpStatus": 200,
-    "sqlWriteCapability": "READ_WRITE_SESSION_OBSERVED_DDL_NOT_TESTED"
+    "sqlWriteCapability": "DDL_AND_ACL_VERIFIED"
   },
   "productionCandidate": {
     "projectRef": "hutqsfftioxtredcjhsy",
@@ -16,10 +16,18 @@
     "defaultWritesAllowed": false
   },
   "observedRuntimeProjectRef": null,
-  "currentSqlBundleTarget": "hutqsfftioxtredcjhsy",
-  "developmentBundlePrepared": false,
+  "currentSqlBundleTarget": "vsphftnmfzfoufasjttd",
+  "developmentBundlePrepared": true,
   "executionEnabled": false,
-  "note": "New environment settings applied by user; development access and read-write session verified. No DDL executed. Existing SQL bundle still targets production candidate.",
+  "note": "Development module installation and same-command scheduler probe verified. No auto apply; installed bundle must not be reapplied. Production bundle preserved.",
   "selectedRuntimeEnvironment": "development",
-  "runtimeSelector": "WJB_CLOUD_ENV + DEV-prefixed variables"
+  "runtimeSelector": "WJB_CLOUD_ENV + DEV-prefixed variables",
+  "installed": true,
+  "keepalive": {
+    "jobName": "keepalive_ping",
+    "scheduleUTC": "0 3 * * *",
+    "scheduleKST": "daily 12:00",
+    "schedulerProbeVerified": true,
+    "dailyScheduledRunObserved": false
+  }
 }
