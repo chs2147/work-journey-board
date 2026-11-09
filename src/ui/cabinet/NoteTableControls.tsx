@@ -1,7 +1,8 @@
 import { V18, TABLE_ACTIONS as actions } from "../../shared/v18Strings";
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { createPortal } from "react-dom";
-import { selectedRect, moveTableRow, moveTableColumn } from "@tiptap/pm/tables";
+import { selectedRect } from "@tiptap/pm/tables";
+import { moveCabiTableAxis } from "./cabiTableMoves";
 import type { Editor } from "@tiptap/react";
 import { useCabiChange } from "./cabiService";
 import styles from "./NoteBlockControls.module.css";
@@ -118,10 +119,7 @@ export function NoteTableControls({ editor }: { editor: Editor }) {
       const state = useCabiChange.getState();
       if (state.locked || state.disconnected || !editor.isEditable || editor.state.doc !== doc || from === to)
         return;
-      (kind === "row" ? moveTableRow : moveTableColumn)({ from, to, pos: source.tableStart })(
-        editor.state,
-        editor.view.dispatch,
-      );
+      moveCabiTableAxis(editor, kind, from, to, source.tableStart);
       editor.view.focus();
     };
     const cancel = () => {
