@@ -1,7 +1,7 @@
 // 빠른 이용 가이드(features-1102-spec F6) — 원본 docs/guide/NN-이름.md → 소개 사이트 site/guide/index.html · PDF.
 //   node scripts/guide/guide.mjs build              HTML 만들기(원본만 읽음, 결정적 — 같은 원본이면 같은 결과)
 //   node scripts/guide/guide.mjs pdf                HTML → site/guide/work-journey-board-guide.pdf(Playwright Chromium 인쇄)
-//   node scripts/guide/guide.mjs shots [주소]       브라우저 모드(가상 샘플 ?sample=showcase)로 장면 스크린샷 → site/guide/shots/
+//   node scripts/guide/guide.mjs shots [주소] [장면]       브라우저 모드(가상 샘플 ?sample=showcase)로 장면 스크린샷 → site/guide/shots/
 //   node scripts/guide/guide.mjs check              CI: 대응표·이미지 파일·HTML이 원본과 같은지
 // 외부 통신 없음(shots는 로컬 개발 서버만). 새 의존성 없음 — 마크다운은 이 파일의 작은 변환기로(가이드에 쓰는 문법만).
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
@@ -316,7 +316,7 @@ async function pdf() {
 }
 
 /** 장면 스크린샷(가상 샘플) — 개발 서버(npm run dev)가 떠 있어야 한다 */
-async function shots(base = "http://localhost:1420") {
+async function shots(base = "http://localhost:1420", only) {
   const { chromium } = await import("playwright");
   const browser = await chromium.launch(
     process.env.PW_CHROMIUM_PATH ? { executablePath: process.env.PW_CHROMIUM_PATH } : {},
@@ -374,7 +374,7 @@ async function shots(base = "http://localhost:1420") {
     "11-cabinet": {
       url: show,
       run: async (p) => {
-        await p.keyboard.press("Alt+4");
+        await p.getByTestId("rail-cabinet").click();
         await p.getByLabel("업무를 선택해 주세요", { exact: true }).selectOption({ index: 1 });
         const notePromise = p.waitForEvent("popup");
         await p.getByTestId("cabi-new-note").click();
@@ -463,7 +463,9 @@ async function shots(base = "http://localhost:1420") {
       },
     },
   };
+  if (only && !Object.hasOwn(steps, only)) throw new Error("Unknown guide scene: " + only);
   for (const [name, st] of Object.entries(steps)) {
+    if (only && only !== name) continue;
     const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1 });
     await page.goto(base + st.url);
     await page.waitForSelector('[data-testid="journal-status"]');
@@ -487,7 +489,7 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
     await pdf();
     console.log("✓ site/guide/work-journey-board-guide.pdf");
   } else if (cmd === "shots") {
-    await shots(arg);
+    await shots(arg, process.argv[4]);
   } else if (cmd === "check") {
     const errs = check();
     if (errs.length) {
@@ -496,7 +498,7 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
     }
     console.log(`✓ 이용 가이드 확인(${readScenes().length}장면)`);
   } else {
-    console.error("사용법: guide.mjs build | pdf | shots [주소] | check");
+    console.error("사용법: guide.mjs build | pdf | shots [주소] [장면] | check");
     process.exit(2);
   }
 }

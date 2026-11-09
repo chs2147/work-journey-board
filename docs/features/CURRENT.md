@@ -1,10 +1,10 @@
-# 현재 Feature List — v1.23.1
+# 현재 Feature List — v1.23.2
 
 기준일 2026-11-09 · DB 구조 v18 · 활성 249개 · 제거/대체 3개 · 미제공/계획 3개
 
 원본은 [catalog.json](catalog.json), 운영 규칙은 [README.md](README.md)입니다. 최초 제공 버전은 0.x 개발판을 포함한 비RC 출시 이력 기준이며 RC는 별도 필드입니다.
 
-[검토용 Excel](exports/work-journey-board/Work-Journey-Board-Feature-List-v1.23.1.xlsx) · [현재 스냅샷](releases/work-journey-board/v1.23.1.json)
+[검토용 Excel](exports/work-journey-board/Work-Journey-Board-Feature-List-v1.23.2.xlsx) · [현재 스냅샷](releases/work-journey-board/v1.23.2.json)
 
 ## 주간 보드·입력
 
@@ -218,8 +218,8 @@
 | WJB-CABINET-012 | Cabi.NET 목록 폭 조절 — 업무 목록 너비를 끌어 조절한다. | 1.5.0 | 1.20.0 | windows / macos |
 | WJB-CABINET-013 | 바로가기·긴 경로 안내 — Windows 바로가기와 긴 폴더 경로를 처리하고 드롭 실패 이유를 안내한다. | 1.5.0 | 1.20.0 | windows |
 | WJB-CABINET-014 | Finder 드롭·별칭 지원 — macOS 폴더 드롭·별칭·숨김 파일 처리에 대응한다. | 1.6.0 | 1.20.0 | macos |
-| WJB-CABINET-015 | 업무별 여러 노트·모달리스 창 — 기존 업무 분류당 여러 노트를 날짜와 무관하게 작성하며 같은 노트 창을 재사용한다. 주간·데일리 뷰 업무 이름 옆에서 기존 업무 메모보드를 바로 연다. | 1.20.0 | 1.23.1 | windows / macos |
-| WJB-CABINET-016 | 블록 단위 Markdown 노트 편집 — 제목·목록·체크·표·코드·인용·이미지·링크·글자색과 블록 이동·복제·삭제를 제공한다. | 1.20.0 | 1.22.0 | windows / macos |
+| WJB-CABINET-015 | 업무별 여러 노트·모달리스 창 — 기존 업무 분류당 여러 노트를 날짜와 무관하게 작성하며 같은 노트 창을 재사용한다. 주간·데일리 뷰 업무 이름 옆에서 기존 업무 메모보드를 바로 연다. | 1.20.0 | 1.23.2 | windows / macos |
+| WJB-CABINET-016 | 블록 단위 Markdown 노트 편집 — 제목·목록·체크·표·코드·인용·이미지·링크·글자색과 블록 이동·복제·삭제를 제공한다. | 1.20.0 | 1.23.2 | windows / macos |
 | WJB-CABINET-017 | Markdown 가져오기와 Markdown/PDF 내보내기 — 블록 구조·URL을 유지하고 선택한 상대 경로 이미지를 함께 가져온다. base64·실행 HTML·외부 이미지 자동 다운로드는 제외한다. 한글 PDF와 Markdown/이미지 묶음을 저장한다. | 1.20.0 | 1.23.0 | windows / macos |
 | WJB-CABINET-018 | 업무당 하나의 자유 메모보드 — 주차와 분리된 업무 보드를 모달리스 창에서 열고 기존 보드 엔진·접이식/폭 조절 자료함을 사용한다. | 1.20.0 | 1.23.0 | windows / macos |
 | WJB-CABINET-019 | 폴더·링크·노트 원본 참조 카드 — 기존 자료와 노트를 보드로 끌어 연결 카드로 배치한다. 카드 삭제는 원본을 삭제하지 않는다. | 1.20.0 | 1.21.0 | windows / macos |

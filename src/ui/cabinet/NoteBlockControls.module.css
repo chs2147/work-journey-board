@@ -31,7 +31,8 @@
 }
 .menu {
   width: 220px;
-  max-height: 460px;
+  max-height: min(460px, calc(100vh - 16px));
+  overscroll-behavior: contain;
   overflow: auto;
   padding: 7px;
 }

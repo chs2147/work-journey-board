@@ -213,7 +213,7 @@ export function CabiHub({
             </div>
           ) : (
             <div
-              className={`${styles.scroll} ${view === "cards" ? styles.grid : ""}`}
+              className={`${styles.scroll} ${view === "cards" ? styles.grid : styles.list}`}
               data-testid="cabi-items"
             >
               {noteRows.map((n) => (

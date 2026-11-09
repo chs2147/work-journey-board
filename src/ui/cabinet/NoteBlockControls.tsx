@@ -102,7 +102,8 @@ export function NoteBlockControls({
         }
       }
     };
-    const scroll = () => {
+    const scroll = (e: Event) => {
+      if (e.target instanceof Element && e.target.closest(`[data-cabi-block-menu]`)) return;
       setMenu(false);
       setOpen(null);
       if (!drag.current) setHover(null);
@@ -186,7 +187,13 @@ export function NoteBlockControls({
         </button>
       )}
       {(menu || slashOpen) && active && (
-        <div className={styles.menu} role="menu" aria-label={CABI.blockMenu} style={menuPos}>
+        <div
+          data-cabi-block-menu
+          className={styles.menu}
+          role="menu"
+          aria-label={CABI.blockMenu}
+          style={menuPos}
+        >
           {Object.entries(CABI.blocks).map(([kind, label]) => (
             <button
               key={kind}

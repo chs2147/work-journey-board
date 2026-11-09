@@ -10,6 +10,7 @@
   | 문서 | 내용 |
   |---|---|
   | `overview.md` | 요구사항·결정 이력·**10절 화면 구성**·**12절 인계 명세** |
+  | `release-notes/v1.23.2.md` | main 직접 패치 — Cabi.NET 목록 정렬·표 열 너비/행열 이동·메뉴 스크롤·바깥 클릭, DB18 유지 |
   | `release-notes/v1.23.1.md` | main 직접 패치 — 주간/데일리 업무 이름의 업무 메모보드 바로가기·생성/삭제 표시 갱신, DB18 유지 |
   | `improve-v19-spec.md` | v19 A/C 모노그램 자동 모션·재생/정지, Universe 복귀 버튼 제거, PDF 실제 렌더링 수정·보드 내보내기 팝업. improve-v19 구현 후 1.23.0 정식 main 반영 승인 / DB18 유지 |
   | `improve-v18-spec.md` | v18 C안 접이식 세로 팔레트 승인, 표/계층 번호·자유 프레임·Universe 배경. improve-v18 RC 검증 후 1.22.0 정식 main 반영 승인 / DB18 |
