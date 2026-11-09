@@ -26,6 +26,10 @@ A01의 명시적 환경 선택기를 cloud-environment.mjs로 구현하고10개 
 
 [50문서](50-development-database-keepalive.md)에 따라 A03의 개발 전용 DB SQL 묶음 구성과 A04의 실제 설치/ACL 검증을 완료했다. gateway/Auth issuer의 개발 설정 전환은 아직 별도 작업으로 남는다. A05 중 KeepAlive만 건물수첩 방식(pg_cron/매일12:00 KST/단일행)으로 적용했고 동일 명령의 임시 scheduler probe 성공·제거를 확인했다. 정규 일일 job 첫 실행, 실제 Auth 사용자/private bucket/파일/gateway 검증은 미완료다. 개발 Free/Usage 조회는403이며 U07 대시보드 확인은 남아 있다. 실제 생성·권한을 증거로 기록했고 이전 미설치/접근대기 표는 당시 상태로 보존한다. 운영 예정 프로젝트는 변경하지 않았다.
 
+## 인증/gateway 조합 후속(최신)
+
+[51문서](51-development-gateway-auth-wiring.md)의 dev 전용 factory/issuer·REST 대상 연결과 로컬HTTP10개·기존 회귀가 통과했다. 개발 공개 JWKS ES256 GET200을 확인했다. 실제 Auth 사용자/RPC/Storage 시험은 DEV_SERVICE_ROLE_KEY 미설정으로 남아 있다. 새 비밀 항목만 초안 저장했고 사용자가 **WJB_SUPABASE_DEV_SERVICE_ROLE_KEY(개발 legacy service_role)**를 Secret에 입력·적용/게시해야 한다(U08). 목적지는 개발 프로젝트 호스트만이다. 기존 관리 토큰은 수정/복제하지 않는다. Blob 공급자는 아직 미선정으로 bucket/파일 생성은 하지 않았다.
+
 ## 사용자가 직접 설정할 항목
 
 | ID | 직접 할 작업 | 완료 기준 | 현재 상태 |
@@ -37,6 +41,7 @@ A01의 명시적 환경 선택기를 cloud-environment.mjs로 구현하고10개 
 | U05 | 허용 호스트 vsphftnmfzfoufasjttd.supabase.co 추가, 기존 api.supabase.com/GitHub/패키지 호스트 유지 | 현재 network policy enforced에 개발 호스트 포함 | 미반영 |
 | U06 | 설정 검토·저장·게시 후 적용 사실 알림. 비밀값은 채팅에 보내지 않음 | 새 revision/current readiness 확인 가능 | 대기 |
 | U07 | 개발/운영 Free 상태와 Usage 확인, 실제 token 권한 UI에서 접근 범위 확인 | 제공자/사용자 근거와 확인 시각 기록 | 운영 Free/Usage만 이전 확인, 개발 미확인 |
+| U08 | DEV_SERVICE_ROLE_KEY에 개발 legacy service_role Secret 입력·적용/게시 | 새 binding ready 및 실제 서버 RPC 권한 검증 | 요구 초안 저장, 값 미입력 |
 
 토큰 UI가 세부 scope를 지원하지 않거나 기존 비밀의 이름 편집이 안 되면 그 UI의 지원 범위를 확인해 전환 방법을 정한다. 환경 도구가 새 이름으로 값을 자동 복사할 수 있다고 가정하지 않는다. 개발용 서버 키·사용자 공개 키·migration DB URL은 해당 단계에서 필요할 때만 추가한다.
 

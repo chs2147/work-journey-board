@@ -37,3 +37,7 @@ handler는 Origin 요청을 기본 거절하고 cookie를 인증 수단으로 �
 `node poc/v2-gateway/recovery.test.mjs`는 복구25개, `node poc/v2-gateway/postgres-metadata.test.mjs`는 확장 adapter14개, `node poc/v2-gateway/durable.test.mjs`는 기존25개를 포함한 영속/복구41개를 실행한다. setup은 matching `postgres-metadata.sql`과 `recovery.sql`을 순서대로 설치하며 실제 Supabase에는 적용하지 않는다. 앞 단계의 개수는 해당 시점 기록이다.
 
 `createRecoveryWorker`는 명시적인 `preview`와 `apply`만 제공하며 cron/실제 앱 UI를 설치하지 않는다. 최대8개/회 미리보기 후 같은 계획 hash/작업을 전달해야 실행한다. matching 파일은 미확정 intent를 보존한 채 ready 복구할 수 있다. 미확정 요청이 없는 경우에만 cleanup과 부재 재확인 후 quota를 반환한다. 불명확한 missing/corrupt/장애·다른 generation은 보류한다. 운영자 확인만으로 intent를 강제 settled로 바꾸지 않는다. SQL 완료 기록으로 응답 유실/worker 재시작의 중복 실행을 막는다. [38문서](../../docs/v2-design/38-recovery-worker-results.md)에 UI 계약과 제한을 기록했다.
+
+## 개발 환경 조합 후속
+
+development-gateway.mjs는 개발 ref에 JWT/세션·metadata·자산/복구 어댑터를 연결하는 서버 factory다. 가상 서명/대체 REST와 실제 loopback HTTP 신규10개 및 기존 회귀 검사를 통과했다. 공개 개발 JWKS는 조회했지만 runtime key 미설정으로 실제 Auth/RPC/Storage 전체 시험은 미완료다. [51문서](../../docs/v2-design/51-development-gateway-auth-wiring.md)에 설정·검증 범위를 기록한다. 기존 미적용 설명은 당시 범위이며, 개발 DB 모듈과 pg_cron 적용은50문서를 따른다.

@@ -1,3 +1,4 @@
+import { CLOUD_TARGETS } from "../v2-cloud/cloud-environment.mjs";
 import { URL } from "node:url";
 import { GatewayError, readLimited, uuid } from "./io.mjs";
 const bucket = "wjb-v2-poc-private";
@@ -5,7 +6,7 @@ const bucket = "wjb-v2-poc-private";
 // Explicit trusted transport required. No environment values or client URLs read.
 export function createSupabaseRest({ projectRef, serviceRoleKey, fetchTransport }) {
   if (
-    projectRef !== "hutqsfftioxtredcjhsy" ||
+    !Object.values(CLOUD_TARGETS).some((target) => target.projectRef === projectRef) ||
     typeof serviceRoleKey !== "string" ||
     !serviceRoleKey ||
     /[\r\n]/.test(serviceRoleKey) ||

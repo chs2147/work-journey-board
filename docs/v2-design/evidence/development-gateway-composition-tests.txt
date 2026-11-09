@@ -1,0 +1,18 @@
+✔ dev composition rejects production target (6.169962ms)
+✔ no implicit transport or credential (0.217251ms)
+✔ unverified modern secret-key mode fails explicitly (0.449053ms)
+✔ real loopback HTTP validates dev issuer then session and reserve RPC (46.259262ms)
+✔ production token rejected before any server RPC (7.90631ms)
+✔ session revoked by server is denied (9.472529ms)
+✔ unknown session response fails closed (4.280021ms)
+✔ missing authentication cannot call metadata (8.926242ms)
+✔ browser origin is still denied pending explicit native/browser auth contract (4.192412ms)
+✔ management PAT shape cannot be substituted for runtime key (0.27047ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 99.532001

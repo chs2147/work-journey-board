@@ -1,0 +1,36 @@
+{
+  "observedAt": "2026-11-09T13:56:56.319202+00:00",
+  "scope": "Local loopback HTTP composition + existing fixture regressions; public dev JWKS GET only",
+  "groups": {
+    "composition": {
+      "count": 10,
+      "logSha256": "a6e1fcf37fa2e2e34b44186d5e1d4610d89926c6c2d060c5544ae0cefa64e27f"
+    },
+    "http_gateway": {
+      "count": 61,
+      "logSha256": "f912b24bd1f7b6494deb5db58f0cf6e2224aea2f2c7fcfef51590409cf6d674f"
+    },
+    "metadata": {
+      "count": 14,
+      "logSha256": "5da5c9f51d9a898fbf372254b228b1d0f5374681df487faec734bb287fbb07fd"
+    },
+    "recovery": {
+      "count": 25,
+      "logSha256": "6da8f97bca2624a38e6a2e3fb9e692a600897605ab7ff3dd39f8e7bc74f18cba"
+    },
+    "auth": {
+      "count": 39,
+      "logSha256": "0da5a6a40ab3fb6fede6dee0e883a21d022a49def10bc19ef4c91b788c6b2664"
+    }
+  },
+  "files": {
+    "poc/v2-gateway/development-gateway.mjs": "74e4b5767f797c9d8f6b78dd7974f8756e782450b29fd17685294e38e0f62a1d",
+    "poc/v2-gateway/development-gateway.test.mjs": "5488b1a78e26ec53b5ae3ba6ea8c9b9b75f2d3f7cfb5437afa748392013c8bab",
+    "poc/v2-gateway/supabase-rest.mjs": "b36247ec7b6473290a25f590b9c5885efed3236c4db47b5b14b27d7d7f0af41b"
+  },
+  "runtimeSecretPresent": false,
+  "cloudUsersCreated": false,
+  "cloudFilesUploaded": false,
+  "gatewayDeployed": false,
+  "providerSelected": null
+}

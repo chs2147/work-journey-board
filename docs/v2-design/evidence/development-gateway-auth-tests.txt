@@ -1,0 +1,59 @@
+
+> test
+> node verifier.test.mjs && node session-adapter.test.mjs
+
+✔ signed ES256 token returns only verified principal (8.05067ms)
+✔ tampered payload fails signature (1.720591ms)
+✔ different signing key rejected (2.008786ms)
+✔ unsigned token rejected (0.182219ms)
+✔ HMAC algorithm confusion rejected (1.149427ms)
+✔ wrong project issuer rejected (1.038003ms)
+✔ wrong audience rejected (0.806791ms)
+✔ expired token rejected (0.725712ms)
+✔ future issued token rejected (0.860882ms)
+✔ not-before enforced (1.311587ms)
+✔ excess token lifetime rejected (0.887701ms)
+✔ missing expiration rejected (2.65467ms)
+✔ missing issued time rejected (0.841903ms)
+✔ missing session rejected (0.819811ms)
+✔ invalid subject UUID rejected (0.556952ms)
+✔ invalid session UUID rejected (0.570112ms)
+✔ service role rejected (1.103911ms)
+✔ anonymous authenticated account rejected (0.862374ms)
+✔ unknown key id fails closed (0.865688ms)
+✔ token supplied key URL rejected (0.481962ms)
+✔ token embedded key rejected (0.482032ms)
+✔ wrong token type rejected (0.816836ms)
+✔ malformed and excessive tokens rejected (0.141398ms)
+✔ live session revoked despite valid signature (1.386287ms)
+✔ session verification failure fails closed (0.750628ms)
+✔ session checker runs only after signature and claims pass (1.683466ms)
+✔ rotation accepts trusted new kid, rejects removed old kid (2.193659ms)
+✔ trusted configuration rejects private or duplicate keys (0.339071ms)
+ℹ tests 28
+ℹ suites 0
+ℹ pass 28
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 42.878683
+✔ only signed principal and fixed RPC reach server transport (6.875304ms)
+✔ non-boolean-true RPC result rejected: false (1.451133ms)
+✔ non-boolean-true RPC result rejected: null (0.912793ms)
+✔ non-boolean-true RPC result rejected: undefined (0.641027ms)
+✔ non-boolean-true RPC result rejected: "true" (0.729097ms)
+✔ non-boolean-true RPC result rejected: 1 (0.630902ms)
+✔ non-boolean-true RPC result rejected: {} (0.63658ms)
+✔ non-boolean-true RPC result rejected: [true] (1.363928ms)
+✔ server RPC outage fails closed without leaking original error (1.94272ms)
+✔ invalid token never reaches service transport (0.48778ms)
+✔ service transport is mandatory (0.172765ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 22.898457

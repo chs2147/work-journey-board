@@ -1,0 +1,22 @@
+✔ explicit server transport required (2.057679ms)
+✔ reserve forwards only trusted identity and fixed RPC (2.531208ms)
+✔ invalid scope never reaches backend (0.315606ms)
+✔ wrong workspace response fails closed (0.630231ms)
+✔ unknown backend errors do not leak details (0.427191ms)
+✔ known access rejection maps to forbidden (0.249679ms)
+✔ busy lease is returned as retryable conflict (2.184746ms)
+✔ lease token mismatch fails closed (0.353162ms)
+✔ callback error still releases exact acquired lease (0.349846ms)
+✔ release outage cannot alter successful committed result (0.509022ms)
+✔ cleanup keeps original IO epoch despite later recheck (1.336904ms)
+✔ storage intent ID is identical in begin and settlement (0.688727ms)
+✔ numeric IO version is rejected instead of rounded (0.310418ms)
+✔ numeric lease fence is rejected instead of rounded (0.192465ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 22.486388

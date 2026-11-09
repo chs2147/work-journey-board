@@ -1,0 +1,19 @@
+{
+  "observedAt": "2026-11-09T13:54:48.176217+00:00",
+  "projectRef": "vsphftnmfzfoufasjttd",
+  "readOnly": true,
+  "endpoint": "/auth/v1/.well-known/jwks.json",
+  "httpStatus": 200,
+  "bodySha256": "3055491289660576c74fe2b4ca11bc74e418ad7fc103a0ad0e4c8fe9612cd136",
+  "keys": [
+    {
+      "kid": "045aa365-cbb6-4e34-ae5f-8ff929248441",
+      "kty": "EC",
+      "crv": "P-256",
+      "alg": "ES256",
+      "use": "sig"
+    }
+  ],
+  "runtimeSecretConfigured": false,
+  "actualUserLoginTested": false
+}

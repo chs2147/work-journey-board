@@ -80,3 +80,7 @@ main CI42585959844의 실제 실패는 Chromium 표 이동 undo 시 표 전체�
 ## 개발 DB·KeepAlive 실제 적용(최신)
 
 사용자 요청으로 [50문서](50-development-database-keepalive.md)의 dev 전용 bundle을 적용했다. schema2/table6/function7 권한 검증과 추가 public.keepalive_pings1행/pg_cron1.6.4/keepalive_ping 매일12:00 KST를 확인했다. 동일 command5초 probe는 succeeded/시각 갱신 후 unschedule했고 정규 job1개만 남았다. 실제 일일 job 첫 실행 관측과 개발 Free/Usage(조직API403), gateway/Auth/private 자산은 미완료다. install.sql 재실행 금지. 기존 운영 예정 bundle/프로젝트·로컬 앱·환경 설정/게시 변경은 없다. 다음은50문서 남은 조건과47문서 최신 추가 절을 따른다.
+
+## 개발 gateway/Auth 연결 구성(최신)
+
+[51문서](51-development-gateway-auth-wiring.md)에 dev factory·issuer/REST 연결과 신규HTTP10/기존gateway61/metadata14/recovery25/Auth28+11 검증을 기록했다. 공개 DEV JWKS는 ES256이다. DEV_SERVICE_ROLE_KEY가 없어 실제 Auth/RPC/Storage 전체 검증은 아직이며 새 Secret 요구만 초안 저장했다. 사용자가 개발 legacy service_role을 설정/적용·게시하면 확인 후 실제 서버 RPC/인증 검증을 진행한다. Blob 공급자/버킷은 미선정·미생성이고 운영/KeepAlive/앱/main은 변경하지 않았다.

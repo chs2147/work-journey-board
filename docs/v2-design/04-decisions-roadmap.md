@@ -308,3 +308,7 @@ V2 체크포인트52ff622를 푸시한 뒤 사용자 요청의 캐비넷/노트 
 ## 4.53 개발 DB-only 설치·건물수첩 KeepAlive 적용
 
 사용자의 다음 단계/같은 KeepAlive 방식 요청으로 dev vsphftnmfzfoufasjttd만 적용했다. 기존 모듈 source와 운영 예정 bundle을 보존한 개발 generator8검사를 통과했고 실제 SQL 모듈 검증값이 일치했다. public heartbeat1행·pg_cron 일일03UTC/12KST를 등록하고 동일command 임시probe 성공/시각증가/제거를 확인했다. [50문서](50-development-database-keepalive.md)에 모든 요청/검증·중단/rollback 범위와 정규job첫실행/개발FreeUsage 미완료를 기록했다. 운영·환경·제품/main 변경은 없다.
+
+## 4.54 개발 Auth/gateway 조합·runtime Secret 준비
+
+다음 단계 요청으로 dev 전용 구성 factory와 등록 ref REST 지원을 구현했다. 로컬 실제HTTP 신규10개·기존gateway61/metadata14/recovery25/Auth28+11이 통과하고 실제 dev 공개 JWKS ES256 GET200을 확인했다. [51문서](51-development-gateway-auth-wiring.md)에 가상 시험/실제 로그인 미완료를 구분했다. DEV_SERVICE_ROLE_KEY 없음 확인 후 개발 호스트에만 전달할 새 사용자 Secret 요구를 초안 저장했다. 키 입력/적용·게시/계정/버킷/파일·gateway 배포/운영 변경은 하지 않았다.
