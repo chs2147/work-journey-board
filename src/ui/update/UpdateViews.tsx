@@ -90,8 +90,13 @@ function useNow(until: number | null) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     if (!until) return;
+    // 실패 시각에 맞춰 곧바로 다시 잰다(패널을 연 시각 기준이면 1분 더 나올 수 있음)
+    const first = setTimeout(() => setNow(Date.now()), 0);
     const t = setInterval(() => setNow(Date.now()), 30_000);
-    return () => clearInterval(t);
+    return () => {
+      clearTimeout(first);
+      clearInterval(t);
+    };
   }, [until]);
   return now;
 }
