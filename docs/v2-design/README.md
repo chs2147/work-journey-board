@@ -34,6 +34,7 @@ PostgreSQL 영속 metadata를 HTTP 흐름에 연결했고 통합25개·adapter12
 
 | 문서 | 논의 내용 |
 |---|---|
+| [53. Blob 선택안·예산·실전 시험 계획](53-blob-selection-and-verification-plan.md) | Free 과금/지역·용량/다운로드 계산·private 표본 검증 범위 |
 | [52. 개발 Auth 실검증](52-development-auth-live-results.md) | 서버 키/RPC·실제 ES256 로그인·세션 회수·다른 사용자 공간 차단·시험 데이터 정리 |
 | [다국어 상세 설계](01-localization.md) | 리소스·언어 선택·모든 배포 요소·사이징·언어별 배포 관문 |
 | [데이터·동기화 상세 설계](02-sync-data.md) | DB 통합/분리, 3가지 방식, 오프라인 전환, 충돌·복원·파일/이미지 |

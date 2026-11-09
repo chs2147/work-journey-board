@@ -88,3 +88,7 @@ main CI42585959844의 실제 실패는 Chromium 표 이동 undo 시 표 전체�
 ## 실제 개발 인증 검증 완료(2026-11-10 KST, 최신)
 
 [52문서](52-development-auth-live-results.md)의 서버 RPC/실제 로그인·서명/세션 회수/계정 간 공간 격리20검사와 시험 데이터 정리 확인이 통과했다. HTTP 시크릿 ready 및 U08 완료, 키 재입력/게시 요구 없음. 임시 Auth 계정2개는 삭제 후404, metadata/차단 행은 잔여0이다. 비밀/토큰은 보존하지 않았다. Blob 공급자·버킷·파일 전송·공개 gateway는 미완료이며 다음은 private Blob 비교/선택안 확정이다. U07 개발 Free/Usage 및 V1/V2 배포/저장 경계는 계속 남는다. install.sql 재실행 금지, main/로컬 앱 변경 없음.
+
+## Blob 선택안 정리(2026-11-10 KST, 최신)
+
+[53문서](53-blob-selection-and-verification-plan.md)의 무료/지역/전송 비용 검토와 계획 예산을 정리했다. Supabase Free 과금 없음·R2 초과 과금/아시아 보장 미확인·Workers Free10ms 조건을 구분했다. 초기 Supabase private Storage안을 제안했으나 공급자는 미선정이며 아시아 힌트 허용 여부 답변/U07 Free·Usage 확인이 남는다. 다음은 답변을 반영한 공급자 확정→DEV private 가상 표본 전송/정리 검증이다. 52문서 Auth20검사/cleanup 완료 상태를 유지하며 환경/계정/구독/버킷/실제 파일/제품/main은 변경하지 않았다.

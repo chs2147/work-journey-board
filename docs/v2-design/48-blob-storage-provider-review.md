@@ -60,3 +60,7 @@ R2의 S3-compatible API 사용은 AWS 직접 인프라 운영을 뜻하지 않�
 4. 선택 후46문서 blob/reference schema와 storeId 연결·환경 Secret/호스트·개발/운영 bucket 정책을 별도 검토한다. 현재 DB-only 승인 묶음에 자동 포함하지 않는다.
 
 원문/조회 상태/본문 hash·발췌는 [조사 증거](evidence/blob-provider-research.json)에 보존한다. 제품 코드/DB18/main/환경/계정·버킷은 변경하지 않았다.
+
+## 후속 비용/지역 판단(2026-11-10 KST)
+
+[53문서](53-blob-selection-and-verification-plan.md)에서 공식 cost-control/regions/Workers 문서를 추가 확인했다. Supabase Free는 과금하지 않으며 Spend Cap은 Pro 전용이다. 기존 용량 우선 R2 후보와 구분해 월0원·아시아 유지 초기안은 Supabase private Storage를 제안한다. R2는 아시아 힌트 허용 여부/초과 과금 조건 결정 전 미선정이다. 현재 DEV/운영 예정 조직은 서로 달라 포함량을 무조건 합산하지 않는다. 실제 계정 Free/Usage·공급자 선택·파일 전송은 남는다.

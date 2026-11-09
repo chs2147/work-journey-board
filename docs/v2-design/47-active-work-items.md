@@ -76,3 +76,7 @@ A06~A08은 **설계/화질 검토를 먼저 진행**하고 제품 DB/이미지 �
 3. [46문서](46-local-compatibility-image-storage.md)의 로컬 무영향/이미지 정책을 검토하고 A06~A08 구현 명세·품질 비교를 확정한다.
 
 이미 확정된 ko/en·개인 여러 기기·Win/macOS·TLS/서버 암호화·월0원 원칙은 유지한다. 작업 브랜치는 v2-design이고 main 제품·기존 로컬 DB18·설치판에는 이번 문서 작업을 반영하지 않는다.
+
+## Blob 후속 검토(2026-11-10 KST, 최신)
+
+A11의 [53문서](53-blob-selection-and-verification-plan.md)에 공식 Free 과금/지역/Workers 조건·이미지500/2,000/10,000개 예산을 추가했다. 월0원·아시아 유지 초기 후보는 Supabase private Storage, 공간 확대 후보는 R2 Standard다. 사용자의 지역 힌트 허용 여부 답변과 실제 Free/Usage(U07), 공급자 확정은 남았다. A05 실제 파일 시험은 가상 표본3개/각64KiB 이하·private/계정 격리·취소/정리 계획까지만 구성했으며 아직 버킷/파일은 만들지 않았다. 제품 dedup·압축·전송이 완성됐다는 뜻이 아니다.

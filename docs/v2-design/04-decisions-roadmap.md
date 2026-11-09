@@ -316,3 +316,7 @@ V2 체크포인트52ff622를 푸시한 뒤 사용자 요청의 캐비넷/노트 
 ## 4.55 개발 서버 키 적용·실제 인증/공간 격리
 
 사용자가 개발 HTTP 시크릿을 저장한 뒤 revision2/ready/enforced와 실제 RPC200/미등록 세션false, 무인증401을 확인했다. [52문서](52-development-auth-live-results.md)의 실제 Auth2계정·ES256·세션 회수·공간 소유권20검사 및 cleanup이 통과했다. 임시 계정/metadata는 제거했고 메일/Blob/호스팅은 사용하지 않았다. U08 완료이며 U07 Free/Usage와 Blob 공급자 선택/실제 파일 전송, V1/V2 격리는 남아 있다. main/제품/로컬 DB18 변경은 없다.
+
+## 4.56 Blob 무료 운영 선택안/검증 계획
+
+[53문서](53-blob-selection-and-verification-plan.md)에 Supabase Free 과금 없음/Spend Cap Pro 전용, R2 포함량 초과 과금/아시아 힌트, Workers Free CPU/일별 요청 조건을 공식 원문으로 확인했다. 초기 월0원·아시아 유지 후보는 Supabase private Storage, 큰 용량 후보는 R2이며 최종 미선정이다. 이미지/전송 계획 예산은 실측이 아니고 기존64KiB PoC/dedup 미구현 경계를 유지한다. 사용자 지역 조건 답변과 개발 실제 Free/Usage 이후 private 파일 검증으로 이어간다. 계정/유료/환경/버킷/파일/제품 변경은 없다.

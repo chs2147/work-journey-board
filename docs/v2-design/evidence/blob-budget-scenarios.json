@@ -1,0 +1,47 @@
+{
+  "kind": "planning arithmetic, not measured image quality or current account usage",
+  "assumptions": {
+    "processedBytes": 409600,
+    "previewBytes": 51200,
+    "retainedExtraFactor": 0.2,
+    "fixedSafetyReserveBytes": 50000000,
+    "downloadEquivalents": 6,
+    "gbBytes": 1000000000,
+    "stopFraction": 0.8,
+    "dedupImplemented": false,
+    "excludes": "metadata/Auth/RPC/Edge egress, unrelated account usage, request retries and gateway runtime; all must be budgeted separately"
+  },
+  "scenarios": [
+    {
+      "logicalImages": 500,
+      "baselineStorageBytes": 326480000,
+      "hypothetical30PercentDedupStorageBytes": 243536000,
+      "sixFullDownloadsBytes": 1382400000,
+      "supabaseStorageBelow80Percent": true,
+      "r2StorageBelow80Percent": true,
+      "supabaseEgressBelow80Percent": true
+    },
+    {
+      "logicalImages": 2000,
+      "baselineStorageBytes": 1155920000,
+      "hypothetical30PercentDedupStorageBytes": 824144000,
+      "sixFullDownloadsBytes": 5529600000,
+      "supabaseStorageBelow80Percent": false,
+      "r2StorageBelow80Percent": true,
+      "supabaseEgressBelow80Percent": false
+    },
+    {
+      "logicalImages": 10000,
+      "baselineStorageBytes": 5579600000,
+      "hypothetical30PercentDedupStorageBytes": 3920720000,
+      "sixFullDownloadsBytes": 27648000000,
+      "supabaseStorageBelow80Percent": false,
+      "r2StorageBelow80Percent": true,
+      "supabaseEgressBelow80Percent": false
+    }
+  ],
+  "baselineImageCountAt80PercentStorage": {
+    "supabase": 1356,
+    "r2": 14377
+  }
+}
