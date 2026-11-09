@@ -1,5 +1,7 @@
 # V2 프로젝트 — 다국어·온라인 동기화 상세 설계 초안
 
+**최신 진행:** [58. 이관 영속 상태·재개·취소](58-durable-migration-resume-cancel.md) PoC103개 통과. journal에는 이미지 본문 없이 상태만 저장하며 원격은 테스트 어댑터다. 다음은 실제 PostgreSQL 이관 테이블/RPC와 도메인 매핑이다.
+
 **최신 진행:** [57. 실행 격리·이관 완료 연결](57-runtime-isolation-and-migration-handoff.md) PoC71개 통과. 로컬/온라인 설정·업데이트 후보 경계와 원본 폴더 보호를 검증했다. 실제 native 배포/서버 이관 완료 기능은 미구현이다.
 
 **최상위 철칙:** [56. 로컬 영구 유지·새 온라인 사본·DB/Blob 분리](56-local-permanence-copy-migration.md). 로컬 원본 구조/이미지는 그대로 유지하며 온라인 사본에만 이미지 참조형 DB와 Blob을 적용한다. 사용자 명시적 포기 전 로컬 모델을 영구 지원한다. 신규 독립 추출22개+DB18회귀19개 통과, 실제 제품 이관은 후속 단계다.
@@ -42,6 +44,7 @@ PostgreSQL 영속 metadata를 HTTP 흐름에 연결했고 통합25개·adapter12
 
 | 문서 | 논의 내용 |
 |---|---|
+| [58. 이관 영속 상태·재개·취소](58-durable-migration-resume-cancel.md) | 별도journal·응답 유실/늦은 I/O·취소/게시 경쟁·SIGKILL·원본보호 |
 | [57. 실행 격리·이관 완료 연결](57-runtime-isolation-and-migration-handoff.md) | 후보 runtime profile·기존 업데이트 피드 보호·원본 폴더 중첩 거절·서버 완료 계약 |
 | [56. 로컬 영구 유지·온라인 사본 철칙](56-local-permanence-copy-migration.md) | 원본 불변·새 ID 복제·온라인 DB 이미지 본문0·독립 추출 PoC/실패 보호 |
 | [55. Supabase private 파일 실검증](55-supabase-private-storage-live-results.md) | Free/Usage·파일3종·실제 gateway/복구·격리/동시quota·API 호환 수정·정리 |

@@ -96,3 +96,7 @@ U07은 사용자 DEV 대시보드의 Free/Storage0/1GB/Egress0/5GB 표시로 완
 ## 실행 격리 PoC 진척(2026-11-10 KST, 최신)
 
 A06의 [57문서](57-runtime-isolation-and-migration-handoff.md)에 후보 profile/업데이트 차단/로컬 cloud 초기화0/서버 완료 callback/경로 중첩 거절을 구현·71개 검증했다. 원본 폴더의 파일 목록/hash를 보존한다. 실제 native 앱/설정/업데이트 분리와 Win/macOS 실기는 아직 미완료다. 다음은 이관 작업/manifest의 이미지 본문 없는 영속 상태·서버 도메인 매핑·재개/취소·서버 완료 증표 연결이다. 기존64KiB gateway와 본문 없는DB 원칙은 유지한다.
+
+## 이관 영속 상태/재개 PoC(2026-11-10 KST, 최신)
+
+[58문서](58-durable-migration-resume-cancel.md)의 독립 migration journal/coordinator에서 신규32개와 회귀71개 통과. 이미지 본문 없는 job/asset 상태·계정/기기scope·lease/fence/취소epoch·업로드/게시/삭제응답 유실·SIGKILL 복구·원본 이후편집 미수집을 확인했다. remote port는 테스트 어댑터이며 서버에서 I/O 종료/취소 경계/전체 검증·완료증표를 보장하는 실제RPC가 다음이다. A06 native 격리, A07 서버 도메인매핑·제품이미지/GC, A08 품질·A09실기/제품동기화는 계속 미완료다.

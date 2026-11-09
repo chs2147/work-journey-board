@@ -1,6 +1,6 @@
 # V2 설계·PoC 중단/재개 기록
 
-**현재 재개 정본:** [57. 실행 격리·이관 완료 연결](57-runtime-isolation-and-migration-handoff.md). 이하 체크포인트는 작성 당시 기록이며 가장 최근 결과가 우선한다.
+**현재 재개 정본:** [58. 이관 영속 상태·재개·취소](58-durable-migration-resume-cancel.md). 이하 체크포인트는 작성 당시 기록이며 가장 최근 결과가 우선한다.
 
 2026-11-09 UTC · V2 설계/PoC 중단 지점을 보존한 뒤 복귀했다. 사용자 요청으로 main 1.23.1 패치(`d11a0ca`)를 v2-design에 병합했다.
 
@@ -110,3 +110,7 @@ main CI42585959844의 실제 실패는 Chromium 표 이동 undo 시 표 전체�
 ## 실행 격리·이관 완료 연결 PoC(2026-11-10 KST, 최신)
 
 [57문서](57-runtime-isolation-and-migration-handoff.md)를 최신 재개점으로 읽는다. local/connected 후보 namespace·기존피드 온라인RC 게시거절·로컬 cloud 초기화0·온라인실패 원본fallback 거절·서버 완료 정보 callback·원본폴더 중첩 경로 가드를 검증했다. 격리29/사본23/DB18회귀19=71개 통과. 원본55/56 철칙과 실제Storage 검증은 유지한다. 실제 native 앱/배포·서버 이관 완료RPC는 아직 없고 다음은 이관작업/manifest 영속 상태→서버 매핑/Blob전송/재개·취소→검증/완료증표 구현이다. 제품/설정/Cloud/원본자료/기존 릴리스는 변경하지 않았다.
+
+## 영속 이관 journal/재개·취소 PoC(2026-11-10 KST, 최신)
+
+[58문서](58-durable-migration-resume-cancel.md)가 최신 재개점이다. 신규32개/회귀71개=103개 통과. journal은 source와 겹치지 않는 별도DB이며 ID/hash/정수크기/상태만 저장한다. 업로드/게시/삭제 응답 유실·cancel fence·이미게시취소거절·SIGKILL/lease·파일유실 후 정리를 테스트용remote와 검증했다. 실제Cloud 이관RPC/메타데이터mapper/native 앱 연결은 아직 없다. 다음은 PostgreSQL의 이관 테이블/원자적 publish-cancel·관측/완료증표 RPC→로컬PG검증→신규전진SQL/ACL/rollback검토→DEV통합이다. 기존install재실행 금지, source 원본/로컬모델영구유지/이미지본문 DB0 철칙 유지. 이번 실제 사용자/Cloud/제품/환경 변경 없음.

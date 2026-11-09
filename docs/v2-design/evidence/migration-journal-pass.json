@@ -1,0 +1,53 @@
+{
+  "checkedAt": "2026-11-09T22:51:08.046373+00:00",
+  "scope": "Synthetic local DB18/copy/migration journal + in-memory remote adapter; Linux SIGKILL child only",
+  "tests": [
+    {
+      "file": "poc/v2-migration/coordinator.test.mjs",
+      "passedCount": 32,
+      "exitCode": 0,
+      "passed": true,
+      "log": "migration-journal-tests.txt",
+      "logSha256": "cb9cb80ba15b10c752bd59a0bebef3258c8ec3bb267d4fe13d8637c6bd224854"
+    },
+    {
+      "file": "poc/v2-runtime/isolation.test.mjs",
+      "passedCount": 29,
+      "exitCode": 0,
+      "passed": true,
+      "log": "migration-runtime-regression-tests.txt",
+      "logSha256": "d4f0da0b33532c2cacb0238d1b07bdfe2b6019bf54a44eba70b2cb4ad7788b15"
+    },
+    {
+      "file": "poc/v2-assets/connected-copy.test.mjs",
+      "passedCount": 23,
+      "exitCode": 0,
+      "passed": true,
+      "log": "migration-copy-regression-tests.txt",
+      "logSha256": "e47ed2bd74adb7c2c2ef38af7857dbcd8c6d165b97a293b690e821ea2d46a32c"
+    },
+    {
+      "file": "poc/v2-sync/db18.test.mjs",
+      "passedCount": 19,
+      "exitCode": 0,
+      "passed": true,
+      "log": "migration-db18-regression-tests.txt",
+      "logSha256": "fb5876042bb7837404c62d0f161b1e4e3dfd30de91a628d7cae2a8fff88e3903"
+    }
+  ],
+  "totalPassed": 103,
+  "sourceSha256": {
+    "poc/v2-migration/journal.mjs": "ec61954b774bee6f6b57e1775022f3e239b0bde5f846d3af7678c7b155b51113",
+    "poc/v2-migration/coordinator.mjs": "122f40677bc49753368e30312a4e226cccf85cc62aebf8d6084bea99d9ca52c4",
+    "poc/v2-migration/coordinator.test.mjs": "867aa9e7cf8aa1c32cdad7d7de79303132eb2078872b9e9bc9840287d5679ec3",
+    "poc/v2-runtime/isolation.mjs": "68f0f6a0a9e34e27651b7d876a7aa7e4d807dbc78eb4cb8cf03e19fb0ca5a237",
+    "poc/v2-assets/connected-copy.mjs": "6629b11f3354f82e4ab3a2092210b1a08c20f4743b7ba0b01b44d60bfb025f76"
+  },
+  "cloudMigrationExecuted": false,
+  "serverMigrationRPCImplemented": false,
+  "productWiringImplemented": false,
+  "nativeWindowsMacVerified": false,
+  "powerFailureDurabilityVerified": false,
+  "localModelPermanence": "unchanged; source is never transformed in place",
+  "journalImagePayloads": false
+}

@@ -1,0 +1,37 @@
+✔ win32: separate app/config/update/credentials/IPC/instance namespaces (2.664823ms)
+✔ darwin: separate app/config/update/credentials/IPC/instance namespaces (0.444659ms)
+✔ linux: separate app/config/update/credentials/IPC/instance namespaces (0.499291ms)
+✔ observed legacy identifier/config folder/release feed match actual sources (1.558452ms)
+✔ linux: reject equal/ancestor/nested source destination /tmp/local/online (0.164955ms)
+✔ linux: reject equal/ancestor/nested source destination /tmp (0.078156ms)
+✔ linux: reject equal/ancestor/nested source destination /tmp/local (0.089053ms)
+✔ linux: reject equal/ancestor/nested source destination /tmp/other/../local/copy (0.100379ms)
+✔ win32: reject equal/ancestor/nested source destination c:\DATA\LOCAL\Online (0.118085ms)
+✔ darwin: reject equal/ancestor/nested source destination /users/fixture/local/Online (0.281608ms)
+✔ a sibling sharing a name prefix is allowed (0.182431ms)
+✔ different Windows volumes are separate (0.127789ms)
+✔ explicit platform/profile and absolute trusted roots required (0.177523ms)
+✔ Windows device paths/alternate streams are not valid roots (0.188851ms)
+✔ Windows trailing-dot/space aliases cannot bypass root separation (0.340145ms)
+✔ macOS Unicode normalization aliases cannot bypass root separation (0.159407ms)
+✔ identity collision is rejected even when config path differs (0.173578ms)
+✔ connected release cannot share existing local feed, even for RC tags (0.178625ms)
+✔ connected publication stays disabled before an approved channel exists (0.090033ms)
+✔ legacy release stays on existing repository (0.070004ms)
+✔ local-classic: local workspace opens without cloud factory or credentials (0.150193ms)
+✔ connected-preview: local workspace opens without cloud factory or credentials (0.045257ms)
+✔ online-capable profile does not auto-convert a local DB based on login (0.198124ms)
+✔ classic local profile cannot initialize connected adapter (0.314075ms)
+✔ connected adapter failures never silently fall back to a legacy original (0.203693ms)
+✔ unsupported local format cannot invoke local repository (0.268739ms)
+✔ local extraction READY cannot substitute for a verified server receipt (0.237492ms)
+✔ missing authoritative receipt adapter blocks connected initialization (0.246586ms)
+✔ verified exact workspace and manifest can initialize only the connected factory (0.754069ms)
+ℹ tests 29
+ℹ suites 0
+ℹ pass 29
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 21.573201

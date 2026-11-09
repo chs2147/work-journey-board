@@ -336,3 +336,7 @@ V2 체크포인트52ff622를 푸시한 뒤 사용자 요청의 캐비넷/노트 
 ## 4.60 실행/업데이트 격리·사본 경로·이관 완료 연결
 
 [57문서](57-runtime-isolation-and-migration-handoff.md)에 실제 CONFIG_DIR/릴리스 피드 고정 관측과 후보 runtime profile을 기록했다. 독립 격리29개+실제 사본 추출23개+기존DB18회귀19개=71개 통과. 원본 폴더 하위 생성도 차단하고 로컬모드 cloud 초기화/온라인오류의 원본fallback을 거절한다. 새 사본 연결은 일치하는 workspace/manifest의 서버 완료 정보 callback을 요구한다. 실제 server receipt RPC/native profile/배포·실기는 미구현이며 제품/클라우드/설정은 변경하지 않았다.
+
+## 4.61 이관 journal·재개·취소·응답 유실 복구
+
+[58문서](58-durable-migration-resume-cancel.md)에 원본과 분리된 metadata-only SQLite journal/coordinator를 구현했다. 신규32개(재열기·응답 유실·취소/게시 경쟁·늦은 I/O·SIGKILL·원본보호/본문0)+기존회귀71개=103개 통과. 원격은 메모리 테스트 어댑터이며 실제 server migration RPC/metadata mapper는 미구현이다. 다음은 PostgreSQL 이관 상태/원자적 완료·취소/관측 RPC 구현/검증→전진SQL검토→개발Supabase 연결이다. 제품/원본/Cloud/환경/과금 변경은 없다.

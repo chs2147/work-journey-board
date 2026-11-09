@@ -1,0 +1,40 @@
+✔ durable metadata-only job reaches connected after exact receipt (70.677128ms)
+✔ different account or device cannot resume a job (29.757821ms)
+✔ upload ack loss survives reopen and rechecks before upload (47.809608ms)
+✔ settled absent upload can retry without changing manifest (46.616938ms)
+✔ absent object with unsettled operation never triggers retry (52.742484ms)
+✔ wrong hash or foreign ownership cannot be reconciled (46.903714ms)
+✔ metadata image payload count blocks final publication (41.792873ms)
+✔ publication ack loss reopens as committed without republishing (51.897542ms)
+✔ unknown publication remains pending until authoritative observation (57.193758ms)
+✔ cancel before upload fences publication and keeps original and copy files (41.884208ms)
+✔ cancel after lost upload removes only owned job objects after settlement (49.245027ms)
+✔ cancel waits for late upload settlement even when a file exists (52.296193ms)
+✔ already committed online workspace rejects staging cancellation and retains files (49.198848ms)
+✔ server cancellation fence blocks a late publisher (50.416374ms)
+✔ delete ack loss resumes by absence check without deleting twice (50.161807ms)
+✔ successful delete response with remaining bytes cannot finish cancel (53.8991ms)
+✔ concurrent lease and stale lease completion are rejected (30.070195ms)
+✔ cancel invalidates in-flight worker completion without losing intent (45.677865ms)
+✔ existing DB18 cannot be opened as a migration journal (27.30353ms)
+✔ journal creation inside preserved source folder is rejected (26.869697ms)
+✔ changed extraction manifest refuses resume before any remote request (26.940442ms)
+✔ wrong completion receipt cannot mark a job connected (39.592359ms)
+✔ SIGKILL after durable intent retains uncertain state and can be reacquired (90.185455ms)
+✔ later edits of original local workspace are not swept into migration (41.658624ms)
+✔ stale operation observation cannot settle the current upload (36.965633ms)
+✔ wrong cancellation fence cannot authorize cleanup (33.160388ms)
+✔ lost server cancellation acknowledgement safely resumes fencing (54.239566ms)
+✔ cancel during metadata staging prevents a late local publish (52.547406ms)
+✔ journal alias is rejected before writable open (35.769158ms)
+✔ cancellation can clean owned remote staging without local copy files (60.922258ms)
+✔ committed publication can be reconciled even if local cache is unavailable (45.272455ms)
+✔ stale publication observation never authorizes republish or connection (43.583053ms)
+ℹ tests 32
+ℹ suites 0
+ℹ pass 32
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1492.40279
