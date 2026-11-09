@@ -95,6 +95,13 @@ fixtures/     sample-*.json — 가상 업무 기록만
 
 ## 4. 이 프로젝트 고유 규칙
 
+### 로컬 모델 영구 유지·온라인 사본 이관 원칙 (2026-11-10 사용자 지시)
+- **로컬 전용 모델은 사용자가 명시적으로 포기하기 전까지 영구 유지한다.** V2/온라인 출시를 이유로 폐기·유지보수 종료·로그인 강제·자동 온라인 전환하지 않는다. 온라인 기능을 위해 전환하지 않은 기존 워크스페이스의 DB/이미지/백업 구조를 변경하지 않는다.
+- 온라인 마이그레이션은 원본을 보존하고 **별도 ID·위치의 새 온라인 워크스페이스를 복제 생성**한다. 원본 로컬 DB의 이미지 행/파일/백업/설정은 추출·업로드 성공 후에도 삭제하거나 온라인 형식으로 덮어쓰지 않는다. 실패/취소와 무관하게 원본은 계속 사용할 수 있어야 한다.
+- **이번 ‘이미지 중복 저장 방지’의 핵심은 온라인 DB와 Blob 간 이중 저장 금지다.** 온라인용 DB/문서 JSON/outbox/inbox/change log/conflict/snapshot에는 이미지 binary/base64/data URL을 저장하지 않고 ID/hash/권한/크기/Blob 참조만 저장한다. 본문/썸네일 모두 대상이다. 로컬 원본 보존과 온라인 공간의 DB 밖 오프라인 파일/캐시는 이 규칙에 위배되지 않는다.
+- 이미지끼리 해시가 같을 때 Blob 실물을 공유하는 dedup는 별도 최적화다. 이를 DB/Blob 이중 저장 금지의 대체 구현으로 보고하지 않는다. 예전 BLOB 포함 보존/모형 DB는 최종 온라인 DB로 배포/업로드하지 않는다.
+- 새 온라인 사본에서만 이미지 분리·참조 변환·Blob 업로드/전체 검증 후 활성화한다. 확인되지 않은 이미지/참조는 생략하지 않고 중단한다. 기존 로컬 DB migration 수정 금지. 상세 정본은 `docs/v2-design/56-local-permanence-copy-migration.md`다.
+
 ### 4-1. 외부 통신 0 (제품의 존재 이유)
 - 앱 코드에서 외부 호스트로 가는 `fetch`·XHR·WebSocket·이미지/폰트 CDN 로드를 **넣지 않는다**. 본문 글꼴은 **Pretendard Variable**(SIL OFL 1.1) — npm `pretendard`(버전 고정)의 공식 woff2를 **수정 없이** 번들한다(`src/shared/fonts.css`, 라이선스 `public/licenses/`). OFL 예약 글꼴 이름 조항 때문에 글자 잘라내기 등 파일 수정 금지. 기본 글자 크기 14px(`--fs-md`). **시그니처 테마만** 고운돋움 Regular(SIL OFL 1.1, `src/shared/fonts/GowunDodum-Regular.woff2` 한글 전체 · 라이선스 `public/licenses/GowunDodum-OFL-1.1.txt`, 굵기 400 하나 → `--fw-bold: 400` + `font-synthesis: none`) — 라이트·다크는 Pretendard(design-renewal-v1 3절 A안, 2026-10-28 사용자 확정).
 - Tauri CSP: `default-src 'self'; connect-src ipc: http://ipc.localhost; img-src 'self' data:; style-src 'self' 'unsafe-inline'`. 외부 도메인을 CSP에 추가하는 변경은 **사용자 승인 필수**.

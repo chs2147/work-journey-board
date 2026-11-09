@@ -100,3 +100,7 @@ main CI42585959844의 실제 실패는 Chromium 표 이동 undo 시 표 전체�
 ## 개발 private Storage 실검증 완료(2026-11-10 KST, 최신)
 
 [55문서](55-supabase-private-storage-live-results.md)가 최신 체크포인트다. 사용자 DEV Free/Storage/Egress 화면으로U07 완료. 실제 private bytes3종/loopback gateway47검사+정리4개 및 관련 로컬156개가 통과했다. 첫 취소 실패는 Supabase HTTP400/내부404 Object not found 호환 수정으로 해결했고 증거를 분리했다. 생성한 계정/실물/버킷/시험metadata는 모두 제거했다. 다음은A06 V1/V2 앱/설정/업데이트/원본복사 격리→A07/A08 자산/dedup·품질 PoC다. 현재64KiB·assetId 계약을 제품용 dedup 완료로 해석하지 않는다. 실제 제품/기기/공개 gateway/이메일은 미완료다. install.sql 재실행·운영/로컬/유료/환경 변경 금지 범위는 유지한다.
+
+## 사용자 철칙·metadata-only 사본 PoC(2026-11-10 KST, 최신)
+
+[56문서](56-local-permanence-copy-migration.md)와 CLAUDE.md가 최상위 계약이다. 로컬 모델은 사용자가 명시적으로 포기하기 전 영구 지원. 마이그레이션은 원본 DB/이미지 그대로 유지한 별도 ID/위치 온라인 사본 생성. ‘중복’은 온라인 DB/Blob의 이미지 본문 이중 저장 금지이며 로컬 원본/오프라인 실물 보관은 허용한다. 예전 db18 staging/local_assets BLOB는 역사적 시험으로만 유지. 신규connected-copy22개/기존DB18회귀19개 통과했고 실제 Supabase 이관/앱 연결은 미구현이다. 다음은 설정/배포 격리와 추출→서버 참조/Blob 업로드→전체 검증/활성화·재개/취소 연결이다. 이미지 재압축은 신규 온라인 사본의 선택 정책으로만 후속 검토한다.

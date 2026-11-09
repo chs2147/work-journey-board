@@ -1,5 +1,7 @@
 # 26. DB18 가상 원본 전환·왕복 복원 결과
 
+**후속 계약:** 이 문서의 v2-poc-staging-1은 binary를 내부 blobs 테이블에 보관하는 역사적 왕복 시험 포맷이다. 온라인 DB에는 사용/업로드하지 않는다. 원본 영구 유지와 metadata-only 새 사본은 [56문서](56-local-permanence-copy-migration.md)를 따른다.
+
 2026-11-08 · `v2-design` · 독립 로컬 PoC 두 번째 구현 증분.
 
 ## 결과

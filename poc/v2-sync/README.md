@@ -1,5 +1,7 @@
 # V2 독립 로컬 동기화 모형
 
+**저장 형식 주의(2026-11-10):** 이 폴더의 BLOB 포함 staging/local_assets/서버 모형은 과거 알고리즘·보존/왕복 시험용이다. 최종 온라인 DB로 배포/업로드하지 않는다. 온라인 DB/Blob 이미지 본문 이중 저장 금지와 로컬 영구 유지 원칙은 [56문서](../../docs/v2-design/56-local-permanence-copy-migration.md), metadata-only 추출 검증은 [v2-assets](../v2-assets/connected-copy.mjs)를 따른다.
+
 Node 24.22.1에서 검증하는 첫 구현 증분이다. 제품 코드와 의존성을 공유하지 않는 ES module + Node 기본 SQLite/테스트 도구를 사용한다. TypeScript/Vitest 통합 전, 루트 설정/패키지를 바꾸지 않고 파일 DB 종료 시험을 재현하기 위한 선택이다.
 
 ```sh

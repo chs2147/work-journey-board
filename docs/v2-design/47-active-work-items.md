@@ -88,3 +88,7 @@ A11 초기 공급자는 사용자 결정으로 Supabase private Storage로 확�
 ## 개발 private 파일 실검증 완료(2026-11-10 KST, 최신)
 
 U07은 사용자 DEV 대시보드의 Free/Storage0/1GB/Egress0/5GB 표시로 완료다. 조직API403은 그대로이며 화면0은 반올림 가능하다. [55문서](55-supabase-private-storage-live-results.md)의 실제 파일3종/무결성/중복 재시도/계정 격리/응답 유실·복구/취소/동시quota/세션 회수47검사와 cleanup4항목이 통과했다. A05는 DEV Auth/Storage/loopback gateway까지 완료, 공개 배포·네이티브 로그인/실기/메일은 미완료다. 다음은A06 V1/V2 격리 및A07/A08 제품용 자산/dedup/압축 검토다. 제품/운영/과금/환경 변경은 없다.
+
+## 로컬 영구 유지·이미지 의미 정정(2026-11-10 KST, 최신)
+
+[56문서](56-local-permanence-copy-migration.md)/CLAUDE.md에 사용자 철칙을 고정했다. A06/A07의 핵심은 원본 구조/이미지 영구 유지·명시적 새 온라인 사본·온라인 DB/Blob 이중 본문 저장 금지다. 이미지끼리 hash 공유는 별도 최적화다. 신규 독립 추출22개+기존 DB18회귀19개 통과. 앱/설정/설치/업데이트 분리와 실제 이관 업로드/재개/취소 연결은 미완료다. 예전 BLOB 모형/staging을 최종 온라인 저장소로 사용하지 않는다. 이번 작업은 가상 로컬 시험뿐이며 실제 사용자 DB/클라우드는 변경하지 않았다.

@@ -48,7 +48,7 @@ function rows(db) {
   }
   return out;
 }
-function validate(data) {
+function validate(data, { allowNoteImages = false } = {}) {
   const entries = new Set(data.entry_item.map((r) => r.id));
   function board(row, kind) {
     const doc = JSON.parse(kind === "week" ? row.doc : row.doc);
@@ -74,14 +74,20 @@ function validate(data) {
   }
   for (const r of data.week_note) board(r, "week");
   for (const r of data.cabi_board) board(r, "board");
-  // The fixed F0 sample has text-only task notes; unsupported image nodes fail closed.
-  function note(n) {
-    if (n.type === "image") throw Error("NOTE_IMAGE_UNSUPPORTED");
-    for (const c of n.content ?? []) note(c);
+  // Historical staging defaults remain text-only. The connected-copy PoC can
+  // explicitly validate the product's asset-id image nodes without inline bytes.
+  function note(n, ownerId) {
+    if (n.type === "image") {
+      if (!allowNoteImages) throw Error("NOTE_IMAGE_UNSUPPORTED");
+      const asset = data.cabi_asset.find((a) => a.id === n.attrs?.asset);
+      if (!asset || asset.owner_kind !== "note" || asset.owner_id !== ownerId)
+        throw Error("NOTE_IMAGE_OWNER");
+    }
+    for (const c of n.content ?? []) note(c, ownerId);
   }
-  for (const r of data.cabi_note) note(JSON.parse(r.content));
+  for (const r of data.cabi_note) note(JSON.parse(r.content), r.id);
 }
-export function capture18(path) {
+export function capture18(path, options = {}) {
   guard(path);
   const before = sourceHash(path);
   const db = new DatabaseSync(path, { readOnly: true });
@@ -102,7 +108,7 @@ export function capture18(path) {
     )
       throw Error("DB_INTEGRITY");
     result = rows(db);
-    validate(result);
+    validate(result, options);
   } finally {
     db.close();
   }

@@ -1,0 +1,32 @@
+{
+  "checkedAt": "2026-11-09T22:15:03.843286+00:00",
+  "scope": "Synthetic local PoC only, no user source or cloud access",
+  "tests": [
+    {
+      "file": "poc/v2-assets/connected-copy.test.mjs",
+      "expectedPassed": 22,
+      "exitCode": 0,
+      "passed": true,
+      "log": "connected-copy-tests.txt",
+      "logSha256": "f4693fa81aeb2a6496b0fa396e251375855b2f61bb278d804a3d7eb572972c5a"
+    },
+    {
+      "file": "poc/v2-sync/db18.test.mjs",
+      "expectedPassed": 19,
+      "exitCode": 0,
+      "passed": true,
+      "log": "legacy-db18-regression-tests.txt",
+      "logSha256": "2f4416d106fae93f81bf0368a95ad1236a8365352feed44999897245908aac3c"
+    }
+  ],
+  "sourceSha256": {
+    "poc/v2-assets/connected-copy.mjs": "5d5bbd763422ff292b4c138add9da028c5ac2e9e65d453802e2b793ec3178e1e",
+    "poc/v2-assets/connected-copy.test.mjs": "1ed5020339044dd29446041c31a2f08615fbb90dff60099d71bb3ea75c4cd9a6",
+    "poc/v2-sync/db18.mjs": "1cce5796c9574ab34663695150ce815b3815a987b3d1930d00af3d5c4901e493"
+  },
+  "totalPassed": 41,
+  "productMigrationImplemented": false,
+  "cloudMigrationExecuted": false,
+  "primaryInvariant": "Preserve local source; separate new workspace; no image payload in online metadata DB",
+  "sameImageHashSharing": "secondary optimization, not the primary invariant"
+}
