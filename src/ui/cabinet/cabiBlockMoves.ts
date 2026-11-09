@@ -1,7 +1,15 @@
 import type { Editor } from "@tiptap/react";
 import { NodeSelection } from "@tiptap/pm/state";
 import { Fragment, Slice, type Node as PMNode } from "@tiptap/pm/model";
-export type Block = { pos: number; node: PMNode; rect: DOMRect };
+// gutter = 최상위 블록(목록이면 목록 전체)의 왼쪽 — 들여쓴 목록 항목도 이끌이는 문장 맨 앞 같은 자리에(불렛을 가리지 않게)
+export type Block = { pos: number; node: PMNode; rect: DOMRect; gutter: number };
+function gutterOf(editor: Editor, pos: number, rect: DOMRect) {
+  const doc = editor.state.doc,
+    r = doc.resolve(Math.max(0, Math.min(pos, doc.content.size)));
+  const top = r.depth >= 1 ? r.before(1) : pos,
+    dom = editor.view.nodeDOM(top);
+  return dom instanceof Element ? Math.min(rect.left, dom.getBoundingClientRect().left) : rect.left;
+}
 export function blockAt(editor: Editor, pos: number): Block | null {
   const sel = editor.state.doc.resolve(Math.max(0, Math.min(pos, editor.state.doc.content.size)));
   let depth = 1;
@@ -14,13 +22,16 @@ export function blockAt(editor: Editor, pos: number): Block | null {
     node = editor.state.doc.nodeAt(before),
     dom = editor.view.nodeDOM(before);
   if (!node || !(dom instanceof Element)) return null;
-  return { pos: before, node, rect: dom.getBoundingClientRect() };
+  const rect = dom.getBoundingClientRect();
+  return { pos: before, node, rect, gutter: gutterOf(editor, before + 1, rect) };
 }
 export function selectedBlock(editor: Editor) {
   const s = editor.state.selection;
   if (s instanceof NodeSelection) {
     const dom = editor.view.nodeDOM(s.from);
-    return dom instanceof Element ? { pos: s.from, node: s.node, rect: dom.getBoundingClientRect() } : null;
+    if (!(dom instanceof Element)) return null;
+    const rect = dom.getBoundingClientRect();
+    return { pos: s.from, node: s.node, rect, gutter: gutterOf(editor, s.from + 1, rect) };
   }
   return blockAt(editor, s.from);
 }

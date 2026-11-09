@@ -218,3 +218,49 @@ test("대체 경로로 찾은 새 판(노트 없음): 창에 '변경 내용은 �
   await expect(page.getByTestId("update-notes-page")).toContainText("릴리스 페이지에서");
   await expect(page.getByRole("dialog")).not.toContainText("MB");
 });
+
+// ── 긴급 수정(1.24.1): 들여쓴 목록 문장도 블록 이끌이는 문장 맨 앞 고정 자리(불렛을 가리지 않음) ──
+test("블록 이끌이: 일반 문단·불렛·들여쓴 불렛 모두 같은 왼쪽 자리, 불렛 왼쪽에 있어 끌기·메뉴를 쓸 수 있다", async ({
+  page,
+}) => {
+  await openHub(page);
+  const c = await newNote(page, "가상 들여쓰기 노트");
+  const ed = c.locator("[contenteditable=true]").first();
+  await ed.click();
+  await c.keyboard.press("End");
+  await c.keyboard.press("Enter");
+  await c.keyboard.type("- 가상 항목 하나");
+  await c.keyboard.press("Enter");
+  await c.keyboard.press("Tab");
+  await c.keyboard.type("가상 하위 항목");
+  await c.keyboard.press("Enter");
+  await c.keyboard.press("Tab");
+  await c.keyboard.type("가상 더 깊은 항목");
+  const deepest = ed.locator("li li li p").first();
+  await expect(deepest).toHaveText("가상 더 깊은 항목");
+  const grip = c.getByTestId("cabi-block-grip");
+  const xs: number[] = [];
+  for (const target of [
+    ed.locator("> p").first(),
+    ed.locator("> ul > li > p").first(),
+    ed.locator("li li > p").first(),
+    deepest,
+  ]) {
+    await target.hover();
+    const g = (await grip.boundingBox())!;
+    const t = (await target.boundingBox())!;
+    expect(g.y).toBeLessThanOrEqual(t.y + t.height);
+    xs.push(g.x);
+  }
+  // 모두 같은 x(문단 맨 앞 자리)
+  for (const x of xs) expect(Math.abs(x - xs[0]!)).toBeLessThan(1);
+  // 가장 바깥 목록의 왼쪽(불렛 자리) 앞에 있다
+  const ul = (await ed.locator("> ul").first().boundingBox())!;
+  const g = (await grip.boundingBox())!;
+  expect(g.x + g.width).toBeLessThanOrEqual(ul.x + 0.5);
+  // 깊은 항목에서 이끌이를 눌러 메뉴가 열린다(목록 항목 블록)
+  await deepest.hover();
+  await expect(grip).toHaveAttribute("data-block", "listItem");
+  await grip.click();
+  await expect(c.locator("[data-cabi-block-menu]")).toBeVisible();
+});

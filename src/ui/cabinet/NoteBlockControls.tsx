@@ -145,7 +145,7 @@ export function NoteBlockControls({
   };
   const menuPos = active
     ? {
-        left: Math.max(8, Math.min(window.innerWidth - 230, active.rect.left - 30)),
+        left: Math.max(8, Math.min(window.innerWidth - 230, active.gutter - 30)),
         top: Math.max(8, Math.min(window.innerHeight - 470, active.rect.top + 25)),
       }
     : undefined;
@@ -158,7 +158,7 @@ export function NoteBlockControls({
           title={V17.grip}
           data-testid="cabi-block-grip"
           data-block={hover.node.type.name}
-          style={{ left: Math.max(3, hover.rect.left - 29), top: hover.rect.top }}
+          style={{ left: Math.max(3, hover.gutter - 29), top: hover.rect.top }}
           draggable
           onPointerEnter={() => {
             if (leaveTimer.current) clearTimeout(leaveTimer.current);
