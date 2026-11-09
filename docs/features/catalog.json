@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "product": "Work Journey Board",
-  "catalogVersion": "1.24.0-rc.1",
+  "catalogVersion": "1.24.0",
   "asOfDate": "2026-11-09",
-  "baseRelease": "1.23.3",
+  "baseRelease": "1.24.0",
   "sourceCommit": "d2d67f1",
   "appSchemaVersion": 19,
   "versionDefinition": "최초 제공 = 비RC 출시 이력에서 기능 제공이 확인된 최초 버전(0.x 개발판 포함); RC는 preview로 별도 기록",
@@ -9759,6 +9759,12 @@
           "type": "changed",
           "description": "ETag 조건부 확인으로 한도 사용 줄이기, 한도 초과/차단 구분 안내·[릴리스 페이지 열기], 한도 초과 때 releases/latest에서 최신 정식 판 번호만 읽는 대체 경로.",
           "source": "docs/release-notes/v1.24.0-rc.1.md"
+        },
+        {
+          "version": "1.24.0",
+          "type": "changed",
+          "description": "승인된 1.24.0-rc.1 기능을 정식 main에 반영. CI·두 플랫폼 빌드 확인 후 승인.",
+          "source": "docs/release-notes/v1.24.0.md"
         }
       ],
       "sources": [
@@ -9766,7 +9772,8 @@
         "README.md",
         "docs/release-notes/v0.2.19.md",
         "docs/improve-v20-spec.md",
-        "docs/release-notes/v1.24.0-rc.1.md"
+        "docs/release-notes/v1.24.0-rc.1.md",
+        "docs/release-notes/v1.24.0.md"
       ],
       "implementation": [
         "src/platform"
@@ -9775,7 +9782,7 @@
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "배포·플랫폼",
-      "lastChanged": "1.24.0-rc.1",
+      "lastChanged": "1.24.0",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
@@ -10407,6 +10414,12 @@
           "type": "changed",
           "description": "업무노트 삭제 잠금(편집 화면, 삭제만 막음·구조 v19)·삭제 최종 확인 창(처음 초점 취소)·목록/편집 화면 노트 복제(이미지 새로 복사, 연결·잠금 미복사).",
           "source": "docs/release-notes/v1.24.0-rc.1.md"
+        },
+        {
+          "version": "1.24.0",
+          "type": "changed",
+          "description": "승인된 1.24.0-rc.1 기능을 정식 main에 반영. CI·두 플랫폼 빌드 확인 후 승인.",
+          "source": "docs/release-notes/v1.24.0.md"
         }
       ],
       "sources": [
@@ -10418,7 +10431,8 @@
         "docs/release-notes/v1.23.1.md",
         "docs/release-notes/v1.23.2.md",
         "docs/improve-v20-spec.md",
-        "docs/release-notes/v1.24.0-rc.1.md"
+        "docs/release-notes/v1.24.0-rc.1.md",
+        "docs/release-notes/v1.24.0.md"
       ],
       "implementation": [
         "src/ui/cabinet",
@@ -10428,7 +10442,7 @@
       "verification": "브라우저/저장소 자동 검사 대상. Windows/macOS 실제 설치·WebView 간 드래그는 실기 확인 필요.",
       "reviewStatus": "미검토",
       "reviewNote": "사용자 승인으로 1.20.0 정식 도입 버전 확정. 실기 전수 검토와 구분.",
-      "lastChanged": "1.24.0-rc.1",
+      "lastChanged": "1.24.0",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v17"
     },
     {
@@ -10504,6 +10518,12 @@
           "type": "changed",
           "description": "표 손잡이·행/열 이끌이 자리 분리로 표 전체 끌어 옮기기, 행/열 이동 중 원래 위치 바탕·들어갈 경계 선·앞/뒤 절반 판정·Esc 취소, 열 경계 ↔ 커서.",
           "source": "docs/release-notes/v1.24.0-rc.1.md"
+        },
+        {
+          "version": "1.24.0",
+          "type": "changed",
+          "description": "승인된 1.24.0-rc.1 기능을 정식 main에 반영. CI·두 플랫폼 빌드 확인 후 승인.",
+          "source": "docs/release-notes/v1.24.0.md"
         }
       ],
       "sources": [
@@ -10517,7 +10537,8 @@
         "docs/release-notes/v1.23.2.md",
         "docs/release-notes/v1.23.3.md",
         "docs/improve-v20-spec.md",
-        "docs/release-notes/v1.24.0-rc.1.md"
+        "docs/release-notes/v1.24.0-rc.1.md",
+        "docs/release-notes/v1.24.0.md"
       ],
       "implementation": [
         "src/ui/cabinet",
@@ -10527,7 +10548,7 @@
       "verification": "브라우저/저장소 자동 검사 대상. Windows/macOS 실제 설치·WebView 간 드래그는 실기 확인 필요.",
       "reviewStatus": "미검토",
       "reviewNote": "사용자 승인으로 1.20.0 정식 도입 버전 확정. 실기 전수 검토와 구분.",
-      "lastChanged": "1.24.0-rc.1",
+      "lastChanged": "1.24.0",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v17"
     },
     {
@@ -10735,6 +10756,12 @@
           "type": "changed",
           "description": "끌기 손잡이를 점 6개(⠿)로 통일(목록·업무 보드 자료 서랍), 보드 객체 끌어 복제는 ⠿+, 복사 모양은 복제 단추 전용.",
           "source": "docs/release-notes/v1.24.0-rc.1.md"
+        },
+        {
+          "version": "1.24.0",
+          "type": "changed",
+          "description": "승인된 1.24.0-rc.1 기능을 정식 main에 반영. CI·두 플랫폼 빌드 확인 후 승인.",
+          "source": "docs/release-notes/v1.24.0.md"
         }
       ],
       "sources": [
@@ -10744,7 +10771,8 @@
         "docs/improve-v17-spec.md",
         "docs/release-notes/v1.21.0.md",
         "docs/improve-v20-spec.md",
-        "docs/release-notes/v1.24.0-rc.1.md"
+        "docs/release-notes/v1.24.0-rc.1.md",
+        "docs/release-notes/v1.24.0.md"
       ],
       "implementation": [
         "src/ui/cabinet",
@@ -10754,7 +10782,7 @@
       "verification": "브라우저/저장소 자동 검사 대상. Windows/macOS 실제 설치·WebView 간 드래그는 실기 확인 필요.",
       "reviewStatus": "미검토",
       "reviewNote": "사용자 승인으로 1.20.0 정식 도입 버전 확정. 실기 전수 검토와 구분.",
-      "lastChanged": "1.24.0-rc.1",
+      "lastChanged": "1.24.0",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v17"
     },
     {

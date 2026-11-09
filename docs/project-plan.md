@@ -340,7 +340,7 @@ project-plan.md의 I-M4 항목을 읽고 클립보드 다리부터 구현해줘.
 - [x] 구조 개편 1 워크스페이스 — [multi-board-spec.md](multi-board-spec.md): `v1.8.0`(2026-11-03) · 전환 때 메모 이미지 유실 긴급 수정 `v1.8.1`(2026-11-04, 14절 · 재발 방지 CLAUDE.md 4-7)
 - [x] 구조 개편 2 Universe — [universe-spec.md](universe-spec.md): UV1 지도 보기 → UV2 직접 연결 → UV3 지식 카드 → UV4 근거 묶음, 작업 브랜치 `universe-model`에서 단계마다 rc 확인 → **`v1.12.0` main 반영(2026-11-04)** · 보존 브랜치 `release/v1.12.0`
 - [x] 개선 v10 업무 항목 마감일·중요 업무 "마감일이 있는 업무" — [improve-1104v10-spec.md](improve-1104v10-spec.md): 작업 브랜치 `improve-v10` → 검증용 `1.13.0-rc.1` → **`v1.13.0` main 반영(2026-11-04)** · 보존 브랜치 `release/v1.13.0`
-- [ ] **Universe 다음 할 일: 새 판 확인 `403 Forbidden` 대응**(2026-11-04 사용자 보고·지시 — "Universe 구현 완료 후")
+- [x] **Universe 다음 할 일: 새 판 확인 `403 Forbidden` 대응** — 개선 v20(improve-v20-spec 6절)으로 `v1.24.0`에 반영(ETag·오류 구분·`releases/latest` 대체 경로)(2026-11-04 사용자 보고·지시 — "Universe 구현 완료 후")
   - 증상: 예전 판에서 설정 [업데이트 확인]·시작 확인이 "GitHub 응답이 올바르지 않습니다(403 Forbidden)"로 실패해 최신 판(`v1.8.1`)을 알아채지 못함. 릴리스·설치 파일·`SHA256SUMS.txt`는 정상(확인함).
   - 원인(유력): 앱이 로그인 없이 `api.github.com` 판 목록을 물음 → GitHub 비로그인 한도 **IP당 1시간 60번** — 회사망처럼 여러 사람이 바깥 주소 하나를 같이 쓰면 금방 바닥나 403. 또는 회사 보안 장비의 `api.github.com` 차단. 지금 오류 글로는 둘을 구분할 수 없음.
   - 할 일 ① (지금 규칙 안) 오류 구분 안내 — 한도 초과면 "약 N분 뒤 다시"(응답의 `X-RateLimit-Remaining`·`X-RateLimit-Reset`), 차단이면 "회사망에서 막혔을 수 있음" + 둘 다 [릴리스 페이지 열기](브라우저로 넘김, 링크 열기 규칙 4-1).
