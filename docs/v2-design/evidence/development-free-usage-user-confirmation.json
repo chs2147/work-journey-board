@@ -1,0 +1,16 @@
+{
+  "recordedAt": "2026-11-09T21:51:02.258131+00:00",
+  "source": "User-provided Supabase dashboard screenshot 22492.jpg",
+  "organizationDisplayed": "Work Journey Board (DEV)",
+  "organizationRefFromRequestedDashboard": "eiwuipccqtdqajvnuewx",
+  "organizationRefVisibleInScreenshot": false,
+  "planDisplayed": "Free",
+  "billingPeriodDisplayed": "Current billing cycle",
+  "exactBillingDatesVisible": false,
+  "storageSizeDisplayed": "0 / 1 GB",
+  "egressDisplayed": "0 / 5 GB (<1%)",
+  "cachedEgressDisplayed": "0 / 5 GB",
+  "zeroValuesMayBeRounded": true,
+  "scope": "User dashboard evidence, not a successful organization Management API entitlement query",
+  "attachmentSha256": "70cc02ed78eb001f290f33524ea7de47aea67e0ce6c2da56237e33432c1eb080"
+}

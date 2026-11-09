@@ -44,6 +44,23 @@ export function createSupabaseRest({ projectRef, serviceRoleKey, fetchTransport 
       await res.body?.cancel();
       throw new GatewayError("OBJECT_MISSING", 404);
     }
+    // Supabase Storage can encode object absence as HTTP 400 with an inner 404.
+    // Match the observed object-specific payload; permission/bucket/unknown
+    // errors must not confirm deletion or release reserved quota.
+    if (res.status === 400) {
+      let missing = false;
+      try {
+        const value = JSON.parse((await readLimited(res, 4096)).toString("utf8"));
+        missing =
+          String(value.statusCode) === "404" &&
+          value.error === "not_found" &&
+          value.message === "Object not found";
+      } catch {
+        // Malformed/oversized responses remain unavailable.
+      }
+      if (missing) throw new GatewayError("OBJECT_MISSING", 404);
+      throw new GatewayError("STORAGE_UNAVAILABLE", 503);
+    }
     if (!res.ok) {
       await res.body?.cancel();
       throw new GatewayError("STORAGE_UNAVAILABLE", 503);

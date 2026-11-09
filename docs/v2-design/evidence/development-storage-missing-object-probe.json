@@ -1,0 +1,21 @@
+{
+  "target": "vsphftnmfzfoufasjttd",
+  "checkedAt": "2026-11-09T21:52:16.818Z",
+  "checks": [
+    {
+      "operation": "delete_absent_object",
+      "http": 200,
+      "body": []
+    },
+    {
+      "operation": "get_absent_object",
+      "http": 400,
+      "body": {
+        "statusCode": "404",
+        "error": "not_found",
+        "message": "Object not found"
+      }
+    }
+  ],
+  "cleanup": true
+}

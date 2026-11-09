@@ -96,3 +96,7 @@ main CI42585959844의 실제 실패는 Chromium 표 이동 undo 시 표 전체�
 ## Supabase Storage 확정(2026-11-10 KST, 최신)
 
 사용자가 초기 Blob 공급자를 Supabase로 확정했다. [54문서](54-supabase-storage-decision.md)가 최신 결정이다. 월0원은 유지하고 Pro 업그레이드는 승인받은 것으로 해석하지 않는다. 개발 Storage 읽기 API200/bucket0/object0/RLS true를 확인했으나 개발 조직 플랜/청구 Usage(U07)는 대시보드 확인이 남아 있다. 다음은 U07→DEV private 제한 표본 gateway 전송/조회/삭제·격리/회수·cleanup 시험이다. R2 관련 질문/가입은 진행 선행 조건에서 제외했다. 현재 실제 파일/버킷/정책 생성·환경/제품/main 변경은 없다.
+
+## 개발 private Storage 실검증 완료(2026-11-10 KST, 최신)
+
+[55문서](55-supabase-private-storage-live-results.md)가 최신 체크포인트다. 사용자 DEV Free/Storage/Egress 화면으로U07 완료. 실제 private bytes3종/loopback gateway47검사+정리4개 및 관련 로컬156개가 통과했다. 첫 취소 실패는 Supabase HTTP400/내부404 Object not found 호환 수정으로 해결했고 증거를 분리했다. 생성한 계정/실물/버킷/시험metadata는 모두 제거했다. 다음은A06 V1/V2 앱/설정/업데이트/원본복사 격리→A07/A08 자산/dedup·품질 PoC다. 현재64KiB·assetId 계약을 제품용 dedup 완료로 해석하지 않는다. 실제 제품/기기/공개 gateway/이메일은 미완료다. install.sql 재실행·운영/로컬/유료/환경 변경 금지 범위는 유지한다.

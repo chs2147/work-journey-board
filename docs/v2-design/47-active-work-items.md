@@ -1,6 +1,6 @@
 # 47. V2 진행 항목·사용자 직접 설정·재개 순서
 
-**최신 체크포인트(2026-11-10 KST):** [52문서](52-development-auth-live-results.md) 참조. U08 HTTP 시크릿 ready 및 실제 서버 RPC 검증 완료. 개발 Auth 임시계정2개/ES256/세션 회수/공간 소유자 격리20검사와 잔여0 정리 확인 완료. A05는 Auth/metadata까지 완료이며 Blob·공개 gateway/실기·메일 흐름은 미완료다. U07 개발 Free/Usage는 남아 있다. 아래의 과거 상태는 당시 기록이며 이 체크포인트가 우선한다.
+**최신 체크포인트(2026-11-10 KST):** [55문서](55-supabase-private-storage-live-results.md) 기준. DEV Free/Usage(U07), 서버 키(U08), 실제 Auth/private 파일/loopback gateway47검사 및 cleanup 완료. 공개 배포·제품/실기·이미지 dedup는 남으며 다음은A06 격리→A07/A08이다. 아래 과거 상태는 당시 기록이다.
 
 2026-11-09 UTC · v2-design · 현재 실행 환경과 저장 초안을 구분한다. 과거 결과/관측을 덮어쓰지 않는다.
 
@@ -42,7 +42,7 @@ A01의 명시적 환경 선택기를 cloud-environment.mjs로 구현하고10개 
 | U04 | 새 개발 프로젝트가 보이는 계정에서 발급한 접근/승인된 SQL 쓰기용 Management token을 DEV_MANAGEMENT_TOKEN Secret에 입력 | DEV_PROJECT GET200. 쓰기 역할은 에이전트가 별도 검증 | 현재 토큰 GET403 |
 | U05 | 허용 호스트 vsphftnmfzfoufasjttd.supabase.co 추가, 기존 api.supabase.com/GitHub/패키지 호스트 유지 | 현재 network policy enforced에 개발 호스트 포함 | 미반영 |
 | U06 | 설정 검토·저장·게시 후 적용 사실 알림. 비밀값은 채팅에 보내지 않음 | 새 revision/current readiness 확인 가능 | 대기 |
-| U07 | 개발/운영 Free 상태와 Usage 확인, 실제 token 권한 UI에서 접근 범위 확인 | 제공자/사용자 근거와 확인 시각 기록 | 운영 Free/Usage만 이전 확인, 개발 미확인 |
+| U07 | 개발/운영 Free 상태와 Usage 확인, 실제 token 권한 UI에서 접근 범위 확인 | 제공자/사용자 근거와 확인 시각 기록 | DEV Free/Storage/Egress 사용자 화면 확인 완료(55문서), 조직 API403은 유지 |
 | U08 | HTTP 시크릿 DEV_SERVICE_ROLE_KEY에 개발 legacy service_role 저장 | 새 binding ready 및 실제 서버 RPC 권한 검증 | 완료: 52문서. 게시 버튼이 없으면 저장만 진행 |
 
 토큰 UI가 세부 scope를 지원하지 않거나 기존 비밀의 이름 편집이 안 되면 그 UI의 지원 범위를 확인해 전환 방법을 정한다. 환경 도구가 새 이름으로 값을 자동 복사할 수 있다고 가정하지 않는다. 개발용 서버 키·사용자 공개 키·migration DB URL은 해당 단계에서 필요할 때만 추가한다.
@@ -84,3 +84,7 @@ A11의 [53문서](53-blob-selection-and-verification-plan.md)에 공식 Free 과
 ## Supabase 공급자 확정(2026-11-10 KST, 최신)
 
 A11 초기 공급자는 사용자 결정으로 Supabase private Storage로 확정했다([54문서](54-supabase-storage-decision.md)). R2/B2/Vercel 추가 가입/비교는 출시 선행 작업에서 제외한다. A05 실제 파일 시험은 U07 개발 조직 Free/Storage/Egress 확인 후 진행한다. 개발 Storage 목록200/bucket0/object0/RLS true만 확인했고 metadata0bytes는 청구 Usage가 아니다. 지역 힌트 질문은 현재 불필요하며 새 Secret 입력/환경 게시/Pro 결제는 요청하지 않는다.
+
+## 개발 private 파일 실검증 완료(2026-11-10 KST, 최신)
+
+U07은 사용자 DEV 대시보드의 Free/Storage0/1GB/Egress0/5GB 표시로 완료다. 조직API403은 그대로이며 화면0은 반올림 가능하다. [55문서](55-supabase-private-storage-live-results.md)의 실제 파일3종/무결성/중복 재시도/계정 격리/응답 유실·복구/취소/동시quota/세션 회수47검사와 cleanup4항목이 통과했다. A05는 DEV Auth/Storage/loopback gateway까지 완료, 공개 배포·네이티브 로그인/실기/메일은 미완료다. 다음은A06 V1/V2 격리 및A07/A08 제품용 자산/dedup/압축 검토다. 제품/운영/과금/환경 변경은 없다.

@@ -80,7 +80,11 @@ async function providerHandler(req, res) {
         res.end();
         return;
       }
-      if (!c.objects.has(object)) return reply(res, 404, { error: "Object not found" });
+      if (!c.objects.has(object)) {
+        if (c.faults.missingAs400)
+          return reply(res, 400, { statusCode: "404", error: "not_found", message: "Object not found" });
+        return reply(res, 404, { error: "Object not found" });
+      }
       if (c.hooks.beforeGet) await c.hooks.beforeGet();
       res.writeHead(200, { "content-type": "application/octet-stream" });
       res.end(c.objects.get(object));
@@ -700,3 +704,33 @@ test("revocation during delete retains cleanup and quota", async () => {
   assert.equal(context.objects.size, 0);
   assert.equal(context.meta.used(WA), bytes.length);
 });
+test("actual Storage HTTP400 inner404 confirms pending cancellation and releases quota", async () => {
+  await reset();
+  await reserve();
+  context.faults.missingAs400 = true;
+  const result = await cancel();
+  assert.equal(result.status, 200);
+  assert.equal(row().state, "canceled");
+  assert.equal(context.meta.used(WA), 0);
+});
+for (const [name, status, value] of [
+  ["permission denial", 403, { statusCode: "404", error: "not_found", message: "Object not found" }],
+  ["missing bucket", 400, { statusCode: "404", error: "not_found", message: "Bucket not found" }],
+  ["inner permission code", 400, { statusCode: "403", error: "not_found", message: "Object not found" }],
+  ["unknown error type", 400, { statusCode: "404", error: "unknown", message: "Object not found" }],
+  ["malformed body", 400, "not-json"],
+  ["oversized body", 400, "x".repeat(4097)],
+]) {
+  test(`${name} cannot prove Storage object absence`, async () => {
+    const rest = createSupabaseRest({
+      projectRef: "vsphftnmfzfoufasjttd",
+      serviceRoleKey: key,
+      fetchTransport: async () =>
+        new Response(typeof value === "string" ? value : JSON.stringify(value), { status }),
+    });
+    await assert.rejects(
+      () => rest.storage.get({ workspaceId: WA, assetId: id(100) }, 64),
+      (error) => error.code === "STORAGE_UNAVAILABLE",
+    );
+  });
+}

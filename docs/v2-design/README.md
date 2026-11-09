@@ -1,6 +1,8 @@
 # V2 프로젝트 — 다국어·온라인 동기화 상세 설계 초안
 
-**저장소 확정:** 첫 온라인 Blob은 [Supabase private Storage](54-supabase-storage-decision.md)다. 기존 월0원 기준으로 실제 개발 플랜/Usage 확인 후 파일 검증을 진행한다. Pro 전환은 별도 결정이다.
+**최신 검증(2026-11-10 KST):** [55. Supabase private 파일 실검증](55-supabase-private-storage-live-results.md). DEV Free/Usage 사용자 확인 후 실제 Auth/DB/Storage/loopback gateway47검사와 생성 데이터 정리를 완료했다. 다음은 V1/V2 격리·제품용 이미지/dedup PoC이며 공개 배포/실기 동기화는 남아 있다. 아래 이전 체크포인트의 대기 표시는 작성 당시 상태다.
+
+**저장소 확정:** 첫 온라인 Blob은 [Supabase private Storage](54-supabase-storage-decision.md)다. 기존 월0원 기준으로 DEV Free/Usage와 실제 파일 검증을 완료했다. Pro 전환은 별도 결정이다.
 
 **최신 상태(2026-11-10 KST):** 개발 DB/KeepAlive 설치 후 [52. 실제 개발 인증 검증](52-development-auth-live-results.md)까지 완료했다. 실제 계정2개 로그인·서명·세션 회수·공간 격리를 확인하고 시험 데이터를 제거했다. 제품/실기 동기화·Blob 저장소/파일 전송·공개 gateway는 미완료이며 main/기존 로컬 모델은 유지한다. 아래 초기 미착수 표시는 작성 당시 기록이다.
 
@@ -36,6 +38,7 @@ PostgreSQL 영속 metadata를 HTTP 흐름에 연결했고 통합25개·adapter12
 
 | 문서 | 논의 내용 |
 |---|---|
+| [55. Supabase private 파일 실검증](55-supabase-private-storage-live-results.md) | Free/Usage·파일3종·실제 gateway/복구·격리/동시quota·API 호환 수정·정리 |
 | [54. Supabase Storage 확정](54-supabase-storage-decision.md) | 사용자 공급자 결정·DEV 읽기 점검·실제 플랜/Usage 확인·private 파일 검증 준비 |
 | [53. Blob 선택안·예산·실전 시험 계획](53-blob-selection-and-verification-plan.md) | Free 과금/지역·용량/다운로드 계산·private 표본 검증 범위 |
 | [52. 개발 Auth 실검증](52-development-auth-live-results.md) | 서버 키/RPC·실제 ES256 로그인·세션 회수·다른 사용자 공간 차단·시험 데이터 정리 |

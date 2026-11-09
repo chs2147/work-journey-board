@@ -1,0 +1,212 @@
+{
+  "target": "vsphftnmfzfoufasjttd",
+  "startedAt": "2026-11-09T21:53:36.799Z",
+  "checks": [
+    {
+      "name": "bucket_preflight_no_collision",
+      "passed": true
+    },
+    {
+      "name": "trusted_dev_jwks",
+      "passed": true
+    },
+    {
+      "name": "confirmed_fixture_0",
+      "passed": true
+    },
+    {
+      "name": "login_0",
+      "passed": true
+    },
+    {
+      "name": "verified_subject_0",
+      "passed": true
+    },
+    {
+      "name": "confirmed_fixture_1",
+      "passed": true
+    },
+    {
+      "name": "login_1",
+      "passed": true
+    },
+    {
+      "name": "verified_subject_1",
+      "passed": true
+    },
+    {
+      "name": "private_bucket_created",
+      "passed": true
+    },
+    {
+      "name": "private_bucket_limits",
+      "passed": true
+    },
+    {
+      "name": "fixture_size_budget",
+      "passed": true
+    },
+    {
+      "name": "png_reserve",
+      "passed": true
+    },
+    {
+      "name": "gateway_no_auth_denied",
+      "passed": true
+    },
+    {
+      "name": "wrong_hash_denied",
+      "passed": true
+    },
+    {
+      "name": "lost_storage_response_is_failure",
+      "passed": true
+    },
+    {
+      "name": "png_upload",
+      "passed": true,
+      "bytes": 68
+    },
+    {
+      "name": "png_idempotent_retry",
+      "passed": true
+    },
+    {
+      "name": "png_read_hash_bytes",
+      "passed": true
+    },
+    {
+      "name": "png_other_owner_denied",
+      "passed": true
+    },
+    {
+      "name": "png_authenticated_direct_denied",
+      "passed": true
+    },
+    {
+      "name": "png_public_read_denied",
+      "passed": true
+    },
+    {
+      "name": "webp_reserve",
+      "passed": true
+    },
+    {
+      "name": "webp_upload",
+      "passed": true,
+      "bytes": 42
+    },
+    {
+      "name": "webp_idempotent_retry",
+      "passed": true
+    },
+    {
+      "name": "webp_read_hash_bytes",
+      "passed": true
+    },
+    {
+      "name": "webp_other_owner_denied",
+      "passed": true
+    },
+    {
+      "name": "webp_authenticated_direct_denied",
+      "passed": true
+    },
+    {
+      "name": "webp_public_read_denied",
+      "passed": true
+    },
+    {
+      "name": "utf8_reserve",
+      "passed": true
+    },
+    {
+      "name": "publication_failure_leaves_pending",
+      "passed": true
+    },
+    {
+      "name": "actual_recovery_preview",
+      "passed": true
+    },
+    {
+      "name": "actual_recovery_restore",
+      "passed": true
+    },
+    {
+      "name": "utf8_upload",
+      "passed": true,
+      "bytes": 56
+    },
+    {
+      "name": "utf8_idempotent_retry",
+      "passed": true
+    },
+    {
+      "name": "utf8_read_hash_bytes",
+      "passed": true
+    },
+    {
+      "name": "utf8_other_owner_denied",
+      "passed": true
+    },
+    {
+      "name": "utf8_authenticated_direct_denied",
+      "passed": true
+    },
+    {
+      "name": "utf8_public_read_denied",
+      "passed": true
+    },
+    {
+      "name": "three_physical_objects_despite_retries",
+      "passed": true
+    },
+    {
+      "name": "pending_reserve",
+      "passed": true
+    },
+    {
+      "name": "pending_cancel_absence_confirmed",
+      "passed": true,
+      "http": 200
+    },
+    {
+      "name": "concurrent_reservations_respect_quota",
+      "passed": true
+    },
+    {
+      "name": "quota_reservation_cancel",
+      "passed": true
+    },
+    {
+      "name": "quota_restored_after_confirmed_absence",
+      "passed": true
+    },
+    {
+      "name": "over_64k_reservation_denied",
+      "passed": true
+    },
+    {
+      "name": "session_revocation",
+      "passed": true
+    },
+    {
+      "name": "revoked_session_cannot_download",
+      "passed": true
+    }
+  ],
+  "cleanup": {
+    "objectsAbsent": true,
+    "bucketAbsent": true,
+    "metadataAbsent": true,
+    "authUsersAbsent": true
+  },
+  "outboundRequests": 144,
+  "outboundBodyBytes": 32969,
+  "storageWriteRequests": 4,
+  "mailSent": false,
+  "productionTouched": false,
+  "publicGatewayDeployed": false,
+  "passed": true,
+  "finishedAt": "2026-11-09T21:54:25.706Z"
+}

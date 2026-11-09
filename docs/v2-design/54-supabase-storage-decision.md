@@ -46,3 +46,7 @@ Free라면 Spend Cap 메뉴를 찾아 설정하거나 이를 위해 업그레이
 DB 예약만 성공한52문서와 실제 bytes 전송/무결성·삭제 확인을 분리해 보고한다. 예외/응답 유실 시 무조건 재업로드하거나 quota를 반환하지 않고 현재 상태를 조회해 복구한다. 완료 후 생성한 테스트 객체/계정/metadata/bucket의 부재를 확인한다. 기존 install.sql은 재실행하지 않는다.
 
 제품용 이미지 압축·workspace별 hash dedup/논리 참조·삭제 유예/GC·quota·장기 오프라인 동기화는 여전히 별도 구현 항목이다. V1/기존 로컬 전용 앱·DB18·이미지 처리·백업에는 영향이 없도록 유지한다. main/제품 버전·환경 설정/유료 플랜은 변경하지 않았다.
+
+## 후속 검증 완료
+
+사용자 개발 대시보드로 U07 Free/Storage/Egress 표시를 확인했고 [55문서](55-supabase-private-storage-live-results.md)의 실제 private 파일/loopback gateway 시험과 cleanup을 완료했다. 이 문서의 U07 대기/실제 파일 미실행은 이전 상태다. 공개 배포/실기·제품 자산/dedup는 남는다.

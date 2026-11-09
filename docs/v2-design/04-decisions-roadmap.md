@@ -324,3 +324,7 @@ V2 체크포인트52ff622를 푸시한 뒤 사용자 요청의 캐비넷/노트 
 ## 4.57 초기 Blob 공급자 Supabase 확정
 
 사용자가 Supabase로 우선 확정했다. [54문서](54-supabase-storage-decision.md)에 private Storage·기존 월0원·지역·V1 무영향과 U07 확인/실제 파일 시험 범위를 기록했다. 개발 Storage API200/bucket0/object0/RLS true를 읽기 확인했다. Pro 결제 승인으로 해석하지 않으며 실제 조직 Free/Usage는 아직 확인 대기다. R2 위치 힌트 질문은 현재 진행의 선행 조건에서 해소했다. 버킷/파일/유료/환경/제품/main 변경은 없다.
+
+## 4.58 개발 Free/Usage·실제 Storage/gateway 검증
+
+사용자22492.jpg로 DEV Free/Storage0/1GB/Egress0/5GB 표시를 확인해 U07을 완료했다. [55문서](55-supabase-private-storage-live-results.md)의 실제 Auth/DB/private Storage/loopback gateway47검사와 cleanup4항목이 통과했다. 실제 HTTP400/내부404 Object not found 차이를 어댑터에서 제한적으로 지원하고 관련7개/전체156개 회귀가 통과했다. 첫 실패/집중 조회/최종 성공 증거를 보존했다. 공개 배포/실기/제품 연결은 남고 다음은A06 격리·A07/A08 자산/이미지 PoC다. 운영/로컬 DB18·환경·결제 변경은 없다.
