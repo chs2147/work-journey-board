@@ -174,3 +174,12 @@ test("SQL phase still requires measured DB headroom and owner review", () => {
 });
 test("unknown bundle phase cannot bypass checks", () =>
   assert.ok(checkReadiness(plan, observed, now, { phase: "other" }).blocked.includes("PHASE_NOT_SUPPORTED")));
+
+test("known read-only SQL executor blocks installation even with reviewed bundle and DB capacity", () => {
+  const r = checkReadiness(plan, { ...observed, sqlExecution: { writeAllowed: false } }, now, {
+    phase: "sql-install",
+  });
+  assert.equal(r.status, "BLOCKED");
+  assert.ok(r.blocked.includes("SQL_EXECUTOR_READ_ONLY"));
+  assert.equal(r.autoApply, false);
+});

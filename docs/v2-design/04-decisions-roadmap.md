@@ -272,3 +272,7 @@ Neon 중심 검토는 유지하되 woori 운영을 유지한 로컬 개발 대�
 ## 4.44 사용자 DB Usage 반영
 
 사용자가 Usage 화면 사용량0.026GB를 제공했다. 이전 Free 플랜 사용자 확인과 공식 공개 기본 한도500MB를 적용해 약26MB 사용/474MB 추정 잔여를 기록했다. 계정별 한도 독립 검증은 아니며 표시 반올림/십진 단위·근거를 관측 JSON에 보존했다. SQL 준비 판정은 이 전제에서 REVIEW_READY이고 자동 적용/실제 설치 승인과 구분한다. Storage/Egress 및 실제 cloud 검증은 미완료다. 실제 DB DDL/DML은 수행하지 않았다.
+
+## 4.45 승인된 실제 SQL 설치 시도·읽기 전용 실행 차단
+
+사용자가 DB-only 적용을 승인했다. 실제 대상/Auth/충돌/후보 권한을 재조회한 뒤 검토된 install.sql을1회 요청했지만 HTTP400/25006으로 실패했다. read_only:false를 명시한 요청도 실제 supabase_read_only_user·transaction/default read_only=on으로 실행됨을 SELECT로 확인했다. 후속 verify는 schema/table/function0개다. [42문서](42-cloud-sql-install-attempt.md)에 요청/검증/진단 증거와 쓰기 연결 또는 소유자 SQL Editor 재개 절차를 기록했다. 승인 자체는 유지하며 재승인하지 않는다. 알려진 읽기 전용 실행을 준비 검사 차단 조건으로 추가했다. bucket/Auth사용자/파일/gateway·제품/main·환경 게시는 변경하지 않았다.

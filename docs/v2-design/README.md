@@ -54,6 +54,7 @@ PostgreSQL 영속 metadata를 HTTP 흐름에 연결했고 통합25개·adapter12
 | [Supabase 신규 계정·Keep Alive](20-supabase-keepalive.md) | 신규 계정 전제 갱신·Supabase 채택 시 하루1회 기본·휴면/복구 검증 |
 | [Supabase 프로젝트 구성안](21-supabase-project-blueprint.md) | 운영1개/로컬 개발·공식 SMTP/리전 조건·설정/비용 관문 |
 | [DB·권한·동기화 계약](22-db-permission-sync-contract.md) | 논리 테이블·tenant scope·원자적 push·커밋 순서 cursor·private 자산 |
+| [실제 SQL 설치 시도·연결 차단](42-cloud-sql-install-attempt.md) | 사용자 승인 후 요청1회·읽기 전용 오류·생성 객체0개·쓰기 연결 준비 후 재개 |
 | [SQL 최종 기술 검토·적용 절차](41-sql-final-review-runbook.md) | 실제 BYPASSRLS 서비스 역할·SQL87개·검토 해시·설치/timeout/복구 절차·용량 미확인 |
 | [SQL 실행 역할·권한 검토](40-sql-executor-review.md) | 실제 postgres 속성·Auth RLS·비 superuser 로컬86개·쓰기 권한/설치 승인과의 경계 |
 | [전체 SQL/권한/되돌리기 묶음](39-full-bundle-review.md) | 단일 transaction·source/hash·ACL·자료 보존 pause·empty-only uninstall·실제 읽기 점검 |

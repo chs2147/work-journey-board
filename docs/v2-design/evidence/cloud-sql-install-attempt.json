@@ -1,0 +1,20 @@
+{
+  "startedAt": "2026-11-09T02:19:01.880600+00:00",
+  "projectRef": "hutqsfftioxtredcjhsy",
+  "authorization": {
+    "source": "user-chat",
+    "userInstruction": "\uc9c4\ud589\ud574\uc918",
+    "scope": "DB-only: 2 schemas, 6 tables, 7 functions",
+    "authorized": true
+  },
+  "manifestSha256": "6ace6c937126d792660580a7f253e11db631b8ed56ffe9d9f1e43fdcdfa946ad",
+  "installQuerySha256": "9a77e28de82583cee850afa5015ddd0007ff515c57a77b63f2ae5e7227a97e4a",
+  "endpoint": "/v1/projects/hutqsfftioxtredcjhsy/database/query",
+  "requestCount": 1,
+  "autoRetry": false,
+  "state": "HTTP_ERROR_REQUIRES_READ_ONLY_CHECK",
+  "installationVerified": false,
+  "httpStatus": 400,
+  "serverMessage": "Failed to run sql query: ERROR:  25006: cannot execute CREATE SCHEMA in a read-only transaction\n",
+  "finishedAt": "2026-11-09T02:19:03.621308+00:00"
+}

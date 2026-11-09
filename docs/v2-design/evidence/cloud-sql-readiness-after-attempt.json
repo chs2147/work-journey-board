@@ -1,0 +1,14 @@
+{
+  "status": "BLOCKED",
+  "projectRef": "hutqsfftioxtredcjhsy",
+  "autoApply": false,
+  "phase": "sql-install",
+  "deferred": [
+    "GATEWAY_RUNTIME_VALIDATION",
+    "PRIVATE_STORAGE_VALIDATION",
+    "ORG_STORAGE_EGRESS_USAGE"
+  ],
+  "blocked": [
+    "SQL_EXECUTOR_READ_ONLY"
+  ]
+}

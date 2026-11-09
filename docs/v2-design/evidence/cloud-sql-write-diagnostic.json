@@ -1,0 +1,17 @@
+{
+  "observedAt": "2026-11-09T02:19:55.081078+00:00",
+  "projectRef": "hutqsfftioxtredcjhsy",
+  "queryReadOnly": true,
+  "requestReadOnlyFlag": false,
+  "endpoint": "/database/query",
+  "httpStatus": 201,
+  "summary": [
+    {
+      "execution_role": "supabase_read_only_user",
+      "transaction_read_only": "on",
+      "default_transaction_read_only": "on",
+      "in_recovery": false
+    }
+  ],
+  "ddlRetried": false
+}

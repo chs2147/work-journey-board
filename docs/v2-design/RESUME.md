@@ -28,16 +28,16 @@
 
 사용자가 Usage 사용량을 **0.026GB**로 제공했다(2026-11-09 UTC, 정확한 기록 시각은 관측 JSON 참조). 기존 사용자 Free 확인과 공식 공개 Free 기본 한도500MB를 적용하면 사용 약26MB/추정 잔여474MB다. 이 값은 표시값에서 계산한 추정치이며 계정별 한도를 API로 독립 확인한 결과가 아니다. 출처·단위·공개 한도 근거는 `observations.current.json`의 databaseUsageEvidence에 보존한다. 기존 물리 DB/파일시스템 여유로 계산한 값이 아니다.
 
-sql-install 준비 판정은 이 기준에서 **REVIEW_READY / autoApply=false**로 갱신했다. bundle/rollback/owner 기술 검토는 완료이며 실제 설치 승인·쓰기 자격증명 검증은 아직 false다. 기존 BLOCKED 증거는 당시 결과로 유지한다. Storage/Egress 잔여량과 실제 gateway/private Storage 검증은 후속 cloud-validation 조건으로 남아 있다.
+사용자가 DB-only 실제 설치를 승인했고, 정확한 install.sql로 한 번 요청했다. 하지만 현재 API 연결이 supabase_read_only_user / transaction_read_only=on으로 실행되어 SQLSTATE25006을 반환했다. 후속 verify는 schema0/table0/function0이다. **실제 설치되지 않았고 현재 준비 상태는 BLOCKED / SQL_EXECUTOR_READ_ONLY**다. 기존 REVIEW_READY 결과는 쓰기 연결 시험 전의 기록으로 보존한다.
 
-다음은 **검토된 DB-only 묶음의 실제 설치 범위를 확정한 뒤 적용**하는 단계다. schema2개/table6개/함수7개(공개RPC4개+private3개)가 대상이다. 버킷/계정/파일/메일/Keep Alive/gateway 배포는 포함하지 않는다. 설치 직전 대상/충돌/역할/세션 설정과 한도 변경 여부를 다시 확인한다.
+승인 범위는 유지되며 재승인은 필요하지 않다. 실제 SQL 쓰기가 가능한 연결 설정 또는 소유자의 SQL Editor 실행이 필요하다. 토큰 scope/역할/연동 중 정확한 제한 원인은 단정하지 않는다. [42 설치 시도·재개 방법](42-cloud-sql-install-attempt.md)의 증거를 먼저 읽고, 연결 변경/수동 실행 이후 **읽기 verify부터** 진행한다. 이미 설치됐다면 중복 설치하지 않는다. Storage/Egress/gateway/private Storage 실제 검증은 별도로 남아 있다.
 
 ## 재개 순서
 
 1. **완료:** main 1.23.1 업무 메모보드 바로가기 패치(`d11a0ca`)를 v2-design에 충돌 없이 병합했다. 앱 기준은1.23.1/DB18이다. V2 설계/PoC를 main에 병합하지 않았고 클라우드 적용도 수행하지 않았다. 다음 재개는2번부터 진행한다.
 2. 이 문서→41문서→검토/관측 JSON을 읽고 환경 readiness, 대상 ref, Free/월0원 조건을 확인한다. 오래된24시간 관측은 재조회하고 기술 검토 hash와 현재 SQL을 대조한다.
 3. **진행:** 사용자 Usage 0.026GB와 공개 Free500MB 기준을 출처와 함께 기록했다. 실제 적용 직전 한도/플랜 변경 여부와 관측 신선도를 재확인한다. 소스가 바뀌면 해당 검토/시험을 다시 수행한다.
-4. DB-only 설치 범위를 사용자와 확정한 뒤 41문서 순서로 실행한다. `bundle/*.sql` 일괄 실행 금지. timeout/응답 유실 시 읽기 조회로 commit 여부부터 확인한다.
+4. **승인 완료·연결 차단:** 42문서에 따라 SQL 쓰기가 가능한 연결을 준비한 뒤 현재 객체 상태를 읽기 조회하고 41문서 순서로 재개한다. 같은 범위 재승인은 요청하지 않는다. `bundle/*.sql` 일괄 실행 금지. timeout/응답 유실 시 읽기 조회로 commit 여부부터 확인한다.
 5. 설치 후 verify/소유자/ACL을 확인하고 증거를 보존한다. gateway/Storage 성공 flag는 별도 실제 검증 전까지 false 유지한다.
 6. 후속 전용 private bucket·가상 사용자/공간·gateway·표본 파일 검증, 메일/Keep Alive, 실제 앱 연결·다국어 이행을 단계별로 진행한다. 각 단계 비용/통신 범위를 다시 확인한다.
 

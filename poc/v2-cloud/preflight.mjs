@@ -10,6 +10,7 @@ import console from "node:console";
 export function checkReadiness(plan, observed, now = new Date(), { phase = "cloud-validation" } = {}) {
   const sqlPhase = plan?.planVersion === 2 && phase === "sql-install";
   const blocked = [];
+  if (sqlPhase && observed?.sqlExecution?.writeAllowed === false) blocked.push("SQL_EXECUTOR_READ_ONLY");
   const check = (ok, code) => {
     if (!ok) blocked.push(code);
   };

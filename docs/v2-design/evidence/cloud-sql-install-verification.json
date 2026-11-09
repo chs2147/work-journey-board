@@ -1,0 +1,57 @@
+{
+  "observedAt": "2026-11-09T02:19:24.923277+00:00",
+  "projectRef": "hutqsfftioxtredcjhsy",
+  "readOnly": true,
+  "httpStatus": 201,
+  "querySha256": "be15494f16ddc9c39067436c071431973e60090e8e79af446c3c0d3c5647cab9",
+  "verification": {
+    "owners": null,
+    "tableCount": 0,
+    "schemaCount": 0,
+    "functionCount": 0,
+    "publicRpcCount": 0,
+    "rlsEnabledCount": 0,
+    "unsafeSearchPaths": 0,
+    "clientExecutableCount": 0,
+    "publicExecutableCount": 0,
+    "servicePublicExecutableCount": 0,
+    "serviceDirectTableAccessCount": 0
+  },
+  "mismatches": {
+    "schemaCount": {
+      "expected": 2,
+      "observed": 0
+    },
+    "tableCount": {
+      "expected": 6,
+      "observed": 0
+    },
+    "rlsEnabledCount": {
+      "expected": 6,
+      "observed": 0
+    },
+    "functionCount": {
+      "expected": 7,
+      "observed": 0
+    },
+    "publicRpcCount": {
+      "expected": 4,
+      "observed": 0
+    },
+    "servicePublicExecutableCount": {
+      "expected": 4,
+      "observed": 0
+    },
+    "owners": {
+      "expected": [
+        {
+          "role": "postgres",
+          "superuser": false,
+          "bypassRls": true
+        }
+      ],
+      "observed": null
+    }
+  },
+  "status": "MISMATCH_REQUIRES_REVIEW"
+}

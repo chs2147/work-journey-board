@@ -1,0 +1,31 @@
+✔ complete operator review returns ready but never auto-applies (1.735381ms)
+✔ actual unknown example is blocked (0.235304ms)
+✔ wrong project (0.13302ms)
+✔ paid plan (0.088513ms)
+✔ unknown plan source (0.152179ms)
+✔ stale usage (0.136305ms)
+✔ future usage (0.103506ms)
+✔ invalid usage date (0.097977ms)
+✔ missing session inspection (0.105649ms)
+✔ unsupported inactivity (0.17269ms)
+✔ unreviewed rollback (0.137597ms)
+✔ unverified storage (0.078088ms)
+✔ database missing or low headroom blocks (0.182524ms)
+✔ storage missing or low headroom blocks (0.136386ms)
+✔ egress missing or low headroom blocks (0.160772ms)
+✔ auto apply cannot be enabled (0.110917ms)
+✔ budget cannot be raised (0.052579ms)
+✔ bucket cannot be public (0.096755ms)
+✔ bucket cannot be replaced (0.058628ms)
+✔ signed urls not enabled (0.073981ms)
+✔ scope cannot be expanded (0.056575ms)
+✔ floors cannot be relaxed (0.058729ms)
+✔ invalid input fails closed without outputting supplied data (0.080582ms)
+ℹ tests 23
+ℹ suites 0
+ℹ pass 23
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 10.57428

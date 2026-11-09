@@ -8,7 +8,7 @@
     "storage": null,
     "egress": null
   },
-  "sessionPolicyObservedAt": "2026-11-08T23:35:33.597105+00:00",
+  "sessionPolicyObservedAt": "2026-11-09T02:17:59.826743+00:00",
   "sessionPolicy": {
     "timeboxSeconds": 0,
     "inactivitySeconds": 0,
@@ -19,7 +19,7 @@
   "gatewayVerified": false,
   "privateStorageVerified": false,
   "rollbackReviewed": true,
-  "targetInspectedAt": "2026-11-08T23:44:22.917790+00:00",
+  "targetInspectedAt": "2026-11-09T02:17:59.826743+00:00",
   "deploymentCollisionFree": true,
   "dataApiPrivateSchemasHidden": true,
   "bundleReviewed": true,
@@ -40,7 +40,7 @@
     "installationAuthorized": false,
     "scope": "candidate SQL executor and fixed server-only definer functions",
     "missing": [],
-    "evidenceObservedAt": "2026-11-09T00:01:01.775264+00:00",
+    "evidenceObservedAt": "2026-11-09T02:17:59.826743+00:00",
     "querySha256": "f2dddb4ccf0935cfa30e0ab34527f984150843873dff18ec2ec63b4c44af6df4"
   },
   "bundleTechnicalReview": {
@@ -61,5 +61,25 @@
     "remainingBytesBasis": "derived estimate from displayed rounded usage and standard Free limit; not an org entitlements API response",
     "accountSpecificLimitIndependentlyVerified": false,
     "unitConvention": "decimal GB/MB; displayed usage may be rounded"
+  },
+  "installationAuthorization": {
+    "authorized": true,
+    "source": "user-chat",
+    "instruction": "진행해줘",
+    "scope": "DB-only: schemas2/tables6/functions7",
+    "manifestSha256": "6ace6c937126d792660580a7f253e11db631b8ed56ffe9d9f1e43fdcdfa946ad",
+    "evidence": "docs/v2-design/evidence/cloud-sql-install-attempt.json"
+  },
+  "sqlExecution": {
+    "observedAt": "2026-11-09T02:19:55.081078+00:00",
+    "writeAllowed": false,
+    "actualRole": "supabase_read_only_user",
+    "transactionReadOnly": true,
+    "requestReadOnlyFlag": false,
+    "installationStatus": "NOT_INSTALLED",
+    "createdSchemaCount": 0,
+    "createdTableCount": 0,
+    "createdFunctionCount": 0,
+    "diagnosticEvidence": "docs/v2-design/evidence/cloud-sql-write-diagnostic.json"
   }
 }
