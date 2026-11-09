@@ -12,9 +12,18 @@ use std::sync::Mutex;
 use std::time::Duration;
 use tauri::{AppHandle, Emitter, Manager, State};
 
+use crate::update_policy::{
+    classify, failure_message, latest_version_from_location, network_message, CheckFailure,
+};
+
 /// 판 목록(사전 릴리스 포함 — 이 앱은 사전 릴리스로 배포한다)
 const RELEASES_API: &str =
     "https://api.github.com/repos/chs2147/work-journey-board/releases?per_page=10";
+/// 판 목록이 한도 초과일 때만 묻는 대체 주소(improve-v20-spec 6-2, 2026-11-09 사용자 승인 D8) —
+/// 이동 주소(Location)에서 최신 정식 판 번호만 읽는다. 따라가지 않는다.
+const LATEST_PAGE: &str = "https://github.com/chs2147/work-journey-board/releases/latest";
+const DOWNLOAD_PREFIX: &str = "https://github.com/chs2147/work-journey-board/releases/download/";
+const CACHE_NAME: &str = "releases-cache.json";
 /// 내려받기는 GitHub 주소에서만(리디렉션 대상 objects.githubusercontent.com 등은 reqwest가 따라감)
 const ALLOWED_PREFIXES: [&str; 2] = [
     "https://github.com/chs2147/work-journey-board/releases/download/",
@@ -152,6 +161,122 @@ fn net_err(e: reqwest::Error) -> String {
     format!("GitHub에 연결하지 못했습니다(회사망·프록시에서 막혔을 수 있습니다): {e}")
 }
 
+/// 판 목록 캐시(improve-v20-spec 6-1): 마지막 `ETag`와 본문 — 다음 확인 때 `If-None-Match`로 물어
+/// 바뀐 게 없으면 GitHub가 304를 돌려주고 한도를 쓰지 않는다. 깨졌으면 없는 것으로 본다.
+fn read_cache(path: &Path) -> Option<(String, Vec<u8>)> {
+    let v: serde_json::Value = serde_json::from_slice(&fs::read(path).ok()?).ok()?;
+    let etag = v["etag"].as_str()?.to_owned();
+    let body = v["body"].as_str()?.as_bytes().to_vec();
+    serde_json::from_slice::<serde_json::Value>(&body).ok()?;
+    Some((etag, body))
+}
+
+fn write_cache(path: &Path, etag: &str, body: &[u8]) {
+    let Ok(text) = std::str::from_utf8(body) else {
+        return;
+    };
+    let v = serde_json::json!({ "etag": etag, "body": text });
+    let _ = fs::write(path, v.to_string());
+}
+
+fn header<'a>(res: &'a reqwest::Response, name: &str) -> Option<&'a str> {
+    res.headers().get(name).and_then(|v| v.to_str().ok())
+}
+
+fn unix_now() -> u64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(0)
+}
+
+/// 대체 경로: `releases/latest` 이동 주소에서 최신 정식 판 번호 → 설치 파일·SUMS 주소를 만든다(설치는 SHA256 확인 필수)
+fn latest_candidate(version: &str, current: &str, os: &str) -> Option<Candidate> {
+    if parse_version(version)? <= parse_version(current)? {
+        return None;
+    }
+    let name = installer_name_for(os, version);
+    Some(Candidate {
+        version: version.to_owned(),
+        notes: String::new(),
+        exe_url: format!("{DOWNLOAD_PREFIX}v{version}/{name}"),
+        size: 0,
+        sums_url: Some(format!("{DOWNLOAD_PREFIX}v{version}/{SUMS_NAME}")),
+    })
+}
+
+async fn fetch_latest_version(app: &AppHandle) -> Result<String, String> {
+    let ua = format!("WorkJourneyBoard/{}", app.package_info().version);
+    let http = reqwest::Client::builder()
+        .user_agent(ua)
+        .redirect(reqwest::redirect::Policy::none())
+        .connect_timeout(Duration::from_secs(10))
+        .timeout(Duration::from_secs(15))
+        .build()
+        .map_err(|e| format!("업데이트 확인을 준비하지 못했습니다: {e}"))?;
+    let res = http
+        .get(LATEST_PAGE)
+        .send()
+        .await
+        .map_err(|e| network_message(&e.to_string()))?;
+    header(&res, "location")
+        .and_then(latest_version_from_location)
+        .ok_or_else(|| failure_message(&CheckFailure::Other(res.status().as_u16())))
+}
+
+/// 판 목록을 받아 새 판 후보를 고른다 — 304면 캐시, 한도 초과면 대체 경로, 그 밖 실패는 종류 꼬리표 글로
+async fn find_candidate(
+    app: &AppHandle,
+    http: &reqwest::Client,
+    current: &str,
+) -> Result<Option<Candidate>, String> {
+    let cache_path = updates_dir(app)?.join(CACHE_NAME);
+    let cache = read_cache(&cache_path);
+    let mut req = http
+        .get(RELEASES_API)
+        .header("Accept", "application/vnd.github+json")
+        .timeout(Duration::from_secs(15));
+    if let Some((etag, _)) = &cache {
+        req = req.header("If-None-Match", etag.as_str());
+    }
+    let res = req
+        .send()
+        .await
+        .map_err(|e| network_message(&e.to_string()))?;
+    let status = res.status().as_u16();
+    let body = if status == 304 {
+        match cache {
+            Some((_, body)) => body,
+            None => return Err(failure_message(&CheckFailure::Other(304))),
+        }
+    } else if res.status().is_success() {
+        let etag = header(&res, "etag").map(str::to_owned);
+        let body = res.bytes().await.map_err(net_err)?.to_vec();
+        if let Some(etag) = etag {
+            write_cache(&cache_path, &etag, &body);
+        }
+        body
+    } else {
+        let failure = classify(
+            status,
+            header(&res, "x-ratelimit-remaining"),
+            header(&res, "x-ratelimit-reset"),
+            header(&res, "retry-after"),
+            unix_now(),
+        );
+        if matches!(failure, CheckFailure::RateLimited { .. }) {
+            // 한도 초과일 때만 대체 경로(D8). 그것도 실패하면 한도 안내를 그대로 보인다
+            if let Ok(v) = fetch_latest_version(app).await {
+                return Ok(latest_candidate(&v, current, std::env::consts::OS));
+            }
+        }
+        return Err(failure_message(&failure));
+    };
+    let json: serde_json::Value =
+        serde_json::from_slice(&body).map_err(|e| format!("판 목록을 읽지 못했습니다: {e}"))?;
+    Ok(pick_release(&json, current, std::env::consts::OS))
+}
+
 fn updates_dir(app: &AppHandle) -> Result<PathBuf, String> {
     let dir = app
         .path()
@@ -174,20 +299,8 @@ pub async fn update_check(
     state: State<'_, UpdateState>,
 ) -> Result<Option<UpdateInfo>, String> {
     let http = client(&app)?;
-    let res = http
-        .get(RELEASES_API)
-        .header("Accept", "application/vnd.github+json")
-        .timeout(Duration::from_secs(15))
-        .send()
-        .await
-        .map_err(net_err)?;
-    if !res.status().is_success() {
-        return Err(format!("GitHub 응답이 올바르지 않습니다({})", res.status()));
-    }
-    let json: serde_json::Value = serde_json::from_slice(&res.bytes().await.map_err(net_err)?)
-        .map_err(|e| format!("판 목록을 읽지 못했습니다: {e}"))?;
     let current = app.package_info().version.to_string();
-    let Some(c) = pick_release(&json, &current, std::env::consts::OS) else {
+    let Some(c) = find_candidate(&app, &http, &current).await? else {
         *state.0.lock().unwrap() = None;
         return Ok(None);
     };
@@ -534,6 +647,41 @@ mod tests {
                 "browser_download_url": format!("https://github.com/chs2147/work-journey-board/releases/download/{tag}/{n}"),
             })).collect::<Vec<_>>(),
         })
+    }
+
+    #[test]
+    fn latest_fallback_candidate() {
+        let c = latest_candidate("1.24.0", "1.23.3", "windows").unwrap();
+        assert_eq!(
+            c.exe_url,
+            "https://github.com/chs2147/work-journey-board/releases/download/v1.24.0/WorkJourneyBoard_1.24.0_setup.exe"
+        );
+        assert!(url_allowed(&c.exe_url));
+        assert!(url_allowed(c.sums_url.as_deref().unwrap()));
+        assert!(c.notes.is_empty());
+        assert_eq!(
+            latest_candidate("1.24.0", "1.23.3", "macos").unwrap().exe_url,
+            "https://github.com/chs2147/work-journey-board/releases/download/v1.24.0/WorkJourneyBoard_1.24.0_mac.dmg"
+        );
+        assert_eq!(latest_candidate("1.23.3", "1.23.3", "windows"), None);
+        assert_eq!(latest_candidate("1.22.0", "1.23.3", "windows"), None);
+    }
+
+    #[test]
+    fn releases_cache_roundtrip_and_broken() {
+        let dir = std::env::temp_dir().join(format!("wjb-cache-{}", std::process::id()));
+        fs::create_dir_all(&dir).unwrap();
+        let path = dir.join(CACHE_NAME);
+        assert_eq!(read_cache(&path), None);
+        write_cache(&path, "W/\"abc\"", br#"[{"tag_name":"v1.0.0"}]"#);
+        let (etag, body) = read_cache(&path).unwrap();
+        assert_eq!(etag, "W/\"abc\"");
+        assert_eq!(body, br#"[{"tag_name":"v1.0.0"}]"#.to_vec());
+        fs::write(&path, "깨진 내용").unwrap();
+        assert_eq!(read_cache(&path), None);
+        fs::write(&path, r#"{"etag":"x","body":"not json"}"#).unwrap();
+        assert_eq!(read_cache(&path), None);
+        let _ = fs::remove_dir_all(&dir);
     }
 
     #[test]

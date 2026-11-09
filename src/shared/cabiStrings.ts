@@ -57,7 +57,7 @@ export const CABI = localizeTree({
   openSource: "원본 열기",
   dragCopy: "다른 보드로 끌어 복제",
   dragResource: "보드로 끌어 원본 연결",
-  dragHelp: "선택한 객체의 복제 아이콘을 다른 보드 창으로 끌어 놓으세요.",
+  dragHelp: "선택한 객체의 끌기 손잡이(⠿⁺)를 다른 보드 창으로 끌어 놓으세요.",
   copyTo: "다른 보드에 복제…",
   chooseBoard: "받을 보드 선택",
   weeklyBoard: "현재 주간 메모보드",

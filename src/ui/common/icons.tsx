@@ -320,3 +320,28 @@ export const IconCopyItem = () => (
     <rect x="6" y="6" width="8" height="8" />
   </Svg>
 );
+
+/** 끌기 손잡이 — 점 6개(2×3). 앱의 모든 "끌어 옮기기·원본 연결" 손잡이가 같은 그림(improve-v20-spec 4절 D5) */
+export const IconGrip = ({ width = 10, height = 16 }: { width?: number; height?: number }) => (
+  <svg width={width} height={height} viewBox="0 0 10 16" aria-hidden="true">
+    {[2.5, 7.5].flatMap((x) =>
+      [3, 8, 13].map((y) => <circle key={`${x}-${y}`} cx={x} cy={y} r="1.6" fill="currentColor" />),
+    )}
+  </svg>
+);
+/** 끌어 "복제"하는 손잡이 — 같은 6점 + 작은 + (끌면 복사본이 생김) */
+export const IconGripCopy = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+    {[2.5, 7.5].flatMap((x) =>
+      [3, 8, 13].map((y) => <circle key={`${x}-${y}`} cx={x} cy={y} r="1.6" fill="currentColor" />),
+    )}
+    <path d="M12.5 1.5v5M10 4h5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="square" />
+  </svg>
+);
+/** 자물쇠(삭제 잠금) — 잠김/풀림 */
+export const IconLock = ({ open = false }: { open?: boolean }) => (
+  <Svg>
+    <rect x="3" y="7" width="10" height="7" fill={open ? "none" : "currentColor"} />
+    <path d={open ? "M5.5 7V4.5a2.5 2.5 0 0 1 4.9-.7" : "M5.5 7V4.5a2.5 2.5 0 0 1 5 0V7"} />
+  </Svg>
+);

@@ -97,7 +97,7 @@ describe("v17 live widget data integrity", () => {
     let backup = false;
     await migrate(db, {
       beforeMigrate: async (from, to) => {
-        expect([from, to]).toEqual([16, 18]);
+        expect([from, to]).toEqual([16, 19]);
         backup = true;
       },
     });

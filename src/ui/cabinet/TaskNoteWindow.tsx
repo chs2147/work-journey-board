@@ -15,7 +15,9 @@ import { importCabiMarkdown } from "../../domain/cabiMarkdown";
 import { MARKDOWN_MAX_BYTES } from "../../domain/markdownNote";
 import { CABI } from "../../shared/cabiStrings";
 import { STR } from "../../shared/strings";
-import { IconNote, IconExportFile, IconTrash } from "../common/icons";
+import { IconNote, IconExportFile, IconTrash, IconLock, IconCopyItem } from "../common/icons";
+import { V20 } from "../../shared/v20Strings";
+import { DeleteNoteDialog } from "./DeleteNoteDialog";
 import { reportError, toast } from "../board/boardStore";
 import { prepareImage, type PreparedImage } from "../note/imageProcess";
 import { cabiClient, cabiContext, registerCabiFlush, useCabiChange } from "./cabiService";
@@ -40,7 +42,9 @@ export function TaskNoteWindow({ noteId }: { noteId: string }) {
     [blockMenu, setBlockMenu] = useState(false),
     [preview, setPreview] = useState<ImportPreview | null>(null),
     [headings, setHeadings] = useState<{ text: string; pos: number }[]>([]),
-    [tasks, setTasks] = useState<{ id: string; name: string }[]>([]);
+    [tasks, setTasks] = useState<{ id: string; name: string }[]>([]),
+    [deleting, setDeleting] = useState<{ refs: number; images: number } | null>(null),
+    [notice, setNotice] = useState<{ id: string; title: string } | null>(null);
   const disconnected = useCabiChange((s) => s.disconnected),
     titleRef = useRef<HTMLInputElement>(null),
     fileRef = useRef<HTMLInputElement>(null),
@@ -410,6 +414,21 @@ export function TaskNoteWindow({ noteId }: { noteId: string }) {
             savedAt={note.updatedAt}
           />
           <button
+            className={`${styles.button} ${note.deleteLocked ? styles.lockOn : ""}`}
+            aria-pressed={!!note.deleteLocked}
+            title={note.deleteLocked ? V20.lockOnTitle : V20.lockOffTitle}
+            data-testid="note-delete-lock"
+            onClick={() =>
+              void (async () => {
+                const n = await cabiClient().setNoteDeleteLock(noteId, !note.deleteLocked);
+                if (current.current) current.current = { ...current.current, deleteLocked: n.deleteLocked };
+                setNote((old) => (old ? { ...old, deleteLocked: n.deleteLocked } : old));
+              })().catch(reportError)
+            }
+          >
+            <IconLock open={!note.deleteLocked} /> {note.deleteLocked ? V20.lockOn : V20.lockOff}
+          </button>
+          <button
             className={styles.button}
             aria-label={CABI.image}
             title={CABI.image}
@@ -469,6 +488,39 @@ export function TaskNoteWindow({ noteId }: { noteId: string }) {
           </button>
         </p>
       )}
+      {notice && (
+        <p className={styles.notice} role="status" data-testid="note-duplicate-notice">
+          {V20.duplicated(notice.title)}
+          <button
+            className={styles.button}
+            onClick={() =>
+              void (async () => {
+                const { openCabi } = await import("./cabiService");
+                await openCabi("note", notice.id);
+              })().catch(reportError)
+            }
+          >
+            {V20.open}
+          </button>
+        </p>
+      )}
+      {deleting && (
+        <DeleteNoteDialog
+          title={note.title}
+          task={tasks.find((t) => t.id === note.categoryId)?.name ?? ""}
+          savedAt={note.updatedAt}
+          images={deleting.images}
+          refs={deleting.refs}
+          onCancel={() => setDeleting(null)}
+          onDelete={async () => {
+            await save();
+            await cabiClient().removeNote(noteId, current.current!.revision);
+            dirty.current = false;
+            const { loadPlatform } = await import("../../platform");
+            await (await loadPlatform()).cabi.closeSelf();
+          }}
+        />
+      )}
       {menu && (
         <div className={styles.menu}>
           <button className={styles.button} onClick={() => void exportDoc("markdown").catch(reportError)}>
@@ -495,23 +547,42 @@ export function TaskNoteWindow({ noteId }: { noteId: string }) {
           </select>
           <button
             className={styles.button}
+            data-testid="note-duplicate"
+            onClick={() =>
+              void (async () => {
+                await save();
+                const c = await cabiClient().duplicateNote(noteId);
+                setMenu(false);
+                setNotice({ id: c.id, title: c.title });
+              })().catch(reportError)
+            }
+          >
+            <IconCopyItem />
+            {V20.duplicate}
+          </button>
+          <button
+            className={styles.button}
+            disabled={!!note.deleteLocked}
+            title={note.deleteLocked ? V20.lockedHint : undefined}
+            data-testid="note-delete"
             onClick={() =>
               void (async () => {
                 const n = current.current;
-                if (!n) return;
+                if (!n || n.deleteLocked) return;
                 await save();
                 const count = await cabiClient().referenceCount("note", n.id);
-                if (!window.confirm(CABI.deleteConfirm(count))) return;
-                await cabiClient().removeNote(n.id, current.current!.revision);
-                dirty.current = false;
-                const { loadPlatform } = await import("../../platform");
-                await (await loadPlatform()).cabi.closeSelf();
+                setDeleting({ refs: count, images: cabiAssetIds(n.content).length });
               })().catch(reportError)
             }
           >
             <IconTrash />
             {CABI.deleteNote}
           </button>
+          {note.deleteLocked && (
+            <small className={styles.menuHint} data-testid="note-delete-locked-hint">
+              🔒 {V20.lockedHint}
+            </small>
+          )}
         </div>
       )}
       {editor && (

@@ -37,7 +37,8 @@ test("표 열 너비 조절·행열 이끌이 이동·바깥 클릭 닫기·저�
   const dest = (await table.locator("tr").nth(2).locator("td").first().boundingBox())!;
   await c.mouse.move(g.x + 12, g.y + 12);
   await c.mouse.down();
-  await c.mouse.move(dest.x + 15, dest.y + 15, { steps: 10 });
+  // 칸의 아래 절반 = 그 행 "뒤"(improve-v20-spec 5-3)
+  await c.mouse.move(dest.x + 15, dest.y + dest.height - 5, { steps: 10 });
   await c.mouse.up();
   await expect(table.locator("tr").nth(2)).toContainText("a1");
   await table.locator("th").first().click();
@@ -45,7 +46,7 @@ test("표 열 너비 조절·행열 이끌이 이동·바깥 클릭 닫기·저�
   const colDest = (await table.locator("th").nth(2).boundingBox())!;
   await c.mouse.move(col.x + 12, col.y + 12);
   await c.mouse.down();
-  await c.mouse.move(colDest.x + 15, colDest.y + 15, { steps: 10 });
+  await c.mouse.move(colDest.x + colDest.width - 8, colDest.y + 15, { steps: 10 });
   await c.mouse.up();
   await expect(table.locator("th").nth(2)).toHaveText("A");
   await c.keyboard.press("Control+z");

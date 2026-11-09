@@ -553,6 +553,9 @@
 .copyGrip {
   cursor: grab;
 }
+.copyGrip:active {
+  cursor: grabbing;
+}
 .drop {
   position: fixed;
   z-index: 500;
@@ -661,8 +664,11 @@
   background: var(--accent);
   pointer-events: none;
 }
-.prose :global(.resize-cursor) {
-  cursor: col-resize;
+/* 열 너비 조절 커서(improve-v20-spec 5-2): prosemirror-tables는 편집기 요소 "자신"에 resize-cursor를 붙인다.
+   자손 선택자로는 맞지 않고, 글자 위에서는 자식의 cursor:auto가 I 커서가 되므로 자식까지 덮는다. */
+.prose:global(.resize-cursor),
+.prose:global(.resize-cursor) * {
+  cursor: col-resize !important;
 }
 .grid > .row {
   display: grid;
@@ -815,4 +821,51 @@
 }
 .list .rowMain small {
   margin-top: 0;
+}
+
+/* 개선 v20(improve-v20-spec 2~4절): 노트 삭제 확인 창 · 삭제 잠금 · 복제 알림 */
+.deleteMeta {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  background: var(--surface-sub);
+  border-left: 3px solid var(--line-strong);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.deleteMeta span {
+  color: var(--text-2);
+}
+.deleteWarn {
+  color: var(--danger);
+}
+.deleteDialog .dangerButton {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #fff;
+}
+.lockOn {
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: var(--fw-bold);
+}
+.lockedIcon {
+  color: var(--accent);
+}
+.menuHint {
+  font-size: 12px;
+  color: var(--text-2);
+}
+.duplicated {
+  background: color-mix(in srgb, var(--warn-soft) 70%, var(--surface-card));
+}
+.notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  padding: 6px 10px;
+  border-left: 3px solid var(--accent);
+  background: var(--surface-sub);
+  font-size: 13px;
 }

@@ -8,6 +8,7 @@ mod files;
 mod menu;
 mod splash;
 mod update;
+mod update_policy;
 
 use tauri::Manager;
 use tauri_plugin_window_state::StateFlags;

@@ -47,7 +47,7 @@ it("manual frame geometry persists in weekly/task boards, export and migration g
   let backup = false;
   await migrate(old, {
     beforeMigrate: async (from, to) => {
-      expect([from, to]).toEqual([17, 18]);
+      expect([from, to]).toEqual([17, 19]);
       backup = true;
     },
   });

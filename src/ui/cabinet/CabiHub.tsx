@@ -1,9 +1,21 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { CabinetItem } from "../../domain/cabinet";
-import type { CabiNoteSummary, TaskBoard } from "../../domain/cabi";
+import { cabiAssetIds, type CabiNoteSummary, type TaskBoard } from "../../domain/cabi";
 import { boxText } from "../../domain/note";
 import { CABI } from "../../shared/cabiStrings";
-import { IconNote, IconList, IconTable, IconMap, IconTune, IconTrash, IconExpand } from "../common/icons";
+import {
+  IconNote,
+  IconList,
+  IconTable,
+  IconMap,
+  IconTune,
+  IconTrash,
+  IconExpand,
+  IconCopyItem,
+  IconLock,
+} from "../common/icons";
+import { V20 } from "../../shared/v20Strings";
+import { DeleteNoteDialog } from "./DeleteNoteDialog";
 import { reportError } from "../board/boardStore";
 import { cabiClient, cabiContext, createCabiNote, openCabi, useCabiChange } from "./cabiService";
 import { CabiDragGrip } from "./CabiDrag";
@@ -35,7 +47,14 @@ export function CabiHub({
     [previewOpen, setPreviewOpen] = useState(false),
     [tasks, setTasks] = useState<{ id: string; name: string }[]>([]),
     [chosen, setChosen] = useState(""),
-    [error, setError] = useState("");
+    [error, setError] = useState(""),
+    [notice, setNotice] = useState<{ id: string; title: string } | null>(null),
+    [deleting, setDeleting] = useState<{ note: CabiNoteSummary; refs: number; images: number } | null>(null);
+  useEffect(() => {
+    if (!notice) return;
+    const t = setTimeout(() => setNotice(null), 6000);
+    return () => clearTimeout(t);
+  }, [notice]);
   const target = categoryId ?? chosen,
     revision = useRef(0);
   useEffect(() => {
@@ -216,8 +235,39 @@ export function CabiHub({
               className={`${styles.scroll} ${view === "cards" ? styles.grid : styles.list}`}
               data-testid="cabi-items"
             >
+              {notice && (
+                <p className={styles.notice} role="status" data-testid="cabi-note-notice">
+                  {V20.duplicated(notice.title)}
+                  <button
+                    className={styles.button}
+                    onClick={() => void openCabi("note", notice.id).catch(reportError)}
+                  >
+                    {V20.open}
+                  </button>
+                </p>
+              )}
+              {deleting && (
+                <DeleteNoteDialog
+                  title={deleting.note.title}
+                  task={tasks.find((t) => t.id === deleting.note.categoryId)?.name ?? ""}
+                  savedAt={deleting.note.updatedAt}
+                  images={deleting.images}
+                  refs={deleting.refs}
+                  onCancel={() => setDeleting(null)}
+                  onDelete={async () => {
+                    const r = cabiClient(),
+                      latest = await r.note(deleting.note.id);
+                    await r.removeNote(latest.id, latest.revision);
+                    setDeleting(null);
+                  }}
+                />
+              )}
               {noteRows.map((n) => (
-                <article key={n.id} className={styles.row} data-testid="cabi-note-row">
+                <article
+                  key={n.id}
+                  className={`${styles.row} ${notice?.id === n.id ? styles.duplicated : ""}`}
+                  data-testid="cabi-note-row"
+                >
                   <IconNote />
                   <button
                     className={styles.rowMain}
@@ -236,26 +286,56 @@ export function CabiHub({
                   <CabiDragGrip reference={{ kind: "note", id: n.id }} />
                   <button
                     className={styles.icon}
+                    title={V20.duplicate}
+                    aria-label={V20.duplicate}
+                    data-testid="cabi-note-duplicate"
+                    onClick={() =>
+                      void cabiClient()
+                        .duplicateNote(n.id)
+                        .then((c) => setNotice({ id: c.id, title: c.title }))
+                        .catch(reportError)
+                    }
+                  >
+                    <IconCopyItem />
+                  </button>
+                  <button
+                    className={styles.icon}
                     aria-label={CABI.open}
                     title={CABI.open}
                     onClick={() => void openCabi("note", n.id).catch(reportError)}
                   >
                     <IconExpand />
                   </button>
-                  <button
-                    className={styles.icon}
-                    title={CABI.deleteNote}
-                    aria-label={CABI.deleteNote}
-                    onClick={() =>
-                      void (async () => {
-                        const r = cabiClient(),
-                          count = await r.referenceCount("note", n.id);
-                        if (window.confirm(CABI.deleteConfirm(count))) await r.removeNote(n.id, n.revision);
-                      })().catch(reportError)
-                    }
-                  >
-                    <IconTrash />
-                  </button>
+                  {n.deleteLocked ? (
+                    <button
+                      className={`${styles.icon} ${styles.lockedIcon}`}
+                      title={V20.lockedRow}
+                      aria-label={V20.lockedRow}
+                      data-testid="cabi-note-locked"
+                      onClick={() => setError(V20.lockedRow)}
+                    >
+                      <IconLock />
+                    </button>
+                  ) : (
+                    <button
+                      className={styles.icon}
+                      title={CABI.deleteNote}
+                      aria-label={CABI.deleteNote}
+                      data-testid="cabi-note-delete"
+                      onClick={() =>
+                        void (async () => {
+                          const r = cabiClient();
+                          const [refs, full] = await Promise.all([
+                            r.referenceCount("note", n.id),
+                            r.note(n.id),
+                          ]);
+                          setDeleting({ note: n, refs, images: cabiAssetIds(full.content).length });
+                        })().catch(reportError)
+                      }
+                    >
+                      <IconTrash />
+                    </button>
+                  )}
                 </article>
               ))}
               {view === "list" ? (

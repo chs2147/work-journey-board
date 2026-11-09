@@ -230,3 +230,21 @@
   background: var(--accent);
   transition: width 0.15s;
 }
+
+/* improve-v20-spec 6절: 확인 실패 안내 — 절 본문과 같은 왼쪽 기준선 */
+.failHelp {
+  margin: 4px 0 8px;
+  padding: 8px 12px;
+  border-left: 3px solid var(--line-strong);
+  background: var(--surface-sub);
+  font-size: var(--fs-sm);
+}
+.failHelp[data-kind="rate"] {
+  border-left-color: var(--warn);
+}
+.failHelp[data-kind="blocked"] {
+  border-left-color: var(--danger);
+}
+.failHelp p {
+  margin: 0 0 6px;
+}

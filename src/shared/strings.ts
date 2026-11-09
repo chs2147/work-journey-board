@@ -1225,6 +1225,13 @@ export const STR_BASE = {
     latest: "최신 판입니다",
     lastCheck: (when: string) => `마지막 확인 ${when}`,
     failed: (msg: string) => `확인하지 못했습니다 — ${msg}`,
+    /** improve-v20-spec 6절: 실패 종류별 안내 */
+    rateRetry: (min: number, at: string) => `약 ${min}분 뒤(${at}) 다시 확인할 수 있습니다.`,
+    rateWait: (at: string) => `${at}부터`,
+    blockedHelp: "릴리스 페이지에서 설치 파일을 직접 받아 설치할 수 있습니다(일지는 그대로).",
+    openReleases: "릴리스 페이지 열기",
+    notesOnPage: "변경 내용은 릴리스 페이지에서 볼 수 있습니다.",
+    releasesUrl: "https://github.com/chs2147/work-journey-board/releases/latest",
     available: (v: string) => `새 판 ${v}이(가) 있습니다`,
     banner: (v: string) => `새 판 ${v}이(가) 있습니다`,
     bannerSub: (cur: string) => `지금 판 ${cur} · 설치 전에 일지를 자동으로 백업합니다`,

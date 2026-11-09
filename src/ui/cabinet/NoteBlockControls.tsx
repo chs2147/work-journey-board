@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import type { Editor } from "@tiptap/react";
 import { NodeSelection, TextSelection } from "@tiptap/pm/state";
 import type { Node as PMNode } from "@tiptap/pm/model";
+import { IconGrip } from "../common/icons";
 import { blockAt, selectedBlock, moveCabiBlock, alterCabiBlock, type Block } from "./cabiBlockMoves";
 import { TEXT_COLORS } from "../../domain/note";
 import { CABI } from "../../shared/cabiStrings";
@@ -73,6 +74,9 @@ export function NoteBlockControls({
       setDrop({ left: b.rect.left, top: after ? b.rect.bottom : b.rect.top, width: b.rect.width });
     };
     const finish = () => {
+      editor.view.dom
+        .querySelectorAll(`.${styles.dragSource}`)
+        .forEach((el) => el.classList.remove(styles.dragSource!));
       drag.current = null;
       target.current = null;
       setDrop(null);
@@ -152,6 +156,8 @@ export function NoteBlockControls({
           className={styles.grip}
           aria-label={V17.grip}
           title={V17.grip}
+          data-testid="cabi-block-grip"
+          data-block={hover.node.type.name}
           style={{ left: Math.max(3, hover.rect.left - 29), top: hover.rect.top }}
           draggable
           onPointerEnter={() => {
@@ -179,11 +185,15 @@ export function NoteBlockControls({
             e.dataTransfer.setData("application/x-cabi-block", token);
             e.dataTransfer.setData("text/plain", hover.node.textContent);
             const dom = editor.view.nodeDOM(hover.pos);
-            if (dom instanceof Element) e.dataTransfer.setDragImage(dom, 0, 0);
+            if (dom instanceof Element) {
+              e.dataTransfer.setDragImage(dom, 0, 0);
+              // 끄는 동안 원래 블록(표 포함)을 반투명으로(improve-v20-spec 5-1)
+              requestAnimationFrame(() => dom.classList.add(styles.dragSource!));
+            }
             setMenu(false);
           }}
         >
-          ⠿
+          <IconGrip />
         </button>
       )}
       {(menu || slashOpen) && active && (
