@@ -1,5 +1,7 @@
 # V2 프로젝트 — 다국어·온라인 동기화 상세 설계 초안
 
+**최신 진행:** [57. 실행 격리·이관 완료 연결](57-runtime-isolation-and-migration-handoff.md) PoC71개 통과. 로컬/온라인 설정·업데이트 후보 경계와 원본 폴더 보호를 검증했다. 실제 native 배포/서버 이관 완료 기능은 미구현이다.
+
 **최상위 철칙:** [56. 로컬 영구 유지·새 온라인 사본·DB/Blob 분리](56-local-permanence-copy-migration.md). 로컬 원본 구조/이미지는 그대로 유지하며 온라인 사본에만 이미지 참조형 DB와 Blob을 적용한다. 사용자 명시적 포기 전 로컬 모델을 영구 지원한다. 신규 독립 추출22개+DB18회귀19개 통과, 실제 제품 이관은 후속 단계다.
 
 **최신 검증(2026-11-10 KST):** [55. Supabase private 파일 실검증](55-supabase-private-storage-live-results.md). DEV Free/Usage 사용자 확인 후 실제 Auth/DB/Storage/loopback gateway47검사와 생성 데이터 정리를 완료했다. 다음은 V1/V2 격리·제품용 이미지/dedup PoC이며 공개 배포/실기 동기화는 남아 있다. 아래 이전 체크포인트의 대기 표시는 작성 당시 상태다.
@@ -40,6 +42,7 @@ PostgreSQL 영속 metadata를 HTTP 흐름에 연결했고 통합25개·adapter12
 
 | 문서 | 논의 내용 |
 |---|---|
+| [57. 실행 격리·이관 완료 연결](57-runtime-isolation-and-migration-handoff.md) | 후보 runtime profile·기존 업데이트 피드 보호·원본 폴더 중첩 거절·서버 완료 계약 |
 | [56. 로컬 영구 유지·온라인 사본 철칙](56-local-permanence-copy-migration.md) | 원본 불변·새 ID 복제·온라인 DB 이미지 본문0·독립 추출 PoC/실패 보호 |
 | [55. Supabase private 파일 실검증](55-supabase-private-storage-live-results.md) | Free/Usage·파일3종·실제 gateway/복구·격리/동시quota·API 호환 수정·정리 |
 | [54. Supabase Storage 확정](54-supabase-storage-decision.md) | 사용자 공급자 결정·DEV 읽기 점검·실제 플랜/Usage 확인·private 파일 검증 준비 |

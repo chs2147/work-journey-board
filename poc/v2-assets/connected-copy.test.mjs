@@ -10,6 +10,7 @@ import {
   rmSync,
   symlinkSync,
   readdirSync,
+  mkdirSync,
 } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
@@ -21,8 +22,14 @@ import { createConnectedCopy, inspectConnectedCopy } from "./connected-copy.mjs"
 function setup(t) {
   const dir = mkdtempSync(join(tmpdir(), "wjb-connected-copy-"));
   writeFileSync(join(dir, ".v2-poc-only"), "synthetic data only");
-  const source = join(dir, "local.db"),
-    destination = join(dir, "online-copy");
+  const localRoot = join(dir, "local-workspace"),
+    connectedRoot = join(dir, "connected-root");
+  for (const root of [localRoot, connectedRoot]) {
+    mkdirSync(root);
+    writeFileSync(join(root, ".v2-poc-only"), "synthetic data only");
+  }
+  const source = join(localRoot, "local.db"),
+    destination = join(connectedRoot, "online-copy");
   fixture18(source);
   t.after(() => rmSync(dir, { recursive: true, force: true }));
   return { dir, source, destination, sourceWorkspaceId: randomUUID(), workspaceId: randomUUID() };
@@ -186,6 +193,15 @@ test("original path and existing destination can never be overwritten", (t) => {
 test("same source/online identity is rejected", (t) => {
   const e = setup(t);
   assert.throws(() => copy(e, { workspaceId: e.sourceWorkspaceId }), /NEW_WORKSPACE_REQUIRED/);
+});
+test("online destination cannot add files inside the preserved local workspace", (t) => {
+  const e = setup(t),
+    localRoot = join(e.dir, "local-workspace");
+  const before = sourceHash(e.source),
+    files = readdirSync(localRoot);
+  assert.throws(() => createConnectedCopy(e.source, join(localRoot, "online-copy"), e), /PATH_OVERLAP/);
+  assert.equal(sourceHash(e.source), before);
+  assert.deepEqual(readdirSync(localRoot), files);
 });
 for (const [name, change, error] of [
   ["bad base64", (db) => db.exec("UPDATE note_asset SET data='invalid%%'"), /ASSET_ENCODING/],

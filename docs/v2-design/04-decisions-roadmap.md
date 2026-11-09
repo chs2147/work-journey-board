@@ -332,3 +332,7 @@ V2 체크포인트52ff622를 푸시한 뒤 사용자 요청의 캐비넷/노트 
 ## 4.59 로컬 영구 유지·온라인 새 사본·DB/Blob 본문 분리
 
 사용자가 ‘중복’의 의미를 온라인 DB/Blob 이중 본문 저장 금지로 명확히 하고 로컬 모델 영구 유지·새 사본 방식 이관을 철칙으로 확정했다. [56문서](56-local-permanence-copy-migration.md)/CLAUDE.md에 명문화하고02/09/46의 모호한 전환/중복 설명을 수정했다. 신규22개 metadata-only 추출 시험과 기존DB18회귀19개가 통과했다. 원본 hash/이미지 보존·새UUID·새DB본문0·썸네일/업무노트 소유권·실패 보호를 검증했으며 실제 온라인 이관/앱 배포/설정 격리 완성은 아니다. 역사적BLOB 모형은 최종 온라인 DB로 사용 금지. 제품/원본/클라우드는 수정하지 않았다.
+
+## 4.60 실행/업데이트 격리·사본 경로·이관 완료 연결
+
+[57문서](57-runtime-isolation-and-migration-handoff.md)에 실제 CONFIG_DIR/릴리스 피드 고정 관측과 후보 runtime profile을 기록했다. 독립 격리29개+실제 사본 추출23개+기존DB18회귀19개=71개 통과. 원본 폴더 하위 생성도 차단하고 로컬모드 cloud 초기화/온라인오류의 원본fallback을 거절한다. 새 사본 연결은 일치하는 workspace/manifest의 서버 완료 정보 callback을 요구한다. 실제 server receipt RPC/native profile/배포·실기는 미구현이며 제품/클라우드/설정은 변경하지 않았다.

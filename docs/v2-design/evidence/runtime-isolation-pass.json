@@ -1,0 +1,49 @@
+{
+  "checkedAt": "2026-11-09T22:26:00.275421+00:00",
+  "scope": "Independent PoC, synthetic files, path semantics and adapter fixtures only",
+  "tests": [
+    {
+      "file": "poc/v2-runtime/isolation.test.mjs",
+      "passedCount": 29,
+      "exitCode": 0,
+      "passed": true,
+      "log": "runtime-isolation-tests.txt",
+      "logSha256": "62f3ea2bb90a7f512f27e2bb64bdcd6581211623d7be7a21ad3ba1a5581288df"
+    },
+    {
+      "file": "poc/v2-assets/connected-copy.test.mjs",
+      "passedCount": 23,
+      "exitCode": 0,
+      "passed": true,
+      "log": "runtime-isolation-copy-tests.txt",
+      "logSha256": "2a639bc3c469a6d3b181815b4f25f726689aabc15c054a4594e7c707feabb48d"
+    },
+    {
+      "file": "poc/v2-sync/db18.test.mjs",
+      "passedCount": 19,
+      "exitCode": 0,
+      "passed": true,
+      "log": "runtime-isolation-db18-tests.txt",
+      "logSha256": "48e0f3b312257c42a69d3d47f4071fdee76e4bff76e9b58e0a37d69ca782544b"
+    }
+  ],
+  "totalPassed": 71,
+  "sourceSha256": {
+    "poc/v2-runtime/isolation.mjs": "68f0f6a0a9e34e27651b7d876a7aa7e4d807dbc78eb4cb8cf03e19fb0ca5a237",
+    "poc/v2-runtime/isolation.test.mjs": "ac82a416dbdf95327c9cd53fb786c2a4d32a521d055dd9d8c1bbd5540bc93df5",
+    "poc/v2-assets/connected-copy.mjs": "6629b11f3354f82e4ab3a2092210b1a08c20f4743b7ba0b01b44d60bfb025f76",
+    "poc/v2-assets/connected-copy.test.mjs": "54dce07a8229a5f4e0cf23ae9cab4fe00df1fabb2a93d42e8789ead5b829fc01",
+    "poc/v2-sync/db18.mjs": "1cce5796c9574ab34663695150ce815b3815a987b3d1930d00af3d5c4901e493"
+  },
+  "observedProductSourceSha256": {
+    "src-tauri/tauri.conf.json": "cabb3b074e6f842a4b86cb823e876145c557bb664922e4e8e8fc96e73e57e19d",
+    "src-tauri/src/files.rs": "7b7d4cdbbef4caaed2b2dc2ef01c6d1555460b3aa8563fe51385232834c0aa59",
+    "src-tauri/src/update.rs": "a5fba9dbde7b9cfcda161e0588fd4121f79fd202a2e545e971280fe486658492",
+    "src-tauri/src/lib.rs": "fa80d747a1627d3388dbe624808dc426894c83a1e2e0d1a805d6b7133e53ccaa"
+  },
+  "nativeWindowsMacInstallationVerified": false,
+  "productWiringImplemented": false,
+  "serverMigrationReceiptImplemented": false,
+  "cloudWrites": false,
+  "existingReleaseFeedChanged": false
+}

@@ -1,10 +1,20 @@
 // Synthetic DB18-only local PoC. No network, app integration or source writes.
 import { DatabaseSync } from "node:sqlite";
 import { randomUUID } from "node:crypto";
-import { readFileSync, writeFileSync, mkdirSync, existsSync, lstatSync, rmSync, readdirSync } from "node:fs";
-import { join, resolve, dirname } from "node:path";
+import {
+  readFileSync,
+  writeFileSync,
+  mkdirSync,
+  existsSync,
+  lstatSync,
+  rmSync,
+  readdirSync,
+  realpathSync,
+} from "node:fs";
+import { join, resolve, dirname, basename } from "node:path";
 import { capture18, guard } from "../v2-sync/db18.mjs";
 import { hash, sourceHash } from "../v2-sync/model.mjs";
+import { assertSeparateWorkspacePaths } from "../v2-runtime/isolation.mjs";
 
 const format = "v2-connected-copy-poc-1";
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
@@ -110,6 +120,11 @@ export function createConnectedCopy(
   if (resolve(source) === resolve(destination) || existsSync(destination)) throw Error("DESTINATION_EXISTS");
   if (lstatSync(source).isSymbolicLink() || lstatSync(dirname(destination)).isSymbolicLink())
     throw Error("SYMLINK_DENIED");
+  assertSeparateWorkspacePaths(
+    process.platform,
+    realpathSync(dirname(source)),
+    join(realpathSync(dirname(destination)), basename(destination)),
+  );
   for (const suffix of ["-journal", "-wal", "-shm"])
     if (existsSync(source + suffix)) throw Error("SOURCE_NOT_FROZEN");
   const captured = capture18(source, { allowNoteImages: true }),

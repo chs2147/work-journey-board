@@ -1,5 +1,7 @@
 # V2 설계·PoC 중단/재개 기록
 
+**현재 재개 정본:** [57. 실행 격리·이관 완료 연결](57-runtime-isolation-and-migration-handoff.md). 이하 체크포인트는 작성 당시 기록이며 가장 최근 결과가 우선한다.
+
 2026-11-09 UTC · V2 설계/PoC 중단 지점을 보존한 뒤 복귀했다. 사용자 요청으로 main 1.23.1 패치(`d11a0ca`)를 v2-design에 병합했다.
 
 ## 보존 위치
@@ -104,3 +106,7 @@ main CI42585959844의 실제 실패는 Chromium 표 이동 undo 시 표 전체�
 ## 사용자 철칙·metadata-only 사본 PoC(2026-11-10 KST, 최신)
 
 [56문서](56-local-permanence-copy-migration.md)와 CLAUDE.md가 최상위 계약이다. 로컬 모델은 사용자가 명시적으로 포기하기 전 영구 지원. 마이그레이션은 원본 DB/이미지 그대로 유지한 별도 ID/위치 온라인 사본 생성. ‘중복’은 온라인 DB/Blob의 이미지 본문 이중 저장 금지이며 로컬 원본/오프라인 실물 보관은 허용한다. 예전 db18 staging/local_assets BLOB는 역사적 시험으로만 유지. 신규connected-copy22개/기존DB18회귀19개 통과했고 실제 Supabase 이관/앱 연결은 미구현이다. 다음은 설정/배포 격리와 추출→서버 참조/Blob 업로드→전체 검증/활성화·재개/취소 연결이다. 이미지 재압축은 신규 온라인 사본의 선택 정책으로만 후속 검토한다.
+
+## 실행 격리·이관 완료 연결 PoC(2026-11-10 KST, 최신)
+
+[57문서](57-runtime-isolation-and-migration-handoff.md)를 최신 재개점으로 읽는다. local/connected 후보 namespace·기존피드 온라인RC 게시거절·로컬 cloud 초기화0·온라인실패 원본fallback 거절·서버 완료 정보 callback·원본폴더 중첩 경로 가드를 검증했다. 격리29/사본23/DB18회귀19=71개 통과. 원본55/56 철칙과 실제Storage 검증은 유지한다. 실제 native 앱/배포·서버 이관 완료RPC는 아직 없고 다음은 이관작업/manifest 영속 상태→서버 매핑/Blob전송/재개·취소→검증/완료증표 구현이다. 제품/설정/Cloud/원본자료/기존 릴리스는 변경하지 않았다.
