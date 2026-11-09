@@ -325,7 +325,16 @@ async function shots(base = "http://localhost:1420") {
   const show = "/?sample=showcase&today=2026-10-22&theme=signature";
   const steps = {
     "01-setup": { url: "/?fresh=1&theme=signature" },
-    "02-daily": { url: show },
+    "02-daily": {
+      url: show,
+      run: async (p) => {
+        await p.evaluate(async () => {
+          const { cabiClient } = await import("/src/ui/cabinet/cabiService.ts");
+          await cabiClient().board("cat-settle", true);
+        });
+        await p.getByTestId("task-board-cat-badge").waitFor();
+      },
+    },
     "03-carry": { url: "/?today=2026-10-22&theme=signature" },
     // 중요 업무 패널은 처음부터 열려 있다(Alt+2는 닫기가 됨)
     "04-important": { url: show },

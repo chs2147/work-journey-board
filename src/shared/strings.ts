@@ -369,6 +369,7 @@ export const STR_BASE = {
     linkedToCat: (title: string, cat: string) => `‘${title}’을(를) ‘${cat}’에도 연결했습니다`,
     groupDrop: "놓으면 이 업무에도 연결",
     rowDragHint: "끌어서 순서 바꾸기 · 왼쪽 업무에 놓으면 그 업무에도 연결",
+    taskBoardBadge: (name: string) => `${name} — 업무 메모보드 바로 열기`,
     catBadge: (name: string, n: number) =>
       n === 1 ? `${name} — Cabi.NET 1개 열기` : `${name} — Cabi.NET ${n}개 보기`,
     filters: { all: "전체", folder: "폴더", link: "링크" },

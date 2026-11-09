@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "productId": "work-journey-board",
   "name": "Work Journey Board",
-  "currentVersion": "1.23.0",
+  "currentVersion": "1.23.1",
   "upstream": null,
   "catalog": "catalog.json",
   "profiles": [
