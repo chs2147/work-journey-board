@@ -1,0 +1,31 @@
+✔ primary invariant: source DB retains embedded images, new online DB has references only (61.509366ms)
+✔ same-image Blob sharing is secondary; distinct logical image owners remain (28.591194ms)
+✔ thumbnail is also extracted from both legacy asset tables (31.490312ms)
+✔ task-note image uses its owned asset reference and preserves its binary outside DB (30.536615ms)
+✔ original local workspace can continue independently after extraction (44.280987ms)
+✔ online copy gets a distinct workspace even from same source snapshot (42.921417ms)
+✔ failure at files-written leaves source usable and no published destination (28.316884ms)
+✔ failure at metadata-written leaves source usable and no published destination (32.326218ms)
+✔ source change during extraction rejects publication (25.462041ms)
+✔ original path and existing destination can never be overwritten (10.613767ms)
+✔ same source/online identity is rejected (10.039755ms)
+✔ online destination cannot add files inside the preserved local workspace (10.70388ms)
+✔ bad base64 fails closed without dropping image or modifying original (18.240674ms)
+✔ byte count mismatch fails closed without dropping image or modifying original (18.774215ms)
+✔ unrecognized inline image fails closed without dropping image or modifying original (18.857449ms)
+✔ unknown future schema fails closed without dropping image or modifying original (22.715063ms)
+✔ unowned note image node fails closed without dropping image or modifying original (18.661418ms)
+✔ active journal requires a frozen snapshot (10.516181ms)
+✔ source symlink is rejected (9.702405ms)
+✔ missing READY cannot be activated (24.496199ms)
+✔ wrong workspace cannot open a copy (24.616718ms)
+✔ tampered external image is detected (27.433474ms)
+✔ tampered metadata is detected (27.476919ms)
+ℹ tests 23
+ℹ suites 0
+ℹ pass 23
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 586.755924

@@ -340,3 +340,7 @@ V2 체크포인트52ff622를 푸시한 뒤 사용자 요청의 캐비넷/노트 
 ## 4.61 이관 journal·재개·취소·응답 유실 복구
 
 [58문서](58-durable-migration-resume-cancel.md)에 원본과 분리된 metadata-only SQLite journal/coordinator를 구현했다. 신규32개(재열기·응답 유실·취소/게시 경쟁·늦은 I/O·SIGKILL·원본보호/본문0)+기존회귀71개=103개 통과. 원격은 메모리 테스트 어댑터이며 실제 server migration RPC/metadata mapper는 미구현이다. 다음은 PostgreSQL 이관 상태/원자적 완료·취소/관측 RPC 구현/검증→전진SQL검토→개발Supabase 연결이다. 제품/원본/Cloud/환경/과금 변경은 없다.
+
+## 4.62 PostgreSQL 이관 서버/원자적 연결·취소
+
+[59문서](59-postgres-migration-server.md)의 신규 schema3테이블/RLS/serverRPC·기존asset INSERT gate·publish ticket/fence·attestation/취소/예약량 검증을 실제 로컬PG17.11에서39개 통과했다. 두PG연결의publish/cancel 경쟁과 미사용rollback/사용후거절도 검증했다. 문단/이미지참조 최소프로필이며 receipt=poc-verified는 제품실행가드에서 거절된다. source/targetmanifest는 별도해시고 전체DB18 mapper·실제gateway/DEV적용·native제품은 후속이다. 새SQL/verify/빈rollback/reviewmanifest를 준비했으나 기존설치SQL/Cloud/원본/제품은 변경하지 않았다.

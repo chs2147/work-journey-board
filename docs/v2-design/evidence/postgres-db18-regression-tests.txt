@@ -1,0 +1,30 @@
+✔ DB18/17: all tables/columns, document/asset/link manifest, two scopes (106.431169ms)
+ℹ {"case":"DB18/17","sourceHash":"45d164925f97e83da7ab47847e8198d8398009284dfa19ceb172484c6b24b739","fixtureHash":"ea361a1da5309b0761c832735344e1dfc6016d3325e9c53b5b31ae67df3c2958","manifestHash":"8c5dfd082c5bc200268546908d8a367bf4e0f70aaafcfd5bf8eb5f2846f83034","tables":26,"entries":8,"assets":2,"uniqueBlobs":1,"status":"PASS"}
+✔ DB18/41: all tables/columns, document/asset/link manifest, two scopes (82.25927ms)
+ℹ {"case":"DB18/41","sourceHash":"71bf1419d6fdc8ce49aa1360efdbf6034d64bbddb5ee9b4b4fa24a8d407d0f0d","fixtureHash":"b9042ef05986c5c9379cbeeeb8b5a7629fa5c1f88fcf921c6004a1aa63cdbd04","manifestHash":"80fc5b0c9305996fcc04ee424d811ad4023266dc6ced5788b453401b70c6f2c5","tables":26,"entries":8,"assets":2,"uniqueBlobs":1,"status":"PASS"}
+✔ DB18/73: all tables/columns, document/asset/link manifest, two scopes (80.726237ms)
+ℹ {"case":"DB18/73","sourceHash":"5305093e385ceb8f79eb95352b693ec1fb02ea46024c9b7894866887c87cd771","fixtureHash":"07262bed794c4d6e83fe787cd8c4afac6f2d67db1407fd6a9cdf74257373c4ac","manifestHash":"6e0f6aa9860c7dc6fd1f2176a81ec26b2e1432ef6919f3dd3d01ca4aaffa6470","tables":26,"entries":8,"assets":2,"uniqueBlobs":1,"status":"PASS"}
+✔ DB18 rejects newer schema without publication (13.547507ms)
+✔ DB18 rejects unknown table without publication (18.139655ms)
+✔ DB18 rejects unknown column without publication (19.82946ms)
+✔ DB18 rejects missing linked entry without publication (20.094963ms)
+✔ DB18 rejects missing linked box without publication (20.880899ms)
+✔ DB18 rejects wrong image owner without publication (19.598427ms)
+✔ DB18 rejects bad base64 without publication (22.482373ms)
+✔ DB18 rejects wrong image size without publication (20.680432ms)
+✔ DB18 rejects bad JSON without publication (21.209095ms)
+✔ DB18 rejects missing image reference without publication (19.23561ms)
+✔ DB18 rejects dangling arrow without publication (19.369057ms)
+✔ DB18 exclusive destination and source protection (11.366532ms)
+✔ stage rejects tampered blob (28.703808ms)
+✔ stage rejects tampered row (28.229173ms)
+✔ stage rejects tampered table (27.854068ms)
+✔ stage rejects tampered scope (31.409809ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 621.424065

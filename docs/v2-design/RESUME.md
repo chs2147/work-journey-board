@@ -1,6 +1,6 @@
 # V2 설계·PoC 중단/재개 기록
 
-**현재 재개 정본:** [58. 이관 영속 상태·재개·취소](58-durable-migration-resume-cancel.md). 이하 체크포인트는 작성 당시 기록이며 가장 최근 결과가 우선한다.
+**현재 재개 정본:** [59. PostgreSQL 이관 서버](59-postgres-migration-server.md). 이하 체크포인트는 작성 당시 기록이며 가장 최근 결과가 우선한다.
 
 2026-11-09 UTC · V2 설계/PoC 중단 지점을 보존한 뒤 복귀했다. 사용자 요청으로 main 1.23.1 패치(`d11a0ca`)를 v2-design에 병합했다.
 
@@ -114,3 +114,7 @@ main CI42585959844의 실제 실패는 Chromium 표 이동 undo 시 표 전체�
 ## 영속 이관 journal/재개·취소 PoC(2026-11-10 KST, 최신)
 
 [58문서](58-durable-migration-resume-cancel.md)가 최신 재개점이다. 신규32개/회귀71개=103개 통과. journal은 source와 겹치지 않는 별도DB이며 ID/hash/정수크기/상태만 저장한다. 업로드/게시/삭제 응답 유실·cancel fence·이미게시취소거절·SIGKILL/lease·파일유실 후 정리를 테스트용remote와 검증했다. 실제Cloud 이관RPC/메타데이터mapper/native 앱 연결은 아직 없다. 다음은 PostgreSQL의 이관 테이블/원자적 publish-cancel·관측/완료증표 RPC→로컬PG검증→신규전진SQL/ACL/rollback검토→DEV통합이다. 기존install재실행 금지, source 원본/로컬모델영구유지/이미지본문 DB0 철칙 유지. 이번 실제 사용자/Cloud/제품/환경 변경 없음.
+
+## PostgreSQL 이관 서버 모듈(2026-11-10 KST, 최신)
+
+[59문서](59-postgres-migration-server.md)가 최신 재개점이다. 로컬PG17.11/NOSUPERUSER-BYPASSRLS 소유자로 서버39개 통과. wjb_migration job/asset/document·RLS·serverRPC·gatewayINSERTgate,readback/IO검증·publish ticket/fence·원자적취소/관측·빈rollback을 구현했다. 최소문서프로필migration-document-poc-1/receipt poc-verified는 제품활성화금지(실행가드실험거절). reviewmanifest는DEV/autoApply=false이며Cloud에적용하지않았다. 다음은전체DB18문서/논리자산mapper와source/targetmanifest별도바인딩·journal/실제gatewayadapter연결이다. 이후신규전진SQL검토/DEV통합. 기존install재실행/원본변경/로컬모델폐기 금지 철칙 유지.

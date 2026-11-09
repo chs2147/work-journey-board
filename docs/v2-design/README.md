@@ -1,5 +1,7 @@
 # V2 프로젝트 — 다국어·온라인 동기화 상세 설계 초안
 
+**최신 진행:** [59. PostgreSQL 이관 서버](59-postgres-migration-server.md)의 실제PG39개 통과. 신규 SQL은 검토안이며 DEV 미적용, 최소문서프로필의 증표는 제품활성화에 쓸 수 없다. 다음은 전체DB18mapper·실제gateway연결이다.
+
 **최신 진행:** [58. 이관 영속 상태·재개·취소](58-durable-migration-resume-cancel.md) PoC103개 통과. journal에는 이미지 본문 없이 상태만 저장하며 원격은 테스트 어댑터다. 다음은 실제 PostgreSQL 이관 테이블/RPC와 도메인 매핑이다.
 
 **최신 진행:** [57. 실행 격리·이관 완료 연결](57-runtime-isolation-and-migration-handoff.md) PoC71개 통과. 로컬/온라인 설정·업데이트 후보 경계와 원본 폴더 보호를 검증했다. 실제 native 배포/서버 이관 완료 기능은 미구현이다.
@@ -44,6 +46,7 @@ PostgreSQL 영속 metadata를 HTTP 흐름에 연결했고 통합25개·adapter12
 
 | 문서 | 논의 내용 |
 |---|---|
+| [59. PostgreSQL 이관 서버](59-postgres-migration-server.md) | serverRPC/RLS·manifest·readback/IO·publish/cancel 경쟁·ticketfence·전진SQL/빈rollback |
 | [58. 이관 영속 상태·재개·취소](58-durable-migration-resume-cancel.md) | 별도journal·응답 유실/늦은 I/O·취소/게시 경쟁·SIGKILL·원본보호 |
 | [57. 실행 격리·이관 완료 연결](57-runtime-isolation-and-migration-handoff.md) | 후보 runtime profile·기존 업데이트 피드 보호·원본 폴더 중첩 거절·서버 완료 계약 |
 | [56. 로컬 영구 유지·온라인 사본 철칙](56-local-permanence-copy-migration.md) | 원본 불변·새 ID 복제·온라인 DB 이미지 본문0·독립 추출 PoC/실패 보호 |

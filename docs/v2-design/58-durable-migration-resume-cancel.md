@@ -82,3 +82,7 @@ node poc/v2-sync/db18.test.mjs
 4. native 앱/설정·업데이트 분리, Win/macOS 파일/잠금/디스크 부족·전원 장애 검증과 UI 연결을 완료한 뒤 제품 이관을 활성화한다.
 
 현재 journal은 PoC 버전1이고 완성된 운영 감사 이력/보관 정책·실제 파일 전송 스케줄러/백그라운드 서비스는 아니다. 실제 원본 DB/제품/src-tauri/워크플로/설정/Cloud/유료 서비스는 변경하지 않았다. 로컬 모델은 계속 영구 지원 대상이다.
+
+## 후속 서버 구현
+
+[59문서](59-postgres-migration-server.md)에서 실제 PostgreSQL의 이관 테이블/RPC·ticket/fence·취소/I/O·권한/rollback39개를 검증했다. 현재 최소문서프로필이며 전체DB18mapper/실제gateway port는 미연결이다. 이 문서의 테스트용remote와 구분하고source/targetmanifest를 각각 바인딩해 후속 연결해야 한다. 실제Cloud는 미적용이다.

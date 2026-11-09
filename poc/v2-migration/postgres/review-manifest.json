@@ -1,0 +1,65 @@
+{
+  "module": "wjb-migration-server-poc-1",
+  "profile": "development",
+  "projectRef": "vsphftnmfzfoufasjttd",
+  "region": "ap-northeast-2",
+  "autoApply": false,
+  "cloudApplied": false,
+  "monthlyBudgetKRW": 0,
+  "productCompatible": false,
+  "documentProfile": "migration-document-poc-1",
+  "receiptStatus": "poc-verified",
+  "ownerReview": "DEV postgres NOSUPERUSER/BYPASSRLS; local analogue wjb_owner",
+  "newObjects": {
+    "schemas": 1,
+    "tables": 3,
+    "rlsTables": 3,
+    "publicServerOnlyRPCs": 1,
+    "privateFunctions": 5,
+    "existingTableInsertTriggers": 1
+  },
+  "sources": [
+    {
+      "path": "poc/v2-migration/postgres/000-preflight.sql",
+      "sha256": "526ab8667fa480ba4754c2354c0bc21c31fa2bb5831954a6e9ccdc06b82ff083"
+    },
+    {
+      "path": "poc/v2-migration/postgres/001-migration.sql",
+      "sha256": "f450c0fc424e730dbfb89c82c6834e65eeacb3cd2d09a2b2996a3aed44395a60"
+    },
+    {
+      "path": "poc/v2-migration/postgres/002-verify.sql",
+      "sha256": "ca81610435a5aa1f4a4d724fd50982252a96f3985142ed8823ea94f47f0e0022"
+    },
+    {
+      "path": "poc/v2-migration/postgres/003-rollback-empty.sql",
+      "sha256": "783dcecc6d5b0f44af9577a01f2eed9d5758f87af2ae94ae64e155876f9ec7e3"
+    }
+  ],
+  "prerequisites": [
+    {
+      "path": "poc/v2-cloud/session-guard.sql",
+      "sha256": "3be17e719a5a5c8cf91268c46b2ce99aeff3c6127b5b43bd8b8f250467a374c9"
+    },
+    {
+      "path": "poc/v2-gateway/postgres-metadata.sql",
+      "sha256": "b8d789769cf529456757092ef59ac484dda451686bf8ca2139895b79fabe9bda"
+    },
+    {
+      "path": "poc/v2-gateway/recovery.sql",
+      "sha256": "bf9e474bbda8a3af4eb4602f83b70cf6605d416befb3e6bf809d172a9f3aca54"
+    }
+  ],
+  "applicationOrder": [
+    "000-preflight.sql (SELECT/review)",
+    "001-migration.sql (new forward candidate; no auto apply)",
+    "002-verify.sql (SELECT)",
+    "003-rollback-empty.sql (only if unused; never automatic)"
+  ],
+  "limitations": [
+    "full DB18 domain mapper not implemented",
+    "actual gateway readback/absence adapter not connected",
+    "scoped PoC receipt cannot activate product workspace",
+    "do not reapply existing install.sql"
+  ]
+}

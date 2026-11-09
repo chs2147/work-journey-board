@@ -100,3 +100,7 @@ A06의 [57문서](57-runtime-isolation-and-migration-handoff.md)에 후보 profi
 ## 이관 영속 상태/재개 PoC(2026-11-10 KST, 최신)
 
 [58문서](58-durable-migration-resume-cancel.md)의 독립 migration journal/coordinator에서 신규32개와 회귀71개 통과. 이미지 본문 없는 job/asset 상태·계정/기기scope·lease/fence/취소epoch·업로드/게시/삭제응답 유실·SIGKILL 복구·원본 이후편집 미수집을 확인했다. remote port는 테스트 어댑터이며 서버에서 I/O 종료/취소 경계/전체 검증·완료증표를 보장하는 실제RPC가 다음이다. A06 native 격리, A07 서버 도메인매핑·제품이미지/GC, A08 품질·A09실기/제품동기화는 계속 미완료다.
+
+## 실제 PostgreSQL 이관 서버 검증(2026-11-10 KST, 최신)
+
+[59문서](59-postgres-migration-server.md)의 실제PG 서버39개가 통과했다. 새전진SQL/ACL/빈rollback/reviewmanifest까지 준비했으나 DEV에는 미적용이다. 새RPC는 server role만 실행, 본문없는 이미지참조·최신readback/IO·ticketfence·원자적publish/cancel을 검증한다. 최소문서프로필의poc-verified는 제품활성화에 사용 금지. 다음은 전체DB18 mapper/프로필·source-targethash 이중바인딩·실제gateway새RPC 어댑터→DEV통합이다. A06native격리/전체제품이관은 미완료다.

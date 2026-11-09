@@ -1,0 +1,37 @@
+{
+  "checkedAt": "2026-11-09T23:25:14.347282+00:00",
+  "serverPassed": 39,
+  "regressionPassed": 103,
+  "totalPassed": 142,
+  "serverEvidence": "migration-postgres-pass.json",
+  "serverLogSha256": "b97062bfeb4b8b433e3cd9818a9e599c544ae3dc5c1ed86d951207ab7e86e9b3",
+  "tests": [
+    {
+      "file": "poc/v2-migration/coordinator.test.mjs",
+      "passed": 32,
+      "log": "postgres-journal-regression-tests.txt",
+      "sha256": "100289ddc671858444d1863ba49e79665ec26513b00ce7c7c0b9aaaa603a5049"
+    },
+    {
+      "file": "poc/v2-runtime/isolation.test.mjs",
+      "passed": 29,
+      "log": "postgres-runtime-regression-tests.txt",
+      "sha256": "24af942b7e1dda10600459915d84b2073426bbed21a9bf0b5824215a43f37e39"
+    },
+    {
+      "file": "poc/v2-assets/connected-copy.test.mjs",
+      "passed": 23,
+      "log": "postgres-copy-regression-tests.txt",
+      "sha256": "7b3c5b45ce03de3c659e44326c6706ab6cf5ed4872ac2cd2c5870f1d2faed40a"
+    },
+    {
+      "file": "poc/v2-sync/db18.test.mjs",
+      "passed": 19,
+      "log": "postgres-db18-regression-tests.txt",
+      "sha256": "09f5224c5134606e09ada16ff760fd5ed162926008f03c0d05c8a0ec26e18678"
+    }
+  ],
+  "cloudApplied": false,
+  "productMigrationCompleted": false,
+  "serverLogKind": "derived from actual test result records; regression logs are raw stdout/stderr"
+}
