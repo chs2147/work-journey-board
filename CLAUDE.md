@@ -188,6 +188,8 @@ npm run lint && npm run typecheck
 - 기능 추가·변경·제거·이름 변경과 판올림은 `docs/features/README.md` 규칙으로 고정 ID·버전·근거를 갱신하고 현재 스냅샷·Markdown·Excel을 함께 생성한다.
 - 앱·제품·파생 프로필·DB·문서 형식 버전을 혼동하지 않는다. 현재 생성 도구는 기준 제품과 세 배포 프로필용이다. 독립 파생 제품은 상위 고정 스냅샷·자체 도입 버전·차이표·생성 연결을 먼저 정의한다.
 - `node scripts/features/generate.mjs build` → `check`가 CI에서 검사된다. 검토자의 Excel 사본을 덮어쓰지 않는다. 과거 버전 스냅샷은 유지한다.
+- **배포마다 필수(2026-11-09 사용자 지시, 공통 규칙 3-7)**: 검증판(rc)·패치·정식판 등 **모든 업데이트 배포**의 판올림 커밋에 Feature List 갱신(변경 이력·`catalogVersion`·제품 `currentVersion`·DB 구조·근거·스냅샷·Excel)을 함께 넣는다. 기능 변화가 없는 판도 판 번호·스냅샷은 맞춘다.
+- **순서**: README·`VERSION_HISTORY.md`·릴리스 노트·가이드 등 다른 문서를 **모두 고친 뒤 맨 마지막에** `build` → `check`. 그 뒤 원본·생성물을 손대지 않는다(prettier 등 형식 정리 포함 — 했으면 다시 `build` → `check`). `docs/**`만 바뀌면 CI가 돌지 않으므로(`paths-ignore`) 로컬 `check` 통과 후 올린다. (1.24.0에서 Excel이 README 최종 수정보다 먼저 생성돼 main CI가 실패한 일이 계기)
 
 ## 7. 마일스톤 (project-plan.md)
 I-M0 설치 검증(◆G1) → I-M1 핵심 기록(◆G2 2주 실사용) → I-M2 집계·엑셀 → I-M3 시각화 → I-M4 AI 클립보드 다리 → I-M5 안정화·v1.0.0
