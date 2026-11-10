@@ -1,4 +1,4 @@
-// Synthetic DB18-only local PoC. No network, app integration or source writes.
+// Synthetic DB18/19 local PoC. No network, app integration or source writes.
 import { DatabaseSync } from "node:sqlite";
 import { randomUUID } from "node:crypto";
 import {
@@ -12,7 +12,7 @@ import {
   realpathSync,
 } from "node:fs";
 import { join, resolve, dirname, basename } from "node:path";
-import { capture18, guard } from "../v2-sync/db18.mjs";
+import { captureWorkspace, guard } from "../v2-sync/db18.mjs";
 import { hash, sourceHash } from "../v2-sync/model.mjs";
 import { assertSeparateWorkspacePaths } from "../v2-runtime/isolation.mjs";
 
@@ -35,7 +35,11 @@ function inspect(directory, workspaceId, requireReady) {
     if (lstatSync(join(directory, name)).isSymbolicLink()) throw Error("SYMLINK_DENIED");
   if (requireReady && !existsSync(join(directory, "READY"))) throw Error("COPY_NOT_READY");
   const manifest = JSON.parse(readFileSync(join(directory, "manifest.json"), "utf8"));
-  if (manifest.format !== format || manifest.workspaceId !== workspaceId || manifest.sourceSchema !== 18)
+  if (
+    manifest.format !== format ||
+    manifest.workspaceId !== workspaceId ||
+    ![18, 19].includes(manifest.sourceSchema)
+  )
     throw Error("MANIFEST_SCOPE");
   const db = new DatabaseSync(join(directory, "metadata.db"), { readOnly: true });
   try {
@@ -127,7 +131,7 @@ export function createConnectedCopy(
   );
   for (const suffix of ["-journal", "-wal", "-shm"])
     if (existsSync(source + suffix)) throw Error("SOURCE_NOT_FROZEN");
-  const captured = capture18(source, { allowNoteImages: true }),
+  const captured = captureWorkspace(source, { allowNoteImages: true }),
     rows = structuredClone(captured.rows),
     blobs = new Map();
   const knownPayloads = [];
@@ -183,7 +187,7 @@ export function createConnectedCopy(
       );
     const manifest = {
       format,
-      sourceSchema: 18,
+      sourceSchema: Number(rows.app_meta.find((r) => r.key === "schema_version").value),
       sourceWorkspaceId,
       workspaceId,
       sourceHash: captured.sourceHash,

@@ -1,0 +1,28 @@
+{
+  "checkedAt": "2026-11-10T03:26:04.444126+00:00",
+  "branch": "v2-design",
+  "appVersion": "1.24.1",
+  "sourceSchemas": [
+    18,
+    19
+  ],
+  "postgresTests": 77,
+  "postgresBaselineTests": 40,
+  "postgresFullProfileTests": 37,
+  "javascriptTests": 145,
+  "totalPassed": 222,
+  "cloudApplied": false,
+  "productCodeChanged": false,
+  "gatewayFullProfileWired": false,
+  "productActivationAllowed": false,
+  "sqlGeneratorDeterministic": true,
+  "schemaContractsDeterministic": true,
+  "localContainerRemoved": true,
+  "postgresEvidence": "migration-full-workspace-pass.json",
+  "limits": {
+    "requestJsonBytes": 1048576,
+    "records": 2048,
+    "assets": 8,
+    "assetBytes": 65536
+  }
+}

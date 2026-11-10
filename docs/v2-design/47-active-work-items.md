@@ -112,3 +112,11 @@ A06의 [57문서](57-runtime-isolation-and-migration-handoff.md)에 후보 profi
 ## main 1.24.1 동기화·다음 우선순위(최신)
 
 사용자 요청으로main ae97c10까지12개 커밋을v2-design에 반영한다([61문서](61-main-1.24.1-sync-checkpoint.md)). 제품 기준은1.24.1/DB19이며 기존 이관은DB18 전용이다. DB19를 원본 변경 없이 거절하므로 다음은delete_locked 보존/복원 및 버전별 계약 검증을 우선한다. 이후 전체 서버 프로필/journal 이중 해시/Storage 연결을 계속한다. V2를main에 병합하거나 Cloud에 적용하지 않았다.
+
+## DB19 이관 계약·왕복 검증(최신)
+
+[62문서](62-db19-copy-contract-compatibility.md)에 요청1번을 구현했다. DB18 전용 API/계약은 유지하고 DB19 사본 추출·잠금0/1 매핑·새 파일 왕복 복원과 본문 revision 트리거를 검증한다. 신규9개+기존136개 시험을 수행한다. 제품/원본/Cloud는 수정하지 않으며 다음은2번 전체 봉투 서버 저장/검증이다.
+
+## 전체 워크스페이스 서버 저장·검증(최신)
+
+[63문서](63-full-workspace-server-profile.md)의 새전진004가 DB18/19 전체 봉투를 검증·저장하고 기존 게시/취소 경계와 재구성 해시를 적용한다. 새2테이블 RLS/직접ACL차단·미사용006rollback을 준비했다. 제품활성화/Cloud적용은 없으며 다음은3번 gateway/journal 전체 프로필·이중해시 연결이다.

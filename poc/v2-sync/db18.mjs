@@ -10,6 +10,10 @@ export function guard(path) {
   if (!existsSync(resolve(dirname(path), ".v2-poc-only"))) throw Error("POC_DIRECTORY_REQUIRED");
 }
 export function create18(path) {
+  return createWorkspaceDB(path, 18);
+}
+export function createWorkspaceDB(path, version) {
+  if (![18, 19].includes(version)) throw Error("SCHEMA_VERSION");
   if (path !== ":memory:") {
     guard(path);
     if (existsSync(path)) throw Error("DESTINATION_EXISTS");
@@ -20,10 +24,10 @@ export function create18(path) {
     for (const f of readdirSync(migrations)
       .filter((f) => /^00\d\d_.*\.sql$/.test(f))
       .sort()) {
-      if (Number(f.slice(0, 4)) > 18) continue;
+      if (Number(f.slice(0, 4)) > version) continue;
       db.exec(readFileSync(new URL(f, migrations), "utf8"));
     }
-    db.prepare("INSERT INTO app_meta(key,value) VALUES('schema_version','18')").run();
+    db.prepare("INSERT INTO app_meta(key,value) VALUES('schema_version',?)").run(String(version));
   });
   return db;
 }
@@ -88,14 +92,19 @@ function validate(data, { allowNoteImages = false } = {}) {
   for (const r of data.cabi_note) note(JSON.parse(r.content), r.id);
 }
 export function capture18(path, options = {}) {
+  return captureWorkspace(path, { ...options, expectedVersion: 18 });
+}
+export function captureWorkspace(path, { expectedVersion, ...options } = {}) {
   guard(path);
   const before = sourceHash(path);
   const db = new DatabaseSync(path, { readOnly: true });
   let result;
   try {
-    if (db.prepare("SELECT value FROM app_meta WHERE key='schema_version'").get()?.value !== "18")
+    const rawVersion = db.prepare("SELECT value FROM app_meta WHERE key='schema_version'").get()?.value;
+    const version = ["18", "19"].includes(rawVersion) ? Number(rawVersion) : NaN;
+    if (![18, 19].includes(version) || (expectedVersion !== undefined && expectedVersion !== version))
       throw Error("SCHEMA_VERSION");
-    const expected = create18(":memory:");
+    const expected = createWorkspaceDB(":memory:", version);
     try {
       if (hash(schema(db)) !== hash(schema(expected))) throw Error("SCHEMA_UNSUPPORTED");
     } finally {
@@ -108,6 +117,8 @@ export function capture18(path, options = {}) {
     )
       throw Error("DB_INTEGRITY");
     result = rows(db);
+    if (version === 19 && result.cabi_note.some((r) => ![0, 1].includes(r.delete_locked)))
+      throw Error("DB_INTEGRITY");
     validate(result, options);
   } finally {
     db.close();

@@ -1,5 +1,9 @@
 # V2 프로젝트 — 다국어·온라인 동기화 상세 설계 초안
 
+**최신 진행:** [63. 전체 워크스페이스 서버 프로필](63-full-workspace-server-profile.md). DB18/19 전체 봉투의 서버 검증·레코드 저장·재조회/게시 해시·RLS·빈 rollback을 추가했다. Cloud 미적용이며 다음은 gateway/journal 연결이다.
+
+**최신 진행:** [62. DB18/19 사본 이관 계약](62-db19-copy-contract-compatibility.md). DB19 삭제 잠금 보존·별도 파일 복원과 기존 DB18 호환 검증을 추가했다. 다음은 전체 봉투 서버 프로필/저장 검증이다.
+
 **현재 제품 기준:** [61. main 1.24.1 동기화](61-main-1.24.1-sync-checkpoint.md). main의12개 커밋을 반영했으며 앱1.24.1/DB19다. V2 이관 PoC는 DB18 전용이므로 다음은 DB19 계약/삭제 잠금 보존 검증이다. 아래 단계별 결과는 당시 기준이다.
 
 **최신 진행:** [60. DB18 전체 매핑·RPC 연결](60-db18-workspace-map-gateway.md). 매핑17개·HTTP16개·실제PG40개 통과. 전체 봉투의 서버 저장/실제 Storage 연결은 다음 단계이며 Cloud 미적용이다.

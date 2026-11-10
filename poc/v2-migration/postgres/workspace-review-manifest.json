@@ -1,0 +1,78 @@
+{
+  "module": "wjb-full-workspace-migration-poc-1",
+  "profile": "development",
+  "projectRef": "vsphftnmfzfoufasjttd",
+  "region": "ap-northeast-2",
+  "autoApply": false,
+  "cloudApplied": false,
+  "productCompatible": false,
+  "monthlyBudgetKRW": 0,
+  "sourceSchemas": [
+    18,
+    19
+  ],
+  "profiles": [
+    "workspace-db18-map-poc-1",
+    "workspace-db19-map-poc-1"
+  ],
+  "receiptStatus": "poc-verified",
+  "limits": {
+    "requestJsonBytes": 1048576,
+    "records": 2048,
+    "assets": 8,
+    "assetBytes": 65536
+  },
+  "newObjects": {
+    "tables": 2,
+    "rlsTables": 2,
+    "newPublicRPCs": 0
+  },
+  "sources": [
+    {
+      "path": "poc/v2-migration/postgres/004-workspace.sql",
+      "sha256": "0053d56c7fa8596509a1c3a6c164c28aa910f80d9a9c0f5bbe174250d2903ddf"
+    },
+    {
+      "path": "poc/v2-migration/postgres/005-workspace-verify.sql",
+      "sha256": "86ec000cdd71da896ee3de4e62dd0804b45296bf52129056d68f7d5955fe2770"
+    },
+    {
+      "path": "poc/v2-migration/postgres/006-workspace-rollback-empty.sql",
+      "sha256": "11fe7fcf459ece1c94473cf242af69e1c9af37c5de5b58c84a0d5911442a8d20"
+    },
+    {
+      "path": "poc/v2-migration/postgres/templates/workspace-validation.sql",
+      "sha256": "2b1780b71b3075c6a26de96192f384ec75174645a92623edf38797bc8ba4b7ea"
+    },
+    {
+      "path": "poc/v2-migration/postgres/build-workspace-sql.py",
+      "sha256": "6a55b87e3e6c94dd25128b63b4d6e27017a43dbddd21ab292d1f34ff1e43a892"
+    },
+    {
+      "path": "poc/v2-migration/db18-contract.json",
+      "sha256": "4f1a9941b2f9bed1c203aaed70643a2eb10d0ffdb52e01b3ea40177b1c7b6778"
+    },
+    {
+      "path": "poc/v2-migration/db19-contract.json",
+      "sha256": "cbd3b2767409691e7c3169fd1f806993cd8798676e9cb5fcd04905cee0070764"
+    }
+  ],
+  "prerequisite": {
+    "path": "poc/v2-migration/postgres/001-migration.sql",
+    "sha256": "6145666198a542a88e10e1b27699c18db7089aa1e843c057cf11eb90a60c63c0"
+  },
+  "applicationOrder": [
+    "Existing C1/C2 remain installed; never reapply old install.sql",
+    "Review/apply new 001 only if migration base not installed",
+    "004-workspace.sql once",
+    "005-workspace-verify.sql SELECT",
+    "006-workspace-rollback-empty.sql only when no full-profile job exists; then base003 only when no migration job exists"
+  ],
+  "limitations": [
+    "Actual Cloud apply not performed",
+    "Current gateway JS adapter still minimal-document-only; full profile/journal wiring is next",
+    "Actual Storage readback and absence attestation not connected",
+    "No native app integration or product activation",
+    "PoC caps are explicit rejections, never image truncation or automatic recompression"
+  ]
+}

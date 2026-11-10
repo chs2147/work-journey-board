@@ -1,5 +1,6 @@
-// DB18 -> online metadata envelope. Never reads/writes the original DB.
-import contract from "./db18-contract.json" with { type: "json" };
+// DB18/19 -> online metadata envelope. Never reads/writes the original DB.
+import db18 from "./db18-contract.json" with { type: "json" };
+import db19 from "./db19-contract.json" with { type: "json" };
 import { inspectConnectedCopy } from "../v2-assets/connected-copy.mjs";
 import { hash } from "../v2-sync/model.mjs";
 
@@ -117,7 +118,7 @@ function board(doc, owner, assetRows, kind) {
   for (const e of doc.edges || [])
     if (!ids.has(e.from) || !ids.has(e.to)) throw Error("BOARD_EDGE_REFERENCE");
 }
-function validateSourceRow(table, row) {
+function validateSourceRow(table, row, contract) {
   const cols = contract.tables[table].columns;
   const names = cols
     .map((c) => c.name)
@@ -137,7 +138,7 @@ function validateSourceRow(table, row) {
   imageFree(row);
   for (const field of jsonFields[table] || []) imageFree(json(row[field]));
 }
-function checkForeignKeys(tables) {
+function checkForeignKeys(tables, contract) {
   for (const [name, schema] of Object.entries(contract.tables)) {
     for (const row of tables[name])
       for (const fk of schema.foreignKeys) {
@@ -200,18 +201,27 @@ function projectSettings(value, exclusions) {
 }
 export function mapWorkspace(directory, workspaceId) {
   const copy = inspectConnectedCopy(directory, workspaceId);
+  const contract = copy.manifest.sourceSchema === 18 ? db18 : db19;
   const grouped = Object.fromEntries(Object.keys(contract.tables).map((t) => [t, []]));
   for (const record of copy.records) {
     if (!Object.hasOwn(grouped, record.table_name)) throw Error("TABLE_UNSUPPORTED");
     const row = JSON.parse(record.value);
-    validateSourceRow(record.table_name, row);
+    validateSourceRow(record.table_name, row, contract);
+    if (
+      record.table_name === "cabi_note" &&
+      contract.sourceSchema === 19 &&
+      ![0, 1].includes(row.delete_locked)
+    )
+      throw Error("DELETE_LOCK_VALUE");
     grouped[record.table_name].push(row);
   }
   for (const table of Object.keys(grouped))
     if (copy.manifest.sourceRows[table] !== grouped[table].length) throw Error("TABLE_COUNT_CHANGED");
   if (Object.keys(copy.manifest.sourceRows).sort().join() !== Object.keys(grouped).sort().join())
     throw Error("TABLE_SET_CHANGED");
-  checkForeignKeys(grouped);
+  if (grouped.app_meta.find((r) => r.key === "schema_version")?.value !== String(contract.sourceSchema))
+    throw Error("SCHEMA_VERSION");
+  checkForeignKeys(grouped, contract);
   for (const row of grouped.cabi_note) rich(json(row.content), row.id, grouped.cabi_asset);
   for (const row of grouped.week_note) board(json(row.doc), row.week_id, grouped.note_asset, "week");
   for (const row of grouped.cabi_board) board(json(row.doc), row.id, grouped.cabi_asset, "task");
@@ -290,9 +300,9 @@ export function mapWorkspace(directory, workspaceId) {
   }
   records.sort((a, b) => a.table.localeCompare(b.table) || a.key.localeCompare(b.key));
   const envelope = {
-    profile: workspaceMapProfile,
+    profile: contract.sourceSchema === 18 ? workspaceMapProfile : "workspace-db19-map-poc-1",
     workspaceId,
-    sourceSchema: 18,
+    sourceSchema: contract.sourceSchema,
     contractFingerprint: contract.fingerprint,
     sourceManifestHash: hash(copy.manifest),
     assets: copy.blobs

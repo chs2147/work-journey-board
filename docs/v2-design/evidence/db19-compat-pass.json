@@ -1,0 +1,29 @@
+{
+  "checkedAt": "2026-11-10T03:09:21.877085+00:00",
+  "branch": "v2-design",
+  "productVersion": "1.24.1",
+  "productSchema": 19,
+  "supportedCopySchemas": [
+    18,
+    19
+  ],
+  "newTests": 9,
+  "regressionTests": 136,
+  "passed": 145,
+  "failed": 0,
+  "cloudApplied": false,
+  "productCodeChanged": false,
+  "productActivationAllowed": false,
+  "postgresRerun": false,
+  "scope": "Synthetic fixture extraction/map/new-file restore only; no real user DB or product migration",
+  "sourceSha256": {
+    "poc/v2-sync/db18.mjs": "7b8cb6076c990a20a47d6f29d5a6528d150596697e196a1e6c82d1739f396620",
+    "poc/v2-assets/connected-copy.mjs": "076ccbbd4142c2dd52430cd09a129fd5de688ddf4ef66fa2af80742156b9889f",
+    "poc/v2-assets/restore-connected-copy.mjs": "340edb8031460d93ae556ca210974721df11637aa067e088b2c7d3b3bb26c7bb",
+    "poc/v2-migration/workspace-map.mjs": "14b7f0f5973516ac089471f986cc9086c2053fdeb1e4bb559eb70fa665ecb9de",
+    "poc/v2-migration/build-db18-contract.mjs": "842da9976a431d69b38e2e55071e92e5739b469ec6de24dc72903279c5eb13d8",
+    "poc/v2-migration/db18-contract.json": "4f1a9941b2f9bed1c203aaed70643a2eb10d0ffdb52e01b3ea40177b1c7b6778",
+    "poc/v2-migration/db19-contract.json": "cbd3b2767409691e7c3169fd1f806993cd8798676e9cb5fcd04905cee0070764",
+    "poc/v2-migration/db19-compat.test.mjs": "eed4ef76373a236fa030ff587e2bbb8050a527e8f7a020efc59cb43c8587d41d"
+  }
+}

@@ -15,3 +15,12 @@ PYTHONDONTWRITEBYTECODE=1 python3 poc/v2-migration/postgres/run-local.py
 정본: [59. 결과/검토 범위](../../../docs/v2-design/59-postgres-migration-server.md)
 
 현재 runner는40개를 검증하며 새1개는 loopback HTTP를 통해 실제 PG 함수를 호출한다. `--evidence-stem migration-map-gateway-postgres`로 이전39개 증거를 덮어쓰지 않고 보존한다. 전체 DB18 봉투의 서버 저장과 실제 Storage readback은 아직 연결되지 않았다([60문서](../../../docs/v2-design/60-db18-workspace-map-gateway.md)).
+
+## 전체 워크스페이스 서버 프로필
+
+```sh
+python3 poc/v2-migration/postgres/build-workspace-sql.py
+PYTHONDONTWRITEBYTECODE=1 python3 poc/v2-migration/postgres/run-local.py --full-workspace --evidence-stem migration-full-workspace
+```
+
+새004는001 뒤에 적용하는 검토용 전진 SQL이며 자동 적용하지 않는다.005는SELECT 검토,006은 전체프로필 미사용일 때만 확장을 되돌린다. 전체프로필 사용 이력이 있으면 rollback을 거절한다. 기본003은 확장006을 먼저 되돌린 뒤 사용한다. 기존 gateway JS의 최소문서 제한은 아직 유지한다. [63. 범위·제한·다음 단계](../../../docs/v2-design/63-full-workspace-server-profile.md)를 따른다.
