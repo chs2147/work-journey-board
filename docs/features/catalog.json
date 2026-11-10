@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "product": "Work Journey Board",
-  "catalogVersion": "1.24.1",
+  "catalogVersion": "1.24.3",
   "asOfDate": "2026-11-10",
-  "baseRelease": "1.24.1",
-  "sourceCommit": "0b1ab6e",
+  "baseRelease": "1.24.3",
+  "sourceCommit": "b2e53ef",
   "appSchemaVersion": 19,
   "versionDefinition": "최초 제공 = 비RC 출시 이력에서 기능 제공이 확인된 최초 버전(0.x 개발판 포함); RC는 preview로 별도 기록",
   "verificationScope": "문서·출시 이력·현행 소스 위치 대조. 기능별 실기 전수 검증을 뜻하지 않음.",
@@ -726,12 +726,19 @@
           "type": "changed",
           "description": "데일리 뷰 [기록 있는 업무만] 깔때기 스위치 — 그 날 기록 0건 업무 카드 숨김·[전체 보기]·설정 유지(툴팁 안내).",
           "source": "docs/release-notes/v1.24.1.md"
+        },
+        {
+          "version": "1.24.2",
+          "type": "changed",
+          "description": "데일리 뷰 날짜 줄의 [전체 가져오기] 단추 제거(Alt+Shift+P·카드별 [가져오기]는 유지).",
+          "source": "docs/release-notes/v1.24.2.md"
         }
       ],
       "sources": [
         "docs/i-m1-plan.md",
         "README.md",
-        "docs/release-notes/v1.24.1.md"
+        "docs/release-notes/v1.24.1.md",
+        "docs/release-notes/v1.24.2.md"
       ],
       "implementation": [
         "src/ui/board"
@@ -740,7 +747,7 @@
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "제품 기능",
-      "lastChanged": "1.24.1",
+      "lastChanged": "1.24.2",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
@@ -2243,11 +2250,18 @@
           "type": "added",
           "description": "메모 도크를 접거나 넓히고 경계선으로 높이를 바꾼다.",
           "source": "README.md"
+        },
+        {
+          "version": "1.24.3",
+          "type": "changed",
+          "description": "크게 보기에서도 메모 도크를 도구 팔레트의 기준 상자로 유지(중요 업무 목록 열림/닫힘·주간/데일리).",
+          "source": "docs/release-notes/v1.24.3.md"
         }
       ],
       "sources": [
         "docs/weekly-note-spec.md",
-        "README.md"
+        "README.md",
+        "docs/release-notes/v1.24.3.md"
       ],
       "implementation": [
         "src/ui/note"
@@ -2256,7 +2270,7 @@
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "제품 기능",
-      "lastChanged": "0.2.1",
+      "lastChanged": "1.24.3",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
@@ -2742,11 +2756,18 @@
           "type": "added",
           "description": "이미지를 개별 확대하고 파일로 저장한다.",
           "source": "README.md"
+        },
+        {
+          "version": "1.24.2",
+          "type": "changed",
+          "description": "메모 사진 크게 보기를 네이티브 모달(<dialog> 최상위 레이어)로 — 앱 화면 전체 흐림, 뒤 화면 조작·전역 단축키 차단, 이후 기능이 위로 올라오지 않음.",
+          "source": "docs/release-notes/v1.24.2.md"
         }
       ],
       "sources": [
         "docs/weekly-note-spec.md",
-        "README.md"
+        "README.md",
+        "docs/release-notes/v1.24.2.md"
       ],
       "implementation": [
         "src/ui/note"
@@ -2755,7 +2776,7 @@
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "제품 기능",
-      "lastChanged": "0.2.2",
+      "lastChanged": "1.24.2",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
@@ -11350,6 +11371,12 @@
           "type": "changed",
           "description": "관계선 보기/숨김을 생성 팔레트에서 상단 오른쪽 보기 도구로 이동한다.",
           "source": "docs/release-notes/v1.22.1.md"
+        },
+        {
+          "version": "1.24.3",
+          "type": "changed",
+          "description": "메모 보드 크게 보기에서 세로 도구 팔레트가 대메뉴(레일) 자리로 붙던 위치 오류 수정.",
+          "source": "docs/release-notes/v1.24.3.md"
         }
       ],
       "sources": [
@@ -11357,7 +11384,8 @@
         "docs/release-notes/v1.22.0-rc.1.md",
         "docs/release-notes/v1.22.0.md",
         "docs/memo-toolbar-modal-fix.md",
-        "docs/release-notes/v1.22.1.md"
+        "docs/release-notes/v1.22.1.md",
+        "docs/release-notes/v1.24.3.md"
       ],
       "implementation": [
         "src/ui/note/NoteDock.tsx"
@@ -11365,7 +11393,7 @@
       "verification": "브라우저·저장소 자동 검사 대상. OS 설치 실기 확인은 별도.",
       "reviewStatus": "미검토",
       "reviewNote": "C안+접기/펼치기 사용자 선택으로 구현.",
-      "lastChanged": "1.22.1",
+      "lastChanged": "1.24.3",
       "schemaRequirement": "DB v18"
     },
     {

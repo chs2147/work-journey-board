@@ -7,7 +7,7 @@ Work Journey Board 소개를 위한 정적 사이트입니다.
 - `index.html`: 사이트 메인 페이지
 - `style.css`: 화면 스타일과 반응형 디자인
 - `motion.js`: 화면 등장·업무 기록의 모션 효과
-- `features.css`, `features.js`: Universe 연결망·초점 전환과 Cabi.NET 작업 공간 모션, 반응형 표시·모션 정지 제어
+- `features.css`, `features.js`: Universe 연결망·초점 전환과 Cabi.NET 작업 공간 모션, 반응형 표시·모션 제어(OS 모션 줄이기 설정 따름)
 - `icon.svg`, `wordmark.svg`: 앱에서 사용하는 아이콘과 워드마크
 - `gowun-dodum.woff2`: 사이트에서 사용하는 고운돋움 서체
 - `font-license.txt`: 고운돋움의 SIL Open Font License 1.1 전문
@@ -39,6 +39,6 @@ Work Journey Board 소개를 위한 정적 사이트입니다.
 - Universe: 독립 다크 배경의 연결망 회전·드래그와 은하/초점 전환. 모션 그래픽과 실제 앱 화면을 구분합니다.
 - Cabi.NET: 자료 허브 → 별도 노트 창 → 주간 메모 복제의 세 장면. 자동 전환 중 장면을 직접 고르면 해당 장면에 머뭅니다.
 - 작업 브랜치 원본은 Cabi.NET V2의 RC 상태를 안내합니다. 사용자 지시에 따라 main Pages 게시 단계에서 `scripts/site/prepare-release.mjs`가 `data-cabi-preview`로 표시된 3곳(첫 화면 RC 접미사·버전 배지·정식판 미포함 문장)을 제거합니다. 모션 설명 문장은 유지하며, 검토 시안 보존본은 변경하지 않습니다.
-- 우측 아래 모션 정지/재생 버튼, OS 모션 줄이기 설정, 화면 밖/숨김 상태에서 연속 렌더링 중단을 지원합니다.
+- OS 모션 줄이기 설정을 따르고, 화면 밖/숨김 상태에서는 연속 렌더링을 멈춥니다. 우측 아래 모션 정지/재생 버튼은 2026-11-10 사용자 지시로 없앴습니다.
 - 신규 이미지·글꼴·스크립트는 모두 `site/` 내부 상대 경로로 제공하여 정적 배포에 저장소의 `docs/`나 `node_modules/`가 필요하지 않습니다.
 - Pages 자동 배포는 기존대로 main의 `site/` 변경 때 실행됩니다. 작업 브랜치 푸시는 실제 사이트 게시를 실행하지 않습니다.

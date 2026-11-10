@@ -487,8 +487,6 @@ export const STR_BASE = {
     nextDay: "다음 날 (Alt+→)",
     title: (label: string) => label,
     statusTitle: "이 날 근무 상태",
-    pullAll: (label: string) => `${label} 전체 가져오기`,
-    pullAllTitle: "직전 기록일의 업무 전체를 오늘 각 카드에 (Alt+Shift+P)",
     prevLine: (label: string) => `${label}:`,
     pull: "가져오기",
     pullTitle: "이 업무의 직전 기록일 내역 가져오기 (Alt+P)",

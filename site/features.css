@@ -797,26 +797,3 @@ html[data-showcase-motion="off"] .motion-reveal {
   scroll-margin-top: 65px;
 }
 
-.showcase-controls {
-  position: fixed;
-  right: 22px;
-  bottom: 18px;
-  z-index: 1000;
-}
-.showcase-controls button {
-  font-family: SiteSans, system-ui, sans-serif;
-  font-size: 11px;
-  color: #fff;
-  background: #233a3aeb;
-  border: 1px solid #607775;
-  padding: 10px 14px;
-  border-radius: 4px;
-  box-shadow: 0 4px 16px #0002;
-  cursor: pointer;
-}
-@media (max-width: 600px) {
-  .showcase-controls {
-    right: 12px;
-    bottom: 12px;
-  }
-}

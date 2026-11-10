@@ -175,31 +175,53 @@ export function ImageBoxView({
   );
 }
 
-/** 크게 보기: 원본 크기(넘치면 스크롤), Esc·바깥 클릭으로 닫기 */
+/** 크게 보기: 원본 크기(넘치면 스크롤), Esc·바깥 클릭으로 닫기.
+ * 1.24.2: 네이티브 <dialog>.showModal()로 브라우저 최상위 레이어(top layer)에 띄운다 — 부모의 z-index·쌓임 맥락과
+ * 상관없이 앱 전체 위에 오고, 나머지 화면은 inert(누르기·초점·화면 읽기 차단). 뒤에 더해지는 기능의 z-index가
+ * 아무리 커도 이 위로 올라오지 못한다. 키 입력은 창 밖(전역 단축키)으로 새지 않게 여기서 멈춘다. */
 export function ImagePreview({ box, onClose }: { box: ImageBox; onClose(): void }) {
   const img = useNote((s) => s.assets[box.asset]);
+  const ref = useRef<HTMLDialogElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
+  const onCloseRef = useRef(onClose);
   useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+  const ready = !!img;
+  useEffect(() => {
+    const dlg = ref.current;
+    if (!dlg) return;
     const prev = document.activeElement as HTMLElement | null;
+    if (!dlg.open) dlg.showModal();
     closeRef.current?.focus();
-    return () => prev?.focus();
-  }, []);
+    const cancel = (e: Event) => {
+      e.preventDefault();
+      onCloseRef.current();
+    };
+    const key = (e: KeyboardEvent) => {
+      e.stopPropagation(); // 전역 단축키(주 이동·뷰 전환 등)가 뒤 화면을 바꾸지 않게
+      if (e.key === "Escape") {
+        e.preventDefault();
+        onCloseRef.current();
+      }
+    };
+    dlg.addEventListener("cancel", cancel);
+    dlg.addEventListener("keydown", key);
+    return () => {
+      dlg.removeEventListener("cancel", cancel);
+      dlg.removeEventListener("keydown", key);
+      if (dlg.open) dlg.close();
+      prev?.focus();
+    };
+  }, [ready]);
   if (!img) return null;
   return (
-    <div
+    <dialog
+      ref={ref}
       className={styles.preview}
-      role="dialog"
-      aria-modal="true"
       aria-label={STR.note.previewTitle}
       data-testid="note-image-preview"
       onPointerDown={(e) => e.target === e.currentTarget && onClose()}
-      onKeyDown={(e) => {
-        if (e.key === "Escape") {
-          e.preventDefault();
-          e.stopPropagation();
-          onClose();
-        }
-      }}
     >
       <div className={styles.previewBar}>
         <span>{box.caption || STR.note.previewTitle}</span>
@@ -216,6 +238,6 @@ export function ImagePreview({ box, onClose }: { box: ImageBox; onClose(): void 
           height={img.height}
         />
       </div>
-    </div>
+    </dialog>
   );
 }

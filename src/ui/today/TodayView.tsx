@@ -17,7 +17,6 @@ import {
   enterCell,
   pullLabel,
   pullPrevious,
-  pullPreviousDay,
   shownCategories,
   useBoard,
 } from "../board/boardStore";
@@ -83,13 +82,6 @@ export function TodayView() {
     if (j.state === "ready")
       void j.repo.updateSettings({ ui: { todayHideEmpty: on } }).catch(() => undefined);
   };
-  // 전체 가져오기가 고를 날 = 보이는 진행 중 업무의 직전 기록일 중 가장 늦은 날(pullPreviousDay와 같은 규칙)
-  const pullAllDate = cats
-    .filter((c) => c.state === "active")
-    .map((c) => prevDates[c.category.id])
-    .filter((d): d is string => Boolean(d))
-    .sort()
-    .at(-1);
 
   const navFor = (row: number): CellNav => ({
     up() {
@@ -225,17 +217,6 @@ export function TodayView() {
             <IconFilterRecorded />
             <span className={styles.toggleTrack} aria-hidden="true" />
           </button>
-          {pullAllDate && (
-            <button
-              type="button"
-              className={styles.textButton}
-              title={STR.today.pullAllTitle}
-              data-testid="today-pull-all"
-              onClick={() => void pullPreviousDay(day)}
-            >
-              {STR.today.pullAll(pullLabel(pullAllDate))}
-            </button>
-          )}
         </div>
         <TagFilterBanner />
         <div className={styles.cards} data-drag-scroll>

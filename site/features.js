@@ -8,7 +8,6 @@
     cabiTimer = 0,
     phase = 0,
     manual = false;
-  const toggle = document.getElementById("site-motion");
   const canvas = document.getElementById("galaxy"),
     ctx = canvas.getContext("2d");
   const stage = document.querySelector(".showcase-cabi-stage");
@@ -166,16 +165,9 @@
   }
   function sync() {
     root.dataset.showcaseMotion = playing ? "on" : "off";
-    toggle.textContent = playing ? "Ⅱ 모션 정지" : "▷ 모션 재생";
-    toggle.setAttribute("aria-pressed", String(!playing));
     schedule();
     timer();
   }
-  toggle.addEventListener("click", () => {
-    playing = !playing;
-    manual = false;
-    sync();
-  });
   reduced.addEventListener("change", () => {
     playing = !reduced.matches;
     sync();

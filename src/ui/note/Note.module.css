@@ -10,6 +10,9 @@
 
 .dockExpanded {
   flex: 1 1 auto;
+  /* 1.24.3: 크게 보기에서도 도구 팔레트(absolute)의 기준 상자는 메모 도크 — 없으면 화면 맨 왼쪽(레일 자리)에 붙었다.
+     쌓임 맥락(isolation)은 만들지 않는다(크게 보기 안 고정 위치 메뉴가 도크에 갇히지 않게). */
+  position: relative;
 }
 
 /* 보드 우선 자동 높이(14절 F1): 보드가 쓰고 남는 공간을 메모가 갖는다 */
@@ -708,13 +711,25 @@
 }
 
 /* 크게 보기 */
+/* 1.24.2: <dialog>.showModal() = 최상위 레이어. z-index 경쟁 없음, 뒤 화면은 ::backdrop으로 흐리게 */
 .preview {
   position: fixed;
   inset: 0;
-  z-index: 200000;
+  width: 100vw;
+  height: 100vh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
   display: flex;
   flex-direction: column;
+  background: transparent;
+  color: inherit;
+}
+.preview::backdrop {
   background: rgb(0 0 0 / 0.72);
+  backdrop-filter: blur(3px);
 }
 
 .previewBar {
