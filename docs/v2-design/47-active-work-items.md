@@ -140,3 +140,7 @@ A06의 [57문서](57-runtime-isolation-and-migration-handoff.md)에 후보 profi
 ## 기존 공간 유지·온라인 신규 운영·유형 표시(최신)
 
 사용자 피드백에 따라 [68문서](68-workspace-type-operating-rules.md)에 기존 오프라인전용공간 영구유지/신규온라인운영을 명확히했다. 고정offline_only/online배지는인터넷·로그인상태와독립적이며연결이끊겨도온라인유형을유지한다. 최상위기능명은온라인워크스페이스만들기이며새로시작/오프라인기록으로시작을구분한다. DB19를수정하지않고기존항목은읽을때오프라인전용으로표시한다. UI시안만수정/제품과Cloud는미변경이다.
+
+## A안 확정·공통 목록/실행 기반(최신)
+
+사용자가UI기본배치로A안을선택했다. 수정시안은6b07b75에보존했다. [69문서](69-workspace-registry-runtime-foundation.md)의 독립registry와 순수kind/status·owner/요청guard를구현해 원본유지·온라인ID/계정별캐시분리·오류fallback금지·late응답폐기를검증한다. A안을다시묻지않고native경계/화면연결로진행한다. 제품cache/OSvault/완료증표관문은아직미완료다.

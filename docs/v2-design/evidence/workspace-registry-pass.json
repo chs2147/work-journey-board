@@ -1,0 +1,34 @@
+{
+  "checkedAt": "2026-11-10T06:47:11.273225+00:00",
+  "scope": "Independent synthetic SQLite PoC; no product/native or cloud wiring",
+  "uiDecision": "A: extend existing workspace settings",
+  "productVersion": "1.24.1",
+  "localSchemaVersion": 19,
+  "command": "node --test poc/v2-runtime/*.test.mjs poc/v2-assets/connected-copy.test.mjs poc/v2-migration/*.test.mjs poc/v2-sync/db18.test.mjs",
+  "newRegistryTests": 29,
+  "existingRegressionTests": 177,
+  "totalPassed": 206,
+  "totalFailed": 0,
+  "log": "workspace-registry-regression.txt",
+  "logSha256": "8114e6f1a0482b2a7f0cb46cac9edfd842f47f9242eb074da6df23d856d00805",
+  "sourceSha256": {
+    "poc/v2-runtime/workspace-registry.mjs": "6dc577146ebc885ee6e5f6585da484a9a3ec47f596e05c350763cbd328f3a5b7",
+    "poc/v2-runtime/workspace-kind.mjs": "680da1f01662fb47b0601c697ea4e8689bd33dac4c9ae3343de7ac4e084a7c59",
+    "poc/v2-runtime/workspace-registry.test.mjs": "af52f8328cfb0c61000dad79f8ccf5b5f2ab5dca27f971b020849d719460e8a6",
+    "poc/v2-runtime/isolation.mjs": "68f0f6a0a9e34e27651b7d876a7aa7e4d807dbc78eb4cb8cf03e19fb0ca5a237"
+  },
+  "verified": [
+    "DB18/DB19 and legacy configuration unchanged",
+    "offline identity and type retained",
+    "online owner and cloud workspace identity isolated",
+    "no online failure fallback to offline source",
+    "late responses rejected and unactivated handles closed",
+    "cache path and offline root revalidated before open"
+  ],
+  "productWiringImplemented": false,
+  "nativeWindowsMacInstallationVerified": false,
+  "productCacheFormatImplemented": false,
+  "cloudWrites": false,
+  "previousPGorDEVTestsRerun": false,
+  "releaseChanged": false
+}
