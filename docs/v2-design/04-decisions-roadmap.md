@@ -388,3 +388,7 @@ V2 체크포인트52ff622를 푸시한 뒤 사용자 요청의 캐비넷/노트 
 ## 4.73 A안 화면·명령 경계 연결 검증
 
 [70문서](70-a-settings-bridge-integration.md)에 browser controller/명령 allowlist/직렬 lifecycle·계정 세대 guard를 연결했다. 별도 가상 SQLite 원본만 읽고 온라인 제품 활성화는 차단한다. 실제 native Tauri나 제품 설정 변경으로 보고하지 않는다. 저장 실패는 기존 공간 유지, 불확실한 detach/close/attach는 blocked, 계정 변경 시 온라인 내용 숨김으로 운영한다. 다음은 제품용 온라인 cache/활성화 어댑터이며 기존 appController의 단일 전환 경로를 재사용해야 한다.
+
+## 4.74 main 1.24.3 동기화
+
+[71문서](71-main-1.24.3-sync-checkpoint.md): main 30a4a9a까지 4개 커밋을 v2-design에 반영했다(병합 5bdd4f3). DB19 유지·저장 형식 변경 없음. V2 로컬 보존/계정별 온라인 분리와 A안 계약을 유지한다. 앱532·V2 235·Chromium26개 및 사이트 smoke로 확인했고 다음 기능 작업은 온라인 제품용 캐시/활성화 어댑터다.

@@ -377,6 +377,8 @@ try {
         data: { prefixes: [...trackedPaths] },
         cleanup: true,
       });
+      // The surrounding cleanup catch handles this throw; it cannot escape finally.
+      // eslint-disable-next-line no-unsafe-finally
       if (![200, 204].includes(removed.status)) throw new Error("Object cleanup failed");
       const remaining = await sql(
         `SELECT count(*) AS objects FROM storage.objects WHERE bucket_id='${bucket}';`,

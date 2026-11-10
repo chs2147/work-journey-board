@@ -1,0 +1,67 @@
+
+> work-journey-board@1.24.3 build
+> tsc --noEmit && vite build
+
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - JSON import "./package.json" without import attributes (vite.config.ts:5:17). Add `with { type: 'json' }`
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+vite v8.3.5 building client environment for production...
+transforming...
+✓ 1045 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                    1.99 kB │ gzip:     0.68 kB
+dist/assets/m1-en-color-DGcOh4xQ.svg              20.04 kB │ gzip:     8.55 kB
+dist/assets/m1-en-reverse-O5zaHx6D.svg            20.04 kB │ gzip:     8.55 kB
+dist/splash.html                                  24.77 kB │ gzip:    10.71 kB
+dist/assets/GowunDodum-Regular-CPI_zSsh.woff2    445.74 kB
+dist/assets/sql-wasm-C1D_RJuy.wasm               684.89 kB │ gzip:   338.96 kB
+dist/assets/PretendardVariable-CJuje-Rk.woff2  2,057.68 kB
+dist/assets/core-DK4RBWNo.css                      0.33 kB │ gzip:     0.20 kB
+dist/assets/editorExtensions-BNa5oeV_.css          3.09 kB │ gzip:     1.07 kB
+dist/assets/CabiWindowApp-C_bO_tSI.css             3.36 kB │ gzip:     1.04 kB
+dist/assets/NoteCanvas-BjfOf0Z4.css                5.78 kB │ gzip:     1.58 kB
+dist/assets/main-CTG17ch6.css                    213.50 kB │ gzip:    38.04 kB
+dist/assets/splash-BwVX82sz.js                     0.51 kB │ gzip:     0.34 kB
+dist/assets/sample-personal-DbOXdOXd.js            0.59 kB │ gzip:     0.35 kB
+dist/assets/driver-ChSHZx75.js                     0.71 kB │ gzip:     0.52 kB
+dist/assets/rolldown-runtime-COiEfhsA.js           1.11 kB │ gzip:     0.62 kB
+dist/assets/splashEvents-BIp7avWc.js               1.34 kB │ gzip:     0.64 kB
+dist/assets/links-C0r0FT1Y.js                      1.43 kB │ gzip:     0.78 kB
+dist/assets/core-DtCrKTdE.js                       1.80 kB │ gzip:     0.88 kB
+dist/assets/localTime-Czb9Sb_l.js                  1.89 kB │ gzip:     1.07 kB
+dist/assets/liveWidgetImage-CYMjn-Js.js            2.29 kB │ gzip:     1.24 kB
+dist/assets/v17Strings-C4VwaLNh.js                 2.29 kB │ gzip:     1.34 kB
+dist/assets/liveWidgetModel-CgLusfYf.js            3.00 kB │ gzip:     1.36 kB
+dist/assets/important-D1ya70Jt.js                  3.15 kB │ gzip:     1.44 kB
+dist/assets/liveWidget-CtB91Jbk.js                 3.45 kB │ gzip:     1.51 kB
+dist/assets/backup-DxvWTWXZ.js                     4.56 kB │ gzip:     2.11 kB
+dist/assets/platform-CzlMvL_C.js                  10.48 kB │ gzip:     4.70 kB
+dist/assets/note-fSiGtPsg.js                      13.52 kB │ gzip:     5.17 kB
+dist/assets/migrate-CCRVwXhA.js                   24.10 kB │ gzip:     7.30 kB
+dist/assets/noteStore-De6BNMQY.js                 24.41 kB │ gzip:     8.83 kB
+dist/assets/tauri-DStojSd3.js                     27.93 kB │ gzip:     7.53 kB
+dist/assets/sample-showcase-DItBnfa1.js           48.14 kB │ gzip:    32.18 kB
+dist/assets/markdownNote-DNUiBMxS.js              54.41 kB │ gzip:    23.11 kB
+dist/assets/cabiService-D0O67tl5.js               66.13 kB │ gzip:    22.70 kB
+dist/assets/NoteCanvas-fUUVxEVN.js                70.86 kB │ gzip:    20.50 kB
+dist/assets/browser-B7wO4kKP.js                   71.20 kB │ gzip:    25.28 kB
+dist/assets/backupPolicy-DwfKGWAf.js              87.19 kB │ gzip:    30.97 kB
+dist/assets/CabiWindowApp-DuomWpcK.js             95.16 kB │ gzip:    28.91 kB
+dist/assets/boardStore-rIAY3Jq8.js               148.09 kB │ gzip:    44.86 kB
+dist/assets/editorExtensions-BNo8TIeV.js         414.20 kB │ gzip:   130.79 kB
+dist/assets/cabiPdf-BdGdRtgR.js                  423.07 kB │ gzip:   176.94 kB
+dist/assets/UniverseScene-DhIvliRr.js            520.83 kB │ gzip:   131.05 kB
+dist/assets/fontkit.es-DCF8HLlI.js               710.72 kB │ gzip:   329.59 kB
+dist/assets/main-BjCpufau.js                     711.61 kB │ gzip:   216.99 kB
+dist/assets/exceljs.min-DqPyZ1yt.js              929.38 kB │ gzip:   256.38 kB
+dist/assets/cabiPdfFont-B4uaj9nB.js            9,638.83 kB │ gzip: 2,581.50 kB
+
+[33m[INEFFECTIVE_DYNAMIC_IMPORT] [0msrc/ui/cabinet/cabinetStore.ts is dynamically imported by src/ui/board/boardStore.ts, src/ui/cabinet/cabiService.ts but also statically imported by src/ui/App.tsx, src/ui/board/CategoryHeader.tsx, src/ui/board/CellEditor.tsx, src/ui/board/useShortcuts.ts, src/ui/cabinet/CabiHub.tsx, ..., dynamic import will not move module into another chunk.
+
+[plugin builtin:vite-reporter] 
+(!) Some chunks are larger than 1000 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 3.69s

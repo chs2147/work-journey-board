@@ -10,7 +10,6 @@ import {
   readdirSync,
   symlinkSync,
   linkSync,
-  existsSync,
 } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";

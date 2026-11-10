@@ -1,0 +1,7 @@
+
+> work-journey-board@1.24.3 lint
+> eslint .
+
+✓ v1.24.3 릴리스 노트 확인
+✓ 이용 가이드 확인(15장면)
+✓ Feature List v1.24.3: ID·버전·근거·프로필·현재 스냅샷·Excel 255개 항목 일치

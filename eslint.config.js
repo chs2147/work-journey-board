@@ -25,6 +25,24 @@ export default tseslint.config(
     languageOptions: { globals: globals.node },
   },
   {
+    // V2 독립 PoC는 Node 도구이며 제품 src의 네트워크 금지 규칙과 분리한다.
+    files: ["poc/**/*.mjs"],
+    languageOptions: { globals: globals.node },
+  },
+  {
+    files: ["docs/v2-design/mockups/**/*.mjs", "docs/v2-design/mockups/**/*.cjs"],
+    languageOptions: { globals: { ...globals.node, ...globals.browser } },
+  },
+  {
+    files: ["docs/v2-design/mockups/**/settings-ui.mjs"],
+    languageOptions: { globals: globals.browser },
+  },
+  {
+    // 명시적 CommonJS 검증 실행기는 require를 사용한다.
+    files: ["docs/v2-design/mockups/**/*.cjs"],
+    rules: { "@typescript-eslint/no-require-imports": "off" },
+  },
+  {
     // 외부 통신 0 원칙(CLAUDE.md 4-1): 앱 코드에서 네트워크 API 사용 금지.
     files: ["src/**/*.{ts,tsx}"],
     rules: {

@@ -1,6 +1,6 @@
 # V2 설계·PoC 중단/재개 기록
 
-**현재 재개 정본:** [70. A안 설정 화면·연결 경계](70-a-settings-bridge-integration.md). 이하 체크포인트는 작성 당시 기록이며 가장 최근 결과가 우선한다.
+**현재 재개 정본:** [71. main 1.24.3 반영](71-main-1.24.3-sync-checkpoint.md). 이하 체크포인트는 작성 당시 기록이며 가장 최근 결과가 우선한다.
 
 2026-11-09 UTC · V2 설계/PoC 중단 지점을 보존한 뒤 복귀했다. 사용자 요청으로 main 1.23.1 패치(`d11a0ca`)를 v2-design에 병합했다.
 
@@ -168,3 +168,7 @@ cfdeae4가 원격과 일치해 재푸시만 확인하고 [67문서](67-product-i
 ## A안 화면과 reference bridge 연결(최신)
 
 이전 기반은 9df4481로 푸시됐다. [70문서](70-a-settings-bridge-integration.md)에 A안 browser controller → 명령 bridge → 별도 registry/읽기 전용 가상 DB19 연결을 기록했다. 새 테스트 29개 + 기존 206개 = 235개 통과, 브라우저 3테마/3폭 9배치·원본 해시 보존을 검증한다. 실제 제품/native/Cloud/기존 config는 미변경이다. 제품용 cache/활성화 어댑터가 다음이며 별도 설치 정책·OS vault·기존 appController 재사용·실기 관문은 남았다. 생성/로그인/받기는 비활성이고 PoC 사본은 제품 활성화로 열지 않는다. A안은 확정이므로 재선택을 묻지 않는다.
+
+## main 1.24.3 동기화(최신)
+
+[71문서](71-main-1.24.3-sync-checkpoint.md): V2 8dde178을 보존하고 main 30a4a9a까지 4개 커밋을 5bdd4f3로 병합했다. 현재 앱1.24.3/DB19. 사진 dialog/메모 팔레트 위치/데일리 버튼/티저 푸터·모션 버튼 개선 반영. 앱532·V2 235·Chromium26개 통과, lint/format/build/문서 정합 통과. PoC 실행 환경 lint 선언과 생성 manifest 포맷 경계만 추가 정리했다. main/Cloud/원본은 직접 수정하지 않았다. 다음은 70문서의 제품용 온라인 캐시·활성화 어댑터이며 A안은 확정이다.

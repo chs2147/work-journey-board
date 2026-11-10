@@ -403,7 +403,9 @@ try {
   for (const e of fixtures) {
     try {
       e.journal.close();
-    } catch {}
+    } catch {
+      // Continue remote fixture cleanup even if a local journal handle cannot close.
+    }
   }
   if (bucketCreated) {
     try {

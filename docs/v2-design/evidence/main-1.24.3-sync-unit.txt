@@ -1,0 +1,20 @@
+
+> work-journey-board@1.24.3 test
+> vitest run
+
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - JSON import "./package.json" without import attributes (vite.config.ts:5:17). Add `with { type: 'json' }`
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.5 /workspace/work-journey-board
+
+
+ Test Files  59 passed (59)
+      Tests  532 passed (532)
+   Start at  08:40:48
+   Duration  47.72s (import 61%, environment 21%, tests 14%, transform 4%)
+
+     Import  212 modules were evaluated 608 times · 78.85s total, 61% of tracked time
+             ~9.90s faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+             learn more: https://vitest.dev/guide/improving-performance#test-isolation
+

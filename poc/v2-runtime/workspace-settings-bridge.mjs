@@ -146,10 +146,14 @@ export function createWorkspaceSettingsBridge({ registry, adapters, lifecycle, g
         phase = "blocked";
         try {
           await lifecycle.detachAll(handle);
-        } catch {}
+        } catch {
+          // Already blocked: attempt remaining cleanup without replacing activation failure.
+        }
         try {
           await handle?.close?.();
-        } catch {}
+        } catch {
+          // Already blocked: attempt remaining cleanup without replacing activation failure.
+        }
         throw Error("WORKSPACE_ACTIVATION_FAILED");
       }
     } catch (e) {

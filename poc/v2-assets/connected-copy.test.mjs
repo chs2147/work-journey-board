@@ -71,8 +71,12 @@ test("primary invariant: source DB retains embedded images, new online DB has re
         assert.equal("thumb" in row, false);
         const bytes = readFileSync(join(e.destination, "assets", row.dataRef.blob + ".bin"));
         assert.equal(bytes.toString("base64"), rows[i].data);
-        const { data, thumb, ...metadata } = rows[i];
-        const { dataRef, thumbRef, ...actualMetadata } = row;
+        const metadata = Object.fromEntries(
+          Object.entries(rows[i]).filter(([key]) => !["data", "thumb"].includes(key)),
+        );
+        const actualMetadata = Object.fromEntries(
+          Object.entries(row).filter(([key]) => !["dataRef", "thumbRef"].includes(key)),
+        );
         assert.deepEqual(actualMetadata, metadata);
       }
   }

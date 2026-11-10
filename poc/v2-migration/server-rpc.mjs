@@ -218,7 +218,9 @@ export function createMigrationRPC({
         try {
           const v = JSON.parse((await readLimited(response, 4096)).toString("utf8"));
           if (v.code === "P0001" && errors.has(v.message)) code = v.message;
-        } catch {}
+        } catch {
+          // Unrecognized upstream payloads map to the fixed generic error below.
+        }
         if (code) throw new GatewayError(code, code === "MIGRATION_ACCESS_DENIED" ? 403 : 409);
         throw new GatewayError("MIGRATION_UNAVAILABLE", 503);
       }

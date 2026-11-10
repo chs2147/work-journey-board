@@ -6,3 +6,6 @@ src-tauri/gen
 package-lock.json
 *.md
 site
+# Generated JSON.stringify manifests: preserve reviewed bytes/hashes from their builders.
+poc/v2-cloud/bundle/manifest.json
+poc/v2-migration/postgres/workspace-review-manifest.json

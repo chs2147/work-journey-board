@@ -1,0 +1,88 @@
+{
+  "checkedAt": "2026-11-10T08:47:49.714489+00:00",
+  "branch": "v2-design",
+  "previousHead": "8dde1786a8c967afa39208d9faaa4e3572f4159c",
+  "mainHead": "30a4a9a",
+  "mergeBase": "ae97c10513342967aedcc1d78a47c8e360e090dc",
+  "mergeCommit": "5bdd4f3220c0360501416e1333d0d6970175377d",
+  "mainCommitsIncorporated": [
+    "b2e53ef",
+    "8499d9c",
+    "c8239dd",
+    "30a4a9a"
+  ],
+  "productVersion": "1.24.3",
+  "localSchemaVersion": 19,
+  "conflicts": false,
+  "checks": {
+    "build": true,
+    "lint": true,
+    "format": true,
+    "releaseNotes": true,
+    "guideScenes": 15,
+    "featureItems": 255,
+    "unitFiles": 59,
+    "unitTests": 532,
+    "v2Tests": 235,
+    "chromiumE2ETests": 26,
+    "siteWidths": [
+      1440,
+      390
+    ],
+    "siteBrowserErrors": 0
+  },
+  "artifacts": {
+    "unit": {
+      "file": "main-1.24.3-sync-unit.txt",
+      "sha256": "9f1b89279a87858a9dce8bd791e36b58dea1669b3078a65b62b6e749f1970610"
+    },
+    "v2": {
+      "file": "main-1.24.3-sync-v2.txt",
+      "sha256": "852b519bc5fc9e36ad362cde4a48f061168db064ac477e039e61bea0a468c358"
+    },
+    "e2e": {
+      "file": "main-1.24.3-sync-e2e.txt",
+      "sha256": "e66878c1207f10c541a109c50ee50a7d13eae99af463b755ea644a0c7563c2ad"
+    },
+    "build": {
+      "file": "main-1.24.3-sync-build.txt",
+      "sha256": "1714a7efe622608afccdf7734fb530811bbd27e3eaf53846d31374919d7976c3"
+    },
+    "checks": {
+      "file": "main-1.24.3-sync-checks.txt",
+      "sha256": "0e8454c2647fec4b921212c1f986a76722e45f0e82d8824ee7d7309542b728cd"
+    },
+    "format": {
+      "file": "main-1.24.3-sync-format.txt",
+      "sha256": "e81cbf2d3beb61cc410c6a65f42e18348868e86c5b40fa1ed5292b4c731e5d58"
+    },
+    "site": {
+      "file": "main-1.24.3-sync-site.json",
+      "sha256": "d9814a152b5d3096f07418c57e9b94dd197635fcaf736f10a9c782f85bcdaf01"
+    }
+  },
+  "sourceSha256": {
+    ".prettierignore": "11e0fd7849c530e0628cc77a6a2c32436605682beb6ecc606b83b08588d18ffa",
+    "eslint.config.js": "e8b45cefbedd5ed8ffbbe0d20f326d9691353c48621f8d1aa1f44b88a5b13de9",
+    "package.json": "78ac1b7aa850afe3026d7bc5d92e1f48b1191329312c904359d9b13a0b54c46f",
+    "src/ui/note/ImageBoxView.tsx": "a164fbd83c5bac771e79d49aabe610baa143b338b9f7662fb399792fb1ce7fdd",
+    "src/ui/note/Note.module.css": "0e96c1bcae6bdfd0f71b5d3c4717b7948ef9a89e14f37b035218417fff15d3df",
+    "src/ui/today/TodayView.tsx": "cbdb52a5b6dd68e0fbdbb2ad50c0595c0dd9891a33144903afb7874faf12d726",
+    "poc/v2-assets/connected-copy.test.mjs": "0e610246d36ad19424bd951058d590f87b656b343fa38067e781c1713f419f69",
+    "poc/v2-cloud/development/storage-live-check.mjs": "7703c3d2cc80f340c6e28604e304ea48ab3f177937ffc0c0cf21683feb5d8982",
+    "poc/v2-migration/development/live-check.mjs": "1df6fc91c7bf0467e148cf3fdce370234c9f2ea9de1c8232d11b544c89205821",
+    "poc/v2-migration/server-rpc.mjs": "f8a31ea5ff0f1bf52407bafa232708233cf090204acbb7033b91cc0226e1292d",
+    "poc/v2-migration/workspace-map.test.mjs": "e94677e221cabd57c9d2fff4471a3e82fb3ff24ed8bffa310f41f28f0693d8b2",
+    "poc/v2-runtime/workspace-registry.test.mjs": "96ae07337f1ef80da49d031c5173350908a8982a9411e26b94c7d7bd148293f9",
+    "poc/v2-runtime/workspace-settings-bridge.mjs": "faa44a5f89cc1d6a2745ea9114151637170a5923924b48d222c47b2299ba0a05"
+  },
+  "productMatchesMain": true,
+  "mainModified": false,
+  "cloudWrites": false,
+  "schemaChanged": false,
+  "previousDEVorPGTestsRerun": false,
+  "nativeWindowsMacVerified": false,
+  "webkitVerified": false,
+  "newReleasePublished": false,
+  "next": "Product online cache format and activation verifier; existing A settings contract preserved"
+}

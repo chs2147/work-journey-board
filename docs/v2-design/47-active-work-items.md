@@ -1,5 +1,7 @@
 # 47. V2 진행 항목·사용자 직접 설정·재개 순서
 
+**최신 제품 동기화:** [71문서](71-main-1.24.3-sync-checkpoint.md). main 30a4a9a의 4개 커밋 반영, 앱1.24.3/DB19. 다음 작업은 제품용 온라인 캐시·활성화 어댑터이며 70문서의 A안 연결 경계 결과를 유지한다.
+
 **현재 진행:** [70. A안 설정 연결](70-a-settings-bridge-integration.md). 독립 PoC의 화면/명령/SQLite 연결·235개 회귀/9개 배치를 검증했다. 제품용 cache/활성화 어댑터 → native 격리/보안 저장소 → 기존 appController/제품 UI 연결이 남는다. 아래 상태는 과거 기록이며 최신 문서를 우선한다.
 
 **최신 체크포인트(2026-11-10 KST):** [55문서](55-supabase-private-storage-live-results.md) 기준. DEV Free/Usage(U07), 서버 키(U08), 실제 Auth/private 파일/loopback gateway47검사 및 cleanup 완료. 공개 배포·제품/실기·이미지 dedup는 남으며 다음은A06 격리→A07/A08이다. 아래 과거 상태는 당시 기록이다.
