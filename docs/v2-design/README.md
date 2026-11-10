@@ -1,5 +1,7 @@
 # V2 프로젝트 — 다국어·온라인 동기화 상세 설계 초안
 
+**최신 사용자 기준:** [68. 워크스페이스 운영·유형 표시](68-workspace-type-operating-rules.md). 기존 공간은 오프라인 전용 그대로 유지하고 신규 온라인 공간에서 운영한다. 유형 배지는 연결 상태와 분리해 상시 표시한다. [수정 표시 비교](mockups/step6/workspace-types.html).
+
 **최신 검토안:** [67. 제품 실행 격리·연결 UI 상세 설계](67-product-isolation-connection-ui.md). 6번의 A/B/C 시안과20개 상태·3개 테마를 작성했다. 추천은A 설정 확장형이며 제품 구현 전 검토 대기다. [3안 비교](mockups/step6/comparison.html) · [직접 체험](mockups/step6/index.html).
 
 **최신 진행:** [66. DEV 실제 이관 검증](66-development-migration-live-results.md). 신규 이관 SQL을 DEV에 적용하고 실제 Auth/Storage 기능44개·정리4개를 통과했다. 표본 자원은 모두 제거했으며 C1/C2·KeepAlive는 유지했다. 다음은 제품 실행 격리/연결 UI 검토다.

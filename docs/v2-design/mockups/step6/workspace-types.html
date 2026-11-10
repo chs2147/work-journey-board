@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>워크스페이스 유형과 연결 상태</title>
+    <style>
+      @font-face {
+        font-family: P;
+        src: url("../../../../node_modules/pretendard/dist/web/variable/woff2/PretendardVariable.woff2");
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #f1ede5;
+        color: #423d35;
+        font:
+          15px/1.7 P,
+          system-ui;
+        padding: 30px 36px;
+      }
+      h1 {
+        font-size: 26px;
+        margin: 4px 0 8px;
+      }
+      p {
+        color: #807568;
+        margin: 0 0 24px;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 225px 1fr;
+        align-items: center;
+        border: 1px solid #d8cebf;
+        border-radius: 8px;
+        background: #fffdf9;
+        padding: 20px 24px;
+        margin: 15px 0;
+        gap: 20px;
+      }
+      .row strong {
+        font-size: 17px;
+      }
+      .row small {
+        display: block;
+        color: #8a7e6e;
+        margin-top: 5px;
+        font-size: 12px;
+      }
+      .row img {
+        max-width: 100%;
+        width: 100%;
+        height: 76px;
+        object-fit: contain;
+        object-position: left center;
+      }
+      .foot {
+        margin-top: 24px;
+        padding: 15px 20px;
+        background: #e8e1d5;
+        border: 1px solid #d6ccbd;
+        border-radius: 6px;
+        color: #716552;
+        font-size: 14px;
+      }
+      small.kicker {
+        font-size: 11px;
+        letter-spacing: 2px;
+        color: #827362;
+      }
+      a {
+        color: #746048;
+      }
+      @media (max-width: 800px) {
+        body {
+          padding: 20px;
+        }
+        .row {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <small class="kicker">WORKSPACE TYPE / CONNECTION STATE</small>
+    <h1>워크스페이스의 유형은 연결 상태와 구분합니다.</h1>
+    <p>
+      기존 공간은 ‘오프라인 전용’으로 유지하고, 신규 온라인 공간을 따로 만듭니다. 공간 이름 옆에 아이콘과
+      유형을 항상 표시합니다.
+    </p>
+    <div class="row">
+      <div><strong>기존 워크스페이스</strong><small>인터넷 유무와 무관하게 오프라인 전용</small></div>
+      <img src="offline-only-header.png" alt="회사일지 오프라인 전용, 이 PC에 저장됨, 이 기기에서만 저장" />
+    </div>
+    <div class="row">
+      <div><strong>신규 온라인 워크스페이스</strong><small>인터넷 연결됨 · 서버 반영 완료</small></div>
+      <img src="online-connected-header.png" alt="회사일지 온라인 유형과 온라인 반영됨 상태" />
+    </div>
+    <div class="row">
+      <div><strong>같은 온라인 워크스페이스</strong><small>연결이 끊겨도 유형은 온라인 유지</small></div>
+      <img
+        src="online-disconnected-header.png"
+        alt="온라인 유형을 유지한 채 연결 끊김과 3건 전송 대기 표시"
+      />
+    </div>
+    <div class="foot">
+      기존 ‘회사일지’는 그대로 유지 → 새 ‘회사일지 · 온라인’에서 온라인 작업 운영 → 그 공간의 기기별 캐시는
+      같은 온라인 워크스페이스의 데이터
+    </div>
+    <p style="font-size: 12px; margin-top: 14px">
+      가상 화면 시안 · 실제 워크스페이스 전환/생성 없음 ·
+      <a href="index.html">상세 시안에서 유형·연결 상태 비교하기 →</a>
+    </p>
+  </body>
+</html>

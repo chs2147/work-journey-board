@@ -88,6 +88,42 @@ if (!/^http:\/\/127\.0\.0\.1:\d+$/.test(base)) throw Error("LOCAL_REVIEW_SERVER_
   await page.locator("#startCopy").click();
   assert.equal(await page.evaluate(() => window.mock.scene), "progress");
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true);
+  await page.setViewportSize({ width: 1440, height: 1080 });
+  await page.evaluate(() => window.mock.close());
+  let typeChecks = 0;
+  for (const scheme of ["A", "B", "C"]) {
+    await page.evaluate((s) => window.mock.setScheme(s), scheme);
+    for (const network of ["connected", "disconnected"]) {
+      await page.evaluate((n) => window.mock.setWorkspace("offline", n), network);
+      assert.equal(await page.locator(".appbar [data-workspace-type]").textContent(), "오프라인 전용");
+      assert.equal(await page.locator('[data-testid="sync-state"]').count(), 0);
+      assert(await page.locator('[data-testid="local-only-state"]').isVisible());
+      typeChecks++;
+      await page.evaluate((n) => window.mock.setWorkspace("online", n), network);
+      assert.equal(await page.locator(".appbar [data-workspace-type]").textContent(), "온라인");
+      const state = await page.locator('[data-testid="sync-state"]').textContent();
+      assert(state.includes(network === "connected" ? "온라인 반영됨" : "연결 끊김"));
+      typeChecks++;
+    }
+  }
+  await page.evaluate(() => {
+    window.mock.setScheme("A");
+    window.mock.setWorkspace("offline");
+    window.mock.show("complete");
+  });
+  await page.getByRole("button", { name: "온라인 워크스페이스 열기", exact: true }).click();
+  assert.equal(await page.evaluate(() => window.mock.workspace.type), "online");
+  assert.equal(await page.evaluate(() => window.mock.workspace.name), "회사일지 · 온라인");
+  assert(
+    await page
+      .locator(".wsrow")
+      .filter({ hasText: "회사일지" })
+      .filter({ has: page.locator('[data-workspace-type="offline_only"]') })
+      .count(),
+  );
+  await page.evaluate(() => window.mock.show("create"));
+  assert(await page.getByRole("button", { name: "새로 시작하기", exact: true }).isVisible());
+  assert(await page.getByRole("button", { name: "오프라인 기록으로 시작", exact: true }).isVisible());
   assert.deepEqual(errors, []);
   assert.deepEqual(external, []);
   const result = {
@@ -98,6 +134,10 @@ if (!/^http:\/\/127\.0\.0\.1:\d+$/.test(base)) throw Error("LOCAL_REVIEW_SERVER_
     scenes: states.length,
     stateRenders: renders,
     explicitConsent: true,
+    workspaceTypeChecks: typeChecks,
+    originalWorkspaceRetained: true,
+    onlineTypePersistsWithoutInternet: true,
+    postCreationOpensNewOnlineWorkspace: true,
     backgroundBlocked: true,
     backgroundBlurred: true,
     pauseResume: true,
