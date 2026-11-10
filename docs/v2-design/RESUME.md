@@ -1,6 +1,6 @@
 # V2 설계·PoC 중단/재개 기록
 
-**현재 재개 정본:** [69. A안 확정·registry/실행 기반](69-workspace-registry-runtime-foundation.md). 이하 체크포인트는 작성 당시 기록이며 가장 최근 결과가 우선한다.
+**현재 재개 정본:** [70. A안 설정 화면·연결 경계](70-a-settings-bridge-integration.md). 이하 체크포인트는 작성 당시 기록이며 가장 최근 결과가 우선한다.
 
 2026-11-09 UTC · V2 설계/PoC 중단 지점을 보존한 뒤 복귀했다. 사용자 요청으로 main 1.23.1 패치(`d11a0ca`)를 v2-design에 병합했다.
 
@@ -20,7 +20,7 @@
 
 ## 완료 범위와 한계
 
-언어 리소스/배포·플랫폼 기능표·인증/동기화/전환/충돌/복구/비용 설계와 독립 PoC를 보존했다. 로컬 SQLite214개, JWT28개, HTTP61개, 영속/복구 통합41개 등은 각 단계 문서의 **서로 다른 범위·실행 시점** 결과다. 합산하여 제품 완성도나 실제 클라우드 검증으로 해석하지 않는다.
+언어 리소스/배포·플랫폼 기능표·인증/동기화/전환/충돌/복구/비용 설계와 독립 PoC를 보존했다. 로컬 SQLite214개, JWT29개, HTTP61개, 영속/복구 통합41개 등은 각 단계 문서의 **서로 다른 범위·실행 시점** 결과다. 합산하여 제품 완성도나 실제 클라우드 검증으로 해석하지 않는다.
 
 최신 SQL은 원자적 install, 권한 확인, 자료 보존 pause/resume, empty-only rollback 묶음이다. 마지막 실행은 SQL87개(기본39+묶음34+역할14), bundle29개·기존 readiness23개 통과. 실제와 같은 BYPASSRLS service_role도 관리 table6개 직접 조회가 거절된다. manifest SHA-256은 `6ace6c937126d792660580a7f253e11db631b8ed56ffe9d9f1e43fdcdfa946ad`다. 재개 시 실제 bytes와 다시 대조한다.
 
@@ -164,3 +164,7 @@ cfdeae4가 원격과 일치해 재푸시만 확인하고 [67문서](67-product-i
 ## A안 확정·목록/실행 분기 기반(최신)
 
 수정시안은6b07b75에푸시했고 사용자가A안(기존설정확장)을선택했다. 다시선택을묻지않는다. [69문서](69-workspace-registry-runtime-foundation.md)에 독립registry/순수유형상태/owner검증·온라인오류fallback금지·late응답폐기/handle정리를구현했다. 실제native/UI/계정vault/cacheheader gate연결은다음이며 이번제품/Cloud변경은없다. 별도앱/설치정책은A안선택과별개로미확정이며기존로컬모델원칙을유지한다.
+
+## A안 화면과 reference bridge 연결(최신)
+
+이전 기반은 9df4481로 푸시됐다. [70문서](70-a-settings-bridge-integration.md)에 A안 browser controller → 명령 bridge → 별도 registry/읽기 전용 가상 DB19 연결을 기록했다. 새 테스트 29개 + 기존 206개 = 235개 통과, 브라우저 3테마/3폭 9배치·원본 해시 보존을 검증한다. 실제 제품/native/Cloud/기존 config는 미변경이다. 제품용 cache/활성화 어댑터가 다음이며 별도 설치 정책·OS vault·기존 appController 재사용·실기 관문은 남았다. 생성/로그인/받기는 비활성이고 PoC 사본은 제품 활성화로 열지 않는다. A안은 확정이므로 재선택을 묻지 않는다.

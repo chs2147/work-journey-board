@@ -384,3 +384,7 @@ V2 체크포인트52ff622를 푸시한 뒤 사용자 요청의 캐비넷/노트 
 ## 4.72 A안 선택과 registry/실행 기반
 
 사용자가UI기본배치로A안을선택했다. 수정시안은6b07b75에보존했다. [69문서](69-workspace-registry-runtime-foundation.md)의 독립registry와 순수kind/status·owner/요청guard를구현해 원본유지·온라인ID/계정별캐시분리·오류fallback금지·late응답폐기를검증한다. A안을다시묻지않고native경계/화면연결로진행한다. 제품cache/OSvault/완료증표관문은아직미완료다.
+
+## 4.73 A안 화면·명령 경계 연결 검증
+
+[70문서](70-a-settings-bridge-integration.md)에 browser controller/명령 allowlist/직렬 lifecycle·계정 세대 guard를 연결했다. 별도 가상 SQLite 원본만 읽고 온라인 제품 활성화는 차단한다. 실제 native Tauri나 제품 설정 변경으로 보고하지 않는다. 저장 실패는 기존 공간 유지, 불확실한 detach/close/attach는 blocked, 계정 변경 시 온라인 내용 숨김으로 운영한다. 다음은 제품용 온라인 cache/활성화 어댑터이며 기존 appController의 단일 전환 경로를 재사용해야 한다.

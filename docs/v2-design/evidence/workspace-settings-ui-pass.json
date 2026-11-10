@@ -1,0 +1,26 @@
+{
+  "checkedAt": "2026-11-10T07:06:31.433Z",
+  "scope": "A-layout browser controller -> loopback synthetic bridge -> real SQLite registry/read-only DB19 fixtures",
+  "layouts": 9,
+  "tests": [
+    "three entries, two fixed offline types and one online type",
+    "offline open with header badge",
+    "save failure retains previous active workspace",
+    "PoC online activation gated without fallback",
+    "online badge retained in three connection states",
+    "three round trips between offline workspaces",
+    "three themes x three viewport widths without horizontal overflow",
+    "foreign origin POST denied",
+    "extra UI credential field denied",
+    "unlisted static resource denied",
+    "public response omits native paths and owner",
+    "lost switch acknowledgement clears identity and reload reconciles active handle",
+    "no external network or browser errors",
+    "original synthetic DB hashes unchanged at cleanup"
+  ],
+  "browserErrors": [],
+  "externalRequests": [],
+  "sourceUnchanged": true,
+  "productWiringImplemented": false,
+  "cloudWrites": false
+}

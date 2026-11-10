@@ -1,5 +1,7 @@
 # V2 프로젝트 — 다국어·온라인 동기화 상세 설계 초안
 
+**현재 재개 정본:** [70. A안 설정 화면·연결 경계](70-a-settings-bridge-integration.md). 화면 controller → 명령 bridge → 별도 SQLite registry/읽기 전용 가상 DB19를 연결했다. 제품 UI/native 배포는 아직 아니며 다음은 제품용 온라인 캐시·활성화 검증 어댑터다. [A안 확인 화면](mockups/step6-settings/a-settings.png). 이하 기록은 작성 당시 체크포인트다.
+
 **최신 진행:** [69. A안 확정·공통 registry/실행 기반](69-workspace-registry-runtime-foundation.md). 사용자A안선택을기록하고 기존공간 보존/새온라인ID·owner별캐시/고정유형/늦은응답 차단을 독립구현했다. native제품연결은다음이며Cloud미변경이다.
 
 **최신 사용자 기준:** [68. 워크스페이스 운영·유형 표시](68-workspace-type-operating-rules.md). 기존 공간은 오프라인 전용 그대로 유지하고 신규 온라인 공간에서 운영한다. 유형 배지는 연결 상태와 분리해 상시 표시한다. [수정 표시 비교](mockups/step6/workspace-types.html).
