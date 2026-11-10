@@ -1,6 +1,7 @@
 // 오늘 뷰(improve-1026-spec 8절): 왼쪽 = 그 날이 든 주의 메모 보드(폭 조절·기억), 오른쪽 = 그 날의 업무 카드.
 // 카드 안 기록은 보드 칸과 같은 편집기(개조식 규칙·단축키·자동 저장 그대로), 카드 아래 = 직전 기록 한 줄 + [가져오기].
 // 창이 좁으면(1100px 미만) 메모는 위쪽 접힌 띠가 된다.
+import { IconFilterRecorded } from "../common/icons";
 import { useEffect, useRef, useState, type PointerEvent } from "react";
 import { CabinetCategoryBadge } from "../cabinet/CabinetCategoryBadge";
 import { cellKey } from "../../data/repository";
@@ -216,12 +217,13 @@ export function TodayView() {
             type="button"
             className={`${styles.textButton} ${styles.toggle}`}
             aria-pressed={hideEmpty}
-            title={STR.today.hideEmptyTitle}
+            aria-label={STR.today.hideEmpty}
+            title={hideEmpty ? STR.today.hideEmptyTitleOn : STR.today.hideEmptyTitleOff}
             data-testid="today-hide-empty"
             onClick={() => toggleHideEmpty(!hideEmpty)}
           >
+            <IconFilterRecorded />
             <span className={styles.toggleTrack} aria-hidden="true" />
-            {STR.today.hideEmpty}
           </button>
           {pullAllDate && (
             <button

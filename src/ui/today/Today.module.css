@@ -312,7 +312,8 @@
 .toggle {
   display: inline-flex;
   align-items: center;
-  gap: var(--sp-2);
+  gap: 6px;
+  padding: 0 var(--sp-2);
 }
 .toggleTrack {
   position: relative;

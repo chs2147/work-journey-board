@@ -345,3 +345,10 @@ export const IconLock = ({ open = false }: { open?: boolean }) => (
     <path d={open ? "M5.5 7V4.5a2.5 2.5 0 0 1 4.9-.7" : "M5.5 7V4.5a2.5 2.5 0 0 1 5 0V7"} />
   </Svg>
 );
+
+/** 데일리 뷰 [기록 있는 업무만](1.24.1) — 깔때기 */
+export const IconFilterRecorded = () => (
+  <Svg>
+    <path d="M2.5 3h11l-4.2 5v4.5l-2.6 1.2V8z" />
+  </Svg>
+);
