@@ -61,7 +61,7 @@
 | B1 | 앱 시작 스플래시(`splash.html`, 560×340) | M1 영문 40px, 아래쪽 줄 오른쪽 | 시그니처·라이트 = color, 다크 = reverse | 위 주간 카드·아이콘·워드마크·한 줄 소개는 그대로, 아래 줄 왼쪽 = 상태 글(일지를 여는 중…) |
 | B2 | 설정 › 업데이트·정보 › 정보 카드 | M1 영문 40px | 테마 따라 color / reverse | "만든 이" 행: 로고 + `상상을 작동시키다. · Copyright 2026 sanbonjini` + [브랜드 사이트 ↗](OS 기본 브라우저로만 — 4-1 링크 규칙). 글꼴 행은 Pretendard · 고운돋움 둘 다 표기 |
 | B3 | 설치 시작·끝 화면 왼쪽 그림(164×314) | M1 영문 40px, 아래쪽 | color(시그니처 베이지 바탕) | 위: 앱 아이콘 + 워드마크 + 한 줄 소개, 가운데: 업무 색 세 줄. 중간 화면 머리 그림(150×57)은 앱 아이콘만(최소 크기를 지키기 어려움) |
-| B4 | 티저 사이트 | "만든 이" 띠 = H1 영문 56px · 바닥 = M1 영문 40px | color | 만든 이 띠: 로고 + 메시지 + [sanbonjini 브랜드 사이트 ↗] · 바닥 줄: M1 + `Copyright 2026 sanbonjini` |
+| B4 | 티저 사이트 | 바닥 줄 = M1 영문 40px 하나(2026-11-10 A안 — 별도 "만든 이" 띠 폐지, 브랜드 중복 정리) | color | 바닥 줄 왼쪽: `MADE BY` + M1 + "상상을 작동시키다." · 오른쪽: `sanbonjini 브랜드 사이트 ↗` · `© 2026 sanbonjini` |
 | B5 | README | M1 영문 40px, 맨 아래 가운데 | `<picture>`로 밝은 화면 color / 어두운 화면 reverse | "Made by" + 로고 + Copyright + 브랜드 사이트 링크 + 자산 정책 한 줄 |
 
 - 파일: 공식 SVG를 **수정 없이** 복사(`src/shared/brand/sanbonjini/m1-en-color.svg`·`m1-en-reverse.svg`, `site/brand/h1-en-color.svg`·`m1-en-color.svg`, README용 `docs/brand/m1-en-color.svg`·`m1-en-reverse.svg`) + 키트의 SHA-256(`asset-manifest.json`)과 같은지 단위 테스트로 대조. 설치 그림 BMP는 이 SVG로 `scripts/brand/`에서 만든다.
@@ -121,6 +121,6 @@
 | B1·B2 | 공식 M1 SVG 사본(`src/shared/brand/sanbonjini/`, `manifest.json` SHA-256 대조 단위 테스트) — 스플래시 아래(판 번호 옆, 다크는 리버스), 설정 › 업데이트·정보 "만든 이" 줄(`MakerRow.tsx`, 브랜드 사이트 = `Platform.openUrl`) |
 | P2-3·B3 | A안: `scripts/brand/render_installer.mjs`(Playwright) → `pack_installer.py` → `src-tauri/installer/sidebar.bmp`(164×314)·`header.bmp`(150×57), `tauri.conf.json` nsis `sidebarImage`·`headerImage`·`installerIcon` |
 | P2-5·B5 | README 정식 판 구성(아이콘·워드마크 `<picture>`·시그니처 스크린샷·핵심 기능·설치·기록과 개인정보·문서·글꼴·개발·Version History·Made by M1 `<picture>` + Copyright) — `docs/brand/` 사본 |
-| P2-6·B4 | 티저 `site/`: 기능 3개(F1~F3, `site/shots/*.webp` 가상 기록 화면), 기본판·오프라인판 내려받기(`releases/latest`), 만든 이 H1 56px·바닥 M1 + Copyright |
+| P2-6·B4 | 티저 `site/`: 기능 3개(F1~F3, `site/shots/*.webp` 가상 기록 화면), 기본판·오프라인판 내려받기(`releases/latest`), 만든 이 H1 56px·바닥 M1 + Copyright(2026-11-10 → 바닥 줄 하나로 통합, B4) |
 | 테스트 | 단위: 테마 기본값·순서, 정식 판 판정·본문, 브랜드 자산 해시 · E2E `brand.spec.ts`: 첫 설치 시그니처 / 기존 일지 유지 / 설정 순서·만든 이 줄·브랜드 사이트 열기 · 보드 입력칸 높이 검사를 테마 글꼴 기준으로 |
 
