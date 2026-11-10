@@ -37,6 +37,8 @@ export interface Settings {
     viewMode: "week" | "today";
     /** 오늘 뷰 왼쪽 메모 폭(창 폭 비율 0.2~0.7) */
     todaySplit: number;
+    /** 데일리 뷰 [기록 있는 업무만](1.24.1) — 그 날 항목 0건인 업무 카드를 숨김. 다시 켜도 유지 */
+    todayHideEmpty: boolean;
     /** 왼쪽 중요 업무·오른쪽 주간 요약 패널 폭(px, improve-1101 #2) — 가장자리를 끌어 조절, 두 번 누르면 기본 */
     importantPanelW: number;
     summaryPanelW: number;
@@ -127,6 +129,7 @@ export const DEFAULT_SETTINGS: Settings = {
     noteMinimap: true,
     viewMode: "week",
     todaySplit: 0.42,
+    todayHideEmpty: false,
     importantPanelW: 264,
     summaryPanelW: 360,
     boardColW: { label: null, days: [null, null, null, null, null, null, null] },
@@ -212,6 +215,7 @@ export function mergeSettings(base: Settings, patch: unknown): Settings {
   if (s.ui.viewMode !== "week" && s.ui.viewMode !== "today") s.ui.viewMode = "week";
   if (!(s.ui.todaySplit >= TODAY_SPLIT_MIN && s.ui.todaySplit <= TODAY_SPLIT_MAX))
     s.ui.todaySplit = DEFAULT_SETTINGS.ui.todaySplit;
+  if (typeof s.ui.todayHideEmpty !== "boolean") s.ui.todayHideEmpty = false;
   for (const [k, spec] of [
     ["importantPanelW", PANEL_W.important],
     ["summaryPanelW", PANEL_W.summary],

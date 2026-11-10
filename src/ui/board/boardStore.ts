@@ -1254,10 +1254,9 @@ async function importPrevious(keys: string[], date: DateStr, all = false) {
       set({ focus: { kind: "item", key, index: (get().cells[key]?.length ?? 1) - 1, caret: "end" } });
     } else setFocusDay(date);
     toast(
-      (all
+      all
         ? STR.pull.doneAll(pullLabel(prev.date), mapping.length, cells.length)
-        : STR.pull.done(pullLabel(prev.date), mapping.length)) +
-        (prev.excluded ? ` · ${STR.itemCompletion.excluded(prev.excluded)}` : ""),
+        : STR.pull.done(pullLabel(prev.date), mapping.length),
       { label: STR.toast.undo, run: () => void undo() },
     );
   } catch (e) {

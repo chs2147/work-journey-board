@@ -497,6 +497,11 @@ export const STR_BASE = {
     memoClose: "메모 접기",
     resizeSplit: "메모 폭 조절(끌기) · 두 번 누르면 기본 폭",
     empty: "보일 업무가 없습니다",
+    hideEmpty: "기록 있는 업무만",
+    hideEmptyTitle: "이 날 기록이 0건인 업무 카드를 숨기거나 다시 보입니다",
+    hiddenBar: (n: number) => `기록 없는 업무 ${n}개를 숨겼습니다`,
+    showAll: "전체 보기",
+    noneRecorded: "이 날 기록이 있는 업무가 없습니다",
   },
   /** 인사이트 — 경과 타임라인·업무 경과 지도(m3-s1-spec) */
   insights: {
