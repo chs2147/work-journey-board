@@ -104,3 +104,7 @@ A06의 [57문서](57-runtime-isolation-and-migration-handoff.md)에 후보 profi
 ## 실제 PostgreSQL 이관 서버 검증(2026-11-10 KST, 최신)
 
 [59문서](59-postgres-migration-server.md)의 실제PG 서버39개가 통과했다. 새전진SQL/ACL/빈rollback/reviewmanifest까지 준비했으나 DEV에는 미적용이다. 새RPC는 server role만 실행, 본문없는 이미지참조·최신readback/IO·ticketfence·원자적publish/cancel을 검증한다. 최소문서프로필의poc-verified는 제품활성화에 사용 금지. 다음은 전체DB18 mapper/프로필·source-targethash 이중바인딩·실제gateway새RPC 어댑터→DEV통합이다. A06native격리/전체제품이관은 미완료다.
+
+## 전체 DB18 매핑·RPC 연결(최신)
+
+[60문서](60-db18-workspace-map-gateway.md)의26테이블 매핑17개·HTTP16개·실제PG40개가 통과했다. 전체 데이터 봉투와 최소 서버 프로필을 구분해 축약 전송을 거절하며 source/target manifest를 별도로 바인딩한다. Cloud/제품은 변경하지 않았다. 다음은 전체 서버 프로필·journal 영속 바인딩·실제 Storage 연결이며 로컬 영구 유지/새 사본 철칙을 유지한다.

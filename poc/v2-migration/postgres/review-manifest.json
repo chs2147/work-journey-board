@@ -25,7 +25,7 @@
     },
     {
       "path": "poc/v2-migration/postgres/001-migration.sql",
-      "sha256": "f450c0fc424e730dbfb89c82c6834e65eeacb3cd2d09a2b2996a3aed44395a60"
+      "sha256": "6145666198a542a88e10e1b27699c18db7089aa1e843c057cf11eb90a60c63c0"
     },
     {
       "path": "poc/v2-migration/postgres/002-verify.sql",
@@ -57,7 +57,7 @@
     "003-rollback-empty.sql (only if unused; never automatic)"
   ],
   "limitations": [
-    "full DB18 domain mapper not implemented",
+    "full DB18 mapper exists locally; full workspace server ingestion profile not implemented",
     "actual gateway readback/absence adapter not connected",
     "scoped PoC receipt cannot activate product workspace",
     "do not reapply existing install.sql"

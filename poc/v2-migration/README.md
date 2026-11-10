@@ -11,3 +11,13 @@ node poc/v2-migration/coordinator.test.mjs
 시험은 새 임시 폴더와 가상 자료만 쓰고 종료 시 그 폴더를 정리한다. SIGKILL 시험은 생성한 Linux 자식 프로세스만 대상으로 한다. 제품/실제 사용자 DB/Cloud에는 연결하지 않는다.
 
 [58. 결과/상태/서버 계약](../../docs/v2-design/58-durable-migration-resume-cancel.md) · [56. 로컬 영구 유지 철칙](../../docs/v2-design/56-local-permanence-copy-migration.md)
+
+## 전체 DB18 매핑·서버 RPC
+
+```sh
+node --test poc/v2-migration/workspace-map.test.mjs poc/v2-migration/server-rpc.test.mjs
+node poc/v2-migration/build-db18-contract.mjs
+PYTHONDONTWRITEBYTECODE=1 python3 poc/v2-migration/postgres/run-local.py --evidence-stem migration-map-gateway-postgres
+```
+
+계약 생성은 메모리 DB의 스키마만 읽는다. 전체 봉투는 최소문서 SQL 프로필에 전송할 수 없다. RPC는 서버에서 검증한 principal을 요구하며 로그인/JWT 검증을 대신하지 않는다. source/target 해시는 별도이며 journal 연결은 후속이다. [60. 범위·검증·다음 단계](../../docs/v2-design/60-db18-workspace-map-gateway.md)를 따른다.

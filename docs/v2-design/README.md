@@ -1,5 +1,7 @@
 # V2 프로젝트 — 다국어·온라인 동기화 상세 설계 초안
 
+**최신 진행:** [60. DB18 전체 매핑·RPC 연결](60-db18-workspace-map-gateway.md). 매핑17개·HTTP16개·실제PG40개 통과. 전체 봉투의 서버 저장/실제 Storage 연결은 다음 단계이며 Cloud 미적용이다.
+
 **최신 진행:** [59. PostgreSQL 이관 서버](59-postgres-migration-server.md)의 실제PG39개 통과. 신규 SQL은 검토안이며 DEV 미적용, 최소문서프로필의 증표는 제품활성화에 쓸 수 없다. 다음은 전체DB18mapper·실제gateway연결이다.
 
 **최신 진행:** [58. 이관 영속 상태·재개·취소](58-durable-migration-resume-cancel.md) PoC103개 통과. journal에는 이미지 본문 없이 상태만 저장하며 원격은 테스트 어댑터다. 다음은 실제 PostgreSQL 이관 테이블/RPC와 도메인 매핑이다.

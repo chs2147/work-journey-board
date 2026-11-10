@@ -1,6 +1,6 @@
 # V2 설계·PoC 중단/재개 기록
 
-**현재 재개 정본:** [59. PostgreSQL 이관 서버](59-postgres-migration-server.md). 이하 체크포인트는 작성 당시 기록이며 가장 최근 결과가 우선한다.
+**현재 재개 정본:** [60. DB18 전체 매핑·RPC 연결](60-db18-workspace-map-gateway.md). 이하 체크포인트는 작성 당시 기록이며 가장 최근 결과가 우선한다.
 
 2026-11-09 UTC · V2 설계/PoC 중단 지점을 보존한 뒤 복귀했다. 사용자 요청으로 main 1.23.1 패치(`d11a0ca`)를 v2-design에 병합했다.
 
@@ -118,3 +118,7 @@ main CI42585959844의 실제 실패는 Chromium 표 이동 undo 시 표 전체�
 ## PostgreSQL 이관 서버 모듈(2026-11-10 KST, 최신)
 
 [59문서](59-postgres-migration-server.md)가 최신 재개점이다. 로컬PG17.11/NOSUPERUSER-BYPASSRLS 소유자로 서버39개 통과. wjb_migration job/asset/document·RLS·serverRPC·gatewayINSERTgate,readback/IO검증·publish ticket/fence·원자적취소/관측·빈rollback을 구현했다. 최소문서프로필migration-document-poc-1/receipt poc-verified는 제품활성화금지(실행가드실험거절). reviewmanifest는DEV/autoApply=false이며Cloud에적용하지않았다. 다음은전체DB18문서/논리자산mapper와source/targetmanifest별도바인딩·journal/실제gatewayadapter연결이다. 이후신규전진SQL검토/DEV통합. 기존install재실행/원본변경/로컬모델폐기 금지 철칙 유지.
+
+## 전체 DB18 매핑·RPC 연결(최신)
+
+[60문서](60-db18-workspace-map-gateway.md)에26개 테이블 매핑17개·HTTP16개·실제PG40개 검증을 기록했다. 원본/온라인 manifest 해시를 구분하며 전체 봉투를 최소문서 RPC에 보내는 것은 거절한다. 다음은 전체 서버 프로필/저장 검증과 journal 이중 해시 영속 연결, 실제 Storage readback/취소 어댑터다. 신규 SQL은 DEV 미적용이며 제품/원본/환경/과금 변경은 없다.

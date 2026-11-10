@@ -142,7 +142,7 @@ BEGIN
   IF FOUND THEN
    IF j.owner_id<>u OR j.device_id<>dev OR j.workspace_id<>ws THEN RAISE EXCEPTION 'MIGRATION_ACCESS_DENIED'; END IF;
    IF j.manifest_hash<>mh THEN RAISE EXCEPTION 'MIGRATION_IDEMPOTENCY_MISMATCH'; END IF;
-   RETURN jsonb_build_object('jobId',j.id,'state',j.state,'manifestHash',j.manifest_hash,'profile',j.profile);
+   RETURN jsonb_build_object('jobId',j.id,'state',j.state,'manifestHash',j.manifest_hash,'profile',j.profile,'workspaceId',j.workspace_id,'sourceManifestHash',j.source_manifest_hash);
   END IF;
   IF (SELECT count(*) FROM wjb_migration.job WHERE owner_id=u AND state IN('staging','cancel_fenced'))>=16 THEN RAISE EXCEPTION 'MIGRATION_LIMIT'; END IF;
   INSERT INTO wjb_gateway.workspace(id,owner_id,generation) VALUES(ws,u,1);
@@ -157,7 +157,7 @@ BEGIN
   FOR v IN SELECT value FROM jsonb_array_elements(norm->'documents') LOOP
    INSERT INTO wjb_migration.document VALUES(jid,(v->>'id')::uuid,v->>'title',v->'blocks');
   END LOOP;
-  RETURN jsonb_build_object('jobId',jid,'state','staging','manifestHash',mh,'profile',j.profile);
+  RETURN jsonb_build_object('jobId',jid,'state','staging','manifestHash',mh,'profile',j.profile,'workspaceId',j.workspace_id,'sourceManifestHash',j.source_manifest_hash);
  END IF;
  IF NOT wjb_migration.keys_exact(p,CASE action
    WHEN 'status' THEN ARRAY['manifestHash']
@@ -179,7 +179,7 @@ BEGIN
  IF p->>'manifestHash' IS DISTINCT FROM j.manifest_hash THEN RAISE EXCEPTION 'MIGRATION_MANIFEST_CHANGED'; END IF;
  PERFORM 1 FROM wjb_gateway.asset WHERE workspace_id=ws ORDER BY id FOR UPDATE;
  IF action='status' THEN RETURN jsonb_build_object('jobId',jid,'state',j.state,'epoch',j.epoch::text,
-   'manifestHash',j.manifest_hash,'profile',j.profile); END IF;
+   'manifestHash',j.manifest_hash,'profile',j.profile,'workspaceId',j.workspace_id,'sourceManifestHash',j.source_manifest_hash); END IF;
  IF action='cancel' THEN
   op:=(p->>'operationId')::uuid;IF op IS NULL THEN RAISE EXCEPTION 'MIGRATION_OPERATION_REQUIRED'; END IF;
   IF j.state='connected' THEN RETURN jsonb_build_object('state','connected','receipt',wjb_migration.receipt(j)); END IF;

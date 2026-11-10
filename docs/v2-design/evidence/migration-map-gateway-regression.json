@@ -1,0 +1,21 @@
+{
+  "checkedAt": "2026-11-10T01:18:23.026466+00:00",
+  "jsTests": 136,
+  "postgresTests": 40,
+  "totalPassed": 176,
+  "cloudApplied": false,
+  "productActivationAllowed": false,
+  "fullWorkspaceServerIngestion": false,
+  "sourceSha256": {
+    "poc/v2-migration/build-db18-contract.mjs": "b49c820a7d200319c510d15f615ce4ed097bec5ed3da07835698e4e07ef80a9c",
+    "poc/v2-migration/coordinator.mjs": "122f40677bc49753368e30312a4e226cccf85cc62aebf8d6084bea99d9ca52c4",
+    "poc/v2-migration/coordinator.test.mjs": "867aa9e7cf8aa1c32cdad7d7de79303132eb2078872b9e9bc9840287d5679ec3",
+    "poc/v2-migration/db18-contract.json": "4f1a9941b2f9bed1c203aaed70643a2eb10d0ffdb52e01b3ea40177b1c7b6778",
+    "poc/v2-migration/journal.mjs": "ec61954b774bee6f6b57e1775022f3e239b0bde5f846d3af7678c7b155b51113",
+    "poc/v2-migration/rpc-pg-client.mjs": "291c4f80d8215409062710ccebf6981e5e97d060ef0426be6d39b2dde87d23f3",
+    "poc/v2-migration/server-rpc.mjs": "541a47feb16ca0dd9deb713a9447fd69c322d33271ca959e3020d0f12735665d",
+    "poc/v2-migration/server-rpc.test.mjs": "53d8bc0f06bb863c9900458a3b0233dc71616e0d68acc6de2c4fc9fdbbd7bf8d",
+    "poc/v2-migration/workspace-map.mjs": "d4e70f7dde829a84c0743059d5e4f299a0430a3035b4df4b091ce81dfc0580b0",
+    "poc/v2-migration/workspace-map.test.mjs": "bb377f50b57dfe1f5eb302969f6c7aa995f466157d924f2d44fc30d0e8d8f529"
+  }
+}

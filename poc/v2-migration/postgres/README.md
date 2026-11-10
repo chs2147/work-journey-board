@@ -13,3 +13,5 @@ PYTHONDONTWRITEBYTECODE=1 python3 poc/v2-migration/postgres/run-local.py
 **migration-document-poc-1은 문단/이미지 참조만 지원한다.** 실제 DB18 전체 도메인 매핑이 아니며, 완료 증표 status=poc-verified는 앱의 verified 조건을 통과하지 못한다. 실제 Auth/JWT/Storage는 가상/신뢰 어댑터 경계로 대체하며 이번 시험의 범위를 분리한다.
 
 정본: [59. 결과/검토 범위](../../../docs/v2-design/59-postgres-migration-server.md)
+
+현재 runner는40개를 검증하며 새1개는 loopback HTTP를 통해 실제 PG 함수를 호출한다. `--evidence-stem migration-map-gateway-postgres`로 이전39개 증거를 덮어쓰지 않고 보존한다. 전체 DB18 봉투의 서버 저장과 실제 Storage readback은 아직 연결되지 않았다([60문서](../../../docs/v2-design/60-db18-workspace-map-gateway.md)).

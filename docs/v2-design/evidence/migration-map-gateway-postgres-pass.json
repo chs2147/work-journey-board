@@ -1,0 +1,224 @@
+{
+  "checkedAt": "2026-11-10T01:12:44.557367+00:00",
+  "postgres": "17.11 (Debian 17.11-1.pgdg12+2)",
+  "image": "postgres@sha256:665dc7b37ac52a17e298511414c21d23ffa4e6a6ef6225b3e5d59c7afb35e994",
+  "tests": [
+    {
+      "name": "preflight confirms separate unused module and existing prerequisites",
+      "status": "PASS",
+      "ms": 79
+    },
+    {
+      "name": "unused rollback removes only new objects; existing gateway definition preserved",
+      "status": "PASS",
+      "ms": 542
+    },
+    {
+      "name": "client RPC and direct table access denied, including bypass-RLS service role",
+      "status": "PASS",
+      "ms": 547
+    },
+    {
+      "name": "other owner, session mismatch and banned user denied",
+      "status": "PASS",
+      "ms": 584
+    },
+    {
+      "name": "start replay matches exact canonical manifest; changed payload rejected",
+      "status": "PASS",
+      "ms": 342
+    },
+    {
+      "name": "inline data URL rejected atomically",
+      "status": "PASS",
+      "ms": 375
+    },
+    {
+      "name": "raw WebP base64 signature rejected in metadata text",
+      "status": "PASS",
+      "ms": 407
+    },
+    {
+      "name": "image node cannot embed data or src",
+      "status": "PASS",
+      "ms": 419
+    },
+    {
+      "name": "unknown image reference rejected",
+      "status": "PASS",
+      "ms": 397
+    },
+    {
+      "name": "duplicate asset IDs rejected",
+      "status": "PASS",
+      "ms": 404
+    },
+    {
+      "name": "bytea/base64-style extra root field rejected",
+      "status": "PASS",
+      "ms": 402
+    },
+    {
+      "name": "unsupported block format rejected",
+      "status": "PASS",
+      "ms": 410
+    },
+    {
+      "name": "old gateway cannot reserve unlisted assets in migration workspace",
+      "status": "PASS",
+      "ms": 247
+    },
+    {
+      "name": "pending files cannot publish",
+      "status": "PASS",
+      "ms": 412
+    },
+    {
+      "name": "ready alone is insufficient; server attestation yields scoped PoC receipt",
+      "status": "PASS",
+      "ms": 1044
+    },
+    {
+      "name": "attestation hash/size and IO version bound",
+      "status": "PASS",
+      "ms": 861
+    },
+    {
+      "name": "stale attestation blocks publish until readback re-attestation",
+      "status": "PASS",
+      "ms": 1308
+    },
+    {
+      "name": "server metadata drift detected by canonical digest",
+      "status": "PASS",
+      "ms": 1126
+    },
+    {
+      "name": "ready asset with older unsettled IO remains blocked",
+      "status": "PASS",
+      "ms": 1547
+    },
+    {
+      "name": "cancel requires absent confirmation and quota released only once",
+      "status": "PASS",
+      "ms": 966
+    },
+    {
+      "name": "cancel waits for old IO settlement; no timeout shortcut",
+      "status": "PASS",
+      "ms": 1207
+    },
+    {
+      "name": "old gateway write lease cannot start IO after cancel fence",
+      "status": "PASS",
+      "ms": 402
+    },
+    {
+      "name": "lost publish response replays same receipt; connected space never canceled",
+      "status": "PASS",
+      "ms": 1251
+    },
+    {
+      "name": "reconciliation fences expired publish and delayed prepare requests",
+      "status": "PASS",
+      "ms": 1444
+    },
+    {
+      "name": "cancel invalidates previously issued publication ticket",
+      "status": "PASS",
+      "ms": 1277
+    },
+    {
+      "name": "empty image inventory is valid without invented Blob",
+      "status": "PASS",
+      "ms": 397
+    },
+    {
+      "name": "expired reservation can renew only within active migration",
+      "status": "PASS",
+      "ms": 854
+    },
+    {
+      "name": "new trigger preserves non-migration gateway workspaces",
+      "status": "PASS",
+      "ms": 155
+    },
+    {
+      "name": "two PG connections: publish commits first, cancel retains connected assets",
+      "status": "PASS",
+      "ms": 1437
+    },
+    {
+      "name": "two PG connections: cancel commits first, late publish rejected",
+      "status": "PASS",
+      "ms": 1489
+    },
+    {
+      "name": "RLS and image-free schema with non-superuser migration owner",
+      "status": "PASS",
+      "ms": 256
+    },
+    {
+      "name": "UUID normalization preserves semantic manifest replay",
+      "status": "PASS",
+      "ms": 278
+    },
+    {
+      "name": "existing session revocation blocks migration RPC",
+      "status": "PASS",
+      "ms": 451
+    },
+    {
+      "name": "cancel replay does not increment fence or release quota twice",
+      "status": "PASS",
+      "ms": 634
+    },
+    {
+      "name": "different publication operation cannot reuse a ticket",
+      "status": "PASS",
+      "ms": 1044
+    },
+    {
+      "name": "reservation renewal refuses outstanding IO",
+      "status": "PASS",
+      "ms": 689
+    },
+    {
+      "name": "actual SQL PoC receipt is rejected by product activation guard",
+      "status": "PASS",
+      "ms": 1060
+    },
+    {
+      "name": "module reapplication fails atomically without changing jobs",
+      "status": "PASS",
+      "ms": 260
+    },
+    {
+      "name": "rollback refuses used module and retains all jobs",
+      "status": "PASS",
+      "ms": 240
+    },
+    {
+      "name": "trusted migration RPC adapter crosses loopback HTTP to actual PG with dual manifest binding",
+      "status": "PASS",
+      "ms": 1267
+    }
+  ],
+  "passed": 40,
+  "cloudApplied": false,
+  "storageBytesReadbackTested": false,
+  "scope": "Actual PostgreSQL functions/RLS/locks, fixture Auth and trusted gateway attestations; no remote network",
+  "sourceSha256": {
+    "poc/v2-migration/postgres/000-preflight.sql": "526ab8667fa480ba4754c2354c0bc21c31fa2bb5831954a6e9ccdc06b82ff083",
+    "poc/v2-migration/postgres/001-migration.sql": "6145666198a542a88e10e1b27699c18db7089aa1e843c057cf11eb90a60c63c0",
+    "poc/v2-migration/postgres/002-verify.sql": "ca81610435a5aa1f4a4d724fd50982252a96f3985142ed8823ea94f47f0e0022",
+    "poc/v2-migration/postgres/003-rollback-empty.sql": "783dcecc6d5b0f44af9577a01f2eed9d5758f87af2ae94ae64e155876f9ec7e3",
+    "poc/v2-migration/postgres/run-local.py": "409ba5e59ad17f9740efde7293ead38a68701ab09315f6569bc4fe317995a36e",
+    "poc/v2-migration/server-rpc.mjs": "541a47feb16ca0dd9deb713a9447fd69c322d33271ca959e3020d0f12735665d",
+    "poc/v2-migration/rpc-pg-client.mjs": "291c4f80d8215409062710ccebf6981e5e97d060ef0426be6d39b2dde87d23f3",
+    "poc/v2-cloud/session-guard.sql": "3be17e719a5a5c8cf91268c46b2ce99aeff3c6127b5b43bd8b8f250467a374c9",
+    "poc/v2-gateway/postgres-metadata.sql": "b8d789769cf529456757092ef59ac484dda451686bf8ca2139895b79fabe9bda",
+    "poc/v2-gateway/recovery.sql": "bf9e474bbda8a3af4eb4602f83b70cf6605d416befb3e6bf809d172a9f3aca54"
+  },
+  "localContainerRemoved": true
+}

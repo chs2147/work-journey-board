@@ -8,6 +8,10 @@ from pathlib import Path
 import subprocess
 import time
 import uuid
+import argparse
+import re
+import threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
 
 ROOT = Path(__file__).resolve().parent
 REPO = ROOT.parents[2]
@@ -19,6 +23,11 @@ RESULTS = []
 created = False
 SQL_USER = 'postgres'
 result = None
+arguments=argparse.ArgumentParser()
+arguments.add_argument('--evidence-stem',default='migration-postgres')
+evidence_stem=arguments.parse_args().evidence_stem
+if not re.fullmatch(r'migration-[a-z0-9-]{1,80}',evidence_stem):raise SystemExit('Invalid local evidence filename')
+EVIDENCE=REPO/'docs/v2-design/evidence'/f'{evidence_stem}-pass.json'
 
 
 def docker(*args, data=None, check=True):
@@ -343,6 +352,32 @@ catch(e){process.stdout.write(e.message);} """.replace('REPLACE',json.dumps((REP
         assert scalar('SELECT count(*) FROM wjb_migration.job;')==before
     test('rollback refuses used module and retains all jobs',nonempty_rollback)
 
+    def http_rpc():
+        f=fixture()
+        class Handler(BaseHTTPRequestHandler):
+            def log_message(self,*args):pass
+            def do_POST(self):
+                if self.path!='/rest/v1/rpc/wjb_v2_migration_command' or self.headers.get('Authorization')!='Bearer local-migration-fixture-key' or self.headers.get('apikey')!='local-migration-fixture-key':
+                    self.send_error(401);return
+                length=int(self.headers.get('Content-Length','0'))
+                if not 0<length<=65536:self.send_error(413);return
+                try:
+                    req=json.loads(self.rfile.read(length))
+                    answer=sql(query(req['p_request']),check=False)
+                    if answer.returncode:
+                        code=re.search(r'ERROR:\s+(MIGRATION_[A-Z_]+)',answer.stderr)
+                        body={'code':'P0001','message':code.group(1) if code else 'SQL_UNAVAILABLE'};status=400
+                    else:body=json.loads(answer.stdout.strip());status=200
+                except Exception:body={'message':'LOCAL_FIXTURE_UNAVAILABLE'};status=503
+                encoded=json.dumps(body).encode();self.send_response(status);self.send_header('Content-Type','application/json');self.send_header('Content-Length',str(len(encoded)));self.end_headers();self.wfile.write(encoded)
+        server=HTTPServer(('127.0.0.1',0),Handler);thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+        try:
+            payload={**f,'user':A,'session':SA,'device':DA,'otherUser':B,'otherSession':SB,'otherDevice':DB}
+            child=subprocess.run(['node',str(REPO/'poc/v2-migration/rpc-pg-client.mjs'),'--local-fixture-only',f'http://127.0.0.1:{server.server_port}'],input=json.dumps(payload),text=True,capture_output=True,env=ENV,timeout=25)
+            assert child.returncode==0 and child.stdout.strip()=='RPC_PG_HTTP_PASS',(child.stdout,child.stderr)
+        finally:server.shutdown();server.server_close();thread.join(timeout=5)
+    test('trusted migration RPC adapter crosses loopback HTTP to actual PG with dual manifest binding',http_rpc)
+
 
 try:
     docker('info','--format','{{.ServerVersion}}')
@@ -379,12 +414,12 @@ try:
     result={'checkedAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'postgres':scalar('SHOW server_version;'),
       'image':IMAGE,'tests':RESULTS,'passed':len(RESULTS),'cloudApplied':False,'storageBytesReadbackTested':False,
       'scope':'Actual PostgreSQL functions/RLS/locks, fixture Auth and trusted gateway attestations; no remote network',
-      'sourceSha256':{str(p.relative_to(REPO)):hashlib.sha256(p.read_bytes()).hexdigest() for p in [*sorted(ROOT.glob('*.sql')),ROOT/'run-local.py',REPO/'poc/v2-cloud/session-guard.sql',REPO/'poc/v2-gateway/postgres-metadata.sql',REPO/'poc/v2-gateway/recovery.sql']}}
-    (REPO/'docs/v2-design/evidence/migration-postgres-pass.json').write_text(json.dumps(result,indent=2)+'\n')
+      'sourceSha256':{str(p.relative_to(REPO)):hashlib.sha256(p.read_bytes()).hexdigest() for p in [*sorted(ROOT.glob('*.sql')),ROOT/'run-local.py',REPO/'poc/v2-migration/server-rpc.mjs',REPO/'poc/v2-migration/rpc-pg-client.mjs',REPO/'poc/v2-cloud/session-guard.sql',REPO/'poc/v2-gateway/postgres-metadata.sql',REPO/'poc/v2-gateway/recovery.sql']}}
+    EVIDENCE.write_text(json.dumps(result,indent=2)+'\n')
     print(json.dumps({'passed':len(RESULTS),'postgres':result['postgres'],'cloudApplied':False}))
 finally:
     removed = not created or docker('rm','-f','-v',NAME,check=False).returncode==0
     if result is not None:
         result['localContainerRemoved']=removed
-        (REPO/'docs/v2-design/evidence/migration-postgres-pass.json').write_text(json.dumps(result,indent=2)+'\n')
+        EVIDENCE.write_text(json.dumps(result,indent=2)+'\n')
     if not removed:raise RuntimeError('Owned local test container cleanup failed')

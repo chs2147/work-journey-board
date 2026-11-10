@@ -344,3 +344,7 @@ V2 체크포인트52ff622를 푸시한 뒤 사용자 요청의 캐비넷/노트 
 ## 4.62 PostgreSQL 이관 서버/원자적 연결·취소
 
 [59문서](59-postgres-migration-server.md)의 신규 schema3테이블/RLS/serverRPC·기존asset INSERT gate·publish ticket/fence·attestation/취소/예약량 검증을 실제 로컬PG17.11에서39개 통과했다. 두PG연결의publish/cancel 경쟁과 미사용rollback/사용후거절도 검증했다. 문단/이미지참조 최소프로필이며 receipt=poc-verified는 제품실행가드에서 거절된다. source/targetmanifest는 별도해시고 전체DB18 mapper·실제gateway/DEV적용·native제품은 후속이다. 새SQL/verify/빈rollback/reviewmanifest를 준비했으나 기존설치SQL/Cloud/원본/제품은 변경하지 않았다.
+
+## 4.63 전체 DB18 매핑·RPC 신뢰 경계
+
+[60문서](60-db18-workspace-map-gateway.md)의26테이블 매핑17개·HTTP16개·실제PG40개가 통과했다. 전체 데이터 봉투와 최소 서버 프로필을 구분해 축약 전송을 거절하며 source/target manifest를 별도로 바인딩한다. Cloud/제품은 변경하지 않았다. 다음은 전체 서버 프로필·journal 영속 바인딩·실제 Storage 연결이며 로컬 영구 유지/새 사본 철칙을 유지한다.
