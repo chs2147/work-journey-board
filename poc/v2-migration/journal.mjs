@@ -22,7 +22,7 @@ export function openMigrationJournal(path, { clock = () => Date.now(), protected
     try {
       if (
         inspect.prepare("PRAGMA application_id").get().application_id !== applicationId ||
-        inspect.prepare("PRAGMA user_version").get().user_version !== 1
+        ![1, 2].includes(inspect.prepare("PRAGMA user_version").get().user_version)
       )
         throw Error("NOT_MIGRATION_JOURNAL");
     } finally {
@@ -62,11 +62,29 @@ export function openMigrationJournal(path, { clock = () => Date.now(), protected
     db.close();
     throw Error("JOURNAL_INTEGRITY");
   }
+  // Forward-only journal upgrade, after identity/path/integrity validation.
+  if (db.prepare("PRAGMA user_version").get().user_version === 1) {
+    transaction(db, () =>
+      db.exec(`
+      CREATE TABLE workspace_binding(
+        job_id TEXT PRIMARY KEY REFERENCES job(id),
+        source_manifest_hash TEXT NOT NULL CHECK(length(source_manifest_hash)=64),
+        mapping_hash TEXT NOT NULL CHECK(length(mapping_hash)=64),
+        target_profile TEXT NOT NULL CHECK(target_profile IN ('workspace-db18-map-poc-1','workspace-db19-map-poc-1')),
+        target_manifest_hash TEXT CHECK(target_manifest_hash IS NULL OR length(target_manifest_hash)=64),
+        phase TEXT NOT NULL CHECK(phase IN ('waiting_binding','staged','publishing','poc_verified','cancel_fenced','canceled')),
+        metadata_verified INTEGER NOT NULL DEFAULT 0 CHECK(metadata_verified IN (0,1)),
+        server_epoch TEXT);
+      PRAGMA user_version=2;
+    `),
+    );
+  }
   const view = (id) => {
     const row = db.prepare("SELECT * FROM job WHERE id=?").get(id);
     if (!row) throw Error("JOB_NOT_FOUND");
     return {
       ...row,
+      binding: db.prepare("SELECT * FROM workspace_binding WHERE job_id=?").get(id) || null,
       assets: db
         .prepare("SELECT * FROM asset WHERE job_id=? ORDER BY object_id")
         .all(id)
@@ -121,6 +139,124 @@ export function openMigrationJournal(path, { clock = () => Date.now(), protected
       });
       return scoped(id, { ownerId, deviceId });
     },
+    prepareWorkspace(lease, { mappingHash, profile }) {
+      return mutation(lease, (job) => {
+        if (
+          !/^[0-9a-f]{64}$/.test(mappingHash) ||
+          !["workspace-db18-map-poc-1", "workspace-db19-map-poc-1"].includes(profile)
+        )
+          throw Error("WORKSPACE_BINDING_REQUIRED");
+        if (job.binding) {
+          if (
+            job.binding.mapping_hash !== mappingHash ||
+            job.binding.target_profile !== profile ||
+            job.binding.source_manifest_hash !== job.manifest_hash
+          )
+            throw Error("WORKSPACE_MAPPING_CHANGED");
+          return job.binding;
+        }
+        if (!["prepared", "cancel_requested"].includes(job.state)) throw Error("WORKSPACE_BINDING_STATE");
+        db.prepare(
+          "INSERT INTO workspace_binding(job_id,source_manifest_hash,mapping_hash,target_profile,phase) VALUES(?,?,?,?,'waiting_binding')",
+        ).run(job.id, job.manifest_hash, mappingHash, profile);
+        return view(job.id).binding;
+      });
+    },
+    bindWorkspace(lease, binding) {
+      return mutation(lease, (job) => {
+        const b = job.binding;
+        if (
+          !b ||
+          binding?.jobId !== job.id ||
+          binding.workspaceId !== job.workspace_id ||
+          binding.sourceManifestHash !== b.source_manifest_hash ||
+          binding.targetProfile !== b.target_profile ||
+          binding.productActivationAllowed !== false ||
+          !/^[0-9a-f]{64}$/.test(binding.targetManifestHash)
+        )
+          throw Error("WORKSPACE_BINDING_MISMATCH");
+        if (b.target_manifest_hash && b.target_manifest_hash !== binding.targetManifestHash)
+          throw Error("WORKSPACE_TARGET_CHANGED");
+        if (!b.target_manifest_hash)
+          db.prepare("UPDATE workspace_binding SET target_manifest_hash=?,phase='staged' WHERE job_id=?").run(
+            binding.targetManifestHash,
+            job.id,
+          );
+        return view(job.id).binding;
+      });
+    },
+    workspaceVerified(lease, proof) {
+      return mutation(lease, (job) => {
+        const b = job.binding;
+        if (
+          !b?.target_manifest_hash ||
+          proof?.jobId !== job.id ||
+          proof.mappingHash !== b.mapping_hash ||
+          proof.targetManifestHash !== b.target_manifest_hash ||
+          proof.sourceManifestHash !== b.source_manifest_hash ||
+          proof.profile !== b.target_profile
+        )
+          throw Error("WORKSPACE_METADATA_MISMATCH");
+        db.prepare("UPDATE workspace_binding SET metadata_verified=1 WHERE job_id=?").run(job.id);
+      });
+    },
+    workspacePocVerified(lease, receipt) {
+      return mutation(lease, (job) => {
+        const b = job.binding;
+        if (
+          !b?.metadata_verified ||
+          !["publishing", "cancel_requested"].includes(job.state) ||
+          receipt?.status !== "poc-verified" ||
+          receipt.profile !== b.target_profile ||
+          receipt.workspaceId !== job.workspace_id ||
+          receipt.manifestHash !== b.target_manifest_hash ||
+          receipt.sourceManifestHash !== b.source_manifest_hash ||
+          receipt.generation !== "1" ||
+          !job.publish_op ||
+          receipt.publicationId !== job.publish_op
+        )
+          throw Error("WORKSPACE_RECEIPT_MISMATCH");
+        db.prepare("UPDATE workspace_binding SET phase='poc_verified' WHERE job_id=?").run(job.id);
+        // Do not mark product job 'connected': PoC receipt cannot activate a workspace.
+      });
+    },
+    workspaceCancelFenced(lease, result) {
+      return mutation(lease, (job) => {
+        const b = job.binding;
+        if (
+          !b ||
+          job.state !== "cancel_requested" ||
+          result?.state !== "cancel_fenced" ||
+          result.publishBlocked !== true ||
+          result.jobId !== job.id ||
+          result.manifestHash !== b.target_manifest_hash ||
+          typeof result.epoch !== "string" ||
+          !/^[1-9][0-9]*$/.test(result.epoch)
+        )
+          throw Error("CANCEL_NOT_FENCED");
+        db.prepare("UPDATE job SET state='cancel_fenced' WHERE id=?").run(job.id);
+        db.prepare("UPDATE workspace_binding SET phase='cancel_fenced',server_epoch=? WHERE job_id=?").run(
+          result.epoch,
+          job.id,
+        );
+      });
+    },
+    workspaceCanceled(lease, result) {
+      return mutation(lease, (job) => {
+        const b = job.binding;
+        if (
+          !b ||
+          job.state !== "cancel_fenced" ||
+          result?.state !== "canceled" ||
+          result.jobId !== job.id ||
+          result.manifestHash !== b.target_manifest_hash ||
+          result.epoch !== b.server_epoch
+        )
+          throw Error("CANCEL_NOT_COMPLETE");
+        db.prepare("UPDATE job SET state='canceled' WHERE id=?").run(job.id);
+        db.prepare("UPDATE workspace_binding SET phase='canceled' WHERE job_id=?").run(job.id);
+      });
+    },
     acquire(id, actor) {
       return transaction(db, () => {
         const job = scoped(id, actor);
@@ -150,7 +286,8 @@ export function openMigrationJournal(path, { clock = () => Date.now(), protected
     requestCancel(id, actor) {
       return transaction(db, () => {
         const job = scoped(id, actor);
-        if (job.state === "connected") throw Error("ALREADY_CONNECTED");
+        if (job.state === "connected" || job.binding?.phase === "poc_verified")
+          throw Error("ALREADY_CONNECTED");
         if (["canceled", "cancel_requested", "cancel_fenced"].includes(job.state)) return job;
         db.prepare(
           "UPDATE job SET state='cancel_requested',epoch=epoch+1,lease_token=NULL,lease_until=NULL,cancel_op=? WHERE id=?",
@@ -217,6 +354,7 @@ export function openMigrationJournal(path, { clock = () => Date.now(), protected
       return mutation(lease, (job) => {
         if (
           !["prepared", "uploading", "publishing"].includes(job.state) ||
+          (job.binding && !job.binding.metadata_verified) ||
           job.assets.some((a) => a.state !== "verified")
         )
           throw Error("ASSETS_NOT_VERIFIED");
@@ -227,6 +365,7 @@ export function openMigrationJournal(path, { clock = () => Date.now(), protected
     },
     connected(lease, receipt) {
       return mutation(lease, (job) => {
+        if (job.binding) throw Error("FULL_WORKSPACE_COORDINATOR_REQUIRED");
         if (!["publishing", "cancel_requested"].includes(job.state)) throw Error("PUBLICATION_STATE");
         if (
           receipt?.status !== "verified" ||

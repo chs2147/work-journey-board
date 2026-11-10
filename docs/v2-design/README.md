@@ -1,5 +1,7 @@
 # V2 프로젝트 — 다국어·온라인 동기화 상세 설계 초안
 
+**최신 진행:** [64. 전체 프로필 gateway·journal 연결](64-workspace-gateway-journal-binding.md). 분리된 source/mapping/target 해시 영속 기록과 실제 RPC 제어 복구를 구현했다. 이미지 공간은 준비 단계에서 차단하며 다음은 실제 Storage I/O 어댑터다.
+
 **최신 진행:** [63. 전체 워크스페이스 서버 프로필](63-full-workspace-server-profile.md). DB18/19 전체 봉투의 서버 검증·레코드 저장·재조회/게시 해시·RLS·빈 rollback을 추가했다. Cloud 미적용이며 다음은 gateway/journal 연결이다.
 
 **최신 진행:** [62. DB18/19 사본 이관 계약](62-db19-copy-contract-compatibility.md). DB19 삭제 잠금 보존·별도 파일 복원과 기존 DB18 호환 검증을 추가했다. 다음은 전체 봉투 서버 프로필/저장 검증이다.

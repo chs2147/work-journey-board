@@ -38,3 +38,12 @@ PYTHONDONTWRITEBYTECODE=1 python3 poc/v2-migration/postgres/run-local.py --full-
 ```
 
 새004는001 뒤에 적용하는 검토용 전진 SQL이며 자동 적용하지 않는다.005는SELECT 검토,006은 전체프로필 미사용일 때만 확장을 되돌린다. 전체프로필 사용 이력이 있으면 rollback을 거절한다. 기본003은 확장006을 먼저 되돌린 뒤 사용한다. 기존 gateway JS의 최소문서 제한은 아직 유지한다. [63. 범위·제한·다음 단계](../../docs/v2-design/63-full-workspace-server-profile.md)를 따른다.
+
+## 전체 프로필 journal 제어 연결
+
+```sh
+node --test poc/v2-migration/workspace-session.test.mjs
+PYTHONDONTWRITEBYTECODE=1 python3 poc/v2-migration/postgres/run-local.py --full-workspace --evidence-stem migration-workspace-session
+```
+
+RPC는 allowWorkspaceProfiles:true로 명시적으로 활성화한다. journal version1은 인식/경로/무결성 확인 후2로 올리며 기존 job/asset을 보존한다. source/mapping/target 해시는 별도다. workspace-session은 이미지 없는 공간의 PoC 게시·재조회/취소 제어를 연결하고, 이미지 공간은 실제Storage어댑터 전까지 준비 단계에서 정지한다. [64문서](../../docs/v2-design/64-workspace-gateway-journal-binding.md)를 따른다.

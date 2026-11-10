@@ -360,3 +360,7 @@ V2 체크포인트52ff622를 푸시한 뒤 사용자 요청의 캐비넷/노트 
 ## 4.66 전체 DB18/19 서버 프로필
 
 [63문서](63-full-workspace-server-profile.md)의 새전진004가 DB18/19 전체 봉투를 검증·저장하고 기존 게시/취소 경계와 재구성 해시를 적용한다. 새2테이블 RLS/직접ACL차단·미사용006rollback을 준비했다. 제품활성화/Cloud적용은 없으며 다음은3번 gateway/journal 전체 프로필·이중해시 연결이다.
+
+## 4.67 gateway 제어 연결과 영속 해시 분리
+
+[64문서](64-workspace-gateway-journal-binding.md)에 전체 프로필 opt-in RPC와 journal version2 보존 업그레이드·해시 이중 바인딩/매핑 지문을 구현했다. 실제 HTTP/PG/SQLite 재열기로 제어 응답 유실을 확인하며 PoC 완료는 제품 활성화로 바꾸지 않는다. 다음은4번 실제Storage전송/readback/취소부재확인이다. 이미지 없는 제어 통합과 실제파일 이관을 구분하며 Cloud에는 미적용이다.

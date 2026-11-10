@@ -1,6 +1,6 @@
 # V2 설계·PoC 중단/재개 기록
 
-**현재 재개 정본:** [63. 전체 워크스페이스 서버 프로필](63-full-workspace-server-profile.md). 이하 체크포인트는 작성 당시 기록이며 가장 최근 결과가 우선한다.
+**현재 재개 정본:** [64. gateway·journal 해시 바인딩](64-workspace-gateway-journal-binding.md). 이하 체크포인트는 작성 당시 기록이며 가장 최근 결과가 우선한다.
 
 2026-11-09 UTC · V2 설계/PoC 중단 지점을 보존한 뒤 복귀했다. 사용자 요청으로 main 1.23.1 패치(`d11a0ca`)를 v2-design에 병합했다.
 
@@ -140,3 +140,7 @@ main CI42585959844의 실제 실패는 Chromium 표 이동 undo 시 표 전체�
 ## 전체 워크스페이스 서버 프로필(최신)
 
 [63문서](63-full-workspace-server-profile.md)에 요청2번 서버 저장/검증을 구현했다. 새004/읽기005/미사용006rollback과 별도 review manifest를 추가했고 기존001/제품 코드는 유지한다. DB18/19 전체26테이블 봉투를 검증·저장하고 게시 전 재구성 해시를 대조한다. 실제 Cloud 미적용이며 현재 gateway JS는 최소문서만 지원한다. 다음은3번 전체 프로필/journal의 source-target 해시 영속 연결, 이후 실제Storage/DEV 검토다.
+
+## 전체 프로필 gateway·journal 연결(최신)
+
+앞 단계1/2를 f1477af로 커밋·푸시했다. [64문서](64-workspace-gateway-journal-binding.md)에 전체 RPC opt-in·journal version2의 보존 업그레이드·source/mapping/target 해시 영속 바인딩·실제 서버 제어 재개/취소를 구현했다. PoC 완료는 제품 connected로 승격하지 않는다. 이미지 공간은 metadata 저장/검증 후 차단하며4번 실제 Storage 연결이 남아 있다. start 유실 후 binding/사본이 모두 없으면 보수적으로 중단한다. 실제 Cloud/제품/원본은 변경하지 않았다.

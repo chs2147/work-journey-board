@@ -5,6 +5,7 @@ const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const sha = /^[0-9a-f]{64}$/;
 const shapes = {
   status: ["manifestHash"],
+  workspace: ["manifestHash"],
   renew: ["manifestHash", "objectId"],
   observe: ["manifestHash", "objectId"],
   attest: ["manifestHash", "objectId", "ioVersion", "sha256", "bytes"],
@@ -44,6 +45,29 @@ const errors = new Set([
   "MIGRATION_IO_UNSETTLED",
   "MIGRATION_ATTESTATION_REJECTED",
   "MIGRATION_INVALID_ACTION",
+  ...[
+    "WORKSPACE_FORMAT",
+    "WORKSPACE_SCHEMA",
+    "WORKSPACE_UNAVAILABLE",
+    "ROW_FORMAT",
+    "ROW_COLUMNS",
+    "ROW_TYPE",
+    "RECORD_KEY",
+    "FOREIGN_KEY",
+    "DUPLICATE_RECORD",
+    "ROW_COUNTS",
+    "DELETE_LOCK",
+    "SETTINGS",
+    "LOCAL_PATH",
+    "RICH_FORMAT",
+    "BOARD_FORMAT",
+    "BOARD_REFERENCE",
+    "WIDGET_FORMAT",
+    "RESOURCE_FORMAT",
+    "UNDO_FORMAT",
+    "EXCLUSION",
+    "DEPTH",
+  ].map((v) => "MIGRATION_" + v),
 ]);
 function keys(v, wanted) {
   return (
@@ -54,10 +78,11 @@ function keys(v, wanted) {
   );
 }
 const decimal = (v) => typeof v === "string" && /^\d+$/.test(v) && BigInt(v) <= 9223372036854775807n;
-function receipt(v, operationId, manifestHash) {
+const workspaceProfiles = ["workspace-db18-map-poc-1", "workspace-db19-map-poc-1"];
+function receipt(v, operationId, manifestHash, allowedProfiles) {
   return (
     v?.status === "poc-verified" &&
-    v.profile === "migration-document-poc-1" &&
+    allowedProfiles.has(v.profile) &&
     uuid.test(v.workspaceId) &&
     sha.test(v.sourceManifestHash) &&
     uuid.test(v.publicationId) &&
@@ -66,8 +91,14 @@ function receipt(v, operationId, manifestHash) {
     v.generation === "1"
   );
 }
-export function createMigrationRPC({ projectRef, serviceRoleKey, fetchTransport }) {
+export function createMigrationRPC({
+  projectRef,
+  serviceRoleKey,
+  fetchTransport,
+  allowWorkspaceProfiles = false,
+}) {
   if (
+    typeof allowWorkspaceProfiles !== "boolean" ||
     projectRef !== dev ||
     typeof serviceRoleKey !== "string" ||
     !serviceRoleKey ||
@@ -77,6 +108,10 @@ export function createMigrationRPC({ projectRef, serviceRoleKey, fetchTransport 
     typeof fetchTransport !== "function"
   )
     throw Error("DEV_SERVER_TRANSPORT_REQUIRED");
+  const allowedProfiles = new Set([
+    "migration-document-poc-1",
+    ...(allowWorkspaceProfiles ? workspaceProfiles : []),
+  ]);
   const url = new URL(`https://${dev}.supabase.co/rest/v1/rpc/wjb_v2_migration_command`);
   return Object.freeze({
     async call({ action, jobId, params }, principal, deviceId) {
@@ -89,19 +124,45 @@ export function createMigrationRPC({ projectRef, serviceRoleKey, fetchTransport 
       )
         throw new GatewayError("MIGRATION_SCOPE_REQUIRED");
       if (action === "start") {
-        // Current SQL accepts its explicit minimal profile only. Never flatten the
-        // complete workspace map into text/documents and silently discard records.
-        if (!keys(params, ["workspaceId", "sourceManifestHash", "assets", "documents"]))
+        const full = allowWorkspaceProfiles && workspaceProfiles.includes(params?.profile);
+        if (full) {
+          if (
+            !keys(params, [
+              "profile",
+              "workspaceId",
+              "sourceSchema",
+              "contractFingerprint",
+              "sourceManifestHash",
+              "assets",
+              "records",
+              "tableStats",
+              "exclusions",
+              "policies",
+            ]) ||
+            params.sourceSchema !== (params.profile === workspaceProfiles[0] ? 18 : 19) ||
+            !sha.test(params.contractFingerprint) ||
+            !Array.isArray(params.records) ||
+            params.records.length > 2048 ||
+            !Array.isArray(params.assets) ||
+            params.assets.length > 8
+          )
+            throw new GatewayError("INVALID_RPC");
+        } else if (!keys(params, ["workspaceId", "sourceManifestHash", "assets", "documents"]))
           throw new GatewayError("MIGRATION_PROFILE_UNSUPPORTED");
         if (
           !uuid.test(params.workspaceId) ||
           !sha.test(params.sourceManifestHash) ||
           !Array.isArray(params.assets) ||
-          !Array.isArray(params.documents)
+          (!full && !Array.isArray(params.documents))
         )
           throw new GatewayError("INVALID_RPC");
       } else {
-        if (!Object.hasOwn(shapes, action) || !keys(params, shapes[action]) || !sha.test(params.manifestHash))
+        if (
+          (action === "workspace" && !allowWorkspaceProfiles) ||
+          !Object.hasOwn(shapes, action) ||
+          !keys(params, shapes[action]) ||
+          !sha.test(params.manifestHash)
+        )
           throw new GatewayError("INVALID_RPC");
         for (const k of ["objectId", "operationId", "token"])
           if (k in params && !uuid.test(params[k])) throw new GatewayError("INVALID_RPC");
@@ -130,7 +191,11 @@ export function createMigrationRPC({ projectRef, serviceRoleKey, fetchTransport 
           deviceId,
         },
       });
-      if (Buffer.byteLength(body) > 65536) throw new GatewayError("INVALID_RPC");
+      if (
+        Buffer.byteLength(body) >
+        (action === "start" && workspaceProfiles.includes(params.profile) ? 1048576 : 65536)
+      )
+        throw new GatewayError("INVALID_RPC");
       let response;
       try {
         response = await fetchTransport(url, {
@@ -158,22 +223,26 @@ export function createMigrationRPC({ projectRef, serviceRoleKey, fetchTransport 
         throw new GatewayError("MIGRATION_UNAVAILABLE", 503);
       }
       try {
-        const v = JSON.parse((await readLimited(response, 8192)).toString("utf8"));
+        const v = JSON.parse(
+          (await readLimited(response, action === "workspace" ? 1048576 + 8192 : 8192)).toString("utf8"),
+        );
         if (!v || typeof v !== "object" || Array.isArray(v)) throw Error();
         if (
           action === "start" &&
           (v.jobId !== jobId ||
             v.workspaceId !== params.workspaceId ||
             v.sourceManifestHash !== params.sourceManifestHash ||
-            v.profile !== "migration-document-poc-1" ||
-            !sha.test(v.manifestHash))
+            !allowedProfiles.has(v.profile) ||
+            !sha.test(v.manifestHash) ||
+            v.profile !== (params.profile || "migration-document-poc-1") ||
+            !["staging", "connected", "cancel_fenced", "canceled"].includes(v.state))
         )
           throw Error();
         if ("jobId" in v && v.jobId !== jobId) throw Error();
         if (action !== "start" && "manifestHash" in v && v.manifestHash !== params.manifestHash)
           throw Error();
         if (
-          (["status", "observe", "publication", "finish_cancel"].includes(action) ||
+          (["status", "workspace", "observe", "publication", "finish_cancel"].includes(action) ||
             (action === "cancel" && v.state === "cancel_fenced")) &&
           (v.jobId !== jobId || v.manifestHash !== params.manifestHash)
         )
@@ -182,7 +251,7 @@ export function createMigrationRPC({ projectRef, serviceRoleKey, fetchTransport 
           action === "status" &&
           (!["staging", "connected", "cancel_fenced", "canceled"].includes(v.state) ||
             !decimal(v.epoch) ||
-            v.profile !== "migration-document-poc-1" ||
+            !allowedProfiles.has(v.profile) ||
             !uuid.test(v.workspaceId) ||
             !sha.test(v.sourceManifestHash))
         )
@@ -200,6 +269,17 @@ export function createMigrationRPC({ projectRef, serviceRoleKey, fetchTransport 
             v.bytes > 65536)
         )
           throw Error();
+        if (
+          action === "workspace" &&
+          (v.productActivationAllowed !== false ||
+            !uuid.test(v.workspaceId) ||
+            !workspaceProfiles.includes(v.envelope?.profile) ||
+            v.envelope.workspaceId !== v.workspaceId ||
+            !sha.test(v.envelope.sourceManifestHash) ||
+            !Array.isArray(v.envelope.records) ||
+            !Array.isArray(v.envelope.assets))
+        )
+          throw Error();
         if (action === "attest" && (v.attested !== true || v.ioVersion !== params.ioVersion)) throw Error();
         if (action === "renew" && v.renewed !== true) throw Error();
         if (action === "confirm_absent" && v.absentConfirmed !== true) throw Error();
@@ -212,10 +292,14 @@ export function createMigrationRPC({ projectRef, serviceRoleKey, fetchTransport 
               v.receipt,
               action === "cancel" ? v.receipt?.publicationId : params.operationId,
               params.manifestHash,
+              allowedProfiles,
             )
           )
             throw Error();
-        } else if (action === "publish" && !receipt(v, params.operationId, params.manifestHash))
+        } else if (
+          action === "publish" &&
+          !receipt(v, params.operationId, params.manifestHash, allowedProfiles)
+        )
           throw Error();
         else if (
           action === "prepare_publish" &&
@@ -247,7 +331,10 @@ export function createMigrationRPC({ projectRef, serviceRoleKey, fetchTransport 
   });
 }
 
-export function bindMigrationManifests({ jobId, workspaceId, sourceManifestHash }, reply) {
+export function bindMigrationManifests(
+  { jobId, workspaceId, sourceManifestHash, expectedProfile = "migration-document-poc-1" },
+  reply,
+) {
   if (
     !uuid.test(jobId) ||
     reply?.jobId !== jobId ||
@@ -256,7 +343,8 @@ export function bindMigrationManifests({ jobId, workspaceId, sourceManifestHash 
     reply?.workspaceId !== workspaceId ||
     reply.sourceManifestHash !== sourceManifestHash ||
     !sha.test(reply.manifestHash) ||
-    reply.profile !== "migration-document-poc-1"
+    !["migration-document-poc-1", ...workspaceProfiles].includes(expectedProfile) ||
+    reply.profile !== expectedProfile
   )
     throw Error("MANIFEST_BINDING_MISMATCH");
   return Object.freeze({

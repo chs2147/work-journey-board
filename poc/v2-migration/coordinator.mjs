@@ -6,6 +6,7 @@ import { inspectConnectedCopy } from "../v2-assets/connected-copy.mjs";
 
 export async function advanceMigration({ journal, id, actor, directory, backend }) {
   let job = journal.get(id, actor);
+  if (job.binding) throw Error("FULL_WORKSPACE_COORDINATOR_REQUIRED");
   if (["connected", "canceled"].includes(job.state)) return { state: job.state };
   // Cleanup and publication reconciliation use durable scope/receipts, even if
   // local staging files are unavailable. Uploading still requires the exact copy.

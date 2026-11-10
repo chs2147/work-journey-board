@@ -1,0 +1,29 @@
+{
+  "checkedAt": "2026-11-10T03:42:23.896702+00:00",
+  "branch": "v2-design",
+  "priorWorkCommit": "f1477af",
+  "javascriptTests": 171,
+  "newSessionTests": 26,
+  "postgresTests": 80,
+  "newActualHttpJournalGroups": 3,
+  "totalPassed": 251,
+  "journalSchema": 2,
+  "originalJournalVersion1Preserved": true,
+  "fullProfileMetadataControlWired": true,
+  "realStorageIOWired": false,
+  "cloudApplied": false,
+  "productCodeChanged": false,
+  "productActivationAllowed": false,
+  "localContainerRemoved": true,
+  "sourceSha256": {
+    "poc/v2-migration/journal.mjs": "fe00371eb1882b301577d0c6cae8d83c756deb15484f07f617bfae92ed12a3ab",
+    "poc/v2-migration/coordinator.mjs": "ba49d9a6a745092e983393f16e2598ee9c5b544becadcb22f45159590496b178",
+    "poc/v2-migration/server-rpc.mjs": "5c0b2f5c6693d007fc5a2f276bcec39060d811e8ff6d28920d57c7bc2e6ec134",
+    "poc/v2-migration/workspace-session.mjs": "d0c14e6346dfc869311e66685dd210a689ebd5b6ea1a23c6b8db92a828e38412",
+    "poc/v2-migration/workspace-session.test.mjs": "e446ddb8a221ea07edfb95a5592750fc8a7e80c495e883f665cff18326b01b7e",
+    "poc/v2-migration/workspace-session-fixture.mjs": "3294c7122205d1d96cb4167778c40c76bd70ae9416d84675bd1273a5d8f4ede2",
+    "poc/v2-migration/workspace-session-pg-client.mjs": "578e02fe3fd909ed77d73cb24651505aae99c142021401ee6da715abae7fb763",
+    "poc/v2-migration/postgres/run-local.py": "e65662a8a83a65611bc292e3306b7a55fc97eeca25331196de1d0ab10f15939b",
+    "poc/v2-migration/postgres/full-workspace-tests.py": "d9497ca19696de2d487e4237bbac1bc4e65c407ab1360acd7b657d6be2620455"
+  }
+}
