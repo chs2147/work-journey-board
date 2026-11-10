@@ -1,10 +1,10 @@
-# 현재 Feature List — v1.24.2
+# 현재 Feature List — v1.24.3
 
 기준일 2026-11-10 · DB 구조 v19 · 활성 249개 · 제거/대체 3개 · 미제공/계획 3개
 
 원본은 [catalog.json](catalog.json), 운영 규칙은 [README.md](README.md)입니다. 최초 제공 버전은 0.x 개발판을 포함한 비RC 출시 이력 기준이며 RC는 별도 필드입니다.
 
-[검토용 Excel](exports/work-journey-board/Work-Journey-Board-Feature-List-v1.24.2.xlsx) · [현재 스냅샷](releases/work-journey-board/v1.24.2.json)
+[검토용 Excel](exports/work-journey-board/Work-Journey-Board-Feature-List-v1.24.3.xlsx) · [현재 스냅샷](releases/work-journey-board/v1.24.3.json)
 
 ## 주간 보드·입력
 
@@ -77,7 +77,7 @@
 | Feature ID | 기능 | 최초 제공 | 최근 개선 | 현재 제공 범위 |
 |---|---|---|---|---|
 | WJB-NOTE-001 | 주간 메모 도크 — 주별 자유 배치 메모 보드를 주간 업무 아래에 표시한다. | 0.2.1 | 0.2.1 | windows / macos |
-| WJB-NOTE-002 | 접기·크게 보기·높이 조절 — 메모 도크를 접거나 넓히고 경계선으로 높이를 바꾼다. | 0.2.1 | 0.2.1 | windows / macos |
+| WJB-NOTE-002 | 접기·크게 보기·높이 조절 — 메모 도크를 접거나 넓히고 경계선으로 높이를 바꾼다. | 0.2.1 | 1.24.3 | windows / macos |
 | WJB-NOTE-003 | 보드 우선 자동 높이 — 업무 보드가 사용한 뒤 남는 공간을 메모 도크가 사용한다. | 0.2.3 | 0.2.3 | windows / macos |
 | WJB-NOTE-004 | 자유 배치 텍스트 메모 — 빈 곳에서 텍스트 메모를 만들고 이동·폭을 조절한다. | 0.2.1 | 0.2.5 | windows / macos |
 | WJB-NOTE-005 | 리치 텍스트 서식 — 제목·글자 크기·굵게·기울임·밑줄·취소선·목록을 사용한다. | 0.2.1 | 0.2.1 | windows / macos |
@@ -110,7 +110,7 @@
 | WJB-NOTE-032 | 메모 보드 PNG 저장·복사 — 전체 메모 판을 PNG로 저장하거나 이미지로 복사한다. | 0.2.17 | 1.6.0 | windows / macos |
 | WJB-NOTE-033 | 메모 Markdown 내보내기 — 주간 메모를 Markdown과 이미지 폴더로 저장하거나 복사한다. | 1.3.0 | 1.3.0 | windows / macos |
 | WJB-NOTE-034 | Markdown 파일 텍스트 드롭 — md 파일마다 텍스트 메모를 생성하고 URL 링크를 보존하며 이미지·base64는 제외한다. | 1.14.0 | 1.14.0 | windows / macos |
-| WJB-NOTE-035 | 접이식 세로 도구 팔레트 — 생성·클립보드·위젯을 명칭 없는 구분선과 1열 아이콘으로 제공하고 미니멀 손잡이로 접는다. 관계선 보기/숨김과 확대 등 보기 도구는 상단에 유지한다. | 1.22.0 | 1.22.1 | windows / macos |
+| WJB-NOTE-035 | 접이식 세로 도구 팔레트 — 생성·클립보드·위젯을 명칭 없는 구분선과 1열 아이콘으로 제공하고 미니멀 손잡이로 접는다. 관계선 보기/숨김과 확대 등 보기 도구는 상단에 유지한다. | 1.22.0 | 1.24.3 | windows / macos |
 | WJB-NOTE-036 | 객체 가로·세로 프레임 크기 — 자동 측정 높이와 별도로 사용자 높이를 저장하고 네 모서리와 변에서 조절·실행 취소한다. | 1.22.0 | 1.22.0 | windows / macos |
 
 ## 주간 요약
