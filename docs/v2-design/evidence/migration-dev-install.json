@@ -1,0 +1,74 @@
+{
+  "startedAt": "2026-11-10T04:02:44.463Z",
+  "projectRef": "vsphftnmfzfoufasjttd",
+  "autoApply": false,
+  "userRequestedDevIntegration": true,
+  "productionTouched": false,
+  "sources": [
+    {
+      "path": "poc/v2-migration/postgres/001-migration.sql",
+      "sha256": "6145666198a542a88e10e1b27699c18db7089aa1e843c057cf11eb90a60c63c0"
+    },
+    {
+      "path": "poc/v2-migration/postgres/004-workspace.sql",
+      "sha256": "0053d56c7fa8596509a1c3a6c164c28aa910f80d9a9c0f5bbe174250d2903ddf"
+    }
+  ],
+  "phases": [
+    {
+      "path": "001-migration.sql",
+      "returnedSuccess": true
+    },
+    {
+      "path": "004-workspace.sql",
+      "returnedSuccess": true
+    }
+  ],
+  "executionRole": [
+    {
+      "role": "postgres",
+      "rolsuper": false,
+      "rolbypassrls": true,
+      "read_only": "off"
+    }
+  ],
+  "baseVerify": [
+    {
+      "jsonb_build_object": {
+        "jobs": 0,
+        "tables": 5,
+        "profile": "migration-document-poc-1",
+        "functions": 12,
+        "ownerRole": "supabase_read_only_user",
+        "rlsTables": 5,
+        "binaryColumns": 0,
+        "clientExecute": false,
+        "ownerSuperuser": false,
+        "serviceExecute": true,
+        "unsafeSearchPaths": 0,
+        "serviceTableAccess": false
+      }
+    }
+  ],
+  "workspaceVerify": [
+    {
+      "jsonb_build_object": {
+        "tables": 5,
+        "clientRPC": false,
+        "rlsTables": 5,
+        "serviceRPC": true,
+        "cloudApplied": false,
+        "privateExecute": false,
+        "directTableAccess": false,
+        "unsafeSearchPaths": false,
+        "workspaceProfiles": [
+          "workspace-db18-map-poc-1",
+          "workspace-db19-map-poc-1"
+        ],
+        "productActivationAllowed": false
+      }
+    }
+  ],
+  "applied": true,
+  "finishedAt": "2026-11-10T04:02:54.788Z"
+}

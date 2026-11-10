@@ -1,6 +1,6 @@
 # V2 설계·PoC 중단/재개 기록
 
-**현재 재개 정본:** [65. Storage I/O·취소 연결](65-workspace-storage-io.md). 이하 체크포인트는 작성 당시 기록이며 가장 최근 결과가 우선한다.
+**현재 재개 정본:** [66. DEV 실제 설치·이관 검증](66-development-migration-live-results.md). 이하 체크포인트는 작성 당시 기록이며 가장 최근 결과가 우선한다.
 
 2026-11-09 UTC · V2 설계/PoC 중단 지점을 보존한 뒤 복귀했다. 사용자 요청으로 main 1.23.1 패치(`d11a0ca`)를 v2-design에 병합했다.
 
@@ -148,3 +148,7 @@ main CI42585959844의 실제 실패는 Chromium 표 이동 undo 시 표 전체�
 ## Storage 이미지 I/O 연결(최신)
 
 [65문서](65-workspace-storage-io.md)에4번을 구현했다. 기존 private REST/C2와 전체 session을 연결하고 journal version3 IO receipt를 추가했다. terminal 응답 확인→정산→bytes readback/attest→게시, cancel fence→미정산 대기→삭제/부재 확인→quota 반환을 구현한다. POST 자체가 불명확하면 자동 해제하지 않는다. 실제 로컬PG/Storage HTTP 표본을 쓰며 Cloud 미적용이다. 다음은5번 DEV 신규 전진SQL 설치상태/hash/ACL 검토 후 실제 Supabase 이관 표본 검증이다. 기존 설치/KeepAlive 재실행 금지, 제품/로컬원본은 유지한다.
+
+## DEV 실제 이관 검증 완료(최신)
+
+Storage작업은3215cdb에 보존했다. [66문서](66-development-migration-live-results.md)에 DEV 신규001/004 실제 적용·5테이블RLS·Auth/Storage 기능44개/정리4개 통과를 기록했다. 세 가상 공간/두 계정/Blob3개204bytes를 시험하고 잔여0을 확인했다. C1/C2 함수6개와 cron설정 불변, KeepAlive정규 실행2026-11-10 03:00UTC succeeded 확인. 새 모듈은 DEV에 유지하므로 재설치 금지. 현재변수로실행/설정추가없음. 다음은6번 제품 실행/설정/업데이트 격리·연결UI 검토이며 아직native제품기능은 아니다.

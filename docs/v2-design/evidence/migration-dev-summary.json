@@ -1,0 +1,42 @@
+{
+  "checkedAt": "2026-11-10T04:11:43.866228+00:00",
+  "branch": "v2-design",
+  "preservedStorageCommit": "3215cdb",
+  "projectRef": "vsphftnmfzfoufasjttd",
+  "sourceSchemas": [
+    18,
+    19
+  ],
+  "devMigrationModuleApplied": true,
+  "installedTables": 5,
+  "rlsTables": 5,
+  "liveChecks": 44,
+  "cleanupChecks": 4,
+  "localInvocationGuardChecks": 6,
+  "syntheticWorkspaces": 3,
+  "syntheticAuthUsers": 2,
+  "physicalStoragePosts": 3,
+  "physicalStorageBytesUploaded": 204,
+  "outboundRequests": 146,
+  "outboundBodyBytes": 100341,
+  "originalSyntheticDatabasesUnchanged": true,
+  "existingCoreFunctionDefinitionsUnchanged": 6,
+  "keepaliveConfigurationUnchanged": true,
+  "keepaliveRegularExecutionSucceededAt": "2026-11-10T03:00:00Z",
+  "postTestFixtureCountsAllZero": true,
+  "productionTouched": false,
+  "productAppChanged": false,
+  "productActivationAllowed": false,
+  "monthlyBudgetKRW": 0,
+  "planChanged": false,
+  "sourceSha256": {
+    "poc/v2-migration/development/live-check.mjs": "2b7baaedac15416f8581cc069788f214b9721ebb23c3708b3ff58eccecbf3762",
+    "poc/v2-migration/development/inspect.mjs": "b0a73d4190add9fd8254ebbb6ce9282f8eb7b20134286118cfc342b958f264fa",
+    "poc/v2-migration/development/guards.test.mjs": "08ab89414e02380abf05c0754afc94b5106889aae364789207dc4afde7015493",
+    "poc/v2-migration/workspace-storage.mjs": "e602be2ecc23ccb2a1df08e1194f2bf023048335ff2d5c49ab3af1f99c6c86ee",
+    "poc/v2-migration/workspace-session.mjs": "6b4e0aa241d6fbdb4ec1e1a67820e0a7d296021c2c4b2a712cd60b8530a75f5c",
+    "poc/v2-migration/journal.mjs": "e68a3dbc66014dff0e54777d6a62b64d15a55876ef1846984c4ade913dff2a51",
+    "poc/v2-migration/postgres/001-migration.sql": "6145666198a542a88e10e1b27699c18db7089aa1e843c057cf11eb90a60c63c0",
+    "poc/v2-migration/postgres/004-workspace.sql": "0053d56c7fa8596509a1c3a6c164c28aa910f80d9a9c0f5bbe174250d2903ddf"
+  }
+}

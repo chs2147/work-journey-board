@@ -56,3 +56,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 poc/v2-migration/postgres/run-local.py --full-
 ```
 
 createWorkspaceStorageGateway의 rpc/assetIO를 session에 명시적으로 주입한다. journal version3은 IO intent/terminal 응답/정산의 ID만 저장한다. 불명확한POST는 hash 조회만으로 정산하지 않는다. runner는 외부 Supabase가 아닌 실제 로컬PG/Storage HTTP표본이다. [65문서](../../docs/v2-design/65-workspace-storage-io.md)의 범위/한계/DEV 다음 단계를 따른다.
+
+## DEV 실제 적용 상태(2026-11-10)
+
+001/004는 DEV에 실제 설치·검증됐다. 기존install/C1/C2/KeepAlive 및 이 파일들을 다시 적용하지 않는다. 표본Auth/공간/Blob은 정리됐고 모듈은 유지한다. [66문서](../../docs/v2-design/66-development-migration-live-results.md)와실행증거가 이전 미적용 기록에 우선한다. 제품/native활성화는 아직 아니다.

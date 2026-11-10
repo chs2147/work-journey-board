@@ -1,0 +1,14 @@
+✔ live requires explicit invocation (73.481238ms)
+✔ live refuses production selection (74.750534ms)
+✔ live needs DEV credentials before requests (76.018251ms)
+✔ inspect requires explicit invocation (26.40821ms)
+✔ inspect refuses production selection (29.545115ms)
+✔ inspect needs DEV credentials before requests (34.212467ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 381.903273

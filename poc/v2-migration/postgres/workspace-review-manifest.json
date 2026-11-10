@@ -4,7 +4,7 @@
   "projectRef": "vsphftnmfzfoufasjttd",
   "region": "ap-northeast-2",
   "autoApply": false,
-  "cloudApplied": false,
+  "cloudApplied": true,
   "productCompatible": false,
   "monthlyBudgetKRW": 0,
   "sourceSchemas": [
@@ -69,10 +69,11 @@
     "006-workspace-rollback-empty.sql only when no full-profile job exists; then base003 only when no migration job exists"
   ],
   "limitations": [
-    "Actual Cloud apply not performed",
-    "Current gateway JS adapter still minimal-document-only; full profile/journal wiring is next",
-    "Actual Storage readback and absence attestation not connected",
-    "No native app integration or product activation",
+    "DEV installed and synthetic Auth/Storage integration verified; production not applied",
+    "Full gateway/journal control and Storage IO are wired in independent PoC; native app integration remains",
+    "Receipt remains poc-verified and cannot activate product workspace",
     "PoC caps are explicit rejections, never image truncation or automatic recompression"
-  ]
+  ],
+  "applicationEvidence": "docs/v2-design/evidence/migration-dev-install.json",
+  "integrationEvidence": "docs/v2-design/evidence/migration-dev-live-check.json"
 }

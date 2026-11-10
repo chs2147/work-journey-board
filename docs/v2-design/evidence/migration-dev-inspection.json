@@ -1,0 +1,124 @@
+{
+  "migrationCounts": [
+    {
+      "jobs": 0,
+      "records": 0,
+      "headers": 0,
+      "migration_assets": 0,
+      "io_intents": 0,
+      "devices": 0
+    }
+  ],
+  "migrationOwner": [
+    {
+      "rolname": "postgres",
+      "rolsuper": false,
+      "rolbypassrls": true
+    }
+  ],
+  "checkedAt": "2026-11-10T04:09:32.414Z",
+  "projectRef": "vsphftnmfzfoufasjttd",
+  "project": {
+    "status": "ACTIVE_HEALTHY",
+    "region": "ap-northeast-2",
+    "name": "WJB DB DEV"
+  },
+  "preflight": [
+    {
+      "jsonb_build_object": {
+        "profile": "migration-document-poc-1",
+        "autoApply": false,
+        "ownerRole": "supabase_read_only_user",
+        "assetCommand": true,
+        "rpcCollision": true,
+        "sessionGuard": true,
+        "schemaCollision": true,
+        "triggerCollision": true
+      }
+    }
+  ],
+  "role": [
+    {
+      "role": "supabase_read_only_user",
+      "read_only": "on",
+      "rolsuper": false,
+      "rolbypassrls": true,
+      "database_bytes": 12113587
+    }
+  ],
+  "counts": [
+    {
+      "workspaces": 0,
+      "assets": 0,
+      "buckets": 0,
+      "objects": 0
+    }
+  ],
+  "keepalive": [
+    {
+      "keepalive": {
+        "rls": true,
+        "jobs": [
+          {
+            "name": "keepalive_ping",
+            "jobid": 1,
+            "active": true,
+            "command": "\n INSERT INTO public.keepalive_pings(id,pinged_at) VALUES(1,now())\n ON CONFLICT(id) DO UPDATE SET pinged_at=excluded.pinged_at;\n DELETE FROM cron.job_run_details\n WHERE jobid IN(SELECT jobid FROM cron.job WHERE jobname='keepalive_ping' AND username=current_user)\n AND end_time < now()-interval '14 days';\n",
+            "schedule": "0 3 * * *",
+            "username": "postgres"
+          }
+        ],
+        "lastPing": "2026-11-10T03:00:00.157572+00:00",
+        "recentRuns": [
+          {
+            "jobid": 1,
+            "status": "succeeded",
+            "end_time": "2026-11-10T03:00:00.224289+00:00",
+            "start_time": "2026-11-10T03:00:00.157524+00:00",
+            "return_message": "DELETE 0"
+          }
+        ],
+        "cronVersion": "1.6.4",
+        "cronTimeZone": "GMT",
+        "executionRole": "supabase_read_only_user",
+        "heartbeatRows": 1,
+        "clientTableAccess": false,
+        "serviceTableAccess": false
+      }
+    }
+  ],
+  "functions": [
+    {
+      "schema": "public",
+      "name": "wjb_v2_asset_command",
+      "definition_hash": "3a4113358a9786039c5c72245b19972ad38dd9a3250507db8551c05aaeb65470"
+    },
+    {
+      "schema": "public",
+      "name": "wjb_v2_recovery_catalog",
+      "definition_hash": "3afbaae98583c799e79398dc8e73c498864a5d7635ee791f9538e1a9ce6c8097"
+    },
+    {
+      "schema": "public",
+      "name": "wjb_v2_session_active",
+      "definition_hash": "b92e7d7a7e4fabef39ce928d03e770a269e65f0b136816f502ece6e49585dcc1"
+    },
+    {
+      "schema": "wjb_gateway",
+      "name": "asset_json",
+      "definition_hash": "d6008d78fbb091c977da15d0c0a0f8b60e41c0d22eb5a7922d8c49cef7198bb7"
+    },
+    {
+      "schema": "wjb_v2_cloud",
+      "name": "revoke_session",
+      "definition_hash": "50e966199124a96e229c46c34eaac85a52deb15c71effd08322a82a9aa519f9a"
+    },
+    {
+      "schema": "wjb_v2_cloud",
+      "name": "session_active",
+      "definition_hash": "27e28c92a7d0e2c66611b9da8fb3bcb7fa7f543049e484bb394666317e7468d6"
+    }
+  ],
+  "storageListStatus": 200,
+  "cloudWritten": false
+}

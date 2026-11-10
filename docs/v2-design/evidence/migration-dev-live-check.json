@@ -1,0 +1,197 @@
+{
+  "startedAt": "2026-11-10T04:05:55.012Z",
+  "projectRef": "vsphftnmfzfoufasjttd",
+  "checks": [
+    {
+      "name": "reviewed_module_install_record",
+      "passed": true
+    },
+    {
+      "name": "installed_source_001-migration.sql",
+      "passed": true
+    },
+    {
+      "name": "installed_source_004-workspace.sql",
+      "passed": true
+    },
+    {
+      "name": "live_module_acl_rls",
+      "passed": true
+    },
+    {
+      "name": "no_bucket_collision",
+      "passed": true
+    },
+    {
+      "name": "dev_public_jwks",
+      "passed": true
+    },
+    {
+      "name": "fixture_user_0",
+      "passed": true
+    },
+    {
+      "name": "fixture_login_0",
+      "passed": true
+    },
+    {
+      "name": "verified_subject_0",
+      "passed": true
+    },
+    {
+      "name": "fixture_user_1",
+      "passed": true
+    },
+    {
+      "name": "fixture_login_1",
+      "passed": true
+    },
+    {
+      "name": "verified_subject_1",
+      "passed": true
+    },
+    {
+      "name": "private_bucket_created",
+      "passed": true
+    },
+    {
+      "name": "private_bucket_limits",
+      "passed": true
+    },
+    {
+      "name": "all_26_tables_populated_0",
+      "passed": true
+    },
+    {
+      "name": "outcome_0",
+      "passed": true
+    },
+    {
+      "name": "one_physical_upload_0",
+      "passed": true
+    },
+    {
+      "name": "original_unchanged_0",
+      "passed": true
+    },
+    {
+      "name": "separate_manifest_hashes_0",
+      "passed": true
+    },
+    {
+      "name": "metadata_count_and_no_image_body_0",
+      "passed": true
+    },
+    {
+      "name": "full_roundtrip_0",
+      "passed": true
+    },
+    {
+      "name": "other_account_denied_0",
+      "passed": true
+    },
+    {
+      "name": "other_account_direct_storage_denied_0",
+      "passed": true
+    },
+    {
+      "name": "all_26_tables_populated_1",
+      "passed": true
+    },
+    {
+      "name": "lost_ready_injected",
+      "passed": true
+    },
+    {
+      "name": "lost_publish_injected",
+      "passed": true
+    },
+    {
+      "name": "outcome_1",
+      "passed": true
+    },
+    {
+      "name": "one_physical_upload_1",
+      "passed": true
+    },
+    {
+      "name": "original_unchanged_1",
+      "passed": true
+    },
+    {
+      "name": "separate_manifest_hashes_1",
+      "passed": true
+    },
+    {
+      "name": "metadata_count_and_no_image_body_1",
+      "passed": true
+    },
+    {
+      "name": "full_roundtrip_1",
+      "passed": true
+    },
+    {
+      "name": "delete_lock_retained",
+      "passed": true
+    },
+    {
+      "name": "other_account_denied_1",
+      "passed": true
+    },
+    {
+      "name": "other_account_direct_storage_denied_1",
+      "passed": true
+    },
+    {
+      "name": "all_26_tables_populated_2",
+      "passed": true
+    },
+    {
+      "name": "lost_prepare_injected",
+      "passed": true
+    },
+    {
+      "name": "lost_delete_injected",
+      "passed": true
+    },
+    {
+      "name": "outcome_2",
+      "passed": true
+    },
+    {
+      "name": "one_physical_upload_2",
+      "passed": true
+    },
+    {
+      "name": "original_unchanged_2",
+      "passed": true
+    },
+    {
+      "name": "separate_manifest_hashes_2",
+      "passed": true
+    },
+    {
+      "name": "metadata_count_and_no_image_body_2",
+      "passed": true
+    },
+    {
+      "name": "cancel_quota_zero",
+      "passed": true
+    }
+  ],
+  "requests": 146,
+  "storagePosts": 3,
+  "storagePostBytes": 204,
+  "outboundBodyBytes": 100341,
+  "productionTouched": false,
+  "mailSent": false,
+  "publicGatewayDeployed": false,
+  "cleanup": {
+    "objectsAbsent": true,
+    "bucketAbsent": true,
+    "metadataAbsent": true,
+    "authUsersAbsent": true
+  },
+  "passed": true,
+  "finishedAt": "2026-11-10T04:07:00.207Z"
+}

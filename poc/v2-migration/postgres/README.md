@@ -24,3 +24,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 poc/v2-migration/postgres/run-local.py --full-
 ```
 
 새004는001 뒤에 적용하는 검토용 전진 SQL이며 자동 적용하지 않는다.005는SELECT 검토,006은 전체프로필 미사용일 때만 확장을 되돌린다. 전체프로필 사용 이력이 있으면 rollback을 거절한다. 기본003은 확장006을 먼저 되돌린 뒤 사용한다. 기존 gateway JS의 최소문서 제한은 아직 유지한다. [63. 범위·제한·다음 단계](../../../docs/v2-design/63-full-workspace-server-profile.md)를 따른다.
+
+## DEV 실제 적용 상태(2026-11-10)
+
+001/004는 DEV에 실제 설치·검증됐다. 기존install/C1/C2/KeepAlive 및 이 파일들을 다시 적용하지 않는다. 표본Auth/공간/Blob은 정리됐고 모듈은 유지한다. [66문서](../../../docs/v2-design/66-development-migration-live-results.md)와실행증거가 이전 미적용 기록에 우선한다. 제품/native활성화는 아직 아니다.
