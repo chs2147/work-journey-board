@@ -1,5 +1,7 @@
 # V2 프로젝트 — 다국어·온라인 동기화 상세 설계 초안
 
+**최신 검토안:** [67. 제품 실행 격리·연결 UI 상세 설계](67-product-isolation-connection-ui.md). 6번의 A/B/C 시안과20개 상태·3개 테마를 작성했다. 추천은A 설정 확장형이며 제품 구현 전 검토 대기다. [3안 비교](mockups/step6/comparison.html) · [직접 체험](mockups/step6/index.html).
+
 **최신 진행:** [66. DEV 실제 이관 검증](66-development-migration-live-results.md). 신규 이관 SQL을 DEV에 적용하고 실제 Auth/Storage 기능44개·정리4개를 통과했다. 표본 자원은 모두 제거했으며 C1/C2·KeepAlive는 유지했다. 다음은 제품 실행 격리/연결 UI 검토다.
 
 **최신 진행:** [65. Storage I/O·검증·취소 연결](65-workspace-storage-io.md). 이미지 전송/실제 readback hash·C2 정산·최신 attestation·취소 부재 확인을 연결했다. Storage는 로컬 HTTP 표본으로 검증하며 실제 DEV 적용/파일 통합은 다음 단계다.

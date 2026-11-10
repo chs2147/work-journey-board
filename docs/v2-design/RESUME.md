@@ -1,6 +1,6 @@
 # V2 설계·PoC 중단/재개 기록
 
-**현재 재개 정본:** [66. DEV 실제 설치·이관 검증](66-development-migration-live-results.md). 이하 체크포인트는 작성 당시 기록이며 가장 최근 결과가 우선한다.
+**현재 재개 정본:** [67. 제품 격리·연결 UI 검토안](67-product-isolation-connection-ui.md). 이하 체크포인트는 작성 당시 기록이며 가장 최근 결과가 우선한다.
 
 2026-11-09 UTC · V2 설계/PoC 중단 지점을 보존한 뒤 복귀했다. 사용자 요청으로 main 1.23.1 패치(`d11a0ca`)를 v2-design에 병합했다.
 
@@ -152,3 +152,7 @@ main CI42585959844의 실제 실패는 Chromium 표 이동 undo 시 표 전체�
 ## DEV 실제 이관 검증 완료(최신)
 
 Storage작업은3215cdb에 보존했다. [66문서](66-development-migration-live-results.md)에 DEV 신규001/004 실제 적용·5테이블RLS·Auth/Storage 기능44개/정리4개 통과를 기록했다. 세 가상 공간/두 계정/Blob3개204bytes를 시험하고 잔여0을 확인했다. C1/C2 함수6개와 cron설정 불변, KeepAlive정규 실행2026-11-10 03:00UTC succeeded 확인. 새 모듈은 DEV에 유지하므로 재설치 금지. 현재변수로실행/설정추가없음. 다음은6번 제품 실행/설정/업데이트 격리·연결UI 검토이며 아직native제품기능은 아니다.
+
+## 6번 상세 설계·UI 검토안(최신)
+
+cfdeae4가 원격과 일치해 재푸시만 확인하고 [67문서](67-product-isolation-connection-ui.md)를 작성했다. A설정확장/B공간허브/C측면패널3안과20개 상태·3개테마·이미지/HTML을 제공한다. 추천은A이며 별도ConnectedPreview와Classic의 관계도 검토 대상이다. 180개 조합렌더링·명시동의·배경blur/차단·키보드/중단/취소·C430px·외부요청0을 검증한다. 실제제품/Cloud미변경. 다음은사용자시안선택→6-B native프로필/설정/업데이트격리부터구현범위확정이며7번sync/8번i18n은후속이다.

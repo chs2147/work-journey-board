@@ -132,3 +132,7 @@ A06의 [57문서](57-runtime-isolation-and-migration-handoff.md)에 후보 profi
 ## DEV 실제 이관·KeepAlive 정규 실행 확인(최신)
 
 [66문서](66-development-migration-live-results.md)에 DEV새001/004 적용·기능44개/정리4개 통과를 기록했다. 26테이블 DB18/19·잠금·실제Auth/Storage·응답유실/취소복구를 확인했고 모든 표본을 정리했다. C1/C2/KeepAlive설정 불변, 정규cron첫실행 succeeded도 확인해 기존 미관측 항목을 완료했다. 새모듈은 설치상태로 유지하며재실행하지 않는다. 다음은6번 제품격리/연결UI 검토다. 운영/로컬제품/결제/환경은 변경하지 않았다.
+
+## 제품 실행 격리·연결 UI 설계 검토(최신)
+
+[67문서](67-product-isolation-connection-ui.md)에 A설정확장/B공간허브/C측면패널 시안과20상태·3테마를 작성했다. 별도Preview/Classic의설정·저장·인증·업데이트분리, 원본read-only사본, 제품용캐시/증표/OTP관문을상세화했다. 추천A이나미확정이며 제품구현전시안검토를기다린다. mockup은가상화면만표현하며Cloud/기존앱을변경하지않는다.

@@ -1,0 +1,21 @@
+{
+  "checkedAt": "2026-11-10T05:00:40.512Z",
+  "browser": "Chromium",
+  "schemes": 3,
+  "themes": 3,
+  "scenes": 20,
+  "stateRenders": 180,
+  "explicitConsent": true,
+  "backgroundBlocked": true,
+  "backgroundBlurred": true,
+  "pauseResume": true,
+  "cancelConfirmation": true,
+  "cancelWaitState": true,
+  "escapeClose": true,
+  "tabFocusTrap": true,
+  "narrowViewport": 430,
+  "narrowOverflow": false,
+  "pageErrors": [],
+  "externalRequests": [],
+  "productCodeChanged": false
+}
