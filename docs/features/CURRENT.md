@@ -1,10 +1,10 @@
-# 현재 Feature List — v1.24.1
+# 현재 Feature List — v1.24.2
 
 기준일 2026-11-10 · DB 구조 v19 · 활성 249개 · 제거/대체 3개 · 미제공/계획 3개
 
 원본은 [catalog.json](catalog.json), 운영 규칙은 [README.md](README.md)입니다. 최초 제공 버전은 0.x 개발판을 포함한 비RC 출시 이력 기준이며 RC는 별도 필드입니다.
 
-[검토용 Excel](exports/work-journey-board/Work-Journey-Board-Feature-List-v1.24.1.xlsx) · [현재 스냅샷](releases/work-journey-board/v1.24.1.json)
+[검토용 Excel](exports/work-journey-board/Work-Journey-Board-Feature-List-v1.24.2.xlsx) · [현재 스냅샷](releases/work-journey-board/v1.24.2.json)
 
 ## 주간 보드·입력
 
@@ -26,7 +26,7 @@
 | WJB-BOARD-014 | 항목 손잡이·우클릭 메뉴 — 항목 왼쪽 손잡이 클릭과 우클릭으로 항목 도구를 연다. | 1.7.1 | 1.7.1 | windows / macos |
 | WJB-BOARD-015 | 오늘·선택 요일 구분 — 오늘 배지와 선택 요일 강조를 별도로 표시한다. | 0.2.5 | 0.2.5 | windows / macos |
 | WJB-BOARD-016 | 주간 업무·요일 열 폭 조절 — 업무 열과 요일 열을 끌어 조절하고 폭을 기억한다. | 1.5.0 | 1.5.0 | windows / macos |
-| WJB-BOARD-017 | 하루 업무 카드 보기 — 한 날짜의 업무 카드와 메모 보드를 함께 본다. | 0.2.7 | 1.24.1 | windows / macos |
+| WJB-BOARD-017 | 하루 업무 카드 보기 — 한 날짜의 업무 카드와 메모 보드를 함께 본다. | 0.2.7 | 1.24.2 | windows / macos |
 | WJB-BOARD-018 | 주간·데일리 전환 기억 — 보기 전환과 마지막 보기를 기억하며 데일리에서는 하루씩 이동한다. | 0.2.7 | 0.2.7 | windows / macos |
 | WJB-BOARD-019 | 이전 업무 항목 가져오기 — 실제 추가하는 항목의 메모/Cabi.NET 연결도 복사하며 완료 묶음·중복 제외와 전체 실패 롤백을 유지한다. | 0.2.5 | 1.24.1 | windows / macos |
 | WJB-BOARD-020 | 모든 업무 일괄 가져오기 — 요일 전체 항목과 공유 연결을 한 트랜잭션으로 가져오고 한 번에 되돌린다. | 0.2.5 | 1.19.0 | windows / macos |
@@ -89,7 +89,7 @@
 | WJB-NOTE-011 | 붙여넣기·파일·드롭 이미지 — 캡처·파일 선택·탐색기 드롭으로 이미지 메모를 만든다. | 0.2.2 | 0.2.2 | windows / macos |
 | WJB-NOTE-012 | 이미지 축소·일지 내 저장 — 긴 변을 제한해 WebP로 저장하고 이미지 데이터를 일지 파일에 보관한다. | 0.2.2 | 0.4.0 | windows / macos |
 | WJB-NOTE-013 | 비율 유지 크기·설명 — 그림 크기와 위치를 조절하고 설명을 입력한다. | 0.2.2 | 0.2.2 | windows / macos |
-| WJB-NOTE-014 | 크게 보기·PNG/WebP 저장 — 이미지를 개별 확대하고 파일로 저장한다. | 0.2.2 | 0.2.2 | windows / macos |
+| WJB-NOTE-014 | 크게 보기·PNG/WebP 저장 — 이미지를 개별 확대하고 파일로 저장한다. | 0.2.2 | 1.24.2 | windows / macos |
 | WJB-NOTE-015 | 보드 캡처 붙여넣기 안내 — 업무 입력 중 캡처를 붙이면 메모에 넣는 조작을 안내한다. | 0.2.3 | 0.2.3 | windows / macos |
 | WJB-NOTE-016 | 링크 카드 생성 — 주소 붙여넣기·드롭·버튼으로 제목과 메모를 가진 카드를 만든다. | 0.2.8 | 1.22.1 | windows / macos |
 | WJB-NOTE-017 | 링크 카드 도메인·썸네일 — 도메인 글자나 사용자가 붙인 썸네일을 표시하며 사이트를 자동 조회하지 않는다. | 0.2.8 | 0.2.8 | windows / macos |

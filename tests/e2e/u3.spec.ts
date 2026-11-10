@@ -66,7 +66,7 @@ test("Alt+V → 오늘 뷰: 날짜·카드·첫 카드에 커서, 카드 편집�
   await expect(page.getByTestId("note-dock")).not.toHaveAttribute("data-dock-mode", "side");
 });
 
-test("오늘 뷰 카드: 직전 기록 한 줄 + [가져오기], [전체 가져오기], [근무 ▾]로 연차, 마지막 카드 ↓ = 왼쪽 메모", async ({
+test("오늘 뷰 카드: 직전 기록 한 줄 + [가져오기], Alt+Shift+P 전체 가져오기(단추 없음), [근무 ▾]로 연차, 마지막 카드 ↓ = 왼쪽 메모", async ({
   page,
 }) => {
   await page.getByTestId("view-today").click();
@@ -78,8 +78,9 @@ test("오늘 뷰 카드: 직전 기록 한 줄 + [가져오기], [전체 가져�
   await expect(cellTexts(page, DASH, TODAY)).toHaveText(["지표 정의서 v0.3 공유"]);
   await saved(page);
 
-  await expect(page.getByTestId("today-pull-all")).toHaveText("10/21(수) 전체 가져오기");
-  await page.getByTestId("today-pull-all").click();
+  // 1.24.2: [전체 가져오기] 단추는 없앰 — 단축키 Alt+Shift+P는 그대로
+  await expect(page.getByTestId("today-pull-all")).toHaveCount(0);
+  await page.keyboard.press("Alt+Shift+KeyP");
   await expect(page.getByRole("status").filter({ hasText: "10/21(수) 업무 2개" })).toBeVisible();
   await expect(cellTexts(page, SETTLE, TODAY)).toHaveCount(2);
 
