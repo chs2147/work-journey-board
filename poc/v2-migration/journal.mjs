@@ -22,7 +22,7 @@ export function openMigrationJournal(path, { clock = () => Date.now(), protected
     try {
       if (
         inspect.prepare("PRAGMA application_id").get().application_id !== applicationId ||
-        ![1, 2].includes(inspect.prepare("PRAGMA user_version").get().user_version)
+        ![1, 2, 3].includes(inspect.prepare("PRAGMA user_version").get().user_version)
       )
         throw Error("NOT_MIGRATION_JOURNAL");
     } finally {
@@ -76,6 +76,18 @@ export function openMigrationJournal(path, { clock = () => Date.now(), protected
         metadata_verified INTEGER NOT NULL DEFAULT 0 CHECK(metadata_verified IN (0,1)),
         server_epoch TEXT);
       PRAGMA user_version=2;
+    `),
+    );
+  }
+  if (db.prepare("PRAGMA user_version").get().user_version === 2) {
+    transaction(db, () =>
+      db.exec(`
+      CREATE TABLE storage_io(
+        job_id TEXT NOT NULL REFERENCES job(id),object_id TEXT NOT NULL,operation_id TEXT NOT NULL,
+        lease_token TEXT NOT NULL,lease_fence TEXT,session_id TEXT NOT NULL,
+        phase TEXT NOT NULL CHECK(phase IN ('prepared','acquired','begun','dispatching','confirmed','settled')),
+        PRIMARY KEY(job_id,object_id,operation_id));
+      PRAGMA user_version=3;
     `),
     );
   }
@@ -348,6 +360,122 @@ export function openMigrationJournal(path, { clock = () => Date.now(), protected
           objectId,
         );
         return op;
+      });
+    },
+    prepareStorageIO(lease, objectId, sessionId) {
+      return mutation(lease, (job) => {
+        const a = asset(job, objectId);
+        if (
+          !job.binding?.target_manifest_hash ||
+          a.state !== "uncertain" ||
+          !uuid.test(a.op_id) ||
+          !uuid.test(sessionId)
+        )
+          throw Error("STORAGE_IO_STATE");
+        let row = db
+          .prepare("SELECT * FROM storage_io WHERE job_id=? AND object_id=? AND operation_id=?")
+          .get(job.id, objectId, a.op_id);
+        if (!row) {
+          db.prepare("INSERT INTO storage_io VALUES(?,?,?,?,?,?,'prepared')").run(
+            job.id,
+            objectId,
+            a.op_id,
+            a.op_id,
+            null,
+            sessionId,
+          );
+          row = db
+            .prepare("SELECT * FROM storage_io WHERE job_id=? AND object_id=? AND operation_id=?")
+            .get(job.id, objectId, a.op_id);
+        }
+        return row;
+      });
+    },
+    storageIOs(id, actor) {
+      scoped(id, actor);
+      return db.prepare("SELECT * FROM storage_io WHERE job_id=? ORDER BY object_id,operation_id").all(id);
+    },
+    storageIOAcquired(lease, objectId, op, fence) {
+      return mutation(lease, (job) => {
+        if (!/^[1-9][0-9]*$/.test(fence) || asset(job, objectId).op_id !== op)
+          throw Error("STORAGE_IO_SCOPE");
+        const row = db
+          .prepare("SELECT * FROM storage_io WHERE job_id=? AND object_id=? AND operation_id=?")
+          .get(job.id, objectId, op);
+        if (!row || (row.lease_fence && row.lease_fence !== fence)) throw Error("STORAGE_IO_FENCE_CHANGED");
+        db.prepare(
+          "UPDATE storage_io SET lease_fence=?,phase='acquired' WHERE job_id=? AND object_id=? AND operation_id=? AND phase='prepared'",
+        ).run(fence, job.id, objectId, op);
+      });
+    },
+    storageIOPhase(lease, objectId, op, from, to) {
+      return mutation(lease, (job) => {
+        if (
+          ![
+            ["acquired", "begun"],
+            ["begun", "dispatching"],
+          ].some((x) => x[0] === from && x[1] === to) ||
+          asset(job, objectId).op_id !== op
+        )
+          throw Error("STORAGE_IO_STATE");
+        const r = db
+          .prepare(
+            "UPDATE storage_io SET phase=? WHERE job_id=? AND object_id=? AND operation_id=? AND phase=?",
+          )
+          .run(to, job.id, objectId, op, from);
+        if (r.changes !== 1) throw Error("STORAGE_IO_STATE");
+      });
+    },
+    storageIOCompleted(id, actor, objectId, op, phase) {
+      // A late worker may record its issued IO completion after cancel invalidates
+      // the job lease. This ONLY advances an immutable IO receipt, never job state.
+      return transaction(db, () => {
+        scoped(id, actor);
+        const row = db
+          .prepare("SELECT * FROM storage_io WHERE job_id=? AND object_id=? AND operation_id=?")
+          .get(id, objectId, op);
+        const allowed =
+          phase === "confirmed"
+            ? ["dispatching", "confirmed"]
+            : phase === "settled"
+              ? ["confirmed", "settled"]
+              : [];
+        if (!row || !allowed.includes(row.phase)) throw Error("STORAGE_IO_RECEIPT");
+        db.prepare("UPDATE storage_io SET phase=? WHERE job_id=? AND object_id=? AND operation_id=?").run(
+          phase,
+          id,
+          objectId,
+          op,
+        );
+      });
+    },
+    workspaceAssetProof(lease, objectId, proof, deleted = false) {
+      return mutation(lease, (job) => {
+        const a = asset(job, objectId),
+          b = job.binding;
+        if (
+          !b ||
+          proof?.jobId !== job.id ||
+          proof.objectId !== objectId ||
+          proof.manifestHash !== b.target_manifest_hash ||
+          proof.sha256 !== a.sha256 ||
+          proof.bytes !== a.bytes ||
+          proof.operationSettled !== true ||
+          proof.ownedByJob !== true ||
+          proof.assetState !== (deleted ? "canceled" : "ready")
+        )
+          throw Error("WORKSPACE_ASSET_PROOF");
+        if (
+          deleted
+            ? job.state !== "cancel_fenced"
+            : !["prepared", "uploading", "publishing"].includes(job.state)
+        )
+          throw Error("WORKSPACE_ASSET_STATE");
+        db.prepare("UPDATE asset SET state=? WHERE job_id=? AND object_id=?").run(
+          deleted ? "deleted" : "verified",
+          job.id,
+          objectId,
+        );
       });
     },
     beginPublish(lease) {

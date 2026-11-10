@@ -153,7 +153,7 @@ test("image workspace is staged and verified but cannot publish without Storage 
   );
   const db = new DatabaseSync(e.path, { readOnly: true });
   try {
-    assert.equal(db.prepare("PRAGMA user_version").get().user_version, 2);
+    assert.equal(db.prepare("PRAGMA user_version").get().user_version, 3);
     assert.ok(
       db
         .prepare("PRAGMA table_info(workspace_binding)")
@@ -278,7 +278,7 @@ test("schema1 journal upgrade preserves all prior jobs/assets", (t) => {
   const e = setup(t);
   e.journal.close();
   const d = new DatabaseSync(e.path);
-  d.exec("DROP TABLE workspace_binding; PRAGMA user_version=1");
+  d.exec("DROP TABLE storage_io; DROP TABLE workspace_binding; PRAGMA user_version=1");
   d.close();
   e.journal = openMigrationJournal(e.path, e.options);
   assert.equal(get(e).id, e.job.id);

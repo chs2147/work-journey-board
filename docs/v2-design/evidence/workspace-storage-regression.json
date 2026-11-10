@@ -1,0 +1,30 @@
+{
+  "checkedAt": "2026-11-10T03:55:51.107205+00:00",
+  "branch": "v2-design",
+  "appVersion": "1.24.1",
+  "productSchema": 19,
+  "journalSchema": 3,
+  "javascriptTests": 280,
+  "newStorageJournalTests": 6,
+  "postgresTests": 89,
+  "newStorageProtocolGroups": 9,
+  "totalPassed": 369,
+  "cloudApplied": false,
+  "actualSupabaseStorageTestedThisStep": false,
+  "localHttpStorageBytesReadbackTested": true,
+  "productCodeChanged": false,
+  "localContainerRemoved": true,
+  "productActivationAllowed": false,
+  "unknownPostOutcomePolicy": "retain_unsettled_intent_block_publish_and_delete",
+  "sourceSha256": {
+    "poc/v2-migration/journal.mjs": "e68a3dbc66014dff0e54777d6a62b64d15a55876ef1846984c4ade913dff2a51",
+    "poc/v2-migration/workspace-session.mjs": "6b4e0aa241d6fbdb4ec1e1a67820e0a7d296021c2c4b2a712cd60b8530a75f5c",
+    "poc/v2-migration/workspace-session.test.mjs": "fca810f863e0ec86102da105169d02101e869bfbfe2b512fc592c186a43d09f6",
+    "poc/v2-migration/workspace-storage.mjs": "e602be2ecc23ccb2a1df08e1194f2bf023048335ff2d5c49ab3af1f99c6c86ee",
+    "poc/v2-migration/workspace-storage.test.mjs": "520d2774bbce8efcd9fa1653a634792550e66a8466bdf602af3990109bf6a689",
+    "poc/v2-migration/workspace-storage-pg-client.mjs": "6e60e7f0f49e793752e9f17519a30057d8d284b78737fb9b4923b9a4bc2f93bc",
+    "poc/v2-migration/postgres/run-local.py": "12c1314910874da7a926f98ffa4cd986a1965c3c2b5200bbbec5851f227f3a77",
+    "poc/v2-migration/postgres/storage-workspace-tests.py": "7e8d5fae7c6b157d4a13fb5278201cf7ee1578be902162c2e696f59fe13159cc",
+    "poc/v2-gateway/supabase-rest.mjs": "1ed0c817214c3071844d3cce952feb608e533b06d68e3166f6bccf62205e3a81"
+  }
+}

@@ -47,3 +47,12 @@ PYTHONDONTWRITEBYTECODE=1 python3 poc/v2-migration/postgres/run-local.py --full-
 ```
 
 RPC는 allowWorkspaceProfiles:true로 명시적으로 활성화한다. journal version1은 인식/경로/무결성 확인 후2로 올리며 기존 job/asset을 보존한다. source/mapping/target 해시는 별도다. workspace-session은 이미지 없는 공간의 PoC 게시·재조회/취소 제어를 연결하고, 이미지 공간은 실제Storage어댑터 전까지 준비 단계에서 정지한다. [64문서](../../docs/v2-design/64-workspace-gateway-journal-binding.md)를 따른다.
+
+## Storage 이미지 I/O 연결
+
+```sh
+node --test poc/v2-migration/workspace-storage.test.mjs
+PYTHONDONTWRITEBYTECODE=1 python3 poc/v2-migration/postgres/run-local.py --full-workspace --storage-workspace --evidence-stem migration-storage
+```
+
+createWorkspaceStorageGateway의 rpc/assetIO를 session에 명시적으로 주입한다. journal version3은 IO intent/terminal 응답/정산의 ID만 저장한다. 불명확한POST는 hash 조회만으로 정산하지 않는다. runner는 외부 Supabase가 아닌 실제 로컬PG/Storage HTTP표본이다. [65문서](../../docs/v2-design/65-workspace-storage-io.md)의 범위/한계/DEV 다음 단계를 따른다.

@@ -27,6 +27,7 @@ arguments=argparse.ArgumentParser()
 arguments.add_argument('--evidence-stem',default='migration-postgres')
 arguments.add_argument('--full-workspace',action='store_true')
 arguments.add_argument('--workspace-only',action='store_true')
+arguments.add_argument('--storage-workspace',action='store_true')
 options=arguments.parse_args()
 evidence_stem=options.evidence_stem
 if not re.fullmatch(r'migration-[a-z0-9-]{1,80}',evidence_stem):raise SystemExit('Invalid local evidence filename')
@@ -418,10 +419,11 @@ try:
         import runpy
         sql((ROOT/'004-workspace.sql').read_text())
         runpy.run_path(str(ROOT/'full-workspace-tests.py'))['run'](globals())
+        if options.storage_workspace: runpy.run_path(str(ROOT/'storage-workspace-tests.py'))['run'](globals())
     result={'checkedAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'postgres':scalar('SHOW server_version;'),
-      'image':IMAGE,'tests':RESULTS,'passed':len(RESULTS),'cloudApplied':False,'storageBytesReadbackTested':False,'fullWorkspaceProfileTested':options.full_workspace,'baselineSuiteExecuted':not options.workspace_only,
+      'image':IMAGE,'tests':RESULTS,'passed':len(RESULTS),'cloudApplied':False,'storageBytesReadbackTested':False,'fullWorkspaceProfileTested':options.full_workspace,'baselineSuiteExecuted':not options.workspace_only,'storageWireProtocolTested':options.storage_workspace,
       'scope':'Actual PostgreSQL functions/RLS/locks, fixture Auth and trusted gateway attestations; no remote network',
-      'sourceSha256':{str(p.relative_to(REPO)):hashlib.sha256(p.read_bytes()).hexdigest() for p in [*sorted(ROOT.glob('*.sql')),ROOT/'run-local.py',ROOT/'build-workspace-sql.py',ROOT/'full-workspace-tests.py',ROOT/'templates/workspace-validation.sql',REPO/'poc/v2-migration/db18-contract.json',REPO/'poc/v2-migration/db19-contract.json',REPO/'poc/v2-migration/emit-workspace-fixture.mjs',REPO/'poc/v2-migration/fixture-full-workspace.mjs',REPO/'poc/v2-migration/workspace-session.mjs',REPO/'poc/v2-migration/workspace-session-fixture.mjs',REPO/'poc/v2-migration/workspace-session-pg-client.mjs',REPO/'poc/v2-migration/journal.mjs',REPO/'poc/v2-assets/connected-copy.mjs',REPO/'poc/v2-sync/db18.mjs',REPO/'poc/v2-migration/workspace-map.mjs',REPO/'poc/v2-migration/server-rpc.mjs',REPO/'poc/v2-migration/rpc-pg-client.mjs',REPO/'poc/v2-cloud/session-guard.sql',REPO/'poc/v2-gateway/postgres-metadata.sql',REPO/'poc/v2-gateway/recovery.sql']}}
+      'sourceSha256':{str(p.relative_to(REPO)):hashlib.sha256(p.read_bytes()).hexdigest() for p in [*sorted(ROOT.glob('*.sql')),ROOT/'run-local.py',ROOT/'build-workspace-sql.py',ROOT/'full-workspace-tests.py',ROOT/'storage-workspace-tests.py',REPO/'poc/v2-migration/workspace-storage.mjs',REPO/'poc/v2-migration/workspace-storage-pg-client.mjs',ROOT/'templates/workspace-validation.sql',REPO/'poc/v2-migration/db18-contract.json',REPO/'poc/v2-migration/db19-contract.json',REPO/'poc/v2-migration/emit-workspace-fixture.mjs',REPO/'poc/v2-migration/fixture-full-workspace.mjs',REPO/'poc/v2-migration/workspace-session.mjs',REPO/'poc/v2-migration/workspace-session-fixture.mjs',REPO/'poc/v2-migration/workspace-session-pg-client.mjs',REPO/'poc/v2-migration/journal.mjs',REPO/'poc/v2-assets/connected-copy.mjs',REPO/'poc/v2-sync/db18.mjs',REPO/'poc/v2-migration/workspace-map.mjs',REPO/'poc/v2-migration/server-rpc.mjs',REPO/'poc/v2-migration/rpc-pg-client.mjs',REPO/'poc/v2-cloud/session-guard.sql',REPO/'poc/v2-gateway/postgres-metadata.sql',REPO/'poc/v2-gateway/recovery.sql']}}
     EVIDENCE.write_text(json.dumps(result,indent=2)+'\n')
     print(json.dumps({'passed':len(RESULTS),'postgres':result['postgres'],'cloudApplied':False}))
 finally:

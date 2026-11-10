@@ -1,10 +1,12 @@
-// Full-profile control connection. Real Storage IO is the next adapter, never inferred here.
+// Full-profile control connection; optional trusted Storage adapter performs and proves IO.
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { inspectConnectedCopy } from "../v2-assets/connected-copy.mjs";
 import { mapWorkspace } from "./workspace-map.mjs";
 import { hash } from "../v2-sync/model.mjs";
 import { bindMigrationManifests } from "./server-rpc.mjs";
 
-export async function advanceWorkspaceSession({ journal, id, actor, directory, rpc, principal }) {
+export async function advanceWorkspaceSession({ journal, id, actor, directory, rpc, principal, assetIO }) {
   if (principal?.role !== "authenticated" || principal.userId !== actor?.ownerId)
     throw Error("WORKSPACE_PRINCIPAL_MISMATCH");
   let job = journal.get(id, actor);
@@ -54,6 +56,8 @@ export async function advanceWorkspaceSession({ journal, id, actor, directory, r
       job = journal.refresh(lease);
     }
     if (job.state === "cancel_fenced") {
+      if (assetIO && !(await assetIO.cancelAll({ journal, lease })))
+        return { state: "cancel_fenced", blocked: "UNSETTLED_STORAGE_IO", productActivationAllowed: false };
       let result;
       try {
         result = await call("finish_cancel", { manifestHash: target });
@@ -78,6 +82,12 @@ export async function advanceWorkspaceSession({ journal, id, actor, directory, r
       if (result.state !== "absent" || result.operationSettled !== true)
         return { state: "publishing", blocked: "PUBLICATION_UNCERTAIN", productActivationAllowed: false };
       // A settled-absent fence invalidates delayed prepares/publishes before retry.
+      if (job.assets.length && (!assetIO || !(await assetIO.attestAll({ journal, lease }))))
+        return {
+          state: "publishing",
+          blocked: "STORAGE_ATTESTATION_REQUIRED",
+          productActivationAllowed: false,
+        };
       const t = await call("prepare_publish", {
         manifestHash: target,
         operationId: job.publish_op,
@@ -108,8 +118,22 @@ export async function advanceWorkspaceSession({ journal, id, actor, directory, r
       sourceManifestHash: b.source_manifest_hash,
       profile: b.target_profile,
     });
-    if (job.assets.length)
-      return { state: "staged", blocked: "ASSET_GATEWAY_NOT_CONNECTED", productActivationAllowed: false };
+    if (job.assets.length) {
+      if (!assetIO)
+        return { state: "staged", blocked: "ASSET_GATEWAY_NOT_CONNECTED", productActivationAllowed: false };
+      for (const item of job.assets) {
+        const bytes = readFileSync(join(directory, "assets", item.sha256 + ".bin"));
+        if (bytes.length !== item.bytes || hash(bytes) !== item.sha256) throw Error("LOCAL_ASSET_CHANGED");
+        if (!(await assetIO.upload({ journal, lease, objectId: item.object_id, bytes })))
+          return { state: "uploading", blocked: "UNSETTLED_STORAGE_IO", productActivationAllowed: false };
+      }
+      if (!(await assetIO.attestAll({ journal, lease })))
+        return {
+          state: "uploading",
+          blocked: "STORAGE_ATTESTATION_REQUIRED",
+          productActivationAllowed: false,
+        };
+    }
     const op = journal.beginPublish(lease);
     const observed = await call("publication", { manifestHash: target, operationId: op });
     if (observed.state === "connected") {

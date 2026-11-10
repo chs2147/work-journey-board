@@ -124,3 +124,7 @@ A06의 [57문서](57-runtime-isolation-and-migration-handoff.md)에 후보 profi
 ## 전체 프로필 gateway·journal 연결(최신)
 
 [64문서](64-workspace-gateway-journal-binding.md)에 전체 프로필 opt-in RPC와 journal version2 보존 업그레이드·해시 이중 바인딩/매핑 지문을 구현했다. 실제 HTTP/PG/SQLite 재열기로 제어 응답 유실을 확인하며 PoC 완료는 제품 활성화로 바꾸지 않는다. 다음은4번 실제Storage전송/readback/취소부재확인이다. 이미지 없는 제어 통합과 실제파일 이관을 구분하며 Cloud에는 미적용이다.
+
+## Storage I/O·readback·취소 연결(최신)
+
+[65문서](65-workspace-storage-io.md)에 전체 이관/Storage/C2 연결과 journal version3을 구현했다. 확정된 HTTP 응답만 정산하고 bytes hash/최신attest를 요구하며, 취소 후 모든IO정산/삭제부재 확인 전에는 quota를 반환하지 않는다. 로컬PG+Storage HTTP표본9시나리오와 journal/기존회귀를 검증한다. 실제Cloud미적용이며 다음은5번 DEV전진SQL 검토/실제통합이다.

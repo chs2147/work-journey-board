@@ -1,5 +1,7 @@
 # V2 프로젝트 — 다국어·온라인 동기화 상세 설계 초안
 
+**최신 진행:** [65. Storage I/O·검증·취소 연결](65-workspace-storage-io.md). 이미지 전송/실제 readback hash·C2 정산·최신 attestation·취소 부재 확인을 연결했다. Storage는 로컬 HTTP 표본으로 검증하며 실제 DEV 적용/파일 통합은 다음 단계다.
+
 **최신 진행:** [64. 전체 프로필 gateway·journal 연결](64-workspace-gateway-journal-binding.md). 분리된 source/mapping/target 해시 영속 기록과 실제 RPC 제어 복구를 구현했다. 이미지 공간은 준비 단계에서 차단하며 다음은 실제 Storage I/O 어댑터다.
 
 **최신 진행:** [63. 전체 워크스페이스 서버 프로필](63-full-workspace-server-profile.md). DB18/19 전체 봉투의 서버 검증·레코드 저장·재조회/게시 해시·RLS·빈 rollback을 추가했다. Cloud 미적용이며 다음은 gateway/journal 연결이다.
