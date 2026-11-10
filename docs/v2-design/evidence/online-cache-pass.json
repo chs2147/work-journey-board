@@ -1,0 +1,61 @@
+{
+  "checkedAt": "2026-11-10T23:33:48.615646+00:00",
+  "branch": "v2-design",
+  "baseline": "fcc29aa",
+  "productVersion": "1.24.3",
+  "localSchemaVersion": 19,
+  "sourceSchemasTested": [
+    18,
+    19
+  ],
+  "cacheFormat": {
+    "family": "wjb-online-cache",
+    "version": 1,
+    "applicationId": 1464487221,
+    "fileName": "online-cache.sqlite",
+    "scope": "owner/workspace/device/generation",
+    "capability": "snapshot-read",
+    "productActivationAllowed": false
+  },
+  "scope": "Independent synthetic Node/SQLite cache format and trusted remote callback fixtures; no native or live backend activation",
+  "command": "node --test poc/v2-runtime/*.test.mjs poc/v2-assets/connected-copy.test.mjs poc/v2-migration/*.test.mjs poc/v2-sync/db18.test.mjs",
+  "newCacheTests": 73,
+  "existingRegressionTests": 235,
+  "totalPassed": 308,
+  "totalFailed": 0,
+  "lintPassed": true,
+  "formatPassed": true,
+  "regressionLog": "online-cache-regression.txt",
+  "regressionLogSha256": "4c06f5e3f42ccd01137411e342b706a4765d4d3d5676e208d1a5f8660b58f46b",
+  "checksLog": "online-cache-checks.txt",
+  "checksLogSha256": "1e72f847c0b20dcb6cc86de4473b66faa4c58b521743fd8875728b335eb144de",
+  "sourceSha256": {
+    "poc/v2-runtime/online-cache.mjs": "1cfd6f10690ec3d3af5346898a304ffe5625a1f4fa7caf465e0b9fa647c5f288",
+    "poc/v2-runtime/online-cache-activation.mjs": "506e30f3b57b02dd969bb3f3f2b7cf77c06b812bba01441a916c4e89dd2dd6a0",
+    "poc/v2-runtime/online-cache.test.mjs": "46101c720460cf4f396866ee4240cb8b7ab5f444b05af886fdcfd2818439221f",
+    "poc/v2-runtime/workspace-registry.mjs": "6dc577146ebc885ee6e5f6585da484a9a3ec47f596e05c350763cbd328f3a5b7",
+    "poc/v2-migration/workspace-map.mjs": "14b7f0f5973516ac089471f986cc9086c2053fdeb1e4bb559eb70fa665ecb9de",
+    "poc/v2-migration/workspace-session-fixture.mjs": "3294c7122205d1d96cb4167778c40c76bd70ae9416d84675bd1273a5d8f4ede2",
+    "poc/v2-assets/connected-copy.mjs": "076ccbbd4142c2dd52430cd09a129fd5de688ddf4ef66fa2af80742156b9889f"
+  },
+  "invariants": [
+    "source DB18/19 hash and file list retained",
+    "mapped records and DB19 delete lock retained",
+    "metadata-only SQLite/Blob references with image-body rejection",
+    "wrong owner/workspace/device/generation/header/schema/hash denied",
+    "exclusive creation without overwrite",
+    "outbox/inbox/conflict metadata only; unresolved envelopes block activation",
+    "account guard, lifetime and terminal revocation enforced",
+    "late remote verification releases SQLite handle",
+    "cache-verified cannot activate workspace-runtime"
+  ],
+  "productWiringImplemented": false,
+  "serverProductActivationAPIImplemented": false,
+  "actualCloudTestsRerun": false,
+  "cloudWrites": false,
+  "existingUserWorkspacesAccessed": false,
+  "windowsMacNativeVerified": false,
+  "uiChanged": false,
+  "newReleasePublished": false,
+  "next": "Native profile/config/OS credential isolation; approved A layout retained"
+}

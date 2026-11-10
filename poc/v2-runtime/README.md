@@ -30,3 +30,11 @@ PW_CHROMIUM_PATH=/usr/bin/chromium node docs/v2-design/mockups/step6-settings/ve
 ```
 
 화면 controller → 명령 bridge → registry를 별도 loopback 확인 화면에 연결했다. DB19 fixture는 읽기 전용이며 실제 제품/native 경로를 등록하지 않는다. 생성/인증/받기는 비활성이다. 온라인 열기는 제품용 증표가 없어 차단한다. [70문서](../../docs/v2-design/70-a-settings-bridge-integration.md)에 명령 계약·전환 순서·미구현 관문을 기록했다.
+
+## 온라인 캐시 형식·읽기 확인
+
+```sh
+node --test poc/v2-runtime/online-cache.test.mjs
+```
+
+별도 `online-cache.sqlite`는 owner/workspace/device/generation으로 묶인 metadata-only 형식이다. `.v2-poc-only`와 원본 보호 루트를 요구한다. DB18/19나 이관 PoC DB를 자동 변환하지 않는다. 원격 확인 callback으로 읽기만 허용하며 cache-verified는 제품 workspace-runtime 증표가 아니다. outbox/inbox/conflict의 실제 동기화 처리는 아직 없고 미처리 항목은 읽기 활성화를 차단한다. 실제 제품/서버 연결과 OS 실기는 미완료다. [72문서](../../docs/v2-design/72-online-cache-format-activation.md)를 따른다.

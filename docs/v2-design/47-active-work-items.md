@@ -1,5 +1,7 @@
 # 47. V2 진행 항목·사용자 직접 설정·재개 순서
 
+**현재 구현 진행:** [72문서](72-online-cache-format-activation.md). 독립 온라인 캐시 형식/읽기 gate와 metadata-only envelope를 구현하고 308개 회귀를 검증했다. 다음은 native 프로필·설정·OS 자격증명 격리. 실제 제품 서버 capability/캐시 native 포트/편집 동기화는 후속이며 기존 로컬 모델과 main1.24.3/DB19를 유지한다.
+
 **최신 제품 동기화:** [71문서](71-main-1.24.3-sync-checkpoint.md). main 30a4a9a의 4개 커밋 반영, 앱1.24.3/DB19. 다음 작업은 제품용 온라인 캐시·활성화 어댑터이며 70문서의 A안 연결 경계 결과를 유지한다.
 
 **현재 진행:** [70. A안 설정 연결](70-a-settings-bridge-integration.md). 독립 PoC의 화면/명령/SQLite 연결·235개 회귀/9개 배치를 검증했다. 제품용 cache/활성화 어댑터 → native 격리/보안 저장소 → 기존 appController/제품 UI 연결이 남는다. 아래 상태는 과거 기록이며 최신 문서를 우선한다.

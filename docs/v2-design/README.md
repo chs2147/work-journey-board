@@ -1,5 +1,7 @@
 # V2 프로젝트 — 다국어·온라인 동기화 상세 설계 초안
 
+**현재 재개 정본:** [72. 온라인 캐시 형식·읽기 검증](72-online-cache-format-activation.md). 별도 cache header/schema/계정·기기·세대·metadata-only 저장과 단기 원격 확인을 구현했다. 308개 회귀 통과. 독립 구현이며 제품 활성화/Cloud 배포는 아직 아니다. 다음은 native 프로필·설정·OS 자격증명 격리다. 제품 기준1.24.3/DB19 유지.
+
 **최신 제품 기준:** [71. main 1.24.3 반영](71-main-1.24.3-sync-checkpoint.md). main의 새 4개 커밋을 5bdd4f3로 병합했다. 앱1.24.3/DB19, V2 원본 보존·별도 온라인 계약 유지. 다음 기능 작업은 70문서의 제품용 캐시/활성화 어댑터다. 아래 구현 기록은 작성 당시 기준이다.
 
 **현재 재개 정본:** [70. A안 설정 화면·연결 경계](70-a-settings-bridge-integration.md). 화면 controller → 명령 bridge → 별도 SQLite registry/읽기 전용 가상 DB19를 연결했다. 제품 UI/native 배포는 아직 아니며 다음은 제품용 온라인 캐시·활성화 검증 어댑터다. [A안 확인 화면](mockups/step6-settings/a-settings.png). 이하 기록은 작성 당시 체크포인트다.

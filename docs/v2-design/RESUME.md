@@ -1,6 +1,6 @@
 # V2 설계·PoC 중단/재개 기록
 
-**현재 재개 정본:** [71. main 1.24.3 반영](71-main-1.24.3-sync-checkpoint.md). 이하 체크포인트는 작성 당시 기록이며 가장 최근 결과가 우선한다.
+**현재 재개 정본:** [72. 온라인 캐시 형식·읽기 검증](72-online-cache-format-activation.md). 이하 체크포인트는 작성 당시 기록이며 가장 최근 결과가 우선한다.
 
 2026-11-09 UTC · V2 설계/PoC 중단 지점을 보존한 뒤 복귀했다. 사용자 요청으로 main 1.23.1 패치(`d11a0ca`)를 v2-design에 병합했다.
 
@@ -172,3 +172,7 @@ cfdeae4가 원격과 일치해 재푸시만 확인하고 [67문서](67-product-i
 ## main 1.24.3 동기화(최신)
 
 [71문서](71-main-1.24.3-sync-checkpoint.md): V2 8dde178을 보존하고 main 30a4a9a까지 4개 커밋을 5bdd4f3로 병합했다. 현재 앱1.24.3/DB19. 사진 dialog/메모 팔레트 위치/데일리 버튼/티저 푸터·모션 버튼 개선 반영. 앱532·V2 235·Chromium26개 통과, lint/format/build/문서 정합 통과. PoC 실행 환경 lint 선언과 생성 manifest 포맷 경계만 추가 정리했다. main/Cloud/원본은 직접 수정하지 않았다. 다음은 70문서의 제품용 온라인 캐시·활성화 어댑터이며 A안은 확정이다.
+
+## 온라인 캐시 형식·읽기 검증(최신)
+
+main 동기화는 fcc29aa까지 푸시되어 있다. [72문서](72-online-cache-format-activation.md)에 별도 application_id/user_version·원본 보호·metadata-only records/Blob refs/envelopes·단기 원격 확인을 구현했다. 새73 + 기존235 = 308개 회귀, lint/format 통과. 실제 제품/native/Cloud/원본은 미변경이다. 현재 PoC 증표는 그대로 거절하며 snapshot-read 확인도 productActivationAllowed:false로 제품 편집 런타임에 승격하지 않는다. 다음은 native 프로필/설정/OS 자격증명 격리이며 실제 설치 식별 정책은 별도 미확정이다. 제품 캐시 native 포트·서버 제품 API·편집/동기화/전원 중단 복구·실기는 남았다. A안은 확정이다.

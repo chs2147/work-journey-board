@@ -1,0 +1,10 @@
+
+> work-journey-board@1.24.3 lint
+> eslint .
+
+
+> work-journey-board@1.24.3 format:check
+> prettier --check .
+
+Checking formatting...
+All matched files use Prettier code style!

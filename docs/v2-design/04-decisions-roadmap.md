@@ -392,3 +392,7 @@ V2 체크포인트52ff622를 푸시한 뒤 사용자 요청의 캐비넷/노트 
 ## 4.74 main 1.24.3 동기화
 
 [71문서](71-main-1.24.3-sync-checkpoint.md): main 30a4a9a까지 4개 커밋을 v2-design에 반영했다(병합 5bdd4f3). DB19 유지·저장 형식 변경 없음. V2 로컬 보존/계정별 온라인 분리와 A안 계약을 유지한다. 앱532·V2 235·Chromium26개 및 사이트 smoke로 확인했고 다음 기능 작업은 온라인 제품용 캐시/활성화 어댑터다.
+
+## 4.75 온라인 캐시 v1·읽기 검증 어댑터
+
+[72문서](72-online-cache-format-activation.md): 로컬 DB19/registry와 별도 header/schema로 metadata와 Blob 참조만 저장한다. 계정·공간·기기·세대·스냅샷/Blob catalog hash와 단기 원격 확인이 맞을 때 snapshot-read만 제공한다. 현재 DEV의 PoC 증표와 cache-verified를 workspace-runtime으로 승격하지 않는다. 원본/실제 제품/Cloud는 미변경이며 다음은 native 프로필·설정·OS 자격증명 격리다.
