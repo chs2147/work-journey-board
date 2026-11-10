@@ -26,6 +26,9 @@ interface UpdateState {
   /** 띠 [나중에] — 이번 실행 동안 띠만 숨김(레일 점·설정은 그대로) */
   dismissed: boolean;
   dialogOpen: boolean;
+  /** 확인 실패 종류(improve-v20-spec 6절) — rate = 한도 초과(retryAt까지 확인 단추 잠김), blocked = 차단 */
+  failKind: "rate" | "blocked" | "other" | null;
+  retryAt: number | null;
 }
 
 export const useUpdate = create<UpdateState>(() => ({
@@ -36,7 +39,21 @@ export const useUpdate = create<UpdateState>(() => ({
   checkedAt: null,
   dismissed: false,
   dialogOpen: false,
+  failKind: null,
+  retryAt: null,
 }));
+
+/** Rust update.rs 오류 글의 꼬리표 `[update:rate:<유닉스 초>]`·`[update:blocked]`·`[update:other]`를 떼어 종류로 */
+export function parseCheckError(msg: string): {
+  kind: UpdateState["failKind"];
+  retryAt: number | null;
+  text: string;
+} {
+  const m = /^\[update:(rate|blocked|other)(?::(\d*))?\]\s*/.exec(msg);
+  if (!m) return { kind: "other", retryAt: null, text: msg };
+  const at = m[1] === "rate" && m[2] ? Number(m[2]) * 1000 : null;
+  return { kind: m[1] as "rate" | "blocked" | "other", retryAt: at, text: msg.slice(m[0].length) };
+}
 
 const set = useUpdate.setState;
 const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
@@ -56,8 +73,9 @@ export async function checkOnStart() {
 
 /** 설정 [업데이트 확인] */
 export async function checkNow() {
-  const { phase } = useUpdate.getState();
+  const { phase, retryAt } = useUpdate.getState();
   if (phase === "checking" || phase === "downloading" || phase === "installing") return;
+  if (retryAt && Date.now() < retryAt) return;
   await check();
   const s = useUpdate.getState();
   if (s.phase === "none") toast(STR.update.latest);
@@ -69,10 +87,29 @@ async function check() {
   set({ phase: "checking", error: null });
   try {
     const info = await platform.updateCheck();
-    set({ phase: info ? "available" : "none", info, checkedAt: new Date().toISOString() });
+    set({
+      phase: info ? "available" : "none",
+      info,
+      checkedAt: new Date().toISOString(),
+      failKind: null,
+      retryAt: null,
+    });
   } catch (e) {
-    set({ phase: "failed", error: message(e), checkedAt: new Date().toISOString() });
+    const p = parseCheckError(message(e));
+    set({
+      phase: "failed",
+      error: p.text,
+      failKind: p.kind,
+      retryAt: p.retryAt,
+      checkedAt: new Date().toISOString(),
+    });
   }
+}
+
+/** [릴리스 페이지 열기] — 기본 브라우저로 넘길 뿐 앱은 접속하지 않는다(링크 열기 규칙 4-1) */
+export async function openReleasesPage() {
+  const platform = useAppStore.getState().platform;
+  if (platform) await platform.openUrl(STR.update.releasesUrl);
 }
 
 export function dismissBanner() {

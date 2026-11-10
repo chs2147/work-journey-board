@@ -1,7 +1,7 @@
 import { captureNoteScope } from "../note/noteStore";
 import { CABI_DRAG_PREFIX } from "./cabiDragFormat";
 import { useState, useRef, type DragEvent } from "react";
-import { IconCopyItem } from "../common/icons";
+import { IconGrip, IconGripCopy } from "../common/icons";
 import { reportError } from "../board/boardStore";
 import { flushNote, useNote } from "../note/noteStore";
 import { cabiCall, registerCabiDrag } from "./cabiService";
@@ -58,11 +58,12 @@ export function CabiDragGrip({ reference, boxId }: { reference?: CabiReference; 
         void cabiCall("dragEnd", activeToken.current).catch(() => undefined);
       }}
       className={`${styles.icon} ${styles.copyGrip}`}
+      data-testid={reference ? "cabi-drag-grip" : "cabi-copy-grip"}
       title={reference ? CABI.dragResource : CABI.dragCopy}
       aria-label={reference ? CABI.dragResource : CABI.dragCopy}
       aria-pressed={ready}
     >
-      <IconCopyItem />
+      {reference ? <IconGrip /> : <IconGripCopy />}
     </button>
   );
 }

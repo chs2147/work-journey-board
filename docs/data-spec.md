@@ -233,6 +233,13 @@ CREATE TABLE app_meta (
 - 기존 일지 가져오기 덮어쓰기·되돌리기 자료(`import_batch.undo_json`)는 `due_date`를 보존한다(v10 `start_time`과 같은 처리).
 - 직전 백업은 `_pre-migration-v13`.
 
+
+### 3-v19. 스키마 v19 (2026-11-09, `0019_note_delete_lock.sql`)
+- 업무노트 삭제 잠금(improve-v20-spec 2절): `cabi_note.delete_locked INTEGER NOT NULL DEFAULT 0 CHECK IN (0,1)` — 기존 노트는 모두 0.
+- revision 트리거 `cabi_note_revision`을 `BEFORE UPDATE OF title, content, plain_text, format_version, category_id, revision`으로 다시 만든다 — 잠금만 바꾸는 갱신은 본문 revision을 올리지 않아 열린 편집 창과 충돌하지 않는다.
+- 저장소 `removeNote`는 잠금을 다시 검사(`CabiLockedError`)하고 DELETE에도 `delete_locked=0` 조건. 복제 `duplicateNote` = 노트 1행 + 이미지 자산 n행(새 id·새 소유자)을 한 batch.
+- 직전 백업은 `_pre-migration-v19`.
+
 ## 4. 카테고리 활성 계산
 
 ### 4-1. 주 W에 보일 카테고리

@@ -53,6 +53,7 @@ import {
   IconDone,
   IconMoveDate,
   IconCopyItem,
+  IconGrip,
   IconNote,
   IconRepeat,
   IconTrash,
@@ -792,16 +793,8 @@ function deleteMenuLabel(items: ItemDraft[], i: number) {
   return items[i]?.depth === 0 && subs > 0 ? STR.itemTools.deleteGroup(subs) : STR.itemTools.delete;
 }
 
-/** ⋮⋮ 손잡이 — 점 6개(2×3), 노션처럼 또렷하게(improve-1103v9-spec N1) */
-function GripDots() {
-  return (
-    <svg width="10" height="16" viewBox="0 0 10 16" aria-hidden="true">
-      {[2.5, 7.5].flatMap((x) =>
-        [3, 8, 13].map((y) => <circle key={`${x}-${y}`} cx={x} cy={y} r="1.6" fill="currentColor" />),
-      )}
-    </svg>
-  );
-}
+/** ⋮⋮ 손잡이 — 점 6개(2×3), 노션처럼 또렷하게(improve-1103v9-spec N1) · 공용 IconGrip(improve-v20-spec D5) */
+const GripDots = () => <IconGrip />;
 
 /** 마감일 꼬리표 — 남은 날·색은 오늘 기준(지남·오늘·7일 안·그 뒤) */
 function DueChip({ today, due, onOpen }: { today: string; due: string; onOpen(): void }) {

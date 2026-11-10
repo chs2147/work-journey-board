@@ -1,6 +1,7 @@
 // 오늘 뷰(improve-1026-spec 8절): 왼쪽 = 그 날이 든 주의 메모 보드(폭 조절·기억), 오른쪽 = 그 날의 업무 카드.
 // 카드 안 기록은 보드 칸과 같은 편집기(개조식 규칙·단축키·자동 저장 그대로), 카드 아래 = 직전 기록 한 줄 + [가져오기].
 // 창이 좁으면(1100px 미만) 메모는 위쪽 접힌 띠가 된다.
+import { IconFilterRecorded } from "../common/icons";
 import { useEffect, useRef, useState, type PointerEvent } from "react";
 import { CabinetCategoryBadge } from "../cabinet/CabinetCategoryBadge";
 import { cellKey } from "../../data/repository";
@@ -37,10 +38,13 @@ export function TodayView() {
   const tags = useBoard((s) => s.tags);
   const prevDates = useBoard((s) => s.prevDates);
   const prevItems = useBoard((s) => s.prevItems);
-  const prevExcluded = useBoard((s) => s.prevExcluded);
+  const cells = useBoard((s) => s.cells);
   const narrow = useMediaQuery("(max-width: 1099px)");
   const [memoOpen, setMemoOpen] = useState(false);
   const [split, setSplit] = useState(DEFAULT_SETTINGS.ui.todaySplit);
+  const [hideEmpty, setHideEmpty] = useState(DEFAULT_SETTINGS.ui.todayHideEmpty);
+  // 숨김을 켠 채 기록하는 카드는 그 날을 떠나거나 토글할 때까지 남긴다(마지막 항목을 지워도 바로 사라지지 않게)
+  const [kept, setKept] = useState<{ day: string | null; ids: string[] }>({ day: null, ids: [] });
   const wrapRef = useRef<HTMLDivElement>(null);
   // 메모 [크게 보기](improve-1101 #3): 주간 뷰처럼 메모가 데일리 뷰 전체를 덮는다(카드는 숨겨 둔 채 그대로)
   const noteExpanded = useNote((s) => s.expanded);
@@ -50,14 +54,35 @@ export function TodayView() {
     const j = useAppStore.getState().journal;
     if (j.state !== "ready") return;
     let alive = true;
-    void j.repo.getSettings().then((s) => alive && setSplit(s.ui.todaySplit));
+    void j.repo.getSettings().then((s) => {
+      if (!alive) return;
+      setSplit(s.ui.todaySplit);
+      setHideEmpty(s.ui.todayHideEmpty);
+    });
     return () => {
       alive = false;
     };
   }, []);
 
   if (!view || !day) return null;
-  const cats = shownCategories({ view, categoryTags, tagFilter });
+  const allCats = shownCategories({ view, categoryTags, tagFilter });
+  const keptIds = kept.day === day ? kept.ids : [];
+  const hasRecord = (id: string) => (cells[cellKey(day, id)] ?? []).some((i) => i.text.trim() !== "");
+  const cats = hideEmpty
+    ? allCats.filter((c) => hasRecord(c.category.id) || keptIds.includes(c.category.id))
+    : allCats;
+  const hiddenCount = allCats.length - cats.length;
+  if (hideEmpty) {
+    const add = cats.filter((c) => !keptIds.includes(c.category.id)).map((c) => c.category.id);
+    if (add.length) setKept({ day, ids: [...keptIds, ...add] });
+  }
+  const toggleHideEmpty = (on: boolean) => {
+    setHideEmpty(on);
+    setKept({ day: null, ids: [] });
+    const j = useAppStore.getState().journal;
+    if (j.state === "ready")
+      void j.repo.updateSettings({ ui: { todayHideEmpty: on } }).catch(() => undefined);
+  };
   // 전체 가져오기가 고를 날 = 보이는 진행 중 업무의 직전 기록일 중 가장 늦은 날(pullPreviousDay와 같은 규칙)
   const pullAllDate = cats
     .filter((c) => c.state === "active")
@@ -188,6 +213,18 @@ export function TodayView() {
           )}
           <DayMarkPicker day={day} />
           <span className={styles.spacer} />
+          <button
+            type="button"
+            className={`${styles.textButton} ${styles.toggle}`}
+            aria-pressed={hideEmpty}
+            aria-label={STR.today.hideEmpty}
+            title={hideEmpty ? STR.today.hideEmptyTitleOn : STR.today.hideEmptyTitleOff}
+            data-testid="today-hide-empty"
+            onClick={() => toggleHideEmpty(!hideEmpty)}
+          >
+            <IconFilterRecorded />
+            <span className={styles.toggleTrack} aria-hidden="true" />
+          </button>
           {pullAllDate && (
             <button
               type="button"
@@ -202,7 +239,15 @@ export function TodayView() {
         </div>
         <TagFilterBanner />
         <div className={styles.cards} data-drag-scroll>
-          {cats.length === 0 && <p className={styles.empty}>{STR.today.empty}</p>}
+          {allCats.length === 0 && <p className={styles.empty}>{STR.today.empty}</p>}
+          {allCats.length > 0 && cats.length === 0 && (
+            <p className={styles.empty} data-testid="today-none-recorded">
+              {STR.today.noneRecorded}{" "}
+              <button type="button" className={styles.textButton} onClick={() => toggleHideEmpty(false)}>
+                {STR.today.showAll}
+              </button>
+            </p>
+          )}
           {cats.map((vc, row) => {
             const id = vc.category.id;
             const key = cellKey(day, id);
@@ -255,7 +300,6 @@ export function TodayView() {
                       {prev.filter((i) => i.depth === 0).length > 2 &&
                         ` ${STR.today.more(prev.filter((i) => i.depth === 0).length - 2)}`}
                     </span>
-                    {!!prevExcluded[id] && <span>{STR.itemCompletion.excluded(prevExcluded[id]!)}</span>}
                     <button
                       type="button"
                       className={styles.pull}
@@ -271,6 +315,14 @@ export function TodayView() {
               </section>
             );
           })}
+          {hideEmpty && hiddenCount > 0 && cats.length > 0 && (
+            <div className={styles.hiddenBar} data-testid="today-hidden-bar">
+              <span>{STR.today.hiddenBar(hiddenCount)}</span>
+              <button type="button" className={styles.textButton} onClick={() => toggleHideEmpty(false)}>
+                {STR.today.showAll}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

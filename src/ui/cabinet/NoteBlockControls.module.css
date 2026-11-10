@@ -1,4 +1,6 @@
 .grip {
+  display: grid;
+  place-items: center;
   position: fixed;
   z-index: 45;
   background: transparent;
@@ -138,4 +140,66 @@
 .bubble[data-below="true"] .link {
   bottom: auto;
   top: calc(100% + 8px);
+}
+
+/* 개선 v20(improve-v20-spec 5절): 표 행/열 이끌이 = 테두리 위 알약(표 손잡이 ⠿와 자리·모양 구분) · 끄는 동안 표시선 */
+.axisGrip {
+  position: fixed;
+  z-index: 46;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  background: var(--surface-card);
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 1;
+  cursor: grab;
+  box-shadow: 0 1px 3px #0002;
+}
+.axisGrip:hover {
+  color: var(--text-1);
+  border-color: var(--accent);
+}
+.axisGrip:active {
+  cursor: grabbing;
+}
+.rowGrip {
+  width: 14px;
+  height: 24px;
+  border-radius: 7px;
+}
+.columnGrip {
+  width: 24px;
+  height: 14px;
+  border-radius: 7px;
+}
+.axisSource,
+.axisLine,
+.axisFlash {
+  position: fixed;
+  z-index: 44;
+  pointer-events: none;
+}
+.axisSource {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+}
+.axisLine {
+  background: var(--accent);
+}
+.axisFlash {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+  animation: axisFlash 0.6s ease-out forwards;
+}
+@keyframes axisFlash {
+  to {
+    opacity: 0;
+  }
+}
+.grabbing,
+.grabbing * {
+  cursor: grabbing !important;
+}
+.dragSource {
+  opacity: 0.45;
 }

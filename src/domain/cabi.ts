@@ -12,6 +12,8 @@ export interface CabiNote {
   revision: number;
   createdAt: string;
   updatedAt: string;
+  /** 삭제 잠금(improve-v20-spec 2절) — 켜져 있으면 저장소가 삭제를 거부 */
+  deleteLocked?: boolean;
 }
 export interface CabiNoteSummary extends Omit<CabiNote, "content"> {
   excerpt: string;
@@ -235,4 +237,33 @@ export function memoSummary(box: NoteDoc["boxes"][number]) {
   return boxText(box)
     .replace(/^[-\s]+/, "")
     .slice(0, 120);
+}
+
+/** 삭제 잠금된 노트를 지우려 할 때(improve-v20-spec 2절) */
+export class CabiLockedError extends Error {
+  constructor() {
+    super("삭제 잠금을 풀어야 지울 수 있습니다.");
+    this.name = "CabiLockedError";
+  }
+}
+/** 복제 제목: "<제목> (사본)", 이미 있으면 "(사본 2)"… — 제목 길이 규칙(cabiTitle) 안에서 */
+export function copyTitle(title: string, taken: Set<string>): string {
+  const base = cabiTitle(title);
+  for (let n = 1; n < 1000; n++) {
+    const tail = n === 1 ? " (사본)" : ` (사본 ${n})`;
+    const t = cabiTitle(base.slice(0, Math.max(1, 200 - tail.length)) + tail);
+    if (!taken.has(t)) return t;
+  }
+  return cabiTitle(`${base} (사본)`);
+}
+/** 본문 이미지의 자산 id를 바꾼 사본(원본은 그대로) */
+export function remapAssets(content: PMNode, map: Map<string, string>): PMNode {
+  const visit = (n: PMNode): PMNode => {
+    const next: PMNode = { ...n };
+    if (n.type === "image" && typeof n.attrs?.asset === "string" && map.has(n.attrs.asset))
+      next.attrs = { ...n.attrs, asset: map.get(n.attrs.asset)! };
+    if (n.content) next.content = n.content.map(visit);
+    return next;
+  };
+  return visit(content);
 }

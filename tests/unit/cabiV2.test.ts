@@ -88,7 +88,7 @@ describe("Cabi.NET date-independent data", () => {
     let backup = false;
     await migrate(db, {
       beforeMigrate: async (from, to) => {
-        expect([from, to]).toEqual([15, 18]);
+        expect([from, to]).toEqual([15, 19]);
         backup = true;
       },
     });

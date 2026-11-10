@@ -279,6 +279,14 @@ export const browserPlatform: Platform = {
     updateCalls.push("check");
     await sleep(50);
     if (fakeUpdate === "fail") throw new Error("GitHub에 연결하지 못했습니다(가짜)");
+    // improve-v20-spec 6절: Rust update.rs가 붙이는 꼬리표 글을 흉내(rate = 18분 뒤, blocked = 차단)
+    if (fakeUpdate === "rate")
+      throw new Error(
+        `[update:rate:${Math.floor(Date.now() / 1000) + 18 * 60}] GitHub 확인 횟수 한도에 걸렸습니다(같은 인터넷 주소를 쓰는 PC가 많을 때 생깁니다).`,
+      );
+    if (fakeUpdate === "blocked")
+      throw new Error("[update:blocked] 회사망·보안 장비에서 GitHub 접속이 막힌 것 같습니다(가짜).");
+    if (fakeUpdate === "latest") return { version: "9.9.9", notes: "", size: 0, hasHash: true };
     if (!fakeUpdate) return null;
     const version = fakeUpdate === "bad" ? "0.9.0" : fakeUpdate;
     return {

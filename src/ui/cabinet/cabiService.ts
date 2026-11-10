@@ -26,6 +26,8 @@ const METHODS = [
   "createNote",
   "saveNote",
   "removeNote",
+  "duplicateNote",
+  "setNoteDeleteLock",
   "referenceCount",
   "listBoards",
   "board",
@@ -347,7 +349,10 @@ async function handle(name: string, args: unknown[], sender: string): Promise<un
       const { refreshLinkedObjects } = await import("../board/boardStore");
       await refreshLinkedObjects();
     }
-    if (["createNote", "removeNote", "removeBoard"].includes(method) || (method === "board" && a[2] === true))
+    if (
+      ["createNote", "duplicateNote", "setNoteDeleteLock", "removeNote", "removeBoard"].includes(method) ||
+      (method === "board" && a[2] === true)
+    )
       await loadCabinet();
     if (
       ![

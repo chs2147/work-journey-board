@@ -1,0 +1,59 @@
+<!doctype html><html lang="ko"><meta charset="utf-8"><style>
+:root{--bg:#f3eee4;--card:#fffdf8;--line:#ddd3c3;--t1:#3a3128;--t2:#7d7062;--acc:#b06a3b;--acc2:#2f6fd8;--red:#b3261e;--redbg:#fbe4e6}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font:14px/1.5 "Pretendard",system-ui,sans-serif;color:var(--t1)}
+.sec{padding:22px 26px;width:1100px}.cap{font-weight:800;font-size:16px;margin:0 0 4px}.sub{color:var(--t2);font-size:12.5px;margin:0 0 12px}
+.row{display:flex;gap:22px;align-items:flex-start}.col{flex:1;min-width:0}.lbl{font-size:12px;font-weight:700;color:var(--t2);margin:0 0 6px}
+.win{background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden;box-shadow:0 2px 10px #0001}
+.bar{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line);font-size:12.5px}
+.crumb{color:var(--t2);flex:1}.pill{border:1px solid var(--line);border-radius:999px;padding:2px 10px;font-size:12px;background:#fff}
+.saved{color:#2e7d4f;border-color:#bcdcc6;background:#eef8f1}.btn{border:1px solid var(--line);background:#fff;border-radius:7px;padding:4px 9px;font-size:12px;display:inline-flex;gap:5px;align-items:center}
+.lock{border-color:var(--acc);background:#fbefe5;color:#8a4a1c;font-weight:700}.ring{outline:3px solid #2f6fd855;outline-offset:2px}
+.page{padding:16px 22px}.page h1{font-size:22px;margin:0 0 8px}.muted{color:var(--t2)}
+.menu{position:absolute;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 6px 18px #0002;padding:6px;width:210px;font-size:12.5px}
+.menu div{padding:5px 8px;border-radius:5px}.dis{color:#b5aa9c}.hint{font-size:11.5px;color:var(--t2);padding:2px 8px 4px}
+.dlg{width:430px;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 18px 50px #0003;padding:18px 20px}
+.dlg h2{font-size:17px;margin:0 0 10px}.meta{background:#f7f2ea;border-radius:8px;padding:10px 12px;margin:0 0 10px;font-size:13px}
+.warn{color:var(--red);font-size:12.5px}.acts{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+.del{background:var(--red);color:#fff;border-color:var(--red)}.dim{position:relative;background:#3a312855;padding:30px;border-radius:10px;display:flex;justify-content:center}
+.list .it{display:grid;grid-template-columns:18px 1fr auto auto auto auto auto auto;gap:8px;align-items:center;padding:8px 10px;border-bottom:1px solid #eee5d8}
+.tag{font-size:11px;border:1px solid var(--line);border-radius:5px;padding:0 6px;color:var(--t2)}.ic{width:26px;height:26px;border:1px solid var(--line);border-radius:6px;display:grid;place-items:center;background:#fff;font-size:13px}
+.ic.grip{cursor:grab;font-size:15px;letter-spacing:-1px}.new{background:#fff6dc}.note{font-size:11.5px;color:var(--t2);margin-top:6px;line-height:1.6}
+.ann{display:inline-block;background:var(--acc2);color:#fff;border-radius:9px;font-size:10.5px;font-weight:800;padding:0 6px;margin-left:3px}
+table.t{border-collapse:collapse;font-size:12.5px}table.t td,table.t th{border:1px solid #cfc3b1;padding:5px 9px;min-width:58px;text-align:left}table.t th{background:#f4ede2}
+.tbl{position:relative;display:inline-block;margin:30px 0 10px 40px}.tg{position:absolute;left:-30px;top:2px;font-size:16px;color:#7d7062;background:#fff;border:1px solid var(--line);border-radius:5px;width:20px;height:22px;display:grid;place-items:center}
+.rg{position:absolute;left:-6px;width:12px;height:22px;border-radius:6px;background:#fff;border:1px solid #9c8f80;font-size:11px;display:grid;place-items:center;line-height:0}
+.cg{position:absolute;top:-6px;height:12px;width:24px;border-radius:6px;background:#fff;border:1px solid #9c8f80;font-size:11px;display:grid;place-items:center;line-height:0}
+.hl{background:#dfe9fb!important}.dropH{position:absolute;height:3px;background:var(--acc2);left:-4px;right:-4px}.dropV{position:absolute;width:3px;background:var(--acc2);top:-4px;bottom:-4px}
+.dot{position:absolute;width:9px;height:9px;border-radius:50%;background:var(--acc2)}
+.cursor{font-size:20px;position:absolute;font-weight:900}.ghost{opacity:.45}.blockline{height:3px;background:var(--acc2);margin:4px 0 4px 40px;width:430px;border-radius:2px}
+.para{margin:6px 0 6px 40px;font-size:13px}.set{width:520px}.cm{border-left:3px solid var(--line);padding:6px 10px;margin:8px 0;font-size:12.5px;background:#faf6ef}
+.cm.rate{border-color:#d08a2e}.cm.block{border-color:var(--red)}
+</style>
+<section class="sec" id="s1"><p class="cap">① 편집 화면 — 삭제 잠금</p><p class="sub">저장 표시 오른쪽 자물쇠 단추. 잠그면 메뉴의 [노트 삭제]가 흐려지고 안내가 붙는다. 편집·내보내기·업무 옮기기는 그대로.</p>
+<div class="row"><div class="col"><p class="lbl">잠금 꺼짐(기본)</p><div class="win"><div class="bar"><span class="crumb">Cabi.NET / 가상 정산 시스템 / 업무 노트</span><span class="pill saved">✓ 저장됨</span><span class="btn">🔓 삭제 잠금</span><span class="btn">🖼 이미지</span><span class="btn">⇩ 내보내기</span></div><div class="page"><h1>배포 점검 절차(가상)</h1><p class="muted">1. 개발계 배포 전 확인 항목…</p></div></div></div>
+<div class="col"><p class="lbl">잠금 켬 <span class="ann">1</span></p><div class="win" style="position:relative;height:250px"><div class="bar"><span class="crumb">Cabi.NET / 가상 정산 시스템 / 업무 노트</span><span class="pill saved">✓ 저장됨</span><span class="btn lock ring">🔒 삭제 잠김</span><span class="btn">🖼 이미지</span><span class="btn">⇩ 내보내기</span></div><div class="page"><h1>배포 점검 절차(가상)</h1><p class="muted">1. 개발계 배포 전 확인 항목…</p></div>
+<div class="menu" style="right:14px;top:44px"><div>Markdown으로</div><div>PDF로</div><div>업무 옮기기 ▾</div><div>⧉ 노트 복제</div><div class="dis">🗑 노트 삭제</div><div class="hint">🔒 삭제 잠금을 풀어야 지울 수 있습니다</div></div></div></div></div></section>
+
+<section class="sec" id="s2"><p class="cap">② 삭제 최종 확인 창</p><p class="sub">기본 확인 한 줄(window.confirm) 대신 앱 확인 창. 처음 초점 = [취소], Enter = 취소, Esc = 닫기.</p>
+<div class="dim"><div class="dlg"><h2>업무노트를 삭제할까요?</h2><div class="meta"><b>배포 점검 절차(가상)</b><br><span class="muted">가상 정산 시스템 · 마지막 저장 11/09 10:42 · 이미지 2개</span><br>이 노트를 가리키는 연결 <b>1곳</b>(업무 보드 카드)</div><p class="warn">삭제하면 되돌릴 수 없습니다. 필요하면 먼저 [내보내기]로 저장하세요.</p><div class="acts"><span class="btn ring">취소</span><span class="btn del">삭제</span></div></div></div></section>
+
+<section class="sec" id="s3"><p class="cap">③ 업무노트 목록 — 복제 · 끌기 손잡이 아이콘</p><p class="sub">끌기 = 6점 손잡이(⠿, 커서 grab) · 복제 = 겹친 사각형(⧉). 잠긴 노트는 🗑 대신 🔒. 복제하면 맨 위에 "(사본)"이 생기고 잠깐 강조.</p>
+<div class="row"><div class="col"><p class="lbl">지금 (v1.23.3)</p><div class="win list"><div class="it"><span>📄</span><span><b>배포 점검 절차(가상)</b><br><small class="muted">가상 정산 시스템 · 1. 개발계 배포 전…</small></span><span class="tag">노트</span><span class="muted" style="font-size:12px">2026-11-09</span><span class="ic" title="끌기">⧉</span><span class="ic">↗</span><span class="ic">🗑</span><span></span></div></div><p class="note">· 끌기 손잡이가 복사(⧉) 모양이라 "복제"로 오해하기 쉬움</p></div>
+<div class="col"><p class="lbl">개선 시안</p><div class="win list"><div class="it new"><span>📄</span><span><b>배포 점검 절차(가상) (사본)</b><br><small class="muted">가상 정산 시스템 · 1. 개발계 배포 전…</small></span><span class="tag">노트</span><span class="muted" style="font-size:12px">2026-11-09</span><span class="ic grip">⠿</span><span class="ic">⧉</span><span class="ic">↗</span><span class="ic">🗑</span></div>
+<div class="it"><span>📄</span><span><b>배포 점검 절차(가상)</b><br><small class="muted">가상 정산 시스템 · 1. 개발계 배포 전…</small></span><span class="tag">노트</span><span class="muted" style="font-size:12px">2026-11-09</span><span class="ic grip">⠿</span><span class="ic ring">⧉</span><span class="ic">↗</span><span class="ic" title="삭제 잠김">🔒</span></div></div>
+<p class="note">· 순서: 끌기 ⠿ · 복제 ⧉ · 열기 ↗ · 삭제 🗑(잠기면 🔒 — 누르면 안내만)<br>· 사본 = 본문·서식·표 그대로, 이미지는 새 자산으로 복사, 연결·잠금은 옮기지 않음<br>· 알림 "복제했습니다 [열기]"</p></div></div></section>
+
+<section class="sec" id="s4"><p class="cap">④ 노트 표 — 표 전체 끌기 · 열 너비 커서 · 행/열 이동 표시선</p><p class="sub">손잡이 셋을 자리·모양으로 구분: 표 = 바깥 왼쪽 위 ⠿ · 행 = 왼쪽 테두리 ⋮ · 열 = 위 테두리 ⋯</p>
+<div class="row">
+<div class="col"><p class="lbl">ⓐ 표 전체 끌기(노션형)</p><div class="win" style="padding:8px 0 14px"><p class="para">점검 결과는 아래 표와 같다.</p><div class="blockline"></div><p class="para" style="color:var(--acc2);font-size:11px;margin-top:-2px">← 여기로 옮김</p><p class="para">다음 주 일정</p>
+<div class="tbl ghost" style="margin-top:10px"><span class="tg" style="opacity:1">⠿</span><table class="t"><tr><th>항목</th><th>담당</th><th>상태</th></tr><tr><td>가상 A</td><td>가</td><td>완료</td></tr><tr><td>가상 B</td><td>나</td><td>진행</td></tr></table></div><p class="note" style="margin-left:40px">표 손잡이로 끌면 블록 사이 가로 놓기 선, 원래 표는 반투명</p></div></div>
+<div class="col"><p class="lbl">ⓑ 행 끌기 — 들어갈 자리 가로선</p><div class="win" style="padding:4px 0 14px"><div class="tbl"><span class="tg">⠿</span><table class="t"><tr><th>항목</th><th>담당</th><th>상태</th></tr><tr><td>가상 A</td><td>가</td><td>완료</td></tr><tr class="hl"><td class="hl">가상 B</td><td class="hl">나</td><td class="hl">진행</td></tr><tr><td>가상 C</td><td>다</td><td>대기</td></tr></table>
+<span class="rg" style="top:66px">⋮</span><span class="dropH" style="top:29px"></span><span class="dot" style="left:-8px;top:26px"></span></div><p class="note" style="margin-left:40px">옮기는 행 = 연한 파랑, 들어갈 경계 = 파란 3px 선<br>칸의 위/아래 절반으로 앞/뒤 판정 · Esc 취소</p></div></div>
+<div class="col"><p class="lbl">ⓒ 열 끌기 — 세로선 · 열 너비 ↔ 커서</p><div class="win" style="padding:4px 0 14px"><div class="tbl"><span class="tg">⠿</span><table class="t"><tr><th>항목</th><th class="hl">담당</th><th>상태</th></tr><tr><td>가상 A</td><td class="hl">가</td><td>완료</td></tr><tr><td>가상 B</td><td class="hl">나</td><td>진행</td></tr></table>
+<span class="cg" style="left:96px">⋯</span><span class="dropV" style="right:-2px"></span><span class="dot" style="right:-5px;top:-10px"></span></div>
+<div class="tbl" style="margin-top:6px"><table class="t"><tr><th>항목</th><th>담당</th></tr><tr><td>가상 A</td><td>가</td></tr></table><span style="position:absolute;left:84px;top:0;bottom:0;width:3px;background:var(--acc)"></span><span class="cursor" style="left:75px;top:12px">↔</span></div><p class="note" style="margin-left:40px">열 경계 위 = <b>col-resize(↔)</b> 커서 + 강조색 세로선</p></div></div>
+</div></section>
+
+<section class="sec" id="s5"><p class="cap">⑤ 설정 › 업데이트 — 403 구분 안내</p><p class="sub">ETag 조건부 요청으로 한도 사용을 줄이고, 실패하면 원인별 문구 + [릴리스 페이지 열기](기본 브라우저).</p>
+<div class="row"><div class="win set" style="padding:14px 16px"><b>업데이트</b><div style="display:flex;justify-content:space-between;margin:8px 0"><span>지금 판 1.24.0</span><span class="btn dis">업데이트 확인 (10:52부터)</span></div><div class="cm rate"><b>GitHub 확인 횟수 한도에 걸렸습니다.</b><br>같은 인터넷 주소를 쓰는 PC가 많을 때 생깁니다. 약 18분 뒤(10:52) 다시 확인합니다.<br><span class="btn" style="margin-top:6px">↗ 릴리스 페이지 열기</span></div></div>
+<div class="win set" style="padding:14px 16px"><b>업데이트</b><div style="display:flex;justify-content:space-between;margin:8px 0"><span>지금 판 1.24.0</span><span class="btn">업데이트 확인</span></div><div class="cm block"><b>회사망·보안 장비에서 GitHub 접속이 막힌 것 같습니다.</b><br>릴리스 페이지에서 설치 파일을 직접 받아 설치할 수 있습니다(일지는 그대로).<br><span class="btn" style="margin-top:6px">↗ 릴리스 페이지 열기</span></div></div></div></section>

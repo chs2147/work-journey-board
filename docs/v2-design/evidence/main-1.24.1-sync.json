@@ -1,0 +1,32 @@
+{
+  "checkedAt": "2026-11-10T01:34:04.974914+00:00",
+  "branch": "v2-design",
+  "checkpointCommit": "e908afb",
+  "mainCommit": "ae97c10",
+  "mainCommitsMerged": 12,
+  "appVersion": "1.24.1",
+  "productSchema": 19,
+  "migrationPocSupportedSchema": [
+    18
+  ],
+  "mergeConflicts": false,
+  "checks": {
+    "appUnit": 532,
+    "v2JavaScript": 136,
+    "chromiumSelectedE2E": 11,
+    "webBuild": "PASS",
+    "releaseNotes": "PASS",
+    "guideScenes": 15,
+    "featureItems": 255,
+    "db19FixtureRejectedWithoutSourceChanges": "PASS"
+  },
+  "browser": {
+    "firstAttempt": "MISSING_PLAYWRIGHT_BUNDLED_EXECUTABLE",
+    "successfulExecutable": "/usr/bin/chromium",
+    "webkitExecuted": false
+  },
+  "postgresRerun": false,
+  "cloudApplied": false,
+  "mainModified": false,
+  "nextStep": "DB18/19 explicit contracts, preserve and restore DB19 delete_locked; then full workspace server profile/journal dual manifest binding/Storage readback"
+}

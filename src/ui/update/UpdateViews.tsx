@@ -1,5 +1,5 @@
 // 새 판 화면 조각(improve-1027v4-spec 1-2): 설정 "업데이트" 절 · 보드 위 띠 · [자세히·설치] 창.
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { STR } from "../../shared/strings";
 import {
   checkNow,
@@ -8,6 +8,7 @@ import {
   hasUpdate,
   installUpdate,
   noteLines,
+  openReleasesPage,
   openUpdateDialog,
   useUpdate,
 } from "./updateStore";
@@ -24,6 +25,9 @@ function localWhen(iso: string): string {
 export function UpdateSettings() {
   const s = useUpdate();
   const available = hasUpdate(s);
+  const now = useNow(s.retryAt);
+  const waiting = s.retryAt !== null && now < s.retryAt;
+  const at = s.retryAt ? localWhen(new Date(s.retryAt).toISOString()).slice(11) : "";
   return (
     <section className={styles.section} aria-labelledby="s-update" data-testid="update-settings">
       <h3 id="s-update">{STR.update.section}</h3>
@@ -35,10 +39,17 @@ export function UpdateSettings() {
         <button
           type="button"
           className={styles.primary}
-          disabled={s.phase === "checking" || s.phase === "downloading" || s.phase === "installing"}
+          disabled={
+            waiting || s.phase === "checking" || s.phase === "downloading" || s.phase === "installing"
+          }
+          data-testid="update-check"
           onClick={() => void checkNow()}
         >
-          {s.phase === "checking" ? STR.update.checking : STR.update.check}
+          {s.phase === "checking"
+            ? STR.update.checking
+            : waiting
+              ? `${STR.update.check} (${STR.update.rateWait(at)})`
+              : STR.update.check}
         </button>
         {available && (
           <button type="button" className={styles.button} onClick={openUpdateDialog}>
@@ -58,9 +69,36 @@ export function UpdateSettings() {
           <span className={styles.when}> · {STR.update.lastCheck(localWhen(s.checkedAt))}</span>
         )}
       </p>
+      {s.phase === "failed" && (
+        <div className={styles.failHelp} data-testid="update-fail-help" data-kind={s.failKind ?? ""}>
+          {s.failKind === "rate" && waiting && (
+            <p>{STR.update.rateRetry(Math.max(1, Math.ceil((s.retryAt! - now) / 60000)), at)}</p>
+          )}
+          {s.failKind !== "rate" && <p>{STR.update.blockedHelp}</p>}
+          <button type="button" className={styles.button} onClick={() => void openReleasesPage()}>
+            ↗ {STR.update.openReleases}
+          </button>
+        </div>
+      )}
       <p className={styles.note}>{STR.update.network}</p>
     </section>
   );
+}
+
+/** 한도 초과 대기 시각까지 30초마다 다시 그림(남은 분·단추 풀림) */
+function useNow(until: number | null) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!until) return;
+    // 실패 시각에 맞춰 곧바로 다시 잰다(패널을 연 시각 기준이면 1분 더 나올 수 있음)
+    const first = setTimeout(() => setNow(Date.now()), 0);
+    const t = setInterval(() => setNow(Date.now()), 30_000);
+    return () => {
+      clearTimeout(first);
+      clearInterval(t);
+    };
+  }, [until]);
+  return now;
 }
 
 /** 보드 위 띠 "새 판 0.2.19가 있습니다 [자세히·설치] [나중에]" */
@@ -129,9 +167,17 @@ export function UpdateDialog() {
           {STR.update.dialogTitle(s.info.version)}
         </h2>
         <p className={styles.meta}>
-          {STR.update.from(__APP_VERSION__, s.info.version)} ·{" "}
-          {STR.update.size((s.info.size / 1_000_000).toFixed(1))}
+          {STR.update.from(__APP_VERSION__, s.info.version)}
+          {s.info.size > 0 && ` · ${STR.update.size((s.info.size / 1_000_000).toFixed(1))}`}
         </p>
+        {!s.info.notes.trim() && (
+          <p className={styles.meta} data-testid="update-notes-page">
+            {STR.update.notesOnPage}{" "}
+            <button type="button" className={styles.button} onClick={() => void openReleasesPage()}>
+              ↗ {STR.update.openReleases}
+            </button>
+          </p>
+        )}
         <div className={styles.notes} data-testid="update-notes">
           {noteLines(s.info.notes).map((l, i) =>
             l.kind === "head" ? (

@@ -497,6 +497,12 @@ export const STR_BASE = {
     memoClose: "메모 접기",
     resizeSplit: "메모 폭 조절(끌기) · 두 번 누르면 기본 폭",
     empty: "보일 업무가 없습니다",
+    hideEmpty: "기록 있는 업무만",
+    hideEmptyTitleOff: "기록 있는 업무만 보기 — 이 날 기록이 0건인 업무 카드를 숨깁니다",
+    hideEmptyTitleOn: "기록 있는 업무만 보는 중 — 누르면 전체 업무를 다시 보입니다",
+    hiddenBar: (n: number) => `기록 없는 업무 ${n}개를 숨겼습니다`,
+    showAll: "전체 보기",
+    noneRecorded: "이 날 기록이 있는 업무가 없습니다",
   },
   /** 인사이트 — 경과 타임라인·업무 경과 지도(m3-s1-spec) */
   insights: {
@@ -1225,6 +1231,13 @@ export const STR_BASE = {
     latest: "최신 판입니다",
     lastCheck: (when: string) => `마지막 확인 ${when}`,
     failed: (msg: string) => `확인하지 못했습니다 — ${msg}`,
+    /** improve-v20-spec 6절: 실패 종류별 안내 */
+    rateRetry: (min: number, at: string) => `약 ${min}분 뒤(${at}) 다시 확인할 수 있습니다.`,
+    rateWait: (at: string) => `${at}부터`,
+    blockedHelp: "릴리스 페이지에서 설치 파일을 직접 받아 설치할 수 있습니다(일지는 그대로).",
+    openReleases: "릴리스 페이지 열기",
+    notesOnPage: "변경 내용은 릴리스 페이지에서 볼 수 있습니다.",
+    releasesUrl: "https://github.com/chs2147/work-journey-board/releases/latest",
     available: (v: string) => `새 판 ${v}이(가) 있습니다`,
     banner: (v: string) => `새 판 ${v}이(가) 있습니다`,
     bannerSub: (cur: string) => `지금 판 ${cur} · 설치 전에 일지를 자동으로 백업합니다`,

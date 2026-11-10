@@ -15,6 +15,9 @@ import {
 import {
   CABI_MAX,
   CabiConflictError,
+  CabiLockedError,
+  copyTitle,
+  remapAssets,
   cabiAssetIds,
   cabiText,
   cabiTitle,
@@ -28,10 +31,10 @@ import {
 } from "../domain/cabi";
 import type { JournalRepository, NoteAsset, NoteAssetMeta, NoteAssetView } from "./repository";
 
-type NoteRow = Omit<CabiNote, "content"> & { content: string };
+type NoteRow = Omit<CabiNote, "content" | "deleteLocked"> & { content: string; deleteLocked: number };
 type BoardRow = Omit<TaskBoard, "doc"> & { doc: string };
 const NOTE_SELECT =
-  "SELECT id, category_id AS categoryId,title,content,revision,created_at AS createdAt,updated_at AS updatedAt FROM cabi_note";
+  "SELECT id, category_id AS categoryId,title,content,revision,created_at AS createdAt,updated_at AS updatedAt,delete_locked AS deleteLocked FROM cabi_note";
 const BOARD_SELECT =
   "SELECT id,category_id AS categoryId,doc,revision,updated_at AS updatedAt FROM cabi_board";
 export class CabiRepository {
@@ -66,15 +69,16 @@ export class CabiRepository {
       throw new Error("업무를 찾을 수 없습니다.");
   }
   async listNotes(categoryId?: string, query = ""): Promise<CabiNoteSummary[]> {
-    return this.db.select<CabiNoteSummary>(
-      `SELECT id,category_id AS categoryId,title,substr(plain_text,1,180) AS excerpt,revision,created_at AS createdAt,updated_at AS updatedAt FROM cabi_note WHERE (? IS NULL OR category_id=?) AND (instr(lower(title),lower(?))>0 OR instr(lower(plain_text),lower(?))>0) ORDER BY updated_at DESC,id`,
+    const rows = await this.db.select<Omit<CabiNoteSummary, "deleteLocked"> & { deleteLocked: number }>(
+      `SELECT id,category_id AS categoryId,title,substr(plain_text,1,180) AS excerpt,revision,created_at AS createdAt,updated_at AS updatedAt,delete_locked AS deleteLocked FROM cabi_note WHERE (? IS NULL OR category_id=?) AND (instr(lower(title),lower(?))>0 OR instr(lower(plain_text),lower(?))>0) ORDER BY updated_at DESC,id`,
       [categoryId ?? null, categoryId ?? null, query, query],
     );
+    return rows.map((r) => ({ ...r, deleteLocked: !!r.deleteLocked }));
   }
   async note(id: string): Promise<CabiNote> {
     const [row] = await this.db.select<NoteRow>(`${NOTE_SELECT} WHERE id=?`, [id]);
     if (!row) throw new Error("노트가 삭제되었거나 다른 공간에 있습니다.");
-    return { ...row, content: cleanCabiContent(JSON.parse(row.content)) };
+    return { ...row, deleteLocked: !!row.deleteLocked, content: cleanCabiContent(JSON.parse(row.content)) };
   }
   async createNote(
     categoryId: string,
@@ -133,11 +137,60 @@ export class CabiRepository {
   async removeNote(id: string, revision: number): Promise<void> {
     await this.serial(async () => {
       const n = await this.note(id);
+      if (n.deleteLocked) throw new CabiLockedError();
       if (n.revision !== revision) throw new CabiConflictError();
       await this.db.batch([
-        { sql: "DELETE FROM cabi_note WHERE id=? AND revision=?", params: [id, revision] },
+        {
+          sql: "DELETE FROM cabi_note WHERE id=? AND revision=? AND delete_locked=0",
+          params: [id, revision],
+        },
         { sql: "DELETE FROM cabi_asset WHERE owner_kind='note' AND owner_id=?", params: [id] },
       ]);
+    });
+  }
+  /** 삭제 잠금 켜기/끄기(improve-v20-spec 2절) — 본문 revision과 따로(편집 중 충돌을 만들지 않음) */
+  async setNoteDeleteLock(id: string, locked: boolean): Promise<CabiNote> {
+    return this.serial(async () => {
+      await this.note(id);
+      await this.db.execute("UPDATE cabi_note SET delete_locked=? WHERE id=?", [locked ? 1 : 0, id]);
+      return this.note(id);
+    });
+  }
+  /**
+   * 노트 복제(improve-v20-spec 4절): 같은 업무에 "<제목> (사본)" — 본문 그대로, 이미지는 새 id·새 소유자로 복사,
+   * 연결·삭제 잠금은 옮기지 않음. 노트 1행 + 자산 n행을 한 batch로.
+   */
+  async duplicateNote(id: string): Promise<CabiNote> {
+    return this.serial(async () => {
+      const src = await this.note(id);
+      const titles = new Set(
+        (
+          await this.db.select<{ title: string }>("SELECT title FROM cabi_note WHERE category_id=?", [
+            src.categoryId,
+          ])
+        ).map((r) => r.title),
+      );
+      const title = copyTitle(src.title, titles);
+      const ids = cabiAssetIds(src.content);
+      const map = new Map(ids.map((a) => [a, uuidv7()] as const));
+      const content = remapAssets(src.content, map);
+      const json = JSON.stringify(content);
+      if (json.length > CABI_MAX) throw new Error("노트가 너무 큽니다.");
+      const newId = uuidv7(),
+        ts = this.ts();
+      const stmts: SqlStatement[] = [
+        {
+          sql: "INSERT INTO cabi_note(id,category_id,title,content,plain_text,created_at,updated_at) VALUES(?,?,?,?,?,?,?)",
+          params: [newId, src.categoryId, title, json, cabiText(content), ts, ts],
+        },
+      ];
+      for (const [from, to] of map)
+        stmts.push({
+          sql: "INSERT INTO cabi_asset(id,owner_kind,owner_id,mime,data,width,height,bytes,thumb,thumb_mime,created_at) SELECT ?,'note',?,mime,data,width,height,bytes,thumb,thumb_mime,? FROM cabi_asset WHERE id=? AND owner_kind='note' AND owner_id=?",
+          params: [to, newId, ts, from, id],
+        });
+      await this.db.batch(stmts);
+      return this.note(newId);
     });
   }
   async referenceCount(kind: "note" | "folder" | "link", id: string): Promise<number> {

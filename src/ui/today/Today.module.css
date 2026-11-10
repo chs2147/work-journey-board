@@ -307,3 +307,49 @@
   text-align: center;
   white-space: nowrap;
 }
+
+/* 1.24.1 [기록 있는 업무만] 토글 — 켜면 스위치 오른쪽·강조색 */
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 var(--sp-2);
+}
+.toggleTrack {
+  position: relative;
+  width: 26px;
+  height: 14px;
+  border-radius: 7px;
+  background: var(--line-strong);
+  transition: background 0.15s;
+}
+.toggleTrack::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--surface-card);
+  transition: transform 0.15s;
+}
+.toggle[aria-pressed="true"] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.toggle[aria-pressed="true"] .toggleTrack {
+  background: var(--accent);
+}
+.toggle[aria-pressed="true"] .toggleTrack::after {
+  transform: translateX(12px);
+}
+.hiddenBar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px dashed var(--line-strong);
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+}

@@ -1,5 +1,7 @@
 # V2 프로젝트 — 다국어·온라인 동기화 상세 설계 초안
 
+**현재 제품 기준:** [61. main 1.24.1 동기화](61-main-1.24.1-sync-checkpoint.md). main의12개 커밋을 반영했으며 앱1.24.1/DB19다. V2 이관 PoC는 DB18 전용이므로 다음은 DB19 계약/삭제 잠금 보존 검증이다. 아래 단계별 결과는 당시 기준이다.
+
 **최신 진행:** [60. DB18 전체 매핑·RPC 연결](60-db18-workspace-map-gateway.md). 매핑17개·HTTP16개·실제PG40개 통과. 전체 봉투의 서버 저장/실제 Storage 연결은 다음 단계이며 Cloud 미적용이다.
 
 **최신 진행:** [59. PostgreSQL 이관 서버](59-postgres-migration-server.md)의 실제PG39개 통과. 신규 SQL은 검토안이며 DEV 미적용, 최소문서프로필의 증표는 제품활성화에 쓸 수 없다. 다음은 전체DB18mapper·실제gateway연결이다.
