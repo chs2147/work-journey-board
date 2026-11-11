@@ -1,0 +1,19 @@
+{
+  "contract": "wjb-connected-preview-bootstrap-1",
+  "profile": "connected-preview",
+  "profileSource": "profiles.tsv",
+  "decision": {
+    "separatePreviewApproved": true,
+    "sessionDate": "2026-11-11",
+    "formalV2ProductNameApproved": false
+  },
+  "status": "native-library-only",
+  "tauriIntegration": "pending",
+  "installerAvailable": false,
+  "publicationEnabled": false,
+  "updater": "disabled",
+  "fileAssociations": "disabled",
+  "automaticClassicConfigImport": false,
+  "osVaultBindings": "implemented-and-host-type-checked",
+  "osVaultRuntimeVerification": "pending"
+}

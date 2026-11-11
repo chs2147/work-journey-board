@@ -1,21 +1,30 @@
 // Standalone design PoC. No env/config reads, network, file writes or Tauri use.
 import { win32, posix } from "node:path";
+import { readFileSync } from "node:fs";
 
-const profiles = Object.freeze({
-  "local-classic": Object.freeze({
-    appId: "com.chs2147.workjourneyboard",
-    productName: "Work Journey Board",
-    configDirectory: "WorkJourneyBoard",
-    releaseRepository: "chs2147/work-journey-board",
-  }),
-  "connected-preview": Object.freeze({
-    appId: "com.chs2147.workjourneyboard.connected.preview",
-    productName: "Work Journey Board Connected Preview",
-    configDirectory: "WorkJourneyBoardConnectedPreview",
-    // Candidate identity only. No approved V2 release repository yet.
-    releaseRepository: null,
-  }),
+// Shared with the standalone Rust native layer. Reads only this checked-in resource.
+const rows = readFileSync(new URL("../v2-native/profiles.tsv", import.meta.url), "utf8")
+  .trimEnd()
+  .split(/\r?\n/);
+if (rows.shift() !== "profile|app_id|product_name|config_directory|release_repository")
+  throw Error("PROFILE_RESOURCE_INVALID");
+const definitions = rows.map((line) => {
+  const fields = line.split("|");
+  if (fields.length !== 5) throw Error("PROFILE_RESOURCE_INVALID");
+  const [name, appId, productName, configDirectory, releaseRepository] = fields;
+  return [
+    name,
+    Object.freeze({ appId, productName, configDirectory, releaseRepository: releaseRepository || null }),
+  ];
 });
+if (
+  definitions.length !== 2 ||
+  new Set(definitions.map(([name]) => name)).size !== 2 ||
+  definitions.some(([name]) => !["local-classic", "connected-preview"].includes(name))
+)
+  throw Error("PROFILE_RESOURCE_INVALID");
+const profiles = Object.freeze(Object.fromEntries(definitions));
+
 function platformPath(platform) {
   if (platform === "win32") return win32;
   if (platform === "darwin" || platform === "linux") return posix;

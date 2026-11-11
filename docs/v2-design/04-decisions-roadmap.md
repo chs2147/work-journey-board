@@ -396,3 +396,7 @@ V2 체크포인트52ff622를 푸시한 뒤 사용자 요청의 캐비넷/노트 
 ## 4.75 온라인 캐시 v1·읽기 검증 어댑터
 
 [72문서](72-online-cache-format-activation.md): 로컬 DB19/registry와 별도 header/schema로 metadata와 Blob 참조만 저장한다. 계정·공간·기기·세대·스냅샷/Blob catalog hash와 단기 원격 확인이 맞을 때 snapshot-read만 제공한다. 현재 DEV의 PoC 증표와 cache-verified를 workspace-runtime으로 승격하지 않는다. 원본/실제 제품/Cloud는 미변경이며 다음은 native 프로필·설정·OS 자격증명 격리다.
+
+## 4.76 별도 Connected Preview 승인·native 격리 구현
+
+사용자가 검증판을 Classic과 별도 공존하는 Connected Preview로 확정했다. [73문서](73-connected-preview-native-isolation.md): 공통 프로필 TSV와 독립 Rust layout/환경·프로젝트·계정·기기 vault 경계, Windows Credential Manager/macOS Keychain 소스를 작성했다. Node311/Rust31개 및 host binding 타입 검사 통과. OS 실기/설치/Tauri 연결은 후속이며 Classic/Cloud는 미변경이다. 정식 이름·배포 저장소는 이 결정과 별개다.

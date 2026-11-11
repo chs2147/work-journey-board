@@ -1,5 +1,7 @@
 # V2 프로젝트 — 다국어·온라인 동기화 상세 설계 초안
 
+**현재 재개 정본:** [73. Connected Preview native 격리](73-connected-preview-native-isolation.md). 사용자가 별도 검증판을 확정했다. 공통 프로필·Rust 경로/OS vault 소스와 scope 경계를 구현했다. Node311·Rust31개 통과, 실제 OS/설치·Tauri 연결은 후속이다. 다음은 Preview native bootstrap/명령 경계다. 제품1.24.3/DB19와 로컬 원본 유지.
+
 **현재 재개 정본:** [72. 온라인 캐시 형식·읽기 검증](72-online-cache-format-activation.md). 별도 cache header/schema/계정·기기·세대·metadata-only 저장과 단기 원격 확인을 구현했다. 308개 회귀 통과. 독립 구현이며 제품 활성화/Cloud 배포는 아직 아니다. 다음은 native 프로필·설정·OS 자격증명 격리다. 제품 기준1.24.3/DB19 유지.
 
 **최신 제품 기준:** [71. main 1.24.3 반영](71-main-1.24.3-sync-checkpoint.md). main의 새 4개 커밋을 5bdd4f3로 병합했다. 앱1.24.3/DB19, V2 원본 보존·별도 온라인 계약 유지. 다음 기능 작업은 70문서의 제품용 캐시/활성화 어댑터다. 아래 구현 기록은 작성 당시 기준이다.

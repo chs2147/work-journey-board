@@ -1,0 +1,82 @@
+{
+  "checkedAt": "2026-11-11T02:54:28.714965+00:00",
+  "sessionDate": "2026-11-11",
+  "branch": "v2-design",
+  "baseline": "8169a44",
+  "decision": {
+    "separateConnectedPreviewApproved": true,
+    "formalV2ProductNameApproved": false
+  },
+  "productVersion": "1.24.3",
+  "localSchemaVersion": 19,
+  "nativeCrateVersion": "0.1.0",
+  "scope": "Independent native Rust library with Fake vault/temp directories; raw OS binding source host type-checked; no Tauri or actual OS credential integration",
+  "tests": {
+    "rustUnitPassed": 31,
+    "rustUnitFailed": 0,
+    "rustHostBindingTypeCheckPassed": true,
+    "nodeNewProfileTests": 3,
+    "nodeExistingRegressionTests": 308,
+    "nodeTotalPassed": 311,
+    "nodeTotalFailed": 0,
+    "lintPassed": true,
+    "prettierPassed": true,
+    "rustfmtRun": false,
+    "clippyRun": false
+  },
+  "toolchain": {
+    "rust": "1.85.1",
+    "container": "rust@sha256:9f841bbe9e7d8e37ceb96ed907265a3a0df7f44e3737d0b100e7907a679acb36",
+    "network": "none",
+    "uid": 1000,
+    "host": "Linux"
+  },
+  "commands": {
+    "rust": "cargo test --offline && cargo check --offline --features check-os-bindings",
+    "node": "node --test poc/v2-runtime/*.test.mjs poc/v2-assets/connected-copy.test.mjs poc/v2-migration/*.test.mjs poc/v2-sync/db18.test.mjs"
+  },
+  "artifacts": {
+    "node": {
+      "file": "native-isolation-node.txt",
+      "sha256": "d51f846c7dc4242b102a55f9503b8f7bac5f2166db1074612c60d0370492954b"
+    },
+    "rust": {
+      "file": "native-isolation-rust.txt",
+      "sha256": "c458c877ebbddbe175459131cae2f10a6e4929245e34b1a1ab07a882920dbe43"
+    },
+    "checks": {
+      "file": "native-isolation-checks.txt",
+      "sha256": "1e72f847c0b20dcb6cc86de4473b66faa4c58b521743fd8875728b335eb144de"
+    }
+  },
+  "sourceSha256": {
+    "poc/v2-native/Cargo.lock": "4c451036d890ad00c067266e971a5506222e7754c3968164ab2c0c892c83dc4d",
+    "poc/v2-native/Cargo.toml": "0b514f506e44f64dcf2571f522a0db1e21d92107676a87159ccc269b5808b0fe",
+    "poc/v2-native/README.md": "e4fd4d422e66c7d92f53de9813b0d74c2d911af8403f8190dae0c41ee7eaff3f",
+    "poc/v2-native/preview-bootstrap-contract.json": "88d0af7ada8f06d5d256d6f203a2024825c61d48a0d9d9031a0c5945b6581488",
+    "poc/v2-native/profiles.tsv": "4bfb5d9b14235716d8e1ba547e65b9edde26d8d5b39e9502876e9eda20f18356",
+    "poc/v2-native/src/lib.rs": "9646c51aff3d18f1f444a6b920600cee673b6c67bb1f2b83e3b0cebde92054b6",
+    "poc/v2-native/src/policy.rs": "cc6643d77bf2677fd7c2802cce11a6a93b8d4622568a02c5f8d67e77f9183c4c",
+    "poc/v2-native/src/system_vault.rs": "b61de9cd18616ad178b5420f33878eec78530ce35dff9d2ad70c6aca1bf39ae9",
+    "poc/v2-native/src/tests.rs": "d9d97df47079a7b5093fe89ac3d1b63d4dddbd4b56c5fef4527cd6178ee5b322",
+    "poc/v2-native/src/vault.rs": "18b555fb9b2ff32703e8f51fc4e6098199cb71f841ea8a183c0cfd406f9b76c0",
+    "poc/v2-runtime/isolation.mjs": "a00b5834ae97f24a14153c163f57d605e93bbc646ac71f9bad62797b9c6e2938",
+    "poc/v2-runtime/native-profile.test.mjs": "bddbd135177775b1cf31776268239335c8ab58b4da1bcda8828d5e8a30e136ff"
+  },
+  "sharedProfileSource": "poc/v2-native/profiles.tsv",
+  "nativeTargetOSVaults": {
+    "windows": "Credential Manager",
+    "macos": "Login Keychain"
+  },
+  "osCredentialWritesPerformed": false,
+  "windowsMacSDKLinkVerified": false,
+  "actualWindowsMacVaultVerified": false,
+  "tauriWiringImplemented": false,
+  "coInstallationVerified": false,
+  "classicSourceChanged": false,
+  "cloudWrites": false,
+  "existingUserConfigAccessed": false,
+  "installerCreated": false,
+  "newReleasePublished": false,
+  "next": "Preview native bootstrap and Tauri command boundary, then OS coexistence/credential tests"
+}

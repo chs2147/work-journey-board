@@ -1,0 +1,14 @@
+[package]
+name = "wjb-native-isolation"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+path = "src/lib.rs"
+
+[features]
+# Type-check OS bindings on Linux without selecting/using those backends.
+check-os-bindings = []
+
+[dependencies]

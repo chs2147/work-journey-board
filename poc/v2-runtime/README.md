@@ -1,6 +1,6 @@
 # V2 실행 격리 독립 PoC
 
-제품이 호출하지 않는 순수 계약/검사 모듈이다. 환경변수/기존 설정 자동 읽기·클라우드 초기화·서버 배포를 하지 않는다. registry/확인 실행기는 가상 fixture와 자체 별도 파일만 쓴다. 신규 온라인 앱의 이름/식별자는 후보이며 실제 native 앱 등록은 아니다.
+제품이 호출하지 않는 순수 계약/검사 모듈이다. 환경변수/기존 설정 자동 읽기·클라우드 초기화·서버 배포를 하지 않는다. registry/확인 실행기는 가상 fixture와 자체 별도 파일만 쓴다. 검증판은 별도 Connected Preview로 사용자 확정했으며 실제 native 앱 등록/설치는 아직 아니다. 정식 V2 이름/채널은 별도다.
 
 ```sh
 node poc/v2-runtime/isolation.test.mjs
@@ -38,3 +38,7 @@ node --test poc/v2-runtime/online-cache.test.mjs
 ```
 
 별도 `online-cache.sqlite`는 owner/workspace/device/generation으로 묶인 metadata-only 형식이다. `.v2-poc-only`와 원본 보호 루트를 요구한다. DB18/19나 이관 PoC DB를 자동 변환하지 않는다. 원격 확인 callback으로 읽기만 허용하며 cache-verified는 제품 workspace-runtime 증표가 아니다. outbox/inbox/conflict의 실제 동기화 처리는 아직 없고 미처리 항목은 읽기 활성화를 차단한다. 실제 제품/서버 연결과 OS 실기는 미완료다. [72문서](../../docs/v2-design/72-online-cache-format-activation.md)를 따른다.
+
+## 네이티브 프로필/자격증명 격리
+
+별도 검증판의 공통 정본은 `../v2-native/profiles.tsv`이며 isolation 모듈과 Rust가 함께 읽는다. [Rust 모듈](../v2-native/README.md)과 [73문서](../../docs/v2-design/73-connected-preview-native-isolation.md)에 environment/project별 설정/registry/cache 계획과 계정·기기별 OS credential 경계를 기록했다. 현재 Tauri 앱에는 링크하지 않았다.

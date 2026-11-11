@@ -1,6 +1,6 @@
 # V2 설계·PoC 중단/재개 기록
 
-**현재 재개 정본:** [72. 온라인 캐시 형식·읽기 검증](72-online-cache-format-activation.md). 이하 체크포인트는 작성 당시 기록이며 가장 최근 결과가 우선한다.
+**현재 재개 정본:** [73. Connected Preview native 격리](73-connected-preview-native-isolation.md). 이하 체크포인트는 작성 당시 기록이며 가장 최근 결과가 우선한다.
 
 2026-11-09 UTC · V2 설계/PoC 중단 지점을 보존한 뒤 복귀했다. 사용자 요청으로 main 1.23.1 패치(`d11a0ca`)를 v2-design에 병합했다.
 
@@ -176,3 +176,7 @@ cfdeae4가 원격과 일치해 재푸시만 확인하고 [67문서](67-product-i
 ## 온라인 캐시 형식·읽기 검증(최신)
 
 main 동기화는 fcc29aa까지 푸시되어 있다. [72문서](72-online-cache-format-activation.md)에 별도 application_id/user_version·원본 보호·metadata-only records/Blob refs/envelopes·단기 원격 확인을 구현했다. 새73 + 기존235 = 308개 회귀, lint/format 통과. 실제 제품/native/Cloud/원본은 미변경이다. 현재 PoC 증표는 그대로 거절하며 snapshot-read 확인도 productActivationAllowed:false로 제품 편집 런타임에 승격하지 않는다. 다음은 native 프로필/설정/OS 자격증명 격리이며 실제 설치 식별 정책은 별도 미확정이다. 제품 캐시 native 포트·서버 제품 API·편집/동기화/전원 중단 복구·실기는 남았다. A안은 확정이다.
+
+## Connected Preview 실행 정책 확정·native 격리(최신)
+
+8169a44는 원격과 일치하여 재푸시만 확인했다. 사용자가 별도 Connected Preview 검증판을 선택했으므로 다시 묻지 않는다(정식 V2명칭/배포 채널은 별개). [73문서](73-connected-preview-native-isolation.md): Node/Rust 공통 profiles.tsv, Rust 환경별 경로 계획·보호 루트·native vault scope와 Windows/macOS API 소스를 구현했다. Rust31·Node311개 통과와 OS binding의 host 타입 검사를 수행했다. 실제 OS vault 호출/설치/Classic Tauri 연결·Cloud 변경은 없다. native library만 있으며 다음은 Preview 실제 bootstrap/명령 경계 연결, OS 서명/저장소/공존 실기다. 기존 로컬판1.24.3/DB19·A안·캐시 제품 승격 금지 원칙을 유지한다.
