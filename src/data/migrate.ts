@@ -77,10 +77,12 @@ export async function readSchemaVersion(driver: SqlDriver): Promise<number> {
   return row ? Number(row.value) : 0;
 }
 
+/** 일지 데이터(DB 버전)가 이 앱이 지원하는 것보다 새로울 때(improve-v22-spec 2절) — 열지 않고 앱 업데이트를 안내한다. */
 export class NewerSchemaError extends Error {
+  readonly supported = LATEST_SCHEMA_VERSION;
   constructor(readonly fileVersion: number) {
     super(
-      `이 데이터 파일은 더 새 버전의 앱(스키마 v${fileVersion})에서 만들어졌습니다. 앱을 업데이트하세요.`,
+      `이 일지 데이터(DB v${fileVersion})는 지금 앱 버전과 호환되지 않습니다(이 앱은 DB v${LATEST_SCHEMA_VERSION}까지 지원). 앱을 최신 버전으로 업데이트한 뒤 이용해 주세요.`,
     );
   }
 }

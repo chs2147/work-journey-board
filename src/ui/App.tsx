@@ -11,7 +11,7 @@ import { Rail } from "./common/Rail";
 import { TopBar } from "./common/TopBar";
 import { useMediaQuery, useWindowWidth } from "./common/useMediaQuery";
 import { FirstRun } from "./first-run/FirstRun";
-import { IntegrityProblem, MissingFolder } from "./first-run/StartScreens";
+import { IntegrityProblem, MissingFolder, UpdateRequired } from "./first-run/StartScreens";
 import { ImportantPanel } from "./important/ImportantPanel";
 import { SearchBand, SearchPanel } from "./search/SearchViews";
 import { MarkdownExportDialog } from "./note/MarkdownExportDialog";
@@ -88,7 +88,7 @@ export function App() {
       </footer>
       {exportOpen && journal.state === "ready" && <ExportDialog />}
       {importOpen && journal.state === "ready" && <ImportWizard />}
-      {updateOpen && journal.state === "ready" && <UpdateDialog />}
+      {updateOpen && (journal.state === "ready" || journal.state === "newer") && <UpdateDialog />}
       {creatingWorkspace && journal.state === "ready" && <NewWorkspaceDialog />}
       <Toasts />
     </div>
@@ -105,6 +105,8 @@ function screen(journal: JournalStatus) {
       return <MissingFolder dataDir={journal.dataDir} />;
     case "integrity":
       return <IntegrityProblem dataDir={journal.dataDir} path={journal.path} />;
+    case "newer":
+      return <UpdateRequired dataDir={journal.dataDir} fileVersion={journal.fileVersion} />;
     default:
       return <p className={styles.placeholder}>{statusText(journal)}</p>;
   }
@@ -216,5 +218,7 @@ function statusText(journal: JournalStatus): string {
       return STR.integrity.title;
     case "error":
       return STR.status.dbError(journal.message);
+    case "newer":
+      return STR.incompatible.title;
   }
 }

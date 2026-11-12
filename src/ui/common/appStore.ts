@@ -12,7 +12,9 @@ export type JournalStatus =
   | { state: "missing"; dataDir: string }
   | { state: "integrity"; dataDir: string; path: string }
   | { state: "ready"; driver: SqlDriver; repo: JournalRepository; dataDir: string; sqliteVersion: string }
-  | { state: "error"; message: string };
+  | { state: "error"; message: string }
+  /** 일지 데이터(DB 버전)가 이 앱보다 새로움 — 열지 않았다(improve-v22-spec 2절) */
+  | { state: "newer"; dataDir: string; fileVersion: number };
 
 interface AppState {
   platform: Platform | null;

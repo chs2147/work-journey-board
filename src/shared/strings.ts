@@ -1351,6 +1351,29 @@ export const STR_BASE = {
     openBoard: "보드 열기 →",
     opening: "여는 중…",
   },
+  /** 앱과 호환되지 않는 일지(improve-v22-spec 2-2) — 외래어는 그대로, 뜻이 바로 통하게 */
+  incompatible: {
+    title: "앱 업데이트가 필요합니다",
+    body: "이 일지 데이터는 지금 설치된 앱 버전과 호환되지 않습니다. 더 최신 버전의 앱에서 저장된 데이터입니다.",
+    body2:
+      "데이터 손상을 막기 위해 일지를 열지 않았습니다 — 앱을 최신 버전으로 업데이트한 뒤 이용해 주세요. 일지 데이터는 변경되지 않았습니다.",
+    workspace: "워크스페이스",
+    folder: "폴더",
+    dataVersion: "데이터 버전",
+    dataVersionValue: (file: number, app: number) => `DB v${file} (이 앱은 DB v${app}까지 지원)`,
+    appVersion: "앱 버전",
+    checkUpdate: "업데이트 확인",
+    updateTo: (v: string) => `${v} 버전으로 업데이트`,
+    checking: "최신 버전 확인 중…",
+    latest: "지금 받을 수 있는 최신 버전이 없습니다 — 릴리스 페이지에서 확인해 주세요",
+    failed: (msg: string) => `최신 버전을 확인하지 못했습니다: ${msg}`,
+    releases: "릴리스 페이지 열기 ↗",
+    otherWorkspace: (name: string) => `${name} 워크스페이스 열기`,
+    otherFolder: "다른 일지 폴더 선택…",
+    note: "앱을 켤 때 최신 버전을 자동으로 확인합니다. 설치 전에 일지 백업(_pre-update)을 파일 복사로 만듭니다.",
+    switchRefused: (name: string) =>
+      `${name} 워크스페이스의 데이터는 지금 앱 버전과 호환되지 않아 열지 않았습니다 — 앱을 업데이트해 주세요`,
+  },
   missing: {
     openWorkspace: (name: string) => `${name} 워크스페이스 열기`,
     title: "저장 폴더를 찾을 수 없습니다",

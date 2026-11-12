@@ -2,7 +2,7 @@
 // 확인 → (새 판) 띠·레일 점 → [자세히·설치] 창 → 입력 저장 → 내려받기(진행) → SHA256 확인 → 일지 자동 백업 → 설치·다시 시작.
 // 인터넷은 Platform.update*(Rust update.rs)만 쓴다. 웹 화면은 주소를 모른다.
 import { create } from "zustand";
-import { preUpdateBackup, preUpdateBackupClosed } from "../../data/session";
+import { copyIncompatibleForUpdate, preUpdateBackup, preUpdateBackupClosed } from "../../data/session";
 import { sameDir } from "../../domain/workspace";
 import type { UpdateInfo } from "../../platform";
 import { STR } from "../../shared/strings";
@@ -131,17 +131,21 @@ export async function installUpdate() {
   const app = useAppStore.getState();
   const platform = app.platform;
   const j = app.journal;
-  if (!platform || j.state !== "ready" || !useUpdate.getState().info) return;
+  // 앱과 호환되지 않는 일지(improve-v22-spec 2-2)도 일지 없이 업데이트 — 백업은 연결 없이 파일 복사
+  if (!platform || (j.state !== "ready" && j.state !== "newer") || !useUpdate.getState().info) return;
   set({ phase: "downloading", progress: 0, error: null });
   try {
-    await flushAll();
-    await flushDraft();
-    await flushNote();
+    if (j.state === "ready") {
+      await flushAll();
+      await flushDraft();
+      await flushNote();
+    }
     await platform.updateDownload((received, total) =>
       set({ progress: total > 0 ? Math.min(1, received / total) : 0 }),
     );
     set({ phase: "installing", progress: 1 });
-    await preUpdateBackup(platform, j.driver, j.dataDir, platform.now());
+    if (j.state === "ready") await preUpdateBackup(platform, j.driver, j.dataDir, platform.now());
+    else await copyIncompatibleForUpdate(platform, j.dataDir, platform.now());
     // 이 PC에 등록된 다른 워크스페이스도 한 부씩(D7) — 한 곳이 실패해도(폴더 없음 등) 업데이트는 막지 않는다
     for (const w of app.workspaces)
       if (!sameDir(w.dir, j.dataDir))
