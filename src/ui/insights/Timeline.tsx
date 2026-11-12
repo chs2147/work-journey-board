@@ -240,17 +240,6 @@ export function Timeline({ rows, today, categoryId, query, search, currentMatch,
               <IconDone size={14} />
             </span>
           )}
-          {/* 기록일이 아닌 날 완료(improve-v21-spec 9절 T2): 실제 완료 연-월-일 */}
-          {(() => {
-            const later = laterDoneDate(it.date, it.doneAt);
-            return (
-              later && (
-                <span className={styles.doneLater} data-testid="timeline-done-later">
-                  {STR.insights.doneLater(later, DAY_LABELS[dayIndex(later)]!)}
-                </span>
-              )
-            );
-          })()}
           {it.startTime && (
             <span className={styles.timeMark} data-testid="timeline-time">
               {it.startTime}
@@ -262,20 +251,35 @@ export function Timeline({ rows, today, categoryId, query, search, currentMatch,
               ↻
             </span>
           )}
-          {it.memos.length > 0 && (
-            <button
-              type="button"
-              className={styles.memoChip}
-              tabIndex={-1}
-              aria-expanded={open}
-              aria-label={STR.insights.memoAria(it.memos.length, open)}
-              data-memo-chip
-              data-testid="memo-chip"
-              onClick={() => setMemoOpen((m) => ({ ...m, [it.id]: !open }))}
-            >
-              {STR.insights.memo(it.memos.length)} {open ? "▴" : "▾"}
-            </button>
-          )}
+          {/* 완료일 열(improve-v22-spec 8절): 항목 글 뒤, 모든 줄 같은 오른쪽 열(폭 고정) — 없으면 빈 칸 */}
+          <span className={styles.doneCol} data-testid="timeline-done-col">
+            {(() => {
+              const later = laterDoneDate(it.date, it.doneAt);
+              return (
+                later && (
+                  <span className={styles.doneLater} data-testid="timeline-done-later">
+                    {STR.insights.doneLater(later, DAY_LABELS[dayIndex(later)]!)}
+                  </span>
+                )
+              );
+            })()}
+          </span>
+          <span className={styles.memoCol}>
+            {it.memos.length > 0 && (
+              <button
+                type="button"
+                className={styles.memoChip}
+                tabIndex={-1}
+                aria-expanded={open}
+                aria-label={STR.insights.memoAria(it.memos.length, open)}
+                data-memo-chip
+                data-testid="memo-chip"
+                onClick={() => setMemoOpen((m) => ({ ...m, [it.id]: !open }))}
+              >
+                {STR.insights.memo(it.memos.length)} {open ? "▴" : "▾"}
+              </button>
+            )}
+          </span>
           <span className={styles.openHint} aria-hidden="true">
             {STR.insights.openOnBoard}
           </span>

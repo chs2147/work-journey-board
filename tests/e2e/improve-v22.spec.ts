@@ -219,3 +219,40 @@ test.describe("칸반 V3", () => {
     await expect(page.getByTestId("kanban-celebrate")).toHaveCount(0);
   });
 });
+
+// ── V4: 업무 타임라인 정돈(improve-v22-spec 8절) ──
+test("타임라인: 이번 주와 지난 주의 요일·항목 글이 같은 세로선 · 요일 한 줄 · 완료일 열이 모든 줄에서 같은 자리 · 기간 드롭다운 카드 바탕", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(`/?today=2026-10-22&sample=showcase`);
+  await page.getByTestId("week-title").waitFor();
+  await page.getByTestId("rail-insights").click();
+  await page.getByTestId("timeline-week").first().waitFor();
+  const lefts = await page.getByTestId("timeline-week").evaluateAll((ws) =>
+    ws.map((w) => {
+      const d = w.querySelector("[data-testid=timeline-day]")!.getBoundingClientRect().left;
+      const t = w.querySelector("[data-testid=timeline-item]")!.getBoundingClientRect().left;
+      return `${Math.round(d)}/${Math.round(t)}`;
+    }),
+  );
+  expect(lefts.length).toBeGreaterThan(1);
+  expect(new Set(lefts).size).toBe(1);
+  // 요일 칸 = 한 줄(요일과 날짜가 같은 높이)
+  const day = page.getByTestId("timeline-day").first();
+  const [b, sm] = await Promise.all([
+    day.locator("b").first().boundingBox(),
+    day.locator("small").first().boundingBox(),
+  ]);
+  expect(Math.abs(b!.y + b!.height - (sm!.y + sm!.height))).toBeLessThan(4);
+  // 완료일 열: 세부 항목을 들여 써도 모든 줄에서 같은 오른쪽 끝
+  const cols = await page
+    .getByTestId("timeline-done-col")
+    .evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().right)));
+  expect(new Set(cols).size).toBe(1);
+  const bg = await page.getByTestId("insight-period").evaluate((e) => getComputedStyle(e).backgroundColor);
+  const page_bg = await page
+    .getByTestId("timeline")
+    .evaluate((e) => getComputedStyle(e.closest("section") ?? document.body).backgroundColor);
+  expect(bg).not.toBe(page_bg);
+});

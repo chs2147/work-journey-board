@@ -357,6 +357,7 @@ export function InsightsView() {
             <label className={styles.check}>
               {STR.insights.period}
               <select
+                className={styles.periodSelect}
                 value={st.period.kind}
                 data-testid="insight-period"
                 onChange={(e) => {
