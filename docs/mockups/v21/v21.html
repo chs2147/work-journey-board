@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8" />
+<title>v21 시안 — 칸반 보드 · 타임라인 개선 (가상 샘플)</title>
+<style>
+  @font-face {
+    font-family: "Gowun";
+    src: url("../../../src/shared/fonts/GowunDodum-Regular.woff2") format("woff2");
+  }
+  :root {
+    --page: #ede6dc; --card: #fcf9f3; --sub: #f3ede3; --focus: #f4ebdd; --line: #e9e1d5; --line2: #d6c3aa;
+    --t1: #423c34; --t2: #6b6054; --t3: #786f63; --acc: #856748; --accsoft: #f0e5d5; --danger: #a94f42; --dangersoft: #f8ece6;
+    --c1: #2a78d6; --c2: #e8683a; --c3: #1fa97a; --c4: #e3a008; --ok: #2e7d4f;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #d9d2c6; font: 13px/1.5 "Gowun", system-ui, sans-serif; color: var(--t1); }
+  .shot { width: 1440px; margin: 0 0 40px; background: var(--page); position: relative; }
+  .cap { background: #2b2620; color: #fff; padding: 8px 14px; font-size: 14px; }
+  .cap small { opacity: 0.75; margin-left: 10px; font-size: 12px; }
+  button, .btn { font: inherit; color: var(--t1); border: 1px solid var(--line2); background: var(--card); border-radius: 6px; padding: 4px 10px; display: inline-flex; gap: 6px; align-items: center; white-space: nowrap; }
+  .btn.pri { background: var(--acc); color: #fff; border-color: var(--acc); }
+  .btn.ghost { border-color: transparent; background: transparent; }
+  .btn.on { border-color: var(--acc); background: var(--accsoft); color: #5d4426; }
+  /* app frame */
+  .brand { height: 48px; background: var(--card); border-bottom: 1px solid var(--line); display: flex; align-items: center; padding: 0 16px; font-size: 18px; gap: 8px; }
+  .brand b { font-weight: 400; } .brand i { color: #d05a2c; font-style: italic; }
+  .top { height: 46px; background: var(--card); border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 8px; padding: 0 16px; }
+  .top h1 { font-size: 16px; margin: 0 8px 0 0; font-weight: 400; }
+  .sp { flex: 1; }
+  .saved { border: 1px solid #bcdcc6; background: #eef8f1; color: var(--ok); border-radius: 999px; padding: 3px 10px; font-size: 12px; }
+  .ws { display: flex; height: 640px; }
+  .rail { width: 52px; background: var(--sub); border-right: 1px solid var(--line); display: flex; flex-direction: column; align-items: center; padding: 10px 0; gap: 8px; }
+  .rail .ic { width: 34px; height: 34px; border-radius: 8px; display: grid; place-items: center; color: var(--t2); position: relative; }
+  .rail .ic.on { background: var(--accsoft); color: var(--acc); }
+  .rail .ic.on::before { content: ""; position: absolute; left: -9px; top: 4px; bottom: 4px; width: 3px; background: var(--acc); }
+  .rail .ic.new { outline: 2px dashed #d05a2c; outline-offset: 2px; }
+  .rail hr { width: 26px; border: 0; border-top: 1px solid var(--line2); margin: 2px 0; }
+  .imp { width: 250px; background: var(--card); border-right: 1px solid var(--line); display: flex; flex-direction: column; }
+  .imp h2 { font-size: 13px; margin: 0; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 400; display: flex; gap: 6px; align-items: center; }
+  .imp .n { background: #c9862a; color: #fff; border-radius: 999px; font-size: 11px; padding: 0 7px; }
+  .imp .grp { background: var(--focus); padding: 5px 12px; font-size: 12px; color: #8a4f24; border-left: 3px solid #c9862a; }
+  .imp .day { padding: 6px 12px 0; font-size: 12px; } .imp .bad { background: var(--dangersoft); color: var(--danger); padding: 0 6px; font-size: 11px; margin-right: 6px; }
+  .imp .it { padding: 4px 12px 6px 14px; display: flex; gap: 8px; align-items: flex-start; font-size: 12.5px; }
+  .imp .cb { width: 14px; height: 14px; border: 1px solid var(--line2); background: #fff; flex: none; margin-top: 3px; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; flex: none; margin-top: 7px; }
+  .imp .foot { margin-top: auto; border-top: 1px solid var(--line); padding: 8px 12px; font-size: 11.5px; color: var(--t3); }
+  /* kanban */
+  .kb { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .filters { display: flex; gap: 8px; align-items: center; padding: 10px 16px; border-bottom: 1px solid var(--line); background: var(--page); }
+  .seg { display: inline-flex; border: 1px solid var(--line2); border-radius: 6px; overflow: hidden; background: var(--card); }
+  .seg span { padding: 4px 10px; border-right: 1px solid var(--line); font-size: 12.5px; } .seg span:last-child { border: 0; }
+  .seg .on { background: var(--acc); color: #fff; }
+  .cols { flex: 1; display: flex; gap: 12px; padding: 12px 16px; overflow: hidden; align-items: stretch; }
+  .col { flex: 1 1 0; min-width: 0; background: var(--sub); border: 1px solid var(--line); display: flex; flex-direction: column; }
+  .col.done { flex: 0.82 1 0; }
+  .col.add { flex: 0 0 44px; border-style: dashed; align-items: center; justify-content: flex-start; padding-top: 10px; color: var(--t3); background: transparent; }
+  .colh { display: flex; align-items: center; gap: 6px; padding: 8px 10px; border-bottom: 1px solid var(--line); border-top: 3px solid var(--t3); background: var(--card); }
+  .colh b { font-weight: 400; font-size: 14px; letter-spacing: 0.02em; } .colh .cnt { color: var(--t3); font-size: 12px; }
+  .colh .lock { font-size: 11px; color: var(--t3); border: 1px solid var(--line); padding: 0 5px; }
+  .col.todo .colh { border-top-color: var(--c1); } .col.park .colh { border-top-color: #9a7bd0; } .col.wait .colh { border-top-color: var(--c4); } .col.done .colh { border-top-color: var(--ok); }
+  .list { padding: 8px; display: flex; flex-direction: column; gap: 8px; overflow: hidden; flex: 1; }
+  .kc { background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--c1); padding: 7px 9px 8px; position: relative; box-shadow: 0 1px 2px #0000000d; }
+  .kc.c2 { border-left-color: var(--c2); } .kc.c3 { border-left-color: var(--c3); } .kc.c4 { border-left-color: var(--c4); }
+  .kc .meta { display: flex; gap: 6px; align-items: center; font-size: 11.5px; color: var(--t3); }
+  .kc .cat { color: var(--t2); } .kc .star { color: #c9862a; }
+  .kc .tt { font-size: 13.5px; margin: 2px 0 2px; }
+  .kc ul { margin: 2px 0 0; padding-left: 16px; color: var(--t2); font-size: 12.5px; } .kc li.d { text-decoration: line-through; color: var(--t3); }
+  .tags { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px; }
+  .tg { font-size: 11px; border: 1px solid var(--line2); padding: 0 6px; background: #fff; color: var(--t2); }
+  .tg.soon { border-color: #e0b070; background: #fdf3e0; color: #8a5a12; } .tg.late { border-color: #e3b1a8; background: var(--dangersoft); color: var(--danger); }
+  .kc .more { position: absolute; right: 6px; top: 5px; color: var(--t3); border: 1px solid var(--line); background: #fff; padding: 0 5px; font-size: 11px; }
+  .kc.sel { outline: 2px solid var(--acc); }
+  .kc.ghost { opacity: 0.4; }
+  .kc.drag { position: absolute; width: 300px; transform: rotate(2deg); box-shadow: 0 10px 24px #0003; z-index: 5; }
+  .dropzone { border: 2px dashed var(--acc); background: #f0e5d5aa; color: var(--acc); text-align: center; padding: 14px 0; font-size: 12.5px; }
+  .dn { background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--c1); padding: 4px 8px; display: flex; gap: 6px; align-items: center; font-size: 12.5px; color: var(--t2); }
+  .dn.c2 { border-left-color: var(--c2); } .dn.c3 { border-left-color: var(--c3); } .dn.c4 { border-left-color: var(--c4); }
+  .dn s { flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-decoration: line-through; }
+  .dn .ck { color: var(--ok); } .dn .when { color: var(--t3); font-size: 11px; white-space: nowrap; }
+  .gh { font-size: 11.5px; color: var(--t3); padding: 2px 2px 0; display: flex; gap: 6px; } .gh::after { content: ""; flex: 1; border-top: 1px solid var(--line2); margin-top: 9px; }
+  .morebtn { text-align: center; font-size: 12px; color: var(--t2); border: 1px dashed var(--line2); padding: 4px; background: transparent; }
+  .addc { border: 1px dashed var(--line2); color: var(--t3); text-align: center; padding: 5px; font-size: 12.5px; background: transparent; }
+  /* popovers / dialogs */
+  .menu { position: absolute; background: #fff; border: 1px solid var(--line2); box-shadow: 0 8px 22px #00000026; border-radius: 6px; padding: 5px; font-size: 12.5px; z-index: 9; }
+  .menu div { padding: 4px 10px; display: flex; gap: 8px; justify-content: space-between; } .menu hr { border: 0; border-top: 1px solid var(--line); margin: 4px 0; }
+  .menu .k { color: var(--t3); font-size: 11px; } .menu .red { color: var(--danger); } .menu .hd { color: var(--t3); font-size: 11px; }
+  .hist td { padding: 2px 8px 2px 0; font-size: 12px; } .hist .ar { color: var(--t3); }
+  .dimwrap { background: #3a312866; padding: 34px 0; display: flex; justify-content: center; gap: 40px; align-items: flex-start; }
+  .dlg { background: #fff; border: 1px solid var(--line2); border-radius: 10px; box-shadow: 0 18px 50px #0003; padding: 18px 20px; width: 560px; }
+  .dlg h2 { font-size: 16px; margin: 0 0 12px; font-weight: 400; }
+  .fr { display: grid; grid-template-columns: 86px 1fr; gap: 8px 10px; align-items: center; margin-bottom: 8px; }
+  .fr label { color: var(--t2); font-size: 12.5px; }
+  .inp { border: 1px solid var(--line2); border-radius: 6px; padding: 5px 9px; background: #fff; display: inline-flex; gap: 8px; align-items: center; }
+  .ed { border: 1px solid var(--acc); border-radius: 6px; padding: 8px 10px; background: var(--card); min-height: 92px; }
+  .ed .r { display: flex; gap: 8px; align-items: center; padding: 2px 0; } .ed .sub { padding-left: 22px; color: var(--t2); }
+  .ed .cur { border-right: 2px solid var(--t1); padding-right: 1px; }
+  .acts { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; align-items: center; }
+  .hint { color: var(--t3); font-size: 11.5px; }
+  .box { background: var(--sub); border: 1px solid var(--line); padding: 8px 10px; font-size: 12.5px; }
+  .rad { display: flex; gap: 8px; align-items: flex-start; margin: 3px 0; } .rb { width: 13px; height: 13px; border: 1px solid var(--t3); border-radius: 50%; flex: none; margin-top: 4px; background: #fff; }
+  .rb.on { border: 4px solid var(--acc); } .chk { width: 13px; height: 13px; border: 1px solid var(--t3); flex: none; margin-top: 4px; background: #fff; display: grid; place-items: center; font-size: 10px; color: #fff; }
+  .chk.on { background: var(--acc); border-color: var(--acc); }
+  /* timeline */
+  .tlwrap { display: flex; gap: 24px; padding: 20px 24px 26px; }
+  .tl { flex: 1; background: var(--card); border: 1px solid var(--line); padding: 12px 16px; }
+  .tl h3 { margin: 0 0 8px; font-size: 13px; font-weight: 400; color: var(--t2); }
+  .wk { font-size: 13px; padding: 4px 0; border-bottom: 1px solid var(--line); margin-bottom: 6px; display: flex; gap: 10px; }
+  .wk small { color: var(--t3); }
+  .ti { display: flex; gap: 8px; padding: 2px 0; font-size: 13px; align-items: baseline; }
+  .ti .dy { width: 30px; color: var(--t3); flex: none; } .ti.s { padding-left: 38px; color: var(--t2); font-size: 12.5px; }
+  .ti .ok { color: var(--ok); } .ti .st { color: #c9862a; }
+  .dchip { font-size: 11px; border: 1px solid #bcdcc6; background: #eef8f1; color: var(--ok); padding: 0 6px; white-space: nowrap; }
+  .dg { display: grid; grid-template-columns: 46px 1fr; border-top: 1px dashed var(--line); padding: 4px 0; }
+  .dg:first-of-type { border-top: 0; } .dg .dl { color: var(--t2); font-size: 12.5px; padding-top: 2px; } .dg .dl small { display: block; color: var(--t3); font-size: 11px; }
+  .dg .ti.s { padding-left: 16px; }
+  .note { position: absolute; background: #fff7d6; border: 1px solid #e3c96a; padding: 4px 8px; font-size: 11.5px; color: #6b5510; box-shadow: 0 2px 6px #0002; z-index: 8; }
+  .set { background: var(--card); border: 1px solid var(--line); padding: 14px 18px; width: 620px; }
+  .set h3 { margin: 0 0 4px; font-size: 14px; font-weight: 400; } .set p { margin: 0 0 10px; color: var(--t3); font-size: 12px; }
+  .srow { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-top: 1px solid var(--line); }
+</style>
+
+<!-- ───────────── 1. 칸반 보드 전체 ───────────── -->
+<div class="shot" id="s1">
+  <div class="cap">① 칸반 보드 전체 화면 <small>레일: 주간 보드와 인사이트 사이 · 왼쪽 = 중요 업무 목록(주간 보드와 같은 패널) · TODO / 사용자 섹션 / DONE</small></div>
+  <div class="brand">▣ <b>Work</b> <i>Journey</i> <b>Board</b></div>
+  <div class="top">
+    <h1>칸반 보드</h1>
+    <span class="btn">업무: 전체 ▾</span>
+    <span class="seg"><span>이번 주</span><span class="on">최근 4주</span><span>최근 12주</span><span>올해</span><span>전체</span><span>직접 지정</span></span>
+    <span class="sp"></span>
+    <span class="btn">🔍 검색 <span class="hint">Ctrl+Shift+F</span></span>
+    <span class="btn pri">＋ 업무 항목 추가</span>
+    <span class="btn">⊞ 섹션 추가</span>
+    <span class="saved">✓ 저장됨</span>
+  </div>
+  <div class="ws">
+    <div class="rail">
+      <div class="ic" title="주간 보드">▦</div>
+      <div class="ic on new" title="칸반 보드 (Alt+6)">▥</div>
+      <div class="ic" title="인사이트">≋</div>
+      <div class="ic" title="Universe">✳</div>
+      <hr />
+      <div class="ic on" title="중요 업무">★</div>
+      <div class="ic" title="Cabi.NET">▤</div>
+      <div class="sp"></div>
+      <div class="ic">⚙</div>
+    </div>
+    <div class="imp">
+      <h2><span style="color:#c9862a">★</span> 중요 업무 <span class="n">3</span><span class="sp"></span>«</h2>
+      <div class="grp">⏳ 마감일이 있는 업무</div>
+      <div class="day"><span class="bad">2일 지남</span>10/20 (화)</div>
+      <div class="it"><span class="cb"></span><span class="dot" style="background:var(--c2)"></span>계정 관리 미흡 2건 발견</div>
+      <div class="day"><span class="bad" style="background:#fdf3e0;color:#8a5a12">D-4</span>10/26 (월)</div>
+      <div class="it"><span class="cb"></span><span class="dot" style="background:var(--c1)"></span>개발계 1차 배포 일정 확정(11/2)</div>
+      <div class="grp" style="margin-top:6px">이번 주</div>
+      <div class="it"><span class="cb"></span><span class="dot" style="background:var(--c3)"></span>지표 정의서 v0.3 공유</div>
+      <div class="foot">체크하면 카드가 DONE으로 이동 · 사용자 섹션(예: Parking Lot)에 둔 항목은 이 목록에 나오지 않습니다</div>
+    </div>
+    <div class="kb">
+      <div class="cols">
+        <div class="col todo">
+          <div class="colh"><b>TODO</b><span class="cnt">12</span><span class="lock">기본</span><span class="sp"></span><span class="btn ghost">정렬: 최신순 ▾</span><span class="btn ghost">⋯</span></div>
+          <div class="list">
+            <div class="addc">＋ 카드 추가</div>
+            <div class="kc sel">
+              <span class="more">⋯</span>
+              <div class="meta"><span class="cat">차세대 정산 시스템 구축</span>· 10/22(목)<span class="star">★</span></div>
+              <div class="tt">개발계 1차 배포 일정 확정(11/2)</div>
+              <ul><li class="d">배포 체크리스트 초안</li><li>DBA 작업 창 협의</li><li>롤백 절차 리뷰</li></ul>
+              <div class="tags"><span class="tg soon">⏳ 10/26(월) D-4</span><span class="tg">⏰ 10:00</span><span class="tg">세부 1/3</span><span class="tg">▤ 메모 1</span><span class="tg">🗄 2</span></div>
+            </div>
+            <div class="kc c2">
+              <div class="meta"><span class="cat">협력사 보안 점검</span>· 10/20(화)<span class="star">★</span></div>
+              <div class="tt">계정 관리 미흡 2건 발견</div>
+              <div class="tags"><span class="tg late">⏳ 10/20 · 2일 지남</span></div>
+            </div>
+            <div class="kc c3">
+              <div class="meta"><span class="cat">사내 데이터 대시보드</span>· 10/20(화)<span class="star">★</span></div>
+              <div class="tt">지표 정의서 v0.3 공유</div>
+            </div>
+            <div class="kc">
+              <div class="meta"><span class="cat">차세대 정산 시스템 구축</span>· 10/21(수)</div>
+              <div class="tt">설계안 팀 리뷰, 수정 의견 5건 반영 중</div>
+              <div class="tags"><span class="tg">↻ 매주</span></div>
+            </div>
+            <div class="kc c4">
+              <div class="meta"><span class="cat">신규 입사자 온보딩</span>· 10/15(목)</div>
+              <div class="tt">온보딩 체크리스트 전달</div>
+            </div>
+            <div class="morebtn">아래로 7개 더 — 스크롤</div>
+          </div>
+        </div>
+        <div class="col park">
+          <div class="colh"><b>Parking Lot</b><span class="cnt">3</span><span class="sp"></span><span class="btn ghost">⋯</span></div>
+          <div class="list">
+            <div class="addc">＋ 카드 추가</div>
+            <div class="kc c3">
+              <div class="meta"><span class="cat">사내 데이터 대시보드</span>· 10/13(화)</div>
+              <div class="tt">대시보드 차트 라이브러리 교체 검토</div>
+              <ul><li>후보 2종 비교표</li></ul>
+              <div class="tags"><span class="tg">10/14부터 이 섹션</span></div>
+            </div>
+            <div class="kc c2">
+              <div class="meta"><span class="cat">협력사 보안 점검</span>· 10/08(목)</div>
+              <div class="tt">B협력사 재점검 일정 — 회신 대기</div>
+            </div>
+            <div class="kc">
+              <div class="meta"><span class="cat">차세대 정산 시스템 구축</span>· 10/06(화)</div>
+              <div class="tt">정산 리포트 PDF 서식 개선 아이디어</div>
+            </div>
+          </div>
+        </div>
+        <div class="col done">
+          <div class="colh"><b>DONE</b><span class="cnt">48</span><span class="lock">기본</span><span class="sp"></span><span class="btn ghost">⋯</span></div>
+          <div class="list">
+            <div class="gh">오늘 10/22</div>
+            <div class="dn"><span class="ck">✓</span><s>테스트 데이터 이관 스크립트 작성 착수</s><span class="when">14:20</span></div>
+            <div class="dn c2"><span class="ck">✓</span><s>점검 결과 보고서 초안 작성</s><span class="when">11:05</span></div>
+            <div class="gh">이번 주</div>
+            <div class="dn"><span class="ck">✓</span><s>야간 배치 02~04시 확정</s><span class="when">10/21</span></div>
+            <div class="dn c2"><span class="ck">✓</span><s>A협력사 현장 점검</s><span class="when">10/21</span></div>
+            <div class="dn c3"><span class="ck">✓</span><s>지표 정의서 v0.2 리뷰</s><span class="when">10/20</span></div>
+            <div class="dn c4"><span class="ck">✓</span><s>입사 서류 안내 메일</s><span class="when">10/19</span></div>
+            <div class="gh">지난주</div>
+            <div class="dn"><span class="ck">✓</span><s>정산 배치 설계서 v1 작성</s><span class="when">10/16</span></div>
+            <div class="dn"><span class="ck">✓</span><s>재처리 조건 초안</s><span class="when">10/15</span></div>
+            <div class="dn c2"><span class="ck">✓</span><s>점검 체크리스트 배포</s><span class="when">10/14</span></div>
+            <div class="dn c3"><span class="ck">✓</span><s>데이터 소스 목록 정리</s><span class="when">10/13</span></div>
+            <div class="gh">2026년 10월 (이전)</div>
+            <div class="dn c4"><span class="ck">✓</span><s>온보딩 일정표 확정</s><span class="when">10/08</span></div>
+            <div class="morebtn">이전 완료 36개 더 보기</div>
+          </div>
+        </div>
+        <div class="col add">＋<div style="writing-mode:vertical-rl;margin-top:8px;font-size:12px">섹션 추가</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="note" style="left:62px;top:470px">↖ 새 레일 단추 — 칸반 보드 (Alt+6)</div>
+  <div class="note" style="left:730px;top:560px">DONE → 접힌 한 줄 카드, 완료 시각순으로 쌓임 · 누르면 펼침</div>
+</div>
+
+<!-- ───────────── 2. 카드 끌어 놓기 · 메뉴 · 상태 이력 ───────────── -->
+<div class="shot" id="s2">
+  <div class="cap">② 카드 끌어 놓기(카드 전체가 손잡이) · 카드 ⋯ 메뉴 · 상태 변경 이력</div>
+  <div style="display:flex;gap:16px;padding:18px 20px 22px;position:relative;height:580px">
+    <div class="col todo" style="flex:0 0 330px">
+      <div class="colh"><b>TODO</b><span class="cnt">12</span><span class="lock">기본</span></div>
+      <div class="list">
+        <div class="kc ghost"><div class="meta"><span class="cat">차세대 정산 시스템 구축</span>· 10/21(수)</div><div class="tt">설계안 팀 리뷰, 수정 의견 5건 반영 중</div></div>
+        <div class="kc c2"><span class="more">⋯</span><div class="meta"><span class="cat">협력사 보안 점검</span>· 10/20(화)<span class="star">★</span></div><div class="tt">계정 관리 미흡 2건 발견</div><div class="tags"><span class="tg late">⏳ 10/20 · 2일 지남</span></div></div>
+        <div class="kc c4"><div class="meta"><span class="cat">신규 입사자 온보딩</span>· 10/15(목)</div><div class="tt">온보딩 체크리스트 전달</div></div>
+      </div>
+    </div>
+    <div class="col park" style="flex:0 0 300px">
+      <div class="colh"><b>Parking Lot</b><span class="cnt">3</span></div>
+      <div class="list"><div class="kc c3"><div class="meta"><span class="cat">사내 데이터 대시보드</span>· 10/13(화)</div><div class="tt">대시보드 차트 라이브러리 교체 검토</div></div></div>
+    </div>
+    <div class="col done" style="flex:0 0 300px;outline:2px solid var(--acc)">
+      <div class="colh"><b>DONE</b><span class="cnt">48</span><span class="lock">기본</span></div>
+      <div class="list">
+        <div class="dropzone">여기에 놓으면 완료 처리<br /><span class="hint">세부 항목 2개도 함께 완료</span></div>
+        <div class="dn"><span class="ck">✓</span><s>테스트 데이터 이관 스크립트 작성 착수</s><span class="when">14:20</span></div>
+        <div class="dn c2"><span class="ck">✓</span><s>점검 결과 보고서 초안 작성</s><span class="when">11:05</span></div>
+      </div>
+    </div>
+    <div class="kc drag" style="left:520px;top:120px"><div class="meta"><span class="cat">차세대 정산 시스템 구축</span>· 10/21(수)</div><div class="tt">설계안 팀 리뷰, 수정 의견 5건 반영 중</div><ul><li>의견 5건 정리</li><li>수정본 회람</li></ul></div>
+    <div class="menu" style="left:300px;top:150px;width:230px">
+      <div>편집… <span class="k">Enter</span></div>
+      <div>주간 보드에서 보기</div>
+      <hr />
+      <div>★ 중요 표시 끄기 <span class="k">Alt+I</span></div>
+      <div>⏳ 마감일… <span class="k">Alt+U</span></div>
+      <div>⏰ 시작 시각… <span class="k">Alt+O</span></div>
+      <div>↻ 매주 반복 <span class="k">Alt+R</span></div>
+      <div>다른 날로 옮기기… <span class="k">Alt+D</span></div>
+      <div>날짜로 복제…</div>
+      <hr />
+      <div class="hd">섹션 이동</div>
+      <div>→ Parking Lot</div>
+      <div>→ DONE (완료) </div>
+      <hr />
+      <div>상태 이력 보기</div>
+      <div class="red">삭제 <span class="k">Alt+Delete</span></div>
+    </div>
+    <div class="menu" style="left:990px;top:250px;width:400px;padding:10px 12px">
+      <div style="padding:0 0 6px"><b style="font-weight:400">상태 이력 — 대시보드 차트 라이브러리 교체 검토</b></div>
+      <table class="hist">
+        <tr><td>2026-10-13 (화) 09:12</td><td>만듦</td><td class="ar">→</td><td>TODO</td><td class="hint">주간 보드</td></tr>
+        <tr><td>2026-10-14 (수) 17:40</td><td>TODO</td><td class="ar">→</td><td>Parking Lot</td><td class="hint">칸반</td></tr>
+        <tr><td>2026-10-19 (월) 10:02</td><td>Parking Lot</td><td class="ar">→</td><td>TODO</td><td class="hint">칸반</td></tr>
+        <tr><td>2026-10-19 (월) 16:30</td><td>TODO</td><td class="ar">→</td><td>Parking Lot</td><td class="hint">칸반</td></tr>
+      </table>
+      <div class="hint" style="padding:6px 0 0">상태가 바뀔 때마다 일시·이전/이후 섹션·바꾼 곳을 기록합니다(주간 보드·중요 업무 목록에서 완료해도 기록).</div>
+    </div>
+    <div class="note" style="left:560px;top:520px">끄는 동안 원래 자리는 흐리게 · Esc 취소 · 놓으면 알림 [되돌리기] · 키보드: 메뉴 "섹션 이동" 또는 Alt+Shift+←/→</div>
+  </div>
+</div>
+
+<!-- ───────────── 3. 업무 항목 추가 ───────────── -->
+<div class="shot" id="s3">
+  <div class="cap">③ [＋ 업무 항목 추가] 레이어 창 <small>업무 · 날짜(기본 오늘) · 주간 보드와 같은 입력기(세부 항목·★·⏳·⏰·↻·⋯)</small></div>
+  <div class="dimwrap">
+    <div class="dlg">
+      <h2>업무 항목 추가</h2>
+      <div class="fr"><label>업무</label><div><span class="inp"><span class="dot" style="background:var(--c1);margin:0"></span>차세대 정산 시스템 구축 ▾</span></div></div>
+      <div class="fr"><label>날짜</label><div style="display:flex;gap:8px;align-items:center"><span class="inp">2026-10-22 (목) 📅</span><span class="btn on">오늘</span><span class="btn">내일</span><span class="btn">다음 주 월</span></div></div>
+      <div class="fr"><label>섹션</label><div><span class="seg"><span class="on">TODO</span><span>Parking Lot</span></span> <span class="hint">DONE으로는 만들 수 없음</span></div></div>
+      <div class="fr" style="align-items:start"><label style="padding-top:8px">내용</label>
+        <div class="ed">
+          <div class="r"><span style="color:var(--t3)">⋮⋮</span><span style="color:#c9862a">★</span><span>운영계 반영 리허설 계획 수립</span><span class="sp"></span><span class="tg soon">⏳ 10/30(금) D-8</span><span class="tg">⏰ 14:00</span></div>
+          <div class="r sub">• 리허설 시나리오 초안</div>
+          <div class="r sub">• 참여자 일정 확인<span class="cur"></span></div>
+        </div>
+      </div>
+      <div class="fr"><label></label><div style="display:flex;gap:6px;flex-wrap:wrap"><span class="btn on">★ 중요</span><span class="btn on">⏳ 마감일 10/30</span><span class="btn on">⏰ 14:00</span><span class="btn">↻ 매주 반복</span><span class="btn">⋯</span></div></div>
+      <div class="hint" style="margin-left:96px">Enter = 다음 항목 · Tab = 세부 항목 · Shift+Tab = 본 항목 — 주간 보드 입력과 같습니다. 본 항목마다 카드 1장이 됩니다.</div>
+      <div class="acts"><span class="hint" style="margin-right:auto">그 날 · 그 업무 칸의 맨 끝에 기록됩니다</span><span class="btn">취소</span><span class="btn">추가하고 계속</span><span class="btn pri">추가</span></div>
+    </div>
+    <div class="menu" style="position:static;width:220px">
+      <div class="hd">⋯ 항목 메뉴(주간 보드와 같음)</div>
+      <div>연결된 메모 만들기</div>
+      <div>↻ 매주 반복 <span class="k">Alt+R</span></div>
+      <div>⏰ 시작 시각… <span class="k">Alt+O</span></div>
+      <div>⏳ 마감일… <span class="k">Alt+U</span></div>
+      <div>★ 중요 표시 <span class="k">Alt+I</span></div>
+      <div>태그…</div>
+    </div>
+  </div>
+</div>
+
+<!-- ───────────── 4. 일괄 완료 ───────────── -->
+<div class="shot" id="s4">
+  <div class="cap">④ 일괄 완료 처리 <small>TODO ⋯ › [일괄 완료…] — 가져온 지난 업무를 한 번에 정리, 미리 보기·되돌리기</small></div>
+  <div class="dimwrap">
+    <div class="dlg" style="width:620px">
+      <h2>TODO 일괄 완료</h2>
+      <div class="fr"><label>기록일</label><div style="display:flex;gap:8px;align-items:center"><span class="inp">2026-09-30 (수) 📅</span> 이전에 기록한 항목 <span class="btn">4주 전</span><span class="btn">지난달 말</span><span class="btn">작년 말</span></div></div>
+      <div class="fr"><label>업무</label><div><span class="btn">업무: 전체 ▾</span> <span class="hint">지금 칸반 필터를 그대로 가져옵니다</span></div></div>
+      <div class="fr" style="align-items:start"><label style="padding-top:2px">제외</label><div>
+        <div class="rad"><span class="chk on">✓</span>★ 중요 표시한 항목은 그대로 둠</div>
+        <div class="rad"><span class="chk on">✓</span>마감일이 아직 남은 항목은 그대로 둠</div>
+        <div class="rad"><span class="chk on">✓</span>사용자 섹션(Parking Lot 등)에 둔 항목은 그대로 둠</div>
+      </div></div>
+      <div class="fr" style="align-items:start"><label style="padding-top:2px">완료일</label><div>
+        <div class="rad"><span class="rb on"></span><span>각 항목의 <b style="font-weight:400;color:var(--acc)">기록일</b>에 끝낸 것으로 <span class="hint">(추천 — 타임라인에 "나중에 완료" 표시가 생기지 않음)</span></span></div>
+        <div class="rad"><span class="rb"></span>오늘(2026-10-22)에 끝낸 것으로</div>
+      </div></div>
+      <div class="box" style="margin-top:6px">
+        <div>대상 <b style="font-weight:400;color:var(--danger)">본 항목 214개</b>(세부 항목 386개 포함 처리) · 업무 6개 · 2025-03-04 ~ 2026-09-30</div>
+        <div class="hint" style="margin-top:4px">예) 2026-09-29 분기 정산 검증 완료 보고 · 2026-09-24 협력사 계정 목록 회신 · 2026-09-18 온보딩 설문 취합 … <u>전체 목록 보기</u></div>
+      </div>
+      <div class="acts"><span class="hint" style="margin-right:auto">처리 뒤 알림의 [되돌리기], 또는 TODO ⋯ › 최근 일괄 처리에서 되돌릴 수 있습니다</span><span class="btn">취소</span><span class="btn pri">214개 완료 처리</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ───────────── 5. 섹션 관리 · 설정 ───────────── -->
+<div class="shot" id="s5">
+  <div class="cap">⑤ 사용자 섹션 관리 · 설정 › 시작 화면 <small>TODO·DONE은 기본(지울 수 없음), 그 사이에 섹션을 더하고 이름·순서를 바꿈</small></div>
+  <div style="display:flex;gap:28px;padding:20px 24px 26px;align-items:flex-start;position:relative">
+    <div style="position:relative;width:330px;height:250px">
+      <div class="col park" style="width:300px"><div class="colh"><b>Parking Lot</b><span class="cnt">3</span><span class="sp"></span><span class="btn on">⋯</span></div><div class="list" style="height:60px"></div></div>
+      <div class="menu" style="left:150px;top:38px;width:190px">
+        <div>이름 바꾸기…</div>
+        <div>색 바꾸기 ▸</div>
+        <div>← 왼쪽으로</div>
+        <div>→ 오른쪽으로</div>
+        <hr />
+        <div>이 섹션의 카드 모두 TODO로</div>
+        <div class="red">섹션 삭제…</div>
+      </div>
+    </div>
+    <div class="dlg" style="width:360px;padding:14px 16px">
+      <h2 style="font-size:15px">섹션 추가</h2>
+      <div class="fr" style="grid-template-columns:50px 1fr"><label>이름</label><span class="inp" style="width:100%">대기 중(회신)</span></div>
+      <div class="fr" style="grid-template-columns:50px 1fr"><label>색</label><div style="display:flex;gap:6px"><span style="width:18px;height:18px;background:#9a7bd0;outline:2px solid var(--t1);outline-offset:1px"></span><span style="width:18px;height:18px;background:var(--c4)"></span><span style="width:18px;height:18px;background:#4aa3a3"></span><span style="width:18px;height:18px;background:#c96a8a"></span><span style="width:18px;height:18px;background:#8a8983"></span></div></div>
+      <div class="hint">TODO와 DONE 사이에 생깁니다 · 최대 8개 · 사용자 섹션은 칸반 보드에서만 보이며 주간 보드·중요 업무 목록에는 나타나지 않습니다.</div>
+      <div class="acts"><span class="btn">취소</span><span class="btn pri">추가</span></div>
+    </div>
+    <div class="dlg" style="width:330px;padding:14px 16px">
+      <h2 style="font-size:15px">"Parking Lot" 섹션을 지울까요?</h2>
+      <div class="box">이 섹션의 카드 <b style="font-weight:400">3개</b>는 지워지지 않고 <b style="font-weight:400">TODO</b>로 돌아갑니다. 이동 기록은 상태 이력에 남습니다.</div>
+      <div class="acts"><span class="btn pri">취소</span><span class="btn" style="color:var(--danger);border-color:var(--danger)">섹션 삭제</span></div>
+    </div>
+    <div class="set" style="width:300px;padding:12px 14px">
+      <h3>시작 화면</h3>
+      <p>앱을 켰을 때 먼저 보일 화면 (설정 › 화면)</p>
+      <div class="srow"><span>시작할 때</span><span class="seg"><span class="on">주간 보드</span><span>칸반 보드</span></span></div>
+      <div class="hint">주간 보드 = 마지막에 본 주간/데일리 뷰 그대로</div>
+    </div>
+  </div>
+</div>
+
+<!-- ───────────── 6. 타임라인 개선 ───────────── -->
+<div class="shot" id="s6">
+  <div class="cap">⑥ 인사이트 › 업무 타임라인 개선 <small>요일은 한 번만(요일별 묶음) · 당일이 아닌 날 완료한 항목은 실제 완료일 표시</small></div>
+  <div class="tlwrap">
+    <div class="tl">
+      <h3>지금 — 본 항목마다 요일이 반복됨</h3>
+      <div class="wk">2026-W43 <small>10/19 ~ 10/25 · 항목 7</small></div>
+      <div class="ti"><span class="dy">(월)</span><span class="ok">✓</span>야간 배치 02~04시 확정</div>
+      <div class="ti"><span class="dy">(월)</span>운영팀 공유 완료</div>
+      <div class="ti"><span class="dy">(월)</span><span class="st">★</span>재처리 조건 수요일 리뷰에서 확정</div>
+      <div class="ti"><span class="dy">(수)</span><span class="ok">✓</span>설계안 팀 리뷰, 수정 의견 5건 반영 중</div>
+      <div class="ti s">· 의견 5건 정리</div>
+      <div class="ti"><span class="dy">(수)</span>배치 스케줄러 계정 신청</div>
+      <div class="ti"><span class="dy">(목)</span>테스트 데이터 이관 스크립트 작성 착수</div>
+      <div class="ti"><span class="dy">(목)</span><span class="st">★</span>개발계 1차 배포 일정 확정(11/2)</div>
+    </div>
+    <div class="tl">
+      <h3>개선 — 요일 한 번 + 요일별 묶음 · 완료일 표시</h3>
+      <div class="wk">2026-W43 <small>10/19 ~ 10/25 · 항목 7</small></div>
+      <div class="dg"><div class="dl">월<small>10/19</small></div><div>
+        <div class="ti"><span class="ok">✓</span>야간 배치 02~04시 확정</div>
+        <div class="ti">운영팀 공유 완료</div>
+        <div class="ti"><span class="st">★</span>재처리 조건 수요일 리뷰에서 확정</div>
+      </div></div>
+      <div class="dg"><div class="dl">수<small>10/21</small></div><div>
+        <div class="ti"><span class="ok">✓</span>설계안 팀 리뷰, 수정 의견 5건 반영 중 <span class="dchip">완료 2026-10-27 (화)</span></div>
+        <div class="ti s">· 의견 5건 정리</div>
+        <div class="ti">배치 스케줄러 계정 신청</div>
+      </div></div>
+      <div class="dg"><div class="dl">목<small>10/22</small></div><div>
+        <div class="ti">테스트 데이터 이관 스크립트 작성 착수</div>
+        <div class="ti"><span class="st">★</span>개발계 1차 배포 일정 확정(11/2)</div>
+      </div></div>
+      <div class="hint" style="margin-top:8px">월요일 ✓ = 그날 완료 → 날짜 표시 없음 · 수요일 ✓ = 6일 뒤 완료 → 실제 완료 연-월-일 표시</div>
+    </div>
+  </div>
+</div>
+</html>
