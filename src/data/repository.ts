@@ -1782,7 +1782,9 @@ export class JournalRepository {
   ): Promise<{ wasImportant: boolean; at: string; children: string[] } | null> {
     const ts = this.ts();
     const kids = await this.kanban.childIds(id);
-    const [before] = await this.db.select<{ depth: number }>("SELECT depth FROM entry_item WHERE id = ?", [id]);
+    const [before] = await this.db.select<{ depth: number }>("SELECT depth FROM entry_item WHERE id = ?", [
+      id,
+    ]);
     const children = before && Number(before.depth) === 0 ? kids : [];
     const open =
       children.length > 0
@@ -1792,25 +1794,35 @@ export class JournalRepository {
           )
         : [];
     const { begin, end } = this.kanban.ctxStatements(source);
-    await this.db.batch([begin, ...this.kanban.completeStatements(id, open.map((r) => r.id), ts), end]);
+    await this.db.batch([
+      begin,
+      ...this.kanban.completeStatements(
+        id,
+        open.map((r) => r.id),
+        ts,
+      ),
+      end,
+    ]);
     const [row] = await this.db.select<{ completion_was_flagged: number; flag_done_at: string | null }>(
       "SELECT completion_was_flagged, flag_done_at FROM entry_item WHERE id = ?",
       [id],
     );
     return row?.flag_done_at
-      ? { wasImportant: row.completion_was_flagged !== 0, at: row.flag_done_at, children: open.map((r) => r.id) }
+      ? {
+          wasImportant: row.completion_was_flagged !== 0,
+          at: row.flag_done_at,
+          children: open.map((r) => r.id),
+        }
       : null;
   }
 
   /** 완료 전 중요 표시를 복원한다(일반 항목이면 별표를 만들지 않는다). 함께 완료된 세부 항목도 되살린다(D7) */
-  async undoComplete(
-    id: string,
-    source: "board" | "important" | "kanban" = "board",
-  ): Promise<boolean> {
-    const [row] = await this.db.select<{ completion_was_flagged: number; flag_done_at: string | null; depth: number }>(
-      "SELECT completion_was_flagged, flag_done_at, depth FROM entry_item WHERE id = ?",
-      [id],
-    );
+  async undoComplete(id: string, source: "board" | "important" | "kanban" = "board"): Promise<boolean> {
+    const [row] = await this.db.select<{
+      completion_was_flagged: number;
+      flag_done_at: string | null;
+      depth: number;
+    }>("SELECT completion_was_flagged, flag_done_at, depth FROM entry_item WHERE id = ?", [id]);
     const important = row?.completion_was_flagged !== 0;
     const children = row && Number(row.depth) === 0 && row.flag_done_at ? await this.kanban.childIds(id) : [];
     const { begin, end } = this.kanban.ctxStatements(source);
