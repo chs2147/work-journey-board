@@ -59,7 +59,7 @@ export function ImportantPanel({ overlay }: { overlay: boolean }) {
     } else if (e.key === " ") {
       e.preventDefault();
       (rows[i + 1] ?? rows[i - 1])?.focus();
-      void completeImportant(it.id);
+      void completeImportant(it.id, false, "important");
     } else if (e.key === "Escape") {
       e.preventDefault();
       focusStartCell();
@@ -163,7 +163,7 @@ export function ImportantPanel({ overlay }: { overlay: boolean }) {
                               className={styles.check}
                               aria-label={STR.important.complete(it.text)}
                               title={STR.important.completeTitle}
-                              onClick={() => void completeImportant(it.id)}
+                              onClick={() => void completeImportant(it.id, false, "important")}
                             >
                               ✓
                             </button>
@@ -206,7 +206,7 @@ export function ImportantPanel({ overlay }: { overlay: boolean }) {
                           className={styles.check}
                           aria-label={STR.important.complete(it.text)}
                           title={STR.important.completeTitle}
-                          onClick={() => void completeImportant(it.id)}
+                          onClick={() => void completeImportant(it.id, false, "important")}
                         >
                           ✓
                         </button>
@@ -278,7 +278,7 @@ export function ImportantPanel({ overlay }: { overlay: boolean }) {
                         type="button"
                         className={styles.restore}
                         aria-label={STR.important.restoreAria(it.text)}
-                        onClick={() => void undoImportant(it.id)}
+                        onClick={() => void undoImportant(it.id, false, "important")}
                       >
                         {STR.important.restore}
                       </button>

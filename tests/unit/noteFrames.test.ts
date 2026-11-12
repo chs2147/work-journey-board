@@ -2,7 +2,7 @@ import { it, expect } from "vitest";
 import { parseNoteDoc, type TextBox } from "../../src/domain/note";
 import { freshRepo } from "./helpers";
 import { layoutSnapshot } from "../../src/export/noteSnapshot";
-import { migrate, MIGRATIONS } from "../../src/data/migrate";
+import { migrate, MIGRATIONS, LATEST_SCHEMA_VERSION } from "../../src/data/migrate";
 import { openSqlJsMemory } from "../../src/data/drivers/sqlJs";
 it("manual frame geometry persists in weekly/task boards, export and migration gate", async () => {
   const box: TextBox = {
@@ -47,7 +47,7 @@ it("manual frame geometry persists in weekly/task boards, export and migration g
   let backup = false;
   await migrate(old, {
     beforeMigrate: async (from, to) => {
-      expect([from, to]).toEqual([17, 19]);
+      expect([from, to]).toEqual([17, LATEST_SCHEMA_VERSION]);
       backup = true;
     },
   });

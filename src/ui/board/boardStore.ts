@@ -672,14 +672,30 @@ function patchLocalItem(
   set({ cells });
 }
 
-/** 목록에서 체크 = 처리 완료(강조 해제). 토스트로 되돌리기. */
-export async function completeImportant(id: string, strict = false) {
+/**
+ * 저장소에서 다시 읽어 화면의 같은 항목들을 맞춘다(완료·되살리기로 세부 항목이 함께 바뀔 때, 칸반에서 옮긴 뒤 — improve-v21-spec 11절)
+ */
+export async function syncItems(ids: string[]) {
+  const r = repo;
+  if (!r || !ids.length) return;
+  const rows = await r.getItemsByIds(ids);
+  if (repo !== r) return;
+  for (const it of rows)
+    patchLocalItem(it.id, {
+      flagged: it.flagged,
+      flagDoneAt: it.flagDoneAt,
+      completionWasFlagged: it.completionWasFlagged,
+    });
+}
+
+/** 목록에서 체크 = 처리 완료(강조 해제) + 세부 항목 함께(D4). 토스트로 되돌리기. */
+export async function completeImportant(id: string, strict = false, source: "board" | "important" = "board") {
   const r = requireRepo();
   await flushAll();
   if (repo !== r) return;
   let completion: Awaited<ReturnType<JournalRepository["completeFlag"]>>;
   try {
-    completion = await track(() => r.completeFlag(id));
+    completion = await track(() => r.completeFlag(id, source));
   } catch (e) {
     if (strict) throw e;
     reportError(e);
@@ -691,19 +707,25 @@ export async function completeImportant(id: string, strict = false) {
     flagDoneAt: completion.at,
     completionWasFlagged: completion.wasImportant,
   });
+  await syncItems(completion.children);
   await refreshImportant();
   void refreshPrevDates();
-  toast(STR.important.completed, { label: STR.toast.undo, run: () => void undoImportant(id) });
+  notifyItemsChanged();
+  toast(
+    completion.children.length ? STR.important.completedWithChildren(completion.children.length) : STR.important.completed,
+    { label: STR.toast.undo, run: () => void undoImportant(id, false, source) },
+  );
   return completion;
 }
 
-export async function undoImportant(id: string, strict = false) {
+export async function undoImportant(id: string, strict = false, source: "board" | "important" = "board") {
   const r = requireRepo();
   await flushAll();
   if (repo !== r) return;
   let wasImportant: boolean;
+  const kids = await r.kanban.childIds(id);
   try {
-    wasImportant = await track(() => r.undoComplete(id));
+    wasImportant = await track(() => r.undoComplete(id, source));
   } catch (e) {
     if (strict) throw e;
     reportError(e);
@@ -711,8 +733,20 @@ export async function undoImportant(id: string, strict = false) {
   }
   if (repo !== r) return;
   patchLocalItem(id, { flagged: wasImportant, flagDoneAt: null });
+  await syncItems(kids);
   await refreshImportant();
   void refreshPrevDates();
+  notifyItemsChanged();
+}
+
+/** 항목 상태가 바뀌었음을 다른 화면(칸반)에 알린다 — 가져오기 고리 없이 구독 */
+const itemListeners = new Set<() => void>();
+export function onItemsChanged(fn: () => void): () => void {
+  itemListeners.add(fn);
+  return () => itemListeners.delete(fn);
+}
+export function notifyItemsChanged() {
+  for (const fn of itemListeners) fn();
 }
 
 /** 목록 항목으로 이동: 그 주·그 요일로 가서 그 항목 입력칸에 커서(글 끝) + 잠깐 강조 */

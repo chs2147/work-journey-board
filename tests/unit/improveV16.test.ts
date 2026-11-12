@@ -311,7 +311,11 @@ describe("v16 shared memo/Cabinet copies", () => {
     const clock = clockAt(2026, 10, 23);
     const before = new JournalRepository(db, clock.now);
     const c = await before.createCategory("이전 데이터", "2026-W43");
-    await before.saveCell("2026-10-23", c.id, [{ id: "old", depth: 0, text: "이전 항목" }]);
+    // v14 구조 그대로 쓰기(새 저장소의 저장 문장은 v20 표를 쓴다)
+    await db.execute(
+      "INSERT INTO entry_item (id, date, category_id, seq, depth, text, created_at, updated_at) VALUES ('old', '2026-10-23', ?, 1, 0, '이전 항목', 't', 't')",
+      [c.id],
+    );
     const legacy = memo(["old"]);
     await db.execute(
       "INSERT INTO week_note (week_id, doc, updated_at) VALUES ('2026-W43', ?, '2026-10-23')",

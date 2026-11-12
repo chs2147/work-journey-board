@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { freshRepo } from "./helpers";
 import { calendarDays, localToday, parseWidget } from "../../src/domain/liveWidget";
 import { parseNoteDoc, emptyContent, type TextBox } from "../../src/domain/note";
-import { migrate, MIGRATIONS, backupStructureMatches } from "../../src/data/migrate";
+import { migrate, MIGRATIONS, backupStructureMatches, LATEST_SCHEMA_VERSION } from "../../src/data/migrate";
 import { openSqlJsMemory, SqlJsDriver, openSqlJs } from "../../src/data/drivers/sqlJs";
 import { JournalRepository } from "../../src/data/repository";
 describe("v17 live widget data integrity", () => {
@@ -97,7 +97,7 @@ describe("v17 live widget data integrity", () => {
     let backup = false;
     await migrate(db, {
       beforeMigrate: async (from, to) => {
-        expect([from, to]).toEqual([16, 19]);
+        expect([from, to]).toEqual([16, LATEST_SCHEMA_VERSION]);
         backup = true;
       },
     });

@@ -753,6 +753,7 @@ export const STR_BASE = {
     complete: (text: string) => `처리 완료: ${text}`,
     completeTitle: "처리 완료(강조 해제)",
     completed: "처리 완료 — 강조를 해제했습니다",
+    completedWithChildren: (n: number) => `처리 완료 — 세부 항목 ${n}개도 함께 완료`,
     emptyTitle: "챙길 중요 업무가 없습니다",
     emptyBody: "꼭 챙겨야 할 기록이 생기면 항목의 ☆ 또는 Alt+I로 표시하세요. 여기에 날짜순으로 모입니다.",
     clearedTitle: "모두 챙겼습니다",
