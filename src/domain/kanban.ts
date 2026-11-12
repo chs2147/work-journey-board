@@ -75,7 +75,10 @@ export function periodRange(
 }
 
 /** 날짜 범위(내 PC 날짜) → 완료 시각(UTC ISO) 비교용 [시작, 끝) */
-export function utcRange(r: { from: DateStr | null; to: DateStr | null }): { from: string | null; to: string | null } {
+export function utcRange(r: { from: DateStr | null; to: DateStr | null }): {
+  from: string | null;
+  to: string | null;
+} {
   const start = (d: DateStr) => utcTimestamp(parseDate(d));
   return { from: r.from ? start(r.from) : null, to: r.to ? start(addDays(r.to, 1)) : null };
 }

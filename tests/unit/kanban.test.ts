@@ -28,8 +28,14 @@ describe("칸반 규칙(순수)", () => {
   it("기간: 오늘·이번 주(기본)·최근 2/4/12주·전체·지정일(뒤집히면 바로)", () => {
     expect(DEFAULT_KANBAN_FILTER.period).toBe("week");
     expect(periodRange({ period: "today", from: null, to: null }, TODAY)).toEqual({ from: TODAY, to: TODAY });
-    expect(periodRange({ period: "week", from: null, to: null }, TODAY)).toEqual({ from: "2026-10-19", to: "2026-10-25" });
-    expect(periodRange({ period: "2w", from: null, to: null }, TODAY)).toEqual({ from: "2026-10-12", to: "2026-10-25" });
+    expect(periodRange({ period: "week", from: null, to: null }, TODAY)).toEqual({
+      from: "2026-10-19",
+      to: "2026-10-25",
+    });
+    expect(periodRange({ period: "2w", from: null, to: null }, TODAY)).toEqual({
+      from: "2026-10-12",
+      to: "2026-10-25",
+    });
     expect(periodRange({ period: "4w", from: null, to: null }, TODAY).from).toBe("2026-09-28");
     expect(periodRange({ period: "12w", from: null, to: null }, TODAY).from).toBe("2026-08-03");
     expect(periodRange({ period: "all", from: null, to: null }, TODAY)).toEqual({ from: null, to: null });
@@ -89,9 +95,24 @@ describe("칸반 규칙(순수)", () => {
       { id: "5", date: "2026-10-20", categoryId: "c1" },
       { id: "6", date: "2026-09-05", categoryId: "c2" },
     ];
-    const o = { before: "2026-09-30", categories: ["c1"], skipFlagged: true, skipFutureDue: true, skipSections: true, today: TODAY };
+    const o = {
+      before: "2026-09-30",
+      categories: ["c1"],
+      skipFlagged: true,
+      skipFutureDue: true,
+      skipSections: true,
+      today: TODAY,
+    };
     expect(bulkTargets(open, o).map((c) => c.id)).toEqual(["1"]);
-    expect(bulkTargets(open, { ...o, categories: [], skipFlagged: false, skipFutureDue: false, skipSections: false }).map((c) => c.id)).toEqual(["1", "2", "3", "4", "6"]);
+    expect(
+      bulkTargets(open, {
+        ...o,
+        categories: [],
+        skipFlagged: false,
+        skipFutureDue: false,
+        skipSections: false,
+      }).map((c) => c.id),
+    ).toEqual(["1", "2", "3", "4", "6"]);
   });
 });
 
@@ -124,10 +145,17 @@ describe("칸반 저장소", () => {
     expect(done.cards[0]!.children.every((x) => x.done)).toBe(true);
     const log = await repo.kanban.statusLog("a");
     expect(log).toHaveLength(1);
-    expect(log[0]).toMatchObject({ fromKey: "todo", toKey: "done", source: "kanban", changedAt: new Date(2026, 9, 23, 14).toISOString() });
+    expect(log[0]).toMatchObject({
+      fromKey: "todo",
+      toKey: "done",
+      source: "kanban",
+      changedAt: new Date(2026, 9, 23, 14).toISOString(),
+    });
     await repo.kanban.restore(r!.undo);
     expect((await repo.kanban.listOpen(F, TODAY)).map((x) => x.id).sort()).toEqual(["a", "b"]);
-    expect((await repo.kanban.listOpen(F, TODAY)).find((x) => x.id === "a")!.children.every((x) => !x.done)).toBe(true);
+    expect(
+      (await repo.kanban.listOpen(F, TODAY)).find((x) => x.id === "a")!.children.every((x) => !x.done),
+    ).toBe(true);
     await db.close();
   });
 
@@ -159,7 +187,13 @@ describe("칸반 저장소", () => {
     const { repo, db, c } = await seed();
     await repo.saveCell("2026-10-21", c.id, [
       { id: "a", depth: 0, text: "가상 본 항목 A" },
-      { id: "a1", depth: 1, text: "가상 세부 1", flagDoneAt: "2026-10-21T01:00:00.000Z", completionWasFlagged: false },
+      {
+        id: "a1",
+        depth: 1,
+        text: "가상 세부 1",
+        flagDoneAt: "2026-10-21T01:00:00.000Z",
+        completionWasFlagged: false,
+      },
       { id: "a2", depth: 1, text: "가상 세부 2" },
       { id: "b", depth: 0, text: "가상 본 항목 B", flagged: true },
     ]);
@@ -184,7 +218,11 @@ describe("칸반 저장소", () => {
       c.id,
       cell.map((it) => (it.id === "a" ? { ...it, flagged: true, flagDoneAt: null } : it)),
     );
-    expect((await repo.kanban.statusLog("a")).at(-1)).toMatchObject({ fromKey: "done", toKey: "todo", source: "board" });
+    expect((await repo.kanban.statusLog("a")).at(-1)).toMatchObject({
+      fromKey: "done",
+      toKey: "todo",
+      source: "board",
+    });
     await db.close();
   });
 
@@ -194,7 +232,9 @@ describe("칸반 저장소", () => {
     await repo.saveCell("2026-10-02", other.id, [{ id: "old", depth: 0, text: "지난 가상 항목" }]);
     const week = { ...F, period: "week" as const };
     expect((await repo.kanban.listOpen(week, TODAY)).map((x) => x.id).sort()).toEqual(["a", "b"]);
-    expect((await repo.kanban.listOpen({ ...F, categories: [other.id] }, TODAY)).map((x) => x.id)).toEqual(["old"]);
+    expect((await repo.kanban.listOpen({ ...F, categories: [other.id] }, TODAY)).map((x) => x.id)).toEqual([
+      "old",
+    ]);
     clock.set(2026, 10, 23, 10);
     await repo.kanban.move("old", DONE); // 옛 기록이지만 이번 주에 완료 → 이번 주 DONE에 보임
     expect((await repo.kanban.listDone(week, TODAY, 10)).cards.map((x) => x.id)).toEqual(["old"]);
@@ -204,7 +244,15 @@ describe("칸반 저장소", () => {
 
   it("일괄 완료: 미리 보기 → 기록일 정오로 완료(세부 포함) → 되돌리기는 그 뒤 손댄 항목을 건드리지 않음", async () => {
     const { repo, db } = await seed();
-    const o = { before: "2026-10-22", categories: [], skipFlagged: true, skipFutureDue: true, skipSections: true, today: TODAY, includeEnded: false };
+    const o = {
+      before: "2026-10-22",
+      categories: [],
+      skipFlagged: true,
+      skipFutureDue: true,
+      skipSections: true,
+      today: TODAY,
+      includeEnded: false,
+    };
     const pv = await repo.kanban.bulkPreview(o);
     expect(pv.cards.map((x) => x.id)).toEqual(["a"]);
     expect(pv.children).toBe(2);
@@ -213,7 +261,9 @@ describe("칸반 저장소", () => {
     expect(done.flagDoneAt).toBe(recordDayDoneAt("2026-10-21"));
     expect(laterDoneDate(done.date, done.flagDoneAt)).toBeNull();
     expect((await repo.kanban.statusLog("a"))[0]).toMatchObject({ source: "bulk" });
-    expect(await repo.kanban.listBulk()).toEqual([expect.objectContaining({ id: info.id, count: 1, undone: false })]);
+    expect(await repo.kanban.listBulk()).toEqual([
+      expect.objectContaining({ id: info.id, count: 1, undone: false }),
+    ]);
     // 그 뒤 a1만 사용자가 되살림 → 되돌리기는 a·a2만
     await repo.undoComplete("a1");
     expect(await repo.kanban.undoBulk(info.id)).toBe(3);
@@ -242,10 +292,20 @@ describe("마이그레이션 v19 → v20(칸반)", () => {
     const before = vi.fn().mockResolvedValue(undefined);
     expect(await migrate(db, { beforeMigrate: before, migrations: MIGRATIONS.slice(0, 20) })).toBe(20);
     expect(before).toHaveBeenCalledWith(19, 20);
-    expect(await db.select("SELECT item_id, from_key, to_key, changed_at, source FROM item_status_log")).toEqual([
-      { item_id: "d", from_key: "todo", to_key: "done", changed_at: "2026-10-02T01:00:00.000Z", source: "migrate" },
+    expect(
+      await db.select("SELECT item_id, from_key, to_key, changed_at, source FROM item_status_log"),
+    ).toEqual([
+      {
+        item_id: "d",
+        from_key: "todo",
+        to_key: "done",
+        changed_at: "2026-10-02T01:00:00.000Z",
+        source: "migrate",
+      },
     ]);
-    expect(await db.select("SELECT kanban_section_id FROM entry_item WHERE id = 'o'")).toEqual([{ kanban_section_id: null }]);
+    expect(await db.select("SELECT kanban_section_id FROM entry_item WHERE id = 'o'")).toEqual([
+      { kanban_section_id: null },
+    ]);
     expect(await quickCheck(db)).toBe(true);
   });
 });

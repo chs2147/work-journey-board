@@ -77,7 +77,13 @@ export interface BulkInfo {
 
 /** 옮기기 되돌리기 자료 — 이전 상태 그대로 */
 export interface MoveUndo {
-  items: { id: string; flagged: number; flagDoneAt: string | null; completionWasFlagged: number; sectionId: string | null }[];
+  items: {
+    id: string;
+    flagged: number;
+    flagDoneAt: string | null;
+    completionWasFlagged: number;
+    sectionId: string | null;
+  }[];
 }
 
 interface CardRow {
@@ -103,7 +109,8 @@ const COLS = `e.id, e.date, e.category_id, e.seq, e.depth, e.text, e.flagged, e.
   e.kanban_section_id, e.due_date, e.start_time, e.recurrence_id,
   c.name AS category_name, c.color AS category_color, c.sort_order AS category_order`;
 
-const isDone = (r: { flagged: number; flag_done_at: string | null }) => Number(r.flagged) === 0 && !!r.flag_done_at;
+const isDone = (r: { flagged: number; flag_done_at: string | null }) =>
+  Number(r.flagged) === 0 && !!r.flag_done_at;
 
 export class KanbanRepository {
   constructor(
@@ -120,7 +127,10 @@ export class KanbanRepository {
   /** 출처 정하기 → 문장들 → 되돌리기 */
   private wrap(source: StatusSource, stmts: SqlStatement[], batchId: string | null = null): SqlStatement[] {
     return [
-      { sql: "UPDATE kanban_ctx SET source = ?, batch_id = ?, at = ? WHERE id = 1", params: [source, batchId, this.ts()] },
+      {
+        sql: "UPDATE kanban_ctx SET source = ?, batch_id = ?, at = ? WHERE id = 1",
+        params: [source, batchId, this.ts()],
+      },
       ...stmts,
       { sql: "UPDATE kanban_ctx SET source = 'board', batch_id = NULL, at = NULL WHERE id = 1" },
     ];
@@ -173,7 +183,8 @@ export class KanbanRepository {
       const p = sectionNameProblem(patch.name, list, id);
       if (p) throw new KanbanError(p);
     }
-    const color = patch.color && (SECTION_COLORS as readonly string[]).includes(patch.color) ? patch.color : cur.color;
+    const color =
+      patch.color && (SECTION_COLORS as readonly string[]).includes(patch.color) ? patch.color : cur.color;
     await this.db.execute("UPDATE kanban_section SET name = ?, color = ?, updated_at = ? WHERE id = ?", [
       name,
       color,
@@ -185,7 +196,10 @@ export class KanbanRepository {
   /** 사용자 섹션 순서(TODO·DONE은 늘 양끝) */
   async reorderSections(idsInOrder: string[]): Promise<void> {
     await this.db.batch(
-      idsInOrder.map((id, i) => ({ sql: "UPDATE kanban_section SET sort_order = ? WHERE id = ?", params: [i + 1, id] })),
+      idsInOrder.map((id, i) => ({
+        sql: "UPDATE kanban_section SET sort_order = ? WHERE id = ?",
+        params: [i + 1, id],
+      })),
     );
   }
 
@@ -193,7 +207,10 @@ export class KanbanRepository {
   async deleteSection(id: string): Promise<{ section: KanbanSection; itemIds: string[] }> {
     const section = (await this.listSections()).find((s) => s.id === id);
     if (!section) throw new KanbanError("missing");
-    const items = await this.db.select<{ id: string }>("SELECT id FROM entry_item WHERE kanban_section_id = ?", [id]);
+    const items = await this.db.select<{ id: string }>(
+      "SELECT id FROM entry_item WHERE kanban_section_id = ?",
+      [id],
+    );
     await this.db.batch(
       this.wrap("section", [
         { sql: "UPDATE entry_item SET kanban_section_id = NULL WHERE kanban_section_id = ?", params: [id] },
@@ -244,8 +261,14 @@ export class KanbanRepository {
     const scope = await this.scopeWhere(f);
     const where: string[] = ["e.depth = 0", "NOT (e.flagged = 0 AND e.flag_done_at IS NOT NULL)"];
     const params: SqlParam[] = [];
-    if (range.from) where.push("e.date >= ?"), params.push(range.from);
-    if (range.to) where.push("e.date <= ?"), params.push(range.to);
+    if (range.from) {
+      where.push("e.date >= ?");
+      params.push(range.from);
+    }
+    if (range.to) {
+      where.push("e.date <= ?");
+      params.push(range.to);
+    }
     const heads = await this.db.select<CardRow>(
       `SELECT ${COLS} FROM entry_item e JOIN category c ON c.id = e.category_id WHERE ${where.join(" AND ")}${scope.sql}`,
       [...params, ...scope.params],
@@ -264,8 +287,14 @@ export class KanbanRepository {
     const scope = await this.scopeWhere(f);
     const where: string[] = ["e.depth = 0", "e.flagged = 0", "e.flag_done_at IS NOT NULL"];
     const params: SqlParam[] = [];
-    if (range.from) where.push("e.flag_done_at >= ?"), params.push(range.from);
-    if (range.to) where.push("e.flag_done_at < ?"), params.push(range.to);
+    if (range.from) {
+      where.push("e.flag_done_at >= ?");
+      params.push(range.from);
+    }
+    if (range.to) {
+      where.push("e.flag_done_at < ?");
+      params.push(range.to);
+    }
     const base = `FROM entry_item e JOIN category c ON c.id = e.category_id WHERE ${where.join(" AND ")}${scope.sql}`;
     const all = [...params, ...scope.params];
     const [cnt] = await this.db.select<{ n: number }>(`SELECT COUNT(*) AS n ${base}`, all);
@@ -280,8 +309,18 @@ export class KanbanRepository {
   private async cards(heads: CardRow[]): Promise<KanbanCard[]> {
     if (!heads.length) return [];
     const cells = new Map<string, { date: string; categoryId: string }>();
-    for (const h of heads) cells.set(`${h.date}|${h.category_id}`, { date: h.date, categoryId: h.category_id });
-    const cellRows: { id: string; date: string; category_id: string; seq: number; depth: number; text: string; flagged: number; flag_done_at: string | null }[] = [];
+    for (const h of heads)
+      cells.set(`${h.date}|${h.category_id}`, { date: h.date, categoryId: h.category_id });
+    const cellRows: {
+      id: string;
+      date: string;
+      category_id: string;
+      seq: number;
+      depth: number;
+      text: string;
+      flagged: number;
+      flag_done_at: string | null;
+    }[] = [];
     const cellList = [...cells.values()];
     for (let i = 0; i < cellList.length; i += 200) {
       const part = cellList.slice(i, i + 200);
@@ -452,17 +491,27 @@ export class KanbanRepository {
   }
 
   /** 카드 옮기기 — 이전 상태(되돌리기)와 바뀐 항목 id를 돌려준다 */
-  async move(id: string, to: SectionKey, source: StatusSource = "kanban"): Promise<{ undo: MoveUndo; changed: string[] } | null> {
+  async move(
+    id: string,
+    to: SectionKey,
+    source: StatusSource = "kanban",
+  ): Promise<{ undo: MoveUndo; changed: string[] } | null> {
     const [cur] = await this.itemState([id]);
     if (!cur) return null;
-    const from = sectionKeyOf({ flagged: cur.flagged === 1, flagDoneAt: cur.flagDoneAt, sectionId: cur.sectionId });
+    const from = sectionKeyOf({
+      flagged: cur.flagged === 1,
+      flagDoneAt: cur.flagDoneAt,
+      sectionId: cur.sectionId,
+    });
     if (from === to) return null;
-    if (to !== TODO && to !== DONE && !(await this.listSections()).some((s) => s.id === to)) throw new KanbanError("missing");
+    if (to !== TODO && to !== DONE && !(await this.listSections()).some((s) => s.id === to))
+      throw new KanbanError("missing");
     const children = await this.childIds(id);
     const undo: MoveUndo = { items: await this.itemState([id, ...children]) };
     let stmts: SqlStatement[];
     if (to === DONE) stmts = this.completeStatements(id, children, this.ts());
-    else if (from === DONE) stmts = this.reopenStatements(id, children, cur.flagDoneAt!, to === TODO ? null : to);
+    else if (from === DONE)
+      stmts = this.reopenStatements(id, children, cur.flagDoneAt!, to === TODO ? null : to);
     else
       stmts = [
         {
@@ -510,9 +559,18 @@ export class KanbanRepository {
   }
 
   // ── 일괄 완료(6절) ───────────────────────────────────
-  async bulkPreview(o: BulkOptions & { includeEnded: boolean }): Promise<{ cards: KanbanCard[]; children: number; categories: number }> {
+  async bulkPreview(
+    o: BulkOptions & { includeEnded: boolean },
+  ): Promise<{ cards: KanbanCard[]; children: number; categories: number }> {
     const open = await this.listOpen(
-      { categories: o.categories, includeEnded: o.includeEnded, period: "custom", from: null, to: o.before, sort: "old" },
+      {
+        categories: o.categories,
+        includeEnded: o.includeEnded,
+        period: "custom",
+        from: null,
+        to: o.before,
+        sort: "old",
+      },
       o.today,
     );
     const cards = bulkTargets(open, o);
@@ -524,7 +582,10 @@ export class KanbanRepository {
   }
 
   /** 일괄 완료 실행 — mode "record" = 각 항목의 기록일 정오, "now" = 지금 */
-  async bulkComplete(cards: Pick<KanbanCard, "id" | "date" | "children">[], mode: "record" | "now"): Promise<BulkInfo> {
+  async bulkComplete(
+    cards: Pick<KanbanCard, "id" | "date" | "children">[],
+    mode: "record" | "now",
+  ): Promise<BulkInfo> {
     const id = uuidv7();
     const now = this.ts();
     const pairs: [string, string][] = [];
@@ -544,11 +605,18 @@ export class KanbanRepository {
   }
 
   async listBulk(limit = 10): Promise<BulkInfo[]> {
-    const rows = await this.db.select<{ id: string; created_at: string; count: number; undone_at: string | null }>(
-      "SELECT id, created_at, count, undone_at FROM kanban_bulk ORDER BY created_at DESC LIMIT ?",
-      [limit],
-    );
-    return rows.map((r) => ({ id: r.id, createdAt: r.created_at, count: Number(r.count), undone: !!r.undone_at }));
+    const rows = await this.db.select<{
+      id: string;
+      created_at: string;
+      count: number;
+      undone_at: string | null;
+    }>("SELECT id, created_at, count, undone_at FROM kanban_bulk ORDER BY created_at DESC LIMIT ?", [limit]);
+    return rows.map((r) => ({
+      id: r.id,
+      createdAt: r.created_at,
+      count: Number(r.count),
+      undone: !!r.undone_at,
+    }));
   }
 
   /** 일괄 완료 되돌리기 — 그 묶음의 완료 시각 그대로인 항목만 되살린다(그 뒤 손댄 항목은 그대로) */
