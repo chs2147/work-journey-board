@@ -166,9 +166,7 @@ function Workspace() {
         }}
       >
         <SearchBand
-          rightInset={
-            searchPanelOpen && summaryOverlay && !insightsOpen && !settingsOpen ? summaryW : 0
-          }
+          rightInset={searchPanelOpen && summaryOverlay && !insightsOpen && !settingsOpen ? summaryW : 0}
         />
         {viewMode === "today" ? (
           <TodayView />
