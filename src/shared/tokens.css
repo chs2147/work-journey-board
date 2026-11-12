@@ -3,6 +3,10 @@
    다크 = <html data-theme="dark">(shared/theme.ts·public/theme-early.js가 시스템/라이트/다크 설정으로 정함, improve-1027v5-spec 4-3).
    시그니처 = <html data-theme="signature">(docs/renewal/design-style-spec.md Warm Beige + 고운돋움, design-renewal-v1). */
 :root {
+  /* 칸반 섹션 색(improve-v21-spec 2절, 2026-11-12 사용자 지시): 업무 색과 섞이지 않게 무채색 두 가지만 —
+     TODO·사용자 섹션 = 같은 연한 회색, DONE = 진한 회색(채도 0) */
+  --kanban-section: #a3a3a3;
+  --kanban-done: #3d3d3d;
   color-scheme: light;
   --font-sans: "Pretendard Variable", "Malgun Gothic", "맑은 고딕", "Segoe UI", system-ui, sans-serif;
   --font-mono: Consolas, "Malgun Gothic", monospace;
@@ -165,6 +169,8 @@
 }
 
 :root[data-theme="dark"] {
+  --kanban-section: #6b6b6b;
+  --kanban-done: #d4d4d4;
   color-scheme: dark;
   --surface-page: #1a1a19;
   --surface-card: #232322;
@@ -259,6 +265,8 @@
 /* 시그니처 테마(docs/renewal/design-style-spec.md 2·3절) — 따뜻한 베이지 면, 짙은 웜그레이 본문, 브라운 강조, 고운돋움.
    로고(워드마크 Journey = --today-mark)는 바꾸지 않는다(라이트 값 그대로, 2026-10-28 사용자 지시). 업무 색은 라이트 값. */
 :root[data-theme="signature"] {
+  --kanban-section: #a6a6a6;
+  --kanban-done: #404040;
   color-scheme: light;
   --font-sans: "Gowun Dodum", "Malgun Gothic", "맑은 고딕", sans-serif;
   /* 고운돋움은 굵기 400 하나 — 굵은 글자를 흉내 내지 않고(font-synthesis: none) 크기·색으로 위계 */

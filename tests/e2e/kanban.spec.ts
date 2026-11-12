@@ -80,6 +80,17 @@ test("섹션 추가 → 카드 옮기기 → 상태 이력 · ★ 항목은 중�
   await page.getByTestId("kanban-section-dialog").getByRole("textbox").fill("Parking Lot");
   await page.getByTestId("kanban-section-save").click();
   await expect(col(page, "section").getByTestId("kanban-col-name")).toHaveText("Parking Lot");
+  // 섹션 색 = 무채색 2가지: TODO·사용자 섹션 같은 회색, DONE만 다름(채도 0)
+  const headColor = (w: "todo" | "done" | "section") =>
+    col(page, w).evaluate((el) => getComputedStyle(el.firstElementChild as Element).borderTopColor);
+  const todoC = await headColor("todo");
+  expect(await headColor("section")).toBe(todoC);
+  expect(await headColor("done")).not.toBe(todoC);
+  for (const c of [todoC, await headColor("done")]) {
+    const [r, g, b] = c.match(/\d+/g)!.map(Number);
+    expect(r === g && g === b).toBe(true);
+  }
+  await expect(page.getByTestId("kanban-section-dialog")).toHaveCount(0);
   // 같은 이름은 거절
   await page.getByTestId("kanban-add-section").click();
   await page.getByTestId("kanban-section-dialog").getByRole("textbox").fill("parking lot");

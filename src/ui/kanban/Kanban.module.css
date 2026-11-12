@@ -458,23 +458,6 @@
 .danger {
   color: var(--danger);
 }
-.swatches {
-  display: flex;
-  gap: 6px;
-  padding: 4px 10px;
-}
-.swatch {
-  width: 18px;
-  height: 18px;
-  border: 1px solid var(--line);
-  cursor: pointer;
-  padding: 0;
-}
-.swatch[aria-pressed="true"] {
-  outline: 2px solid var(--text-1);
-  outline-offset: 1px;
-}
-
 .history {
   composes: menu;
   width: 440px;

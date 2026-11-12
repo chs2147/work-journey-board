@@ -1,14 +1,5 @@
-// 칸반 화면 공용(improve-v21-spec): 섹션 색 · 모달 창 훅 — 컴포넌트 파일과 나눠 둔다(빠른 새로 고침 규칙).
+// 칸반 화면 공용(improve-v21-spec): 모달 창 훅 — 컴포넌트 파일과 나눠 둔다(빠른 새로 고침 규칙).
 import { useEffect, useRef } from "react";
-import type { SectionColor } from "../../domain/kanban";
-
-export const SECTION_HEX: Record<SectionColor, string> = {
-  violet: "#9a7bd0",
-  amber: "#d99a1e",
-  teal: "#4aa3a3",
-  rose: "#c96a8a",
-  gray: "#8a8983",
-};
 
 /** <dialog>.showModal() — 최상위 레이어(1.24.2와 같은 방식), Esc = 닫기, 키 입력이 전역 단축키로 새지 않게 */
 export function useModal(onClose: () => void) {

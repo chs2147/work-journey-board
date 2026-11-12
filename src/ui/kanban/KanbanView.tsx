@@ -4,11 +4,9 @@ import { useEffect, useLayoutEffect, useRef, useState, type DragEvent, type Keyb
 import {
   DONE,
   TODO,
-  SECTION_COLORS,
   doneGroupOf,
   periodRange,
   type KanbanSection,
-  type SectionColor,
   type SectionKey,
 } from "../../domain/kanban";
 import type { KanbanCard, StatusLogRow } from "../../data/kanbanRepository";
@@ -18,7 +16,7 @@ import { STR } from "../../shared/strings";
 import { revealItem, useBoard } from "../board/boardStore";
 import { dueView } from "../board/dueView";
 import { CAB_MIME } from "../cabinet/CabinetPanel";
-import { SECTION_HEX, useModal } from "./kanbanUi";
+import { useModal } from "./kanbanUi";
 import { IconItemAdd, IconPeriod, IconSectionAdd } from "../common/icons";
 import {
   closeKanban,
@@ -320,12 +318,8 @@ function Column({
   const cards = cardsOf(sectionKey, s);
   const isDone = sectionKey === DONE;
   const name = sectionKey === TODO ? K.todo : isDone ? K.done : (section?.name ?? "");
-  const color =
-    sectionKey === TODO
-      ? "var(--cat-c1)"
-      : isDone
-        ? "var(--ok, #2e7d4f)"
-        : SECTION_HEX[section?.color ?? "gray"];
+  // 섹션 색은 무채색 두 가지만(업무 색과 혼동 방지): DONE만 진한 회색, TODO·사용자 섹션은 모두 같은 회색
+  const color = isDone ? "var(--kanban-done)" : "var(--kanban-section)";
   const total = isDone ? s.doneTotal : cards.length;
   const canDrop = () => !!dragCard && dragCard.from !== sectionKey;
 
@@ -404,20 +398,6 @@ function Column({
                 <button type="button" onClick={() => (setMenu(null), onRename(section.id))}>
                   {K.rename}
                 </button>
-                <div className={styles.menuHead}>{K.color}</div>
-                <div className={styles.swatches}>
-                  {SECTION_COLORS.map((c) => (
-                    <button
-                      key={c}
-                      type="button"
-                      className={styles.swatch}
-                      style={{ background: SECTION_HEX[c] }}
-                      aria-label={K.colors[c]}
-                      aria-pressed={section.color === c}
-                      onClick={() => void updateSection(section.id, { color: c })}
-                    />
-                  ))}
-                </div>
                 <button
                   type="button"
                   disabled={first}
@@ -978,11 +958,10 @@ function SectionDialog({ id, onClose }: { id: string | null; onClose(): void }) 
   const sections = useKanban((s) => s.sections);
   const cur = id ? sections.find((x) => x.id === id) : null;
   const [name, setName] = useState(cur?.name ?? "");
-  const [color, setColor] = useState<SectionColor>(cur?.color ?? "violet");
   const [error, setError] = useState<string | null>(null);
   const ref = useModal(onClose);
   const save = async () => {
-    const err = cur ? await updateSection(cur.id, { name, color }) : await createSection(name, color);
+    const err = cur ? await updateSection(cur.id, { name }) : await createSection(name, "gray");
     if (err) setError(err);
     else onClose();
   };
@@ -1016,22 +995,6 @@ function SectionDialog({ id, onClose }: { id: string | null; onClose(): void }) 
             }
           }}
         />
-      </div>
-      <div className={styles.row} style={{ gridTemplateColumns: "50px 1fr" }}>
-        <span className={styles.label}>{K.color}</span>
-        <div className={styles.inline}>
-          {SECTION_COLORS.map((c) => (
-            <button
-              key={c}
-              type="button"
-              className={styles.swatch}
-              style={{ background: SECTION_HEX[c] }}
-              aria-label={K.colors[c]}
-              aria-pressed={color === c}
-              onClick={() => setColor(c)}
-            />
-          ))}
-        </div>
       </div>
       {error && (
         <p className={styles.error} role="alert" data-testid="kanban-section-error">

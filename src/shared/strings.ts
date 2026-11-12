@@ -802,11 +802,6 @@ export const STR_BASE = {
     dropHere: "여기에 놓기",
     sectionMenu: "섹션 메뉴",
     rename: "이름 바꾸기…",
-    color: "색",
-    colors: { violet: "보라", amber: "주황", teal: "청록", rose: "분홍", gray: "회색" } as Record<
-      string,
-      string
-    >,
     moveLeft: "← 왼쪽으로",
     moveRight: "→ 오른쪽으로",
     allToTodo: "이 섹션의 카드 모두 TODO로",

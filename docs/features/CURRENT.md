@@ -1,10 +1,10 @@
-# 현재 Feature List — v1.25.0-rc.1
+# 현재 Feature List — v1.25.0-rc.2
 
 기준일 2026-11-12 · DB 구조 v20 · 활성 260개 · 제거/대체 3개 · 미제공/계획 3개
 
 원본은 [catalog.json](catalog.json), 운영 규칙은 [README.md](README.md)입니다. 최초 제공 버전은 0.x 개발판을 포함한 비RC 출시 이력 기준이며 RC는 별도 필드입니다.
 
-[검토용 Excel](exports/work-journey-board/Work-Journey-Board-Feature-List-v1.25.0-rc.1.xlsx) · [현재 스냅샷](releases/work-journey-board/v1.25.0-rc.1.json)
+[검토용 Excel](exports/work-journey-board/Work-Journey-Board-Feature-List-v1.25.0-rc.2.xlsx) · [현재 스냅샷](releases/work-journey-board/v1.25.0-rc.2.json)
 
 ## 주간 보드·입력
 
@@ -79,11 +79,11 @@
 | WJB-KANBAN-001 | 칸반 보드 화면 — 레일의 주간 보드와 인사이트 사이(Alt+6)에서 본 항목을 카드로 TODO·사용자 섹션·DONE 열에 보여 준다. | RC 제공만 | 1.25.0-rc.1 | windows / macos |
 | WJB-KANBAN-002 | 카드 끌어 상태 변경 — 카드 전체를 끌어 다른 열에 놓거나 Alt+Shift+←/→로 옮겨 상태를 바꾸고 알림에서 되돌린다. | RC 제공만 | 1.25.0-rc.1 | windows / macos |
 | WJB-KANBAN-003 | DONE 완료·세부 자동 완료 — DONE에 놓으면 완료하고 끝나지 않은 세부도 함께 완료한다. 되살리면 함께 끝난 세부만 되살리고 DONE은 끝낸 날로 접어 묶는다. | RC 제공만 | 1.25.0-rc.1 | windows / macos |
-| WJB-KANBAN-004 | 사용자 섹션 관리 — TODO와 DONE 사이에 이름·5색·순서를 가진 섹션을 최대 8개 두고, 지우면 그 카드를 TODO로 돌린다. TODO·DONE은 고정. | RC 제공만 | 1.25.0-rc.1 | windows / macos |
+| WJB-KANBAN-004 | 사용자 섹션 관리 — TODO와 DONE 사이에 이름·순서를 가진 섹션을 최대 8개 두고, 지우면 그 카드를 TODO로 돌린다. TODO·DONE은 고정. 섹션 색은 업무 색과 섞이지 않게 무채색 두 가지(DONE만 진하게). | RC 제공만 | 1.25.0-rc.2 | windows / macos |
 | WJB-KANBAN-005 | 상태 변경 이력 — 칸반·주간 보드·중요 업무·일괄 완료 어디서 바꿨든 상태 변경을 시각·출처와 함께 남기고 카드 메뉴에서 본다. | RC 제공만 | 1.25.0-rc.1 | windows / macos |
-| WJB-KANBAN-006 | 업무 항목 추가 창 — 업무·날짜(기본 오늘)·섹션을 고르고 주간 보드와 같은 키로 본 항목·세부·★·마감일·시작 시각을 적어 그 날 칸에 넣는다(오른쪽 위 아이콘 단추·N). | RC 제공만 | 1.25.0-rc.1 | windows / macos |
+| WJB-KANBAN-006 | 업무 항목 추가 창 — 업무·날짜(기본 오늘)·섹션을 고르고 주간 보드와 같은 키로 본 항목·세부·★·마감일·시작 시각을 적어 그 날 칸에 넣는다(오른쪽 위 아이콘 단추·N). | RC 제공만 | 1.25.0-rc.2 | windows / macos |
 | WJB-KANBAN-007 | 일괄 완료·되돌리기 — 날짜 이전 카드를 조건·미리 보기로 골라 기록일 또는 오늘로 한 번에 완료하고 최근 일괄 처리에서 묶음째 되돌린다. | RC 제공만 | 1.25.0-rc.1 | windows / macos |
-| WJB-KANBAN-008 | 업무·기간 아이콘 거르기·정렬 — 업무와 기간 아이콘(오늘·이번 주 기본·최근 2/4/12주·전체·지정일, 툴팁에 실제 날짜)으로 거르고 최신·오래된·마감순으로 정렬한다. TODO·섹션 = 기록일, DONE = 완료일 기준. | RC 제공만 | 1.25.0-rc.1 | windows / macos |
+| WJB-KANBAN-008 | 업무·기간 아이콘 거르기·정렬 — 업무와 기간 아이콘(오늘·이번 주 기본·최근 2/4/12주·전체·지정일, 툴팁에 실제 날짜)으로 거르고 최신·오래된·마감순으로 정렬한다. TODO·섹션 = 기록일, DONE = 완료일 기준. | RC 제공만 | 1.25.0-rc.2 | windows / macos |
 | WJB-KANBAN-009 | 중요 업무 목록 연동 — 왼쪽 중요 업무 목록의 체크 = DONE, 항목 누르면 칸반 카드 강조. 사용자 섹션의 ★ 카드는 목록에서 빠진다. | RC 제공만 | 1.25.0-rc.1 | windows / macos |
 | WJB-KANBAN-010 | Cabi.NET 줄 끌어 연결 — Cabi.NET의 폴더·링크 줄을 카드에 놓으면 그 항목에 연결하고 카드에 연결 수를 표시한다. | RC 제공만 | 1.25.0-rc.1 | windows / macos |
 
