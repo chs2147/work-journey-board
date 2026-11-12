@@ -24,7 +24,8 @@
 ## 핵심 기능
 - **매일 2분, 키보드만으로** — 주간·데일리 뷰에서 개조식 기록, 업무·태그 간편 추가, 마감일 컬러칩·중요 표시·완료/완료 취소·매주 반복. 날짜 지정 복제와 이전 기록 가져오기에서도 메모·자료 연결을 함께 유지
 - **쓰기만 하면 주간 보고** — 업무별·요일별 자동 집계, 수정본, 사내 AI 도구용 다듬기 지시문, 여러 주 엑셀 2시트 · 메모 보드 그림 내보내기
-- **지나온 일이 한눈에** — 년월→주차→업무 내역으로 이어지는 업무 타임라인, 유연한 열 너비의 활동 히트맵·habit tracker, 연간 보기
+- **칸반 보드로 상태 한눈에** — 업무 항목을 TODO / 사용자 섹션 / DONE 카드로, 카드를 끌어 상태 변경·DONE이면 세부까지 함께 완료, 상태 이력·일괄 완료·기간 아이콘 거르기, 중요 업무 목록과 연동 (`Alt+6`, **1.30.0**)
+- **지나온 일이 한눈에** — 년월→주차→요일별로 묶인 업무 타임라인(다른 날 완료한 항목은 실제 완료일), 유연한 열 너비의 활동 히트맵·habit tracker, 연간 보기
 - **메모 보드로 맥락까지** — 업무항목에 연결한 글·이미지·링크 카드와 관계선, 다중 선택·그룹 이동·글자색·Markdown 파일 드롭, PNG·Markdown 내보내기
 - **Universe — 기록이 살아 있는 연결 지도로** — 독립된 다크 우주에서 3D 회전·이동·확대/축소, 줌에 따라 이어지는 은하↔초점 탐색, 정적 2D·목록 보기. 접고 폭을 조절하는 필터·상세 패널, 시간 탐색·주를 넘는 직접 연결, 지식 카드·외부 AI에 붙여 넣을 근거 묶음 (`Alt+5`)
 - **Cabi.NET — 업무별 자료·노트·메모보드** — 기존 Cabinet의 폴더·링크 관리를 확장한 업무 작업 공간. **1.20.0**부터 업무별 복수 블록 노트와 업무당 하나의 자유 보드를 별도 모달리스 창으로 제공. 누적 주간 메모 연결, 주간↔업무 보드 객체·이미지 복제, 목록·카드·보드 보기, Markdown 가져오기와 Markdown·한글 PDF 내보내기. 블록 이끌이로 순서를 옮기고, 선택한 글 가까이에서 서식·링크·글자색 편집 ([실제 화면](docs/mockups/cabinet-v2/implemented/README.md))
@@ -104,11 +105,17 @@ npm run tauri dev    # 실앱 모드(윈도우·맥 / 리눅스는 webkit2gtk-4.
 - 브라우저 모드 주소 옵션(E2E·시연): `?today=YYYY-MM-DD` 오늘 고정 · `?empty=1` 빈 일지 · `?fresh=1` 첫 실행 화면 · `?existing=/경로` 그 폴더에 샘플 일지 준비 · `?config=/경로` 설정 폴더 지정 · `?sample=year`(`year-img`) 가상 1년치 일지 · `?sample=showcase` README·소개 사이트 화면용 메모 보드 예시 · `?corrupt=1` 파손 일지
 - 설치 파일: `main`에 반영되면 *Build desktop installers*가 윈도우(NSIS)·맥(유니버설 DMG)을 나란히 만들고, **둘 다 성공해야** [Releases](https://github.com/chs2147/work-journey-board/releases)에 `v<버전>`으로 함께 올린다 — 0.x·`-rc`는 사전 릴리스, 1.0.0 이상 정식 판은 정식 릴리스. 윈도우 오프라인 설치판은 요청할 때만 Actions → *Build desktop installers* → Run workflow(main) → `offline`으로 그 판 릴리스에 더한다. 하나의 원본으로 두 플랫폼을 같은 판으로 운영한다([docs/macos-spec.md](docs/macos-spec.md)).
 
-현재 상세 기능과 도입 버전: [Feature List 운영 문서](docs/features/README.md) · [현재 목록](docs/features/CURRENT.md) · [검토용 Excel](docs/features/exports/work-journey-board/Work-Journey-Board-Feature-List-v1.23.3.xlsx)
+현재 상세 기능과 도입 버전: [Feature List 운영 문서](docs/features/README.md) · [현재 목록](docs/features/CURRENT.md) · [검토용 Excel](docs/features/exports/work-journey-board/Work-Journey-Board-Feature-List-v1.30.0.xlsx)
 
 ## Version History
 
 최근 5개 버전(정식·RC)을 표시합니다. [더 보기 — 전체 버전 히스토리](VERSION_HISTORY.md)
+
+### v1.30.0 (2026-11-12) — 칸반 보드·업무 타임라인 요일별 묶음·실제 완료일
+
+- 칸반 보드(레일 주간 보드↔인사이트·`Alt+6`): TODO / 사용자 섹션(최대 8, 무채색) / DONE, 카드 통째로 끌어 상태 변경, DONE = 세부 함께 완료·되돌리기, 상태 이력(구조 v20), 항목 추가 창·일괄 완료·Cabi.NET 줄 끌어 연결, 업무·기간 아이콘 거르기.
+- 설정 › 화면 › 시작 화면(주간 보드/칸반). 업무 타임라인 요일별 묶음·실제 완료일·경과 복사 묶음 형식.
+- 1.25.0-rc.1·rc.2 검증 후 사용자 승인으로 1.30.0 정식 main 반영. 이전 main 1.24.3은 `release/v1.24.3`에 보존, Windows 기본판·macOS 유니버설 동시 빌드.
 
 ### v1.25.0-rc.2 (2026-11-12) — 칸반 보드 다듬기: 기간 아이콘·단추 통일·섹션 무채색(검증용)
 
@@ -130,12 +137,6 @@ npm run tauri dev    # 실앱 모드(윈도우·맥 / 리눅스는 webkit2gtk-4.
 
 - 메모 사진 크게 보기를 최상위 레이어(모달)로 — 앱 화면 전체 흐림·뒤 화면 조작/단축키 차단, 이후 기능이 위로 올라오지 않음.
 - 데일리 뷰 날짜 줄의 [전체 가져오기] 단추 제거(`Alt+Shift+P`·요일 머리 메뉴는 유지).
-- main 직접 패치, 구조 v19 유지. Windows 기본판·macOS 유니버설 동시 빌드.
-
-### v1.24.1 (2026-11-10) — 업무노트 이끌이 위치·데일리 뷰 기록 있는 업무만 보기
-
-- 업무노트 들여쓴 불렛에서도 블록 이끌이를 문장 맨 앞 고정 자리에(불렛을 덮지 않음).
-- 데일리 뷰 깔때기 스위치 — 그 날 기록 0건 업무 숨김·[전체 보기]·설정 유지. "완료 묶음 N개 제외" 표기 제거.
 - main 직접 패치, 구조 v19 유지. Windows 기본판·macOS 유니버설 동시 빌드.
 
 [더 보기 — 전체 버전 히스토리](VERSION_HISTORY.md)
