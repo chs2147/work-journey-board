@@ -1,6 +1,6 @@
 # 개선 v21 — 칸반 보드 · 업무 타임라인 개선 (상세 설계)
 
-> 2026-11-12 작성 · 작업 브랜치 `improve-v21` · 기준 판 1.24.3(구조 v19) · **상태: 2026-11-12 승인(D5 사용자 수정, 나머지 추천안) · 구현 진행**
+> 2026-11-12 작성 · 작업 브랜치 `improve-v21` · 기준 판 1.24.3(구조 v19) · **상태: 2026-11-12 승인(D5 사용자 수정, 나머지 추천안) · 작업 브랜치 `improve-v21` 구현(14절) → 검증용 `1.25.0-rc.1`(구조 v20)**
 > 시안: `docs/mockups/v21/`(①~⑥ PNG, 원본 `v21.html` — 가상 샘플만)
 
 ## 0. 요약
@@ -132,6 +132,7 @@
 | 카드 → Cabi.NET 창(업무 연결) | 주간 보드 행과 같은 처리 |
 - 카드 끌기 하나가 "섹션 이동"과 "다른 창에 놓기"를 겸한다 — 칸반 열에 놓으면 상태 변경, 메모·Cabi 창에 놓으면 연결.
 - 구현 때 주간 보드 행 끌기 코드(`rowDrag.ts`·`CabiDrag`)의 형식을 그대로 쓰고, 지원 항목은 확인표에 주간 보드와 1:1로 대조한다.
+- **`1.25.0-rc.1` 구현 범위: 첫 줄(Cabi.NET 줄 → 카드)만** — 카드 → 메모 보드·Cabi.NET 창은 넣지 않음(이유·후속안 14절).
 
 ## 8. 설정
 - 설정 › 화면에 **시작 화면**: `주간 보드`(기본) / `칸반 보드`. 주간 보드 = 마지막에 본 주간/데일리 뷰 그대로.
@@ -198,3 +199,15 @@ CREATE INDEX ix_status_batch ON item_status_log(batch_id) WHERE batch_id IS NOT 
 | D9 | 카드 다중 선택(Ctrl+클릭) 끌기 | **이번엔 넣지 않음**(일괄 완료 창으로 충분, 필요하면 후속) |
 | D10 | 사용자 섹션 수·색 | **최대 8개, 5색** |
 | D11 | 판 번호 | **1.25.0**(검증판 `1.25.0-rc.1` → 승인 뒤 main) |
+
+## 14. 구현 기록 (2026-11-12, 검증용 `1.25.0-rc.1`)
+- **데이터**: `0020_kanban.sql`(구조 v20) — 섹션·항목 섹션 열·상태 이력(트리거)·쓰기 출처 1행 `kanban_ctx`·일괄 완료 되돌리기 `kanban_bulk`. 설계 10절과 다른 점: 이력에 외래 키를 두지 않음(항목을 지웠다 되돌려도 이력이 이어지게), 세부 수는 이력이 아니라 알림·되돌리기 자료에만. `JournalRepository.kanban`(`src/data/kanbanRepository.ts`) · 규칙 `src/domain/kanban.ts`.
+- **완료 규칙(D4·D7)**: 칸반·주간 보드 완료 아이콘·중요 업무 패널 모두 `completeFlag(id, source)` — 끝나지 않은 세부 함께(같은 시각), 되살리면 같은 시각에 끝난 세부만. 화면 사이 동기화는 `boardStore.notifyItemsChanged`·`syncItems`.
+- **화면**: `src/ui/kanban/`(`KanbanView`·`ItemDialog`·`BulkDialog`·`kanbanStore`·`kanbanUi`) · 레일 `rail-kanban` · `Alt+6` · TopBar 칸반 제목. 창은 모두 `<dialog>.showModal()`(1.24.2와 같은 최상위 레이어, 전역 단축키 차단).
+- **끌어 놓기**: 카드 전체가 HTML5 끌기 대상(`application/x-wjb-kanban-card`). 놓을 때 끌기 상태를 지운다(옮긴 카드는 다른 열에서 새로 그려져 원래 요소의 `dragend`가 React에 닿지 않음 — 가이드 스크린샷 검토 중 발견해 고침, e2e로 고정).
+- **Cabi.NET(7절)**: 이번 판은 **Cabi.NET 폴더·링크 줄 → 카드 = 그 항목에 연결**(주간 보드 행에 놓는 것과 같은 `setCabinetLinks`)만. **카드 → 메모 보드/Cabi.NET 창은 넣지 않음** — 주간 보드 행 → 메모 연결은 같은 창 안 포인터 끌기(`rowDrag.ts`)라 메모 도크가 없는 칸반에서는 놓을 곳이 없고, 카드 HTML5 끌기와 겹치면 열 이동과 구분이 흐려진다. 필요하면 후속(카드 ⋯ › [메모에 연결] 같은 메뉴 방식 추천).
+- **항목 추가 창(5절)**: 주간 보드 칸 편집기(`CellEditor`)는 그 주 화면 저장소의 칸에 묶여 있어 다시 쓰지 않고, 같은 키 규칙을 창 안에서 따로 구현(`Enter`·`Tab`·`Shift+Tab`·`Backspace`·`Alt+I/U/O/R`·`Ctrl+Enter`).
+- **섹션 보존**: 칸 저장은 새 행에만 섹션을 쓴다 — 주간 보드에서 지웠다 되돌린 항목·다른 날로 옮긴 항목은 그 섹션으로, 가져오기 되돌리기도 보존(지운 섹션이면 TODO).
+- **설정**: 설정 › 화면 › 시작 화면(`ui.startView`) · 칸반 필터 기억(`ui.kanban`). 둘 다 일지(공간)마다.
+- **타임라인 T1·T2**: `domain/insights.ts` `dayGroups` · `laterDoneDate` 칩 · 경과 복사 `(월) 10/12` 줄 + `- 항목`(골든 시험 갱신).
+- **시험**: 단위 `tests/unit/kanban.test.ts`(규칙·저장소·이력·일괄·섹션 보존·마이그레이션) · e2e `tests/e2e/kanban.spec.ts`(레일·끌기·섹션·추가 창·일괄·중요 연동·T1/T2·시작 화면·Cabi.NET 끌기) · 전환 무결성 `workspace-integrity.spec.ts` v21 시나리오(`journalCounts`에 칸반 표) · 확인표 `m1-check.md` 7-44.

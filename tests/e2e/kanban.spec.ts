@@ -46,6 +46,8 @@ test("끌어 DONE에 놓으면 완료 + 세부 함께 · 되돌리기 · 주간 
   await c.dragTo(col(page, "done"));
   const row = page.getByTestId("kanban-done-row").filter({ hasText: "A협력사 현장 점검" });
   await expect(row).toHaveCount(1);
+  // 놓은 뒤 끌기 표시(반투명)가 남지 않음 — 원래 요소는 다른 열로 옮겨져 dragend를 받지 못함
+  await expect(row).not.toHaveClass(/cardDragging/);
   await expect(page.getByRole("status").filter({ hasText: "세부 항목 1개도 함께 완료" })).toBeVisible();
   // 펼치면 세부도 취소선(완료)
   await row.click();

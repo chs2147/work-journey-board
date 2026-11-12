@@ -1,10 +1,10 @@
-# 현재 Feature List — v1.24.3
+# 현재 Feature List — v1.25.0-rc.1
 
-기준일 2026-11-10 · DB 구조 v19 · 활성 249개 · 제거/대체 3개 · 미제공/계획 3개
+기준일 2026-11-12 · DB 구조 v20 · 활성 260개 · 제거/대체 3개 · 미제공/계획 3개
 
 원본은 [catalog.json](catalog.json), 운영 규칙은 [README.md](README.md)입니다. 최초 제공 버전은 0.x 개발판을 포함한 비RC 출시 이력 기준이며 RC는 별도 필드입니다.
 
-[검토용 Excel](exports/work-journey-board/Work-Journey-Board-Feature-List-v1.24.3.xlsx) · [현재 스냅샷](releases/work-journey-board/v1.24.3.json)
+[검토용 Excel](exports/work-journey-board/Work-Journey-Board-Feature-List-v1.25.0-rc.1.xlsx) · [현재 스냅샷](releases/work-journey-board/v1.25.0-rc.1.json)
 
 ## 주간 보드·입력
 
@@ -58,9 +58,9 @@
 | Feature ID | 기능 | 최초 제공 | 최근 개선 | 현재 제공 범위 |
 |---|---|---|---|---|
 | WJB-IMPORTANT-001 | 별표 중요 표시 — 기록 항목의 별표와 Alt+I로 중요 상태를 바꾼다. | 0.0.11 | 1.16.0 | windows / macos |
-| WJB-IMPORTANT-002 | 중요 업무 패널 — 레일에서 지난 날짜·오늘·이번 주·이후 중요 업무를 본다. | 0.0.11 | 1.7.1 | windows / macos |
+| WJB-IMPORTANT-002 | 중요 업무 패널 — 레일에서 지난 날짜·오늘·이번 주·이후 중요 업무를 본다. | 0.0.11 | 1.25.0-rc.1 | windows / macos |
 | WJB-IMPORTANT-003 | 중요 개수·지난 업무 표시 — 레일의 개수 배지와 지난 중요 업무 알림을 표시한다. | 0.0.11 | 0.0.11 | windows / macos |
-| WJB-IMPORTANT-004 | 중요 업무 완료·취소 — 중요 패널에서 완료 처리와 되돌리기를 제공한다. | 0.0.11 | 1.16.0 | windows / macos |
+| WJB-IMPORTANT-004 | 중요 업무 완료·취소 — 중요 패널에서 완료 처리와 되돌리기를 제공한다. | 0.0.11 | 1.25.0-rc.1 | windows / macos |
 | WJB-IMPORTANT-005 | 이 주 완료 목록 — 보고 있는 주에 완료한 항목을 별도 목록으로 표시한다. | 0.2.18 | 0.2.18 | windows / macos |
 | WJB-IMPORTANT-006 | 중요 패널 너비 조절 — 패널 폭을 드래그로 조절하고 기억한다. | 1.1.0 | 1.1.0 | windows / macos |
 | WJB-IMPORTANT-007 | 마감 업무 별도 목록 — 마감이 있는 업무를 중요 패널 위쪽에 임박순으로 표시한다. | 1.13.0 | 1.14.0 | windows / macos |
@@ -71,6 +71,21 @@
 | WJB-IMPORTANT-012 | 미래 반복 예정 보기 — 다음 주 이후 예정 항목을 미리 보고 해당 주에 생성한다. | 0.0.12 | 0.0.12 | windows / macos |
 | WJB-IMPORTANT-013 | 반복 관리·이번 주만 제외 — 문구·중요 상태·중지·재시작·삭제를 관리하고 생성 항목 삭제는 그 주에만 적용한다. | 0.0.12 | 0.0.12 | windows / macos |
 | WJB-IMPORTANT-014 | 무기록 판정 구분 — 자동 생성 후 수정하지 않은 반복 항목은 사용 기록과 구분한다. | 0.0.12 | 0.0.12 | windows / macos |
+
+## 칸반 보드
+
+| Feature ID | 기능 | 최초 제공 | 최근 개선 | 현재 제공 범위 |
+|---|---|---|---|---|
+| WJB-KANBAN-001 | 칸반 보드 화면 — 레일의 주간 보드와 인사이트 사이(Alt+6)에서 본 항목을 카드로 TODO·사용자 섹션·DONE 열에 보여 준다. | RC 제공만 | 1.25.0-rc.1 | windows / macos |
+| WJB-KANBAN-002 | 카드 끌어 상태 변경 — 카드 전체를 끌어 다른 열에 놓거나 Alt+Shift+←/→로 옮겨 상태를 바꾸고 알림에서 되돌린다. | RC 제공만 | 1.25.0-rc.1 | windows / macos |
+| WJB-KANBAN-003 | DONE 완료·세부 자동 완료 — DONE에 놓으면 완료하고 끝나지 않은 세부도 함께 완료한다. 되살리면 함께 끝난 세부만 되살리고 DONE은 끝낸 날로 접어 묶는다. | RC 제공만 | 1.25.0-rc.1 | windows / macos |
+| WJB-KANBAN-004 | 사용자 섹션 관리 — TODO와 DONE 사이에 이름·5색·순서를 가진 섹션을 최대 8개 두고, 지우면 그 카드를 TODO로 돌린다. TODO·DONE은 고정. | RC 제공만 | 1.25.0-rc.1 | windows / macos |
+| WJB-KANBAN-005 | 상태 변경 이력 — 칸반·주간 보드·중요 업무·일괄 완료 어디서 바꿨든 상태 변경을 시각·출처와 함께 남기고 카드 메뉴에서 본다. | RC 제공만 | 1.25.0-rc.1 | windows / macos |
+| WJB-KANBAN-006 | 업무 항목 추가 창 — 업무·날짜(기본 오늘)·섹션을 고르고 주간 보드와 같은 키로 본 항목·세부·★·마감일·시작 시각을 적어 그 날 칸에 넣는다(N). | RC 제공만 | 1.25.0-rc.1 | windows / macos |
+| WJB-KANBAN-007 | 일괄 완료·되돌리기 — 날짜 이전 카드를 조건·미리 보기로 골라 기록일 또는 오늘로 한 번에 완료하고 최근 일괄 처리에서 묶음째 되돌린다. | RC 제공만 | 1.25.0-rc.1 | windows / macos |
+| WJB-KANBAN-008 | 업무·기간 거르기·정렬 — 업무와 기간(오늘·이번 주 기본·최근 2/4/12주·전체·지정일)으로 거르고 최신·오래된·마감순으로 정렬한다. TODO·섹션 = 기록일, DONE = 완료일 기준. | RC 제공만 | 1.25.0-rc.1 | windows / macos |
+| WJB-KANBAN-009 | 중요 업무 목록 연동 — 왼쪽 중요 업무 목록의 체크 = DONE, 항목 누르면 칸반 카드 강조. 사용자 섹션의 ★ 카드는 목록에서 빠진다. | RC 제공만 | 1.25.0-rc.1 | windows / macos |
+| WJB-KANBAN-010 | Cabi.NET 줄 끌어 연결 — Cabi.NET의 폴더·링크 줄을 카드에 놓으면 그 항목에 연결하고 카드에 연결 수를 표시한다. | RC 제공만 | 1.25.0-rc.1 | windows / macos |
 
 ## 메모 보드
 
@@ -155,14 +170,14 @@
 |---|---|---|---|---|
 | WJB-INSIGHT-001 | 업무별 타임라인 열기 — 레일·단축키·업무 메뉴에서 해당 업무의 기록 흐름을 연다. | 0.2.12 | 1.18.0 | windows / macos |
 | WJB-INSIGHT-002 | 타임라인 기간·종료 업무 — 기간과 업무, 종료 업무 포함 여부로 기록을 조회한다. | 0.2.12 | 0.2.12 | windows / macos |
-| WJB-INSIGHT-003 | 월·주차·상세 업무 위계 — 기록을 과거부터 최근까지 월과 주차로 묶는다. | 0.2.12 | 1.18.0 | windows / macos |
+| WJB-INSIGHT-003 | 월·주차·상세 업무 위계 — 기록을 과거부터 최근까지 월과 주차로 묶는다. | 0.2.12 | 1.25.0-rc.1 | windows / macos |
 | WJB-INSIGHT-004 | 월 아래·주 사이 직각 구분선 — 년월 바로 아래와 주차 사이에 같은 기준선의 구분선을 표시한다. | 1.18.0 | 1.18.1 | windows / macos |
 | WJB-INSIGHT-005 | 오래된 월·무기록 묶음 접기 — 오래된 달과 무기록 구간을 접어 긴 기록을 탐색한다. | 0.2.12 | 1.18.0 | windows / macos |
 | WJB-INSIGHT-006 | 시작·종료·재개 구간 — 업무 생애의 경계와 쉬었던 기간을 표시한다. | 0.2.12 | 0.2.12 | windows / macos |
-| WJB-INSIGHT-007 | 기록 표시·보드 바로가기 — 중요·반복·링크·휴가 기록을 보고 해당 보드 칸으로 이동한다. | 0.2.12 | 1.7.0 | windows / macos |
+| WJB-INSIGHT-007 | 기록 표시·보드 바로가기 — 중요·반복·링크·휴가 기록을 보고 해당 보드 칸으로 이동한다. | 0.2.12 | 1.25.0-rc.1 | windows / macos |
 | WJB-INSIGHT-008 | 연결 메모 펼치기 — 다른 주의 원본 메모도 연결된 업무 항목에 펼쳐 표시한다. | 0.2.12 | 1.19.0 | windows / macos |
 | WJB-INSIGHT-009 | 업무 안 검색·강조 — 현재 업무의 항목을 찾고 다음·이전 일치 기록으로 이동한다. | 0.2.12 | 0.2.12 | windows / macos |
-| WJB-INSIGHT-010 | 경과 텍스트 복사 — 현재 기간의 경과를 평문으로 복사한다. | 0.2.12 | 0.2.12 | windows / macos |
+| WJB-INSIGHT-010 | 경과 텍스트 복사 — 현재 기간의 경과를 평문으로 복사한다. | 0.2.12 | 1.25.0-rc.1 | windows / macos |
 | WJB-INSIGHT-011 | 업무 생애 히트맵 — 시작부터 현재 또는 종료까지 주·월별 기록 강도를 보여준다. | 0.2.12 | 1.18.0 | windows / macos |
 | WJB-INSIGHT-012 | 지도 선택·주차 이동 — 지도 칸을 누르면 타임라인의 해당 주·월로 이동한다. | 0.2.12 | 0.2.12 | windows / macos |
 | WJB-INSIGHT-013 | 표 보기 — 지도 데이터를 표로 표시하고 닫는다. | 0.2.12 | 1.18.0 | windows / macos |
@@ -317,6 +332,7 @@
 | WJB-SETTINGS-008 | 빠른 이용 가이드 HTML·PDF — 장면별 사용법과 단축키를 HTML과 PDF로 제공한다. | 1.3.0 | 1.3.0 | windows / macos |
 | WJB-SETTINGS-009 | 별도 스플래시 창 — 보드 준비 과정을 별도 시작 창에 표시한다. | 0.0.7 | 1.4.0 | windows / macos |
 | WJB-SETTINGS-010 | 앱 아이콘·워드마크 — 노트 아이콘과 Work Journey Board 타이틀을 사용한다. | 0.0.9 | 1.0.0 | windows / macos |
+| WJB-SETTINGS-011 | 시작 화면 선택 — 설정 › 화면에서 앱을 켤 때·공간을 바꿀 때 처음 보일 화면(주간 보드/칸반 보드)을 공간마다 고른다. | RC 제공만 | 1.25.0-rc.1 | windows / macos |
 
 ## 플랫폼·배포
 

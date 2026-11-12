@@ -307,7 +307,11 @@ function Column({
     e.preventDefault();
     setOver(false);
     const id = e.dataTransfer.getData(CARD_MIME) || dragCard?.id;
-    if (id && canDrop()) void moveCard(id, sectionKey);
+    const ok = !!id && canDrop();
+    // 옮긴 카드는 다른 열에서 새로 그려져 원래 요소의 dragend가 React에 닿지 않는다 — 놓을 때 끌기 상태를 지운다
+    dragCard = null;
+    setDragging(null);
+    if (ok) void moveCard(id, sectionKey);
   };
 
   return (

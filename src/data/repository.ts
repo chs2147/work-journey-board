@@ -298,6 +298,8 @@ interface ItemSnapshot {
   start_time?: string | null;
   /** v13부터 */
   due_date?: string | null;
+  /** v20부터 */
+  kanban_section_id?: string | null;
   created_at: string;
   updated_at: string;
   import_id: string | null;
@@ -390,6 +392,7 @@ interface ItemRow {
   recurrence_id: string | null;
   start_time: string | null;
   due_date?: string | null;
+  kanban_section_id?: string | null;
 }
 interface ImportantRow extends ItemRow {
   category_name: string;
@@ -426,7 +429,7 @@ export interface RepeatPreview {
 }
 
 const ITEM_COLUMNS =
-  "id, date, category_id, seq, depth, text, flagged, flag_done_at, completion_was_flagged, recurrence_id, start_time, due_date";
+  "id, date, category_id, seq, depth, text, flagged, flag_done_at, completion_was_flagged, recurrence_id, start_time, due_date, kanban_section_id";
 
 const toCategory = (r: CategoryRow): Category => ({
   id: r.id,
@@ -454,6 +457,7 @@ const toItem = (r: ItemRow): EntryItem => ({
   recurrenceId: r.recurrence_id,
   startTime: r.start_time ?? null,
   dueDate: r.due_date ?? null,
+  kanbanSectionId: r.kanban_section_id ?? null,
 });
 
 /**
@@ -1645,6 +1649,7 @@ export class JournalRepository {
       recurrenceId: d.recurrenceId ?? null,
       startTime: isStartTime(d.startTime) ? d.startTime : null,
       dueDate: isDueDate(d.dueDate) ? d.dueDate : null,
+      kanbanSectionId: d.depth === 0 ? (d.kanbanSectionId ?? null) : null,
     }));
     const ids = items.map((i) => i.id);
     const ts = this.ts();
@@ -1656,9 +1661,10 @@ export class JournalRepository {
         params: [date, categoryId, ...ids],
       },
       ...items.map((it) => ({
+        // 칸반 섹션은 새 행(지운 항목 되살리기·다른 날로 옮기기)에만 — 있는 행은 칸반 쪽 값을 그대로 둔다. 지운 섹션이면 NULL
         sql: `INSERT INTO entry_item (id, date, category_id, seq, depth, text, flagged, flag_done_at, completion_was_flagged, recurrence_id,
-                                      start_time, due_date, created_at, updated_at)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                      start_time, due_date, created_at, updated_at, kanban_section_id)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, (SELECT id FROM kanban_section WHERE id = ?))
               ON CONFLICT(id) DO UPDATE SET
                 date = excluded.date, category_id = excluded.category_id, seq = excluded.seq,
                 depth = excluded.depth, text = excluded.text, flagged = excluded.flagged,
@@ -1684,6 +1690,7 @@ export class JournalRepository {
           it.dueDate ?? null,
           ts,
           ts,
+          it.flagDoneAt ? null : (it.kanbanSectionId ?? null),
         ],
       })),
     ];
@@ -3234,7 +3241,7 @@ export class JournalRepository {
       const ids = plan.deleteItemIds.slice(i, i + 500);
       undo.deletedItems.push(
         ...(await this.db.select<ItemSnapshot>(
-          `SELECT id, date, category_id, seq, depth, text, flagged, flag_done_at, completion_was_flagged, recurrence_id, start_time, due_date, created_at, updated_at, import_id
+          `SELECT id, date, category_id, seq, depth, text, flagged, flag_done_at, completion_was_flagged, recurrence_id, start_time, due_date, kanban_section_id, created_at, updated_at, import_id
            FROM entry_item WHERE id IN (${ids.map(() => "?").join(", ")})`,
           ids,
         )),
@@ -3355,8 +3362,8 @@ export class JournalRepository {
     for (const it of undo.deletedItems)
       stmts.push({
         sql: `INSERT OR IGNORE INTO entry_item (id, date, category_id, seq, depth, text, flagged, flag_done_at, completion_was_flagged, recurrence_id,
-                                                start_time, due_date, created_at, updated_at, import_id)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                                                start_time, due_date, created_at, updated_at, import_id, kanban_section_id)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, (SELECT id FROM kanban_section WHERE id = ?))`,
         params: [
           it.id,
           it.date,
@@ -3373,6 +3380,7 @@ export class JournalRepository {
           it.created_at,
           it.updated_at,
           it.import_id,
+          it.kanban_section_id ?? null,
         ],
       });
     for (const n of undo.notes)

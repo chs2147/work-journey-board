@@ -445,6 +445,24 @@ async function shots(base = "http://localhost:1420", only) {
       url: `${show}&ws=2`,
       run: (p) => p.getByTestId("workspace-button").click(),
     },
+    "15-kanban": {
+      url: show,
+      run: async (p) => {
+        await p.keyboard.press("Alt+Digit6");
+        await p.getByTestId("kanban-view").waitFor();
+        // 가상 섹션 하나 + 카드 하나를 옮긴 모습(v21)
+        await p.getByTestId("kanban-add-section").click();
+        await p.getByTestId("kanban-section-dialog").getByRole("textbox").fill("검토 중");
+        await p.getByTestId("kanban-section-save").click();
+        await p
+          .getByTestId("kanban-card")
+          .filter({ hasText: "점검 결과 보고서 초안 작성" })
+          .first()
+          .dragTo(p.getByTestId("kanban-col-section"));
+        await p.mouse.move(0, 0);
+        await p.waitForTimeout(4500); // 알림이 사라진 뒤
+      },
+    },
     "14-universe": {
       url: show,
       run: async (p) => {

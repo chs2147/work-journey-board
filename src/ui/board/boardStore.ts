@@ -471,6 +471,7 @@ async function loadWeekNow(r: JournalRepository, weekId: WeekId, focusDay: DateS
         recurrenceId: i.recurrenceId,
         startTime: i.startTime ?? null,
         dueDate: i.dueDate ?? null,
+        kanbanSectionId: i.kanbanSectionId ?? null,
       }));
       cells[key] = drafts;
       persistedCells.set(key, drafts);
@@ -622,6 +623,7 @@ export async function moveItemToDate(fromKey: string, index: number, date: DateS
       recurrenceId: i.recurrenceId,
       startTime: i.startTime ?? null,
       dueDate: i.dueDate ?? null,
+      kanbanSectionId: i.kanbanSectionId ?? null,
     }));
     dstSaved = dst;
   }

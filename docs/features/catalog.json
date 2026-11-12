@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
   "product": "Work Journey Board",
-  "catalogVersion": "1.24.3",
-  "asOfDate": "2026-11-10",
+  "catalogVersion": "1.25.0-rc.1",
+  "asOfDate": "2026-11-12",
   "baseRelease": "1.24.3",
-  "sourceCommit": "b2e53ef",
-  "appSchemaVersion": 19,
+  "sourceCommit": "7934af0",
+  "appSchemaVersion": 20,
   "versionDefinition": "최초 제공 = 비RC 출시 이력에서 기능 제공이 확인된 최초 버전(0.x 개발판 포함); RC는 preview로 별도 기록",
   "verificationScope": "문서·출시 이력·현행 소스 위치 대조. 기능별 실기 전수 검증을 뜻하지 않음.",
   "features": [
@@ -1661,11 +1661,19 @@
           "type": "changed",
           "description": "오늘 묶음 배경",
           "source": "docs/release-notes/v1.7.1.md"
+        },
+        {
+          "version": "1.25.0-rc.1",
+          "type": "changed",
+          "description": "칸반 사용자 섹션에 둔 ★ 항목은 목록에서 빠지고(★ 유지), 칸반이 열려 있으면 항목을 누를 때 칸반 카드를 강조한다.",
+          "source": "docs/release-notes/v1.25.0-rc.1.md"
         }
       ],
       "sources": [
         "docs/important-repeat-spec.md",
-        "README.md"
+        "README.md",
+        "docs/improve-v21-spec.md",
+        "docs/release-notes/v1.25.0-rc.1.md"
       ],
       "implementation": [
         "src/ui/board"
@@ -1674,7 +1682,7 @@
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "제품 기능",
-      "lastChanged": "1.7.1",
+      "lastChanged": "1.25.0-rc.1",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
@@ -1753,11 +1761,19 @@
           "type": "changed",
           "description": "일반 항목 완료 상태와 동기화",
           "source": "docs/release-notes/v1.16.0.md"
+        },
+        {
+          "version": "1.25.0-rc.1",
+          "type": "changed",
+          "description": "본 항목을 완료하면 끝나지 않은 세부도 함께 완료하고, 되살리면 함께 끝난 세부만 되살린다(칸반과 같은 규칙).",
+          "source": "docs/release-notes/v1.25.0-rc.1.md"
         }
       ],
       "sources": [
         "docs/important-repeat-spec.md",
-        "README.md"
+        "README.md",
+        "docs/improve-v21-spec.md",
+        "docs/release-notes/v1.25.0-rc.1.md"
       ],
       "implementation": [
         "src/ui/board"
@@ -1766,7 +1782,7 @@
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "제품 기능",
-      "lastChanged": "1.16.0",
+      "lastChanged": "1.25.0-rc.1",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
@@ -2185,6 +2201,422 @@
       "kind": "제품 기능",
       "lastChanged": "0.0.12",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
+    },
+    {
+      "id": "WJB-KANBAN-001",
+      "area": "칸반 보드",
+      "section": "진입",
+      "kind": "제품 기능",
+      "name": "칸반 보드 화면",
+      "description": "레일의 주간 보드와 인사이트 사이(Alt+6)에서 본 항목을 카드로 TODO·사용자 섹션·DONE 열에 보여 준다.",
+      "entry": "칸반 보드",
+      "introduced": null,
+      "preview": "1.25.0-rc.1",
+      "status": "active",
+      "platforms": [
+        "windows",
+        "macos"
+      ],
+      "platformSince": {
+        "windows": "1.25.0-rc.1",
+        "macos": "1.25.0-rc.1"
+      },
+      "history": [
+        {
+          "version": "1.25.0-rc.1",
+          "type": "added",
+          "description": "레일의 주간 보드와 인사이트 사이(Alt+6)에서 본 항목을 카드로 TODO·사용자 섹션·DONE 열에 보여 준다.",
+          "source": "docs/improve-v21-spec.md"
+        }
+      ],
+      "sources": [
+        "docs/improve-v21-spec.md",
+        "docs/release-notes/v1.25.0-rc.1.md"
+      ],
+      "implementation": [
+        "src/ui/kanban",
+        "src/data/kanbanRepository.ts",
+        "src/domain/kanban.ts"
+      ],
+      "verification": "단위·Chromium E2E·공간 3회 왕복 검증. Windows/macOS 실기 확인 필요(확인표 7-44).",
+      "reviewStatus": "미검토",
+      "reviewNote": "정식 도입 버전은 main 반영 때 확정.",
+      "lastChanged": "1.25.0-rc.1",
+      "schemaRequirement": "DB v20"
+    },
+    {
+      "id": "WJB-KANBAN-002",
+      "area": "칸반 보드",
+      "section": "상태",
+      "kind": "제품 기능",
+      "name": "카드 끌어 상태 변경",
+      "description": "카드 전체를 끌어 다른 열에 놓거나 Alt+Shift+←/→로 옮겨 상태를 바꾸고 알림에서 되돌린다.",
+      "entry": "칸반 보드",
+      "introduced": null,
+      "preview": "1.25.0-rc.1",
+      "status": "active",
+      "platforms": [
+        "windows",
+        "macos"
+      ],
+      "platformSince": {
+        "windows": "1.25.0-rc.1",
+        "macos": "1.25.0-rc.1"
+      },
+      "history": [
+        {
+          "version": "1.25.0-rc.1",
+          "type": "added",
+          "description": "카드 전체를 끌어 다른 열에 놓거나 Alt+Shift+←/→로 옮겨 상태를 바꾸고 알림에서 되돌린다.",
+          "source": "docs/improve-v21-spec.md"
+        }
+      ],
+      "sources": [
+        "docs/improve-v21-spec.md",
+        "docs/release-notes/v1.25.0-rc.1.md"
+      ],
+      "implementation": [
+        "src/ui/kanban",
+        "src/data/kanbanRepository.ts",
+        "src/domain/kanban.ts"
+      ],
+      "verification": "단위·Chromium E2E·공간 3회 왕복 검증. Windows/macOS 실기 확인 필요(확인표 7-44).",
+      "reviewStatus": "미검토",
+      "reviewNote": "정식 도입 버전은 main 반영 때 확정.",
+      "lastChanged": "1.25.0-rc.1",
+      "schemaRequirement": "DB v20"
+    },
+    {
+      "id": "WJB-KANBAN-003",
+      "area": "칸반 보드",
+      "section": "상태",
+      "kind": "제품 기능",
+      "name": "DONE 완료·세부 자동 완료",
+      "description": "DONE에 놓으면 완료하고 끝나지 않은 세부도 함께 완료한다. 되살리면 함께 끝난 세부만 되살리고 DONE은 끝낸 날로 접어 묶는다.",
+      "entry": "칸반 보드",
+      "introduced": null,
+      "preview": "1.25.0-rc.1",
+      "status": "active",
+      "platforms": [
+        "windows",
+        "macos"
+      ],
+      "platformSince": {
+        "windows": "1.25.0-rc.1",
+        "macos": "1.25.0-rc.1"
+      },
+      "history": [
+        {
+          "version": "1.25.0-rc.1",
+          "type": "added",
+          "description": "DONE에 놓으면 완료하고 끝나지 않은 세부도 함께 완료한다. 되살리면 함께 끝난 세부만 되살리고 DONE은 끝낸 날로 접어 묶는다.",
+          "source": "docs/improve-v21-spec.md"
+        }
+      ],
+      "sources": [
+        "docs/improve-v21-spec.md",
+        "docs/release-notes/v1.25.0-rc.1.md"
+      ],
+      "implementation": [
+        "src/ui/kanban",
+        "src/data/kanbanRepository.ts",
+        "src/domain/kanban.ts",
+        "src/data/repository.ts"
+      ],
+      "verification": "단위·Chromium E2E·공간 3회 왕복 검증. Windows/macOS 실기 확인 필요(확인표 7-44).",
+      "reviewStatus": "미검토",
+      "reviewNote": "정식 도입 버전은 main 반영 때 확정.",
+      "lastChanged": "1.25.0-rc.1",
+      "schemaRequirement": "DB v20"
+    },
+    {
+      "id": "WJB-KANBAN-004",
+      "area": "칸반 보드",
+      "section": "섹션",
+      "kind": "제품 기능",
+      "name": "사용자 섹션 관리",
+      "description": "TODO와 DONE 사이에 이름·5색·순서를 가진 섹션을 최대 8개 두고, 지우면 그 카드를 TODO로 돌린다. TODO·DONE은 고정.",
+      "entry": "칸반 보드",
+      "introduced": null,
+      "preview": "1.25.0-rc.1",
+      "status": "active",
+      "platforms": [
+        "windows",
+        "macos"
+      ],
+      "platformSince": {
+        "windows": "1.25.0-rc.1",
+        "macos": "1.25.0-rc.1"
+      },
+      "history": [
+        {
+          "version": "1.25.0-rc.1",
+          "type": "added",
+          "description": "TODO와 DONE 사이에 이름·5색·순서를 가진 섹션을 최대 8개 두고, 지우면 그 카드를 TODO로 돌린다. TODO·DONE은 고정.",
+          "source": "docs/improve-v21-spec.md"
+        }
+      ],
+      "sources": [
+        "docs/improve-v21-spec.md",
+        "docs/release-notes/v1.25.0-rc.1.md"
+      ],
+      "implementation": [
+        "src/ui/kanban",
+        "src/data/kanbanRepository.ts",
+        "src/domain/kanban.ts"
+      ],
+      "verification": "단위·Chromium E2E·공간 3회 왕복 검증. Windows/macOS 실기 확인 필요(확인표 7-44).",
+      "reviewStatus": "미검토",
+      "reviewNote": "정식 도입 버전은 main 반영 때 확정.",
+      "lastChanged": "1.25.0-rc.1",
+      "schemaRequirement": "DB v20"
+    },
+    {
+      "id": "WJB-KANBAN-005",
+      "area": "칸반 보드",
+      "section": "이력",
+      "kind": "제품 기능",
+      "name": "상태 변경 이력",
+      "description": "칸반·주간 보드·중요 업무·일괄 완료 어디서 바꿨든 상태 변경을 시각·출처와 함께 남기고 카드 메뉴에서 본다.",
+      "entry": "칸반 보드",
+      "introduced": null,
+      "preview": "1.25.0-rc.1",
+      "status": "active",
+      "platforms": [
+        "windows",
+        "macos"
+      ],
+      "platformSince": {
+        "windows": "1.25.0-rc.1",
+        "macos": "1.25.0-rc.1"
+      },
+      "history": [
+        {
+          "version": "1.25.0-rc.1",
+          "type": "added",
+          "description": "칸반·주간 보드·중요 업무·일괄 완료 어디서 바꿨든 상태 변경을 시각·출처와 함께 남기고 카드 메뉴에서 본다.",
+          "source": "docs/improve-v21-spec.md"
+        }
+      ],
+      "sources": [
+        "docs/improve-v21-spec.md",
+        "docs/release-notes/v1.25.0-rc.1.md"
+      ],
+      "implementation": [
+        "src/ui/kanban",
+        "src/data/kanbanRepository.ts",
+        "src/domain/kanban.ts",
+        "src/data/migrations/0020_kanban.sql"
+      ],
+      "verification": "단위·Chromium E2E·공간 3회 왕복 검증. Windows/macOS 실기 확인 필요(확인표 7-44).",
+      "reviewStatus": "미검토",
+      "reviewNote": "정식 도입 버전은 main 반영 때 확정.",
+      "lastChanged": "1.25.0-rc.1",
+      "schemaRequirement": "DB v20"
+    },
+    {
+      "id": "WJB-KANBAN-006",
+      "area": "칸반 보드",
+      "section": "입력",
+      "kind": "제품 기능",
+      "name": "업무 항목 추가 창",
+      "description": "업무·날짜(기본 오늘)·섹션을 고르고 주간 보드와 같은 키로 본 항목·세부·★·마감일·시작 시각을 적어 그 날 칸에 넣는다(N).",
+      "entry": "칸반 보드",
+      "introduced": null,
+      "preview": "1.25.0-rc.1",
+      "status": "active",
+      "platforms": [
+        "windows",
+        "macos"
+      ],
+      "platformSince": {
+        "windows": "1.25.0-rc.1",
+        "macos": "1.25.0-rc.1"
+      },
+      "history": [
+        {
+          "version": "1.25.0-rc.1",
+          "type": "added",
+          "description": "업무·날짜(기본 오늘)·섹션을 고르고 주간 보드와 같은 키로 본 항목·세부·★·마감일·시작 시각을 적어 그 날 칸에 넣는다(N).",
+          "source": "docs/improve-v21-spec.md"
+        }
+      ],
+      "sources": [
+        "docs/improve-v21-spec.md",
+        "docs/release-notes/v1.25.0-rc.1.md"
+      ],
+      "implementation": [
+        "src/ui/kanban/ItemDialog.tsx"
+      ],
+      "verification": "단위·Chromium E2E·공간 3회 왕복 검증. Windows/macOS 실기 확인 필요(확인표 7-44).",
+      "reviewStatus": "미검토",
+      "reviewNote": "정식 도입 버전은 main 반영 때 확정.",
+      "lastChanged": "1.25.0-rc.1",
+      "schemaRequirement": "DB v20"
+    },
+    {
+      "id": "WJB-KANBAN-007",
+      "area": "칸반 보드",
+      "section": "일괄",
+      "kind": "제품 기능",
+      "name": "일괄 완료·되돌리기",
+      "description": "날짜 이전 카드를 조건·미리 보기로 골라 기록일 또는 오늘로 한 번에 완료하고 최근 일괄 처리에서 묶음째 되돌린다.",
+      "entry": "칸반 보드",
+      "introduced": null,
+      "preview": "1.25.0-rc.1",
+      "status": "active",
+      "platforms": [
+        "windows",
+        "macos"
+      ],
+      "platformSince": {
+        "windows": "1.25.0-rc.1",
+        "macos": "1.25.0-rc.1"
+      },
+      "history": [
+        {
+          "version": "1.25.0-rc.1",
+          "type": "added",
+          "description": "날짜 이전 카드를 조건·미리 보기로 골라 기록일 또는 오늘로 한 번에 완료하고 최근 일괄 처리에서 묶음째 되돌린다.",
+          "source": "docs/improve-v21-spec.md"
+        }
+      ],
+      "sources": [
+        "docs/improve-v21-spec.md",
+        "docs/release-notes/v1.25.0-rc.1.md"
+      ],
+      "implementation": [
+        "src/ui/kanban/BulkDialog.tsx",
+        "src/data/kanbanRepository.ts"
+      ],
+      "verification": "단위·Chromium E2E·공간 3회 왕복 검증. Windows/macOS 실기 확인 필요(확인표 7-44).",
+      "reviewStatus": "미검토",
+      "reviewNote": "정식 도입 버전은 main 반영 때 확정.",
+      "lastChanged": "1.25.0-rc.1",
+      "schemaRequirement": "DB v20"
+    },
+    {
+      "id": "WJB-KANBAN-008",
+      "area": "칸반 보드",
+      "section": "필터",
+      "kind": "제품 기능",
+      "name": "업무·기간 거르기·정렬",
+      "description": "업무와 기간(오늘·이번 주 기본·최근 2/4/12주·전체·지정일)으로 거르고 최신·오래된·마감순으로 정렬한다. TODO·섹션 = 기록일, DONE = 완료일 기준.",
+      "entry": "칸반 보드",
+      "introduced": null,
+      "preview": "1.25.0-rc.1",
+      "status": "active",
+      "platforms": [
+        "windows",
+        "macos"
+      ],
+      "platformSince": {
+        "windows": "1.25.0-rc.1",
+        "macos": "1.25.0-rc.1"
+      },
+      "history": [
+        {
+          "version": "1.25.0-rc.1",
+          "type": "added",
+          "description": "업무와 기간(오늘·이번 주 기본·최근 2/4/12주·전체·지정일)으로 거르고 최신·오래된·마감순으로 정렬한다. TODO·섹션 = 기록일, DONE = 완료일 기준.",
+          "source": "docs/improve-v21-spec.md"
+        }
+      ],
+      "sources": [
+        "docs/improve-v21-spec.md",
+        "docs/release-notes/v1.25.0-rc.1.md"
+      ],
+      "implementation": [
+        "src/ui/kanban",
+        "src/data/kanbanRepository.ts",
+        "src/domain/kanban.ts"
+      ],
+      "verification": "단위·Chromium E2E·공간 3회 왕복 검증. Windows/macOS 실기 확인 필요(확인표 7-44).",
+      "reviewStatus": "미검토",
+      "reviewNote": "정식 도입 버전은 main 반영 때 확정.",
+      "lastChanged": "1.25.0-rc.1",
+      "schemaRequirement": "DB v20"
+    },
+    {
+      "id": "WJB-KANBAN-009",
+      "area": "칸반 보드",
+      "section": "연동",
+      "kind": "제품 기능",
+      "name": "중요 업무 목록 연동",
+      "description": "왼쪽 중요 업무 목록의 체크 = DONE, 항목 누르면 칸반 카드 강조. 사용자 섹션의 ★ 카드는 목록에서 빠진다.",
+      "entry": "칸반 보드",
+      "introduced": null,
+      "preview": "1.25.0-rc.1",
+      "status": "active",
+      "platforms": [
+        "windows",
+        "macos"
+      ],
+      "platformSince": {
+        "windows": "1.25.0-rc.1",
+        "macos": "1.25.0-rc.1"
+      },
+      "history": [
+        {
+          "version": "1.25.0-rc.1",
+          "type": "added",
+          "description": "왼쪽 중요 업무 목록의 체크 = DONE, 항목 누르면 칸반 카드 강조. 사용자 섹션의 ★ 카드는 목록에서 빠진다.",
+          "source": "docs/improve-v21-spec.md"
+        }
+      ],
+      "sources": [
+        "docs/improve-v21-spec.md",
+        "docs/release-notes/v1.25.0-rc.1.md"
+      ],
+      "implementation": [
+        "src/ui/important/ImportantPanel.tsx",
+        "src/ui/kanban/kanbanStore.ts"
+      ],
+      "verification": "단위·Chromium E2E·공간 3회 왕복 검증. Windows/macOS 실기 확인 필요(확인표 7-44).",
+      "reviewStatus": "미검토",
+      "reviewNote": "정식 도입 버전은 main 반영 때 확정.",
+      "lastChanged": "1.25.0-rc.1",
+      "schemaRequirement": "DB v20"
+    },
+    {
+      "id": "WJB-KANBAN-010",
+      "area": "칸반 보드",
+      "section": "연동",
+      "kind": "제품 기능",
+      "name": "Cabi.NET 줄 끌어 연결",
+      "description": "Cabi.NET의 폴더·링크 줄을 카드에 놓으면 그 항목에 연결하고 카드에 연결 수를 표시한다.",
+      "entry": "칸반 보드",
+      "introduced": null,
+      "preview": "1.25.0-rc.1",
+      "status": "active",
+      "platforms": [
+        "windows",
+        "macos"
+      ],
+      "platformSince": {
+        "windows": "1.25.0-rc.1",
+        "macos": "1.25.0-rc.1"
+      },
+      "history": [
+        {
+          "version": "1.25.0-rc.1",
+          "type": "added",
+          "description": "Cabi.NET의 폴더·링크 줄을 카드에 놓으면 그 항목에 연결하고 카드에 연결 수를 표시한다.",
+          "source": "docs/improve-v21-spec.md"
+        }
+      ],
+      "sources": [
+        "docs/improve-v21-spec.md",
+        "docs/release-notes/v1.25.0-rc.1.md"
+      ],
+      "implementation": [
+        "src/ui/kanban/KanbanView.tsx"
+      ],
+      "verification": "Chromium E2E. WebView 간 끌어 놓기는 Windows/macOS 실기 확인 필요(확인표 7-44 K-8).",
+      "reviewStatus": "미검토",
+      "reviewNote": "정식 도입 버전은 main 반영 때 확정.",
+      "lastChanged": "1.25.0-rc.1",
+      "schemaRequirement": "DB v20"
     },
     {
       "id": "WJB-NOTE-001",
@@ -4647,11 +5079,19 @@
           "type": "changed",
           "description": "월20px·주16px·상세14px의 세로 위계",
           "source": "docs/release-notes/v1.18.0.md"
+        },
+        {
+          "version": "1.25.0-rc.1",
+          "type": "changed",
+          "description": "주 안에서 날짜마다 요일+월/일을 한 번만 쓰고 그날 항목을 묶는다(요일별 묶음).",
+          "source": "docs/release-notes/v1.25.0-rc.1.md"
         }
       ],
       "sources": [
         "docs/m3-s1-spec.md",
-        "README.md"
+        "README.md",
+        "docs/improve-v21-spec.md",
+        "docs/release-notes/v1.25.0-rc.1.md"
       ],
       "implementation": [
         "src/ui/insights"
@@ -4660,7 +5100,7 @@
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "제품 기능",
-      "lastChanged": "1.18.0",
+      "lastChanged": "1.25.0-rc.1",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
@@ -4832,11 +5272,19 @@
           "type": "changed",
           "description": "시작 시각 표시",
           "source": "docs/release-notes/v1.7.0.md"
+        },
+        {
+          "version": "1.25.0-rc.1",
+          "type": "changed",
+          "description": "기록일이 아닌 날 완료한 항목에 실제 완료 연-월-일 칩을 붙인다.",
+          "source": "docs/release-notes/v1.25.0-rc.1.md"
         }
       ],
       "sources": [
         "docs/m3-s1-spec.md",
-        "README.md"
+        "README.md",
+        "docs/improve-v21-spec.md",
+        "docs/release-notes/v1.25.0-rc.1.md"
       ],
       "implementation": [
         "src/ui/insights"
@@ -4845,7 +5293,7 @@
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "제품 기능",
-      "lastChanged": "1.7.0",
+      "lastChanged": "1.25.0-rc.1",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
@@ -4966,11 +5414,19 @@
           "type": "added",
           "description": "현재 기간의 경과를 평문으로 복사한다.",
           "source": "README.md"
+        },
+        {
+          "version": "1.25.0-rc.1",
+          "type": "changed",
+          "description": "경과 복사 글도 요일별 묶음 형식((월) 10/12 줄 아래 - 항목).",
+          "source": "docs/release-notes/v1.25.0-rc.1.md"
         }
       ],
       "sources": [
         "docs/m3-s1-spec.md",
-        "README.md"
+        "README.md",
+        "docs/improve-v21-spec.md",
+        "docs/release-notes/v1.25.0-rc.1.md"
       ],
       "implementation": [
         "src/ui/insights"
@@ -4979,7 +5435,7 @@
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "제품 기능",
-      "lastChanged": "0.2.12",
+      "lastChanged": "1.25.0-rc.1",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
@@ -9569,6 +10025,47 @@
       "kind": "제품 기능",
       "lastChanged": "1.0.0",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
+    },
+    {
+      "id": "WJB-SETTINGS-011",
+      "area": "설정·표현",
+      "section": "설정",
+      "kind": "제품 기능",
+      "name": "시작 화면 선택",
+      "description": "설정 › 화면에서 앱을 켤 때·공간을 바꿀 때 처음 보일 화면(주간 보드/칸반 보드)을 공간마다 고른다.",
+      "entry": "설정·표현",
+      "introduced": null,
+      "preview": "1.25.0-rc.1",
+      "status": "active",
+      "platforms": [
+        "windows",
+        "macos"
+      ],
+      "platformSince": {
+        "windows": "1.25.0-rc.1",
+        "macos": "1.25.0-rc.1"
+      },
+      "history": [
+        {
+          "version": "1.25.0-rc.1",
+          "type": "added",
+          "description": "설정 › 화면에서 앱을 켤 때·공간을 바꿀 때 처음 보일 화면(주간 보드/칸반 보드)을 공간마다 고른다.",
+          "source": "docs/improve-v21-spec.md"
+        }
+      ],
+      "sources": [
+        "docs/improve-v21-spec.md",
+        "docs/release-notes/v1.25.0-rc.1.md"
+      ],
+      "implementation": [
+        "src/ui/settings/SettingsView.tsx",
+        "src/ui/common/appController.ts"
+      ],
+      "verification": "단위·Chromium E2E·공간 3회 왕복 검증. Windows/macOS 실기 확인 필요(확인표 7-44).",
+      "reviewStatus": "미검토",
+      "reviewNote": "정식 도입 버전은 main 반영 때 확정.",
+      "lastChanged": "1.25.0-rc.1",
+      "schemaRequirement": "DB v20"
     },
     {
       "id": "WJB-DIST-001",

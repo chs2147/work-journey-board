@@ -34,6 +34,8 @@ export interface ItemMarks {
   startTime?: string | null;
   /** 마감일 'YYYY-MM-DD'(improve-1104v10-spec) — 없으면 null */
   dueDate?: string | null;
+  /** 칸반 사용자 섹션 id(improve-v21-spec 10절) — 지운 항목을 되살릴 때 그 섹션으로. 칸 저장은 새 행에만 쓴다 */
+  kanbanSectionId?: string | null;
 }
 
 export interface EntryItem extends ItemMarks {

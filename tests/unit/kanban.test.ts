@@ -183,6 +183,38 @@ describe("칸반 저장소", () => {
     await db.close();
   });
 
+  it("섹션 카드: 주간 보드에서 고쳐도 섹션 유지 · 지웠다 되돌리면(새 행) 그 섹션으로 · 지운 섹션이면 TODO", async () => {
+    const { repo, db, c } = await seed();
+    const park = await repo.kanban.createSection("가상 보류", "teal");
+    await repo.kanban.move("a", park.id);
+    const all = [
+      { id: "a", depth: 0 as const, text: "가상 본 항목 A (고침)" },
+      { id: "a1", depth: 1 as const, text: "가상 세부 1" },
+      { id: "a2", depth: 1 as const, text: "가상 세부 2" },
+      { id: "b", depth: 0 as const, text: "가상 본 항목 B", flagged: true },
+    ];
+    // 섹션 값을 싣지 않은 칸 저장(있는 행) — 칸반 쪽 값 그대로
+    await repo.saveCell("2026-10-21", c.id, all);
+    const sec = async () => (await repo.kanban.listOpen(F, TODAY)).find((x) => x.id === "a")?.sectionId;
+    expect(await sec()).toBe(park.id);
+    // 지우기 → 되돌리기(보드 실행 취소는 읽어 둔 표시를 실어 다시 저장)
+    const a = (await repo.getCategoryEntries(c.id, "2026-10-21", "2026-10-21")).find((x) => x.id === "a")!;
+    expect(a.kanbanSectionId).toBe(park.id);
+    await repo.saveCell("2026-10-21", c.id, all.slice(3));
+    expect(await sec()).toBeUndefined();
+    await repo.saveCell("2026-10-21", c.id, [
+      { ...all[0]!, kanbanSectionId: a.kanbanSectionId },
+      ...all.slice(1),
+    ]);
+    expect(await sec()).toBe(park.id);
+    // 섹션을 지운 뒤 되돌린 행은 TODO(외래 키 오류 없이)
+    await repo.saveCell("2026-10-21", c.id, all.slice(3));
+    await repo.kanban.deleteSection(park.id);
+    await repo.saveCell("2026-10-21", c.id, [{ ...all[0]!, kanbanSectionId: park.id }, ...all.slice(1)]);
+    expect(await sec()).toBeNull();
+    await db.close();
+  });
+
   it("주간 보드·중요 업무에서 완료해도 세부 함께 완료(D4)·이력 · 되살리면 함께 끝난 세부만(D7) · 섹션 항목 완료 = DONE", async () => {
     const { repo, db, c } = await seed();
     await repo.saveCell("2026-10-21", c.id, [
