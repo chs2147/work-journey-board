@@ -550,6 +550,7 @@ export const STR_BASE = {
     rest: (n: number, range: string) => `쉬는 구간 ${n}주 (${range}) — 업무가 종료된 동안`,
     boundary: { start: "▶ 시작", end: "■ 종료", resume: "▶ 재개" },
     openOnBoard: "보드에서 열기 ↗",
+    doneLater: (date: string, day: string) => `완료 ${date} (${day})`,
     itemAria: (day: string, text: string) => `${day} ${text} — 보드에서 열기`,
     flagged: "중요",
     repeat: "매주 반복",
@@ -1424,7 +1425,11 @@ export const STR_BASE = {
         desc: "공간 목록 · 이름·색·아이콘 · 새로 만들기",
         intro: "회사·개인처럼 기록을 따로 두는 공간입니다. 공간마다 폴더와 일지 파일이 따로 있습니다.",
       },
-      screen: { name: "화면", desc: "테마", intro: "앱의 색 테마를 고릅니다. 고르면 바로 바뀝니다." },
+      screen: {
+        name: "화면",
+        desc: "테마 · 시작 화면",
+        intro: "앱의 색 테마와 처음 보일 화면을 고릅니다. 고르면 바로 바뀝니다.",
+      },
       data: {
         name: "데이터·백업",
         desc: "저장 위치 · 백업 · 용량",
@@ -1463,6 +1468,10 @@ export const STR_BASE = {
     themeSignature: "따뜻한 베이지 바탕 · 고운돋움 글꼴",
     themeNote:
       "테마는 이 PC에 저장됩니다(일지 파일과 따로). 다른 PC에서 같은 일지를 열면 그 PC의 테마를 따릅니다. 시작 창도 같은 테마로 뜹니다.",
+    startView: "시작 화면",
+    startViewLabel: "앱을 열거나 공간을 바꾸면 처음 보일 화면 (이 일지에 저장)",
+    startViewBoard: "주간 보드",
+    startViewKanban: "칸반 보드",
     locationDesc: "일지 = 이 폴더의 파일 1개",
     folderLabel: "일지 폴더",
     backupDesc: "켤 때·닫을 때, 켜 둔 동안 2시간마다 자동",

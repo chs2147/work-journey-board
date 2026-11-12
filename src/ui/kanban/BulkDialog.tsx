@@ -6,7 +6,8 @@ import { localDate } from "../../domain/localTime";
 import { STR } from "../../shared/strings";
 import { useBoard } from "../board/boardStore";
 import { bulkComplete, bulkPreview, listBulk, undoBulk, useKanban } from "./kanbanStore";
-import { Menu, useModal } from "./KanbanView";
+import { Menu } from "./KanbanView";
+import { useModal } from "./kanbanUi";
 import styles from "./Kanban.module.css";
 
 const K = STR.kanban;

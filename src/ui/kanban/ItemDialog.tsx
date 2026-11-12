@@ -12,7 +12,7 @@ import { DueDatePopover, StartTimePopover } from "../board/ItemActions";
 import { dueView } from "../board/dueView";
 import { isComposingKey } from "../board/helpers";
 import { addItems, cardDrafts, replaceCard, useKanban } from "./kanbanStore";
-import { useModal } from "./KanbanView";
+import { useModal } from "./kanbanUi";
 import styles from "./Kanban.module.css";
 
 const K = STR.kanban;

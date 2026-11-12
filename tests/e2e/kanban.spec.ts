@@ -162,3 +162,62 @@ test("중요 업무 목록에서 체크 = DONE · 누르면 칸반 카드 강조
     page.getByTestId("kanban-done-row").filter({ hasText: "개발계 1차 배포 일정 확정(11/2)" }),
   ).toHaveCount(1);
 });
+
+test("타임라인 T1 요일별 묶음 · T2 기록일이 아닌 날 완료 = 실제 완료일", async ({ page }) => {
+  await openKanban(page);
+  // 10/21(수) 기록을 칸반에서 완료 → 완료일(오늘 시계) ≠ 기록일 → 완료일 칩
+  await card(page, "A협력사 현장 점검").dragTo(col(page, "done"));
+  await expect(page.getByTestId("kanban-done-row").filter({ hasText: "A협력사 현장 점검" })).toHaveCount(1);
+  await page.getByTestId("rail-insights").click();
+  await page.getByTestId("insight-category").filter({ hasText: "협력사 보안 점검" }).click();
+  const w43 = page.locator('[data-testid="timeline-week"][data-week="2026-W43"]');
+  await expect(w43).toBeVisible();
+  // T1: 날짜마다 요일 묶음 하나(같은 날짜가 두 번 나오지 않음)
+  const dates = await w43
+    .getByTestId("timeline-day")
+    .evaluateAll((els) => els.map((e) => e.getAttribute("data-date")));
+  expect(dates.length).toBeGreaterThan(0);
+  expect(new Set(dates).size).toBe(dates.length);
+  const wed = w43.locator('[data-testid="timeline-day"][data-date="2026-10-21"]');
+  await expect(wed).toContainText("수");
+  await expect(wed).toContainText("10/21");
+  // T2: 완료 항목에 실제 완료일
+  const item = wed.getByTestId("timeline-item").filter({ hasText: "A협력사 현장 점검" });
+  await expect(item.getByTestId("timeline-done")).toBeVisible();
+  await expect(item.getByTestId("timeline-done-later")).toHaveText(
+    /^완료 \d{4}-\d{2}-\d{2} \([월화수목금토일]\)$/,
+  );
+});
+
+test("설정 › 화면 › 시작 화면 = 칸반 보드 저장", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(`/?today=${TODAY}&sample=showcase`);
+  await page.getByTestId("week-title").waitFor();
+  await page.getByTestId("rail-settings").click();
+  await page.locator("#settings-tab-screen").click();
+  await expect(page.getByTestId("start-view-select")).toHaveValue("board");
+  await page.getByTestId("start-view-select").selectOption("kanban");
+  await page.getByTestId("rail-board").click();
+  await page.getByTestId("rail-settings").click();
+  await page.locator("#settings-tab-screen").click();
+  await expect(page.getByTestId("start-view-select")).toHaveValue("kanban");
+});
+
+test("Cabi.NET 줄을 카드에 끌어 놓으면 그 항목에 연결(카드에 🗄 수)", async ({ page }) => {
+  await openKanban(page);
+  const c = card(page, "A협력사 현장 점검");
+  await expect(c.getByTestId("kanban-cabinet-count")).toHaveCount(0);
+  await page.getByTestId("rail-cabinet").click();
+  await expect(page.getByTestId("cabinet")).toBeVisible();
+  // Cabi.NET은 별도 창(실앱)·떠 있는 창(브라우저 모드)이라 같은 DataTransfer로 끌기 → 놓기를 이어 보낸다
+  const row = await page.getByTestId("cabinet-row").first().elementHandle();
+  await c.evaluate((target, src) => {
+    const dt = new DataTransfer();
+    src!.dispatchEvent(new DragEvent("dragstart", { bubbles: true, cancelable: true, dataTransfer: dt }));
+    target.dispatchEvent(new DragEvent("dragover", { bubbles: true, cancelable: true, dataTransfer: dt }));
+    target.dispatchEvent(new DragEvent("drop", { bubbles: true, cancelable: true, dataTransfer: dt }));
+    src!.dispatchEvent(new DragEvent("dragend", { bubbles: true, dataTransfer: dt }));
+  }, row);
+  await expect(page.getByRole("status").filter({ hasText: "이 항목에 연결했습니다" })).toBeVisible();
+  await expect(c.getByTestId("kanban-cabinet-count")).toBeVisible();
+});

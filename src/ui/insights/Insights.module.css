@@ -738,6 +738,47 @@
   display: inline-flex;
 }
 
+/* 기록일이 아닌 날 완료한 항목의 실제 완료일(improve-v21-spec 9절 T2) */
+.doneLater {
+  flex: 0 0 auto;
+  padding: 0 6px;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  font-size: var(--fs-xs);
+  color: var(--text-2);
+  white-space: nowrap;
+}
+
+/* 요일별 묶음(T1): 왼쪽 요일 + 월/일 한 번, 오른쪽 그날 항목 — 묶음 사이 옅은 점선 */
+.dayGroup {
+  display: flex;
+  gap: 8px;
+  padding: 4px 0;
+}
+.dayGroup + .dayGroup {
+  border-top: 1px dashed var(--line);
+}
+.dayLabel {
+  flex: 0 0 36px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding-top: 3px;
+  line-height: 1.2;
+  color: var(--text-2);
+}
+.dayLabel b {
+  font-weight: var(--fw-bold);
+  color: var(--text-1);
+}
+.dayLabel small {
+  font-size: var(--fs-xs);
+}
+.dayItems {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 .text {
   flex: 1 1 auto;
   min-width: 0;

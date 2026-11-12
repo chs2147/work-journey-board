@@ -252,7 +252,30 @@ export function SettingsView() {
   const imageBytes = imageUse?.bytes ?? 0;
   const imageShare = size ? Math.min(100, Math.round((imageBytes / size) * 100)) : 0;
 
-  const screen = <ThemeSettings />;
+  const screen = (
+    <>
+      <ThemeSettings />
+      {/* 시작 화면(improve-v21-spec 9절): 앱을 열면 처음 보일 화면 */}
+      <Card id="s-start-view" title={STR.settings.startView} testId="start-view-settings">
+        <label className={styles.setRow}>
+          <span className={styles.rowText}>
+            <span className={styles.rowDesc}>{STR.settings.startViewLabel}</span>
+          </span>
+          <select
+            value={settings?.ui.startView ?? "board"}
+            data-testid="start-view-select"
+            onChange={async (e) => {
+              const v = e.target.value === "kanban" ? "kanban" : "board";
+              setSettings(await ready.repo.updateSettings({ ui: { startView: v } }));
+            }}
+          >
+            <option value="board">{STR.settings.startViewBoard}</option>
+            <option value="kanban">{STR.settings.startViewKanban}</option>
+          </select>
+        </label>
+      </Card>
+    </>
+  );
 
   const data = (
     <>

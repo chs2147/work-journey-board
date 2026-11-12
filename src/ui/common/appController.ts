@@ -840,6 +840,9 @@ if (typeof window !== "undefined")
           "cabi_board",
           "cabi_asset",
           "cabi_entry_link",
+          "kanban_section",
+          "item_status_log",
+          "kanban_bulk",
         ] as const;
         const counts: Record<string, number> = {};
         for (const table of tables)

@@ -8,6 +8,8 @@ import {
   addDays,
   addWeeks,
   compareWeekId,
+  DAY_LABELS,
+  dayIndex,
   formatDate,
   parseDate,
   parseWeekId,
@@ -362,6 +364,17 @@ export interface TimelineMeta {
   endDate: DateStr | null;
 }
 
+/** 한 주의 항목을 날짜별로 묶는다(순서 유지 — 세부 항목은 본 항목과 같은 날이라 함께 묶임, improve-v21-spec 9절 T1) */
+export function dayGroups<T extends { date: DateStr }>(items: T[]): { date: DateStr; items: T[] }[] {
+  const out: { date: DateStr; items: T[] }[] = [];
+  for (const it of items) {
+    const last = out[out.length - 1];
+    if (last?.date === it.date) last.items.push(it);
+    else out.push({ date: it.date, items: [it] });
+  }
+  return out;
+}
+
 /** 지금 기간 전체를 평문으로(접힌 달도 펼친 것처럼). ★·↻·연차는 넣지 않고 연결 메모는 `[메모]` 줄 */
 export function timelineText(rows: TimelineRow[], meta: TimelineMeta): string {
   const c = timelineCounts(rows);
@@ -380,10 +393,14 @@ export function timelineText(rows: TimelineRow[], meta: TimelineMeta): string {
     switch (r.kind) {
       case "week": {
         const lines = [`■ ${r.weekId} (${md(r.start)}~${md(r.end)})`];
-        for (const it of r.items) {
-          lines.push(...summaryItemLines(it));
-          for (const memo of it.memos) {
-            memo.split("\n").forEach((l, i) => lines.push((i === 0 ? "  [메모] " : "         ") + l));
+        // 요일별 묶음(improve-v21-spec 9절 T1): 날짜 머리 `(월) 10/12` 한 번 + 그날 항목
+        for (const g of dayGroups(r.items)) {
+          lines.push(`(${DAY_LABELS[dayIndex(g.date)]}) ${md(g.date)}`);
+          for (const it of g.items) {
+            lines.push(...summaryItemLines(it, { dayTag: false }));
+            for (const memo of it.memos) {
+              memo.split("\n").forEach((l, i) => lines.push((i === 0 ? "  [메모] " : "         ") + l));
+            }
           }
         }
         blocks.push(lines.join("\n"));

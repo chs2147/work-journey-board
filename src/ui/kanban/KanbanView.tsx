@@ -17,6 +17,7 @@ import { STR } from "../../shared/strings";
 import { revealItem, useBoard } from "../board/boardStore";
 import { dueView } from "../board/dueView";
 import { CAB_MIME } from "../cabinet/CabinetPanel";
+import { SECTION_HEX, useModal } from "./kanbanUi";
 import {
   closeKanban,
   cardsOf,
@@ -48,14 +49,6 @@ const K = STR.kanban;
 export const CARD_MIME = "application/x-wjb-kanban-card";
 /** 끄는 중인 카드(dragover 중엔 자료를 읽을 수 없음) */
 let dragCard: { id: string; from: SectionKey; children: number } | null = null;
-
-export const SECTION_HEX: Record<SectionColor, string> = {
-  violet: "#9a7bd0",
-  amber: "#d99a1e",
-  teal: "#4aa3a3",
-  rose: "#c96a8a",
-  gray: "#8a8983",
-};
 
 const PERIODS = ["today", "week", "2w", "4w", "12w", "all", "custom"] as const;
 
@@ -1064,36 +1057,4 @@ function ConfirmDelete({
       </div>
     </dialog>
   );
-}
-
-/** <dialog>.showModal() — 최상위 레이어(1.24.2와 같은 방식), Esc = 닫기, 키 입력이 전역 단축키로 새지 않게 */
-export function useModal(onClose: () => void) {
-  const ref = useRef<HTMLDialogElement>(null);
-  const closeRef = useRef(onClose);
-  useEffect(() => {
-    closeRef.current = onClose;
-  }, [onClose]);
-  useEffect(() => {
-    const d = ref.current;
-    if (!d) return;
-    const prev = document.activeElement as HTMLElement | null;
-    if (!d.open) d.showModal();
-    const cancel = (e: Event) => {
-      e.preventDefault();
-      closeRef.current();
-    };
-    // React(루트 요소)가 받은 뒤 document에서 멈춘다 — 창 안 입력기는 동작하고 window의 전역 단축키로는 새지 않는다
-    const key = (e: globalThis.KeyboardEvent) => {
-      if (e.target instanceof Node && d.contains(e.target)) e.stopPropagation();
-    };
-    d.addEventListener("cancel", cancel);
-    document.addEventListener("keydown", key);
-    return () => {
-      d.removeEventListener("cancel", cancel);
-      document.removeEventListener("keydown", key);
-      if (d.open) d.close();
-      prev?.focus?.();
-    };
-  }, []);
-  return ref;
 }
