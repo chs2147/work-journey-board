@@ -727,7 +727,7 @@ test("v21 칸반 섹션·상태 이력·시작 화면은 공간마다 따로: �
   // 회사: 항목 추가 → 섹션 만들기 → 카드를 섹션으로 → 시작 화면 = 칸반
   await page.keyboard.press("Alt+Digit6");
   await expect(page.getByTestId("kanban-view")).toBeVisible();
-  await page.getByTestId("kanban-add-item").click();
+  await page.locator("[data-testid='kanban-col-todo'] [data-testid='kanban-add-card']").click();
   const dlg = page.getByTestId("kanban-item-dialog");
   await dlg.getByTestId("kanban-item-category").selectOption({ index: 0 });
   await dlg.getByTestId("kanban-item-line").first().fill("가상 공간 칸반 카드");

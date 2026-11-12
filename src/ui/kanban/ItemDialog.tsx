@@ -32,7 +32,14 @@ export function ItemDialog({ target, onClose }: { target: ItemDialogTarget; onCl
   const [lines, setLines] = useState<ItemDraft[]>(() => [newDraft()]);
   const [repeat, setRepeat] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [pop, setPop] = useState<{ kind: "due" | "time"; index: number } | null>(null);
+  const [pop, setPop] = useState<{ kind: "due" | "time"; index: number; row?: boolean } | null>(null);
+  // 위쪽 시작 시간·마감일 행이 적용될 본 항목 = 지금 초점 줄(세부면 그 본 항목, improve-v22-spec 6절)
+  const [curLine, setCurLine] = useState(0);
+  const mainIndex = (() => {
+    for (let i = Math.min(curLine, lines.length - 1); i >= 0; i--) if (lines[i]!.depth === 0) return i;
+    return 0;
+  })();
+  const main = lines[mainIndex];
   const [busy, setBusy] = useState(false);
   const refs = useRef<(HTMLTextAreaElement | null)[]>([]);
   const focusAt = useRef<number | null>(0);
@@ -68,6 +75,8 @@ export function ItemDialog({ target, onClose }: { target: ItemDialogTarget; onCl
     }
   });
 
+  /** 이번 주(0)·다음 주(1) 금요일 */
+  const fri = (n: number): DateStr => addDays(weekRange(addWeeks(weekIdOf(today), n)).start, 4);
   const update = (i: number, patch: Partial<ItemDraft>) =>
     setLines((ls) => ls.map((l, j) => (j === i ? { ...l, ...patch } : l)));
 
@@ -151,18 +160,27 @@ export function ItemDialog({ target, onClose }: { target: ItemDialogTarget; onCl
       aria-label={edit ? K.editTitle : K.addTitle}
       data-testid="kanban-item-dialog"
     >
-      <h2>{edit ? K.editTitle : K.addTitle}</h2>
+      <h2>
+        {edit
+          ? K.editTitle
+          : K.addTitleIn(sectionId ? (s.sections.find((x) => x.id === sectionId)?.name ?? K.todo) : K.todo)}
+      </h2>
       {!edit && (
         <>
-          <div className={styles.row}>
-            <label className={styles.label} htmlFor="kanban-item-cat">
-              {K.addCategory}
-            </label>
+          {/* 업무 고르기 띠(6절): 어느 업무의 카드인지 가장 먼저 보이게 — 업무 색 띠(직각)·옅은 업무 색 바탕·큰 글자 */}
+          <label
+            className={styles.catBand}
+            style={{
+              ["--band" as string]: `var(--cat-${cats.find((c) => c.id === categoryId)?.color ?? "c1"})`,
+            }}
+            htmlFor="kanban-item-cat"
+          >
+            <span className={styles.catBandDot} aria-hidden="true" />
             <select
               id="kanban-item-cat"
-              className={styles.select}
-              style={{ height: 30 }}
+              className={styles.catBandSelect}
               value={categoryId}
+              aria-label={K.addCategory}
               data-testid="kanban-item-category"
               onChange={(e) => setCategoryId(e.target.value)}
             >
@@ -172,7 +190,7 @@ export function ItemDialog({ target, onClose }: { target: ItemDialogTarget; onCl
                 </option>
               ))}
             </select>
-          </div>
+          </label>
           <div className={styles.row}>
             <label className={styles.label} htmlFor="kanban-item-date">
               {K.addDate}
@@ -230,6 +248,113 @@ export function ItemDialog({ target, onClose }: { target: ItemDialogTarget; onCl
           </div>
         </>
       )}
+      {main && (
+        <>
+          {/* 시작 시간·마감일은 결이 달라 행을 따로(6절, 2026-11-12 사용자 지시) — 지금 줄의 본 항목에 적용 */}
+          <div className={styles.row} style={{ position: "relative" }}>
+            <span className={styles.label}>{K.startLabel}</span>
+            <div className={styles.inline}>
+              <button
+                type="button"
+                className={`${styles.fieldBtn} ${main.startTime ? styles.fieldOn : ""}`}
+                data-testid="kanban-item-start"
+                onClick={() => setPop({ kind: "time", index: mainIndex, row: true })}
+              >
+                {main.startTime ? `⏰ ${main.startTime}` : K.startSet}
+              </button>
+              {main.startTime && (
+                <button
+                  type="button"
+                  className={`${styles.btn} ${styles.ghost}`}
+                  aria-label={K.clearValue}
+                  onClick={() => update(mainIndex, { startTime: null })}
+                >
+                  ×
+                </button>
+              )}
+              <span className={styles.hint}>{K.startHint}</span>
+            </div>
+            {pop?.row && pop.kind === "time" && (
+              <div
+                className={styles.rowPop}
+                onKeyDown={(e) => (e.stopPropagation(), e.key === "Escape" && setPop(null))}
+              >
+                <StartTimePopover
+                  date={date}
+                  initial={main.startTime ?? defaultStartTime(date === today, new Date())}
+                  hasValue={!!main.startTime}
+                  onSave={(t) => {
+                    update(mainIndex, { startTime: t });
+                    setPop(null);
+                  }}
+                  onClose={() => setPop(null)}
+                />
+              </div>
+            )}
+          </div>
+          <div className={styles.row} style={{ position: "relative" }}>
+            <span className={styles.label}>{K.dueLabel}</span>
+            <div className={styles.inline}>
+              <button
+                type="button"
+                className={`${styles.fieldBtn} ${main.dueDate ? styles.fieldOn : ""}`}
+                data-testid="kanban-item-due"
+                onClick={() => setPop({ kind: "due", index: mainIndex, row: true })}
+              >
+                {main.dueDate ? dueView(today, main.dueDate).chip : K.dueSet}
+              </button>
+              {main.dueDate ? (
+                <button
+                  type="button"
+                  className={`${styles.btn} ${styles.ghost}`}
+                  aria-label={K.clearValue}
+                  onClick={() => update(mainIndex, { dueDate: null })}
+                >
+                  ×
+                </button>
+              ) : (
+                (
+                  [
+                    [K.dueThisFri, fri(0)],
+                    [K.dueNextFri, fri(1)],
+                  ] as const
+                ).map(([label, d]) => (
+                  <button
+                    key={label}
+                    type="button"
+                    className={styles.btn}
+                    onClick={() => update(mainIndex, { dueDate: d, flagged: true, flagDoneAt: null })}
+                  >
+                    {label}
+                  </button>
+                ))
+              )}
+              <span className={styles.hint}>{K.dueHint}</span>
+            </div>
+            {pop?.row && pop.kind === "due" && (
+              <div
+                className={styles.rowPop}
+                onKeyDown={(e) => (e.stopPropagation(), e.key === "Escape" && setPop(null))}
+              >
+                <DueDatePopover
+                  text={main.text}
+                  today={today}
+                  initial={main.dueDate ?? null}
+                  hasValue={!!main.dueDate}
+                  onSave={(d) => {
+                    update(
+                      mainIndex,
+                      d ? { dueDate: d, flagged: true, flagDoneAt: null } : { dueDate: null },
+                    );
+                    setPop(null);
+                  }}
+                  onClose={() => setPop(null)}
+                />
+              </div>
+            )}
+          </div>
+        </>
+      )}
       {edit && <p className={styles.hint}>{K.editHint}</p>}
       <div className={styles.row} style={{ alignItems: "start" }}>
         <span className={styles.label} style={{ paddingTop: 8 }}>
@@ -275,6 +400,7 @@ export function ItemDialog({ target, onClose }: { target: ItemDialogTarget; onCl
                     setError(null);
                   }}
                   onKeyDown={(e) => onKey(e, i)}
+                  onFocus={() => setCurLine(i)}
                 />
                 <button
                   type="button"
@@ -304,7 +430,7 @@ export function ItemDialog({ target, onClose }: { target: ItemDialogTarget; onCl
                 >
                   {l.startTime ? `⏰ ${l.startTime}` : "⏰"}
                 </button>
-                {pop?.index === i && (
+                {pop?.index === i && !pop.row && (
                   <div
                     style={{ position: "absolute", right: 0, top: "100%", zIndex: 5 }}
                     onKeyDown={(e) => {
@@ -354,18 +480,15 @@ export function ItemDialog({ target, onClose }: { target: ItemDialogTarget; onCl
           </label>
         </div>
       )}
-      <p className={styles.hint} style={{ marginLeft: 96 }}>
-        {K.addHint}
-      </p>
       {error && (
         <p className={styles.error} role="alert" data-testid="kanban-item-error">
           {error}
         </p>
       )}
       <div className={styles.acts}>
-        {!edit && <span className={styles.hint}>{K.addWhere}</span>}
-        <button type="button" className={styles.btn} onClick={close}>
-          {K.cancel}
+        {/* 하단은 단추만 — 단축키 안내 글 없음(2026-11-12 사용자 지시) */}
+        <button type="button" className={styles.btn} data-testid="kanban-item-close" onClick={close}>
+          {K.close}
         </button>
         {!edit && (
           <button

@@ -615,3 +615,168 @@
 .popWrap {
   position: relative;
 }
+
+/* 상단 막대 안 칸반 도구(improve-v22-spec 5절) */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+.filtered {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.catDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex: none;
+}
+.catMenu {
+  position: absolute;
+  top: 34px;
+  left: 0;
+  width: 300px;
+  z-index: 40;
+}
+.radio {
+  width: 13px;
+  height: 13px;
+  border: 1px solid var(--text-3);
+  border-radius: 50%;
+  display: inline-block;
+  vertical-align: -2px;
+  background: var(--surface-card);
+}
+.radioOn {
+  border: 4px solid var(--accent);
+}
+.catRow {
+  display: flex;
+  align-items: center;
+}
+.catRow > button:first-child {
+  flex: 1;
+  justify-content: flex-start !important;
+  gap: 6px;
+}
+.catRowOn {
+  background: var(--accent-soft);
+}
+.check {
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--text-3);
+  display: inline-grid;
+  place-items: center;
+  font-size: 10px;
+  color: var(--on-accent, #fff);
+  background: var(--surface-card);
+  flex: none;
+}
+.checkOn {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.only {
+  flex: none !important;
+  width: auto !important;
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+  visibility: hidden;
+}
+.catRow:hover .only,
+.catRow:focus-within .only {
+  visibility: visible;
+}
+
+/* 카드 추가 창(improve-v22-spec 6절) — 업무 띠(직각)·시작 시간/마감일 행 */
+.catBand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 var(--sp-3);
+  padding: 8px 12px;
+  border-left: 6px solid var(--band);
+  background: color-mix(in srgb, var(--band) 12%, var(--surface-card));
+  border-radius: 0;
+}
+.catBandDot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--band);
+  flex: none;
+}
+.catBandSelect {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-1);
+  font: inherit;
+  font-size: 16px;
+  padding: 2px 0;
+  cursor: pointer;
+}
+.fieldBtn {
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--btn-line);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-2);
+  font: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.fieldOn {
+  border-color: #e0b070;
+  background: #fdf3e0;
+  color: #8a5a12;
+}
+.rowPop {
+  position: absolute;
+  left: 96px;
+  top: 100%;
+  z-index: 6;
+}
+
+/* 섹션 머리 끌기(improve-v22-spec 3절) — 놓일 자리 세로 표시선(직각) */
+.colHeadDrag {
+  cursor: grab;
+}
+.colHeadDrag:active {
+  cursor: grabbing;
+}
+.colHeadDrag:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.secBefore,
+.secAfter {
+  position: relative;
+}
+.secBefore::before,
+.secAfter::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--accent);
+  border-radius: 0;
+  z-index: 3;
+}
+.secBefore::before {
+  left: -7px;
+}
+.secAfter::after {
+  right: -7px;
+}

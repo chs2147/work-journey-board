@@ -1,23 +1,16 @@
 // 칸반 보드 화면(docs/improve-v21-spec.md 2·3·4절, 시안 docs/mockups/v21 ①②⑤).
 // 카드 전체가 끌기 대상(HTML5 DnD) — 열에 놓으면 상태 변경, Cabinet 줄을 카드에 놓으면 그 항목에 연결.
 import { useEffect, useLayoutEffect, useRef, useState, type DragEvent, type KeyboardEvent } from "react";
-import {
-  DONE,
-  TODO,
-  doneGroupOf,
-  periodRange,
-  type KanbanSection,
-  type SectionKey,
-} from "../../domain/kanban";
+import { DONE, TODO, doneGroupOf, type KanbanSection, type SectionKey } from "../../domain/kanban";
 import type { KanbanCard, StatusLogRow } from "../../data/kanbanRepository";
 import { localDate } from "../../domain/localTime";
 import { shortDateLabel } from "../../domain/week";
+import { matchesTagFilter } from "../../domain/tags";
 import { STR } from "../../shared/strings";
 import { revealItem, useBoard } from "../board/boardStore";
 import { dueView } from "../board/dueView";
 import { CAB_MIME } from "../cabinet/CabinetPanel";
 import { useModal } from "./kanbanUi";
-import { IconItemAdd, IconPeriod, IconSectionAdd } from "../common/icons";
 import {
   closeKanban,
   cardsOf,
@@ -30,6 +23,7 @@ import {
   load,
   moveCard,
   moveSection,
+  placeSection,
   neighborKey,
   patchCard,
   setDragging,
@@ -50,33 +44,25 @@ export const CARD_MIME = "application/x-wjb-kanban-card";
 /** 끄는 중인 카드(dragover 중엔 자료를 읽을 수 없음) */
 let dragCard: { id: string; from: SectionKey; children: number } | null = null;
 
-const PERIODS = ["today", "week", "2w", "4w", "12w", "all", "custom"] as const;
-
-/** 기간 단추 툴팁: 이름 + 실제 날짜 범위(전체·지정일은 설명) */
-function periodTip(p: (typeof PERIODS)[number], today: string): string {
-  const name = K.periods[p];
-  if (p === "all") return `${name} · ${K.periodAllHint}`;
-  if (p === "custom") return `${name} · ${K.periodCustomHint}`;
-  const r = periodRange({ period: p, from: null, to: null }, today);
-  if (!r.from || !r.to) return name;
-  return r.from === r.to
-    ? `${name} · ${shortDateLabel(r.from)}`
-    : `${name} · ${shortDateLabel(r.from)} ~ ${shortDateLabel(r.to)}`;
-}
-
 function md(at: string) {
   return shortDateLabel(localDate(new Date(at))).replace(" ", "");
 }
 
 export function KanbanView() {
   const s = useKanban();
-  const today = useBoard((b) => b.today);
+  // 상단 [업무 추가] 창이 닫히면 업무 목록을 다시 읽는다(새 업무가 카드 추가 창·거르기에 바로 보이게)
+  const addOpen = useBoard((b) => b.addOpen);
+  const wasAdding = useRef(false);
+  useEffect(() => {
+    if (wasAdding.current && !addOpen) void load();
+    wasAdding.current = addOpen;
+  }, [addOpen]);
   const [dialog, setDialog] = useState<ItemDialogTarget | null>(null);
-  const [sectionDlg, setSectionDlg] = useState<{ id: string | null } | null>(null);
+  const sectionDlg = useKanban((k) => k.sectionDialog);
+  const setSectionDlg = (v: { id: string | null } | null) => useKanban.setState({ sectionDialog: v });
   const [confirmDel, setConfirmDel] = useState<KanbanSection | null>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
   const [recentBulk, setRecentBulk] = useState<{ x: number; y: number } | null>(null);
-  const [catOpen, setCatOpen] = useState(false);
   const keys: SectionKey[] = [TODO, ...s.sections.map((x) => x.id), DONE];
 
   // N = 항목 추가(입력에 초점이 없을 때)
@@ -94,96 +80,8 @@ export function KanbanView() {
     return () => window.removeEventListener("keydown", key);
   }, [dialog, sectionDlg, bulkOpen]);
 
-  const pickedAll = s.filter.categories.length === 0;
   return (
     <section className={styles.view} aria-label={K.title} data-testid="kanban-view">
-      <div className={styles.bar}>
-        <div className={styles.popWrap}>
-          <button
-            type="button"
-            className={styles.btn}
-            aria-haspopup="true"
-            aria-expanded={catOpen}
-            data-testid="kanban-cat-filter"
-            onClick={() => setCatOpen((o) => !o)}
-          >
-            {K.categories(s.filter.categories.length, pickedAll)} ▾
-          </button>
-          {catOpen && <CategoryFilter onClose={() => setCatOpen(false)} />}
-        </div>
-        {/* 기간 = 아이콘 세그먼트(시안 period-icons A안) — 이름·실제 날짜는 툴팁, 짧은 기간 | 긴 기간 | 전체·지정 사이 구분 */}
-        <div
-          className={`${styles.seg} ${styles.iconSeg}`}
-          role="group"
-          aria-label={K.periodAria}
-          data-testid="kanban-period"
-        >
-          {PERIODS.map((p, i) => {
-            const tip = periodTip(p, today);
-            return (
-              <span key={p} className={styles.segItem}>
-                {(i === 2 || i === 5) && <span className={styles.segGap} aria-hidden="true" />}
-                <button
-                  type="button"
-                  aria-pressed={s.filter.period === p}
-                  aria-label={K.periods[p]}
-                  title={tip}
-                  data-period={p}
-                  onClick={() =>
-                    setFilter(
-                      p === "custom" && !s.filter.from
-                        ? { period: p, from: today, to: today }
-                        : { period: p },
-                    )
-                  }
-                >
-                  <IconPeriod kind={p} />
-                </button>
-              </span>
-            );
-          })}
-        </div>
-        {s.filter.period === "custom" && (
-          <span className={styles.inline}>
-            <input
-              type="date"
-              className={styles.dateInput}
-              aria-label={K.from}
-              value={s.filter.from ?? ""}
-              onChange={(e) => setFilter({ from: e.target.value || null })}
-            />
-            ~
-            <input
-              type="date"
-              className={styles.dateInput}
-              aria-label={K.to}
-              value={s.filter.to ?? ""}
-              onChange={(e) => setFilter({ to: e.target.value || null })}
-            />
-          </span>
-        )}
-        <span className={styles.spacer} />
-        {/* 주간 보드 상단 단추와 같은 모양: 아이콘 + 글자(TopBar textButton) */}
-        <button
-          type="button"
-          className={styles.actBtn}
-          title={K.addItemTitle}
-          data-testid="kanban-add-item"
-          onClick={() => setDialog({ mode: "add", sectionId: null })}
-        >
-          <IconItemAdd />
-          {K.addItem}
-        </button>
-        <button
-          type="button"
-          className={styles.actBtn}
-          data-testid="kanban-add-section"
-          onClick={() => setSectionDlg({ id: null })}
-        >
-          <IconSectionAdd />
-          {K.addSection}
-        </button>
-      </div>
       <div className={styles.cols}>
         {keys.map((key) => (
           <Column
@@ -224,70 +122,9 @@ export function KanbanView() {
   );
 }
 
-function CategoryFilter({ onClose }: { onClose(): void }) {
-  const s = useKanban();
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const out = (e: MouseEvent) => {
-      if (!ref.current?.parentElement?.contains(e.target as Node)) onClose();
-    };
-    document.addEventListener("mousedown", out);
-    return () => document.removeEventListener("mousedown", out);
-  }, [onClose]);
-  const list = s.categories.filter((c) => s.filter.includeEnded || !c.ended);
-  const picked = s.filter.categories;
-  const toggle = (id: string) => {
-    const all = list.map((c) => c.id);
-    const base = picked.length ? picked : all;
-    const next = base.includes(id) ? base.filter((x) => x !== id) : [...base, id];
-    setFilter({ categories: next.length === all.length ? [] : next });
-  };
-  return (
-    <div
-      ref={ref}
-      className={styles.menu}
-      style={{ position: "absolute", top: 32, left: 0 }}
-      role="dialog"
-      aria-label={K.categories(0, true)}
-      data-testid="kanban-cat-menu"
-      onKeyDown={(e) => {
-        if (e.key === "Escape") {
-          e.stopPropagation();
-          onClose();
-        }
-      }}
-    >
-      <button type="button" onClick={() => setFilter({ categories: [] })}>
-        {K.categories(0, true)}
-        {picked.length === 0 && <span>✓</span>}
-      </button>
-      <hr />
-      {list.map((c) => (
-        <button
-          key={c.id}
-          type="button"
-          role="menuitemcheckbox"
-          aria-checked={!picked.length || picked.includes(c.id)}
-          onClick={() => toggle(c.id)}
-        >
-          <span>
-            <span style={{ color: `var(--cat-${c.color})` }}>●</span> {c.name}
-          </span>
-          {(!picked.length || picked.includes(c.id)) && <span>✓</span>}
-        </button>
-      ))}
-      <hr />
-      <label className={styles.checkRow} style={{ padding: "2px 10px" }}>
-        <input
-          type="checkbox"
-          checked={s.filter.includeEnded}
-          onChange={(e) => setFilter({ includeEnded: e.target.checked })}
-        />
-        {K.includeEnded}
-      </label>
-    </div>
-  );
-}
+/** 섹션 머리 끌기(사용자 섹션만 — TODO 맨 앞·DONE 맨 끝 고정) */
+const SECTION_MIME = "application/x-wjb-kanban-section";
+let dragSection: string | null = null;
 
 function Column({
   sectionKey,
@@ -314,22 +151,64 @@ function Column({
 }) {
   const s = useKanban();
   const [over, setOver] = useState(false);
+  const [secOver, setSecOver] = useState<"before" | "after" | null>(null);
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
-  const cards = cardsOf(sectionKey, s);
+  // 상단 태그 거르기(주간 보드와 같은 것, improve-v22-spec 5절) — 고른 태그가 있는 업무의 카드만
+  const tagFilter = useBoard((b) => b.tagFilter);
+  const categoryTags = useBoard((b) => b.categoryTags);
+  const cards = cardsOf(sectionKey, s).filter(
+    (c) => !tagFilter.length || matchesTagFilter(categoryTags[c.categoryId] ?? [], tagFilter),
+  );
   const isDone = sectionKey === DONE;
   const name = sectionKey === TODO ? K.todo : isDone ? K.done : (section?.name ?? "");
   // 섹션 색은 무채색 두 가지만(업무 색과 혼동 방지): DONE만 진한 회색, TODO·사용자 섹션은 모두 같은 회색
   const color = isDone ? "var(--kanban-done)" : "var(--kanban-section)";
-  const total = isDone ? s.doneTotal : cards.length;
+  const total = isDone && !tagFilter.length ? s.doneTotal : cards.length;
   const canDrop = () => !!dragCard && dragCard.from !== sectionKey;
 
+  /** 놓일 자리 = 사용자 섹션 순서 안의 번호. TODO에 놓으면 맨 앞, DONE에 놓으면 맨 끝 */
+  const secIndex = (side: "before" | "after") => {
+    if (sectionKey === TODO) return 0;
+    if (isDone) return s.sections.length;
+    const i = s.sections.findIndex((x) => x.id === sectionKey);
+    return side === "before" ? i : i + 1;
+  };
   const onDragOver = (e: DragEvent) => {
+    if ([...e.dataTransfer.types].includes(SECTION_MIME)) {
+      if (!dragSection || dragSection === sectionKey) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      const r = e.currentTarget.getBoundingClientRect();
+      const side =
+        sectionKey === TODO
+          ? "before"
+          : isDone
+            ? "after"
+            : e.clientX < r.left + r.width / 2
+              ? "before"
+              : "after";
+      // TODO 오른쪽·DONE 왼쪽에 표시선(그 자리로 들어감)
+      const shown = sectionKey === TODO ? "after" : isDone ? "before" : side;
+      if (secOver !== shown) setSecOver(shown);
+      return;
+    }
     if (![...e.dataTransfer.types].includes(CARD_MIME) || !canDrop()) return;
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
     if (!over) setOver(true);
   };
   const onDrop = (e: DragEvent) => {
+    if ([...e.dataTransfer.types].includes(SECTION_MIME)) {
+      e.preventDefault();
+      const id = dragSection;
+      const side = secOver;
+      setSecOver(null);
+      dragSection = null;
+      if (!id || !side || id === sectionKey) return;
+      const to = sectionKey === TODO ? 0 : isDone ? s.sections.length : secIndex(side);
+      void placeSection(id, to);
+      return;
+    }
     if (![...e.dataTransfer.types].includes(CARD_MIME)) return;
     e.preventDefault();
     setOver(false);
@@ -343,16 +222,53 @@ function Column({
 
   return (
     <div
-      className={`${styles.col} ${isDone ? styles.colDone : ""} ${over ? styles.colOver : ""}`}
+      className={`${styles.col} ${isDone ? styles.colDone : ""} ${over ? styles.colOver : ""} ${secOver === "before" ? styles.secBefore : secOver === "after" ? styles.secAfter : ""}`}
       data-testid={`kanban-col-${isDone ? "done" : sectionKey === TODO ? "todo" : "section"}`}
       data-section={sectionKey}
       onDragOver={onDragOver}
       onDragLeave={(e) => {
-        if (!e.currentTarget.contains(e.relatedTarget as Node)) setOver(false);
+        if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+          setOver(false);
+          setSecOver(null);
+        }
       }}
       onDrop={onDrop}
     >
-      <div className={styles.colHead} style={{ borderTopColor: color }}>
+      <div
+        className={`${styles.colHead} ${section ? styles.colHeadDrag : ""}`}
+        style={{ borderTopColor: color }}
+        data-testid="kanban-col-head"
+        {...(section
+          ? {
+              draggable: true,
+              tabIndex: 0,
+              title: K.sectionDragTip,
+              "aria-roledescription": K.sectionDragTip,
+              onDragStart: (e: DragEvent) => {
+                if ((e.target as HTMLElement).closest("button,select,input")) return e.preventDefault();
+                dragSection = section.id;
+                e.dataTransfer.setData(SECTION_MIME, section.id);
+                e.dataTransfer.effectAllowed = "move";
+              },
+              onDragEnd: () => {
+                dragSection = null;
+              },
+              onKeyDown: (e: KeyboardEvent) => {
+                if (!e.altKey || !e.shiftKey || (e.key !== "ArrowLeft" && e.key !== "ArrowRight")) return;
+                if (e.target !== e.currentTarget) return;
+                e.preventDefault();
+                const i = s.sections.findIndex((x) => x.id === section.id);
+                void placeSection(section.id, e.key === "ArrowLeft" ? i - 1 : i + 2).then(() =>
+                  document
+                    .querySelector<HTMLElement>(
+                      `[data-section="${section.id}"] [data-testid="kanban-col-head"]`,
+                    )
+                    ?.focus(),
+                );
+              },
+            }
+          : {})}
+      >
         <span className={styles.colName} data-testid="kanban-col-name">
           {name}
         </span>
@@ -446,7 +362,7 @@ function Column({
       </div>
       <div className={styles.list} data-drag-scroll>
         {!isDone && (
-          <button type="button" className={styles.addCard} onClick={onAdd}>
+          <button type="button" className={styles.addCard} data-testid="kanban-add-card" onClick={onAdd}>
             ＋ {K.addCard}
           </button>
         )}

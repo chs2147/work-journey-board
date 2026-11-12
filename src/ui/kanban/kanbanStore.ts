@@ -51,6 +51,8 @@ export interface KanbanState {
   dragging: string | null;
   /** 업무 목록(필터·추가 창) — 종료 여부 포함 */
   categories: { id: string; name: string; color: string; ended: boolean }[];
+  /** 섹션 추가/이름 바꾸기 창(상단 막대 [섹션 추가]도 연다, improve-v22-spec 5절) */
+  sectionDialog: { id: string | null } | null;
 }
 
 const initial: KanbanState = {
@@ -65,6 +67,7 @@ const initial: KanbanState = {
   highlight: null,
   dragging: null,
   categories: [],
+  sectionDialog: null,
 };
 
 export const useKanban = create<KanbanState>(() => initial);
@@ -286,6 +289,36 @@ export async function updateSection(
   }
   await load();
   return null;
+}
+
+/** 섹션을 사용자 섹션 순서 안의 toIndex 자리로(머리 끌기·Alt+Shift+←/→, improve-v22-spec 3절) — 되돌리기 알림 */
+export async function placeSection(id: string, toIndex: number) {
+  const r = repo;
+  if (!r) return;
+  const before = get().sections.map((s) => s.id);
+  const from = before.indexOf(id);
+  if (from < 0) return;
+  const ids = before.filter((x) => x !== id);
+  const at = Math.max(0, Math.min(ids.length, toIndex > from ? toIndex - 1 : toIndex));
+  ids.splice(at, 0, id);
+  if (ids.join() === before.join()) return;
+  const name = get().sections[from]!.name;
+  try {
+    await track(() => r.kanban.reorderSections(ids));
+  } catch (e) {
+    reportError(e);
+    return;
+  }
+  await load();
+  toast(STR.kanban.sectionMoved(name), {
+    label: STR.toast.undo,
+    run: () =>
+      void (async () => {
+        if (repo !== r) return;
+        await track(() => r.kanban.reorderSections(before)).catch(reportError);
+        await load();
+      })(),
+  });
 }
 
 export async function moveSection(id: string, dir: -1 | 1) {

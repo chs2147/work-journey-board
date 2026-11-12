@@ -25,6 +25,7 @@ import { SearchBox } from "../search/SearchViews";
 import { useInsights } from "../insights/insightsStore";
 import { useUniverse } from "../universe/universeStore";
 import { useKanban } from "../kanban/kanbanStore";
+import { KanbanActions, KanbanFilters } from "../kanban/KanbanToolbar";
 import { AddCategoryDialog } from "../board/AddCategoryDialog";
 import styles from "./TopBar.module.css";
 
@@ -91,12 +92,8 @@ export function TopBar() {
             <span>{STR.insights.subtitle}</span>
           </div>
         )}
-        {ready && journalReady && kanban && (
-          <div className={styles.insightTitle} data-testid="kanban-title">
-            <b>{STR.kanban.title}</b>
-            <span>{STR.kanban.subtitle}</span>
-          </div>
-        )}
+        {/* 칸반(improve-v22-spec 5절): 제목 글자 없이 업무 거르기·기간 아이콘부터 — 주간 보드와 같은 한 줄 */}
+        {ready && journalReady && kanban && <KanbanFilters />}
         {ready && journalReady && universe && (
           <div className={styles.insightTitle} data-testid="universe-title">
             <b>{STR.universe.title}</b>
@@ -173,9 +170,9 @@ export function TopBar() {
           </nav>
         )}
         <div className={styles.spacer} />
-        {ready && journalReady && week && <SearchBox />}
-        {ready && journalReady && !settings && !kanban && <TagFilterMenu />}
-        {ready && journalReady && week && (
+        {ready && journalReady && (week || kanban) && <SearchBox />}
+        {ready && journalReady && !settings && <TagFilterMenu />}
+        {ready && journalReady && (week || kanban) && (
           <button
             type="button"
             className={`${styles.textButton} ${styles.actionButton}`}
@@ -186,7 +183,10 @@ export function TopBar() {
             {STR.categoryCreate.button}
           </button>
         )}
-        {ready && journalReady && week && addOpen && <AddCategoryDialog />}
+        {ready && journalReady && (week || kanban) && addOpen && <AddCategoryDialog />}
+        {ready && journalReady && kanban && (
+          <KanbanActions className={`${styles.textButton} ${styles.actionButton}`} />
+        )}
         {ready && journalReady && week && (
           <button
             type="button"

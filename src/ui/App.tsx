@@ -167,7 +167,7 @@ function Workspace() {
       >
         <SearchBand
           rightInset={
-            searchPanelOpen && summaryOverlay && !insightsOpen && !settingsOpen && !kanbanOpen ? summaryW : 0
+            searchPanelOpen && summaryOverlay && !insightsOpen && !settingsOpen ? summaryW : 0
           }
         />
         {viewMode === "today" ? (
@@ -192,7 +192,7 @@ function Workspace() {
       {/* Cabinet(F5): 모달리스 — 보드·인사이트·설정 어디서나 위에 떠 있다 */}
       {cabinetInApp && <CabinetPanel />}
       <FolderPanels />
-      {searchPanelOpen && !insightsOpen && !settingsOpen && !kanbanOpen ? (
+      {searchPanelOpen && !insightsOpen && !settingsOpen ? (
         <SearchPanel overlay={summaryOverlay} />
       ) : (
         summaryOpen &&

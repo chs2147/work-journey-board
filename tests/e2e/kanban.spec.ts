@@ -29,7 +29,9 @@ test("레일·Alt+6: 칸반 = 주간 보드와 인사이트 사이, 기본 기�
   expect(rail.indexOf("rail-insights")).toBe(rail.indexOf("rail-kanban") + 1);
   await page.keyboard.press("Alt+Digit6");
   await expect(page.getByTestId("kanban-view")).toBeVisible();
-  await expect(page.getByTestId("kanban-title")).toBeVisible();
+  // 상단 한 줄(improve-v22-spec 5절): 제목 글자 없이 업무 거르기·기간부터, 오른쪽은 주간 보드와 같은 [업무 추가]
+  await expect(page.getByTestId("kanban-title")).toHaveCount(0);
+  await expect(page.getByTestId("category-add")).toBeVisible();
   // 기간 = 아이콘 세그먼트(A안): 이름은 aria-label, 툴팁에 실제 날짜
   const on = page.getByTestId("kanban-period").locator("[aria-pressed=true]");
   await expect(on).toHaveAttribute("aria-label", "이번 주");
@@ -124,7 +126,7 @@ test("섹션 추가 → 카드 옮기기 → 상태 이력 · ★ 항목은 중�
 
 test("업무 항목 추가 창: 업무·날짜(기본 오늘)·세부(Tab)·★ → 카드 + 주간 보드 칸에 기록", async ({ page }) => {
   await openKanban(page);
-  await page.getByTestId("kanban-add-item").click();
+  await col(page, "todo").getByTestId("kanban-add-card").click();
   const dlg = page.getByTestId("kanban-item-dialog");
   await expect(dlg.getByTestId("kanban-item-date")).toHaveValue(TODAY);
   await dlg.getByTestId("kanban-item-category").selectOption({ label: "사내 데이터 대시보드" });
