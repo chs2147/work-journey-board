@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "product": "Work Journey Board",
-  "catalogVersion": "1.31.0-rc.1",
+  "catalogVersion": "1.35.0",
   "asOfDate": "2026-11-12",
-  "baseRelease": "1.31.0-rc.1",
+  "baseRelease": "1.35.0",
   "sourceCommit": "6d769c4",
   "appSchemaVersion": 20,
   "versionDefinition": "최초 제공 = 비RC 출시 이력에서 기능 제공이 확인된 최초 버전(0.x 개발판 포함); RC는 preview로 별도 기록",
@@ -2253,6 +2253,12 @@
           "type": "changed",
           "description": "상단을 주간 보드와 같은 한 줄로(제목 글자 없음 · 검색·태그 거르기·[업무 추가] 같은 자리).",
           "source": "docs/release-notes/v1.31.0-rc.1.md"
+        },
+        {
+          "version": "1.35.0",
+          "type": "changed",
+          "description": "승인된 1.31.0-rc.1 변경을 1.35.0 정식 main에 반영.",
+          "source": "docs/release-notes/v1.35.0.md"
         }
       ],
       "sources": [
@@ -2260,7 +2266,8 @@
         "docs/release-notes/v1.25.0-rc.1.md",
         "docs/release-notes/v1.30.0.md",
         "docs/improve-v22-spec.md",
-        "docs/release-notes/v1.31.0-rc.1.md"
+        "docs/release-notes/v1.31.0-rc.1.md",
+        "docs/release-notes/v1.35.0.md"
       ],
       "implementation": [
         "src/ui/kanban",
@@ -2270,7 +2277,7 @@
       "verification": "단위·Chromium E2E·공간 3회 왕복 검증. Windows/macOS 실기 확인 필요(확인표 7-44).",
       "reviewStatus": "미검토",
       "reviewNote": "사용자 승인으로 1.30.0 정식 도입 버전 확정. 실기 전수 검토와 구분.",
-      "lastChanged": "1.31.0-rc.1",
+      "lastChanged": "1.35.0",
       "schemaRequirement": "DB v20"
     },
     {
@@ -2359,6 +2366,12 @@
           "type": "changed",
           "description": "카드가 DONE에 들어가면 체크·색종이 완료 축하 모션(WJB-KANBAN-013).",
           "source": "docs/release-notes/v1.31.0-rc.1.md"
+        },
+        {
+          "version": "1.35.0",
+          "type": "changed",
+          "description": "승인된 1.31.0-rc.1 변경을 1.35.0 정식 main에 반영.",
+          "source": "docs/release-notes/v1.35.0.md"
         }
       ],
       "sources": [
@@ -2366,7 +2379,8 @@
         "docs/release-notes/v1.25.0-rc.1.md",
         "docs/release-notes/v1.30.0.md",
         "docs/improve-v22-spec.md",
-        "docs/release-notes/v1.31.0-rc.1.md"
+        "docs/release-notes/v1.31.0-rc.1.md",
+        "docs/release-notes/v1.35.0.md"
       ],
       "implementation": [
         "src/ui/kanban",
@@ -2377,7 +2391,7 @@
       "verification": "단위·Chromium E2E·공간 3회 왕복 검증. Windows/macOS 실기 확인 필요(확인표 7-44).",
       "reviewStatus": "미검토",
       "reviewNote": "사용자 승인으로 1.30.0 정식 도입 버전 확정. 실기 전수 검토와 구분.",
-      "lastChanged": "1.31.0-rc.1",
+      "lastChanged": "1.35.0",
       "schemaRequirement": "DB v20"
     },
     {
@@ -2423,6 +2437,12 @@
           "type": "changed",
           "description": "사용자 섹션 머리를 끌어(또는 Alt+Shift+←/→) 순서 바꾸기·되돌리기(WJB-KANBAN-011).",
           "source": "docs/release-notes/v1.31.0-rc.1.md"
+        },
+        {
+          "version": "1.35.0",
+          "type": "changed",
+          "description": "승인된 1.31.0-rc.1 변경을 1.35.0 정식 main에 반영.",
+          "source": "docs/release-notes/v1.35.0.md"
         }
       ],
       "sources": [
@@ -2431,7 +2451,8 @@
         "docs/release-notes/v1.25.0-rc.2.md",
         "docs/release-notes/v1.30.0.md",
         "docs/improve-v22-spec.md",
-        "docs/release-notes/v1.31.0-rc.1.md"
+        "docs/release-notes/v1.31.0-rc.1.md",
+        "docs/release-notes/v1.35.0.md"
       ],
       "implementation": [
         "src/ui/kanban",
@@ -2441,7 +2462,7 @@
       "verification": "단위·Chromium E2E·공간 3회 왕복 검증. Windows/macOS 실기 확인 필요(확인표 7-44).",
       "reviewStatus": "미검토",
       "reviewNote": "사용자 승인으로 1.30.0 정식 도입 버전 확정. 실기 전수 검토와 구분.",
-      "lastChanged": "1.31.0-rc.1",
+      "lastChanged": "1.35.0",
       "schemaRequirement": "DB v20"
     },
     {
@@ -2537,6 +2558,12 @@
           "type": "changed",
           "description": "카드 추가 창: 제목에 섹션 이름, 업무 띠, 시작 시간·마감일 별도 행(마감일 = ★ 함께), [닫기], 하단 안내 글 없음. 열마다 [+ 카드 추가]·N으로 연다.",
           "source": "docs/release-notes/v1.31.0-rc.1.md"
+        },
+        {
+          "version": "1.35.0",
+          "type": "changed",
+          "description": "승인된 1.31.0-rc.1 변경을 1.35.0 정식 main에 반영.",
+          "source": "docs/release-notes/v1.35.0.md"
         }
       ],
       "sources": [
@@ -2545,7 +2572,8 @@
         "docs/release-notes/v1.25.0-rc.2.md",
         "docs/release-notes/v1.30.0.md",
         "docs/improve-v22-spec.md",
-        "docs/release-notes/v1.31.0-rc.1.md"
+        "docs/release-notes/v1.31.0-rc.1.md",
+        "docs/release-notes/v1.35.0.md"
       ],
       "implementation": [
         "src/ui/kanban/ItemDialog.tsx"
@@ -2553,7 +2581,7 @@
       "verification": "단위·Chromium E2E·공간 3회 왕복 검증. Windows/macOS 실기 확인 필요(확인표 7-44).",
       "reviewStatus": "미검토",
       "reviewNote": "사용자 승인으로 1.30.0 정식 도입 버전 확정. 실기 전수 검토와 구분.",
-      "lastChanged": "1.31.0-rc.1",
+      "lastChanged": "1.35.0",
       "schemaRequirement": "DB v20"
     },
     {
@@ -2647,6 +2675,12 @@
           "type": "changed",
           "description": "업무 거르기를 전체 / 한 업무만([이것만]) / 여러 업무 체크로, 상단 줄로 옮김. 태그 거르기도 카드에 적용.",
           "source": "docs/release-notes/v1.31.0-rc.1.md"
+        },
+        {
+          "version": "1.35.0",
+          "type": "changed",
+          "description": "승인된 1.31.0-rc.1 변경을 1.35.0 정식 main에 반영.",
+          "source": "docs/release-notes/v1.35.0.md"
         }
       ],
       "sources": [
@@ -2655,7 +2689,8 @@
         "docs/release-notes/v1.25.0-rc.2.md",
         "docs/release-notes/v1.30.0.md",
         "docs/improve-v22-spec.md",
-        "docs/release-notes/v1.31.0-rc.1.md"
+        "docs/release-notes/v1.31.0-rc.1.md",
+        "docs/release-notes/v1.35.0.md"
       ],
       "implementation": [
         "src/ui/kanban",
@@ -2666,7 +2701,7 @@
       "verification": "단위·Chromium E2E·공간 3회 왕복 검증. Windows/macOS 실기 확인 필요(확인표 7-44).",
       "reviewStatus": "미검토",
       "reviewNote": "사용자 승인으로 1.30.0 정식 도입 버전 확정. 실기 전수 검토와 구분.",
-      "lastChanged": "1.31.0-rc.1",
+      "lastChanged": "1.35.0",
       "schemaRequirement": "DB v20"
     },
     {
@@ -2772,7 +2807,7 @@
       "name": "섹션 머리 끌어 순서 바꾸기",
       "description": "사용자 섹션 머리를 끌어 놓을 자리(세로 표시선)에 놓거나 머리에서 Alt+Shift+←/→로 순서를 바꾸고 알림으로 되돌린다. TODO 맨 앞·DONE 맨 끝 고정.",
       "entry": "칸반 보드",
-      "introduced": null,
+      "introduced": "1.35.0",
       "preview": "1.31.0-rc.1",
       "status": "active",
       "platforms": [
@@ -2780,8 +2815,8 @@
         "macos"
       ],
       "platformSince": {
-        "windows": "1.31.0-rc.1",
-        "macos": "1.31.0-rc.1"
+        "windows": "1.35.0",
+        "macos": "1.35.0"
       },
       "history": [
         {
@@ -2789,11 +2824,18 @@
           "type": "added",
           "description": "사용자 섹션 머리를 끌어 놓을 자리(세로 표시선)에 놓거나 머리에서 Alt+Shift+←/→로 순서를 바꾸고 알림으로 되돌린다. TODO 맨 앞·DONE 맨 끝 고정.",
           "source": "docs/improve-v22-spec.md"
+        },
+        {
+          "version": "1.35.0",
+          "type": "added",
+          "description": "1.31.0-rc.1 검증 후 정식 제공. RC 선행 이력은 유지한다.",
+          "source": "docs/release-notes/v1.35.0.md"
         }
       ],
       "sources": [
         "docs/improve-v22-spec.md",
-        "docs/release-notes/v1.31.0-rc.1.md"
+        "docs/release-notes/v1.31.0-rc.1.md",
+        "docs/release-notes/v1.35.0.md"
       ],
       "implementation": [
         "src/ui/kanban/KanbanView.tsx",
@@ -2801,8 +2843,8 @@
       ],
       "verification": "단위·Chromium E2E·공간 3회 왕복 검증. Windows/macOS 실기 확인 필요(확인표 7-45).",
       "reviewStatus": "미검토",
-      "reviewNote": "정식 도입 버전은 main 반영 때 확정.",
-      "lastChanged": "1.31.0-rc.1",
+      "reviewNote": "사용자 승인으로 1.35.0 정식 도입 버전 확정. 실기 전수 검토와 구분.",
+      "lastChanged": "1.35.0",
       "schemaRequirement": "DB v20"
     },
     {
@@ -2813,7 +2855,7 @@
       "name": "배치 모드(균등/자유)",
       "description": "균등 분할과 자유 배치(머리 끌기 위치·모서리 크기, 8px 격자, 읽는 순서 = 섹션 순서, 배치 초기화)를 고른다. 공간마다 일지 설정에 저장하고 900px 미만 창은 균등으로 보인다.",
       "entry": "칸반 보드",
-      "introduced": null,
+      "introduced": "1.35.0",
       "preview": "1.31.0-rc.1",
       "status": "active",
       "platforms": [
@@ -2821,8 +2863,8 @@
         "macos"
       ],
       "platformSince": {
-        "windows": "1.31.0-rc.1",
-        "macos": "1.31.0-rc.1"
+        "windows": "1.35.0",
+        "macos": "1.35.0"
       },
       "history": [
         {
@@ -2830,11 +2872,18 @@
           "type": "added",
           "description": "균등 분할과 자유 배치(머리 끌기 위치·모서리 크기, 8px 격자, 읽는 순서 = 섹션 순서, 배치 초기화)를 고른다. 공간마다 일지 설정에 저장하고 900px 미만 창은 균등으로 보인다.",
           "source": "docs/improve-v22-spec.md"
+        },
+        {
+          "version": "1.35.0",
+          "type": "added",
+          "description": "1.31.0-rc.1 검증 후 정식 제공. RC 선행 이력은 유지한다.",
+          "source": "docs/release-notes/v1.35.0.md"
         }
       ],
       "sources": [
         "docs/improve-v22-spec.md",
-        "docs/release-notes/v1.31.0-rc.1.md"
+        "docs/release-notes/v1.31.0-rc.1.md",
+        "docs/release-notes/v1.35.0.md"
       ],
       "implementation": [
         "src/ui/kanban/KanbanView.tsx",
@@ -2844,8 +2893,8 @@
       ],
       "verification": "단위·Chromium E2E·공간 3회 왕복 검증. Windows/macOS 실기 확인 필요(확인표 7-45).",
       "reviewStatus": "미검토",
-      "reviewNote": "정식 도입 버전은 main 반영 때 확정.",
-      "lastChanged": "1.31.0-rc.1",
+      "reviewNote": "사용자 승인으로 1.35.0 정식 도입 버전 확정. 실기 전수 검토와 구분.",
+      "lastChanged": "1.35.0",
       "schemaRequirement": "DB v20"
     },
     {
@@ -2856,7 +2905,7 @@
       "name": "완료 축하 모션",
       "description": "카드가 DONE에 들어가면 카드 자리에 초록 체크와 색종이(CSS만)를 잠깐 보인다. 일괄 완료는 제외, 동작 줄이기면 체크만, 설정 › 화면에서 끈다(이 PC 설정).",
       "entry": "칸반 보드",
-      "introduced": null,
+      "introduced": "1.35.0",
       "preview": "1.31.0-rc.1",
       "status": "active",
       "platforms": [
@@ -2864,8 +2913,8 @@
         "macos"
       ],
       "platformSince": {
-        "windows": "1.31.0-rc.1",
-        "macos": "1.31.0-rc.1"
+        "windows": "1.35.0",
+        "macos": "1.35.0"
       },
       "history": [
         {
@@ -2873,11 +2922,18 @@
           "type": "added",
           "description": "카드가 DONE에 들어가면 카드 자리에 초록 체크와 색종이(CSS만)를 잠깐 보인다. 일괄 완료는 제외, 동작 줄이기면 체크만, 설정 › 화면에서 끈다(이 PC 설정).",
           "source": "docs/improve-v22-spec.md"
+        },
+        {
+          "version": "1.35.0",
+          "type": "added",
+          "description": "1.31.0-rc.1 검증 후 정식 제공. RC 선행 이력은 유지한다.",
+          "source": "docs/release-notes/v1.35.0.md"
         }
       ],
       "sources": [
         "docs/improve-v22-spec.md",
-        "docs/release-notes/v1.31.0-rc.1.md"
+        "docs/release-notes/v1.31.0-rc.1.md",
+        "docs/release-notes/v1.35.0.md"
       ],
       "implementation": [
         "src/ui/kanban/Celebration.tsx",
@@ -2885,8 +2941,8 @@
       ],
       "verification": "단위·Chromium E2E·공간 3회 왕복 검증. Windows/macOS 실기 확인 필요(확인표 7-45).",
       "reviewStatus": "미검토",
-      "reviewNote": "정식 도입 버전은 main 반영 때 확정.",
-      "lastChanged": "1.31.0-rc.1",
+      "reviewNote": "사용자 승인으로 1.35.0 정식 도입 버전 확정. 실기 전수 검토와 구분.",
+      "lastChanged": "1.35.0",
       "schemaRequirement": "DB v20"
     },
     {
@@ -5368,6 +5424,12 @@
           "type": "changed",
           "description": "이번 주 강조를 바탕·왼쪽 띠로만 바꿔 모든 주의 요일·항목 글을 같은 세로선에 맞추고, 요일 칸을 한 줄(요일 굵게 + 날짜)로, 실제 완료일을 항목 글 뒤 같은 열로.",
           "source": "docs/release-notes/v1.31.0-rc.1.md"
+        },
+        {
+          "version": "1.35.0",
+          "type": "changed",
+          "description": "승인된 1.31.0-rc.1 변경을 1.35.0 정식 main에 반영.",
+          "source": "docs/release-notes/v1.35.0.md"
         }
       ],
       "sources": [
@@ -5377,7 +5439,8 @@
         "docs/release-notes/v1.25.0-rc.1.md",
         "docs/release-notes/v1.30.0.md",
         "docs/improve-v22-spec.md",
-        "docs/release-notes/v1.31.0-rc.1.md"
+        "docs/release-notes/v1.31.0-rc.1.md",
+        "docs/release-notes/v1.35.0.md"
       ],
       "implementation": [
         "src/ui/insights"
@@ -5386,7 +5449,7 @@
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "제품 기능",
-      "lastChanged": "1.31.0-rc.1",
+      "lastChanged": "1.35.0",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
@@ -9607,6 +9670,12 @@
           "type": "changed",
           "description": "앱이 지원하는 것보다 새 구조의 일지는 열지 않고 \"앱 업데이트가 필요합니다\" 화면으로(WJB-DIST-012).",
           "source": "docs/release-notes/v1.31.0-rc.1.md"
+        },
+        {
+          "version": "1.35.0",
+          "type": "changed",
+          "description": "승인된 1.31.0-rc.1 변경을 1.35.0 정식 main에 반영.",
+          "source": "docs/release-notes/v1.35.0.md"
         }
       ],
       "sources": [
@@ -9614,7 +9683,8 @@
         "README.md",
         "docs/release-notes/v1.17.0.md",
         "docs/improve-v22-spec.md",
-        "docs/release-notes/v1.31.0-rc.1.md"
+        "docs/release-notes/v1.31.0-rc.1.md",
+        "docs/release-notes/v1.35.0.md"
       ],
       "implementation": [
         "src/data"
@@ -9623,7 +9693,7 @@
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "제품 기능",
-      "lastChanged": "1.31.0-rc.1",
+      "lastChanged": "1.35.0",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
@@ -10618,6 +10688,12 @@
           "type": "changed",
           "description": "호환되지 않는 일지 화면에서 일지를 열지 않고 새 판 확인·설치(업데이트 전 백업은 파일 사본).",
           "source": "docs/release-notes/v1.31.0-rc.1.md"
+        },
+        {
+          "version": "1.35.0",
+          "type": "changed",
+          "description": "승인된 1.31.0-rc.1 변경을 1.35.0 정식 main에 반영.",
+          "source": "docs/release-notes/v1.35.0.md"
         }
       ],
       "sources": [
@@ -10628,7 +10704,8 @@
         "docs/release-notes/v1.24.0-rc.1.md",
         "docs/release-notes/v1.24.0.md",
         "docs/improve-v22-spec.md",
-        "docs/release-notes/v1.31.0-rc.1.md"
+        "docs/release-notes/v1.31.0-rc.1.md",
+        "docs/release-notes/v1.35.0.md"
       ],
       "implementation": [
         "src/platform"
@@ -10637,7 +10714,7 @@
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "배포·플랫폼",
-      "lastChanged": "1.31.0-rc.1",
+      "lastChanged": "1.35.0",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
@@ -10869,7 +10946,7 @@
       "name": "호환되지 않는 일지 차단",
       "description": "앱이 지원하는 구조보다 새 일지는 열지 않고(쓰기 0) 데이터 버전·앱 버전과 [업데이트]·[다른 워크스페이스]를 보인다. 열린 동안 바뀌면 창 활성화·주기 백업 직전에 멈추고, 호환되지 않는 공간으로의 전환은 거부한다.",
       "entry": "시작 화면",
-      "introduced": null,
+      "introduced": "1.35.0",
       "preview": "1.31.0-rc.1",
       "status": "active",
       "platforms": [
@@ -10877,8 +10954,8 @@
         "macos"
       ],
       "platformSince": {
-        "windows": "1.31.0-rc.1",
-        "macos": "1.31.0-rc.1"
+        "windows": "1.35.0",
+        "macos": "1.35.0"
       },
       "history": [
         {
@@ -10886,11 +10963,18 @@
           "type": "added",
           "description": "앱이 지원하는 구조보다 새 일지는 열지 않고(쓰기 0) 데이터 버전·앱 버전과 [업데이트]·[다른 워크스페이스]를 보인다. 열린 동안 바뀌면 창 활성화·주기 백업 직전에 멈추고, 호환되지 않는 공간으로의 전환은 거부한다.",
           "source": "docs/improve-v22-spec.md"
+        },
+        {
+          "version": "1.35.0",
+          "type": "added",
+          "description": "1.31.0-rc.1 검증 후 정식 제공. RC 선행 이력은 유지한다.",
+          "source": "docs/release-notes/v1.35.0.md"
         }
       ],
       "sources": [
         "docs/improve-v22-spec.md",
-        "docs/release-notes/v1.31.0-rc.1.md"
+        "docs/release-notes/v1.31.0-rc.1.md",
+        "docs/release-notes/v1.35.0.md"
       ],
       "implementation": [
         "src/data/session.ts",
@@ -10899,8 +10983,8 @@
       ],
       "verification": "단위·Chromium E2E·공간 3회 왕복 검증. Windows/macOS 실기 확인 필요(확인표 7-45).",
       "reviewStatus": "미검토",
-      "reviewNote": "정식 도입 버전은 main 반영 때 확정.",
-      "lastChanged": "1.31.0-rc.1",
+      "reviewNote": "사용자 승인으로 1.35.0 정식 도입 버전 확정. 실기 전수 검토와 구분.",
+      "lastChanged": "1.35.0",
       "schemaRequirement": "DB v20"
     },
     {
