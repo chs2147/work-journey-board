@@ -185,7 +185,10 @@ export function TopBar() {
         )}
         {ready && journalReady && (week || kanban) && addOpen && <AddCategoryDialog />}
         {ready && journalReady && kanban && (
-          <KanbanActions className={`${styles.textButton} ${styles.actionButton}`} />
+          <KanbanActions
+            className={`${styles.textButton} ${styles.actionButton}`}
+            segmentClass={styles.segment ?? ""}
+          />
         )}
         {ready && journalReady && week && (
           <button

@@ -2,7 +2,14 @@
 import { normalizeBackupPolicy, RECOMMENDED_BACKUP_POLICY, type BackupPolicy } from "./backupPolicy";
 import { COMPANY_DATE_RE, LABEL_MAX_HOLIDAY, type HolidaySettings } from "../domain/holidaysKr";
 import { parseMeta, type WorkspaceMeta } from "../domain/workspace";
-import { DEFAULT_KANBAN_FILTER, KANBAN_PERIODS, type KanbanFilter } from "../domain/kanban";
+import {
+  DEFAULT_KANBAN_FILTER,
+  DEFAULT_KANBAN_LAYOUT,
+  KANBAN_FREE,
+  KANBAN_PERIODS,
+  type KanbanFilter,
+  type KanbanLayout,
+} from "../domain/kanban";
 export interface Settings {
   /** 이 일지(워크스페이스)의 이름·색·아이콘(multi-board-spec 7절) — 없으면 이 PC 목록의 사본으로 채운다 */
   workspace: WorkspaceMeta | null;
@@ -65,6 +72,8 @@ export interface Settings {
     startView: "board" | "kanban";
     /** 칸반 보드 필터·정렬(improve-v21-spec 2-5) */
     kanban: KanbanFilter;
+    /** 칸반 배치 모드(improve-v22-spec 4절) — 공간마다 */
+    kanbanLayout: KanbanLayout;
   };
 }
 
@@ -148,6 +157,7 @@ export const DEFAULT_SETTINGS: Settings = {
     settingsCategory: "screen",
     startView: "board",
     kanban: DEFAULT_KANBAN_FILTER,
+    kanbanLayout: DEFAULT_KANBAN_LAYOUT,
   },
 };
 
@@ -245,6 +255,7 @@ export function mergeSettings(base: Settings, patch: unknown): Settings {
   if (!(s.ui.noteDockHeight >= NOTE_DOCK_MIN)) s.ui.noteDockHeight = DEFAULT_SETTINGS.ui.noteDockHeight;
   if (s.ui.startView !== "board" && s.ui.startView !== "kanban") s.ui.startView = "board";
   s.ui.kanban = validKanbanFilter(s.ui.kanban);
+  s.ui.kanbanLayout = validKanbanLayout(s.ui.kanbanLayout);
   return s;
 }
 
@@ -276,4 +287,20 @@ export function validKanbanFilter(v: unknown): KanbanFilter {
     to: date(o.to),
     sort: o.sort === "old" || o.sort === "due" ? o.sort : "new",
   };
+}
+
+/** 칸반 배치 검사 — 모르는 모드는 균등, 이상한 자리는 버림(기본 자리로 다시 놓임) */
+export function validKanbanLayout(v: unknown): KanbanLayout {
+  const o = (v && typeof v === "object" ? v : {}) as { mode?: unknown; rects?: unknown };
+  const rects: KanbanLayout["rects"] = {};
+  if (o.rects && typeof o.rects === "object" && !Array.isArray(o.rects)) {
+    for (const [k, r] of Object.entries(o.rects as Record<string, unknown>)) {
+      const q = (r ?? {}) as Record<string, unknown>;
+      const ok = (x: unknown, min: number) =>
+        typeof x === "number" && Number.isFinite(x) && x >= min && x <= KANBAN_FREE.maxXY;
+      if (ok(q.x, 0) && ok(q.y, 0) && ok(q.w, KANBAN_FREE.minW) && ok(q.h, KANBAN_FREE.minH))
+        rects[k] = { x: q.x as number, y: q.y as number, w: q.w as number, h: q.h as number };
+    }
+  }
+  return { mode: o.mode === "free" ? "free" : "equal", rects };
 }

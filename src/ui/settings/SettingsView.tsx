@@ -44,6 +44,7 @@ import { useAppStore } from "../common/appStore";
 import { hasUpdate, useUpdate } from "../update/updateStore";
 import styles from "./Settings.module.css";
 import { Card, Row } from "./SettingsCard";
+import { setCelebrateOn, useKanban } from "../kanban/kanbanStore";
 import { AboutCard, LicensesCard } from "./AboutCards";
 import { CalendarSettings } from "./CalendarSettings";
 import { DiagnosticsCard } from "./DiagnosticsCard";
@@ -274,6 +275,7 @@ export function SettingsView() {
           </select>
         </label>
       </Card>
+      <CelebrateCard />
     </>
   );
 
@@ -795,5 +797,32 @@ export function SettingsView() {
         )}
       </div>
     </section>
+  );
+}
+
+/** 설정 › 화면 › 완료 축하 모션(improve-v22-spec 7절) — 이 PC 설정(config.json `celebrate`), 기본 켬 */
+function CelebrateCard() {
+  const on = useKanban((k) => k.celebrateOn);
+  return (
+    <Card id="s-celebrate" title={STR.settings.celebrate} testId="celebrate-settings">
+      <label className={styles.setRow}>
+        <span className={styles.rowText}>
+          <span className={styles.rowDesc}>{STR.settings.celebrateLabel}</span>
+        </span>
+        <input
+          type="checkbox"
+          checked={on}
+          data-testid="celebrate-toggle"
+          onChange={(e) => {
+            const v = e.target.checked;
+            setCelebrateOn(v);
+            void useAppStore
+              .getState()
+              .platform?.saveConfig({ celebrate: v })
+              .catch(() => undefined);
+          }}
+        />
+      </label>
+    </Card>
   );
 }

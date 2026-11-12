@@ -1,7 +1,17 @@
 // 칸반 보드 화면(docs/improve-v21-spec.md 2·3·4절, 시안 docs/mockups/v21 ①②⑤).
 // 카드 전체가 끌기 대상(HTML5 DnD) — 열에 놓으면 상태 변경, Cabinet 줄을 카드에 놓으면 그 항목에 연결.
 import { useEffect, useLayoutEffect, useRef, useState, type DragEvent, type KeyboardEvent } from "react";
-import { DONE, TODO, doneGroupOf, type KanbanSection, type SectionKey } from "../../domain/kanban";
+import {
+  DONE,
+  KANBAN_FREE,
+  KANBAN_FREE_MIN_VIEW,
+  TODO,
+  doneGroupOf,
+  snapGrid,
+  type KanbanRect,
+  type KanbanSection,
+  type SectionKey,
+} from "../../domain/kanban";
 import type { KanbanCard, StatusLogRow } from "../../data/kanbanRepository";
 import { localDate } from "../../domain/localTime";
 import { shortDateLabel } from "../../domain/week";
@@ -11,6 +21,7 @@ import { revealItem, useBoard } from "../board/boardStore";
 import { dueView } from "../board/dueView";
 import { CAB_MIME } from "../cabinet/CabinetPanel";
 import { useModal } from "./kanbanUi";
+import { Celebration } from "./Celebration";
 import {
   closeKanban,
   cardsOf,
@@ -24,6 +35,8 @@ import {
   moveCard,
   moveSection,
   placeSection,
+  layoutRects,
+  setRect,
   neighborKey,
   patchCard,
   setDragging,
@@ -80,32 +93,107 @@ export function KanbanView() {
     return () => window.removeEventListener("keydown", key);
   }, [dialog, sectionDlg, bulkOpen]);
 
+  // 배치 모드(improve-v22-spec 4절): 좁은 창(< 900px)은 자유여도 균등으로 보인다(저장값 그대로)
+  const layoutMode = useKanban((k) => k.layout.mode);
+  const [viewW, setViewW] = useState(() => window.innerWidth);
+  useEffect(() => {
+    const on = () => setViewW(window.innerWidth);
+    window.addEventListener("resize", on);
+    return () => window.removeEventListener("resize", on);
+  }, []);
+  const free = layoutMode === "free" && viewW >= KANBAN_FREE_MIN_VIEW;
+  const rects = free ? layoutRects(s) : null;
+  const [front, setFront] = useState<string | null>(null);
+  const [draft, setDraft] = useState<{ key: string; rect: KanbanRect } | null>(null);
+  /** 머리 끌기 = 위치, 오른쪽 아래 모서리 = 크기. 8px 격자에 붙음 */
+  const freeDrag = (key: SectionKey, kind: "move" | "size") => (e: React.PointerEvent) => {
+    if (e.button !== 0 || !rects) return;
+    if (kind === "move" && (e.target as HTMLElement).closest("button,select,input,a")) return;
+    e.preventDefault();
+    const start = rects[key]!;
+    const x0 = e.clientX,
+      y0 = e.clientY;
+    setFront(key);
+    const calc = (ev: PointerEvent): KanbanRect =>
+      kind === "move"
+        ? {
+            ...start,
+            x: Math.max(0, snapGrid(start.x + ev.clientX - x0)),
+            y: Math.max(0, snapGrid(start.y + ev.clientY - y0)),
+          }
+        : {
+            ...start,
+            w: Math.max(KANBAN_FREE.minW, snapGrid(start.w + ev.clientX - x0)),
+            h: Math.max(KANBAN_FREE.minH, snapGrid(start.h + ev.clientY - y0)),
+          };
+    const move = (ev: PointerEvent) => setDraft({ key, rect: calc(ev) });
+    const up = (ev: PointerEvent) => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      setDraft(null);
+      const r = calc(ev);
+      if (r.x !== start.x || r.y !== start.y || r.w !== start.w || r.h !== start.h) void setRect(key, r);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  };
+
+  const column = (key: SectionKey) => (
+    <Column
+      key={key}
+      freeMove={rects ? freeDrag(key, "move") : undefined}
+      sectionKey={key}
+      section={s.sections.find((x) => x.id === key) ?? null}
+      onAdd={() => setDialog({ mode: "add", sectionId: key === TODO ? null : key })}
+      onEdit={(card) => setDialog({ mode: "edit", card })}
+      onRename={(id) => setSectionDlg({ id })}
+      onDelete={(sec) => setConfirmDel(sec)}
+      onBulk={() => setBulkOpen(true)}
+      onRecent={(x, y) => setRecentBulk({ x, y })}
+      first={key === s.sections[0]?.id}
+      last={key === s.sections.at(-1)?.id}
+    />
+  );
+
   return (
     <section className={styles.view} aria-label={K.title} data-testid="kanban-view">
-      <div className={styles.cols}>
-        {keys.map((key) => (
-          <Column
-            key={key}
-            sectionKey={key}
-            section={s.sections.find((x) => x.id === key) ?? null}
-            onAdd={() => setDialog({ mode: "add", sectionId: key === TODO ? null : key })}
-            onEdit={(card) => setDialog({ mode: "edit", card })}
-            onRename={(id) => setSectionDlg({ id })}
-            onDelete={(sec) => setConfirmDel(sec)}
-            onBulk={() => setBulkOpen(true)}
-            onRecent={(x, y) => setRecentBulk({ x, y })}
-            first={key === s.sections[0]?.id}
-            last={key === s.sections.at(-1)?.id}
-          />
-        ))}
-        <button
-          type="button"
-          className={styles.addSection}
-          aria-label={K.addSection}
-          onClick={() => setSectionDlg({ id: null })}
-        >
-          ＋<span>{K.addSection}</span>
-        </button>
+      <div
+        className={`${styles.cols} ${rects ? styles.freeBoard : ""}`}
+        data-testid="kanban-board"
+        data-layout={rects ? "free" : "equal"}
+      >
+        {rects
+          ? keys.map((key) => {
+              const r = draft?.key === key ? draft.rect : rects[key]!;
+              return (
+                <div
+                  key={key}
+                  className={styles.freeItem}
+                  data-testid="kanban-free-item"
+                  data-key={key}
+                  style={{ left: r.x, top: r.y, width: r.w, height: r.h, zIndex: front === key ? 2 : 1 }}
+                >
+                  {column(key)}
+                  <span
+                    className={styles.resize}
+                    data-testid="kanban-free-resize"
+                    aria-hidden="true"
+                    onPointerDown={freeDrag(key, "size")}
+                  />
+                </div>
+              );
+            })
+          : keys.map(column)}
+        {!rects && (
+          <button
+            type="button"
+            className={styles.addSection}
+            aria-label={K.addSection}
+            onClick={() => setSectionDlg({ id: null })}
+          >
+            ＋<span>{K.addSection}</span>
+          </button>
+        )}
       </div>
       {dialog && <ItemDialog target={dialog} onClose={() => setDialog(null)} />}
       {sectionDlg && <SectionDialog id={sectionDlg.id} onClose={() => setSectionDlg(null)} />}
@@ -118,6 +206,7 @@ export function KanbanView() {
       )}
       {bulkOpen && <BulkDialog onClose={() => setBulkOpen(false)} />}
       {recentBulk && <RecentBulk at={recentBulk} onClose={() => setRecentBulk(null)} />}
+      <Celebration />
     </section>
   );
 }
@@ -127,6 +216,7 @@ const SECTION_MIME = "application/x-wjb-kanban-section";
 let dragSection: string | null = null;
 
 function Column({
+  freeMove,
   sectionKey,
   section,
   onAdd,
@@ -138,6 +228,8 @@ function Column({
   first,
   last,
 }: {
+  /** 자유 배치: 머리를 끌면 상자 위치를 옮김(순서 끌기 대신) */
+  freeMove?: (e: React.PointerEvent) => void;
   sectionKey: SectionKey;
   section: KanbanSection | null;
   onAdd(): void;
@@ -235,10 +327,11 @@ function Column({
       onDrop={onDrop}
     >
       <div
-        className={`${styles.colHead} ${section ? styles.colHeadDrag : ""}`}
+        className={`${styles.colHead} ${section || freeMove ? styles.colHeadDrag : ""}`}
         style={{ borderTopColor: color }}
         data-testid="kanban-col-head"
-        {...(section
+        onPointerDown={freeMove}
+        {...(section && !freeMove
           ? {
               draggable: true,
               tabIndex: 0,

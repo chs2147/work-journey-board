@@ -136,3 +136,86 @@ test.describe("칸반 V2", () => {
     await expect.poll(names).toEqual(["TODO", "가상 B", "가상 A", "DONE"]);
   });
 });
+
+// ── V3: 배치 모드·완료 축하 모션(improve-v22-spec 4·7절) ──
+test.describe("칸반 V3", () => {
+  test("자유 배치: 상자 옮기기·크기·읽는 순서로 섹션 순서 · 다시 열어도 그대로 · 좁은 창은 균등 · 초기화", async ({
+    page,
+  }) => {
+    await openKanban(page);
+    for (const n of ["가상 A", "가상 B"]) {
+      await page.getByTestId("kanban-add-section").click();
+      await page.getByTestId("kanban-section-dialog").getByRole("textbox").fill(n);
+      await page.getByTestId("kanban-section-save").click();
+      await expect(page.getByTestId("kanban-section-dialog")).toHaveCount(0);
+    }
+    const board = page.getByTestId("kanban-board");
+    await expect(board).toHaveAttribute("data-layout", "equal");
+    await page.getByTestId("kanban-layout-free").click();
+    await expect(board).toHaveAttribute("data-layout", "free");
+    await expect(page.getByTestId("kanban-layout-reset")).toBeVisible();
+    const names = () => page.getByTestId("kanban-col-name").allTextContents();
+    // B 상자를 같은 줄 A 앞으로 → 섹션 순서 = 왼쪽 위부터 읽는 순서
+    const item = (n: string) =>
+      page
+        .getByTestId("kanban-free-item")
+        .filter({ has: page.getByTestId("kanban-col-name").getByText(n, { exact: true }) });
+    const a = (await item("가상 A").boundingBox())!;
+    const bHead = item("가상 B").getByTestId("kanban-col-head");
+    const bb = (await bHead.boundingBox())!;
+    await page.mouse.move(bb.x + 30, bb.y + 10);
+    await page.mouse.down();
+    await page.mouse.move(a.x + 10, bb.y + 10, { steps: 6 });
+    await page.mouse.up();
+    await expect.poll(names).toEqual(["TODO", "가상 B", "가상 A", "DONE"]);
+    // 크기: 오른쪽 아래 모서리 끌기 → 8px 격자
+    const before = (await item("가상 A").boundingBox())!;
+    const h = (await item("가상 A").getByTestId("kanban-free-resize").boundingBox())!;
+    await page.mouse.move(h.x + 5, h.y + 5);
+    await page.mouse.down();
+    await page.mouse.move(h.x + 45, h.y - 95, { steps: 5 });
+    await page.mouse.up();
+    const after = (await item("가상 A").boundingBox())!;
+    expect(Math.round(after.width - before.width)).toBe(40);
+    expect(after.width % 8).toBe(0);
+    // 다시 열어도 그대로(일지 설정)
+    await page.getByTestId("rail-board").click();
+    await page.getByTestId("rail-kanban").click();
+    await expect(board).toHaveAttribute("data-layout", "free");
+    expect(Math.round((await item("가상 A").boundingBox())!.width)).toBe(Math.round(after.width));
+    // 좁은 창: 균등으로 보임(저장값 유지)
+    await page.setViewportSize({ width: 860, height: 800 });
+    await expect(board).toHaveAttribute("data-layout", "equal");
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await expect(board).toHaveAttribute("data-layout", "free");
+    // 초기화 → 균등 모습 자리
+    await page.getByTestId("kanban-layout-reset").click();
+    const ys = await page
+      .getByTestId("kanban-free-item")
+      .evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().top)));
+    expect(new Set(ys).size).toBe(1);
+    await page.getByTestId("kanban-layout-equal").click();
+    await expect(board).toHaveAttribute("data-layout", "equal");
+  });
+
+  test("완료 축하: DONE에 놓으면 체크·색종이(자유 배치에서도) · 설정에서 끄면 없음", async ({ page }) => {
+    await openKanban(page);
+    await page.getByTestId("kanban-layout-free").click();
+    const card = page.getByTestId("kanban-card").first();
+    await card.dragTo(page.getByTestId("kanban-col-done").getByTestId("kanban-col-head"));
+    await expect(page.getByTestId("kanban-celebrate")).toBeVisible();
+    await expect(page.getByTestId("kanban-col-done").getByTestId("kanban-col-count")).toContainText("1");
+    await expect(page.getByTestId("kanban-celebrate")).toHaveCount(0, { timeout: 3000 });
+    // 설정 › 화면 › 완료 축하 모션 끄기
+    await page.keyboard.press("Control+Comma");
+    await page.getByTestId("celebrate-toggle").uncheck();
+    await page.getByTestId("settings-back").click();
+    await page.getByTestId("rail-kanban").click();
+    await page
+      .getByTestId("kanban-card")
+      .first()
+      .dragTo(page.getByTestId("kanban-col-done").getByTestId("kanban-col-head"));
+    await expect(page.getByTestId("kanban-col-done").getByTestId("kanban-col-count")).toContainText("2");
+    await expect(page.getByTestId("kanban-celebrate")).toHaveCount(0);
+  });
+});

@@ -780,3 +780,31 @@
 .secAfter::after {
   right: -7px;
 }
+
+/* 자유 배치(improve-v22-spec 4절) — 판 위 상자, 판은 내용만큼 스크롤 */
+.freeBoard {
+  display: block;
+  position: relative;
+  overflow: auto;
+}
+.freeItem {
+  position: absolute;
+  display: flex;
+  margin: var(--sp-3) var(--sp-4);
+}
+.freeItem > .col {
+  flex: 1 1 auto;
+  min-width: 0;
+  box-shadow: 0 2px 8px rgb(60 40 20 / 0.08);
+}
+.resize {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 14px;
+  height: 14px;
+  cursor: nwse-resize;
+  background: linear-gradient(135deg, transparent 50%, var(--line-strong, #b9a891) 50%);
+  border-radius: 0;
+  z-index: 4;
+}

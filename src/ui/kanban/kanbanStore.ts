@@ -3,6 +3,12 @@
 import { create } from "zustand";
 import {
   DEFAULT_KANBAN_FILTER,
+  DEFAULT_KANBAN_LAYOUT,
+  equalRects,
+  fillRects,
+  readingOrder,
+  type KanbanLayout,
+  type KanbanRect,
   DONE,
   TODO,
   sortCards,
@@ -31,6 +37,7 @@ import type { ItemDraft } from "../../domain/types";
 import { groupCell as groupItems } from "../../domain/kanban";
 import { weekIdOf, type DateStr } from "../../domain/week";
 import { reload as reloadBoard } from "../board/boardStore";
+import { useAppStore } from "../common/appStore";
 
 export const DONE_PAGE = 50;
 
@@ -53,6 +60,12 @@ export interface KanbanState {
   categories: { id: string; name: string; color: string; ended: boolean }[];
   /** 섹션 추가/이름 바꾸기 창(상단 막대 [섹션 추가]도 연다, improve-v22-spec 5절) */
   sectionDialog: { id: string | null } | null;
+  /** 완료 축하 모션(7절) — DONE에 들어간 카드가 있던 자리 */
+  celebrating: { key: number; x: number; y: number; w: number; h: number } | null;
+  /** 설정 › 화면 [완료 축하 모션](이 PC 설정, 기본 켬) */
+  celebrateOn: boolean;
+  /** 배치 모드(4절) — 일지 설정 ui.kanbanLayout */
+  layout: KanbanLayout;
 }
 
 const initial: KanbanState = {
@@ -68,6 +81,9 @@ const initial: KanbanState = {
   dragging: null,
   categories: [],
   sectionDialog: null,
+  celebrating: null,
+  celebrateOn: true,
+  layout: DEFAULT_KANBAN_LAYOUT,
 };
 
 export const useKanban = create<KanbanState>(() => initial);
@@ -84,14 +100,45 @@ export function detachKanban() {
   loadSeq++;
   unsub?.();
   unsub = null;
-  set({ ...initial });
+  set({ ...initial, celebrateOn: get().celebrateOn });
+}
+
+let celebrateKey = 0;
+type Rect = { x: number; y: number; w: number; h: number };
+/** 옮기기 전에 카드 자리를 잡아 둔다(옮긴 뒤엔 DONE 줄로 접혀 자리가 바뀜) */
+function cardRect(id: string): Rect | null {
+  if (!get().celebrateOn) return null;
+  const el = document.querySelector<HTMLElement>(
+    `[data-testid="kanban-card"][data-card="${CSS.escape(id)}"]`,
+  );
+  const r = el?.getBoundingClientRect();
+  return r && r.width ? { x: r.left, y: r.top, w: r.width, h: r.height } : null;
+}
+/** 카드가 DONE에 들어가는 순간(끌어 놓기·메뉴·단축키 — 일괄 완료는 제외, 7절) */
+function celebrate(r: Rect) {
+  const key = ++celebrateKey;
+  set({ celebrating: { key, ...r } });
+  setTimeout(() => {
+    if (get().celebrating?.key === key) set({ celebrating: null });
+  }, 1100);
+}
+
+export function setCelebrateOn(on: boolean) {
+  set({ celebrateOn: on, ...(on ? {} : { celebrating: null }) });
 }
 
 export async function initKanban(r: JournalRepository) {
   repo = r;
   const s = await r.getSettings();
   if (repo !== r) return;
-  set({ filter: s.ui.kanban });
+  set({ filter: s.ui.kanban, layout: s.ui.kanbanLayout });
+  void useAppStore
+    .getState()
+    .platform?.loadConfig()
+    .then((c) => {
+      if (repo === r) set({ celebrateOn: c?.celebrate !== false });
+    })
+    .catch(() => undefined);
   unsub?.();
   // 주간 보드·중요 업무에서 완료하면 칸반도 새로 읽는다
   unsub = onItemsChanged(() => {
@@ -161,6 +208,57 @@ export function closeKanban() {
   set({ open: false, dragging: null });
 }
 
+// ── 배치 모드(improve-v22-spec 4절) ───────────────────────────────────────────
+const allKeys = (s: KanbanState = get()): SectionKey[] => [TODO, ...s.sections.map((x) => x.id), DONE];
+
+function saveLayout(layout: KanbanLayout) {
+  // 지운 섹션 자리는 버린다
+  const keys = new Set<string>(allKeys());
+  const rects = Object.fromEntries(Object.entries(layout.rects).filter(([k]) => keys.has(k)));
+  const next = { ...layout, rects };
+  set({ layout: next });
+  void repo?.updateSettings({ ui: { kanbanLayout: next } }).catch(() => undefined);
+}
+
+/** 보드 자리 크기(균등 모습 계산용) */
+function boardSize(): { w: number; h: number } {
+  const el = document.querySelector<HTMLElement>('[data-testid="kanban-board"]');
+  return el ? { w: el.clientWidth - 32, h: el.clientHeight - 24 } : { w: 1200, h: 600 };
+}
+
+/** 균등 ↔ 자유. 처음 자유로 바꾸면 지금 균등 모습 그대로의 자리에서 시작 */
+export function setLayoutMode(mode: KanbanLayout["mode"], board = boardSize()) {
+  const l = get().layout;
+  if (l.mode === mode) return;
+  const rects =
+    mode === "free" && !Object.keys(l.rects).length && board
+      ? equalRects(allKeys(), board.w, board.h)
+      : l.rects;
+  saveLayout({ mode, rects });
+}
+
+/** [배치 초기화] — 균등 분할 모습으로 다시 놓기(자유 모드 그대로) */
+export function resetLayout(board = boardSize()) {
+  saveLayout({ mode: "free", rects: equalRects(allKeys(), board.w, board.h) });
+}
+
+/** 자유 배치의 열 자리 — 지금 섹션 모두(없는 것은 맨 오른쪽 빈 자리) */
+export function layoutRects(s: KanbanState = get()): Record<string, KanbanRect> {
+  return fillRects(allKeys(s), s.layout.rects);
+}
+
+/** 상자 하나를 옮기거나 크기를 바꿈 → 사용자 섹션 순서는 왼쪽 위부터 읽는 순서로 맞춘다 */
+export async function setRect(key: SectionKey, rect: KanbanRect) {
+  const rects = { ...layoutRects(), [key]: rect };
+  saveLayout({ ...get().layout, rects });
+  const r = repo;
+  const ids = get().sections.map((x) => x.id);
+  const order = readingOrder(ids, rects);
+  if (!r || order.join() === ids.join()) return;
+  await track(() => r.kanban.reorderSections(order)).catch(reportError);
+  if (repo === r) await load();
+}
+
 export function setFilter(patch: Partial<KanbanFilter>) {
   const filter = { ...get().filter, ...patch };
   set({ filter, done: [] });
@@ -193,6 +291,7 @@ export async function moveCard(id: string, to: SectionKey) {
   if (!r) return;
   await flushAll();
   if (repo !== r) return;
+  const shot = to === DONE ? cardRect(id) : null;
   let res: Awaited<ReturnType<JournalRepository["kanban"]["move"]>>;
   try {
     res = await track(() => r.kanban.move(id, to));
@@ -201,6 +300,7 @@ export async function moveCard(id: string, to: SectionKey) {
     return;
   }
   if (repo !== r || !res) return;
+  if (shot) celebrate(shot);
   const kids = res.changed.length - 1;
   await afterChange(r, res.changed);
   const undo = res.undo;

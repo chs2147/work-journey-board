@@ -212,3 +212,57 @@ export function groupCell<T extends { id: string; seq: number; depth: number }>(
   }
   return out;
 }
+
+// ── 배치 모드(improve-v22-spec 4절): 균등 분할 / 자유 배치 ─────────────────────────
+export interface KanbanRect {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+export interface KanbanLayout {
+  mode: "equal" | "free";
+  /** 자유 배치의 섹션 자리 — 키 = SectionKey(TODO·DONE·섹션 id) */
+  rects: Record<string, KanbanRect>;
+}
+export const DEFAULT_KANBAN_LAYOUT: KanbanLayout = { mode: "equal", rects: {} };
+export const KANBAN_GRID = 8;
+export const KANBAN_FREE = { w: 300, h: 560, minW: 220, minH: 200, gap: 16, maxXY: 20000 } as const;
+/** 이보다 좁은 창에서는 자유 배치여도 균등 분할로 보인다(결정 K2-b, 저장값은 그대로) */
+export const KANBAN_FREE_MIN_VIEW = 900;
+
+export const snapGrid = (v: number) => Math.round(v / KANBAN_GRID) * KANBAN_GRID;
+
+/** 자리가 없는 열에 기본 자리 — 이미 놓인 상자 오른쪽 끝 다음부터 한 줄로(새 섹션 = 맨 오른쪽 빈 자리) */
+export function fillRects(keys: SectionKey[], rects: Record<string, KanbanRect>): Record<string, KanbanRect> {
+  const out: Record<string, KanbanRect> = {};
+  for (const k of keys) if (rects[k]) out[k] = rects[k]!;
+  let right = Math.max(0, ...Object.values(out).map((r) => r.x + r.w + KANBAN_FREE.gap));
+  for (const k of keys) {
+    if (out[k]) continue;
+    out[k] = { x: snapGrid(right), y: 0, w: KANBAN_FREE.w, h: KANBAN_FREE.h };
+    right = out[k]!.x + KANBAN_FREE.w + KANBAN_FREE.gap;
+  }
+  return out;
+}
+
+/** 균등 분할로 놓았던 모습 그대로의 자리(자유 배치로 처음 바꿀 때·[배치 초기화]) */
+export function equalRects(keys: SectionKey[], width: number, height: number): Record<string, KanbanRect> {
+  const g = KANBAN_FREE.gap;
+  const w = Math.max(KANBAN_FREE.minW, snapGrid((width - g * (keys.length - 1)) / Math.max(1, keys.length)));
+  const h = Math.max(KANBAN_FREE.minH, snapGrid(height));
+  const out: Record<string, KanbanRect> = {};
+  keys.forEach((k, i) => (out[k] = { x: snapGrid(i * (w + g)), y: 0, w, h }));
+  return out;
+}
+
+/** 자유 배치에서 사용자 섹션 순서 = 왼쪽 위부터 읽는 순서(줄 = 상자 높이 절반 안의 y) */
+export function readingOrder(ids: string[], rects: Record<string, KanbanRect>): string[] {
+  return [...ids].sort((a, b) => {
+    const ra = rects[a],
+      rb = rects[b];
+    if (!ra || !rb) return 0;
+    const row = Math.abs(ra.y - rb.y) < Math.min(ra.h, rb.h) / 2 ? 0 : ra.y - rb.y;
+    return row || ra.x - rb.x;
+  });
+}

@@ -18,6 +18,8 @@ export interface AppConfig {
   /** 화면 테마(improve-1027v5-spec 4-2) — 이 PC 취향이라 일지가 아니라 여기에. 없으면 시스템 설정 */
   theme?: ThemePref;
   universeMotion?: "dynamic" | "static";
+  /** 칸반 완료 축하 모션(improve-v22-spec 7절) — 이 PC 취향, 없으면 켬 */
+  celebrate?: boolean;
   universeAutoMotion?: boolean;
   universeAutoStyle?: "drift" | "orbit";
   universePanelWidths?: { filter: number; detail: number };
@@ -254,6 +256,7 @@ export function parseConfig(raw: string | null): AppConfig | null {
       );
     }
     if (typeof c.universeAutoMotion === "boolean") out.universeAutoMotion = c.universeAutoMotion;
+    if (typeof c.celebrate === "boolean") out.celebrate = c.celebrate;
     if (c.universeAutoStyle === "drift" || c.universeAutoStyle === "orbit")
       out.universeAutoStyle = c.universeAutoStyle;
     if (c.universeMotion === "dynamic" || c.universeMotion === "static")
