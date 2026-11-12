@@ -764,3 +764,54 @@ test("v21 칸반 섹션·상태 이력·시작 화면은 공간마다 따로: �
     expect(await kanbanCounts()).toEqual(company);
   }
 });
+
+test("v22 칸반 배치 모드·섹션 순서는 공간마다 따로: 공간을 3번 오가도 그 공간 일지에만(CLAUDE.md 4-7)", async ({
+  page,
+}) => {
+  const hop = async (n: 1 | 2, name: string) => {
+    await page.keyboard.press(`Control+Alt+Digit${n}`);
+    await expect(page).toHaveTitle(`Work Journey Board — ${name}`);
+  };
+  const board = page.getByTestId("kanban-board");
+  await hop(2, "개인");
+  await page.keyboard.press("Alt+Digit6");
+  await expect(board).toHaveAttribute("data-layout", "equal");
+  const base2 = await journalCounts(page);
+  await hop(1, "회사");
+  // 회사: 섹션 둘 → 순서 바꾸기 → 자유 배치 → 상자 크기
+  await page.keyboard.press("Alt+Digit6");
+  for (const n of ["가상 A", "가상 B"]) {
+    await page.getByTestId("kanban-add-section").click();
+    await page.getByTestId("kanban-section-dialog").getByRole("textbox").fill(n);
+    await page.getByTestId("kanban-section-save").click();
+    await expect(page.getByTestId("kanban-section-dialog")).toHaveCount(0);
+  }
+  await page.getByTestId("kanban-col-section").first().getByTestId("kanban-col-head").focus();
+  await page.keyboard.press("Alt+Shift+ArrowRight");
+  const names = () => page.getByTestId("kanban-col-name").allTextContents();
+  await expect.poll(names).toEqual(["TODO", "가상 B", "가상 A", "DONE"]);
+  await page.getByTestId("kanban-layout-free").click();
+  await expect(board).toHaveAttribute("data-layout", "free");
+  const done = page.getByTestId("kanban-free-item").last();
+  const h = (await done.getByTestId("kanban-free-resize").boundingBox())!;
+  await page.mouse.move(h.x + 5, h.y + 5);
+  await page.mouse.down();
+  await page.mouse.move(h.x + 85, h.y - 100, { steps: 5 });
+  await page.mouse.up();
+  const width = Math.round((await done.boundingBox())!.width);
+  const company = await journalCounts(page);
+
+  for (let round = 0; round < 3; round++) {
+    await hop(2, "개인");
+    await page.keyboard.press("Alt+Digit6");
+    await expect(board).toHaveAttribute("data-layout", "equal");
+    await expect.poll(names).toEqual(["TODO", "DONE"]);
+    expect(await journalCounts(page)).toEqual(base2);
+    await hop(1, "회사");
+    await page.keyboard.press("Alt+Digit6");
+    await expect(board).toHaveAttribute("data-layout", "free");
+    await expect.poll(names).toEqual(["TODO", "가상 B", "가상 A", "DONE"]);
+    expect(Math.round((await page.getByTestId("kanban-free-item").last().boundingBox())!.width)).toBe(width);
+    expect(await journalCounts(page)).toEqual(company);
+  }
+});

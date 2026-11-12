@@ -188,6 +188,9 @@ export function validNudgeWeeks(n: number): boolean {
 /** 기본값 위에 저장값(또는 변경분)을 합치고, 범위를 벗어난 값은 기본값으로 되돌린다. */
 export function mergeSettings(base: Settings, patch: unknown): Settings {
   const s = deepMerge(base, patch);
+  // 칸반 배치 자리(improve-v22-spec 4절)는 키가 섹션 id라 기본값에 없다 — 깊이 합치지 않고 통째로 바꾼다(지운 섹션 자리도 빠짐)
+  if (isObject(patch) && isObject(patch.ui) && "kanbanLayout" in patch.ui)
+    s.ui.kanbanLayout = validKanbanLayout(patch.ui.kanbanLayout);
   // v0.2.2 이전 저장값(auto 없음): 기본 높이와 다르면 사용자가 끌어서 정한 높이 → 고정으로 둔다
   if (
     isObject(patch) &&

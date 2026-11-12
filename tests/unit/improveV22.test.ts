@@ -106,3 +106,26 @@ describe("칸반 배치 모드(4절)", () => {
     expect(Object.keys(v.rects)).toEqual(["a"]);
   });
 });
+
+describe("칸반 배치 저장(4절) — 섹션 id 키 자리가 저장·다시 읽기에서 살아남음", () => {
+  it("mergeSettings: rects는 통째로 바뀜", async () => {
+    const { DEFAULT_SETTINGS, mergeSettings } = await import("../../src/data/settings");
+    const a = mergeSettings(DEFAULT_SETTINGS, {
+      ui: {
+        kanbanLayout: {
+          mode: "free",
+          rects: { sec1: { x: 8, y: 0, w: 400, h: 300 }, done: { x: 420, y: 0, w: 300, h: 300 } },
+        },
+      },
+    });
+    expect(Object.keys(a.ui.kanbanLayout.rects).sort()).toEqual(["done", "sec1"]);
+    // 다시 읽기(저장값 JSON을 기본값 위에)
+    const b = mergeSettings(DEFAULT_SETTINGS, JSON.parse(JSON.stringify(a)));
+    expect(b.ui.kanbanLayout).toEqual(a.ui.kanbanLayout);
+    // 지운 섹션 자리는 빠짐(통째 교체)
+    const c = mergeSettings(b, {
+      ui: { kanbanLayout: { mode: "free", rects: { done: { x: 0, y: 0, w: 300, h: 300 } } } },
+    });
+    expect(Object.keys(c.ui.kanbanLayout.rects)).toEqual(["done"]);
+  });
+});

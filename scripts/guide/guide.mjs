@@ -463,6 +463,26 @@ async function shots(base = "http://localhost:1420", only) {
         await p.waitForTimeout(4500); // 알림이 사라진 뒤
       },
     },
+    "15-kanban-free": {
+      url: show,
+      run: async (p) => {
+        await p.keyboard.press("Alt+Digit6");
+        await p.getByTestId("kanban-view").waitFor();
+        // 자유 배치(v22): 섹션 하나를 만들고 DONE 상자를 아래로 옮긴 모습
+        await p.getByTestId("kanban-add-section").click();
+        await p.getByTestId("kanban-section-dialog").getByRole("textbox").fill("검토 중");
+        await p.getByTestId("kanban-section-save").click();
+        await p.getByTestId("kanban-layout-free").click();
+        const head = p.locator("[data-key] [data-testid='kanban-col-done'] [data-testid='kanban-col-head']");
+        const b = await head.boundingBox();
+        await p.mouse.move(b.x + 60, b.y + 10);
+        await p.mouse.down();
+        await p.mouse.move(b.x - 420, b.y + 330, { steps: 8 });
+        await p.mouse.up();
+        await p.mouse.move(0, 0);
+        await p.waitForTimeout(4500); // 알림이 사라진 뒤
+      },
+    },
     "14-universe": {
       url: show,
       run: async (p) => {
