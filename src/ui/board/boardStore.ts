@@ -712,7 +712,9 @@ export async function completeImportant(id: string, strict = false, source: "boa
   void refreshPrevDates();
   notifyItemsChanged();
   toast(
-    completion.children.length ? STR.important.completedWithChildren(completion.children.length) : STR.important.completed,
+    completion.children.length
+      ? STR.important.completedWithChildren(completion.children.length)
+      : STR.important.completed,
     { label: STR.toast.undo, run: () => void undoImportant(id, false, source) },
   );
   return completion;

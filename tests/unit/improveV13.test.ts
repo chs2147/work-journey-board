@@ -278,7 +278,8 @@ it("v13 구형 구조 실제 복원 후 전진 마이그레이션, 원본 백업
   await db.execute("DROP TRIGGER entry_item_status_log");
   await db.execute("DROP INDEX ix_item_kanban_section");
   await db.execute("ALTER TABLE entry_item DROP COLUMN kanban_section_id");
-  for (const t of ["item_status_log", "kanban_ctx", "kanban_bulk", "kanban_section"]) await db.execute(`DROP TABLE ${t}`);
+  for (const t of ["item_status_log", "kanban_ctx", "kanban_bulk", "kanban_section"])
+    await db.execute(`DROP TABLE ${t}`);
   await db.execute("DROP INDEX ix_entry_widget_category_date");
   await db.execute("DROP INDEX ix_entry_widget_important");
   await db.execute("DROP TABLE note_entry_link");
