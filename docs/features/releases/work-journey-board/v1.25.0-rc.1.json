@@ -8,7 +8,7 @@
   "asOfDate": "2026-11-12",
   "reconstructed": false,
   "baselineCommit": "7934af0",
-  "catalogDigestAtCapture": "706917bdc29b7ee004eef605ef70e1ce104b9655e347463b0b5002df0a4088b1",
+  "catalogDigestAtCapture": "df20b56b8829f3ebd4250b9ce4ca0375909acbf6c7b5e71eee8dcf239e118ee6",
   "artifactProfiles": [
     "windows-standard",
     "macos-universal"
@@ -2756,7 +2756,7 @@
       "section": "입력",
       "kind": "제품 기능",
       "name": "업무 항목 추가 창",
-      "description": "업무·날짜(기본 오늘)·섹션을 고르고 주간 보드와 같은 키로 본 항목·세부·★·마감일·시작 시각을 적어 그 날 칸에 넣는다(N).",
+      "description": "업무·날짜(기본 오늘)·섹션을 고르고 주간 보드와 같은 키로 본 항목·세부·★·마감일·시작 시각을 적어 그 날 칸에 넣는다(오른쪽 위 아이콘 단추·N).",
       "entry": "칸반 보드",
       "introduced": null,
       "preview": "1.25.0-rc.1",
@@ -2773,7 +2773,7 @@
         {
           "version": "1.25.0-rc.1",
           "type": "added",
-          "description": "업무·날짜(기본 오늘)·섹션을 고르고 주간 보드와 같은 키로 본 항목·세부·★·마감일·시작 시각을 적어 그 날 칸에 넣는다(N).",
+          "description": "업무·날짜(기본 오늘)·섹션을 고르고 주간 보드와 같은 키로 본 항목·세부·★·마감일·시작 시각을 적어 그 날 칸에 넣는다(오른쪽 위 아이콘 단추·N).",
           "source": "docs/improve-v21-spec.md"
         }
       ],
@@ -2848,8 +2848,8 @@
       "area": "칸반 보드",
       "section": "필터",
       "kind": "제품 기능",
-      "name": "업무·기간 거르기·정렬",
-      "description": "업무와 기간(오늘·이번 주 기본·최근 2/4/12주·전체·지정일)으로 거르고 최신·오래된·마감순으로 정렬한다. TODO·섹션 = 기록일, DONE = 완료일 기준.",
+      "name": "업무·기간 아이콘 거르기·정렬",
+      "description": "업무와 기간 아이콘(오늘·이번 주 기본·최근 2/4/12주·전체·지정일, 툴팁에 실제 날짜)으로 거르고 최신·오래된·마감순으로 정렬한다. TODO·섹션 = 기록일, DONE = 완료일 기준.",
       "entry": "칸반 보드",
       "introduced": null,
       "preview": "1.25.0-rc.1",
@@ -2866,7 +2866,7 @@
         {
           "version": "1.25.0-rc.1",
           "type": "added",
-          "description": "업무와 기간(오늘·이번 주 기본·최근 2/4/12주·전체·지정일)으로 거르고 최신·오래된·마감순으로 정렬한다. TODO·섹션 = 기록일, DONE = 완료일 기준.",
+          "description": "업무와 기간 아이콘(오늘·이번 주 기본·최근 2/4/12주·전체·지정일, 툴팁에 실제 날짜)으로 거르고 최신·오래된·마감순으로 정렬한다. TODO·섹션 = 기록일, DONE = 완료일 기준.",
           "source": "docs/improve-v21-spec.md"
         }
       ],

@@ -30,7 +30,12 @@ test("레일·Alt+6: 칸반 = 주간 보드와 인사이트 사이, 기본 기�
   await page.keyboard.press("Alt+Digit6");
   await expect(page.getByTestId("kanban-view")).toBeVisible();
   await expect(page.getByTestId("kanban-title")).toBeVisible();
-  await expect(page.getByTestId("kanban-period").locator("[aria-pressed=true]")).toHaveText("이번 주");
+  // 기간 = 아이콘 세그먼트(A안): 이름은 aria-label, 툴팁에 실제 날짜
+  const on = page.getByTestId("kanban-period").locator("[aria-pressed=true]");
+  await expect(on).toHaveAttribute("aria-label", "이번 주");
+  await expect(on).toHaveAttribute("title", "이번 주 · 10/19 (월) ~ 10/25 (일)");
+  await expect(page.getByTestId("kanban-period").locator("button")).toHaveCount(7);
+  await expect(page.getByTestId("kanban-period").locator("button").first()).toHaveText("");
   await expect(card(page, "테스트 데이터 이관 스크립트 작성 착수")).toHaveCount(1);
   // 중요 업무 패널은 그대로 왼쪽
   await expect(page.getByTestId("important-panel")).toBeVisible();

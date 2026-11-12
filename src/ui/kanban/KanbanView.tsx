@@ -6,6 +6,7 @@ import {
   TODO,
   SECTION_COLORS,
   doneGroupOf,
+  periodRange,
   type KanbanSection,
   type SectionColor,
   type SectionKey,
@@ -18,6 +19,7 @@ import { revealItem, useBoard } from "../board/boardStore";
 import { dueView } from "../board/dueView";
 import { CAB_MIME } from "../cabinet/CabinetPanel";
 import { SECTION_HEX, useModal } from "./kanbanUi";
+import { IconItemAdd, IconPeriod, IconSectionAdd } from "../common/icons";
 import {
   closeKanban,
   cardsOf,
@@ -51,6 +53,18 @@ export const CARD_MIME = "application/x-wjb-kanban-card";
 let dragCard: { id: string; from: SectionKey; children: number } | null = null;
 
 const PERIODS = ["today", "week", "2w", "4w", "12w", "all", "custom"] as const;
+
+/** 기간 단추 툴팁: 이름 + 실제 날짜 범위(전체·지정일은 설명) */
+function periodTip(p: (typeof PERIODS)[number], today: string): string {
+  const name = K.periods[p];
+  if (p === "all") return `${name} · ${K.periodAllHint}`;
+  if (p === "custom") return `${name} · ${K.periodCustomHint}`;
+  const r = periodRange({ period: p, from: null, to: null }, today);
+  if (!r.from || !r.to) return name;
+  return r.from === r.to
+    ? `${name} · ${shortDateLabel(r.from)}`
+    : `${name} · ${shortDateLabel(r.from)} ~ ${shortDateLabel(r.to)}`;
+}
 
 function md(at: string) {
   return shortDateLabel(localDate(new Date(at))).replace(" ", "");
@@ -99,22 +113,37 @@ export function KanbanView() {
           </button>
           {catOpen && <CategoryFilter onClose={() => setCatOpen(false)} />}
         </div>
-        <div className={styles.seg} role="group" aria-label={K.periodAria} data-testid="kanban-period">
-          {PERIODS.map((p) => (
-            <button
-              key={p}
-              type="button"
-              aria-pressed={s.filter.period === p}
-              data-period={p}
-              onClick={() =>
-                setFilter(
-                  p === "custom" && !s.filter.from ? { period: p, from: today, to: today } : { period: p },
-                )
-              }
-            >
-              {K.periods[p]}
-            </button>
-          ))}
+        {/* 기간 = 아이콘 세그먼트(시안 period-icons A안) — 이름·실제 날짜는 툴팁, 짧은 기간 | 긴 기간 | 전체·지정 사이 구분 */}
+        <div
+          className={`${styles.seg} ${styles.iconSeg}`}
+          role="group"
+          aria-label={K.periodAria}
+          data-testid="kanban-period"
+        >
+          {PERIODS.map((p, i) => {
+            const tip = periodTip(p, today);
+            return (
+              <span key={p} className={styles.segItem}>
+                {(i === 2 || i === 5) && <span className={styles.segGap} aria-hidden="true" />}
+                <button
+                  type="button"
+                  aria-pressed={s.filter.period === p}
+                  aria-label={K.periods[p]}
+                  title={tip}
+                  data-period={p}
+                  onClick={() =>
+                    setFilter(
+                      p === "custom" && !s.filter.from
+                        ? { period: p, from: today, to: today }
+                        : { period: p },
+                    )
+                  }
+                >
+                  <IconPeriod kind={p} />
+                </button>
+              </span>
+            );
+          })}
         </div>
         {s.filter.period === "custom" && (
           <span className={styles.inline}>
@@ -136,20 +165,24 @@ export function KanbanView() {
           </span>
         )}
         <span className={styles.spacer} />
+        {/* 주간 보드 상단 단추와 같은 모양: 아이콘 + 글자(TopBar textButton) */}
         <button
           type="button"
-          className={`${styles.btn} ${styles.primary}`}
+          className={styles.actBtn}
+          title={K.addItemTitle}
           data-testid="kanban-add-item"
           onClick={() => setDialog({ mode: "add", sectionId: null })}
         >
-          ＋ {K.addItem}
+          <IconItemAdd />
+          {K.addItem}
         </button>
         <button
           type="button"
-          className={styles.btn}
+          className={styles.actBtn}
           data-testid="kanban-add-section"
           onClick={() => setSectionDlg({ id: null })}
         >
+          <IconSectionAdd />
           {K.addSection}
         </button>
       </div>

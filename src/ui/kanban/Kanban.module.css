@@ -79,6 +79,52 @@
   background: var(--accent);
   color: var(--on-accent, #fff);
 }
+/* 기간 아이콘 세그먼트(시안 period-icons A안) */
+.iconSeg {
+  align-items: stretch;
+}
+.segItem {
+  display: inline-flex;
+}
+.iconSeg button {
+  width: 32px;
+  height: 28px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-2);
+}
+.segItem:last-child button {
+  border-right: 0;
+}
+.iconSeg button[aria-pressed="true"] {
+  color: var(--on-accent, #fff);
+}
+.segGap {
+  width: 2px;
+  background: var(--btn-line);
+}
+/* 오른쪽 위 단추 = 주간 보드 상단 단추(TopBar textButton·actionButton)와 같은 모양 */
+.actBtn {
+  flex: 0 0 auto;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 var(--sp-4);
+  border: 1px solid var(--btn-line);
+  border-radius: var(--radius-md);
+  background: var(--btn-bg);
+  color: var(--text-1);
+  font: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.actBtn:hover {
+  background: var(--btn-hover);
+}
 .dateInput {
   height: 26px;
   border: 1px solid var(--btn-line);

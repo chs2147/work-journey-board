@@ -208,6 +208,7 @@ CREATE INDEX ix_status_batch ON item_status_log(batch_id) WHERE batch_id IS NOT 
 - **Cabi.NET(7절)**: 이번 판은 **Cabi.NET 폴더·링크 줄 → 카드 = 그 항목에 연결**(주간 보드 행에 놓는 것과 같은 `setCabinetLinks`)만. **카드 → 메모 보드/Cabi.NET 창은 넣지 않음** — 주간 보드 행 → 메모 연결은 같은 창 안 포인터 끌기(`rowDrag.ts`)라 메모 도크가 없는 칸반에서는 놓을 곳이 없고, 카드 HTML5 끌기와 겹치면 열 이동과 구분이 흐려진다. 필요하면 후속(카드 ⋯ › [메모에 연결] 같은 메뉴 방식 추천).
 - **항목 추가 창(5절)**: 주간 보드 칸 편집기(`CellEditor`)는 그 주 화면 저장소의 칸에 묶여 있어 다시 쓰지 않고, 같은 키 규칙을 창 안에서 따로 구현(`Enter`·`Tab`·`Shift+Tab`·`Backspace`·`Alt+I/U/O/R`·`Ctrl+Enter`).
 - **섹션 보존**: 칸 저장은 새 행에만 섹션을 쓴다 — 주간 보드에서 지웠다 되돌린 항목·다른 날로 옮긴 항목은 그 섹션으로, 가져오기 되돌리기도 보존(지운 섹션이면 TODO).
+- **도구 막대(2026-11-12 사용자 요청)**: 기간 필터 = 아이콘 세그먼트(시안 `docs/mockups/v21/period-icons.html` A안 — 달력 안 표시, 툴팁에 이름·실제 날짜, 짧은 기간 | 긴 기간 | 전체·지정 구분선). 오른쪽 위 [업무 항목 추가]·[섹션 추가]는 주간 보드 상단 단추와 같은 아이콘 + 글자 단추(채움 색 강조 없음).
 - **설정**: 설정 › 화면 › 시작 화면(`ui.startView`) · 칸반 필터 기억(`ui.kanban`). 둘 다 일지(공간)마다.
 - **타임라인 T1·T2**: `domain/insights.ts` `dayGroups` · `laterDoneDate` 칩 · 경과 복사 `(월) 10/12` 줄 + `- 항목`(골든 시험 갱신).
 - **시험**: 단위 `tests/unit/kanban.test.ts`(규칙·저장소·이력·일괄·섹션 보존·마이그레이션) · e2e `tests/e2e/kanban.spec.ts`(레일·끌기·섹션·추가 창·일괄·중요 연동·T1/T2·시작 화면·Cabi.NET 끌기) · 전환 무결성 `workspace-integrity.spec.ts` v21 시나리오(`journalCounts`에 칸반 표) · 확인표 `m1-check.md` 7-44.

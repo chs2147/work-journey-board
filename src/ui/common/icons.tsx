@@ -352,3 +352,71 @@ export const IconFilterRecorded = () => (
     <path d="M2.5 3h11l-4.2 5v4.5l-2.6 1.2V8z" />
   </Svg>
 );
+
+/** 칸반 기간 필터(improve-v21-spec 2절 · 시안 period-icons A안): 달력 안 표시로 구분 — 오늘 ■ · 이번 주 ━ · 최근 n주 숫자 · 전체 ∞ · 지정일 [ ] */
+const PeriodCal = ({ children }: { children?: ReactNode }) => (
+  <Svg>
+    <rect x="2" y="2.75" width="12" height="11.5" rx="1.5" />
+    <path d="M2 6h12M5.25 1.5v2.25M10.75 1.5v2.25" />
+    {children}
+  </Svg>
+);
+const periodNum = (t: string) => (
+  <text
+    x="8"
+    y="12.6"
+    textAnchor="middle"
+    fontSize={t.length > 1 ? 5.4 : 6}
+    fontWeight={700}
+    fill="currentColor"
+    stroke="none"
+    fontFamily="system-ui, sans-serif"
+  >
+    {t}
+  </text>
+);
+export const IconPeriod = ({ kind }: { kind: string }) => {
+  switch (kind) {
+    case "today":
+      return (
+        <PeriodCal>
+          <rect x="6.6" y="8.3" width="2.8" height="2.8" fill="currentColor" stroke="none" />
+        </PeriodCal>
+      );
+    case "week":
+      return (
+        <PeriodCal>
+          <path d="M4.25 10.1h7.5" strokeWidth="2.2" strokeLinecap="butt" />
+        </PeriodCal>
+      );
+    case "2w":
+      return <PeriodCal>{periodNum("2")}</PeriodCal>;
+    case "4w":
+      return <PeriodCal>{periodNum("4")}</PeriodCal>;
+    case "12w":
+      return <PeriodCal>{periodNum("12")}</PeriodCal>;
+    case "all":
+      return (
+        <Svg>
+          <path d="M8 8C6.6 6.1 5.3 5.2 4.1 5.2a2.8 2.8 0 0 0 0 5.6C5.3 10.8 6.6 9.9 8 8Zm0 0c1.4 1.9 2.7 2.8 3.9 2.8a2.8 2.8 0 0 0 0-5.6C10.7 5.2 9.4 6.1 8 8Z" />
+        </Svg>
+      );
+    default:
+      return (
+        <PeriodCal>
+          <path d="M5 8.6v3.2h1.2M5 8.6h1.2M11 8.6v3.2H9.8M11 8.6H9.8" />
+        </PeriodCal>
+      );
+  }
+};
+/** 칸반: 업무 항목 추가(목록 + 더하기) · 섹션 추가(열 + 더하기) */
+export const IconItemAdd = () => (
+  <Svg>
+    <path d="M2.5 4h6.5M2.5 8h6.5M2.5 12h4M12 9v5M9.5 11.5h5" />
+  </Svg>
+);
+export const IconSectionAdd = () => (
+  <Svg>
+    <path d="M2 2.5h3.5v11H2ZM7.25 2.5h3.5v6h-3.5ZM13.25 10v4.5M11 12.25h4.5" />
+  </Svg>
+);
