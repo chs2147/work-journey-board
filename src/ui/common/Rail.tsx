@@ -9,6 +9,7 @@ import { setSettingsOpen } from "./appController";
 import { CabinetRailIcon } from "../cabinet/CabinetIcons";
 import { toggleCabinet, useCabinet } from "../cabinet/cabinetStore";
 import { useAppStore } from "./appStore";
+import { closeKanban, openKanban, useKanban } from "../kanban/kanbanStore";
 import styles from "./Rail.module.css";
 import { WorkspaceRailButton } from "./WorkspaceSwitcher";
 import { closeUniverse, openUniverse, usePack, useUniverse } from "../universe/universeStore";
@@ -19,6 +20,23 @@ const BoardIcon = () => (
   <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
     <rect x="2" y="3" width="14" height="12" rx="2" fill="none" stroke="currentColor" strokeWidth="1.6" />
     <path d="M2 7h14M7 7v8M12 7v8" stroke="currentColor" strokeWidth="1.4" />
+  </svg>
+);
+
+/** 칸반: 세 열 + 카드(improve-v21-spec 2-1) */
+const KanbanIcon = () => (
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 18 18"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.5"
+    aria-hidden="true"
+  >
+    <rect x="2" y="2.5" width="4" height="9" />
+    <rect x="7" y="2.5" width="4" height="13" />
+    <rect x="12" y="2.5" width="4" height="6" />
   </svg>
 );
 
@@ -98,7 +116,8 @@ export function Rail() {
   const universeOpen = useUniverse((s) => s.open) && !settingsOpen;
   const packCount = usePack((s) => s.items.length);
   const insightsOpen = useInsights((s) => s.open) && !settingsOpen && !universeOpen;
-  const boardOn = !insightsOpen && !settingsOpen && !universeOpen;
+  const kanbanOn = useKanban((k) => k.open) && !insightsOpen && !settingsOpen && !universeOpen;
+  const boardOn = !insightsOpen && !settingsOpen && !universeOpen && !kanbanOn;
   const important = useBoard((s) => s.important);
   const today = useBoard((s) => s.today);
   const panelOpen = useBoard((s) => s.panelOpen);
@@ -131,10 +150,27 @@ export function Rail() {
           setSettingsOpen(false);
           closeInsights();
           closeUniverse();
+          closeKanban();
           focusStartCell();
         }}
       >
         <BoardIcon />
+      </button>
+      <button
+        type="button"
+        className={`${styles.btn} ${kanbanOn ? styles.on : ""}`}
+        aria-current={kanbanOn ? "page" : undefined}
+        aria-label={STR.rail.kanban}
+        title={STR.rail.kanban}
+        data-testid="rail-kanban"
+        onClick={() => {
+          setSettingsOpen(false);
+          closeInsights();
+          closeUniverse();
+          void openKanban();
+        }}
+      >
+        <KanbanIcon />
       </button>
       <button
         type="button"
@@ -146,6 +182,7 @@ export function Rail() {
         onClick={() => {
           setSettingsOpen(false);
           closeUniverse();
+          closeKanban();
           void openInsights();
         }}
       >

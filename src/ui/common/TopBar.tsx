@@ -24,6 +24,7 @@ import { TagFilterMenu } from "./TagFilterMenu";
 import { SearchBox } from "../search/SearchViews";
 import { useInsights } from "../insights/insightsStore";
 import { useUniverse } from "../universe/universeStore";
+import { useKanban } from "../kanban/kanbanStore";
 import { AddCategoryDialog } from "../board/AddCategoryDialog";
 import styles from "./TopBar.module.css";
 
@@ -55,7 +56,9 @@ export function TopBar() {
   const insights = insightsOpen && !settings;
   // Universe(universe-spec 4절): 인사이트처럼 보드 자리를 덮는다 — 주 단위 기능은 감춘다
   const universe = useUniverse((s) => s.open) && !settings;
-  const week = !insights && !settings && !universe;
+  // 칸반(improve-v21-spec 2-1): 주 단위 기능은 감추고 제목만 — 필터·추가는 칸반 화면 안에
+  const kanban = useKanban((k) => k.open) && !settings && !insights && !universe;
+  const week = !insights && !settings && !universe && !kanban;
 
   const savedAt = useBoard((s) => s.savedAt);
 
@@ -86,6 +89,12 @@ export function TopBar() {
           <div className={styles.insightTitle} data-testid="insights-title">
             <b>{STR.insights.title}</b>
             <span>{STR.insights.subtitle}</span>
+          </div>
+        )}
+        {ready && journalReady && kanban && (
+          <div className={styles.insightTitle} data-testid="kanban-title">
+            <b>{STR.kanban.title}</b>
+            <span>{STR.kanban.subtitle}</span>
           </div>
         )}
         {ready && journalReady && universe && (
@@ -165,7 +174,7 @@ export function TopBar() {
         )}
         <div className={styles.spacer} />
         {ready && journalReady && week && <SearchBox />}
-        {ready && journalReady && !settings && <TagFilterMenu />}
+        {ready && journalReady && !settings && !kanban && <TagFilterMenu />}
         {ready && journalReady && week && (
           <button
             type="button"

@@ -2,6 +2,7 @@
 import { normalizeBackupPolicy, RECOMMENDED_BACKUP_POLICY, type BackupPolicy } from "./backupPolicy";
 import { COMPANY_DATE_RE, LABEL_MAX_HOLIDAY, type HolidaySettings } from "../domain/holidaysKr";
 import { parseMeta, type WorkspaceMeta } from "../domain/workspace";
+import { DEFAULT_KANBAN_FILTER, KANBAN_PERIODS, type KanbanFilter } from "../domain/kanban";
 export interface Settings {
   /** 이 일지(워크스페이스)의 이름·색·아이콘(multi-board-spec 7절) — 없으면 이 PC 목록의 사본으로 채운다 */
   workspace: WorkspaceMeta | null;
@@ -60,6 +61,10 @@ export interface Settings {
     weekDoneOpen: boolean;
     /** 설정 화면에서 마지막으로 본 분류(improve-1027v5-spec 1-2) */
     settingsCategory: SettingsCategory;
+    /** 앱을 켰을 때 먼저 보일 화면(improve-v21-spec 8절) — board = 마지막 주간/데일리 뷰 */
+    startView: "board" | "kanban";
+    /** 칸반 보드 필터·정렬(improve-v21-spec 2-5) */
+    kanban: KanbanFilter;
   };
 }
 
@@ -141,6 +146,8 @@ export const DEFAULT_SETTINGS: Settings = {
     exportSnapshots: false,
     weekDoneOpen: true,
     settingsCategory: "screen",
+    startView: "board",
+    kanban: DEFAULT_KANBAN_FILTER,
   },
 };
 
@@ -236,6 +243,8 @@ export function mergeSettings(base: Settings, patch: unknown): Settings {
   if (!(SETTINGS_CATEGORIES as readonly string[]).includes(s.ui.settingsCategory))
     s.ui.settingsCategory = "screen";
   if (!(s.ui.noteDockHeight >= NOTE_DOCK_MIN)) s.ui.noteDockHeight = DEFAULT_SETTINGS.ui.noteDockHeight;
+  if (s.ui.startView !== "board" && s.ui.startView !== "kanban") s.ui.startView = "board";
+  s.ui.kanban = validKanbanFilter(s.ui.kanban);
   return s;
 }
 
@@ -248,5 +257,23 @@ export function validBoardColW(v: unknown): BoardColW {
   return {
     label: num(o.label, BOARD_COL_W.label.min, BOARD_COL_W.label.max),
     days: Array.from({ length: 7 }, (_, i) => num(days[i], BOARD_COL_W.day.min, BOARD_COL_W.day.max)),
+  };
+}
+
+/** 칸반 필터 검사 — 모르는 값은 기본 */
+export function validKanbanFilter(v: unknown): KanbanFilter {
+  const o = (v && typeof v === "object" ? v : {}) as Partial<Record<keyof KanbanFilter, unknown>>;
+  const date = (x: unknown) => (typeof x === "string" && /^\d{4}-\d{2}-\d{2}$/.test(x) ? x : null);
+  return {
+    categories: Array.isArray(o.categories)
+      ? o.categories.filter((x): x is string => typeof x === "string")
+      : [],
+    includeEnded: o.includeEnded === true,
+    period: (KANBAN_PERIODS as readonly unknown[]).includes(o.period)
+      ? (o.period as KanbanFilter["period"])
+      : DEFAULT_KANBAN_FILTER.period,
+    from: date(o.from),
+    to: date(o.to),
+    sort: o.sort === "old" || o.sort === "due" ? o.sort : "new",
   };
 }

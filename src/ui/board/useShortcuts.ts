@@ -1,5 +1,6 @@
 // 전역 단축키(overview 10-2·10-3). 한국어 자판에서도 동작하도록 e.key 대신 e.code로 판별한다.
 import { useEffect } from "react";
+import { closeKanban, openKanban, useKanban } from "../kanban/kanbanStore";
 import { toggleCabinet } from "../cabinet/cabinetStore";
 import { addDays, weekDays } from "../../domain/week";
 import {
@@ -78,6 +79,25 @@ export function useShortcuts() {
         } else void openUniverse(focusedItemId());
         return;
       }
+      // 칸반 보드(improve-v21-spec D1): Alt+6 = 열기/주간 보드로 — 어느 화면에서나
+      if (e.altKey && !mod && !e.shiftKey && e.code === "Digit6") {
+        e.preventDefault();
+        if (
+          useKanban.getState().open &&
+          !settings &&
+          !useInsights.getState().open &&
+          !useUniverse.getState().open
+        ) {
+          closeKanban();
+          focusStartCell();
+        } else {
+          setSettingsOpen(false);
+          closeInsights();
+          closeUniverse();
+          void openKanban();
+        }
+        return;
+      }
       const universe = useUniverse.getState().open;
       if (settings) {
         if (e.altKey && !mod && !e.shiftKey && ["Digit1", "Digit2", "Digit3"].includes(e.code)) {
@@ -86,6 +106,7 @@ export function useShortcuts() {
           if (e.code === "Digit1") {
             closeInsights();
             closeUniverse();
+            closeKanban();
             focusStartCell();
           } else if (e.code === "Digit2") setPanelOpen(true, true);
           else if (!insights) void openInsights(focusedCategory());
@@ -101,6 +122,7 @@ export function useShortcuts() {
           focusStartCell();
         } else {
           closeUniverse();
+          closeKanban();
           void openInsights(focusedCategory());
         }
         return;
@@ -124,6 +146,18 @@ export function useShortcuts() {
           // Universe 안의 실행 취소 = 직접 연결 작업만(UV2) — 보드 기록은 건드리지 않는다
           e.preventDefault();
           void (e.code === "KeyZ" && !e.shiftKey ? undoRelation() : redoRelation());
+        }
+        return;
+      }
+      // 칸반이 보이는 동안: Alt+1 = 주간 보드로, Alt+2 = 중요 업무 패널, 보드 단축키는 쉰다
+      if (useKanban.getState().open && !insights) {
+        if (e.altKey && !mod && !e.shiftKey && e.code === "Digit1") {
+          e.preventDefault();
+          closeKanban();
+          focusStartCell();
+        } else if (e.altKey && !mod && !e.shiftKey && e.code === "Digit2") {
+          e.preventDefault();
+          setPanelOpen(!panelOpen, !panelOpen);
         }
         return;
       }

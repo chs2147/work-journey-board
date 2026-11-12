@@ -31,6 +31,8 @@ import { NoteDock } from "./note/NoteDock";
 import { TodayView } from "./today/TodayView";
 import { InsightsView } from "./insights/InsightsView";
 import { useInsights } from "./insights/insightsStore";
+import { KanbanView } from "./kanban/KanbanView";
+import { useKanban } from "./kanban/kanbanStore";
 import { UniverseView } from "./universe/UniverseView";
 import { useUniverse } from "./universe/universeStore";
 import { useNote } from "./note/noteStore";
@@ -133,6 +135,8 @@ function Workspace() {
   // Universe(universe-spec 4절): 인사이트처럼 보드 자리를 덮는다 — 둘은 함께 열리지 않는다
   const universeOpen = useUniverse((s) => s.open);
   const insightsOpen = insightsOpen0 || universeOpen;
+  // 칸반 보드(improve-v21-spec 2-1): 보드 자리를 덮는다 — 인사이트·Universe·설정이 열리면 그쪽이 위
+  const kanbanOpen = useKanban((s) => s.open) && !insightsOpen;
   // 설정(improve-1027v5-spec 1-2)도 인사이트처럼 보드 자리를 덮는다 — 보드·인사이트는 그대로 두고 숨김
   const settingsOpen = useAppStore((s) => s.settingsOpen);
   // 메모 도크가 자동 높이면 보드는 필요한 만큼만(남는 공간은 메모) — 접혀 있으면 보드가 다 쓴다
@@ -151,15 +155,18 @@ function Workspace() {
       {insightsOpen0 && !universeOpen && !settingsOpen && <InsightsView />}
       {universeOpen && !settingsOpen && <UniverseView />}
       {settingsOpen && <SettingsView />}
+      {kanbanOpen && !settingsOpen && <KanbanView />}
       <div
-        className={insightsOpen || settingsOpen ? styles.hidden : styles.boardArea}
+        className={insightsOpen || settingsOpen || kanbanOpen ? styles.hidden : styles.boardArea}
         onMouseDown={() => {
           if (narrow && panelOpen) setPanelOpen(false);
           if (summaryOverlay && summaryOpen) setSummaryOpen(false);
         }}
       >
         <SearchBand
-          rightInset={searchPanelOpen && summaryOverlay && !insightsOpen && !settingsOpen ? summaryW : 0}
+          rightInset={
+            searchPanelOpen && summaryOverlay && !insightsOpen && !settingsOpen && !kanbanOpen ? summaryW : 0
+          }
         />
         {viewMode === "today" ? (
           <TodayView />
@@ -183,10 +190,13 @@ function Workspace() {
       {/* Cabinet(F5): 모달리스 — 보드·인사이트·설정 어디서나 위에 떠 있다 */}
       {cabinetInApp && <CabinetPanel />}
       <FolderPanels />
-      {searchPanelOpen && !insightsOpen && !settingsOpen ? (
+      {searchPanelOpen && !insightsOpen && !settingsOpen && !kanbanOpen ? (
         <SearchPanel overlay={summaryOverlay} />
       ) : (
-        summaryOpen && !insightsOpen && !settingsOpen && <SummaryPanel overlay={summaryOverlay} />
+        summaryOpen &&
+        !insightsOpen &&
+        !settingsOpen &&
+        !kanbanOpen && <SummaryPanel overlay={summaryOverlay} />
       )}
     </div>
   );

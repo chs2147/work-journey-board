@@ -1,4 +1,5 @@
 // 왼쪽 중요 업무 패널(important-repeat-spec 2-3~2-5): 모든 주의 중요 항목을 묶음 › 업무별로(improve-1026v2-spec 8절), 체크 = 처리 완료, 누르면 그 칸으로.
+import { revealInKanban, useKanban } from "../kanban/kanbanStore";
 import { useEffect, useRef, type KeyboardEvent } from "react";
 import { groupImportant } from "../../domain/important";
 import type { ImportantItem } from "../../domain/types";
@@ -19,6 +20,12 @@ import {
 import { IconDone } from "../common/icons";
 import { dueView } from "../board/dueView";
 import styles from "./ImportantPanel.module.css";
+
+/** 칸반이 보이면 그 카드로(주간 보드로 넘어가지 않음 — improve-v21-spec 2-1), 아니면 주간 보드 그 칸으로 */
+function revealFromPanel(it: Parameters<typeof revealItem>[0]) {
+  if (useKanban.getState().open) return revealInKanban(it.id);
+  return revealItem(it);
+}
 
 /** 처리한 날(내 PC 날짜)로 묶음 — 목록은 이미 최근 순 */
 function doneDays(items: ImportantItem[]): [DateStr, ImportantItem[]][] {
@@ -173,7 +180,7 @@ export function ImportantPanel({ overlay }: { overlay: boolean }) {
                               data-row
                               data-testid="important-row"
                               title={STR.dueDate.rowTitle(it.categoryName, shortDateLabel(it.date))}
-                              onClick={() => void revealItem(it)}
+                              onClick={() => void revealFromPanel(it)}
                               onKeyDown={(e) => onRowKey(e, it)}
                             >
                               <span className={styles.dueLine}>
@@ -215,7 +222,7 @@ export function ImportantPanel({ overlay }: { overlay: boolean }) {
                           className={styles.main}
                           data-row
                           data-testid="important-row"
-                          onClick={() => void revealItem(it)}
+                          onClick={() => void revealFromPanel(it)}
                           onKeyDown={(e) => onRowKey(e, it)}
                         >
                           {it.parentText && <span className={styles.parent}>{it.parentText} ›</span>}
@@ -270,7 +277,11 @@ export function ImportantPanel({ overlay }: { overlay: boolean }) {
                   {items.map((it) => (
                     <li key={it.id} className={styles.doneRow} data-testid="week-done-row">
                       <IconDone size={14} />
-                      <button type="button" className={styles.doneText} onClick={() => void revealItem(it)}>
+                      <button
+                        type="button"
+                        className={styles.doneText}
+                        onClick={() => void revealFromPanel(it)}
+                      >
                         {it.text}
                       </button>
                       <span className={styles.meta}>{shortDateLabel(it.date)}</span>

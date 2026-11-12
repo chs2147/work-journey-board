@@ -46,6 +46,7 @@ import {
 import { detachSummary, flushDraft, initSummary } from "../summary/summaryStore";
 import { detachNote, finishNote, flushNote, initNote, useNote } from "../note/noteStore";
 import { detachInsights, initInsights, useInsights } from "../insights/insightsStore";
+import { detachKanban, initKanban, openKanban } from "../kanban/kanbanStore";
 import { restoreCabinet, shutdownCabinet, suspendCabinet } from "../cabinet/cabinetStore";
 import { closeInsights } from "../insights/insightsStore";
 import { today as todayOf } from "../../domain/week";
@@ -300,6 +301,7 @@ function detachAll() {
   detachSummary();
   detachNote();
   detachInsights();
+  detachKanban();
   for (const f of detachList()) f();
 }
 
@@ -364,10 +366,13 @@ async function activate(driver: SqlDriver, dataDir: string) {
   await initSummary(repo);
   await initNote(repo);
   await initInsights(repo);
+  await initKanban(repo);
   await syncWorkspace(repo, dataDir);
   set({ journal: { state: "ready", driver, repo, dataDir, sqliteVersion: row?.v ?? "?" } });
   closingJournal = null;
   lastBackup = { writes: repo.writeCount, at: p.now().getTime() };
+  // 시작 화면(improve-v21-spec 8절) — 칸반이면 보드 자리에 칸반을 띄운다
+  if ((await repo.getSettings()).ui.startView === "kanban") void openKanban();
   void restoreCabinet().catch(() => undefined);
   void waitInputIdle(START_BACKUP_MAX_WAIT_MS).then(() => {
     const current = get().journal;
