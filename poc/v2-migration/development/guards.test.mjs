@@ -6,7 +6,8 @@ const clean = Object.fromEntries(
 );
 const dev = { ...clean, WJB_CLOUD_ENV: "development", WJB_SUPABASE_DEV_PROJECT_REF: "vsphftnmfzfoufasjttd" };
 const live = new URL("./live-check.mjs", import.meta.url),
-  inspect = new URL("./inspect.mjs", import.meta.url);
+  inspect = new URL("./inspect.mjs", import.meta.url),
+  apply20 = new URL("./db20-apply.mjs", import.meta.url);
 for (const [name, file, args, env, code] of [
   ["live requires explicit invocation", live, [], dev, "EXPLICIT_DEV_FIXTURE_REQUIRED"],
   [
@@ -20,6 +21,35 @@ for (const [name, file, args, env, code] of [
     "live needs DEV credentials before requests",
     live,
     ["--run-development-fixtures", "--free-usage-confirmed"],
+    dev,
+    "DEV_CREDENTIALS_REQUIRED",
+  ],
+  [
+    "live DB20 needs DEV credentials before requests",
+    live,
+    ["--run-development-fixtures", "--free-usage-confirmed", "--db20"],
+    dev,
+    "DEV_CREDENTIALS_REQUIRED",
+  ],
+  [
+    "live refuses unknown extra flags",
+    live,
+    ["--run-development-fixtures", "--free-usage-confirmed", "--db21"],
+    dev,
+    "EXPLICIT_DEV_FIXTURE_REQUIRED",
+  ],
+  ["DB20 apply requires explicit invocation", apply20, [], dev, "EXPLICIT_DEV_APPLY_REQUIRED"],
+  [
+    "DB20 apply refuses production selection",
+    apply20,
+    ["--apply-007-development", "--free-usage-confirmed"],
+    { ...dev, WJB_CLOUD_ENV: "production" },
+    "EXPLICIT_DEV_APPLY_REQUIRED",
+  ],
+  [
+    "DB20 apply needs DEV credentials before requests",
+    apply20,
+    ["--apply-007-development", "--free-usage-confirmed"],
     dev,
     "DEV_CREDENTIALS_REQUIRED",
   ],

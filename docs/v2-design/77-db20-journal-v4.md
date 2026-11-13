@@ -29,3 +29,15 @@
 ## 4. 다음
 
 **개발 DB 적용(사용자 확인 필요)** — 007 적용 → 008 점검 → 가상 DB20 표본(계정·공간·작은 이미지)으로 실제 Auth/Storage 이관 → 모든 표본 정리 → 잔여 0 확인. 66문서와 같은 절차이며 001·004·KeepAlive는 다시 적용하지 않는다. 운영 예정 프로젝트·제품 앱·원본 로컬 모델은 그대로다.
+
+## 5. 개발 DB 적용 준비 (2026-11-13, 실행 대기)
+
+사용자가 개발 DB 적용을 승인했으나, 이 세션은 기본(Default) 환경에서 실행되어 개발 DB 비밀값(`WJB_SUPABASE_DEV_SERVICE_ROLE_KEY`·`WJB_SUPABASE_DEV_MANAGEMENT_TOKEN`)과 개발 호스트 허용이 없다. 연결된 Supabase 도구는 다른 계정(건물수첩 프로젝트)이라 사용하지 않았다. **클라우드에는 아무것도 적용하지 않았다.** 대신 바로 실행할 수 있게 도구를 준비했다.
+
+| 도구 | 내용 |
+|---|---|
+| `poc/v2-migration/development/db20-apply.mjs --apply-007-development --free-usage-confirmed` | 개발 환경·007/008 해시(검토 manifest) 확인 → 쓰기 역할·비superuser 확인 → 004 있음·007 없음 확인 → 007 한 번 적용(응답 유실 시 다시 적용하지 않고 읽기로 확인) → 008 점검 → `evidence/migration-dev-db20-install.json` |
+| `live-check.mjs --run-development-fixtures --free-usage-confirmed --db20` | 기존 DB18/19 흐름 그대로, 표본만 DB20 3건(정상·준비/게시 응답 유실 복구·취소). 007 설치 기록·해시와 008 점검 선행, 30테이블·`kanban_ctx` 제외·칸반 테이블 왕복 확인, 기존과 같은 정리·잔여 0 확인 → `evidence/migration-dev-db20-live-check.json` |
+| `guards.test.mjs` | 새 도구·`--db20`의 명시 실행·운영 선택 거절·비밀값 없을 때 요청 전 중단 시험 추가(11개 통과) |
+
+실행에 필요한 것: 개발 DB 변수가 있는 환경(이전 개발 DB 작업 세션의 환경)에서 실행하거나, 이 저장소용 환경에 아래를 설정한다 — 일반 변수 `WJB_CLOUD_ENV=development`·`WJB_SUPABASE_DEV_PROJECT_REF=vsphftnmfzfoufasjttd`, 비밀 변수 `WJB_SUPABASE_DEV_SERVICE_ROLE_KEY`·`WJB_SUPABASE_DEV_MANAGEMENT_TOKEN`, 허용 호스트 `api.supabase.com`·`vsphftnmfzfoufasjttd.supabase.co`.

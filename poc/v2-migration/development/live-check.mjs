@@ -7,6 +7,7 @@ import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { fixture18 } from "../../v2-sync/fixture18.mjs";
 import { enrich } from "../fixture-full-workspace.mjs";
+import { upgradeFixture } from "../fixture-db20.mjs";
 import { hash, sourceHash } from "../../v2-sync/model.mjs";
 import { createConnectedCopy, inspectConnectedCopy } from "../../v2-assets/connected-copy.mjs";
 import { mapWorkspace } from "../workspace-map.mjs";
@@ -20,8 +21,11 @@ import { createMigrationRPC } from "../server-rpc.mjs";
 const ref = "vsphftnmfzfoufasjttd",
   origin = `https://${ref}.supabase.co`,
   bucket = "wjb-v2-poc-private";
+const invocation = process.argv.slice(2).join(" ");
+// --db20: same bounded flow with DB20 (kanban) fixtures; needs 007 installed by db20-apply.mjs first.
+const db20 = invocation === "--run-development-fixtures --free-usage-confirmed --db20";
 if (
-  process.argv.slice(2).join(" ") !== "--run-development-fixtures --free-usage-confirmed" ||
+  (invocation !== "--run-development-fixtures --free-usage-confirmed" && !db20) ||
   process.env.WJB_CLOUD_ENV !== "development" ||
   process.env.WJB_SUPABASE_DEV_PROJECT_REF !== ref
 )
@@ -29,7 +33,10 @@ if (
 const key = process.env.WJB_SUPABASE_DEV_SERVICE_ROLE_KEY,
   management = process.env.WJB_SUPABASE_DEV_MANAGEMENT_TOKEN;
 if (!key || !management) throw Error("DEV_CREDENTIALS_REQUIRED");
-const evidence = new URL("../../../docs/v2-design/evidence/migration-dev-live-check.json", import.meta.url);
+const evidence = new URL(
+  `../../../docs/v2-design/evidence/${db20 ? "migration-dev-db20-live-check.json" : "migration-dev-live-check.json"}`,
+  import.meta.url,
+);
 const report = {
   startedAt: new Date().toISOString(),
   projectRef: ref,
@@ -133,6 +140,7 @@ function fixture(version) {
         "UPDATE app_meta SET value='19' WHERE key='schema_version'; UPDATE cabi_note SET delete_locked=1 WHERE id='n1'",
       );
     }
+    if (version === 20) upgradeFixture(db, 20);
   } finally {
     db.close();
   }
@@ -176,6 +184,29 @@ try {
     check(
       "installed_source_" + entry.path.split("/").at(-1),
       createHash("sha256").update(readFileSync(path)).digest("hex") === entry.sha256,
+    );
+  }
+  if (db20) {
+    const installed20 = JSON.parse(
+      readFileSync(
+        new URL("../../../docs/v2-design/evidence/migration-dev-db20-install.json", import.meta.url),
+        "utf8",
+      ),
+    );
+    check("reviewed_db20_install_record", installed20.applied === true && installed20.projectRef === ref);
+    for (const entry of installed20.sources)
+      check(
+        "installed_source_" + entry.path.split("/").at(-1),
+        createHash("sha256")
+          .update(readFileSync(new URL("../../../" + entry.path, import.meta.url)))
+          .digest("hex") === entry.sha256,
+      );
+    const v20 = (
+      await sql(readFileSync(new URL("../postgres/008-workspace-db20-verify.sql", import.meta.url), "utf8"))
+    )[0]?.jsonb_build_object;
+    check(
+      "live_db20_extension",
+      v20?.db20Contract === true && v20.db20Tables === 30 && v20.profileCheck === true,
     );
   }
   const v = await sql(readFileSync(new URL("../postgres/005-workspace-verify.sql", import.meta.url), "utf8"));
@@ -245,14 +276,17 @@ try {
     "private_bucket_limits",
     config.status === 200 && config.body.public === false && Number(config.body.file_size_limit) === 65536,
   );
-  for (const [index, version] of [18, 19, 19].entries()) {
+  for (const [index, version] of (db20 ? [20, 20, 20] : [18, 19, 19]).entries()) {
     currentStep = "case-" + index;
     const e = fixture(version);
     await save();
+    const tableCount = version === 20 ? 30 : 26;
     check(
-      "all_26_tables_populated_" + index,
-      Object.keys(e.mapped.envelope.tableStats).length === 26 &&
-        Object.values(e.mapped.envelope.tableStats).every((s) => s.mappedRows > 0),
+      `all_${tableCount}_tables_populated_` + index,
+      Object.keys(e.mapped.envelope.tableStats).length === tableCount &&
+        Object.entries(e.mapped.envelope.tableStats).every(([t, s]) =>
+          t === "kanban_ctx" ? s.mappedRows === 0 && s.excludedRows === 1 : s.mappedRows > 0,
+        ),
     );
     let lose = index === 1 ? "mark_ready" : index === 2 ? "prepare_publish" : null,
       puts = 0;
@@ -364,7 +398,15 @@ try {
         devices[0],
       );
       check("full_roundtrip_" + index, hash(fetched.envelope) === e.mapped.mappingHash);
-      if (version === 19)
+      if (version === 20) {
+        const tables = new Set(fetched.envelope.records.map((r) => r.table));
+        check(
+          "kanban_tables_roundtrip_" + index,
+          ["kanban_section", "item_status_log", "kanban_bulk"].every((t) => tables.has(t)) &&
+            !tables.has("kanban_ctx"),
+        );
+      }
+      if (version >= 19)
         check(
           "delete_lock_retained",
           fetched.envelope.records.some((r) => r.table === "cabi_note" && r.value.delete_locked === 1),
