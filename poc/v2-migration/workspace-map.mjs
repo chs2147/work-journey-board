@@ -1,10 +1,30 @@
-// DB18/19 -> online metadata envelope. Never reads/writes the original DB.
+// DB18/19/20 -> online metadata envelope. Never reads/writes the original DB.
+import { readFileSync } from "node:fs";
 import db18 from "./db18-contract.json" with { type: "json" };
 import db19 from "./db19-contract.json" with { type: "json" };
+import db20 from "./db20-contract.json" with { type: "json" };
 import { inspectConnectedCopy } from "../v2-assets/connected-copy.mjs";
 import { hash } from "../v2-sync/model.mjs";
+import { KANBAN_CTX_REST } from "../v2-sync/db18.mjs";
 
 export const workspaceMapProfile = "workspace-db18-map-poc-1";
+const contracts = { 18: db18, 19: db19, 20: db20 };
+export const workspaceMapProfiles = Object.freeze({
+  18: workspaceMapProfile,
+  19: "workspace-db19-map-poc-1",
+  20: "workspace-db20-map-poc-1",
+});
+// DB20 kanban: section icons are the product's generated Fluent set (read as code resource, not user data).
+const sectionIconIds = new Set(
+  [
+    ...readFileSync(new URL("../../src/shared/sectionIcons.ts", import.meta.url), "utf8").matchAll(
+      /"id": "([a-z0-9-]+)"/g,
+    ),
+  ].map((m) => m[1]),
+);
+const kanbanFixedKeys = new Set(["todo", "done"]);
+const statusSources = new Set(["kanban", "board", "important", "bulk", "section", "import", "migrate"]);
+const isoTime = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,3})?Z$/;
 const assetTables = new Set(["note_asset", "cabi_asset"]);
 const jsonFields = {
   week_note: ["doc"],
@@ -12,6 +32,7 @@ const jsonFields = {
   cabi_note: ["content"],
   knowledge_card_source: ["locator_json"],
   import_batch: ["undo_json"],
+  kanban_bulk: ["items"],
 };
 const nodes = new Set([
   "doc",
@@ -150,7 +171,23 @@ function checkForeignKeys(tables, contract) {
 function folderBase(path) {
   return path.replaceAll("\\", "/").split("/").filter(Boolean).at(-1) || "import";
 }
-function projectSettings(value, exclusions) {
+/** DB20: column order/icons are workspace content (they name kanban sections); layout stays per device. */
+function kanbanColumns(value, sectionIds) {
+  if (!keysEqual(value, ["order", "icons"]) || !Array.isArray(value.order) || !value.icons)
+    throw Error("KANBAN_COLUMNS_FORMAT");
+  if (typeof value.icons !== "object" || Array.isArray(value.icons)) throw Error("KANBAN_COLUMNS_FORMAT");
+  const known = (k) => kanbanFixedKeys.has(k) || sectionIds.has(k);
+  if (
+    value.order.some((k) => typeof k !== "string" || !known(k)) ||
+    new Set(value.order).size !== value.order.length
+  )
+    throw Error("KANBAN_COLUMNS_REFERENCE");
+  for (const [k, icon] of Object.entries(value.icons))
+    if (!known(k) || typeof icon !== "string" || !sectionIconIds.has(icon))
+      throw Error("KANBAN_COLUMNS_REFERENCE");
+  return { order: [...value.order], icons: { ...value.icons } };
+}
+function projectSettings(value, exclusions, version = 18, sectionIds = new Set()) {
   const s = json(value),
     known = ["workspace", "nudgeWeeks", "backup", "summary", "holiday", "ai", "ui"];
   if (!s || typeof s !== "object" || Array.isArray(s) || Object.keys(s).some((k) => !known.includes(k)))
@@ -194,14 +231,22 @@ function projectSettings(value, exclusions) {
     )
       throw Error("SETTINGS_FORMAT");
   }
+  if (version >= 20 && s.ui && typeof s.ui === "object" && "kanbanColumns" in s.ui)
+    out.ui = { kanbanColumns: kanbanColumns(s.ui.kanbanColumns, sectionIds) };
   for (const k of ["backup", "ai", "ui"])
     if (k in s)
-      exclusions.push({ table: "app_meta", key: "settings." + k, reason: "device-preference-not-synced" });
+      exclusions.push({
+        table: "app_meta",
+        key: "settings." + k,
+        reason: "device-preference-not-synced",
+        ...(k === "ui" && out.ui ? { kept: ["kanbanColumns"] } : {}),
+      });
   return JSON.stringify(out);
 }
 export function mapWorkspace(directory, workspaceId) {
   const copy = inspectConnectedCopy(directory, workspaceId);
-  const contract = copy.manifest.sourceSchema === 18 ? db18 : db19;
+  const contract = contracts[copy.manifest.sourceSchema];
+  if (!contract) throw Error("SCHEMA_VERSION");
   const grouped = Object.fromEntries(Object.keys(contract.tables).map((t) => [t, []]));
   for (const record of copy.records) {
     if (!Object.hasOwn(grouped, record.table_name)) throw Error("TABLE_UNSUPPORTED");
@@ -209,7 +254,7 @@ export function mapWorkspace(directory, workspaceId) {
     validateSourceRow(record.table_name, row, contract);
     if (
       record.table_name === "cabi_note" &&
-      contract.sourceSchema === 19 &&
+      contract.sourceSchema >= 19 &&
       ![0, 1].includes(row.delete_locked)
     )
       throw Error("DELETE_LOCK_VALUE");
@@ -239,6 +284,33 @@ export function mapWorkspace(directory, workspaceId) {
       throw Error("UNKNOWN_IMPORT_UNDO_FORMAT");
     for (const n of undo.notes) if (n.doc !== null) board(json(n.doc), n.weekId, grouped.note_asset, "week");
   }
+  const sectionIds = new Set((grouped.kanban_section || []).map((r) => r.id));
+  if (contract.sourceSchema >= 20) {
+    if (grouped.kanban_ctx.length !== 1 || hash(grouped.kanban_ctx[0]) !== hash({ ...KANBAN_CTX_REST }))
+      throw Error("KANBAN_WRITE_IN_PROGRESS");
+    for (const r of grouped.item_status_log) {
+      // from/to keep the key that was current then: a deleted section stays as its old id (no FK by design).
+      if (
+        !statusSources.has(r.source) ||
+        !isoTime.test(r.changed_at) ||
+        [r.from_key, r.to_key].some((k) => !k || k.length > 64) ||
+        r.from_key === r.to_key
+      )
+        throw Error("KANBAN_STATUS_LOG_FORMAT");
+    }
+    for (const r of grouped.kanban_bulk) {
+      const items = json(r.items);
+      if (
+        !Array.isArray(items) ||
+        items.length < r.count ||
+        items.some(
+          (p) => !Array.isArray(p) || p.length !== 2 || typeof p[0] !== "string" || !isoTime.test(p[1]),
+        ) ||
+        (r.undone_at !== null && !isoTime.test(r.undone_at))
+      )
+        throw Error("KANBAN_BULK_FORMAT");
+    }
+  }
   const exclusions = [],
     records = [],
     stats = {};
@@ -256,13 +328,20 @@ export function mapWorkspace(directory, workspaceId) {
         key = hash([table, keys.map((k) => value[k])]);
       if (seen.has(key)) throw Error("DUPLICATE_RECORD_KEY");
       seen.add(key);
+      if (table === "kanban_ctx") {
+        // Write-source row of the local trigger: verified at rest above, recreated by the target schema.
+        excluded++;
+        exclusions.push({ table, key: String(value.id), reason: "local-write-context" });
+        continue;
+      }
       if (table === "app_meta") {
         if (value.key === "schema_version") {
           excluded++;
           exclusions.push({ table, key: value.key, reason: "source-format-only" });
           continue;
         }
-        if (value.key === "settings") value.value = projectSettings(value.value, exclusions);
+        if (value.key === "settings")
+          value.value = projectSettings(value.value, exclusions, contract.sourceSchema, sectionIds);
         else if (value.key !== "created_at") throw Error("UNKNOWN_APP_META_KEY");
       }
       if (table === "cabinet_item" && value.kind === "folder") {
@@ -300,7 +379,7 @@ export function mapWorkspace(directory, workspaceId) {
   }
   records.sort((a, b) => a.table.localeCompare(b.table) || a.key.localeCompare(b.key));
   const envelope = {
-    profile: contract.sourceSchema === 18 ? workspaceMapProfile : "workspace-db19-map-poc-1",
+    profile: workspaceMapProfiles[contract.sourceSchema],
     workspaceId,
     sourceSchema: contract.sourceSchema,
     contractFingerprint: contract.fingerprint,

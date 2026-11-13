@@ -105,7 +105,7 @@ for (const mode of ["unknown-version", "wrong-schema", "invalid-lock"])
     const e = setup(t),
       db = new DatabaseSync(e.source);
     if (mode === "unknown-version")
-      db.prepare("UPDATE app_meta SET value='20' WHERE key='schema_version'").run();
+      db.prepare("UPDATE app_meta SET value='21' WHERE key='schema_version'").run();
     if (mode === "wrong-schema") db.exec("ALTER TABLE cabi_note ADD COLUMN unexpected TEXT");
     if (mode === "invalid-lock") {
       db.exec("PRAGMA ignore_check_constraints=ON");

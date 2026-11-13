@@ -1,0 +1,76 @@
+TAP version 13
+# Subtest: DB20: extract/map/restore keeps kanban sections, status history, bulk undo data and original
+ok 1 - DB20: extract/map/restore keeps kanban sections, status history, bulk undo data and original
+  ---
+  duration_ms: 169.032912
+  type: 'test'
+  ...
+# Subtest: DB20 envelope: profile, kanban tables mapped, write context and per-device layout excluded
+ok 2 - DB20 envelope: profile, kanban tables mapped, write context and per-device layout excluded
+  ---
+  duration_ms: 85.852393
+  type: 'test'
+  ...
+# Subtest: DB20 restored triggers still log section moves with the recreated write context
+ok 3 - DB20 restored triggers still log section moves with the recreated write context
+  ---
+  duration_ms: 150.093421
+  type: 'test'
+  ...
+# Subtest: DB20 interrupted kanban write refuses before any online envelope, original unchanged
+ok 4 - DB20 interrupted kanban write refuses before any online envelope, original unchanged
+  ---
+  duration_ms: 81.82777
+  type: 'test'
+  ...
+# Subtest: DB20 unknown column icon refuses before any online envelope, original unchanged
+ok 5 - DB20 unknown column icon refuses before any online envelope, original unchanged
+  ---
+  duration_ms: 84.35042
+  type: 'test'
+  ...
+# Subtest: DB20 column order naming a missing section refuses before any online envelope, original unchanged
+ok 6 - DB20 column order naming a missing section refuses before any online envelope, original unchanged
+  ---
+  duration_ms: 106.389391
+  type: 'test'
+  ...
+# Subtest: DB20 malformed bulk undo items refuses before any online envelope, original unchanged
+ok 7 - DB20 malformed bulk undo items refuses before any online envelope, original unchanged
+  ---
+  duration_ms: 112.319086
+  type: 'test'
+  ...
+# Subtest: DB20 restore refuses a copy whose kanban data is invalid, without output
+ok 8 - DB20 restore refuses a copy whose kanban data is invalid, without output
+  ---
+  duration_ms: 95.12797
+  type: 'test'
+  ...
+# Subtest: DB19-expecting reader and unknown DB21 are refused without touching the source
+ok 9 - DB19-expecting reader and unknown DB21 are refused without touching the source
+  ---
+  duration_ms: 75.709316
+  type: 'test'
+  ...
+# Subtest: DB20 contract matches the generated product schema and keeps DB18/19 contracts separate
+ok 10 - DB20 contract matches the generated product schema and keeps DB18/19 contracts separate
+  ---
+  duration_ms: 9.296235
+  type: 'test'
+  ...
+# Subtest: server RPC stays fail-closed for the DB20 profile until its server contract exists
+ok 11 - server RPC stays fail-closed for the DB20 profile until its server contract exists
+  ---
+  duration_ms: 98.647658
+  type: 'test'
+  ...
+1..11
+# tests 11
+# suites 0
+# pass 11
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1153.03076

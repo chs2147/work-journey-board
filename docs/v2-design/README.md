@@ -1,6 +1,8 @@
 # V2 프로젝트 — 다국어·온라인 동기화 상세 설계 초안
 
-**최신 분석(2026-11-13):** [74. 진행 현황 분석](74-progress-analysis-1113.md) — main 1.40.0/DB20 동기화, 다음 추천 DB20 사본 계약.
+**최신(2026-11-13):** [75. DB20(칸반) 사본 이관 계약](75-db20-kanban-copy-contract.md) — 1단계(로컬 사본·매핑·복원) 완료, 다음은 서버 프로필.
+
+**분석(2026-11-13):** [74. 진행 현황 분석](74-progress-analysis-1113.md) — main 1.40.0/DB20 동기화, 다음 추천 DB20 사본 계약.
 
 **재개 정본:** [73. Connected Preview native 격리](73-connected-preview-native-isolation.md). 사용자가 별도 검증판을 확정했다. 공통 프로필·Rust 경로/OS vault 소스와 scope 경계를 구현했다. Node311·Rust31개 통과, 실제 OS/설치·Tauri 연결은 후속이다. 다음은 Preview native bootstrap/명령 경계다. 제품1.24.3/DB19와 로컬 원본 유지.
 

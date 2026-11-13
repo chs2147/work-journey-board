@@ -1,4 +1,4 @@
-// Synthetic DB18/19 local PoC. No network, app integration or source writes.
+// Synthetic DB18/19/20 local PoC. No network, app integration or source writes.
 import { DatabaseSync } from "node:sqlite";
 import { randomUUID } from "node:crypto";
 import {
@@ -12,7 +12,7 @@ import {
   realpathSync,
 } from "node:fs";
 import { join, resolve, dirname, basename } from "node:path";
-import { captureWorkspace, guard } from "../v2-sync/db18.mjs";
+import { captureWorkspace, guard, SUPPORTED_SCHEMAS } from "../v2-sync/db18.mjs";
 import { hash, sourceHash } from "../v2-sync/model.mjs";
 import { assertSeparateWorkspacePaths } from "../v2-runtime/isolation.mjs";
 
@@ -38,7 +38,7 @@ function inspect(directory, workspaceId, requireReady) {
   if (
     manifest.format !== format ||
     manifest.workspaceId !== workspaceId ||
-    ![18, 19].includes(manifest.sourceSchema)
+    !SUPPORTED_SCHEMAS.includes(manifest.sourceSchema)
   )
     throw Error("MANIFEST_SCOPE");
   const db = new DatabaseSync(join(directory, "metadata.db"), { readOnly: true });

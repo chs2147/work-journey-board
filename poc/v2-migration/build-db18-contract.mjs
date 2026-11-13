@@ -1,13 +1,13 @@
 // Schema metadata only; no user file or network access.
-import { createWorkspaceDB } from "../v2-sync/db18.mjs";
+import { createWorkspaceDB, SUPPORTED_SCHEMAS } from "../v2-sync/db18.mjs";
 import { writeFileSync } from "node:fs";
 import { hash } from "../v2-sync/model.mjs";
-for (const version of [18, 19]) {
+for (const version of SUPPORTED_SCHEMAS) {
   const db = createWorkspaceDB(":memory:", version);
   try {
     const tables = {};
     for (const { name } of db
-      .prepare("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")
+      .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name")
       .all()) {
       tables[name] = {
         columns: db

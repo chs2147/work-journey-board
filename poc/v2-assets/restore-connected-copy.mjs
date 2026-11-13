@@ -31,7 +31,8 @@ export function restoreConnectedCopy(directory, destination, workspaceId) {
   try {
     db = createWorkspaceDB(temp, copy.manifest.sourceSchema);
     const tables = db
-      .prepare("SELECT name FROM sqlite_master WHERE type='table'")
+      // sqlite_sequence (DB20 AUTOINCREMENT) is SQLite-internal: explicit ids keep it at max(id).
+      .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")
       .all()
       .map((r) => r.name);
     for (const t of tables) data[t] ??= [];

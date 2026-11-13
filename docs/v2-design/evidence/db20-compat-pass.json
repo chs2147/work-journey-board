@@ -1,0 +1,35 @@
+{
+  "checkpoint": "db20-copy-contract",
+  "date": "2026-11-13",
+  "branch": "v2-design",
+  "product": "1.40.0/DB20",
+  "tests": {
+    "new": 11,
+    "regression": 311,
+    "total": 322,
+    "fail": 0
+  },
+  "contract": {
+    "sourceSchema": 20,
+    "tables": 30,
+    "fingerprint": "44351cf09c2f542bdae9ed4fbd4bec222c75c600fcea4f45d68cfc2ed430c3f5"
+  },
+  "unchangedContracts": [
+    "db18-contract.json",
+    "db19-contract.json"
+  ],
+  "cloud": "not contacted",
+  "productCode": "unchanged",
+  "sourceHashes": {
+    "poc/v2-sync/db18.mjs": "9c5fdcaffadde20cb9f21f1ab5ef3ff5094fa259b9a692eb903cfcac4e54a9e3",
+    "poc/v2-migration/workspace-map.mjs": "d382115465ba86f8a53afe8a0a655fb297720574cf2034d8c550b9141ca8f98f",
+    "poc/v2-migration/db20-contract.json": "17f184bc1c2bec48e7db03327e6e3852fea72b4d2be49679eb8ed4b8247b8003",
+    "poc/v2-migration/fixture-db20.mjs": "4f5fa04dacaad1737d7af316888fc837f565015a5809f36d3a160fd5ba390362",
+    "poc/v2-migration/db20-compat.test.mjs": "1358a148e346d6d7c8180250d08ead488471c437400bad86fd7533ea757ad23f",
+    "poc/v2-assets/connected-copy.mjs": "72a9a9a8c299f77c8bfeef3bd85e7e24d0b9872b9c0758efa77e6874da79468a",
+    "poc/v2-assets/restore-connected-copy.mjs": "cad006c2dadb056f59ba14438d3cc207d80e57e7c8d9394b372d94eb0c760e20",
+    "poc/v2-migration/build-db18-contract.mjs": "1a15441da5bc0ef077b77fefbde3e4e10ca89f391b03c93a3f50df19070d05db",
+    "poc/v2-migration/emit-workspace-fixture.mjs": "ebf63c8028fa66f07379e105ef72357677c16451727eeb9a665c8742a5295e67",
+    "src/data/migrations/0020_kanban.sql": "4ea8dc87ef128a1428f15f95c31b7aff33ce0bfe0b0855e869409444f56923d0"
+  }
+}

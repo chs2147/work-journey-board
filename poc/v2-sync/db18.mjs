@@ -6,6 +6,10 @@ import { dirname, resolve } from "node:path";
 import { randomUUID } from "node:crypto";
 import { hash, transaction, sourceHash } from "./model.mjs";
 const migrations = new URL("../../src/data/migrations/", import.meta.url);
+/** Journal schema versions whose copy contract has been verified (DB18 base, DB19 delete lock, DB20 kanban). */
+export const SUPPORTED_SCHEMAS = Object.freeze([18, 19, 20]);
+/** The only resting state of the DB20 write-source row; anything else means a kanban write was interrupted. */
+export const KANBAN_CTX_REST = Object.freeze({ id: 1, source: "board", batch_id: null, at: null });
 export function guard(path) {
   if (!existsSync(resolve(dirname(path), ".v2-poc-only"))) throw Error("POC_DIRECTORY_REQUIRED");
 }
@@ -13,7 +17,7 @@ export function create18(path) {
   return createWorkspaceDB(path, 18);
 }
 export function createWorkspaceDB(path, version) {
-  if (![18, 19].includes(version)) throw Error("SCHEMA_VERSION");
+  if (!SUPPORTED_SCHEMAS.includes(version)) throw Error("SCHEMA_VERSION");
   if (path !== ":memory:") {
     guard(path);
     if (existsSync(path)) throw Error("DESTINATION_EXISTS");
@@ -101,8 +105,11 @@ export function captureWorkspace(path, { expectedVersion, ...options } = {}) {
   let result;
   try {
     const rawVersion = db.prepare("SELECT value FROM app_meta WHERE key='schema_version'").get()?.value;
-    const version = ["18", "19"].includes(rawVersion) ? Number(rawVersion) : NaN;
-    if (![18, 19].includes(version) || (expectedVersion !== undefined && expectedVersion !== version))
+    const version = SUPPORTED_SCHEMAS.map(String).includes(rawVersion) ? Number(rawVersion) : NaN;
+    if (
+      !SUPPORTED_SCHEMAS.includes(version) ||
+      (expectedVersion !== undefined && expectedVersion !== version)
+    )
       throw Error("SCHEMA_VERSION");
     const expected = createWorkspaceDB(":memory:", version);
     try {
@@ -117,8 +124,13 @@ export function captureWorkspace(path, { expectedVersion, ...options } = {}) {
     )
       throw Error("DB_INTEGRITY");
     result = rows(db);
-    if (version === 19 && result.cabi_note.some((r) => ![0, 1].includes(r.delete_locked)))
+    if (version >= 19 && result.cabi_note.some((r) => ![0, 1].includes(r.delete_locked)))
       throw Error("DB_INTEGRITY");
+    if (version >= 20) {
+      const ctx = result.kanban_ctx;
+      if (ctx.length !== 1 || hash(ctx[0]) !== hash({ ...KANBAN_CTX_REST }))
+        throw Error("KANBAN_WRITE_IN_PROGRESS");
+    }
     validate(result, options);
   } finally {
     db.close();

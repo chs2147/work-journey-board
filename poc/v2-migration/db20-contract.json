@@ -1,0 +1,1475 @@
+{
+  "sourceSchema": 20,
+  "tables": {
+    "app_meta": {
+      "columns": [
+        {
+          "name": "key",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 1
+        },
+        {
+          "name": "value",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        }
+      ],
+      "foreignKeys": []
+    },
+    "cabi_asset": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 1
+        },
+        {
+          "name": "owner_kind",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "owner_id",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "mime",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "data",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "width",
+          "type": "INTEGER",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "height",
+          "type": "INTEGER",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "bytes",
+          "type": "INTEGER",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "thumb",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 0
+        },
+        {
+          "name": "thumb_mime",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 0
+        },
+        {
+          "name": "created_at",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        }
+      ],
+      "foreignKeys": []
+    },
+    "cabi_board": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 1
+        },
+        {
+          "name": "category_id",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "doc",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "format_version",
+          "type": "INTEGER",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "revision",
+          "type": "INTEGER",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "updated_at",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        }
+      ],
+      "foreignKeys": [
+        {
+          "id": 0,
+          "seq": 0,
+          "table": "category",
+          "from": "category_id",
+          "to": "id"
+        }
+      ]
+    },
+    "cabi_entry_link": {
+      "columns": [
+        {
+          "name": "board_id",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 1
+        },
+        {
+          "name": "box_id",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 2
+        },
+        {
+          "name": "entry_id",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 3
+        }
+      ],
+      "foreignKeys": [
+        {
+          "id": 0,
+          "seq": 0,
+          "table": "entry_item",
+          "from": "entry_id",
+          "to": "id"
+        },
+        {
+          "id": 1,
+          "seq": 0,
+          "table": "cabi_board",
+          "from": "board_id",
+          "to": "id"
+        }
+      ]
+    },
+    "cabi_note": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 1
+        },
+        {
+          "name": "category_id",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "title",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "content",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "plain_text",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "format_version",
+          "type": "INTEGER",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "revision",
+          "type": "INTEGER",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "created_at",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "updated_at",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "delete_locked",
+          "type": "INTEGER",
+          "nullable": false,
+          "pk": 0
+        }
+      ],
+      "foreignKeys": [
+        {
+          "id": 0,
+          "seq": 0,
+          "table": "category",
+          "from": "category_id",
+          "to": "id"
+        }
+      ]
+    },
+    "cabinet_item": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 1
+        },
+        {
+          "name": "kind",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "title",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "target",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "sort_order",
+          "type": "INTEGER",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "created_at",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "updated_at",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        }
+      ],
+      "foreignKeys": []
+    },
+    "cabinet_link": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 1
+        },
+        {
+          "name": "item_id",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "category_id",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 0
+        },
+        {
+          "name": "entry_id",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 0
+        },
+        {
+          "name": "created_at",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        }
+      ],
+      "foreignKeys": [
+        {
+          "id": 0,
+          "seq": 0,
+          "table": "entry_item",
+          "from": "entry_id",
+          "to": "id"
+        },
+        {
+          "id": 1,
+          "seq": 0,
+          "table": "category",
+          "from": "category_id",
+          "to": "id"
+        },
+        {
+          "id": 2,
+          "seq": 0,
+          "table": "cabinet_item",
+          "from": "item_id",
+          "to": "id"
+        }
+      ]
+    },
+    "category": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 1
+        },
+        {
+          "name": "name",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "color",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "sort_order",
+          "type": "INTEGER",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "nudge_snoozed_until",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 0
+        },
+        {
+          "name": "created_at",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "updated_at",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        }
+      ],
+      "foreignKeys": []
+    },
+    "category_period": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 1
+        },
+        {
+          "name": "category_id",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "start_date",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "end_date",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 0
+        }
+      ],
+      "foreignKeys": [
+        {
+          "id": 0,
+          "seq": 0,
+          "table": "category",
+          "from": "category_id",
+          "to": "id"
+        }
+      ]
+    },
+    "category_tag": {
+      "columns": [
+        {
+          "name": "category_id",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 1
+        },
+        {
+          "name": "tag_id",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 2
+        }
+      ],
+      "foreignKeys": [
+        {
+          "id": 0,
+          "seq": 0,
+          "table": "tag",
+          "from": "tag_id",
+          "to": "id"
+        },
+        {
+          "id": 1,
+          "seq": 0,
+          "table": "category",
+          "from": "category_id",
+          "to": "id"
+        }
+      ]
+    },
+    "day_mark": {
+      "columns": [
+        {
+          "name": "date",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 1
+        },
+        {
+          "name": "kind",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "label",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 0
+        },
+        {
+          "name": "updated_at",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        }
+      ],
+      "foreignKeys": []
+    },
+    "day_memo": {
+      "columns": [
+        {
+          "name": "date",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 1
+        },
+        {
+          "name": "text",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "updated_at",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        }
+      ],
+      "foreignKeys": []
+    },
+    "entry_item": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 1
+        },
+        {
+          "name": "date",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "category_id",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "seq",
+          "type": "INTEGER",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "depth",
+          "type": "INTEGER",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "text",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "created_at",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "updated_at",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "flagged",
+          "type": "INTEGER",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "flag_done_at",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 0
+        },
+        {
+          "name": "recurrence_id",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 0
+        },
+        {
+          "name": "import_id",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 0
+        },
+        {
+          "name": "start_time",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 0
+        },
+        {
+          "name": "due_date",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 0
+        },
+        {
+          "name": "completion_was_flagged",
+          "type": "INTEGER",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "kanban_section_id",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 0
+        }
+      ],
+      "foreignKeys": [
+        {
+          "id": 0,
+          "seq": 0,
+          "table": "kanban_section",
+          "from": "kanban_section_id",
+          "to": "id"
+        },
+        {
+          "id": 1,
+          "seq": 0,
+          "table": "import_batch",
+          "from": "import_id",
+          "to": "id"
+        },
+        {
+          "id": 2,
+          "seq": 0,
+          "table": "recurrence",
+          "from": "recurrence_id",
+          "to": "id"
+        },
+        {
+          "id": 3,
+          "seq": 0,
+          "table": "category",
+          "from": "category_id",
+          "to": "id"
+        }
+      ]
+    },
+    "import_batch": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 1
+        },
+        {
+          "name": "file_name",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "week_count",
+          "type": "INTEGER",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "item_count",
+          "type": "INTEGER",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "undo_json",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "created_at",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "undone_at",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 0
+        }
+      ],
+      "foreignKeys": []
+    },
+    "item_status_log": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": true,
+          "pk": 1
+        },
+        {
+          "name": "item_id",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "from_key",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "from_name",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "to_key",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "to_name",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "changed_at",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "source",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "batch_id",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 0
+        }
+      ],
+      "foreignKeys": []
+    },
+    "kanban_bulk": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 1
+        },
+        {
+          "name": "created_at",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "count",
+          "type": "INTEGER",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "items",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "undone_at",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 0
+        }
+      ],
+      "foreignKeys": []
+    },
+    "kanban_ctx": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": true,
+          "pk": 1
+        },
+        {
+          "name": "source",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "batch_id",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 0
+        },
+        {
+          "name": "at",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 0
+        }
+      ],
+      "foreignKeys": []
+    },
+    "kanban_section": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 1
+        },
+        {
+          "name": "name",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "color",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "sort_order",
+          "type": "INTEGER",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "created_at",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "updated_at",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        }
+      ],
+      "foreignKeys": []
+    },
+    "knowledge_card": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 1
+        },
+        {
+          "name": "card_type",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "title",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "summary",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "conditions",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "body",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "status",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "revision",
+          "type": "INTEGER",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "created_at",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "updated_at",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "reviewed_at",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 0
+        },
+        {
+          "name": "deleted_at",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 0
+        }
+      ],
+      "foreignKeys": []
+    },
+    "knowledge_card_category": {
+      "columns": [
+        {
+          "name": "card_id",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 1
+        },
+        {
+          "name": "category_id",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 2
+        }
+      ],
+      "foreignKeys": [
+        {
+          "id": 0,
+          "seq": 0,
+          "table": "category",
+          "from": "category_id",
+          "to": "id"
+        },
+        {
+          "id": 1,
+          "seq": 0,
+          "table": "knowledge_card",
+          "from": "card_id",
+          "to": "id"
+        }
+      ]
+    },
+    "knowledge_card_source": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 1
+        },
+        {
+          "name": "card_id",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "source_kind",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "source_id",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "source_week",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 0
+        },
+        {
+          "name": "excerpt",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "content_fp",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "location_fp",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "locator_json",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "sort_order",
+          "type": "INTEGER",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "captured_at",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        }
+      ],
+      "foreignKeys": [
+        {
+          "id": 0,
+          "seq": 0,
+          "table": "knowledge_card",
+          "from": "card_id",
+          "to": "id"
+        }
+      ]
+    },
+    "note_asset": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 1
+        },
+        {
+          "name": "week_id",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "mime",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "data",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "width",
+          "type": "INTEGER",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "height",
+          "type": "INTEGER",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "bytes",
+          "type": "INTEGER",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "created_at",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "thumb",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 0
+        },
+        {
+          "name": "thumb_mime",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 0
+        }
+      ],
+      "foreignKeys": []
+    },
+    "note_entry_link": {
+      "columns": [
+        {
+          "name": "note_week_id",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 1
+        },
+        {
+          "name": "box_id",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 2
+        },
+        {
+          "name": "entry_id",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 3
+        },
+        {
+          "name": "created_at",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        }
+      ],
+      "foreignKeys": [
+        {
+          "id": 0,
+          "seq": 0,
+          "table": "entry_item",
+          "from": "entry_id",
+          "to": "id"
+        },
+        {
+          "id": 1,
+          "seq": 0,
+          "table": "week_note",
+          "from": "note_week_id",
+          "to": "week_id"
+        }
+      ]
+    },
+    "recurrence": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 1
+        },
+        {
+          "name": "category_id",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "weekday",
+          "type": "INTEGER",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "start_week",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "end_week",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 0
+        },
+        {
+          "name": "flag_on_create",
+          "type": "INTEGER",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "created_at",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "updated_at",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        }
+      ],
+      "foreignKeys": [
+        {
+          "id": 0,
+          "seq": 0,
+          "table": "category",
+          "from": "category_id",
+          "to": "id"
+        }
+      ]
+    },
+    "recurrence_line": {
+      "columns": [
+        {
+          "name": "recurrence_id",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 1
+        },
+        {
+          "name": "seq",
+          "type": "INTEGER",
+          "nullable": false,
+          "pk": 2
+        },
+        {
+          "name": "depth",
+          "type": "INTEGER",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "text",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        }
+      ],
+      "foreignKeys": [
+        {
+          "id": 0,
+          "seq": 0,
+          "table": "recurrence",
+          "from": "recurrence_id",
+          "to": "id"
+        }
+      ]
+    },
+    "recurrence_week": {
+      "columns": [
+        {
+          "name": "recurrence_id",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 1
+        },
+        {
+          "name": "week_id",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 2
+        },
+        {
+          "name": "created_at",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        }
+      ],
+      "foreignKeys": [
+        {
+          "id": 0,
+          "seq": 0,
+          "table": "recurrence",
+          "from": "recurrence_id",
+          "to": "id"
+        }
+      ]
+    },
+    "tag": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 1
+        },
+        {
+          "name": "name",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "sort_order",
+          "type": "INTEGER",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "created_at",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        }
+      ],
+      "foreignKeys": []
+    },
+    "universe_relation": {
+      "columns": [
+        {
+          "name": "id",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 1
+        },
+        {
+          "name": "from_kind",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "from_id",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "from_week",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 0
+        },
+        {
+          "name": "to_kind",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "to_id",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "to_week",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 0
+        },
+        {
+          "name": "relation_type",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "note",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "created_at",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "updated_at",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "deleted_at",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 0
+        },
+        {
+          "name": "revision",
+          "type": "INTEGER",
+          "nullable": false,
+          "pk": 0
+        }
+      ],
+      "foreignKeys": []
+    },
+    "week_note": {
+      "columns": [
+        {
+          "name": "week_id",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 1
+        },
+        {
+          "name": "doc",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        },
+        {
+          "name": "updated_at",
+          "type": "TEXT",
+          "nullable": false,
+          "pk": 0
+        }
+      ],
+      "foreignKeys": []
+    },
+    "weekly_summary": {
+      "columns": [
+        {
+          "name": "week_id",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 1
+        },
+        {
+          "name": "ai_text",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 0
+        },
+        {
+          "name": "ai_basis_hash",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 0
+        },
+        {
+          "name": "ai_saved_at",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 0
+        },
+        {
+          "name": "edited_text",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 0
+        },
+        {
+          "name": "edited_basis_hash",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 0
+        },
+        {
+          "name": "edited_at",
+          "type": "TEXT",
+          "nullable": true,
+          "pk": 0
+        }
+      ],
+      "foreignKeys": []
+    }
+  },
+  "fingerprint": "44351cf09c2f542bdae9ed4fbd4bec222c75c600fcea4f45d68cfc2ed430c3f5"
+}

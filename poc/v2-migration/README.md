@@ -30,6 +30,14 @@ node --test poc/v2-migration/db19-compat.test.mjs
 
 DB18/19를 실제 스키마로 구분하고 잠금 값을 보존한다. generator 이름은 기존 경로 호환을 위해 유지하지만 DB18·DB19 계약을 함께 만든다. 별도 파일 복원 도구는 합성 표본 왕복 검증만 수행하며 온라인 DB에 본문을 저장하지 않는다. [62문서](../../docs/v2-design/62-db19-copy-contract-compatibility.md)를 따른다.
 
+## DB20(칸반) 호환성
+
+```sh
+node --test poc/v2-migration/db20-compat.test.mjs
+```
+
+DB20은 칸반 4테이블과 `entry_item.kanban_section_id`를 더한다. 섹션·상태 이력(전체)·일괄 완료 자료와 일지 설정의 `ui.kanbanColumns`(순서·아이콘)는 온라인 사본에 담고, 트리거용 쓰기 문맥 `kanban_ctx`와 기기별 `ui.kanbanLayout`은 제외한다. 쓰기 문맥이 쉬는 상태가 아니면 추출을 거절한다. 서버 프로필은 아직 DB18/19만 받으며 DB20 봉투는 전송 전에 거절된다. [75문서](../../docs/v2-design/75-db20-kanban-copy-contract.md)를 따른다.
+
 ## 전체 워크스페이스 서버 프로필
 
 ```sh

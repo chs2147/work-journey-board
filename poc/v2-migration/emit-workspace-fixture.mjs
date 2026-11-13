@@ -1,15 +1,16 @@
 // Local synthetic DB only; stdin/URL/credentials are never accepted.
-import { mkdtempSync, writeFileSync, mkdirSync, rmSync, readFileSync } from "node:fs";
+import { mkdtempSync, writeFileSync, mkdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
 import { enrich } from "./fixture-full-workspace.mjs";
+import { upgradeFixture } from "./fixture-db20.mjs";
 import { fixture18 } from "../v2-sync/fixture18.mjs";
 import { createConnectedCopy } from "../v2-assets/connected-copy.mjs";
 import { mapWorkspace } from "./workspace-map.mjs";
 const version = Number(process.argv[2]);
-if (![18, 19].includes(version)) throw Error("FIXTURE_VERSION");
+if (![18, 19, 20].includes(version)) throw Error("FIXTURE_VERSION");
 const dir = mkdtempSync(join(tmpdir(), "wjb-workspace-sql-"));
 try {
   for (const n of ["source", "target"]) {
@@ -24,15 +25,10 @@ try {
   } finally {
     enriched.close();
   }
-  if (version === 19) {
+  if (version >= 19) {
     const db = new DatabaseSync(source);
     try {
-      db.exec(
-        readFileSync(new URL("../../src/data/migrations/0019_note_delete_lock.sql", import.meta.url), "utf8"),
-      );
-      db.exec(
-        "UPDATE app_meta SET value='19' WHERE key='schema_version'; UPDATE cabi_note SET delete_locked=1 WHERE id=(SELECT id FROM cabi_note ORDER BY id LIMIT 1)",
-      );
+      upgradeFixture(db, version);
     } finally {
       db.close();
     }
