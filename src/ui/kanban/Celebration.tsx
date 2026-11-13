@@ -1,5 +1,6 @@
 // 완료 축하 모션(docs/improve-v22-spec.md 7절): 카드 자리에 초록 체크(0.25s) + 색종이 14개(0.9s). CSS만 — 외부 라이브러리 없음.
 // OS "동작 줄이기"면 체크만 잠깐. 설정 › 화면 [완료 축하 모션]으로 끈다(이 PC 설정).
+import { createPortal } from "react-dom";
 import { useKanban } from "./kanbanStore";
 import styles from "./Celebration.module.css";
 
@@ -9,7 +10,8 @@ const COLORS = ["var(--accent)", "#2f9e5b", "#e8b628", "var(--accent)", "#2f9e5b
 export function Celebration() {
   const c = useKanban((k) => k.celebrating);
   if (!c) return null;
-  return (
+  // 문서 맨 위 레이어(document.body)에 — 보드 화면의 쌓임·잘림과 무관하게(improve-v23-spec 6절)
+  return createPortal(
     <div
       key={c.key}
       className={styles.layer}
@@ -38,6 +40,7 @@ export function Celebration() {
           />
         );
       })}
-    </div>
+    </div>,
+    document.body,
   );
 }

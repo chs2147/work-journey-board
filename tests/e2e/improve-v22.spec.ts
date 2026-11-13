@@ -106,7 +106,7 @@ test.describe("칸반 V2", () => {
     await expect(page.getByTestId("important-panel")).toContainText("가상 v22 카드");
   });
 
-  test("섹션 머리: Alt+Shift+→/←로 순서 바꾸기 · 되돌리기 · TODO/DONE 고정", async ({ page }) => {
+  test("섹션 머리: Alt+Shift+→/←로 순서 바꾸기 · 되돌리기 · 끌어 놓기", async ({ page }) => {
     await openKanban(page);
     for (const n of ["가상 A", "가상 B"]) {
       await page.getByTestId("kanban-add-section").click();
@@ -122,17 +122,14 @@ test.describe("칸반 V2", () => {
     await expect.poll(names).toEqual(["TODO", "가상 B", "가상 A", "DONE"]);
     await page.getByRole("button", { name: "되돌리기" }).last().click();
     await expect.poll(names).toEqual(["TODO", "가상 A", "가상 B", "DONE"]);
-    // TODO 머리는 끌 수 없음
-    await expect(page.getByTestId("kanban-col-todo").getByTestId("kanban-col-head")).not.toHaveAttribute(
-      "draggable",
-      "true",
-    );
-    // 끌어 놓기: B 머리를 TODO에 놓으면 맨 앞(사용자 섹션 중)
+    // 끌어 놓기: B 머리를 A의 왼쪽 절반에 놓으면 A 앞(v23 — TODO·DONE도 자유, improve-v23.spec에서 시험)
+    const a = page.getByTestId("kanban-col-section").first();
+    const ab = (await a.boundingBox())!;
     await page
       .getByTestId("kanban-col-section")
       .nth(1)
       .getByTestId("kanban-col-head")
-      .dragTo(page.getByTestId("kanban-col-todo"));
+      .dragTo(a, { targetPosition: { x: 20, y: ab.height / 2 } });
     await expect.poll(names).toEqual(["TODO", "가상 B", "가상 A", "DONE"]);
   });
 });

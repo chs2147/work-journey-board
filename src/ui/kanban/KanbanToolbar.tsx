@@ -81,41 +81,48 @@ export function KanbanFilters() {
   );
 }
 
-/** 오른쪽(주간 보드 [업무 추가] 다음): 배치 모드 ⊞/▦ · (자유) [배치 초기화] · [섹션 추가] */
-export function KanbanActions({ className, segmentClass }: { className: string; segmentClass: string }) {
+/** 오른쪽 [⊞ 균등 / ▦ 자유] — [업무 추가] 앞(improve-v23-spec 5절) */
+export function KanbanLayoutToggle({ segmentClass }: { segmentClass: string }) {
+  const mode = useKanban((s) => s.layout.mode);
+  return (
+    <div className={segmentClass} role="group" aria-label={K.layoutGroup} data-testid="kanban-layout">
+      <button
+        type="button"
+        aria-pressed={mode === "equal"}
+        aria-label={K.layoutEqual}
+        title={K.layoutEqual}
+        data-testid="kanban-layout-equal"
+        onClick={() => setLayoutMode("equal")}
+      >
+        <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
+          <rect x="2.5" y="3.5" width="13" height="11" />
+          <path d="M6.8 3.5v11M11.2 3.5v11" />
+        </svg>
+      </button>
+      <button
+        type="button"
+        aria-pressed={mode === "free"}
+        aria-label={K.layoutFree}
+        title={K.layoutFree}
+        data-testid="kanban-layout-free"
+        onClick={() => setLayoutMode("free")}
+      >
+        <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
+          <rect x="2.5" y="3" width="6" height="7" />
+          <rect x="10.5" y="3" width="5" height="4.5" />
+          <rect x="10.5" y="9.5" width="5" height="5.5" />
+          <rect x="2.5" y="12" width="6" height="3" />
+        </svg>
+      </button>
+    </div>
+  );
+}
+
+/** 오른쪽 [업무 추가] 다음: (자유) [배치 초기화] · [섹션 추가] */
+export function KanbanActions({ className }: { className: string }) {
   const mode = useKanban((s) => s.layout.mode);
   return (
     <>
-      <div className={segmentClass} role="group" aria-label={K.layoutGroup} data-testid="kanban-layout">
-        <button
-          type="button"
-          aria-pressed={mode === "equal"}
-          aria-label={K.layoutEqual}
-          title={K.layoutEqual}
-          data-testid="kanban-layout-equal"
-          onClick={() => setLayoutMode("equal")}
-        >
-          <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
-            <rect x="2.5" y="3.5" width="13" height="11" />
-            <path d="M6.8 3.5v11M11.2 3.5v11" />
-          </svg>
-        </button>
-        <button
-          type="button"
-          aria-pressed={mode === "free"}
-          aria-label={K.layoutFree}
-          title={K.layoutFree}
-          data-testid="kanban-layout-free"
-          onClick={() => setLayoutMode("free")}
-        >
-          <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
-            <rect x="2.5" y="3" width="6" height="7" />
-            <rect x="10.5" y="3" width="5" height="4.5" />
-            <rect x="10.5" y="9.5" width="5" height="5.5" />
-            <rect x="2.5" y="12" width="6" height="3" />
-          </svg>
-        </button>
-      </div>
       {mode === "free" && (
         <button
           type="button"

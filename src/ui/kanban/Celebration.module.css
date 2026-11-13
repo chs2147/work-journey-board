@@ -1,7 +1,7 @@
 /* 완료 축하 모션(improve-v22-spec 7절) — 카드 위에 겹쳐 그리고 클릭은 통과 */
 .layer {
   position: fixed;
-  z-index: 60;
+  z-index: 2147483000;
   pointer-events: none;
   display: grid;
   place-items: center;

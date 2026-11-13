@@ -24,6 +24,7 @@ const FONTS = [
 
 const LIBS: [string, string, string][] = [
   ["Three.js", "0.180.0", "MIT"],
+  ["Fluent Emoji Flat (칸반 섹션 아이콘 36개)", "1.2.6", "MIT · © Microsoft"],
   ["Tauri", "2", "MIT / Apache-2.0"],
   ["React", "18.3", "MIT"],
   ["Tiptap · ProseMirror", "3.32", "MIT"],

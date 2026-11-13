@@ -1,7 +1,7 @@
 // 업무 항목 추가·편집 창(docs/improve-v21-spec.md 5절, 시안 ③). 업무 · 날짜(기본 오늘) · 섹션 + 주간 보드와 같은 키 규칙의
 // 개조식 입력(Enter = 다음 항목 · Tab = 세부 · Shift+Tab = 본 항목 · Backspace로 빈 줄 지우기) + 줄마다 ★·⏳·⏰ + 매주 반복.
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
-import { TODO } from "../../domain/kanban";
+import { DONE, TODO } from "../../domain/kanban";
 import type { ItemDraft } from "../../domain/types";
 import { addDays, addWeeks, shortDateLabel, weekIdOf, weekRange, type DateStr } from "../../domain/week";
 import { defaultStartTime } from "../../domain/startTime";
@@ -11,7 +11,16 @@ import { newDraft, useBoard } from "../board/boardStore";
 import { DueDatePopover, StartTimePopover } from "../board/ItemActions";
 import { dueView } from "../board/dueView";
 import { isComposingKey } from "../board/helpers";
-import { addItems, cardDrafts, replaceCard, useKanban } from "./kanbanStore";
+import {
+  addItems,
+  cardDrafts,
+  columnIcon,
+  columnKeys,
+  columnName,
+  replaceCard,
+  useKanban,
+} from "./kanbanStore";
+import { SectionIconImg } from "./SectionIcon";
 import { useModal } from "./kanbanUi";
 import styles from "./Kanban.module.css";
 
@@ -30,7 +39,6 @@ export function ItemDialog({ target, onClose }: { target: ItemDialogTarget; onCl
   const [date, setDate] = useState<DateStr>(edit?.date ?? today);
   const [sectionId, setSectionId] = useState<string | null>(target.mode === "add" ? target.sectionId : null);
   const [lines, setLines] = useState<ItemDraft[]>(() => [newDraft()]);
-  const [repeat, setRepeat] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pop, setPop] = useState<{ kind: "due" | "time"; index: number; row?: boolean } | null>(null);
   // 위쪽 시작 시간·마감일 행이 적용될 본 항목 = 지금 초점 줄(세부면 그 본 항목, improve-v22-spec 6절)
@@ -44,6 +52,12 @@ export function ItemDialog({ target, onClose }: { target: ItemDialogTarget; onCl
   const refs = useRef<(HTMLTextAreaElement | null)[]>([]);
   const focusAt = useRef<number | null>(0);
   const dirty = lines.some((l) => l.text.trim());
+  // 본 항목 줄 = 카드 한 장. 카드 번호(빈 줄도 셈 — 저장 때 빈 줄은 빠짐)
+  const cardNo: number[] = [];
+  let nCards = 0;
+  for (const l of lines) cardNo.push(l.depth === 0 ? ++nCards : nCards);
+  const cards = lines.filter((l) => l.depth === 0 && l.text.trim()).length;
+  const multi = !edit && lines.filter((l) => l.depth === 0).length > 1;
   const close = () => {
     if (!edit && dirty && !window.confirm(K.addDiscard)) return;
     onClose();
@@ -126,9 +140,6 @@ export function ItemDialog({ target, onClose }: { target: ItemDialogTarget; onCl
     } else if (e.altKey && (e.code === "KeyO" || e.key === "o")) {
       e.preventDefault();
       setPop({ kind: "time", index: i });
-    } else if (e.altKey && (e.code === "KeyR" || e.key === "r")) {
-      e.preventDefault();
-      setRepeat((r) => !r);
     } else if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
       e.preventDefault();
       void save(false);
@@ -141,12 +152,11 @@ export function ItemDialog({ target, onClose }: { target: ItemDialogTarget; onCl
     setBusy(true);
     const ok = edit
       ? await replaceCard(edit, lines)
-      : await addItems({ categoryId, date, sectionId, drafts: lines, repeat });
+      : await addItems({ categoryId, date, sectionId, drafts: lines, repeat: false });
     setBusy(false);
     if (!ok) return;
     if (more && !edit) {
       setLines([newDraft()]);
-      setRepeat(false);
       focusAt.current = 0;
     } else onClose();
   };
@@ -229,21 +239,20 @@ export function ItemDialog({ target, onClose }: { target: ItemDialogTarget; onCl
             <span className={styles.label}>{K.addSectionLabel}</span>
             <div className={styles.inline}>
               <div className={styles.seg} role="group" aria-label={K.addSectionLabel}>
-                {[
-                  { id: null as string | null, name: K.todo },
-                  ...s.sections.map((x) => ({ id: x.id, name: x.name })),
-                ].map((x) => (
-                  <button
-                    key={x.id ?? TODO}
-                    type="button"
-                    aria-pressed={sectionId === x.id}
-                    onClick={() => setSectionId(x.id)}
-                  >
-                    {x.name}
-                  </button>
-                ))}
+                {/* 열 순서 그대로(DONE 제외, improve-v23-spec 2절) · 섹션 아이콘 */}
+                {columnKeys(s)
+                  .filter((k) => k !== DONE)
+                  .map((k) => (
+                    <button
+                      key={k}
+                      type="button"
+                      aria-pressed={sectionId === (k === TODO ? null : k)}
+                      onClick={() => setSectionId(k === TODO ? null : k)}
+                    >
+                      <SectionIconImg id={columnIcon(k, s)} size={14} /> {columnName(k, s)}
+                    </button>
+                  ))}
               </div>
-              <span className={styles.hint}>{K.addNoDone}</span>
             </div>
           </div>
         </>
@@ -272,7 +281,6 @@ export function ItemDialog({ target, onClose }: { target: ItemDialogTarget; onCl
                   ×
                 </button>
               )}
-              <span className={styles.hint}>{K.startHint}</span>
             </div>
             {pop?.row && pop.kind === "time" && (
               <div
@@ -329,7 +337,6 @@ export function ItemDialog({ target, onClose }: { target: ItemDialogTarget; onCl
                   </button>
                 ))
               )}
-              <span className={styles.hint}>{K.dueHint}</span>
             </div>
             {pop?.row && pop.kind === "due" && (
               <div
@@ -355,7 +362,6 @@ export function ItemDialog({ target, onClose }: { target: ItemDialogTarget; onCl
           </div>
         </>
       )}
-      {edit && <p className={styles.hint}>{K.editHint}</p>}
       <div className={styles.row} style={{ alignItems: "start" }}>
         <span className={styles.label} style={{ paddingTop: 8 }}>
           {K.addContent}
@@ -369,6 +375,15 @@ export function ItemDialog({ target, onClose }: { target: ItemDialogTarget; onCl
                 className={`${styles.line} ${l.depth === 1 ? styles.lineSub : ""}`}
                 style={{ position: "relative" }}
               >
+                {/* 여러 줄 = 여러 카드(improve-v23-spec 7절): 본 항목 줄에 "카드 N" */}
+                {multi && (
+                  <span
+                    className={`${styles.lineNum} ${l.depth === 1 ? styles.lineNumSub : ""}`}
+                    data-testid="kanban-item-cardnum"
+                  >
+                    {l.depth === 1 ? K.lineSub : K.lineCard(cardNo[i]!)}
+                  </span>
+                )}
                 <span className={styles.bullet}>{l.depth === 1 ? "·" : "•"}</span>
                 <textarea
                   ref={(el) => {
@@ -471,15 +486,6 @@ export function ItemDialog({ target, onClose }: { target: ItemDialogTarget; onCl
           })}
         </div>
       </div>
-      {!edit && (
-        <div className={styles.row}>
-          <span />
-          <label className={styles.checkRow}>
-            <input type="checkbox" checked={repeat} onChange={(e) => setRepeat(e.target.checked)} />↻{" "}
-            {STR.repeat.toggleOn}
-          </label>
-        </div>
-      )}
       {error && (
         <p className={styles.error} role="alert" data-testid="kanban-item-error">
           {error}
@@ -508,7 +514,7 @@ export function ItemDialog({ target, onClose }: { target: ItemDialogTarget; onCl
           data-testid="kanban-item-save"
           onClick={() => void save(false)}
         >
-          {edit ? K.save : K.add}
+          {edit ? K.save : cards > 1 ? K.addCards(cards) : K.add}
         </button>
       </div>
     </dialog>

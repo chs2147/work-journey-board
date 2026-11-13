@@ -4,10 +4,12 @@ import { COMPANY_DATE_RE, LABEL_MAX_HOLIDAY, type HolidaySettings } from "../dom
 import { parseMeta, type WorkspaceMeta } from "../domain/workspace";
 import {
   DEFAULT_KANBAN_FILTER,
+  DEFAULT_KANBAN_COLUMNS,
   DEFAULT_KANBAN_LAYOUT,
   KANBAN_FREE,
   KANBAN_PERIODS,
   type KanbanFilter,
+  type KanbanColumns,
   type KanbanLayout,
 } from "../domain/kanban";
 export interface Settings {
@@ -74,6 +76,8 @@ export interface Settings {
     kanban: KanbanFilter;
     /** 칸반 배치 모드(improve-v22-spec 4절) — 공간마다 */
     kanbanLayout: KanbanLayout;
+    /** 칸반 열 순서(TODO·DONE 포함)·열 아이콘(improve-v23-spec 2·8절) — 공간마다 */
+    kanbanColumns: KanbanColumns;
   };
 }
 
@@ -158,6 +162,7 @@ export const DEFAULT_SETTINGS: Settings = {
     startView: "board",
     kanban: DEFAULT_KANBAN_FILTER,
     kanbanLayout: DEFAULT_KANBAN_LAYOUT,
+    kanbanColumns: DEFAULT_KANBAN_COLUMNS,
   },
 };
 
@@ -191,6 +196,9 @@ export function mergeSettings(base: Settings, patch: unknown): Settings {
   // 칸반 배치 자리(improve-v22-spec 4절)는 키가 섹션 id라 기본값에 없다 — 깊이 합치지 않고 통째로 바꾼다(지운 섹션 자리도 빠짐)
   if (isObject(patch) && isObject(patch.ui) && "kanbanLayout" in patch.ui)
     s.ui.kanbanLayout = validKanbanLayout(patch.ui.kanbanLayout);
+  // 열 순서·아이콘도 키가 섹션 id라 통째로 바꾼다(improve-v23-spec 11절)
+  if (isObject(patch) && isObject(patch.ui) && "kanbanColumns" in patch.ui)
+    s.ui.kanbanColumns = validKanbanColumns(patch.ui.kanbanColumns);
   // v0.2.2 이전 저장값(auto 없음): 기본 높이와 다르면 사용자가 끌어서 정한 높이 → 고정으로 둔다
   if (
     isObject(patch) &&
@@ -259,6 +267,7 @@ export function mergeSettings(base: Settings, patch: unknown): Settings {
   if (s.ui.startView !== "board" && s.ui.startView !== "kanban") s.ui.startView = "board";
   s.ui.kanban = validKanbanFilter(s.ui.kanban);
   s.ui.kanbanLayout = validKanbanLayout(s.ui.kanbanLayout);
+  s.ui.kanbanColumns = validKanbanColumns(s.ui.kanbanColumns);
   return s;
 }
 
@@ -306,4 +315,21 @@ export function validKanbanLayout(v: unknown): KanbanLayout {
     }
   }
   return { mode: o.mode === "free" ? "free" : "equal", rects };
+}
+
+/** 칸반 열 순서·아이콘 검사 — 글자 키만, 중복 제거, 아이콘 id는 글자(모르는 id는 표시 때 기본으로) */
+export function validKanbanColumns(v: unknown): KanbanColumns {
+  const o = (v && typeof v === "object" ? v : {}) as { order?: unknown; icons?: unknown };
+  const order = Array.isArray(o.order)
+    ? [
+        ...new Set(
+          o.order.filter((x): x is string => typeof x === "string" && x.length > 0 && x.length <= 80),
+        ),
+      ]
+    : [];
+  const icons: Record<string, string> = {};
+  if (o.icons && typeof o.icons === "object" && !Array.isArray(o.icons))
+    for (const [k, id] of Object.entries(o.icons as Record<string, unknown>))
+      if (typeof id === "string" && /^[a-z0-9-]{1,40}$/.test(id) && k.length <= 80) icons[k] = id;
+  return { order, icons };
 }

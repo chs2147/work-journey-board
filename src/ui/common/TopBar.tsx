@@ -25,7 +25,7 @@ import { SearchBox } from "../search/SearchViews";
 import { useInsights } from "../insights/insightsStore";
 import { useUniverse } from "../universe/universeStore";
 import { useKanban } from "../kanban/kanbanStore";
-import { KanbanActions, KanbanFilters } from "../kanban/KanbanToolbar";
+import { KanbanActions, KanbanFilters, KanbanLayoutToggle } from "../kanban/KanbanToolbar";
 import { AddCategoryDialog } from "../board/AddCategoryDialog";
 import styles from "./TopBar.module.css";
 
@@ -172,6 +172,7 @@ export function TopBar() {
         <div className={styles.spacer} />
         {ready && journalReady && (week || kanban) && <SearchBox />}
         {ready && journalReady && !settings && <TagFilterMenu />}
+        {ready && journalReady && kanban && <KanbanLayoutToggle segmentClass={styles.segment ?? ""} />}
         {ready && journalReady && (week || kanban) && (
           <button
             type="button"
@@ -185,10 +186,7 @@ export function TopBar() {
         )}
         {ready && journalReady && (week || kanban) && addOpen && <AddCategoryDialog />}
         {ready && journalReady && kanban && (
-          <KanbanActions
-            className={`${styles.textButton} ${styles.actionButton}`}
-            segmentClass={styles.segment ?? ""}
-          />
+          <KanbanActions className={`${styles.textButton} ${styles.actionButton}`} />
         )}
         {ready && journalReady && week && (
           <button

@@ -2,6 +2,7 @@
 // 카드 전체가 끌기 대상(HTML5 DnD) — 열에 놓으면 상태 변경, Cabinet 줄을 카드에 놓으면 그 항목에 연결.
 import { useEffect, useLayoutEffect, useRef, useState, type DragEvent, type KeyboardEvent } from "react";
 import {
+  suggestIcon,
   DONE,
   KANBAN_FREE,
   KANBAN_FREE_MIN_VIEW,
@@ -22,6 +23,7 @@ import { dueView } from "../board/dueView";
 import { CAB_MIME } from "../cabinet/CabinetPanel";
 import { useModal } from "./kanbanUi";
 import { Celebration } from "./Celebration";
+import { IconPicker, SectionIconImg } from "./SectionIcon";
 import {
   closeKanban,
   cardsOf,
@@ -33,8 +35,14 @@ import {
   linkCabinetItem,
   load,
   moveCard,
-  moveSection,
-  placeSection,
+  columnIcon,
+  columnKeys,
+  columnName,
+  placeColumn,
+  setColumnIcon,
+  shiftColumn,
+  toggleCardRepeat,
+  cardRepeating,
   layoutRects,
   setRect,
   neighborKey,
@@ -76,7 +84,7 @@ export function KanbanView() {
   const [confirmDel, setConfirmDel] = useState<KanbanSection | null>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
   const [recentBulk, setRecentBulk] = useState<{ x: number; y: number } | null>(null);
-  const keys: SectionKey[] = [TODO, ...s.sections.map((x) => x.id), DONE];
+  const keys: SectionKey[] = columnKeys(s);
 
   // N = 항목 추가(입력에 초점이 없을 때)
   useEffect(() => {
@@ -150,8 +158,8 @@ export function KanbanView() {
       onDelete={(sec) => setConfirmDel(sec)}
       onBulk={() => setBulkOpen(true)}
       onRecent={(x, y) => setRecentBulk({ x, y })}
-      first={key === s.sections[0]?.id}
-      last={key === s.sections.at(-1)?.id}
+      index={keys.indexOf(key)}
+      count={keys.length}
     />
   );
 
@@ -184,16 +192,6 @@ export function KanbanView() {
               );
             })
           : keys.map(column)}
-        {!rects && (
-          <button
-            type="button"
-            className={styles.addSection}
-            aria-label={K.addSection}
-            onClick={() => setSectionDlg({ id: null })}
-          >
-            ＋<span>{K.addSection}</span>
-          </button>
-        )}
       </div>
       {dialog && <ItemDialog target={dialog} onClose={() => setDialog(null)} />}
       {sectionDlg && <SectionDialog id={sectionDlg.id} onClose={() => setSectionDlg(null)} />}
@@ -211,7 +209,7 @@ export function KanbanView() {
   );
 }
 
-/** 섹션 머리 끌기(사용자 섹션만 — TODO 맨 앞·DONE 맨 끝 고정) */
+/** 섹션 머리 끌기 — TODO·DONE 포함 모든 열(improve-v23-spec 2절) */
 const SECTION_MIME = "application/x-wjb-kanban-section";
 let dragSection: string | null = null;
 
@@ -225,8 +223,8 @@ function Column({
   onDelete,
   onBulk,
   onRecent,
-  first,
-  last,
+  index,
+  count,
 }: {
   /** 자유 배치: 머리를 끌면 상자 위치를 옮김(순서 끌기 대신) */
   freeMove?: (e: React.PointerEvent) => void;
@@ -238,13 +236,15 @@ function Column({
   onDelete(s: KanbanSection): void;
   onBulk(): void;
   onRecent(x: number, y: number): void;
-  first: boolean;
-  last: boolean;
+  index: number;
+  count: number;
 }) {
   const s = useKanban();
   const [over, setOver] = useState(false);
   const [secOver, setSecOver] = useState<"before" | "after" | null>(null);
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
+  const [picker, setPicker] = useState<{ x: number; y: number } | null>(null);
+  const flashing = useKanban((k) => k.flashKey === sectionKey);
   // 상단 태그 거르기(주간 보드와 같은 것, improve-v22-spec 5절) — 고른 태그가 있는 업무의 카드만
   const tagFilter = useBoard((b) => b.tagFilter);
   const categoryTags = useBoard((b) => b.categoryTags);
@@ -252,36 +252,21 @@ function Column({
     (c) => !tagFilter.length || matchesTagFilter(categoryTags[c.categoryId] ?? [], tagFilter),
   );
   const isDone = sectionKey === DONE;
-  const name = sectionKey === TODO ? K.todo : isDone ? K.done : (section?.name ?? "");
+  const name = columnName(sectionKey, s);
+  const icon = columnIcon(sectionKey, s);
   // 섹션 색은 무채색 두 가지만(업무 색과 혼동 방지): DONE만 진한 회색, TODO·사용자 섹션은 모두 같은 회색
   const color = isDone ? "var(--kanban-done)" : "var(--kanban-section)";
   const total = isDone && !tagFilter.length ? s.doneTotal : cards.length;
   const canDrop = () => !!dragCard && dragCard.from !== sectionKey;
 
-  /** 놓일 자리 = 사용자 섹션 순서 안의 번호. TODO에 놓으면 맨 앞, DONE에 놓으면 맨 끝 */
-  const secIndex = (side: "before" | "after") => {
-    if (sectionKey === TODO) return 0;
-    if (isDone) return s.sections.length;
-    const i = s.sections.findIndex((x) => x.id === sectionKey);
-    return side === "before" ? i : i + 1;
-  };
   const onDragOver = (e: DragEvent) => {
     if ([...e.dataTransfer.types].includes(SECTION_MIME)) {
       if (!dragSection || dragSection === sectionKey) return;
       e.preventDefault();
       e.dataTransfer.dropEffect = "move";
       const r = e.currentTarget.getBoundingClientRect();
-      const side =
-        sectionKey === TODO
-          ? "before"
-          : isDone
-            ? "after"
-            : e.clientX < r.left + r.width / 2
-              ? "before"
-              : "after";
-      // TODO 오른쪽·DONE 왼쪽에 표시선(그 자리로 들어감)
-      const shown = sectionKey === TODO ? "after" : isDone ? "before" : side;
-      if (secOver !== shown) setSecOver(shown);
+      const side = e.clientX < r.left + r.width / 2 ? "before" : "after";
+      if (secOver !== side) setSecOver(side);
       return;
     }
     if (![...e.dataTransfer.types].includes(CARD_MIME) || !canDrop()) return;
@@ -297,8 +282,7 @@ function Column({
       setSecOver(null);
       dragSection = null;
       if (!id || !side || id === sectionKey) return;
-      const to = sectionKey === TODO ? 0 : isDone ? s.sections.length : secIndex(side);
-      void placeSection(id, to);
+      void placeColumn(id, side === "before" ? index : index + 1);
       return;
     }
     if (![...e.dataTransfer.types].includes(CARD_MIME)) return;
@@ -309,12 +293,12 @@ function Column({
     // 옮긴 카드는 다른 열에서 새로 그려져 원래 요소의 dragend가 React에 닿지 않는다 — 놓을 때 끌기 상태를 지운다
     dragCard = null;
     setDragging(null);
-    if (ok) void moveCard(id, sectionKey);
+    if (ok) void moveCard(id, sectionKey, { x: e.clientX, y: e.clientY });
   };
 
   return (
     <div
-      className={`${styles.col} ${isDone ? styles.colDone : ""} ${over ? styles.colOver : ""} ${secOver === "before" ? styles.secBefore : secOver === "after" ? styles.secAfter : ""}`}
+      className={`${styles.col} ${isDone ? styles.colDone : ""} ${over ? styles.colOver : ""} ${secOver === "before" ? styles.secBefore : secOver === "after" ? styles.secAfter : ""} ${flashing ? styles.colFlash : ""}`}
       data-testid={`kanban-col-${isDone ? "done" : sectionKey === TODO ? "todo" : "section"}`}
       data-section={sectionKey}
       onDragOver={onDragOver}
@@ -327,11 +311,11 @@ function Column({
       onDrop={onDrop}
     >
       <div
-        className={`${styles.colHead} ${section || freeMove ? styles.colHeadDrag : ""}`}
+        className={`${styles.colHead} ${styles.colHeadDrag}`}
         style={{ borderTopColor: color }}
         data-testid="kanban-col-head"
         onPointerDown={freeMove}
-        {...(section && !freeMove
+        {...(!freeMove
           ? {
               draggable: true,
               tabIndex: 0,
@@ -339,8 +323,8 @@ function Column({
               "aria-roledescription": K.sectionDragTip,
               onDragStart: (e: DragEvent) => {
                 if ((e.target as HTMLElement).closest("button,select,input")) return e.preventDefault();
-                dragSection = section.id;
-                e.dataTransfer.setData(SECTION_MIME, section.id);
+                dragSection = sectionKey;
+                e.dataTransfer.setData(SECTION_MIME, sectionKey);
                 e.dataTransfer.effectAllowed = "move";
               },
               onDragEnd: () => {
@@ -350,11 +334,10 @@ function Column({
                 if (!e.altKey || !e.shiftKey || (e.key !== "ArrowLeft" && e.key !== "ArrowRight")) return;
                 if (e.target !== e.currentTarget) return;
                 e.preventDefault();
-                const i = s.sections.findIndex((x) => x.id === section.id);
-                void placeSection(section.id, e.key === "ArrowLeft" ? i - 1 : i + 2).then(() =>
+                void shiftColumn(sectionKey, e.key === "ArrowLeft" ? -1 : 1).then(() =>
                   document
                     .querySelector<HTMLElement>(
-                      `[data-section="${section.id}"] [data-testid="kanban-col-head"]`,
+                      `[data-section="${sectionKey}"] [data-testid="kanban-col-head"]`,
                     )
                     ?.focus(),
                 );
@@ -362,13 +345,25 @@ function Column({
             }
           : {})}
       >
+        <button
+          type="button"
+          className={styles.secIconBtn}
+          aria-label={K.iconMenu}
+          title={K.iconMenu}
+          data-testid="kanban-col-icon"
+          onClick={(e) => {
+            const r = e.currentTarget.getBoundingClientRect();
+            setPicker({ x: r.left, y: r.bottom + 4 });
+          }}
+        >
+          <SectionIconImg id={icon} />
+        </button>
         <span className={styles.colName} data-testid="kanban-col-name">
           {name}
         </span>
         <span className={styles.count} data-testid="kanban-col-count">
           {K.count(total)}
         </span>
-        {!section && <span className={styles.base}>{K.base}</span>}
         <span className={styles.spacer} />
         {sectionKey !== DONE && sectionKey === TODO && (
           <select
@@ -384,7 +379,7 @@ function Column({
             ))}
           </select>
         )}
-        {!isDone && (
+        {
           <button
             type="button"
             className={`${styles.btn} ${styles.ghost}`}
@@ -399,28 +394,37 @@ function Column({
           >
             ⋯
           </button>
-        )}
+        }
         {menu && (
           <Menu at={menu} onClose={() => setMenu(null)}>
-            {section ? (
+            {section && (
+              <button type="button" onClick={() => (setMenu(null), onRename(section.id))}>
+                {K.rename}
+              </button>
+            )}
+            <button
+              type="button"
+              data-testid="kanban-col-icon-menu"
+              onClick={() => (setMenu(null), setPicker({ x: menu.x, y: menu.y }))}
+            >
+              {K.iconMenu}
+            </button>
+            <button
+              type="button"
+              disabled={index <= 0}
+              onClick={() => (setMenu(null), void shiftColumn(sectionKey, -1))}
+            >
+              {K.moveLeft}
+            </button>
+            <button
+              type="button"
+              disabled={index >= count - 1}
+              onClick={() => (setMenu(null), void shiftColumn(sectionKey, 1))}
+            >
+              {K.moveRight}
+            </button>
+            {section && (
               <>
-                <button type="button" onClick={() => (setMenu(null), onRename(section.id))}>
-                  {K.rename}
-                </button>
-                <button
-                  type="button"
-                  disabled={first}
-                  onClick={() => (setMenu(null), void moveSection(section.id, -1))}
-                >
-                  {K.moveLeft}
-                </button>
-                <button
-                  type="button"
-                  disabled={last}
-                  onClick={() => (setMenu(null), void moveSection(section.id, 1))}
-                >
-                  {K.moveRight}
-                </button>
                 <hr />
                 <button type="button" onClick={() => (setMenu(null), void clearSection(section.id))}>
                   {K.allToTodo}
@@ -434,8 +438,10 @@ function Column({
                   {K.deleteSection}
                 </button>
               </>
-            ) : (
+            )}
+            {sectionKey === TODO && (
               <>
+                <hr />
                 <button type="button" data-testid="kanban-bulk" onClick={() => (setMenu(null), onBulk())}>
                   {K.bulk}
                 </button>
@@ -451,6 +457,22 @@ function Column({
               </>
             )}
           </Menu>
+        )}
+        {picker && (
+          <IconPicker
+            at={picker}
+            value={icon}
+            title={K.iconTitle(name)}
+            onPick={(id) => {
+              setPicker(null);
+              setColumnIcon(sectionKey, id);
+            }}
+            onReset={() => {
+              setPicker(null);
+              setColumnIcon(sectionKey, null);
+            }}
+            onClose={() => setPicker(null)}
+          />
         )}
       </div>
       <div className={styles.list} data-drag-scroll>
@@ -617,7 +639,11 @@ function Card({
   const kids = card.children;
   const shown = kids.length > 3 ? kids.slice(0, 3) : kids;
   const due = card.dueDate ? dueView(today, card.dueDate) : null;
-  const openMenu = (x: number, y: number) => setMenu({ x: Math.min(x, window.innerWidth - 240), y });
+  const [repeatOn, setRepeatOn] = useState(false);
+  const openMenu = (x: number, y: number) => {
+    setMenu({ x: Math.min(x, window.innerWidth - 240), y });
+    void cardRepeating(card).then(setRepeatOn);
+  };
   const onKey = (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.target !== e.currentTarget) return;
     if (e.key === "Enter") {
@@ -627,18 +653,20 @@ function Card({
       e.preventDefault();
       const to = neighborKey(card.id, e.key === "ArrowLeft" ? -1 : 1);
       if (to) void moveCard(card.id, to);
+    } else if (e.altKey && !e.shiftKey && (e.code === "KeyR" || e.key === "r")) {
+      e.preventDefault();
+      void toggleCardRepeat(card);
     } else if (e.key === "ContextMenu" || (e.shiftKey && e.key === "F10")) {
       e.preventDefault();
       const r = e.currentTarget.getBoundingClientRect();
       openMenu(r.left + 20, r.top + 24);
     }
   };
-  const sections = useKanban((s) => s.sections);
-  const targets: { key: SectionKey; name: string }[] = [
-    { key: TODO, name: K.todo },
-    ...sections.map((x) => ({ key: x.id, name: x.name })),
-    { key: DONE, name: K.moveToDone },
-  ].filter((t) => t.key !== sectionKey);
+  // 옮길 곳 = 열 순서 그대로(improve-v23-spec 2절)
+  const st = useKanban();
+  const targets: { key: SectionKey; name: string }[] = columnKeys(st)
+    .filter((k) => k !== sectionKey)
+    .map((k) => ({ key: k, name: k === DONE ? K.moveToDone : columnName(k, st) }));
   return (
     <div
       ref={ref}
@@ -761,6 +789,13 @@ function Card({
               </button>
               <button type="button" onClick={() => (setMenu(null), setPop("time"))}>
                 {K.timeMenu} <span className={styles.key}>Alt+O</span>
+              </button>
+              <button
+                type="button"
+                data-testid="kanban-card-repeat"
+                onClick={() => (setMenu(null), void toggleCardRepeat(card))}
+              >
+                ↻ {repeatOn ? K.repeatOff : K.repeatOn} <span className={styles.key}>Alt+R</span>
               </button>
             </>
           )}
@@ -968,9 +1003,21 @@ function SectionDialog({ id, onClose }: { id: string | null; onClose(): void }) 
   const cur = id ? sections.find((x) => x.id === id) : null;
   const [name, setName] = useState(cur?.name ?? "");
   const [error, setError] = useState<string | null>(null);
+  // 아이콘: 고르지 않으면 이름에 맞춘 추천(improve-v23-spec 8절) — 설명 글은 두지 않는다(15절 U1)
+  const [icon, setIcon] = useState<string | null>(() =>
+    cur ? (useKanban.getState().columns.icons[cur.id] ?? null) : null,
+  );
+  const [picker, setPicker] = useState<{ x: number; y: number } | null>(null);
+  const shown = icon ?? suggestIcon(name);
   const ref = useModal(onClose);
   const save = async () => {
-    const err = cur ? await updateSection(cur.id, { name }) : await createSection(name, "gray");
+    if (cur) {
+      const err = await updateSection(cur.id, { name });
+      if (err) return setError(err);
+      if (icon !== (useKanban.getState().columns.icons[cur.id] ?? null)) setColumnIcon(cur.id, icon);
+      return onClose();
+    }
+    const err = await createSection(name, "gray", icon);
     if (err) setError(err);
     else onClose();
   };
@@ -983,6 +1030,34 @@ function SectionDialog({ id, onClose }: { id: string | null; onClose(): void }) 
       data-testid="kanban-section-dialog"
     >
       <h2>{cur ? K.sectionRename : K.sectionDialog}</h2>
+      <div className={styles.row} style={{ gridTemplateColumns: "50px 1fr" }}>
+        <span className={styles.label}>{K.iconLabel}</span>
+        <div>
+          <button
+            type="button"
+            className={styles.iconField}
+            aria-label={K.iconMenu}
+            data-testid="kanban-section-icon"
+            data-icon={shown}
+            onClick={(e) => {
+              const r = e.currentTarget.getBoundingClientRect();
+              setPicker({ x: r.left, y: r.bottom + 4 });
+            }}
+          >
+            <SectionIconImg id={shown} size={20} /> ▾
+          </button>
+        </div>
+      </div>
+      {picker && (
+        <IconPicker
+          at={picker}
+          value={shown}
+          title={K.iconTitle(name || K.sectionDialog)}
+          onPick={(id) => (setIcon(id), setPicker(null))}
+          onReset={() => (setIcon(null), setPicker(null))}
+          onClose={() => setPicker(null)}
+        />
+      )}
       <div className={styles.row} style={{ gridTemplateColumns: "50px 1fr" }}>
         <label className={styles.label} htmlFor="kanban-section-name">
           {K.sectionName}
@@ -1010,7 +1085,6 @@ function SectionDialog({ id, onClose }: { id: string | null; onClose(): void }) 
           {error}
         </p>
       )}
-      {!cur && <p className={styles.hint}>{K.sectionHint}</p>}
       <div className={styles.acts}>
         <button type="button" className={styles.btn} onClick={onClose}>
           {K.cancel}

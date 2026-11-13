@@ -808,3 +808,109 @@
   border-radius: 0;
   z-index: 4;
 }
+
+/* 섹션 아이콘·고르기 판(improve-v23-spec 8절) */
+.secIcon {
+  flex: none;
+  display: inline-block;
+}
+.secIconBtn {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  cursor: pointer;
+}
+.secIconBtn:hover,
+.secIconBtn:focus-visible {
+  background: var(--surface-sub);
+}
+.picker {
+  position: fixed;
+  z-index: 70;
+  width: 330px;
+  padding: 10px;
+  background: var(--surface-card);
+  border: 1px solid var(--btn-line);
+  border-radius: var(--radius-md);
+  box-shadow: 0 12px 30px rgb(0 0 0 / 0.2);
+}
+.pickerHead {
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+  margin-bottom: 8px;
+}
+.pickerGrid {
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  gap: 3px;
+}
+.pickerGrid button {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  cursor: pointer;
+}
+.pickerGrid button:hover,
+.pickerGrid button:focus-visible {
+  background: var(--surface-sub);
+  outline: none;
+}
+.pickerGrid button.pickerOn {
+  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+.pickerFoot {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+.colFlash {
+  box-shadow:
+    0 0 0 3px var(--accent),
+    0 0 0 8px color-mix(in srgb, var(--accent) 25%, transparent);
+  transition: box-shadow 0.3s;
+}
+.iconField {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 8px;
+  border: 1px solid var(--btn-line);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-2);
+  font: inherit;
+  cursor: pointer;
+}
+
+/* 카드 추가 창 줄 꼬리표(improve-v23-spec 7절) — 여러 줄 = 여러 카드 */
+.lineNum {
+  flex: none;
+  align-self: flex-start;
+  margin-top: 6px;
+  min-width: 44px;
+  padding: 0 5px;
+  border-radius: 0;
+  background: var(--accent);
+  color: var(--on-accent, #fff);
+  font-size: 11px;
+  line-height: 18px;
+  text-align: center;
+  white-space: nowrap;
+}
+.lineNumSub {
+  background: transparent;
+  color: var(--text-3);
+  border: 1px dashed var(--btn-line);
+}

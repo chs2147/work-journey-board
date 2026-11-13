@@ -755,8 +755,12 @@
   gap: 16px;
   padding: 5px 0;
 }
-.dayGroup + .dayGroup {
-  border-top: 1px dashed var(--line);
+/* 요일 묶음 위아래 실선(improve-v23-spec 9절) — 첫 묶음 위·마지막 묶음 아래까지, 직각 */
+.dayGroup {
+  border-top: 1px solid var(--line-strong);
+}
+.dayGroup:last-child {
+  border-bottom: 1px solid var(--line-strong);
 }
 /* 요일 칸 76px 한 줄: 요일 굵게 14px + 날짜 12px 보조색 */
 .dayLabel {

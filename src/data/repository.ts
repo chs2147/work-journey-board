@@ -1701,7 +1701,7 @@ export class JournalRepository {
   private async importantRows(where: string, params: SqlParam[]): Promise<ImportantItem[]> {
     const rows = await this.db.select<ImportantRow>(
       `SELECT e.id, e.date, e.category_id, e.seq, e.depth, e.text, e.flagged, e.flag_done_at, e.completion_was_flagged, e.recurrence_id,
-              e.start_time, e.due_date, c.name AS category_name, c.color AS category_color, c.sort_order AS category_order,
+              e.start_time, e.due_date, e.kanban_section_id, c.name AS category_name, c.color AS category_color, c.sort_order AS category_order,
               CASE WHEN e.depth = 1 THEN (
                 SELECT p.text FROM entry_item p
                 WHERE p.date = e.date AND p.category_id = e.category_id AND p.depth = 0 AND p.seq < e.seq
@@ -1727,6 +1727,7 @@ export class JournalRepository {
       flagDoneAt: r.flag_done_at,
       startTime: r.start_time ?? null,
       dueDate: r.due_date ?? null,
+      kanbanSectionId: r.kanban_section_id ?? null,
     }));
   }
 
@@ -1761,8 +1762,8 @@ export class JournalRepository {
 
   /** 아직 처리하지 않은 중요 항목 전부(모든 주). 묶음·정렬은 domain/important.ts */
   async listImportant(): Promise<ImportantItem[]> {
-    // 사용자 칸반 섹션에 둔 항목은 빠진다(★는 유지 — improve-v21-spec D3)
-    return this.importantRows("e.flagged = 1 AND e.kanban_section_id IS NULL", []);
+    // 미완료 ★는 어느 칸반 섹션에 있든 표시(improve-v23-spec 4절 — v21 D3 되돌림)
+    return this.importantRows("e.flagged = 1", []);
   }
 
   /**

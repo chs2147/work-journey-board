@@ -815,3 +815,49 @@ test("v22 칸반 배치 모드·섹션 순서는 공간마다 따로: 공간을 
     expect(await journalCounts(page)).toEqual(company);
   }
 });
+
+test("v23 칸반 열 순서(TODO·DONE 포함)·섹션 아이콘은 공간마다 따로: 공간을 3번 오가도 그 공간 일지에만(CLAUDE.md 4-7)", async ({
+  page,
+}) => {
+  const hop = async (n: 1 | 2, name: string) => {
+    await page.keyboard.press(`Control+Alt+Digit${n}`);
+    await expect(page).toHaveTitle(`Work Journey Board — ${name}`);
+  };
+  const names = () => page.getByTestId("kanban-col-name").allTextContents();
+  const todoIcon = () => page.getByTestId("kanban-col-todo").getByTestId("kanban-col-icon").locator("svg");
+  await hop(2, "개인");
+  await page.keyboard.press("Alt+Digit6");
+  await expect.poll(names).toEqual(["TODO", "DONE"]);
+  const base2 = await journalCounts(page);
+  await hop(1, "회사");
+  await page.keyboard.press("Alt+Digit6");
+  // 회사: 섹션 하나 → TODO를 맨 뒤로 → TODO 아이콘 🚀
+  await page.getByTestId("kanban-add-section").click();
+  await page.getByTestId("kanban-section-dialog").getByRole("textbox").fill("가상 검토");
+  await page.getByTestId("kanban-section-save").click();
+  await expect(page.getByTestId("kanban-section-dialog")).toHaveCount(0);
+  const todoHead = page.getByTestId("kanban-col-todo").getByTestId("kanban-col-head");
+  await todoHead.focus();
+  await page.keyboard.press("Alt+Shift+ArrowRight");
+  await expect.poll(names).toEqual(["가상 검토", "TODO", "DONE"]);
+  await todoHead.focus();
+  await page.keyboard.press("Alt+Shift+ArrowRight");
+  await expect.poll(names).toEqual(["가상 검토", "DONE", "TODO"]);
+  await page.getByTestId("kanban-col-todo").getByTestId("kanban-col-icon").click();
+  await page.getByTestId("kanban-icon-picker").locator("button[data-icon='rocket']").click();
+  await expect(todoIcon()).toHaveAttribute("data-icon", "rocket");
+  const company = await journalCounts(page);
+
+  for (let round = 0; round < 3; round++) {
+    await hop(2, "개인");
+    await page.keyboard.press("Alt+Digit6");
+    await expect.poll(names).toEqual(["TODO", "DONE"]);
+    await expect(todoIcon()).toHaveAttribute("data-icon", "clipboard");
+    expect(await journalCounts(page)).toEqual(base2);
+    await hop(1, "회사");
+    await page.keyboard.press("Alt+Digit6");
+    await expect.poll(names).toEqual(["가상 검토", "DONE", "TODO"]);
+    await expect(todoIcon()).toHaveAttribute("data-icon", "rocket");
+    expect(await journalCounts(page)).toEqual(company);
+  }
+});

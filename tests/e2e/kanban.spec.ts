@@ -74,7 +74,7 @@ test("끌어 DONE에 놓으면 완료 + 세부 함께 · 되돌리기 · 주간 
   await expect(card(page, "A협력사 현장 점검").getByTestId("kanban-card-child")).not.toHaveClass(/childDone/);
 });
 
-test("섹션 추가 → 카드 옮기기 → 상태 이력 · ★ 항목은 중요 목록에서 빠짐 · 섹션 삭제 = TODO로", async ({
+test("섹션 추가 → 카드 옮기기 → 상태 이력 · ★ 항목은 사용자 섹션에서도 중요 목록에(섹션 칩) · 섹션 삭제 = TODO로", async ({
   page,
 }) => {
   await openKanban(page);
@@ -104,7 +104,9 @@ test("섹션 추가 → 카드 옮기기 → 상태 이력 · ★ 항목은 중�
   await star.dragTo(col(page, "section"));
   await expect(col(page, "section").getByTestId("kanban-card")).toHaveCount(1);
   await expect(col(page, "section").getByTestId("kanban-since")).toBeVisible();
-  await expect(page.getByTestId("important-panel")).not.toContainText("개발계 1차 배포 일정 확정(11/2)");
+  // v23: 사용자 섹션으로 옮겨도 미완료 ★는 중요 목록에 남고 섹션 칩이 붙는다
+  await expect(page.getByTestId("important-panel")).toContainText("개발계 1차 배포 일정 확정(11/2)");
+  await expect(page.getByTestId("important-section-chip").first()).toContainText("Parking Lot");
   // 이력
   const moved = col(page, "section").getByTestId("kanban-card");
   await moved.hover();

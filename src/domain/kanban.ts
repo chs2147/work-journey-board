@@ -266,3 +266,87 @@ export function readingOrder(ids: string[], rects: Record<string, KanbanRect>): 
     return row || ra.x - rb.x;
   });
 }
+
+// ── 열 순서·섹션 아이콘(improve-v23-spec 2·8절) — TODO·DONE도 순서 자유, 일지 설정에 저장 ─────
+export interface KanbanColumns {
+  /** 열 순서(TODO·DONE·섹션 id) */
+  order: string[];
+  /** 열 아이콘 — 값은 sectionIcons의 id */
+  icons: Record<string, string>;
+}
+export const DEFAULT_KANBAN_COLUMNS: KanbanColumns = { order: [], icons: {} };
+
+/**
+ * 저장된 순서 + 지금 섹션 → 실제 열 순서. 모르는 키는 버리고, 목록에 없는 섹션(새 섹션·예전 일지)은
+ * DONE 바로 앞에 섹션 순서대로 끼운다. TODO·DONE이 빠져 있으면 맨 앞·맨 끝.
+ */
+export function mergeColumnOrder(order: readonly string[], sectionIds: readonly string[]): SectionKey[] {
+  const known = new Set<string>([TODO, DONE, ...sectionIds]);
+  const out: string[] = [];
+  for (const k of order) if (known.has(k) && !out.includes(k)) out.push(k);
+  if (!out.includes(TODO)) out.unshift(TODO);
+  const missing = sectionIds.filter((id) => !out.includes(id));
+  if (!out.includes(DONE)) out.push(DONE);
+  if (missing.length) out.splice(out.indexOf(DONE), 0, ...missing);
+  return out;
+}
+
+/** key를 순서 안의 toIndex 자리로(toIndex는 옮기기 전 기준 끼울 자리, 0~length) */
+export function moveColumn(order: readonly SectionKey[], key: SectionKey, toIndex: number): SectionKey[] {
+  const from = order.indexOf(key);
+  if (from < 0) return [...order];
+  const rest = order.filter((k) => k !== key);
+  const at = Math.max(0, Math.min(rest.length, toIndex > from ? toIndex - 1 : toIndex));
+  rest.splice(at, 0, key);
+  return rest;
+}
+
+/**
+ * 자유 배치에 새 열 놓을 자리(3절): 보이는 영역(view) 안 첫 빈자리(왼쪽 위부터, 8px 격자) →
+ * 없으면 가장 아래 상자 아래 왼쪽.
+ */
+export function freeSpot(
+  rects: readonly KanbanRect[],
+  view: { x: number; y: number; w: number; h: number },
+  size: { w: number; h: number } = { w: KANBAN_FREE.w, h: 360 },
+): KanbanRect {
+  const g = KANBAN_FREE.gap;
+  const hit = (r: KanbanRect) =>
+    rects.some(
+      (o) => r.x < o.x + o.w + g && o.x < r.x + r.w + g && r.y < o.y + o.h + g && o.y < r.y + r.h + g,
+    );
+  for (let y = snapGrid(view.y); y + size.h <= view.y + view.h; y += KANBAN_GRID * 2)
+    for (let x = snapGrid(view.x); x + size.w <= view.x + view.w; x += KANBAN_GRID * 2) {
+      const r = { x, y, w: size.w, h: size.h };
+      if (!hit(r)) return r;
+    }
+  const bottom = Math.max(0, ...rects.map((r) => r.y + r.h + g));
+  return { x: 0, y: snapGrid(bottom), w: size.w, h: size.h };
+}
+
+/** 열 기본 아이콘 id — TODO 📋 · DONE ✅ · 사용자 섹션 = 이름 추천(8절) */
+export function defaultColumnIcon(key: SectionKey, name = ""): string {
+  if (key === TODO) return "clipboard";
+  if (key === DONE) return "check-mark-button";
+  return suggestIcon(name);
+}
+
+const ICON_WORDS: [RegExp, string][] = [
+  [/검토|리뷰|review/i, "eyes"],
+  [/보류|대기|hold|wait/i, "pause-button"],
+  [/진행|작업|doing|wip|progress/i, "rocket"],
+  [/테스트|검증|test|qa/i, "test-tube"],
+  [/배포|릴리스|출시|release|deploy/i, "package"],
+  [/아이디어|idea/i, "light-bulb"],
+  [/조사|분석|research/i, "magnifying-glass-tilted-left"],
+  [/긴급|급함|urgent/i, "fire"],
+  [/논의|회의|meeting/i, "speech-balloon"],
+  [/협업|협의/i, "handshake"],
+  [/일정|예정|schedule/i, "spiral-calendar"],
+];
+
+/** 섹션 이름에 맞는 아이콘 id(없으면 📌) */
+export function suggestIcon(name: string): string {
+  for (const [re, id] of ICON_WORDS) if (re.test(name)) return id;
+  return "pushpin";
+}

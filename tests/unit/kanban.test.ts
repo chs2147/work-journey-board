@@ -159,13 +159,14 @@ describe("칸반 저장소", () => {
     await db.close();
   });
 
-  it("사용자 섹션: 만들기·이름 검사·최대 8개 · ★ 항목을 두면 중요 목록에서 빠짐(★ 유지) · 지우면 TODO로", async () => {
+  it("사용자 섹션: 만들기·이름 검사·최대 8개 · ★ 항목은 사용자 섹션에서도 중요 목록에 남음(v23) · 지우면 TODO로", async () => {
     const { repo, db } = await seed();
     const park = await repo.kanban.createSection("Parking Lot", "violet");
     await expect(repo.kanban.createSection("parking lot", "amber")).rejects.toBeInstanceOf(KanbanError);
     expect((await repo.listImportant()).map((x) => x.id)).toEqual(["b"]);
     await repo.kanban.move("b", park.id);
-    expect(await repo.listImportant()).toEqual([]);
+    const imp = await repo.listImportant();
+    expect(imp.map((x) => [x.id, x.kanbanSectionId])).toEqual([["b", park.id]]);
     const b = (await repo.kanban.listOpen(F, TODAY)).find((x) => x.id === "b")!;
     expect(b).toMatchObject({ sectionId: park.id, flagged: true });
     expect(b.sectionSince).toBeTruthy();

@@ -76,4 +76,6 @@ export interface ImportantItem {
   startTime?: string | null;
   /** 마감일(improve-1104v10-spec) */
   dueDate?: string | null;
+  /** 칸반 사용자 섹션(없으면 TODO, improve-v23-spec 4절) */
+  kanbanSectionId?: string | null;
 }

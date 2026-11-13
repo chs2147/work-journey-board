@@ -1,5 +1,6 @@
 // 왼쪽 중요 업무 패널(important-repeat-spec 2-3~2-5): 모든 주의 중요 항목을 묶음 › 업무별로(improve-1026v2-spec 8절), 체크 = 처리 완료, 누르면 그 칸으로.
-import { revealInKanban, useKanban } from "../kanban/kanbanStore";
+import { celebrateDone, columnIcon, columnName, revealInKanban, useKanban } from "../kanban/kanbanStore";
+import { SectionIconImg } from "../kanban/SectionIcon";
 import { useEffect, useRef, type KeyboardEvent } from "react";
 import { groupImportant } from "../../domain/important";
 import type { ImportantItem } from "../../domain/types";
@@ -66,6 +67,7 @@ export function ImportantPanel({ overlay }: { overlay: boolean }) {
     } else if (e.key === " ") {
       e.preventDefault();
       (rows[i + 1] ?? rows[i - 1])?.focus();
+      celebrateDone();
       void completeImportant(it.id, false, "important");
     } else if (e.key === "Escape") {
       e.preventDefault();
@@ -170,7 +172,10 @@ export function ImportantPanel({ overlay }: { overlay: boolean }) {
                               className={styles.check}
                               aria-label={STR.important.complete(it.text)}
                               title={STR.important.completeTitle}
-                              onClick={() => void completeImportant(it.id, false, "important")}
+                              onClick={() => (
+                                celebrateDone(),
+                                void completeImportant(it.id, false, "important")
+                              )}
                             >
                               ✓
                             </button>
@@ -189,6 +194,7 @@ export function ImportantPanel({ overlay }: { overlay: boolean }) {
                                   style={{ background: `var(--cat-${it.categoryColor})` }}
                                 />
                                 <span className={styles.dueText}>{it.text}</span>
+                                <SectionChip id={it.kanbanSectionId} />
                               </span>
                             </button>
                           </li>
@@ -213,7 +219,7 @@ export function ImportantPanel({ overlay }: { overlay: boolean }) {
                           className={styles.check}
                           aria-label={STR.important.complete(it.text)}
                           title={STR.important.completeTitle}
-                          onClick={() => void completeImportant(it.id, false, "important")}
+                          onClick={() => (celebrateDone(), void completeImportant(it.id, false, "important"))}
                         >
                           ✓
                         </button>
@@ -227,6 +233,7 @@ export function ImportantPanel({ overlay }: { overlay: boolean }) {
                         >
                           {it.parentText && <span className={styles.parent}>{it.parentText} ›</span>}
                           <span className={styles.text}>{it.text}</span>
+                          <SectionChip id={it.kanbanSectionId} />
                           {/* 업무명은 머리에 있으니 빼고, 날짜는 "오늘" 묶음이면 생략(8절) */}
                           {(g.key !== "today" || it.startTime) && (
                             <span className={styles.meta}>
@@ -314,4 +321,16 @@ function dueDays(items: ImportantItem[]): [string, ImportantItem[]][] {
     else out.push([it.dueDate!, [it]]);
   }
   return out;
+}
+
+/** 칸반 사용자 섹션에 있는 ★ 항목의 섹션 칩(improve-v23-spec 4절) — TODO는 칩 없음 */
+function SectionChip({ id }: { id?: string | null }) {
+  const st = useKanban();
+  if (!id || !st.sections.some((x) => x.id === id)) return null;
+  return (
+    <span className={styles.secChip} data-testid="important-section-chip">
+      <SectionIconImg id={columnIcon(id, st)} size={12} />
+      {columnName(id, st)}
+    </span>
+  );
 }
