@@ -1,6 +1,8 @@
 # V2 프로젝트 — 다국어·온라인 동기화 상세 설계 초안
 
-**현재 재개 정본:** [73. Connected Preview native 격리](73-connected-preview-native-isolation.md). 사용자가 별도 검증판을 확정했다. 공통 프로필·Rust 경로/OS vault 소스와 scope 경계를 구현했다. Node311·Rust31개 통과, 실제 OS/설치·Tauri 연결은 후속이다. 다음은 Preview native bootstrap/명령 경계다. 제품1.24.3/DB19와 로컬 원본 유지.
+**최신 분석(2026-11-13):** [74. 진행 현황 분석](74-progress-analysis-1113.md) — main 1.40.0/DB20 동기화, 다음 추천 DB20 사본 계약.
+
+**재개 정본:** [73. Connected Preview native 격리](73-connected-preview-native-isolation.md). 사용자가 별도 검증판을 확정했다. 공통 프로필·Rust 경로/OS vault 소스와 scope 경계를 구현했다. Node311·Rust31개 통과, 실제 OS/설치·Tauri 연결은 후속이다. 다음은 Preview native bootstrap/명령 경계다. 제품1.24.3/DB19와 로컬 원본 유지.
 
 **현재 재개 정본:** [72. 온라인 캐시 형식·읽기 검증](72-online-cache-format-activation.md). 별도 cache header/schema/계정·기기·세대·metadata-only 저장과 단기 원격 확인을 구현했다. 308개 회귀 통과. 독립 구현이며 제품 활성화/Cloud 배포는 아직 아니다. 다음은 native 프로필·설정·OS 자격증명 격리다. 제품 기준1.24.3/DB19 유지.
 

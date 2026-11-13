@@ -1,6 +1,6 @@
 # V2 설계·PoC 중단/재개 기록
 
-**현재 재개 정본:** [73. Connected Preview native 격리](73-connected-preview-native-isolation.md). 이하 체크포인트는 작성 당시 기록이며 가장 최근 결과가 우선한다.
+**현재 재개 정본:** [74. 진행 현황 분석(2026-11-13, main 1.40.0/DB20 동기화)](74-progress-analysis-1113.md) → [73. Connected Preview native 격리](73-connected-preview-native-isolation.md). 다음 추천은 DB20(칸반) 사본 계약부터. 이하 체크포인트는 작성 당시 기록이며 가장 최근 결과가 우선한다.
 
 2026-11-09 UTC · V2 설계/PoC 중단 지점을 보존한 뒤 복귀했다. 사용자 요청으로 main 1.23.1 패치(`d11a0ca`)를 v2-design에 병합했다.
 

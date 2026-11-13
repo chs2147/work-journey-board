@@ -1,5 +1,7 @@
 # 47. V2 진행 항목·사용자 직접 설정·재개 순서
 
+**최신 분석(2026-11-13):** [74문서](74-progress-analysis-1113.md). main 1.40.0(구조 v20, 칸반) 동기화 후 V2 Node 회귀 311개 통과. v20 일지는 이관 PoC가 `SCHEMA_VERSION`으로 거절 — DB20 사본 계약이 다음 추천. 아래 U/A 표는 당시 상태이며 뒤 절·74문서가 우선한다.
+
 **현재 진행:** [73문서](73-connected-preview-native-isolation.md). 별도 Connected Preview 검증판은 사용자 확정. Rust 정책/OS vault 소스·공유 프로필(Node311/Rust31개 검증)을 추가했다. 다음은 Preview native bootstrap/명령 경계와 OS 실기이며 정식 V2 이름/배포 채널은 여전히 미확정이다.
 
 **현재 구현 진행:** [72문서](72-online-cache-format-activation.md). 독립 온라인 캐시 형식/읽기 gate와 metadata-only envelope를 구현하고 308개 회귀를 검증했다. 다음은 native 프로필·설정·OS 자격증명 격리. 실제 제품 서버 capability/캐시 native 포트/편집 동기화는 후속이며 기존 로컬 모델과 main1.24.3/DB19를 유지한다.
