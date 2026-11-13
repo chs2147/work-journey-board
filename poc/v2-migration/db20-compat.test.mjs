@@ -212,29 +212,42 @@ test("DB20 contract matches the generated product schema and keeps DB18/19 contr
   }
 });
 
-test("server RPC stays fail-closed for the DB20 profile until its server contract exists", async (t) => {
+test("server RPC adapter: DB20 only with workspace profiles enabled and matching schema", async (t) => {
   const e = setup(t);
   createConnectedCopy(e.source, e.destination, e);
   const { envelope } = mapWorkspace(e.destination, e.workspaceId);
-  let calls = 0;
-  const client = createMigrationRPC({
-    projectRef: "vsphftnmfzfoufasjttd",
-    serviceRoleKey: "fictional-local-runtime-key",
-    allowWorkspaceProfiles: true,
-    fetchTransport: async () => {
-      calls++;
-      throw Error("TRANSPORT_MUST_NOT_RUN");
-    },
-  });
   const id = (n) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
+  const who = [{ userId: id(1), sessionId: id(2), role: "authenticated" }, id(3)];
+  const make = (allowWorkspaceProfiles, sent) =>
+    createMigrationRPC({
+      projectRef: "vsphftnmfzfoufasjttd",
+      serviceRoleKey: "fictional-local-runtime-key",
+      allowWorkspaceProfiles,
+      fetchTransport: async (url, options) => {
+        sent.push(JSON.parse(options.body));
+        throw Error("LOCAL_STOP_AFTER_SEND"); // reaching the transport is the assertion; no server here
+      },
+    });
+  const off = [];
   await assert.rejects(
-    () =>
-      client.call(
-        { action: "start", jobId: id(4), params: envelope },
-        { userId: id(1), sessionId: id(2), role: "authenticated" },
-        id(3),
-      ),
+    () => make(false, off).call({ action: "start", jobId: id(4), params: envelope }, ...who),
     (err) => err.code === "MIGRATION_PROFILE_UNSUPPORTED",
   );
-  assert.equal(calls, 0);
+  const wrong = [];
+  await assert.rejects(
+    () =>
+      make(true, wrong).call(
+        { action: "start", jobId: id(4), params: { ...envelope, sourceSchema: 19 } },
+        ...who,
+      ),
+    (err) => err.code === "INVALID_RPC",
+  );
+  assert.equal(off.length + wrong.length, 0);
+  const on = [];
+  await assert.rejects(
+    () => make(true, on).call({ action: "start", jobId: id(4), params: envelope }, ...who),
+    (err) => err.code === "MIGRATION_UNAVAILABLE",
+  );
+  assert.equal(on.length, 1);
+  assert.equal(on[0].p_request.params.profile, "workspace-db20-map-poc-1");
 });

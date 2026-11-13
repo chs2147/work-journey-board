@@ -1,0 +1,79 @@
+{
+  "module": "wjb-full-workspace-db20-extension-poc-1",
+  "profile": "development",
+  "projectRef": "vsphftnmfzfoufasjttd",
+  "region": "ap-northeast-2",
+  "autoApply": false,
+  "cloudApplied": false,
+  "productCompatible": false,
+  "monthlyBudgetKRW": 0,
+  "requires": ["001-migration.sql (installed)", "004-workspace.sql (installed, unchanged bytes)"],
+  "sourceSchemas": [18, 19, 20],
+  "profiles": ["workspace-db18-map-poc-1", "workspace-db19-map-poc-1", "workspace-db20-map-poc-1"],
+  "receiptStatus": "poc-verified",
+  "limits": {
+    "requestJsonBytes": 1048576,
+    "records": 2048,
+    "assets": 8,
+    "assetBytes": 65536
+  },
+  "newObjects": {
+    "tables": 0,
+    "rlsTables": 0,
+    "newPublicRPCs": 0,
+    "replacedFunctions": [
+      "wjb_migration.workspace_contract",
+      "wjb_migration.normalize_workspace",
+      "wjb_migration.normalize"
+    ],
+    "widenedConstraint": "wjb_migration.job.job_profile_check"
+  },
+  "rollback": "009 only while no workspace-db20-map-poc-1 job exists; restores the exact 004 function text; deletes nothing",
+  "localEvidence": "docs/v2-design/evidence/migration-db20-workspace-pass.json",
+  "sources": [
+    {
+      "path": "poc/v2-migration/postgres/007-workspace-db20.sql",
+      "sha256": "3b071513394462f2657473907ba5ebb2d246d4b29a0a47ac36a3d59e95c62a8b"
+    },
+    {
+      "path": "poc/v2-migration/postgres/008-workspace-db20-verify.sql",
+      "sha256": "361ba73e34d874c88d8d5bc15a7a2d50d9b2fefddd97ec58618f1f83c2112fc7"
+    },
+    {
+      "path": "poc/v2-migration/postgres/009-workspace-db20-rollback-empty.sql",
+      "sha256": "cc5e363be6293d1cea152f3fa1d6877872b9d9ea68da3d8f7f5b1964444deba2"
+    },
+    {
+      "path": "poc/v2-migration/postgres/build-workspace-sql.py",
+      "sha256": "74b7879a35aee4b1b1659e15af49186c06e33254563fd8ce510855e14eeab4be"
+    },
+    {
+      "path": "poc/v2-migration/postgres/templates/workspace-validation.sql",
+      "sha256": "2b1780b71b3075c6a26de96192f384ec75174645a92623edf38797bc8ba4b7ea"
+    },
+    {
+      "path": "poc/v2-migration/postgres/db20-workspace-tests.py",
+      "sha256": "1672cbab5e7c316a3539455ceb1d1eea6b5b675b3d497134e1c34eea381a874f"
+    },
+    {
+      "path": "poc/v2-migration/db20-contract.json",
+      "sha256": "17f184bc1c2bec48e7db03327e6e3852fea72b4d2be49679eb8ed4b8247b8003"
+    },
+    {
+      "path": "poc/v2-migration/workspace-map.mjs",
+      "sha256": "d382115465ba86f8a53afe8a0a655fb297720574cf2034d8c550b9141ca8f98f"
+    },
+    {
+      "path": "poc/v2-migration/server-rpc.mjs",
+      "sha256": "63f52ecdf58f9652bd1c6c8971e33feda59335cd8aaed4f00c353167df9b877d"
+    },
+    {
+      "path": "src/shared/sectionIcons.ts",
+      "sha256": "cc0da3f82b3385bdc2a3b45fef8eb4dbd42882ce7063720e1387b9cf3d9fd2c4"
+    },
+    {
+      "path": "src/data/migrations/0020_kanban.sql",
+      "sha256": "4ea8dc87ef128a1428f15f95c31b7aff33ce0bfe0b0855e869409444f56923d0"
+    }
+  ]
+}

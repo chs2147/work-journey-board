@@ -78,7 +78,17 @@ function keys(v, wanted) {
   );
 }
 const decimal = (v) => typeof v === "string" && /^\d+$/.test(v) && BigInt(v) <= 9223372036854775807n;
-const workspaceProfiles = ["workspace-db18-map-poc-1", "workspace-db19-map-poc-1"];
+const workspaceProfiles = [
+  "workspace-db18-map-poc-1",
+  "workspace-db19-map-poc-1",
+  "workspace-db20-map-poc-1",
+];
+// DB20 needs server SQL 007 on the target; before that the server CHECK still rejects the profile.
+const workspaceSchemas = {
+  "workspace-db18-map-poc-1": 18,
+  "workspace-db19-map-poc-1": 19,
+  "workspace-db20-map-poc-1": 20,
+};
 function receipt(v, operationId, manifestHash, allowedProfiles) {
   return (
     v?.status === "poc-verified" &&
@@ -139,7 +149,7 @@ export function createMigrationRPC({
               "exclusions",
               "policies",
             ]) ||
-            params.sourceSchema !== (params.profile === workspaceProfiles[0] ? 18 : 19) ||
+            params.sourceSchema !== workspaceSchemas[params.profile] ||
             !sha.test(params.contractFingerprint) ||
             !Array.isArray(params.records) ||
             params.records.length > 2048 ||

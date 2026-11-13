@@ -1,6 +1,7 @@
 """Deterministic, local-only SQL candidate generator. No credentials/network/apply."""
 from pathlib import Path
 import json
+import re
 ROOT=Path(__file__).resolve().parent
 REPO=ROOT.parents[2]
 base=(ROOT/'001-migration.sql').read_text()
@@ -65,3 +66,90 @@ REVOKE ALL ON ALL FUNCTIONS IN SCHEMA wjb_migration FROM PUBLIC,anon,authenticat
 COMMIT;
 '''
 (ROOT/'006-workspace-rollback-empty.sql').write_text(rollback)
+
+# ── DB20 (kanban) forward extension: 007 apply / 008 verify / 009 empty rollback ──────────────
+# 004 is installed in DEV and stays byte-identical. 007 only REPLACEs functions and widens the
+# profile CHECK; the DB18/19 branches are the 004 source text with DB20-only additions.
+template=(ROOT/'templates/workspace-validation.sql').read_text()
+workspace_fn=template[template.index('CREATE FUNCTION wjb_migration.normalize_workspace('):]
+def edit(text,old,new):
+    assert text.count(old)==1,old
+    return text.replace(old,new,1)
+icons=sorted(set(re.findall(r'"id": "([a-z0-9-]+)"',(REPO/'src/shared/sectionIcons.ts').read_text())))
+assert len(icons)==36,len(icons)
+iso="'^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}([.][0-9]{1,3})?Z$'"
+icon_array="ARRAY["+','.join("'"+i+"'" for i in icons)+"]"
+w20=workspace_fn.replace('CREATE FUNCTION','CREATE OR REPLACE FUNCTION',1)
+w20=edit(w20,"(v->>'sourceSchema') NOT IN('18','19')","(v->>'sourceSchema') NOT IN('18','19','20')")
+w20=edit(w20,"IF version=19 AND rowv->'delete_locked'","IF version>=19 AND rowv->'delete_locked'")
+w20=edit(w20,"  ELSIF t='app_meta' THEN\n",f"""  ELSIF t='kanban_ctx' THEN RAISE EXCEPTION 'MIGRATION_KANBAN_CONTEXT';
+  ELSIF t='kanban_section' THEN
+   IF char_length(rowv->>'name') NOT BETWEEN 1 AND 20 THEN RAISE EXCEPTION 'MIGRATION_KANBAN_FORMAT'; END IF;
+  ELSIF t='item_status_log' THEN
+   IF rowv->>'source' NOT IN('kanban','board','important','bulk','section','import','migrate') OR rowv->>'changed_at' !~ {iso} OR char_length(rowv->>'from_key') NOT BETWEEN 1 AND 64 OR char_length(rowv->>'to_key') NOT BETWEEN 1 AND 64 OR rowv->>'from_key'=rowv->>'to_key' THEN RAISE EXCEPTION 'MIGRATION_KANBAN_FORMAT'; END IF;
+  ELSIF t='kanban_bulk' THEN
+   BEGIN d:=(rowv->>'items')::jsonb; EXCEPTION WHEN invalid_text_representation THEN RAISE EXCEPTION 'MIGRATION_KANBAN_FORMAT'; END;
+   IF jsonb_typeof(d) IS DISTINCT FROM 'array' OR jsonb_array_length(d)<(rowv->>'count')::bigint OR EXISTS(SELECT 1 FROM jsonb_array_elements(d) p WHERE jsonb_typeof(p)<>'array' OR jsonb_array_length(p)<>2 OR jsonb_typeof(p->0)<>'string' OR jsonb_typeof(p->1)<>'string' OR (p->>1) !~ {iso}) OR (rowv->'undone_at'<>'null'::jsonb AND rowv->>'undone_at' !~ {iso}) THEN RAISE EXCEPTION 'MIGRATION_KANBAN_FORMAT'; END IF;
+  ELSIF t='app_meta' THEN
+""")
+w20=edit(w20,"x NOT IN('workspace','nudgeWeeks','summary','holiday')) THEN RAISE EXCEPTION 'MIGRATION_SETTINGS'","x NOT IN('workspace','nudgeWeeks','summary','holiday') AND NOT(version>=20 AND x='ui')) THEN RAISE EXCEPTION 'MIGRATION_SETTINGS'")
+w20=edit(w20,"   ELSIF rowv->>'key'<>'created_at' THEN RAISE EXCEPTION 'MIGRATION_SETTINGS'; END IF;",f"""    IF setting ? 'ui' THEN
+     -- DB20: only column order/icons (workspace content naming sections). Layout and other ui stay per device.
+     n:=setting->'ui'->'kanbanColumns';
+     IF NOT wjb_migration.keys_exact(setting->'ui',ARRAY['kanbanColumns']) OR NOT coalesce(wjb_migration.keys_exact(n,ARRAY['order','icons']),false) OR jsonb_typeof(n->'order') IS DISTINCT FROM 'array' OR jsonb_typeof(n->'icons') IS DISTINCT FROM 'object' THEN RAISE EXCEPTION 'MIGRATION_SETTINGS'; END IF;
+     IF EXISTS(SELECT 1 FROM jsonb_array_elements(n->'order') x WHERE jsonb_typeof(x)<>'string' OR NOT ((x#>>'{{}}') IN('todo','done') OR EXISTS(SELECT 1 FROM jsonb_array_elements(v->'records') s WHERE s->>'table'='kanban_section' AND s->'value'->>'id'=x#>>'{{}}'))) OR (SELECT count(DISTINCT x) FROM jsonb_array_elements(n->'order') x)<>jsonb_array_length(n->'order') THEN RAISE EXCEPTION 'MIGRATION_KANBAN_REFERENCE'; END IF;
+     IF EXISTS(SELECT 1 FROM jsonb_each(n->'icons') e WHERE jsonb_typeof(e.value)<>'string' OR NOT (e.value#>>'{{}}')=ANY({icon_array}) OR NOT (e.key IN('todo','done') OR EXISTS(SELECT 1 FROM jsonb_array_elements(v->'records') s WHERE s->>'table'='kanban_section' AND s->'value'->>'id'=e.key))) THEN RAISE EXCEPTION 'MIGRATION_KANBAN_REFERENCE'; END IF;
+    END IF;
+   ELSIF rowv->>'key'<>'created_at' THEN RAISE EXCEPTION 'MIGRATION_SETTINGS'; END IF;""")
+w20=edit(w20,"(st->>'excludedRows')::integer<>(CASE WHEN t='app_meta' THEN 1 ELSE 0 END)","(st->>'excludedRows')::integer<>(CASE WHEN t='app_meta' OR (version>=20 AND t='kanban_ctx') THEN 1 ELSE 0 END)")
+w20=edit(w20,"IF NOT coalesce(wjb_migration.keys_exact(d,ARRAY['table','key','reason']) OR wjb_migration.keys_exact(d,ARRAY['table','key','reason','field']),false)","IF NOT coalesce(wjb_migration.keys_exact(d,ARRAY['table','key','reason']) OR wjb_migration.keys_exact(d,ARRAY['table','key','reason','field']) OR (version>=20 AND wjb_migration.keys_exact(d,ARRAY['table','key','reason','kept']) AND d->>'key'='settings.ui' AND d->'kept'='[\"kanbanColumns\"]'::jsonb),false)")
+w20=edit(w20,"(d->>'table'='import_batch' AND d->>'field'='file_name' AND d->>'reason'='path-basename-only'))","(d->>'table'='import_batch' AND d->>'field'='file_name' AND d->>'reason'='path-basename-only') OR (version>=20 AND d->>'table'='kanban_ctx' AND d->>'key'='1' AND d->>'reason'='local-write-context'))")
+w20=edit(w20," RETURN v||jsonb_build_object('records'","""  IF version>=20 AND (SELECT count(*) FROM jsonb_array_elements(v->'exclusions') x WHERE x->>'table'='kanban_ctx')<>1 THEN RAISE EXCEPTION 'MIGRATION_EXCLUSION'; END IF;
+ RETURN v||jsonb_build_object('records'""")
+contracts20={str(v):json.loads((REPO/f'poc/v2-migration/db{v}-contract.json').read_text()) for v in [18,19,20]}
+contract20=contract.replace('CREATE FUNCTION','CREATE OR REPLACE FUNCTION',1).replace("'"+json.dumps(contracts,separators=(',',':')).replace("'","''")+"'","'"+json.dumps(contracts20,separators=(',',':')).replace("'","''")+"'",1)
+assert "\"20\"" in contract20
+profiles3="'migration-document-poc-1','workspace-db18-map-poc-1','workspace-db19-map-poc-1'"
+normalize20=edit(fullnormalize,"IN('workspace-db18-map-poc-1','workspace-db19-map-poc-1')","IN('workspace-db18-map-poc-1','workspace-db19-map-poc-1','workspace-db20-map-poc-1')")
+(ROOT/'007-workspace-db20.sql').write_text(f"""-- GENERATED by build-workspace-sql.py. REVIEW ONLY; no cloud auto-apply.
+-- Apply once after 004 (DEV already has 001/004 installed: never re-run those). Adds the DB20 kanban
+-- profile; DB18/19 validation is the 004 text plus DB20-only branches. C2 limits stay unchanged.
+BEGIN;
+SET LOCAL lock_timeout='5s'; SET LOCAL statement_timeout='30s';
+DO $$ BEGIN
+ IF to_regclass('wjb_migration.workspace_record') IS NULL THEN RAISE EXCEPTION 'MIGRATION_004_REQUIRED'; END IF;
+ IF wjb_migration.workspace_contract(20) IS NOT NULL THEN RAISE EXCEPTION 'MIGRATION_007_ALREADY_APPLIED'; END IF;
+END $$;
+ALTER TABLE wjb_migration.job DROP CONSTRAINT job_profile_check;
+ALTER TABLE wjb_migration.job ADD CONSTRAINT job_profile_check CHECK(profile IN({profiles3},'workspace-db20-map-poc-1'));
+{contract20}{w20}{normalize20}
+REVOKE ALL ON ALL FUNCTIONS IN SCHEMA wjb_migration FROM PUBLIC,anon,authenticated,service_role;
+COMMIT;
+""")
+(ROOT/'008-workspace-db20-verify.sql').write_text("""-- SELECT only; Cloud apply and actual Storage verification remain separate.
+SELECT jsonb_build_object(
+ 'workspaceProfiles',jsonb_build_array('workspace-db18-map-poc-1','workspace-db19-map-poc-1','workspace-db20-map-poc-1'),
+ 'db20Contract',wjb_migration.workspace_contract(20) IS NOT NULL,
+ 'db20Tables',(SELECT count(*) FROM jsonb_object_keys(wjb_migration.workspace_contract(20)->'tables')),
+ 'profileCheck',(SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid='wjb_migration.job'::regclass AND conname='job_profile_check') LIKE '%workspace-db20-map-poc-1%',
+ 'tables',(SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='wjb_migration' AND c.relkind='r'),
+ 'rlsTables',(SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='wjb_migration' AND c.relkind='r' AND c.relrowsecurity),
+ 'clientRPC',has_function_privilege('anon','public.wjb_v2_migration_command(jsonb)','EXECUTE') OR has_function_privilege('authenticated','public.wjb_v2_migration_command(jsonb)','EXECUTE'),
+ 'serviceRPC',has_function_privilege('service_role','public.wjb_v2_migration_command(jsonb)','EXECUTE'),
+ 'directTableAccess',EXISTS(SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='wjb_migration' AND c.relkind='r' AND has_table_privilege('service_role',c.oid,'SELECT,INSERT,UPDATE,DELETE')),
+ 'privateExecute',EXISTS(SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='wjb_migration' AND (has_function_privilege('service_role',p.oid,'EXECUTE') OR has_function_privilege('anon',p.oid,'EXECUTE') OR has_function_privilege('authenticated',p.oid,'EXECUTE'))),
+ 'unsafeSearchPaths',EXISTS(SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='wjb_migration' AND NOT('search_path=pg_catalog'=ANY(coalesce(p.proconfig,'{}'::text[])))),
+ 'cloudApplied',false,'productActivationAllowed',false);
+""")
+(ROOT/'009-workspace-db20-rollback-empty.sql').write_text(f"""-- Unused DB20 extension only: back to the exact 004 function text. Never deletes jobs or records.
+BEGIN;
+SET LOCAL lock_timeout='5s'; SET LOCAL statement_timeout='30s';
+DO $$ BEGIN
+ IF EXISTS(SELECT 1 FROM wjb_migration.job WHERE profile='workspace-db20-map-poc-1') THEN RAISE EXCEPTION 'MIGRATION_DB20_ROLLBACK_NOT_EMPTY'; END IF;
+END $$;
+ALTER TABLE wjb_migration.job DROP CONSTRAINT job_profile_check;
+ALTER TABLE wjb_migration.job ADD CONSTRAINT job_profile_check CHECK(profile IN({profiles3}));
+{contract.replace('CREATE FUNCTION','CREATE OR REPLACE FUNCTION',1)}{workspace_fn.replace('CREATE FUNCTION','CREATE OR REPLACE FUNCTION',1)}{fullnormalize}
+REVOKE ALL ON ALL FUNCTIONS IN SCHEMA wjb_migration FROM PUBLIC,anon,authenticated,service_role;
+COMMIT;
+""")

@@ -1,0 +1,106 @@
+PASS preflight confirms separate unused module and existing prerequisites
+PASS unused rollback removes only new objects; existing gateway definition preserved
+PASS client RPC and direct table access denied, including bypass-RLS service role
+PASS other owner, session mismatch and banned user denied
+PASS start replay matches exact canonical manifest; changed payload rejected
+PASS inline data URL rejected atomically
+PASS raw WebP base64 signature rejected in metadata text
+PASS image node cannot embed data or src
+PASS unknown image reference rejected
+PASS duplicate asset IDs rejected
+PASS bytea/base64-style extra root field rejected
+PASS unsupported block format rejected
+PASS old gateway cannot reserve unlisted assets in migration workspace
+PASS pending files cannot publish
+PASS ready alone is insufficient; server attestation yields scoped PoC receipt
+PASS attestation hash/size and IO version bound
+PASS stale attestation blocks publish until readback re-attestation
+PASS server metadata drift detected by canonical digest
+PASS ready asset with older unsettled IO remains blocked
+PASS cancel requires absent confirmation and quota released only once
+PASS cancel waits for old IO settlement; no timeout shortcut
+PASS old gateway write lease cannot start IO after cancel fence
+PASS lost publish response replays same receipt; connected space never canceled
+PASS reconciliation fences expired publish and delayed prepare requests
+PASS cancel invalidates previously issued publication ticket
+PASS empty image inventory is valid without invented Blob
+PASS expired reservation can renew only within active migration
+PASS new trigger preserves non-migration gateway workspaces
+PASS two PG connections: publish commits first, cancel retains connected assets
+PASS two PG connections: cancel commits first, late publish rejected
+PASS RLS and image-free schema with non-superuser migration owner
+PASS UUID normalization preserves semantic manifest replay
+PASS existing session revocation blocks migration RPC
+PASS cancel replay does not increment fence or release quota twice
+PASS different publication operation cannot reuse a ticket
+PASS reservation renewal refuses outstanding IO
+PASS actual SQL PoC receipt is rejected by product activation guard
+PASS module reapplication fails atomically without changing jobs
+PASS rollback refuses used module and retains all jobs
+PASS trusted migration RPC adapter crosses loopback HTTP to actual PG with dual manifest binding
+PASS full extension ACL/RLS and empty rollback preserve historical document jobs
+PASS actual DB18 envelope stages all tables, reads losslessly, replays and publishes only after attestation
+PASS actual DB19 envelope stages all tables, reads losslessly, replays and publishes only after attestation
+PASS full manifest rejects unknown profile atomically
+PASS full manifest rejects wrong contract fingerprint atomically
+PASS full manifest rejects unsupported schema atomically
+PASS full manifest rejects extra root binary field atomically
+PASS full manifest rejects raw inline image atomically
+PASS full manifest rejects escaped inline image in stringified rich JSON atomically
+PASS full manifest rejects unknown row column atomically
+PASS full manifest rejects changed record key atomically
+PASS full manifest rejects duplicate record atomically
+PASS full manifest rejects missing foreign record atomically
+PASS full manifest rejects missing physical reference atomically
+PASS full manifest rejects invalid delete lock atomically
+PASS full manifest rejects row count drift atomically
+PASS full manifest rejects missing table accounting atomically
+PASS full manifest rejects missing exclusion audit atomically
+PASS full manifest rejects forbidden original policy atomically
+PASS full manifest rejects oversize image atomically
+PASS full manifest rejects local folder target atomically
+PASS full manifest rejects device setting atomically
+PASS full manifest rejects nested device setting atomically
+PASS full manifest rejects missing rich content atomically
+PASS full manifest rejects string for integer atomically
+PASS full manifest rejects null row accounting atomically
+PASS full manifest rejects unknown live widget atomically
+PASS full manifest rejects dangling board edge atomically
+PASS full manifest rejects image reference owner mismatch atomically
+PASS full manifest rejects oversize metadata atomically
+PASS full manifest rejects unknown document node atomically
+PASS full envelope retrieval enforces identity and server-only RPC with no direct table ACL
+PASS full metadata drift blocks readback and publication before image state checks
+PASS missing full header fails closed instead of bypassing nullable digest comparison
+PASS full cancel fences publication and retains metadata without exposing canceled workspace
+PASS used full extension cannot roll back or delete staged/canceled metadata
+PASS legacy minimal document profile still publishes through unchanged attestation rules
+PASS actual HTTP/PG plus persistent journal reconciles lost start with >64KiB metadata
+PASS actual HTTP/PG plus persistent journal reconciles lost publish with >64KiB metadata
+PASS actual HTTP/PG plus persistent journal reconciles lost cancel with >64KiB metadata
+PASS 007 applies over a used 004 once and refuses a second run without change
+PASS 008 review ACL/RLS and unused 009 rollback restore exact 004 functions, keeping DB18/19 jobs
+PASS actual DB20 envelope stages 30 tables, excludes write context, reads losslessly and publishes only after attestation
+PASS DB18 envelopes still stage and read back unchanged after 007
+PASS DB19 envelopes still stage and read back unchanged after 007
+PASS DB20 manifest rejects write-context record smuggled in atomically
+PASS DB20 manifest rejects missing write-context exclusion atomically
+PASS DB20 manifest rejects write-context accounting drift atomically
+PASS DB20 manifest rejects overlong section name atomically
+PASS DB20 manifest rejects unknown status source atomically
+PASS DB20 manifest rejects status line without change atomically
+PASS DB20 manifest rejects non-ISO status time atomically
+PASS DB20 manifest rejects malformed bulk undo items atomically
+PASS DB20 manifest rejects bulk count above items atomically
+PASS DB20 manifest rejects item in a missing section atomically
+PASS DB20 manifest rejects column order naming a missing section atomically
+PASS DB20 manifest rejects duplicate column order key atomically
+PASS DB20 manifest rejects unknown column icon atomically
+PASS DB20 manifest rejects per-device kanban layout atomically
+PASS DB20 manifest rejects kept marker on another exclusion atomically
+PASS DB20 manifest rejects profile/schema mismatch atomically
+PASS DB20 manifest rejects unknown DB21 schema atomically
+PASS DB19 envelope still refuses any ui settings after 007
+PASS DB20 retrieval keeps identity checks and server-only RPC
+PASS used DB20 extension cannot roll back or delete DB20 metadata
+{"passed": 105, "postgres": "17.11 (Debian 17.11-1.pgdg12+2)", "cloudApplied": false}

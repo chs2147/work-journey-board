@@ -28,3 +28,12 @@ PYTHONDONTWRITEBYTECODE=1 python3 poc/v2-migration/postgres/run-local.py --full-
 ## DEV 실제 적용 상태(2026-11-10)
 
 001/004는 DEV에 실제 설치·검증됐다. 기존install/C1/C2/KeepAlive 및 이 파일들을 다시 적용하지 않는다. 표본Auth/공간/Blob은 정리됐고 모듈은 유지한다. [66문서](../../../docs/v2-design/66-development-migration-live-results.md)와실행증거가 이전 미적용 기록에 우선한다. 제품/native활성화는 아직 아니다.
+
+## DB20(칸반) 확장 — 007/008/009
+
+```sh
+python3 poc/v2-migration/postgres/build-workspace-sql.py
+PYTHONDONTWRITEBYTECODE=1 python3 poc/v2-migration/postgres/run-local.py --full-workspace --db20 --evidence-stem migration-db20-workspace
+```
+
+007은 004 위에 한 번만 적용하는 검토용 전진 SQL이다(004·001은 그대로, 다시 적용 금지). 008은 SELECT 점검, 009는 DB20 작업이 없을 때만 004 함수 원문으로 되돌린다. Docker Hub 요청 한도 시 같은 digest의 공식 미러 이미지도 쓴다. 개발/운영 DB에 자동 적용하지 않는다. [76문서](../../../docs/v2-design/76-db20-server-profile.md)를 따른다.
