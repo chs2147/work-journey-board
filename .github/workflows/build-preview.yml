@@ -1,0 +1,175 @@
+# Connected Preview 검증용 설치 파일(V2 6-B, docs/v2-design/78-preview-native-bootstrap.md)
+# - Windows NSIS(현재 사용자) + macOS 유니버설 DMG를 Actions 산출물로만 올린다.
+# - **릴리스·태그를 만들지 않는다**(권한 contents: read). 기존 Classic 업데이트 피드(GitHub Releases)에 올리지 않는다(CLAUDE.md 4절).
+# - 빌드 = `--features connected-preview` + `tauri.preview.conf.json`. 설치 파일·DMG 안 앱 ID가 Preview인지 검사한다.
+# - v2-design 푸시(앱·Tauri·프로필 정본이 바뀔 때)와 수동 실행.
+name: Build Connected Preview (verification)
+
+on:
+  push:
+    branches: [v2-design]
+    paths:
+      - "src/**"
+      - "src-tauri/**"
+      - "poc/v2-native/**"
+      - "index.html"
+      - "splash.html"
+      - "public/**"
+      - "package.json"
+      - "package-lock.json"
+      - "vite.config.ts"
+      - ".github/workflows/build-preview.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-preview-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PREVIEW_ID: com.chs2147.workjourneyboard.connected.preview
+  PREVIEW_NAME: Work Journey Board Connected Preview
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.p.outputs.tag }}
+      version: ${{ steps.p.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: p
+        shell: bash
+        run: |
+          version=$(node -p "require('./package.json').version")
+          tag="${version}-preview.$(git rev-parse --short=7 HEAD)"
+          # 프로필 정본과 Preview 설정이 맞는지(앱 ID·이름·업데이트 저장소 없음) 먼저 본다
+          row=$(grep '^connected-preview|' poc/v2-native/profiles.tsv)
+          test "$(cut -d'|' -f2 <<<"$row")" = "$PREVIEW_ID"
+          test "$(cut -d'|' -f3 <<<"$row")" = "$PREVIEW_NAME"
+          test -z "$(cut -d'|' -f5 <<<"$row")"
+          test "$(node -p "require('./src-tauri/tauri.preview.conf.json').identifier")" = "$PREVIEW_ID"
+          { echo "version=$version"; echo "tag=$tag"; } >> "$GITHUB_OUTPUT"
+          echo "Connected Preview $tag (앱 $version, 릴리스 없음)"
+
+  windows:
+    needs: plan
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "src-tauri -> target"
+          key: connected-preview
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Preview NSIS installer
+        shell: pwsh
+        run: |
+          npx tauri build --config src-tauri/tauri.preview.conf.json --features connected-preview
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Rust tests (Classic · Preview profiles)
+        run: |
+          cargo test --release --lib --manifest-path src-tauri/Cargo.toml
+          cargo test --release --lib --manifest-path src-tauri/Cargo.toml --features connected-preview
+
+      - name: Collect installer (Preview name only)
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem src-tauri/target/release/bundle/nsis/*.exe | Select-Object -First 1
+          if (-not $exe) { throw "NSIS 설치 파일을 찾지 못했습니다" }
+          if ($exe.Name -notlike "Work Journey Board Connected Preview*") { throw "Preview 이름이 아닌 설치 파일: $($exe.Name)" }
+          New-Item -ItemType Directory -Force out | Out-Null
+          Copy-Item $exe.FullName "out/WorkJourneyBoardConnectedPreview_${{ needs.plan.outputs.tag }}_setup.exe"
+          Get-FileHash out/*.exe -Algorithm SHA256 | ForEach-Object { "$($_.Hash.ToLower())  $(Split-Path $_.Path -Leaf)" } | Out-File -Encoding ascii out/SHA256SUMS-windows.txt
+          Get-ChildItem out
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: connected-preview-windows-${{ needs.plan.outputs.tag }}
+          path: out/*
+          retention-days: 14
+
+  macos:
+    needs: plan
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "src-tauri -> target"
+          key: connected-preview
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Preview universal DMG
+        shell: bash
+        run: |
+          args="--target universal-apple-darwin --config src-tauri/tauri.preview.conf.json --features connected-preview"
+          if ! CI=false npx tauri build $args; then
+            echo "::warning::DMG 꾸미기(Finder 스크립트)에 실패해 꾸밈 없이 다시 묶습니다"
+            CI=true npx tauri build $args
+          fi
+
+      - name: Rust tests (Classic · Preview profiles — macOS)
+        run: |
+          cargo test --release --lib --manifest-path src-tauri/Cargo.toml
+          cargo test --release --lib --manifest-path src-tauri/Cargo.toml --features connected-preview
+
+      - name: Collect DMG
+        shell: bash
+        run: |
+          tag="${{ needs.plan.outputs.tag }}"
+          dmg=$(ls src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg | head -1)
+          test -n "$dmg" || { echo "DMG를 찾지 못했습니다"; exit 1; }
+          mkdir -p out && cp "$dmg" "out/WorkJourneyBoardConnectedPreview_${tag}_mac.dmg"
+          hdiutil verify "out/WorkJourneyBoardConnectedPreview_${tag}_mac.dmg"
+          (cd out && shasum -a 256 *.dmg > SHA256SUMS-macos.txt)
+          ls -l out
+
+      # DMG 안 앱이 Preview인지(앱 ID·이름), 유니버설·서명인지 검사
+      - name: Check app in DMG (Preview identity · universal · signature)
+        shell: bash
+        run: |
+          tag="${{ needs.plan.outputs.tag }}"
+          mnt=$(mktemp -d)
+          hdiutil attach -nobrowse -readonly -mountpoint "$mnt" "out/WorkJourneyBoardConnectedPreview_${tag}_mac.dmg"
+          trap 'hdiutil detach -force "$mnt"' EXIT
+          ls -la "$mnt"
+          app=$(find "$mnt" -maxdepth 1 -name "*.app" | head -1)
+          test -n "$app" || { echo "DMG 안에 앱이 없습니다"; exit 1; }
+          plist="$app/Contents/Info.plist"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$plist")" = "$PREVIEW_ID"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleName' "$plist")" = "$PREVIEW_NAME"
+          for b in "$app"/Contents/MacOS/*; do echo "$b: $(lipo -archs "$b")"; lipo -archs "$b" | grep -q "x86_64 arm64\|arm64 x86_64"; done
+          codesign --verify --deep --strict "$app" && codesign -dv "$app" 2>&1 | grep -E "Signature|Identifier"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: connected-preview-macos-${{ needs.plan.outputs.tag }}
+          path: out/*
+          retention-days: 14

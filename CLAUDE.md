@@ -86,7 +86,7 @@
 | Tauri 플러그인 | sql · dialog(폴더 선택·저장) · fs(저장 폴더 범위만) · clipboard-manager · single-instance · opener(폴더 열기) · window-state |
 | 테스트 | Vitest(+Testing Library), Playwright(브라우저 모드 E2E·스크린샷 — Chromium 기준 + WebKit 보험) |
 | 품질 | ESLint + Prettier, `tsc --noEmit` |
-| CI | GitHub Actions: `ci.yml`(ubuntu: lint·typecheck·test·e2e + macos: Rust `cargo test`) / `build-desktop.yml`(windows-latest NSIS · macos-latest 유니버설 DMG 나란히 → main은 **둘 다 성공해야** `v<버전>` 릴리스 한 번에 생성·갱신, `SHA256SUMS.txt` 합침 — 0.x는 사전 릴리스, 1.0.0 이상 정식 판은 정식 릴리스, 윈도우 오프라인 설치판은 요청할 때만 수동 실행) |
+| CI | GitHub Actions: `ci.yml`(ubuntu: lint·typecheck·test·e2e + macos: Rust `cargo test`) / `build-desktop.yml`(windows-latest NSIS · macos-latest 유니버설 DMG 나란히 → main은 **둘 다 성공해야** `v<버전>` 릴리스 한 번에 생성·갱신, `SHA256SUMS.txt` 합침 — 0.x는 사전 릴리스, 1.0.0 이상 정식 판은 정식 릴리스, 윈도우 오프라인 설치판은 요청할 때만 수동 실행) · `build-preview.yml`(v2-design 전용 Connected Preview 검증 설치 파일 — 산출물만, 릴리스 권한 없음, docs/v2-design/78) |
 
 ## 3. 디렉토리 구조
 ```

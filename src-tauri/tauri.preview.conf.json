@@ -2,6 +2,7 @@
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Work Journey Board Connected Preview",
   "identifier": "com.chs2147.workjourneyboard.connected.preview",
+  "mainBinaryName": "work-journey-board-connected-preview",
   "app": {
     "windows": [
       {
