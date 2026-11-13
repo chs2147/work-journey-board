@@ -459,6 +459,12 @@ async function shots(base = "http://localhost:1420", only) {
           .filter({ hasText: "점검 결과 보고서 초안 작성" })
           .first()
           .dragTo(p.getByTestId("kanban-col-section"));
+        // ★ 항목도 사용자 섹션에 — 중요 업무 목록에 섹션 칩(v23)
+        await p
+          .getByTestId("kanban-card")
+          .filter({ hasText: "개발계 1차 배포 일정 확정" })
+          .first()
+          .dragTo(p.getByTestId("kanban-col-section"));
         await p.mouse.move(0, 0);
         await p.waitForTimeout(4500); // 알림이 사라진 뒤
       },

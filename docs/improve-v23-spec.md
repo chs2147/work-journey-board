@@ -1,6 +1,6 @@
 # 개선 v23 — 칸반 섹션 순서·아이콘·중요 목록·카드 추가 창 · 타임라인 구분선 · 티저 모션 (상세 설계)
 
-> 2026-11-13 작성 · 작업 브랜치 `improve-v23` · 기준 판 1.35.0(구조 v20) · **상태: 2026-11-13 승인(추천안 D1~D10 + 사용자 추가 — 15절) · 구현 진행**
+> 2026-11-13 작성 · 작업 브랜치 `improve-v23` · 기준 판 1.35.0(구조 v20) · **상태: 2026-11-13 승인(추천안 D1~D10 + 사용자 추가 — 15절) · 작업 브랜치 `improve-v23` 구현(16절, 검증용 `1.36.0-rc.1`, 구조 v20 유지)**
 > 시안: `docs/mockups/v23/`(①~⑨ PNG, 원본 `v23.html` — 가상 샘플만, 섹션 아이콘은 Fluent Emoji Flat으로 그림)
 
 ## 0. 요약
@@ -121,3 +121,13 @@
 |---|---|---|
 | U1 | 섹션 추가 창 아래 아이콘 설명(기본·추천 안내 글) 불필요 | 섹션 추가/이름 창에 아이콘 칸만, 설명 글 없음 — 시안 ② 갱신 |
 | U2 | 공통 규칙: 따로 요청하지 않는 한 기능의 명시적 부연 설명 레이블을 붙이지 않는다 | CLAUDE.md 규칙 추가. 이번 작업에서 카드 추가 창 안내 한 줄(ⓘ)을 빼고, 손대는 칸반 창의 기존 설명 글("DONE으로는 만들 수 없음" 등)도 함께 정리. 줄 꼬리표 "카드 N"·단추 "카드 N장 추가"는 상태 표시라 유지 |
+
+## 16. 구현 기록 (2026-11-13, 검증용 `1.36.0-rc.1`)
+| 단계 | 구현 | 위치 |
+|---|---|---|
+| W1 | 열 순서 = 일지 설정 `ui.kanbanColumns.order`(TODO·DONE·섹션 id 한 목록, 통째로 바꿔 저장). 맞추기 `mergeColumnOrder` — 모르는 키 버림, 빠진 섹션은 DONE 바로 앞, TODO/DONE 없으면 앞/끝. 사용자 섹션 `sort_order`도 같은 순서로(`reorderSections`). 모든 머리 끌기·⋯ 왼쪽/오른쪽·`Alt+Shift+←/→`(`placeColumn`·`shiftColumn`, 알림 [되돌리기]). 상단 = `KanbanLayoutToggle` → [업무 추가] → `KanbanActions`. 오른쪽 끝 섹션 추가 단추 제거. 자유 배치 새 섹션 = `freeSpot`(보이는 빈자리 → 없으면 아래) + 스크롤·`flashKey` 강조 | `domain/kanban.ts` · `data/settings.ts` · `ui/kanban/kanbanStore.ts` · `KanbanView.tsx` · `KanbanToolbar.tsx` · `ui/common/TopBar.tsx` |
+| W2 | 섹션 아이콘 36종 = Fluent Emoji Flat(MIT) — 고정 devDependency `@iconify-json/fluent-emoji-flat@1.2.6`에서 `scripts/emoji/build.mjs gen`이 `src/shared/sectionIcons.ts` 생성(그라데이션 id 접두어 `se-<id>-`, `check`로 원본 일치 확인, 런타임 의존성·네트워크 없음). 저장 = `ui.kanbanColumns.icons`(TODO·DONE 포함). 이름 → 추천 `suggestIcon`(키워드 표). 머리 아이콘 단추·⋯ [아이콘 바꾸기] → `IconPicker`(9열, 방향키·`Esc`, [기본 아이콘]). 섹션 추가/이름 창 아이콘 칸(설명 글 없음, 15절 U1). 라이선스 `public/licenses/FluentEmoji-MIT.txt`·정보 카드 | `scripts/emoji/` · `shared/sectionIcons.ts` · `ui/kanban/SectionIcon.tsx` |
+| W3 | 중요 목록 조회 조건 `e.flagged = 1`(DONE 아닌 ★ 모두) + `ImportantItem.kanbanSectionId` → 패널 섹션 칩. 축하 = `createPortal(document.body)`·z-index 최상위·끌어 놓은 마우스 지점에서 즉시(`moveCard(id,to,at)`), 메뉴·키보드·패널 ✓는 DONE 머리에서. 카드 추가 창: 본 항목 둘 이상이면 줄 꼬리표 "카드 N"/"세부", 단추 "카드 N장 추가", 시작/마감 설명·"DONE으로는 만들 수 없음"·매주 반복 체크 제거. 카드 ⋯ [↻ 매주 반복 켜기/끄기]·`Alt+R`(`toggleCardRepeat`, 되돌리기) | `data/repository.ts` · `ui/important/ImportantPanel.tsx` · `Celebration.tsx` · `ItemDialog.tsx` |
+| W4 | 업무 타임라인 `.dayGroup` 위 1px 실선(`--line-strong`), 마지막 묶음 아래도 | `ui/insights/Insights.module.css` |
+| W5 | 단위 `improveV23.test.ts`(10) · e2e `improve-v23.spec.ts`(7) · 무결성 시나리오(순서·아이콘 → 공간 3번 오가기) · 기존 v21/v22 시험을 새 동작으로(★ 목록 유지·TODO 끌기 가능) · 가이드 04·08·15 · 단축키 표 · 확인표 7-46 · Feature List | `tests/` · `docs/` |
+| W6 | 티저: 첫 화면 주간 보드 입력 모션(`board-motion.js` — 오늘 칸 한 줄 → 세부 → ★ → ⏳ → 메모 연결, 키캡, 화면 밖 정지·모션 줄이기 따름) · 칸반 7장면(손 커서 잡기/끌기 → DONE 축하 → 한 줄 → 섹션 순서·아이콘 → 자유 배치 → 카드 추가 창 세 줄 = 세 장) · 모바일 머리 [이용 가이드](360px 미만은 📖만, 320~430px 가로 넘침 없음). 03·04는 기존 등장 모션 유지. Universe 그대로. main 반영 때 배포 | `site/` |

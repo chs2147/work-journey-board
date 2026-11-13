@@ -1,10 +1,10 @@
 # Feature List 운영 구조
 
-현재 기준: **Work Journey Board 1.35.0 · DB 구조 v20 · 문서 스키마 1**.
+현재 기준: **Work Journey Board 1.36.0-rc.1 · DB 구조 v20 · 문서 스키마 1**.
 
 정식 릴리스에도 검토용 Excel과 `SHA256SUMS_features.txt`를 설치 파일과 함께 첨부한다.
 
-[현재 기능 목록](CURRENT.md) · [검토용 Excel](exports/work-journey-board/Work-Journey-Board-Feature-List-v1.35.0.xlsx)
+[현재 기능 목록](CURRENT.md) · [검토용 Excel](exports/work-journey-board/Work-Journey-Board-Feature-List-v1.36.0-rc.1.xlsx)
 
 ## 1. 목적과 범위
 
