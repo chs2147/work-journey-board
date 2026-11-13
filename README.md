@@ -38,7 +38,7 @@
 
 | 칸반 보드 — 업무 항목을 상태로 한눈에 (**NEW 1.40**) | 칸반 자유 배치 — 섹션 위치·크기를 내 마음대로 |
 |---|---|
-| ![칸반 보드 — TODO·사용자 섹션·DONE과 중요 업무 목록](docs/screenshots/kanban-signature.png) | ![칸반 자유 배치 — DONE 섹션을 아래로 옮긴 모습](site/guide/shots/15-kanban-free.png) |
+| ![칸반 보드 — 섹션 아이콘이 붙은 TODO·사용자 섹션·DONE과 중요 업무 목록](docs/screenshots/kanban-signature.png) | ![칸반 자유 배치 — DONE 섹션을 아래로 옮긴 모습](site/guide/shots/15-kanban-free.png) |
 
 | 주간 요약 — 기록을 보고서로 | 인사이트 — 업무 타임라인과 활동 |
 |---|---|

@@ -55,6 +55,8 @@ async function kanbanSetup(p) {
   await move("점검 결과 보고서 초안 작성", "kanban-col-section");
   await move("설계안 팀 리뷰", "kanban-col-section");
   await move("지표 정의서 v0.3 공유", "kanban-col-done");
+  // 1.40: ★ 항목도 사용자 섹션에 — 중요 업무 목록에 섹션 칩
+  await move("개발계 1차 배포 일정 확정", "kanban-col-section");
 }
 
 const steps = {
@@ -113,7 +115,12 @@ const steps = {
     await p.locator("[data-testid='kanban-col-section'] [data-testid='kanban-add-card']").click();
     const dlg = p.getByTestId("kanban-item-dialog");
     await dlg.getByTestId("kanban-item-category").selectOption({ label: "차세대 정산 시스템 구축" });
-    await dlg.getByTestId("kanban-item-line").first().fill("운영 이관 체크리스트 검토");
+    // 1.40: 여러 줄 = 카드 여러 장("카드 1·2" 꼬리표, [카드 2장 추가])
+    const line = dlg.getByTestId("kanban-item-line").first();
+    await line.fill("운영 이관 체크리스트 검토");
+    await line.press("End");
+    await line.press("Enter");
+    await p.keyboard.type("이관 리허설 일정 협의");
     await dlg.getByRole("button", { name: "다음 주 금", exact: true }).click();
     await p.waitForTimeout(300);
     await shot(p, "kanban-add", dlg);
