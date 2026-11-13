@@ -28,7 +28,8 @@
   <link rel="stylesheet" href="./style.css">
   <script src="./motion.js" defer></script>
 <link rel="stylesheet" href="./features.css"><script src="./features.js" defer></script>
-  <link rel="stylesheet" href="./kanban.css"><script src="./kanban.js" defer></script></head>
+  <link rel="stylesheet" href="./kanban.css"><script src="./kanban.js" defer></script>
+  <link rel="stylesheet" href="./board-motion.css"><script src="./board-motion.js" defer></script></head>
 <body>
   <a class="skip-link" href="#main">본문으로 바로가기</a>
   <header class="site-header">
@@ -42,7 +43,7 @@
         <a class="nav-link" href="#kanban">칸반 보드</a>
         <a class="nav-link" href="#universe">Universe</a><a class="nav-link" href="#cabi">Cabi.NET</a>
         <a class="nav-link" href="#privacy">데이터 보관</a>
-        <a class="nav-link" href="./guide/">이용 가이드</a>
+        <a class="nav-link nav-guide" href="./guide/" aria-label="이용 가이드"><span class="ng-ico" aria-hidden="true">📖</span><span class="ng-text">이용 가이드</span></a>
         <a class="button button-small" href="https://github.com/chs2147/work-journey-board/releases/latest">다운로드 <span aria-hidden="true">↗</span></a>
       </nav>
     </div>
@@ -108,28 +109,35 @@
       <div class="wrap">
         <p class="showcase-kicker">02 / KANBAN BOARD <span>NEW · 1.35</span></p>
         <div class="showcase-heading"><h2 id="kanban-title">흩어진 할 일을,<br><em>상태로 한눈에.</em></h2><p>주간 보드에 적은 업무 항목이 그대로 카드가 됩니다.<br>끌어서 옮기면 상태가 바뀌고, DONE에 놓으면 끝.<br>기록과 진행 상태가 하나의 일지에 이어집니다.</p></div>
-        <div class="kb-stage" data-phase="0" aria-label="칸반 보드 동작 설명 모션 — 카드 하나가 TODO에서 검토 중을 거쳐 DONE으로 옮겨집니다(가상 기록)">
-          <div class="kb-col"><div class="kb-col-head">TODO <small>4</small></div>
+        <div class="kb-stage" data-phase="0" aria-label="칸반 보드 동작 설명 모션 — 카드를 끌어 상태를 바꾸고, DONE 축하, 섹션 순서·아이콘, 자유 배치, 카드 추가를 차례로 보여 줍니다(가상 기록)">
+          <div class="kb-col kb-c1"><div class="kb-col-head"><span class="kb-icos"><span class="kb-i1"><svg class="kb-ico" width="16" height="16" viewBox="0 0 32 32" aria-hidden="true"><g fill="none"><path fill="#e19747" d="M5 4.5A1.5 1.5 0 0 1 6.5 3h19A1.5 1.5 0 0 1 27 4.5v24a1.5 1.5 0 0 1-1.5 1.5h-19A1.5 1.5 0 0 1 5 28.5z"/><path fill="#f3eef8" d="M25 6a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v21a1 1 0 0 0 1 1h10.586c.147 0 .29-.032.421-.093l.321-.783l.632-4.086l4.457-.783l.49-.247a1 1 0 0 0 .093-.422z"/><path fill="#cdc4d6" d="M24.91 22H20a1 1 0 0 0-1 1v4.91a1 1 0 0 0 .293-.203l5.414-5.414A1 1 0 0 0 24.91 22"/><path fill="#9b9b9b" d="M18 4a2 2 0 1 0-4 0h-1a2 2 0 0 0-2 2v1.5a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5V6a2 2 0 0 0-2-2zm-1 0a1 1 0 1 1-2 0a1 1 0 0 1 2 0m-8 8.5a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13a.5.5 0 0 1-.5-.5m0 3a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13a.5.5 0 0 1-.5-.5m.5 2.5a.5.5 0 0 0 0 1h13a.5.5 0 0 0 0-1zM9 21.5a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 0 1h-8a.5.5 0 0 1-.5-.5"/></g></svg></span><span class="kb-i2"><svg class="kb-ico" width="16" height="16" viewBox="0 0 32 32" aria-hidden="true"><g fill="none"><path fill="#ca0b4a" d="M29.2 2.95c-.947-.947-2.7-.998-3.818-.425c-.913.314-1.874.667-2.854 1.063l.01.01c-2.575 1.095-6.427 3.04-9.51 5.902c-2.164 2.01-3.404 3.556-4.235 4.965l-5.298 1.95a1 1 0 0 0-.362 1.646l11.138 11.137a1 1 0 0 0 1.645-.362l2.204-5.986c1.608-.958 3.223-2.165 4.908-3.85c2.39-2.39 4.366-6.56 5.513-9.357l.009.008c.4-.99.758-1.961 1.074-2.883c.573-1.118.74-2.654-.424-3.818"/><path fill="#f4f4f4" d="M23.299 4.365c-2.517 1.04-6.478 2.978-9.59 5.868c-2.015 1.87-3.172 3.294-3.94 4.55c-.769 1.255-1.175 2.38-1.663 3.74l-.002.007c-.17.474-.35.977-.559 1.514l4.556 4.556c3.602-1.48 6.74-2.828 10.22-6.307c2.351-2.352 4.339-6.642 5.454-9.421z"/><path fill="#9b9b9b" d="M24.528 11.25a3.25 3.25 0 1 1-6.5 0a3.25 3.25 0 0 1 6.5 0"/><path fill="#83cbff" d="M23.528 11.25a2.25 2.25 0 1 1-4.5 0a2.25 2.25 0 0 1 4.5 0"/><path fill="#ff8257" d="M2.451 29.61C1.744 28.905 2.028 24 4.528 23c0 0 2.5-1 4.11.6c1.612 1.601.89 3.4.89 3.4c-.707 2.121-3.718 2.965-4.071 2.61c-.195-.194.156-.55 0-.706c-.157-.157-.398.022-1.06.353c-.472.236-1.663.637-1.946.354"/><path fill="#533566" d="M6.088 21.06a1.5 1.5 0 0 1 2.122 0l3.535 3.536a1.5 1.5 0 1 1-2.121 2.122l-3.536-3.536a1.5 1.5 0 0 1 0-2.121"/><path fill="#f92f60" d="M15.535 18.722c.442-1.2-.725-2.368-1.926-1.926l-7.114 2.619a1 1 0 0 0-.362 1.646l5.138 5.137a1 1 0 0 0 1.645-.362z"/></g></svg></span></span>TODO <small>4</small></div>
+            <div class="kb-new" aria-hidden="true"><div class="kb-card" style="--c:#d96c4a"><small>협력사 점검 · 10/22(목)</small>재점검 일정 협의</div><div class="kb-card" style="--c:#d96c4a"><small>협력사 점검 · 10/22(목)</small>점검표 갱신</div></div>
             <div class="kb-slot" aria-hidden="true"></div>
             <div class="kb-card" style="--c:#2f9e5b"><small>데이터 대시보드 · 10/23(금)</small>영업팀 요구사항 인터뷰</div>
             <div class="kb-card"><small>정산 시스템 · 10/23(금) ★</small>개발계 1차 배포 일정 확정<br><span class="kb-tag">⏳ 10/26(월) D-4</span></div>
             <div class="kb-card" style="--c:#d96c4a"><small>협력사 점검 · 10/21(수)</small>A협력사 현장 점검</div>
           </div>
-          <div class="kb-col"><div class="kb-col-head">검토 중 <small>내가 만든 단계</small></div>
+          <div class="kb-col kb-c2"><div class="kb-col-head"><svg class="kb-ico" width="16" height="16" viewBox="0 0 32 32" aria-hidden="true"><g fill="none"><path fill="#9b9b9b" d="M9.528 7a8.5 8.5 0 0 0-8.5 8.5v7a8.5 8.5 0 0 0 15 5.477a8.5 8.5 0 0 0 15-5.477v-7a8.5 8.5 0 0 0-15-5.477A8.48 8.48 0 0 0 9.528 7"/><path fill="#fff" d="M9.528 8a7.5 7.5 0 0 0-7.5 7.5v7a7.5 7.5 0 0 0 14 3.744a7.5 7.5 0 0 0 14-3.744v-7a7.5 7.5 0 0 0-14-3.744A7.5 7.5 0 0 0 9.528 8"/><path fill="#d3d3d3" d="M15.028 15.5c0-1.364.364-2.642 1-3.744A7.53 7.53 0 0 0 12.226 8.5h-.167c1.094.656 1.938 3.25 1.938 4.5v12.125c0 1.375-.157 3.093-1.937 4.437a7.53 7.53 0 0 0 3.968-3.318a7.47 7.47 0 0 1-1-3.744zm15 0a7.5 7.5 0 0 0-4.802-7h-.167c1.656 1.094 2.906 3.063 2.906 4.531V25c0 1.375-1.124 3.218-2.905 4.562a7.5 7.5 0 0 0 4.968-7.062z"/><path fill="#321b41" d="M6.59 13a3.5 3.5 0 0 0-3.5 3.5v5a3.5 3.5 0 1 0 7 0v-5a3.5 3.5 0 0 0-3.5-3.5m12.938 0a3.5 3.5 0 0 0-3.5 3.5v5a3.5 3.5 0 1 0 7 0v-5a3.5 3.5 0 0 0-3.5-3.5"/><path fill="#f4f4f4" d="M8.766 16.861c.372-.31.355-.942-.038-1.414s-1.012-.603-1.384-.294s-.354.942.039 1.414c.392.471 1.012.603 1.383.294m12.997 0c.371-.31.354-.942-.039-1.414s-1.012-.603-1.383-.294c-.372.309-.354.942.038 1.414c.393.471 1.012.603 1.384.294"/></g></svg>검토 중 <small>1</small></div>
             <div class="kb-card" style="--c:#d96c4a"><small>협력사 점검 · 10/22(목)</small>점검 결과 보고서 초안 작성</div>
           </div>
-          <div class="kb-col kb-done"><div class="kb-col-head">DONE <small>끝낸 날로 묶음</small></div>
+          <div class="kb-col kb-c3 kb-done"><div class="kb-col-head"><svg class="kb-ico" width="16" height="16" viewBox="0 0 32 32" aria-hidden="true"><g fill="none"><path fill="#00d26a" d="M2 6a4 4 0 0 1 4-4h20a4 4 0 0 1 4 4v20a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4z"/><path fill="#f4f4f4" d="M13.242 23c-.383 0-.766-.143-1.059-.43l-5.744-5.642a1.453 1.453 0 0 1 0-2.08a1.517 1.517 0 0 1 2.118 0l4.685 4.601L23.443 9.431a1.517 1.517 0 0 1 2.118 0a1.45 1.45 0 0 1 0 2.08l-11.26 11.058a1.5 1.5 0 0 1-1.059.431"/></g></svg>DONE <small>오늘</small></div>
             <div class="kb-done-row kb-new-done"><span>테스트 데이터 이관 스크립트 작성</span><span>오늘</span></div>
             <div class="kb-done-row"><span>지표 정의서 v0.3 공유</span><span>10/20</span></div>
           </div>
           <div class="kb-card kb-mover" aria-hidden="true"><small>정산 시스템 · 10/22(목)</small>테스트 데이터 이관 스크립트 작성</div>
           <div class="kb-cheer" aria-hidden="true"><b>✓</b></div>
+          <span class="kb-hand" aria-hidden="true"></span>
+          <span class="kb-badge" aria-hidden="true">▦ 자유 배치</span>
+          <div class="kb-add" aria-hidden="true"><div class="kb-add-h">카드 추가 — TODO</div><div class="kb-add-band">● 협력사 보안 점검</div><div class="kb-add-l"><i>카드 1</i>점검 결과 보고서 초안 작성</div><div class="kb-add-l"><i>카드 2</i>재점검 일정 협의</div><div class="kb-add-l"><i>카드 3</i>점검표 갱신</div><div class="kb-add-f"><b>카드 3장 추가</b></div></div>
         </div>
         <div class="kb-steps" role="group" aria-label="칸반 보드 시연 장면 선택">
-          <button type="button" data-kb="0" aria-pressed="true"><b>01</b> 적으면 카드로 <small>주간 보드 기록 = 칸반 카드</small></button>
+          <button type="button" data-kb="0" aria-pressed="true"><b>01</b> 카드 잡기 <small>주간 보드 기록 = 칸반 카드</small></button>
           <button type="button" data-kb="1" aria-pressed="false"><b>02</b> 끌어서 상태 변경 <small>카드를 통째로 다음 단계에</small></button>
-          <button type="button" data-kb="2" aria-pressed="false"><b>03</b> DONE이면 끝 <small>세부 항목까지 함께 완료 · 축하</small></button>
+          <button type="button" data-kb="2" aria-pressed="false"><b>03</b> DONE이면 끝 <small>세부 항목까지 함께 완료</small></button>
           <button type="button" data-kb="3" aria-pressed="false"><b>04</b> 끝낸 날로 정리 <small>DONE은 날짜별 한 줄로</small></button>
+          <button type="button" data-kb="4" aria-pressed="false"><b>05</b> 섹션 순서·아이콘 <small>TODO·DONE도 자유롭게</small></button>
+          <button type="button" data-kb="5" aria-pressed="false"><b>06</b> 자유 배치 <small>위치·크기를 내 마음대로</small></button>
+          <button type="button" data-kb="6" aria-pressed="false"><b>07</b> 카드 추가 <small>세 줄이면 카드 세 장</small></button>
         </div>
         <p class="kb-caption">위 모션은 동작 설명용 그래픽입니다. 아래는 실제 앱 화면(가상 기록)입니다.</p>
         <ul class="kb-points">

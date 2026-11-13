@@ -8,7 +8,8 @@ Work Journey Board 소개를 위한 정적 사이트입니다.
 - `style.css`: 화면 스타일과 반응형 디자인
 - `motion.js`: 화면 등장·업무 기록의 모션 효과
 - `features.css`, `features.js`: Universe 연결망·초점 전환과 Cabi.NET 작업 공간 모션, 반응형 표시·모션 제어(OS 모션 줄이기 설정 따름)
-- `kanban.css`, `kanban.js`: 칸반 보드 소개 섹션 — 카드가 TODO → 검토 중 → DONE(완료 축하)으로 옮겨지는 설명 모션, 장면 고르기(OS 모션 줄이기·사이트 모션 끄기 따름)
+- `kanban.css`, `kanban.js`: 칸반 보드 소개 섹션 — 7장면 설명 모션(손 커서로 카드 잡기 → 끌기 → DONE 축하 → 날짜별 한 줄 → 섹션 순서 바꾸기·아이콘 → 자유 배치 → 카드 추가 창 세 줄 = 카드 세 장), 장면 고르기(OS 모션 줄이기·사이트 모션 끄기 따름)
+- `board-motion.css`, `board-motion.js`: 첫 화면 주간 보드 모션(오늘 칸에 한 줄 입력 → 세부 → ★ → ⏳ 마감일 → 메모 연결, 키캡 표시, 화면 밖에서는 멈춤) · 모바일 머리 [이용 가이드] 단추(improve-v23-spec 10절)
 - `icon.svg`, `wordmark.svg`: 앱에서 사용하는 아이콘과 워드마크
 - `gowun-dodum.woff2`: 사이트에서 사용하는 고운돋움 서체
 - `font-license.txt`: 고운돋움의 SIL Open Font License 1.1 전문

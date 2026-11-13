@@ -19,7 +19,8 @@
     p.style.animationDelay = `${0.9 + (i % 4) * 0.02}s`;
     cheer.appendChild(p);
   }
-  const hold = [2600, 2600, 2400, 2600];
+  const hold = [2200, 2400, 2600, 2200, 3000, 3000, 3800];
+  const N = hold.length;
   let phase = 0,
     timer = 0,
     visible = false,
@@ -28,13 +29,15 @@
   function set(n) {
     phase = n;
     stage.dataset.phase = String(n);
+    // 03(축하) 뒤 장면은 카드가 DONE에 들어간 상태로
+    stage.dataset.after = n >= 3 ? "1" : "0";
     steps.forEach((b) => b.setAttribute("aria-pressed", String(+b.dataset.kb === n)));
   }
   function run() {
     clearTimeout(timer);
     if (!visible || manual || document.hidden || !moving()) return;
     timer = setTimeout(() => {
-      set((phase + 1) % 4);
+      set((phase + 1) % N);
       run();
     }, hold[phase]);
   }
@@ -59,4 +62,5 @@
   reduced.addEventListener("change", run);
   new MutationObserver(run).observe(root, { attributes: true, attributeFilter: ["data-showcase-motion"] });
   set(moving() ? 0 : 3);
+  if (!moving()) stage.dataset.after = "1";
 })();
