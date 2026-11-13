@@ -125,7 +125,7 @@ const run = (e, r, extra = {}) =>
     ...extra,
   });
 const get = (e) => e.journal.get(e.job.id, e.actor);
-for (const version of [18, 19])
+for (const version of [18, 19, 20])
   test(`DB${version}: durable dual digests and PoC completion never activates product`, async (t) => {
     const e = setup(t, { withoutImages: true, version }),
       r = remote(e);
@@ -153,7 +153,7 @@ test("image workspace is staged and verified but cannot publish without Storage 
   );
   const db = new DatabaseSync(e.path, { readOnly: true });
   try {
-    assert.equal(db.prepare("PRAGMA user_version").get().user_version, 3);
+    assert.equal(db.prepare("PRAGMA user_version").get().user_version, 4);
     assert.ok(
       db
         .prepare("PRAGMA table_info(workspace_binding)")
@@ -409,5 +409,49 @@ test("binding rows store no auth key, source path, user document or image body",
       assert.equal(bytes.includes(Buffer.isBuffer(value) ? value : Buffer.from(value)), false);
   } finally {
     db.close();
+  }
+});
+
+test("schema3 journal with a DB19 binding upgrades to v4 losslessly and widens the profile CHECK to DB20", async (t) => {
+  const e = setup(t, { withoutImages: true }),
+    r = remote(e);
+  await run(e, r);
+  const before = get(e);
+  assert.equal(before.binding.target_profile, "workspace-db19-map-poc-1");
+  e.journal.close();
+  // Rebuild the binding table exactly as schema3 created it (old CHECK), keeping the row.
+  const d = new DatabaseSync(e.path);
+  const row = d.prepare("SELECT * FROM workspace_binding").get();
+  d.exec(`DROP TABLE workspace_binding;
+    CREATE TABLE workspace_binding(job_id TEXT PRIMARY KEY REFERENCES job(id),
+      source_manifest_hash TEXT NOT NULL CHECK(length(source_manifest_hash)=64),
+      mapping_hash TEXT NOT NULL CHECK(length(mapping_hash)=64),
+      target_profile TEXT NOT NULL CHECK(target_profile IN ('workspace-db18-map-poc-1','workspace-db19-map-poc-1')),
+      target_manifest_hash TEXT CHECK(target_manifest_hash IS NULL OR length(target_manifest_hash)=64),
+      phase TEXT NOT NULL CHECK(phase IN ('waiting_binding','staged','publishing','poc_verified','cancel_fenced','canceled')),
+      metadata_verified INTEGER NOT NULL DEFAULT 0 CHECK(metadata_verified IN (0,1)), server_epoch TEXT);
+    PRAGMA user_version=3;`);
+  d.prepare(
+    `INSERT INTO workspace_binding VALUES(${Object.keys(row)
+      .map(() => "?")
+      .join(",")})`,
+  ).run(...Object.values(row));
+  assert.throws(
+    () => d.prepare("UPDATE workspace_binding SET target_profile='workspace-db20-map-poc-1'").run(),
+    /CHECK/,
+  );
+  d.close();
+  e.journal = openMigrationJournal(e.path, e.options);
+  assert.deepEqual(get(e), before);
+  const r2 = new DatabaseSync(e.path, { readOnly: true });
+  try {
+    assert.equal(r2.prepare("PRAGMA user_version").get().user_version, 4);
+    assert.match(
+      r2.prepare("SELECT sql FROM sqlite_master WHERE name='workspace_binding'").get().sql,
+      /workspace-db20-map-poc-1/,
+    );
+    assert.equal(r2.prepare("PRAGMA integrity_check").get().integrity_check, "ok");
+  } finally {
+    r2.close();
   }
 });

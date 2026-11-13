@@ -13,6 +13,13 @@ const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 const jobStates =
   "'prepared','uploading','publishing','connected','cancel_requested','cancel_fenced','canceled'";
 const assetStates = "'pending','uncertain','verified','delete_uncertain','deleted'";
+/** Full-workspace target profiles the journal can bind (v4 adds the DB20 kanban profile). */
+export const journalWorkspaceProfiles = Object.freeze([
+  "workspace-db18-map-poc-1",
+  "workspace-db19-map-poc-1",
+  "workspace-db20-map-poc-1",
+]);
+const bindingPhases = "'waiting_binding','staged','publishing','poc_verified','cancel_fenced','canceled'";
 export function openMigrationJournal(path, { clock = () => Date.now(), protectedLocalRoots } = {}) {
   guard(path);
   if (existsSync(path)) {
@@ -22,7 +29,7 @@ export function openMigrationJournal(path, { clock = () => Date.now(), protected
     try {
       if (
         inspect.prepare("PRAGMA application_id").get().application_id !== applicationId ||
-        ![1, 2, 3].includes(inspect.prepare("PRAGMA user_version").get().user_version)
+        ![1, 2, 3, 4].includes(inspect.prepare("PRAGMA user_version").get().user_version)
       )
         throw Error("NOT_MIGRATION_JOURNAL");
     } finally {
@@ -91,6 +98,31 @@ export function openMigrationJournal(path, { clock = () => Date.now(), protected
     `),
     );
   }
+  if (db.prepare("PRAGMA user_version").get().user_version === 3) {
+    // SQLite cannot widen a CHECK in place: rebuild the binding table with every row kept, then verify.
+    transaction(db, () => {
+      const before = db.prepare("SELECT * FROM workspace_binding ORDER BY job_id").all();
+      db.exec(`
+      CREATE TABLE workspace_binding_v4(
+        job_id TEXT PRIMARY KEY REFERENCES job(id),
+        source_manifest_hash TEXT NOT NULL CHECK(length(source_manifest_hash)=64),
+        mapping_hash TEXT NOT NULL CHECK(length(mapping_hash)=64),
+        target_profile TEXT NOT NULL CHECK(target_profile IN (${journalWorkspaceProfiles.map((p) => `'${p}'`).join(",")})),
+        target_manifest_hash TEXT CHECK(target_manifest_hash IS NULL OR length(target_manifest_hash)=64),
+        phase TEXT NOT NULL CHECK(phase IN (${bindingPhases})),
+        metadata_verified INTEGER NOT NULL DEFAULT 0 CHECK(metadata_verified IN (0,1)),
+        server_epoch TEXT);
+      INSERT INTO workspace_binding_v4 SELECT job_id,source_manifest_hash,mapping_hash,target_profile,
+        target_manifest_hash,phase,metadata_verified,server_epoch FROM workspace_binding;
+      DROP TABLE workspace_binding;
+      ALTER TABLE workspace_binding_v4 RENAME TO workspace_binding;
+      PRAGMA user_version=4;
+    `);
+      const after = db.prepare("SELECT * FROM workspace_binding ORDER BY job_id").all();
+      if (hash(after) !== hash(before) || db.prepare("PRAGMA foreign_key_check").all().length)
+        throw Error("JOURNAL_UPGRADE_MISMATCH");
+    });
+  }
   const view = (id) => {
     const row = db.prepare("SELECT * FROM job WHERE id=?").get(id);
     if (!row) throw Error("JOB_NOT_FOUND");
@@ -153,10 +185,7 @@ export function openMigrationJournal(path, { clock = () => Date.now(), protected
     },
     prepareWorkspace(lease, { mappingHash, profile }) {
       return mutation(lease, (job) => {
-        if (
-          !/^[0-9a-f]{64}$/.test(mappingHash) ||
-          !["workspace-db18-map-poc-1", "workspace-db19-map-poc-1"].includes(profile)
-        )
+        if (!/^[0-9a-f]{64}$/.test(mappingHash) || !journalWorkspaceProfiles.includes(profile))
           throw Error("WORKSPACE_BINDING_REQUIRED");
         if (job.binding) {
           if (

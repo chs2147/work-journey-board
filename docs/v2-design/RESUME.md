@@ -1,6 +1,6 @@
 # V2 설계·PoC 중단/재개 기록
 
-**현재 재개 정본:** [76. DB20 서버 프로필·전진 SQL](76-db20-server-profile.md) — 007/008/009 로컬 PG 105개·JS 322개 통과, 개발 DB 미적용. 다음은 개발 DB 적용(사용자 확인)과 이관 저널 DB20 업그레이드. 이전 단계 [75](75-db20-kanban-copy-contract.md). 앞선 분석 [74](74-progress-analysis-1113.md) → [73](73-connected-preview-native-isolation.md). 이하 체크포인트는 작성 당시 기록이며 가장 최근 결과가 우선한다.
+**현재 재개 정본:** [77. 이관 저널 v4 — DB20 연결](77-db20-journal-v4.md) — 로컬 PG 108개·JS 324개 통과. 다음은 개발 DB 적용(사용자 확인 필요). 이전 단계 [76 서버 프로필](76-db20-server-profile.md) · [75 사본 계약](75-db20-kanban-copy-contract.md). 앞선 분석 [74](74-progress-analysis-1113.md) → [73](73-connected-preview-native-isolation.md). 이하 체크포인트는 작성 당시 기록이며 가장 최근 결과가 우선한다.
 
 2026-11-09 UTC · V2 설계/PoC 중단 지점을 보존한 뒤 복귀했다. 사용자 요청으로 main 1.23.1 패치(`d11a0ca`)를 v2-design에 병합했다.
 

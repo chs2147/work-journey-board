@@ -50,7 +50,7 @@ test("persistent IO receipts survive schema2 upgrade without touching full bindi
   assert.deepEqual(after.assets, before.assets);
   const r = new DatabaseSync(e.path, { readOnly: true });
   try {
-    assert.equal(r.prepare("PRAGMA user_version").get().user_version, 3);
+    assert.equal(r.prepare("PRAGMA user_version").get().user_version, 4);
   } finally {
     r.close();
   }

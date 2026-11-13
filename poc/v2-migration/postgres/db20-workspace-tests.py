@@ -117,3 +117,30 @@ def run(g):
         assert r.returncode and 'MIGRATION_DB20_ROLLBACK_NOT_EMPTY' in r.stderr
         assert scalar(defs)==defs_before and scalar('SELECT count(*) FROM wjb_migration.workspace_record;')==records
     test('used DB20 extension cannot roll back or delete DB20 metadata',rollback_used)
+
+    def http_journal(scenario):
+        import re
+        import threading
+        from http.server import HTTPServer, BaseHTTPRequestHandler
+        class Handler(BaseHTTPRequestHandler):
+            def log_message(self,*args):pass
+            def do_POST(self):
+                if self.path!='/rest/v1/rpc/wjb_v2_migration_command' or self.headers.get('Authorization')!='Bearer local-migration-fixture-key' or self.headers.get('apikey')!='local-migration-fixture-key':self.send_error(401);return
+                length=int(self.headers.get('Content-Length','0'))
+                if not 0<length<=1048576:self.send_error(413);return
+                try:
+                    req=json.loads(self.rfile.read(length));answer=sql(g['query'](req['p_request']),check=False)
+                    if answer.returncode:
+                        code=re.search(r'ERROR:\s+(MIGRATION_[A-Z_]+)',answer.stderr)
+                        body={'code':'P0001','message':code.group(1) if code else 'SQL_UNAVAILABLE'};status=400
+                    else:body=json.loads(answer.stdout.strip());status=200
+                except Exception:body={'message':'LOCAL_FIXTURE_UNAVAILABLE'};status=503
+                encoded=json.dumps(body,ensure_ascii=False).encode();self.send_response(status);self.send_header('Content-Type','application/json');self.send_header('Content-Length',str(len(encoded)));self.end_headers();self.wfile.write(encoded)
+        server=HTTPServer(('127.0.0.1',0),Handler);thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+        try:
+            payload={'user':g['A'],'session':g['SA'],'device':g['DA'],'scenario':scenario,'version':20}
+            child=subprocess.run(['node',str(REPO/'poc/v2-migration/workspace-session-pg-client.mjs'),'--local-fixture-only',f'http://127.0.0.1:{server.server_port}'],input=json.dumps(payload),text=True,capture_output=True,env=ENV,timeout=30)
+            assert child.returncode==0 and child.stdout.strip()=='WORKSPACE_SESSION_PG_PASS',(child.stdout,child.stderr[-800:])
+        finally:server.shutdown();server.server_close();thread.join(timeout=5)
+    for scenario in ['start','publish','cancel']:
+        test('DB20 actual HTTP/PG plus v4 journal reconciles lost '+scenario+' with >64KiB metadata',lambda scenario=scenario:http_journal(scenario))

@@ -6,6 +6,7 @@ import { DatabaseSync } from "node:sqlite";
 import { fixture18 } from "../v2-sync/fixture18.mjs";
 import { createConnectedCopy } from "../v2-assets/connected-copy.mjs";
 import { sourceHash } from "../v2-sync/model.mjs";
+import { upgradeFixture } from "./fixture-db20.mjs";
 export function workspaceSessionFixture(
   root,
   { ownerId = randomUUID(), deviceId = randomUUID(), withoutImages = false, version = 19, textSize = 0 } = {},
@@ -28,6 +29,7 @@ export function workspaceSessionFixture(
         "UPDATE app_meta SET value='19' WHERE key='schema_version'; UPDATE cabi_note SET delete_locked=1 WHERE id='n1'",
       );
     }
+    if (version === 20) upgradeFixture(db, 20);
     if (textSize)
       db.prepare("UPDATE cabi_note SET plain_text=?,revision=revision+1 WHERE id='n1'").run(
         "가".repeat(textSize),

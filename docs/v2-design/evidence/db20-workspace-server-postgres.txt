@@ -103,4 +103,7 @@ PASS DB20 manifest rejects unknown DB21 schema atomically
 PASS DB19 envelope still refuses any ui settings after 007
 PASS DB20 retrieval keeps identity checks and server-only RPC
 PASS used DB20 extension cannot roll back or delete DB20 metadata
-{"passed": 105, "postgres": "17.11 (Debian 17.11-1.pgdg12+2)", "cloudApplied": false}
+PASS DB20 actual HTTP/PG plus v4 journal reconciles lost start with >64KiB metadata
+PASS DB20 actual HTTP/PG plus v4 journal reconciles lost publish with >64KiB metadata
+PASS DB20 actual HTTP/PG plus v4 journal reconciles lost cancel with >64KiB metadata
+{"passed": 108, "postgres": "17.11 (Debian 17.11-1.pgdg12+2)", "cloudApplied": false}

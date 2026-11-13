@@ -53,7 +53,7 @@
     },
     {
       "path": "poc/v2-migration/postgres/db20-workspace-tests.py",
-      "sha256": "1672cbab5e7c316a3539455ceb1d1eea6b5b675b3d497134e1c34eea381a874f"
+      "sha256": "0a90ab274d15e762e61aab413b4c42dbdf5f89bf1f7834edd0a3d99c6055b92c"
     },
     {
       "path": "poc/v2-migration/db20-contract.json",
@@ -74,6 +74,19 @@
     {
       "path": "src/data/migrations/0020_kanban.sql",
       "sha256": "4ea8dc87ef128a1428f15f95c31b7aff33ce0bfe0b0855e869409444f56923d0"
+    },
+    {
+      "path": "poc/v2-migration/journal.mjs",
+      "sha256": "540c8ca5e845ed2c7ba2a852e768c96847f8be161da19ff9a0892e018f4b7383"
+    },
+    {
+      "path": "poc/v2-migration/workspace-session-pg-client.mjs",
+      "sha256": "22b0daa3411b672f5678275081a575fd017fe1517b1cfe6cbc130bc45f9baab9"
+    },
+    {
+      "path": "poc/v2-migration/workspace-session-fixture.mjs",
+      "sha256": "401f6ef585324250447b1ca383f08a0b594107001a4bb3216d3123366fc80d4c"
     }
-  ]
+  ],
+  "journalSchema": 4
 }

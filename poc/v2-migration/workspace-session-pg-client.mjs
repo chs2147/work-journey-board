@@ -13,6 +13,8 @@ if (process.argv[2] !== "--local-fixture-only" || !/^http:\/\/127\.0\.0\.1:\d+$/
 let raw = "";
 for await (const c of process.stdin) raw += c;
 const f = JSON.parse(raw);
+const version = f.version ?? 19;
+if (![18, 19, 20].includes(version)) throw Error("FIXTURE_VERSION");
 const root = mkdtempSync(join(tmpdir(), "wjb-session-pg-"));
 let journal;
 try {
@@ -21,6 +23,7 @@ try {
     deviceId: f.device,
     withoutImages: true,
     textSize: 24000,
+    version,
   });
   const options = { protectedLocalRoots: [e.localRoot] };
   journal = openMigrationJournal(e.path, options);
