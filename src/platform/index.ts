@@ -269,6 +269,32 @@ export async function loadAppProfile(): Promise<AppProfileInfo> {
   return q === "connected-preview" ? PREVIEW_PROFILE : CLASSIC_PROFILE;
 }
 
+/** Connected Preview 온라인 계정 상태(토큰 없음 — Rust `online.rs`가 보안 저장소에 보관) */
+export interface OnlineStatus {
+  state: "signedOut" | "signedIn" | "vaultUnavailable";
+  email: string | null;
+  accountId: string | null;
+  /** gateway가 세션을 확인한 시각(유닉스 초) */
+  serverCheckedAt: number | null;
+}
+
+/**
+ * Connected Preview 계정(V2 B단계, docs/v2-design/79). 실앱 = Rust 명령(개발 프로젝트 인증·gateway만 접속),
+ * 브라우저 모드 = 네트워크 없는 시험용 가짜(인증번호 `12345678`). 오류는 대문자 코드 문자열.
+ */
+export interface PreviewOnline {
+  status(): Promise<OnlineStatus>;
+  sendCode(email: string): Promise<void>;
+  verifyCode(email: string, code: string): Promise<OnlineStatus>;
+  check(): Promise<OnlineStatus>;
+  signOut(): Promise<OnlineStatus>;
+}
+
+export async function loadPreviewOnline(): Promise<PreviewOnline> {
+  if (isTauri()) return (await import("./tauriPreviewOnline")).tauriPreviewOnline;
+  return (await import("./browserPreviewOnline")).browserPreviewOnline;
+}
+
 /** 스플래시 창만(Connected Preview 시작 화면용 — 일지·SQLite 모듈을 불러오지 않는다). 브라우저 모드는 없음 */
 export async function loadSplash(): Promise<SplashWindow | undefined> {
   if (isTauri()) return (await import("./tauriSplash")).splash;

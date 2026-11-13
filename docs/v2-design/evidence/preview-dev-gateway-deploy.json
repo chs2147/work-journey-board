@@ -1,0 +1,12 @@
+{
+  "deployedAt": "2026-11-13T23:07:35.613Z",
+  "projectRef": "vsphftnmfzfoufasjttd",
+  "productionTouched": false,
+  "function": "wjb-gateway",
+  "verifyJwt": false,
+  "bundleSha256": "e39192dd360fbd6d7f7ec95ebe2e76a2f367a53ae0b512adf71d0e366b29afc8",
+  "bundleBytes": 59590,
+  "status": 201,
+  "version": 2,
+  "functionStatus": "ACTIVE"
+}

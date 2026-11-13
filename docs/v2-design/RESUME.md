@@ -1,6 +1,6 @@
 # V2 설계·PoC 중단/재개 기록
 
-**현재 재개 정본:** [78. Connected Preview 실행 프로필·Tauri 명령 경계](78-preview-native-bootstrap.md) — 6-B 코드 부분 완료(`src-tauri` `connected-preview` 기능 플래그, Classic 빌드 그대로). 검증용 설치 파일 = `build-preview.yml` 산출물(78문서 7절). 다음은 Windows·macOS 실기(동시 설치·실행) → 73문서 순서(캐시 포트·활성화 API·로그인·A안 화면). 바로 앞 단계 [77](77-db20-journal-v4.md) 6절 — 개발 DB에 007 적용·008 점검·DB20 실검증 51개 통과·잔여 0(2026-11-14 KST). 이전 [76](76-db20-server-profile.md) · [75](75-db20-kanban-copy-contract.md) · 분석 [74](74-progress-analysis-1113.md) → [73](73-connected-preview-native-isolation.md). 이하 체크포인트는 작성 당시 기록이며 가장 최근 결과가 우선한다.
+**현재 재개 정본:** [79. B단계 — Preview 앱 ↔ 개발 DB 첫 연결](79-preview-dev-connection.md) — Rust 로그인·세션 모듈과 Preview 계정 카드 완료(가짜 서버 시험). gateway Edge Function은 배포됐으나 서버 열쇠 형식 문제로 503, 메일 양식 인증번호 미반영 — 두 가지 사용자 결정 대기(79문서 5절). 앞 단계 [78](78-preview-native-bootstrap.md)(6-B, 검증용 설치 파일 run 1 성공) · [77](77-db20-journal-v4.md) 6절(개발 DB DB20 적용). 이하 체크포인트는 작성 당시 기록이며 가장 최근 결과가 우선한다.
 
 2026-11-09 UTC · V2 설계/PoC 중단 지점을 보존한 뒤 복귀했다. 사용자 요청으로 main 1.23.1 패치(`d11a0ca`)를 v2-design에 병합했다.
 

@@ -19,14 +19,13 @@ const base = json("src-tauri/tauri.conf.json");
 const preview = json("src-tauri/tauri.preview.conf.json");
 const lib = read("src-tauri/src/lib.rs");
 const handlers = (cfg: string) => {
-  const at = lib.indexOf(
-    `#[cfg(${cfg})]\n    let builder = builder.invoke_handler(tauri::generate_handler![`,
-  );
+  const at = lib.indexOf(`#[cfg(${cfg})]\n    let builder = builder`);
   expect(at).toBeGreaterThan(0);
-  const body = lib.slice(lib.indexOf("[", at + cfg.length + 60) + 1, lib.indexOf("]);", at));
-  return body
+  const open = lib.indexOf("generate_handler![", at) + "generate_handler![".length;
+  return lib
+    .slice(open, lib.indexOf("]", open))
     .split(",")
-    .map((s) => s.trim())
+    .map((x) => x.trim())
     .filter(Boolean);
 };
 
@@ -90,6 +89,25 @@ describe("Tauri 설정", () => {
   });
 });
 
+describe("Preview 온라인 모듈(online.rs) 접속 범위", () => {
+  const online = read("src-tauri/src/online.rs");
+  it("개발 프로젝트 한 곳의 인증·gateway 경로만, 서버 열쇠 없음", () => {
+    expect(online).toContain('const ORIGIN: &str = "https://vsphftnmfzfoufasjttd.supabase.co";');
+    expect(
+      online.match(/https:\/\/[a-z0-9.-]+/g)?.every((u) => u === "https://vsphftnmfzfoufasjttd.supabase.co"),
+    ).toBe(true);
+    expect(online).toMatch(/const PUBLISHABLE_KEY: &str = "sb_publishable_[A-Za-z0-9_-]+";/);
+    expect(online).not.toMatch(/sb_secret_|service_role|eyJ[A-Za-z0-9]{10}|sbp_/);
+    expect(online).toContain("redirect(reqwest::redirect::Policy::none())");
+  });
+  it("웹 화면 CSP는 그대로(네트워크는 Rust에서만)", () => {
+    expect(base.app.security.csp).toBe(
+      "default-src 'self'; connect-src ipc: http://ipc.localhost; img-src 'self' data:; style-src 'self' 'unsafe-inline'",
+    );
+    expect(preview.app.security.csp).toBeUndefined();
+  });
+});
+
 describe("Rust 명령 경계(lib.rs)", () => {
   const classic = handlers('not(feature = "connected-preview")');
   const prev = handlers('feature = "connected-preview"');
@@ -125,14 +143,21 @@ describe("Rust 명령 경계(lib.rs)", () => {
     ]);
   });
 
-  it("Preview 명령: 일지·백업·복원·내보내기·Cabinet·업데이트 없음", () => {
+  it("Preview 명령: 일지·백업·복원·내보내기·Cabinet·업데이트 없음, 온라인 계정(B단계)만 더함", () => {
     expect(prev).toEqual([
       "splash::splash_finish",
       "files::config_read",
       "files::config_write",
       "files::open_url",
       "profile::app_profile",
+      "online::online_status",
+      "online::online_send_code",
+      "online::online_verify_code",
+      "online::online_check",
+      "online::online_sign_out",
     ]);
+    // 온라인 모듈은 Preview 빌드에만 컴파일된다
+    expect(lib).toMatch(/#\[cfg\(feature = "connected-preview"\)\]\nmod online;/);
     expect(lib).toMatch(
       /#\[cfg\(not\(feature = "connected-preview"\)\)\]\n\s+let builder = builder\.plugin\(tauri_plugin_sql/,
     );

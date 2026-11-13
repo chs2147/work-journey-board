@@ -11,7 +11,7 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 # 실행 프로필(V2 6-B, src/profile.rs). 기본 = Local Classic(예전과 같은 빌드).
 # connected-preview = 별도 앱 ID·설정 폴더·업데이트 꺼짐·일지 명령 없음 — `tauri.preview.conf.json`과 함께만 빌드한다
 [features]
-connected-preview = ["dep:wjb-native-isolation"]
+connected-preview = ["dep:wjb-native-isolation", "dep:uuid"]
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
@@ -34,6 +34,8 @@ reqwest = "0.13"
 sha2 = "0.10"
 # Preview 프로필 정본·격리 규칙(poc/v2-native, 외부 의존성 없음). connected-preview 빌드에서만 링크된다
 wjb-native-isolation = { path = "../poc/v2-native", optional = true }
+# Preview 기기 ID(무작위 UUID) — tauri 의존성 트리에 이미 있는 판
+uuid = { version = "1.28", features = ["v4"], optional = true }
 
 # Cabinet 끌어 놓기 다리(cabinet.rs, features-1102-spec F5 A안) — 윈도우 WebView2에서 놓은 파일 경로 받기.
 # tauri(wry)가 이미 쓰는 판과 같게 둔다(새로 받는 코드 없음, 네트워크 없음)

@@ -8,6 +8,8 @@ mod db_batch;
 mod files;
 #[cfg(target_os = "macos")]
 mod menu;
+#[cfg(feature = "connected-preview")]
+mod online;
 mod profile;
 mod splash;
 mod update;
@@ -106,12 +108,19 @@ pub fn run() {
     // Connected Preview: 기존 일지를 열거나 쓰는 명령(SQLite 묶음·백업·복원·내보내기·Cabinet)과
     // 새 판 확인·설치 명령을 등록하지 않는다. 스플래시·자기 설정 파일·링크 넘기기·프로필 묻기만
     #[cfg(feature = "connected-preview")]
-    let builder = builder.invoke_handler(tauri::generate_handler![
-        splash::splash_finish,
-        files::config_read,
-        files::config_write,
-        files::open_url,
-        profile::app_profile
-    ]);
+    let builder = builder
+        .manage(online::OnlineState::default())
+        .invoke_handler(tauri::generate_handler![
+            splash::splash_finish,
+            files::config_read,
+            files::config_write,
+            files::open_url,
+            profile::app_profile,
+            online::online_status,
+            online::online_send_code,
+            online::online_verify_code,
+            online::online_check,
+            online::online_sign_out
+        ]);
     builder.run(context).expect("Work Journey Board 실행 중 오류");
 }

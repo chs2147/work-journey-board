@@ -6435,6 +6435,7 @@ dependencies = [
  "tauri-plugin-single-instance",
  "tauri-plugin-sql",
  "tauri-plugin-window-state",
+ "uuid",
  "webview2-com",
  "windows",
  "wjb-native-isolation",

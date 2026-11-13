@@ -41,7 +41,8 @@ pub fn active() -> AppProfile {
 #[cfg(feature = "connected-preview")]
 pub fn active() -> AppProfile {
     use wjb_native_isolation::policy::{identity, Profile};
-    let id = identity(Profile::ConnectedPreview).expect("Connected Preview 프로필 정본을 읽지 못했습니다");
+    let id = identity(Profile::ConnectedPreview)
+        .expect("Connected Preview 프로필 정본을 읽지 못했습니다");
     AppProfile {
         key: id.profile.key(),
         app_id: id.app_id,

@@ -13,6 +13,8 @@ impl Secret {
     }
     #[cfg(any(target_os = "windows", target_os = "macos", test, feature = "check-os-bindings"))]
     pub(crate) fn bytes(&self) -> &[u8] { &self.0 }
+    /// Native auth only: borrow the token text for one request body. No copy is returned.
+    pub fn with_str<R>(&self, f: impl FnOnce(&str) -> R) -> R { f(std::str::from_utf8(&self.0).unwrap_or("")) }
 }
 impl fmt::Debug for Secret { fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { f.write_str("Secret([REDACTED])") } }
 impl Drop for Secret {
