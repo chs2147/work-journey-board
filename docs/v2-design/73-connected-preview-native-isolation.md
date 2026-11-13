@@ -98,6 +98,8 @@ node --test poc/v2-runtime/*.test.mjs poc/v2-assets/connected-copy.test.mjs poc/
 
 ## 다음 단계
 
+> 후속(2026-11-14): native bootstrap·명령 경계의 코드 부분은 [78문서](78-preview-native-bootstrap.md)에서 `src-tauri` 기능 플래그로 연결했다. Windows·macOS 실기는 남아 있다.
+
 **별도 Preview 결정은 완료**다. 다음은 Preview의 실제 native bootstrap/프로필 경로와 Tauri 명령 경계를 연결하는 작업이다. 기존 Classic 경로는 그대로 두고 Preview에서 Classic 초기화/기존 업데이트 명령으로 흘러가지 않도록 시작 단계에서 차단해야 한다. WebView/창 상태/단일 인스턴스 경로·OS 서명/Keychain 동작을 Windows/macOS에서 확인하기 전 설치판을 게시하지 않는다.
 
 이후 native cache/repository 포트·실제 서버 활성화 API·로그인/세션 수명과 A안 제품 화면을 연결한다. cache-verified를 workspace-runtime으로 승격하지 않으며 기존 appController의 단일 전환 순서를 재사용한다. 다중 기기 변경 동기화/충돌 처리는7번, 전면 다국어는8번의 후속 범위다. 기존 로컬 모델은 영구 유지한다.

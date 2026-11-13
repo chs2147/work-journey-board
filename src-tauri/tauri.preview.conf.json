@@ -1,0 +1,40 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Work Journey Board Connected Preview",
+  "identifier": "com.chs2147.workjourneyboard.connected.preview",
+  "app": {
+    "windows": [
+      {
+        "label": "splash",
+        "url": "splash.html",
+        "title": "Work Journey Board Connected Preview",
+        "width": 560,
+        "height": 340,
+        "center": true,
+        "resizable": false,
+        "maximizable": false,
+        "minimizable": false,
+        "closable": false,
+        "decorations": false,
+        "shadow": true,
+        "focus": true,
+        "backgroundColor": "#ffffff"
+      },
+      {
+        "label": "main",
+        "visible": false,
+        "dragDropEnabled": false,
+        "title": "Work Journey Board Connected Preview",
+        "width": 1280,
+        "height": 820,
+        "minWidth": 1024,
+        "minHeight": 640,
+        "resizable": true,
+        "backgroundColor": "#faf9f5"
+      }
+    ],
+    "security": {
+      "capabilities": ["preview-main", "splash"]
+    }
+  }
+}

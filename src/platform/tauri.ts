@@ -24,10 +24,9 @@ import {
   type FolderWindowEvent,
   type FolderWindows,
   type Platform,
-  type SplashWindow,
   type UpdateInfo,
 } from "./index";
-import { SPLASH_STATUS_EVENT } from "./splashEvents";
+import { splash } from "./tauriSplash";
 import { OS } from "../shared/os";
 
 // 실앱(윈도우·맥, macos-spec). 파일 동작은 src-tauri/src/files.rs의 얇은 명령을 쓴다(삭제·이름 바꾸기는 Rust에서도 패턴 검사).
@@ -39,18 +38,6 @@ const join = (...parts: string[]) =>
     .join(SEP);
 
 let oneDriveRoots: string[] | null = null;
-
-// 시작 스플래시 창(tauri.conf.json의 "splash"). 메인 창은 숨긴 채 시작하고 finish()에서 보인다(src-tauri/src/splash.rs).
-let splashOpen = true;
-const splash: SplashWindow = {
-  status(text) {
-    if (splashOpen) void emitTo("splash", SPLASH_STATUS_EVENT, text).catch(() => undefined);
-  },
-  async finish() {
-    splashOpen = false;
-    await invoke("splash_finish");
-  },
-};
 
 // Cabinet 폴더 창(features-1102-spec F5): 폴더마다 별도 OS 창 `folder-<id>` — 같은 앱 화면(index.html?win=folder)을 띄운다.
 // 창 위치·크기는 window-state 플러그인이 창 이름별로 기억한다. 폴더 창에는 DB 권한이 없다(capabilities/folder.json).

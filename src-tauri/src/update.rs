@@ -278,6 +278,7 @@ async fn find_candidate(
 }
 
 fn updates_dir(app: &AppHandle) -> Result<PathBuf, String> {
+    crate::profile::require_updates()?;
     let dir = app
         .path()
         .app_local_data_dir()
@@ -298,6 +299,7 @@ pub async fn update_check(
     app: AppHandle,
     state: State<'_, UpdateState>,
 ) -> Result<Option<UpdateInfo>, String> {
+    crate::profile::require_updates()?;
     let http = client(&app)?;
     let current = app.package_info().version.to_string();
     let Some(c) = find_candidate(&app, &http, &current).await? else {
@@ -346,6 +348,7 @@ struct Progress {
 /// 확인한 새 판 설치 파일 내려받기 → 앱 자료 폴더 `updates\` · SHA256 확인. 진행은 `update-progress` 이벤트
 #[tauri::command]
 pub async fn update_download(app: AppHandle, state: State<'_, UpdateState>) -> Result<(), String> {
+    crate::profile::require_updates()?;
     let pending = state
         .0
         .lock()
@@ -426,6 +429,7 @@ pub async fn update_download(app: AppHandle, state: State<'_, UpdateState>) -> R
 /// 실행 직전 이름·위치·SHA256을 다시 확인한다. 일지 자동 백업은 웹 화면이 부르기 전에 끝낸다.
 #[tauri::command]
 pub fn update_install(app: AppHandle, state: State<'_, UpdateState>) -> Result<(), String> {
+    crate::profile::require_updates()?;
     let pending = state
         .0
         .lock()

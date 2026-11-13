@@ -1,6 +1,8 @@
 # V2 프로젝트 — 다국어·온라인 동기화 상세 설계 초안
 
-**최신(2026-11-13):** [77. 이관 저널 v4](77-db20-journal-v4.md) — DB20 세션 끝까지 로컬 검증, 개발 DB 적용 대기.
+**최신(2026-11-14):** [78. Connected Preview 실행 프로필·Tauri 명령 경계](78-preview-native-bootstrap.md) — `src-tauri` 기능 플래그(사용자 선택), Classic 빌드 그대로 + Preview 빌드 격리, Linux 실제 실행 확인. 다음 = Windows·macOS 실기.
+
+**이전(2026-11-13~14):** [77. 이관 저널 v4](77-db20-journal-v4.md) — DB20 로컬 검증 후 개발 DB 적용·실검증 51개 통과(6절).
 
 **이전:** [76. DB20 서버 프로필·전진 SQL](76-db20-server-profile.md) — 007/008/009 로컬 검증 완료, 개발 DB 적용 대기. 1단계 [75](75-db20-kanban-copy-contract.md).
 

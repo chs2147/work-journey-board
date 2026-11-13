@@ -1,12 +1,12 @@
 # V2 Native Isolation
 
-사용자가 별도 **Connected Preview 검증판**을 선택한 뒤 작성한 독립 Rust 라이브러리다. 정식 V2의 최종 이름/배포 채널을 확정한 것이 아니다. Classic Tauri 앱에 링크하거나 설치판을 만들지 않았다.
+사용자가 별도 **Connected Preview 검증판**을 선택한 뒤 작성한 독립 Rust 라이브러리다. 정식 V2의 최종 이름/배포 채널을 확정한 것이 아니다. Classic 빌드에는 링크되지 않으며, `src-tauri`의 `connected-preview` 기능을 켠 빌드에서만 프로필 정본으로 쓰인다([78문서](../../docs/v2-design/78-preview-native-bootstrap.md)). 설치판은 만들지 않았다.
 
 - `profiles.tsv`: Node/Rust 공통 프로필 정본.
 - `src/policy.rs`: 명시적 profile·DEV/PROD project·별도 설정/registry/cache 경로와 원본 보호 검사.
 - `src/vault.rs`: Preview+online에서만 만드는 계정/기기별 refresh token 저장 경계. secret은 Debug에서 가리고 소유 버퍼를 drop 때 지운다.
 - `src/system_vault.rs`: Windows Credential Manager/macOS Keychain 호출 소스. Linux에서는 UnsupportedPlatform, 파일 저장 fallback 없음.
-- `preview-bootstrap-contract.json`: 현재 준비 상태 기록. **실행 가능한 Tauri 설정/설치 프로그램이 아니다.**
+- `preview-bootstrap-contract.json`: 현재 준비 상태 기록(Tauri 연결은 `src-tauri/tauri.preview.conf.json`·`src/profile.rs`). **설치 프로그램이 아니다.**
 
 ```sh
 cargo test --offline --manifest-path poc/v2-native/Cargo.toml

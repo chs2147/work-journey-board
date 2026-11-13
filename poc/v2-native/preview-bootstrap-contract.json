@@ -7,13 +7,19 @@
     "sessionDate": "2026-11-11",
     "formalV2ProductNameApproved": false
   },
-  "status": "native-library-only",
-  "tauriIntegration": "pending",
+  "status": "tauri-profile-wired",
+  "tauriIntegration": "feature-flag: src-tauri --features connected-preview + tauri.preview.conf.json",
   "installerAvailable": false,
   "publicationEnabled": false,
   "updater": "disabled",
   "fileAssociations": "disabled",
   "automaticClassicConfigImport": false,
   "osVaultBindings": "implemented-and-host-type-checked",
-  "osVaultRuntimeVerification": "pending"
+  "osVaultRuntimeVerification": "pending",
+  "startupIdentifierGuard": true,
+  "previewCommands": ["splash_finish", "config_read", "config_write", "open_url", "app_profile"],
+  "previewSqlitePlugin": false,
+  "linuxRuntimeSmoke": "passed-2026-11-14",
+  "windowsMacosRuntimeVerification": "pending",
+  "classicBuildChanges": "app_profile read-only command added; app id, config folder, updater, other commands and plugins unchanged"
 }

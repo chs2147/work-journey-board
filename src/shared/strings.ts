@@ -1422,6 +1422,19 @@ export const STR_BASE = {
     openBackups: "백업 폴더 열기",
     retry: "다시 시도",
   },
+  /** Connected Preview 시작 화면(V2 6-B, docs/v2-design/78-preview-native-bootstrap.md) */
+  connectedPreview: {
+    lead: "온라인 연결 검증판입니다. 기존 로컬 일지는 이 앱에서 열지 않습니다.",
+    profile: "실행 프로필",
+    profileValue: "Connected Preview",
+    appVersion: "앱 버전",
+    updates: "업데이트",
+    updatesOff: "꺼짐",
+    localJournal: "로컬 일지",
+    localJournalOff: "열지 않음",
+    online: "온라인 연결",
+    onlinePending: "준비 중",
+  },
   /** 새 판 확인·설치(improve-1027v4-spec 1절 B안) */
   update: {
     section: "업데이트",

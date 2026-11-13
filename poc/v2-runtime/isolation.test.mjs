@@ -44,6 +44,8 @@ test("observed legacy identifier/config folder/release feed match actual sources
     readFileSync(new URL("../../src-tauri/tauri.conf.json", import.meta.url), "utf8"),
   );
   const files = readFileSync(new URL("../../src-tauri/src/files.rs", import.meta.url), "utf8");
+  // 6-B부터 Classic 설정 폴더 이름은 profile.rs의 상수, files.rs는 실행 프로필 값을 쓴다
+  const profile = readFileSync(new URL("../../src-tauri/src/profile.rs", import.meta.url), "utf8");
   const update = readFileSync(new URL("../../src-tauri/src/update.rs", import.meta.url), "utf8");
   const local = resolveIsolationProfile({
     profile: "local-classic",
@@ -51,7 +53,9 @@ test("observed legacy identifier/config folder/release feed match actual sources
     localDataBase: "C:\\Fixture",
   });
   assert.equal(local.appId, config.identifier);
-  assert.ok(files.includes(`const CONFIG_DIR: &str = "${local.configDirectory}"`));
+  assert.ok(profile.includes(`pub const CLASSIC_CONFIG_DIR: &str = "${local.configDirectory}"`));
+  assert.ok(profile.includes(`config_dir: CLASSIC_CONFIG_DIR,`));
+  assert.ok(files.includes(".join(crate::profile::active().config_dir)"));
   assert.ok(update.includes(`https://api.github.com/repos/${local.releaseRepository}/releases?per_page=10`));
 });
 for (const [platform, source, destination] of [

@@ -1,0 +1,12 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "preview-main",
+  "description": "Connected Preview 메인 창 권한(tauri.preview.conf.json에서만 켬): 창 상태·창 제목·테마만. SQLite·파일 대화상자·클립보드·창 만들기·네트워크 권한 없음. Classic 메인 창 권한(default)의 부분 집합",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "window-state:default",
+    "core:window:allow-set-theme",
+    "core:window:allow-set-title"
+  ]
+}

@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { resolveIsolationProfile, assertProfileSeparation, assertReleasePublication } from "./isolation.mjs";
 const read = (p) => readFileSync(new URL(p, import.meta.url), "utf8");
-test("shared Classic profile matches actual Tauri identity and hard-coded config folder", () => {
+test("shared Classic profile matches actual Tauri identity and Classic config folder constant", () => {
   const t = JSON.parse(read("../../src-tauri/tauri.conf.json"));
   const p = resolveIsolationProfile({
     profile: "local-classic",
@@ -12,7 +12,9 @@ test("shared Classic profile matches actual Tauri identity and hard-coded config
   });
   assert.equal(p.appId, t.identifier);
   assert.equal(p.productName, t.productName);
-  const dir = read("../../src-tauri/src/files.rs").match(/const CONFIG_DIR: &str = "([^"]+)"/)[1];
+  const dir = read("../../src-tauri/src/profile.rs").match(
+    /pub const CLASSIC_CONFIG_DIR: &str = "([^"]+)"/,
+  )[1];
   assert.equal(p.configRoot, "/synthetic/" + dir);
   assert(
     read("../../src-tauri/src/update.rs").includes(

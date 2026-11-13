@@ -1,7 +1,7 @@
 import { CABI } from "../shared/cabiStrings";
 import type { CabiBridge } from "./cabiBridge";
 import { normalizeBackupPolicy, type BackupControl } from "../data/backupPolicy";
-import { isTauri } from "@tauri-apps/api/core";
+import { invoke, isTauri } from "@tauri-apps/api/core";
 import type { BackupFs, VerifyCopy } from "../data/backup";
 import type { SqlDriver } from "../data/driver";
 import type { FsEntry } from "../domain/cabinet";
@@ -215,6 +215,64 @@ export interface SplashWindow {
   status(text: string): void;
   /** 메인 창을 보이고 스플래시 창을 닫는다. */
   finish(): Promise<void>;
+}
+
+/**
+ * 실행 프로필(V2 6-B, src-tauri/src/profile.rs). Local Classic = 지금 앱 그대로.
+ * Connected Preview = 별도 앱 ID·설정 폴더, 업데이트 꺼짐, 기존 로컬 일지를 열지 않음(Rust가 일지 명령을 등록하지 않음).
+ */
+export interface AppProfileInfo {
+  key: "local-classic" | "connected-preview";
+  appId: string;
+  productName: string;
+  updates: boolean;
+  localJournal: boolean;
+}
+
+export const CLASSIC_PROFILE: AppProfileInfo = {
+  key: "local-classic",
+  appId: "com.chs2147.workjourneyboard",
+  productName: "Work Journey Board",
+  updates: true,
+  localJournal: true,
+};
+
+export const PREVIEW_PROFILE: AppProfileInfo = {
+  key: "connected-preview",
+  appId: "com.chs2147.workjourneyboard.connected.preview",
+  productName: "Work Journey Board Connected Preview",
+  updates: false,
+  localJournal: false,
+};
+
+/** Rust가 알려 준 값만 받는다. Preview라고 답하면 Preview, 그 밖은 Classic */
+export function parseAppProfile(v: unknown): AppProfileInfo {
+  const o = (v ?? {}) as Partial<AppProfileInfo>;
+  if (o.key === "connected-preview" && o.appId === PREVIEW_PROFILE.appId) return PREVIEW_PROFILE;
+  return CLASSIC_PROFILE;
+}
+
+/**
+ * 시작할 때 1번. 실앱 = Rust `app_profile`. 브라우저 모드 = `?profile=connected-preview`(개발·시험용).
+ * 묻기가 실패하면 Classic으로 시작한다 — Classic 빌드는 이 명령을 늘 등록하고, Preview 빌드는 Rust에
+ * 일지 명령·SQLite 플러그인 자체가 없어 Classic 화면으로 가도 일지를 열 수 없다.
+ */
+export async function loadAppProfile(): Promise<AppProfileInfo> {
+  if (isTauri()) {
+    try {
+      return parseAppProfile(await invoke("app_profile"));
+    } catch {
+      return CLASSIC_PROFILE;
+    }
+  }
+  const q = new URLSearchParams(location.search).get("profile");
+  return q === "connected-preview" ? PREVIEW_PROFILE : CLASSIC_PROFILE;
+}
+
+/** 스플래시 창만(Connected Preview 시작 화면용 — 일지·SQLite 모듈을 불러오지 않는다). 브라우저 모드는 없음 */
+export async function loadSplash(): Promise<SplashWindow | undefined> {
+  if (isTauri()) return (await import("./tauriSplash")).splash;
+  return undefined;
 }
 
 export async function loadPlatform(): Promise<Platform> {

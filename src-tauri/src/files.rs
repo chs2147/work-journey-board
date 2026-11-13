@@ -9,20 +9,20 @@ use serde::Serialize;
 use tauri::{AppHandle, Manager};
 use tauri_plugin_opener::OpenerExt;
 
-const CONFIG_DIR: &str = "WorkJourneyBoard";
 const CONFIG_FILE: &str = "config.json";
 
 fn err<E: std::fmt::Display>(e: E) -> String {
     e.to_string()
 }
 
-/// `%LOCALAPPDATA%\WorkJourneyBoard\config.json` (Roaming이 아닌 Local — data-spec 3-4)
+/// `%LOCALAPPDATA%\WorkJourneyBoard\config.json` (Roaming이 아닌 Local — data-spec 3-4).
+/// 폴더 이름은 실행 프로필이 정한다(Classic = `WorkJourneyBoard` 그대로, Preview = 별도 폴더 — profile.rs)
 fn config_path(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(app
         .path()
         .local_data_dir()
         .map_err(err)?
-        .join(CONFIG_DIR)
+        .join(crate::profile::active().config_dir)
         .join(CONFIG_FILE))
 }
 
