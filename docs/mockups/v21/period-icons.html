@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<title>v21 시안 — 칸반 기간 필터 아이콘화 (가상 샘플)</title>
+<style>
+  @font-face {
+    font-family: "Gowun";
+    src: url("../../../src/shared/fonts/GowunDodum-Regular.woff2") format("woff2");
+  }
+  :root {
+    --page: #ede6dc; --card: #fcf9f3; --sub: #f3ede3; --line: #e9e1d5; --line2: #d6c3aa;
+    --t1: #423c34; --t2: #6b6054; --t3: #786f63; --acc: #856748; --accsoft: #f0e5d5;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #d9d2c6; font: 13px/1.5 "Gowun", system-ui, sans-serif; color: var(--t1); }
+  .shot { width: 1100px; margin: 0 0 28px; background: var(--page); }
+  .cap { background: #2b2620; color: #fff; padding: 8px 14px; font-size: 14px; }
+  .cap small { opacity: .75; margin-left: 10px; font-size: 12px; }
+  .bar { display: flex; align-items: center; gap: 8px; padding: 12px 16px; background: var(--page); border-bottom: 1px solid var(--line); min-height: 58px; }
+  .sp { flex: 1; }
+  button { font: inherit; color: var(--t1); border: 1px solid var(--line2); background: var(--card); border-radius: 6px; padding: 4px 10px; display: inline-flex; gap: 6px; align-items: center; white-space: nowrap; height: 30px; }
+  .pri { background: var(--acc); color: #fff; border-color: var(--acc); }
+  .seg { display: inline-flex; border: 1px solid var(--line2); border-radius: 6px; overflow: hidden; background: var(--card); }
+  .seg button { border: 0; border-radius: 0; border-right: 1px solid var(--line); }
+  .seg button:last-child { border-right: 0; }
+  .seg button.on { background: var(--acc); color: #fff; }
+  .iseg { overflow: visible; }
+  .iseg .rel:first-child button { border-radius: 5px 0 0 5px; }
+  .iseg .rel:last-child button { border-radius: 0 5px 5px 0; border-right: 0; }
+  .iseg button { width: 34px; padding: 0; justify-content: center; color: var(--t2); }
+  .iseg button.on { color: #fff; }
+  .iseg .gap { width: 2px; background: var(--line2); }
+  .tip { position: absolute; top: 40px; left: 50%; transform: translateX(-50%); background: #2b2620; color: #fff; font-size: 12px; padding: 4px 8px; border-radius: 4px; white-space: nowrap; z-index: 2; }
+  .tip small { opacity: .7; margin-left: 6px; }
+  .rel { position: relative; display: inline-flex; }
+  .note { padding: 10px 16px 14px; color: var(--t2); font-size: 12.5px; background: var(--card); }
+  .note b { color: var(--t1); font-weight: 400; text-decoration: underline; text-decoration-color: var(--line2); }
+  .pop { position: absolute; top: 38px; left: 0; background: var(--card); border: 1px solid var(--line2); border-radius: 8px; box-shadow: 0 6px 20px rgba(60,40,20,.18); padding: 10px; width: 268px; z-index: 2; }
+  .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .tile { height: 56px; flex-direction: column; gap: 2px; padding: 6px 0 4px; justify-content: center; font-size: 11px; color: var(--t2); width: 100%; }
+  .tile.on { border-color: var(--acc); background: var(--accsoft); color: #5d4426; }
+  .range { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); font-size: 12px; color: var(--t3); display: flex; justify-content: space-between; }
+  .badge { position: absolute; right: -6px; bottom: -6px; background: var(--acc); color: #fff; font-size: 10px; line-height: 14px; padding: 0 4px; border-radius: 3px; }
+  .hint { font-size: 12px; color: var(--t3); }
+  .catbtn { gap: 4px; }
+  .spacer { height: 170px; }
+  .spacer2 { height: 40px; }
+</style>
+</head>
+<body>
+<script>
+  // 아이콘(16px 선 아이콘, 앱 아이콘 세트와 같은 굵기 1.4)
+  const cal = (inner) => `<svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><rect x="2.5" y="3.5" width="13" height="12" rx="1.5"/><path d="M2.5 7h13M6 2v3M12 2v3"/>${inner}</svg>`;
+  const num = (t, size = 6.2) => `<text x="9" y="13.6" text-anchor="middle" font-size="${size}" font-family="system-ui" fill="currentColor" stroke="none" font-weight="700">${t}</text>`;
+  const I = {
+    today: cal(`<rect x="7.3" y="9.2" width="3.4" height="3.4" fill="currentColor" stroke="none"/>`),
+    week: cal(`<path d="M4.6 10.8h8.8" stroke-width="2.4" stroke-linecap="butt"/>`),
+    "2w": cal(num("2")),
+    "4w": cal(num("4")),
+    "12w": cal(num("12", 5.6)),
+    all: `<svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 9c-1.6-2.2-3-3.2-4.4-3.2A3.2 3.2 0 0 0 4.6 12.2C6 12.2 7.4 11.2 9 9Zm0 0c1.6 2.2 3 3.2 4.4 3.2a3.2 3.2 0 0 0 0-6.4C12 5.8 10.6 6.8 9 9Z"/></svg>`,
+    custom: cal(`<path d="M5.5 9.6v3.4M5.5 9.6h1.4M5.5 13h1.4M12.5 9.6v3.4M12.5 9.6h-1.4M12.5 13h-1.4"/>`),
+  };
+  const P = [
+    ["today", "오늘", "10/22(목)"],
+    ["week", "이번 주", "10/19~10/25"],
+    ["2w", "최근 2주", "10/12~10/25"],
+    ["4w", "최근 4주", "9/28~10/25"],
+    ["12w", "최근 12주", "8/3~10/25"],
+    ["all", "전체", "모든 기록"],
+    ["custom", "지정일", "날짜 고르기"],
+  ];
+  const left = `<button class="catbtn">업무: 전체 ▾</button>`;
+  const right = `<span class="sp"></span><button class="pri">＋ 업무 항목 추가</button><button>섹션 추가</button>`;
+  const cur = P.map(([k, l]) => `<button class="${k === "week" ? "on" : ""}">${l}</button>`).join("");
+  // A안: 아이콘 세그먼트(7개), 짧은 기간 | 긴 기간 | 전체·지정 세 묶음 사이 가는 구분
+  const a = (hoverKey) =>
+    P.map(([k, l, r], i) => {
+      const gap = i === 2 || i === 5 ? `<span class="gap"></span>` : "";
+      const tip = k === hoverKey ? `<span class="tip">${l}<small>${r}</small></span>` : "";
+      return `${gap}<span class="rel"><button class="${k === "week" ? "on" : ""}" aria-label="${l}" title="${l}">${I[k]}</button>${tip}</span>`;
+    }).join("");
+  // B안: 아이콘 하나 + 펼친 타일
+  const b = (open) => `<span class="rel"><button aria-label="기간: 이번 주" style="width:38px;padding:0;justify-content:center;position:relative">${I.week}<span class="badge">1W</span></button>
+    ${open ? `<div class="pop"><div class="grid">${P.map(([k, l]) => `<button class="tile ${k === "week" ? "on" : ""}">${I[k]}<span>${l}</span></button>`).join("")}</div>
+      <div class="range"><span>이번 주</span><span>10/19(월) ~ 10/25(일)</span></div></div>` : ""}</span>`;
+  document.write(`
+  <div class="shot"><div class="cap">지금 — 기간 7개가 모두 글자 단추 <small>업무 필터 옆 약 390px 차지</small></div>
+    <div class="bar">${left}<span class="seg">${cur}</span>${right}</div></div>
+
+  <div class="shot"><div class="cap">A안 — 아이콘 세그먼트 <small>7개 아이콘이 그대로 한 줄 · 한 번 눌러 바로 전환 · 약 250px</small></div>
+    <div class="bar">${left}<span class="seg iseg">${a("4w")}</span>${right}</div>
+    <div class="spacer2"></div>
+    <div class="note">달력 아이콘 안의 표시로 구분 — <b>■ 오늘</b> · <b>━ 이번 주</b> · <b>2 / 4 / 12</b> 최근 n주 · <b>∞ 전체</b> · <b>[ ] 지정일</b>(누르면 지금처럼 날짜 두 칸).
+      마우스를 올리면 이름과 실제 날짜 범위 툴팁(위 그림은 "최근 4주"에 올린 모습). 짧은 기간 | 긴 기간 | 전체·지정 사이에 가는 구분선. 선택은 지금과 같은 채움 색.</div></div>
+
+  <div class="shot"><div class="cap">B안 — 기간 아이콘 1개 + 펼침 <small>평소엔 아이콘 하나(지금 기간 꼬리표) · 누르면 아이콘 타일 · 약 40px</small></div>
+    <div class="bar">${left}${b(false)}<span class="hint">← 평소 모습(이번 주 = 1W, 최근 4주 = 4W …)</span>${right}</div>
+    <div class="bar" style="border-top:1px solid var(--line)">${left}${b(true)}${right}</div>
+    <div class="spacer"></div>
+    <div class="note">타일 안에서만 이름을 보여 처음 쓰는 사람도 헷갈리지 않고, 막대는 가장 간결. 대신 기간을 바꾸려면 두 번 누름(누르기 → 고르기). 아래 줄에 고른 기간의 실제 날짜. 키보드: 아이콘에서 Enter = 펼침, ←/→ = 고르기, Esc = 닫기.</div></div>
+  `);
+</script>
+</body>
+</html>

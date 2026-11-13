@@ -3,6 +3,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent, type MouseEvent } from "react";
 import { DAY_MARK_LABEL } from "../../domain/dayMark";
 import {
+  dayGroups,
   foldBefore,
   monthOf,
   splitMatches,
@@ -14,6 +15,7 @@ import { splitLinks, shortUrl } from "../../domain/links";
 import { DAY_LABELS, dayIndex, type DateStr } from "../../domain/week";
 import { STR } from "../../shared/strings";
 import { doneDate } from "../../domain/important";
+import { laterDoneDate } from "../../domain/kanban";
 import { IconDone, IconChevronDown, IconChevronRight } from "../common/icons";
 import { openLink } from "../common/openLink";
 import { revealOnBoard, setVisibleWeeks, toggleMonth, useInsights } from "./insightsStore";
@@ -221,11 +223,7 @@ export function Timeline({ rows, today, categoryId, query, search, currentMatch,
             }
           }}
         >
-          {it.depth === 0 ? (
-            <span className={styles.day}>{dayTag(it.date)}</span>
-          ) : (
-            <span aria-hidden="true">·</span>
-          )}
+          {it.depth === 1 && <span aria-hidden="true">·</span>}
           {it.flagged && (
             <span className={styles.star} aria-label={STR.insights.flagged}>
               ★
@@ -253,20 +251,35 @@ export function Timeline({ rows, today, categoryId, query, search, currentMatch,
               ↻
             </span>
           )}
-          {it.memos.length > 0 && (
-            <button
-              type="button"
-              className={styles.memoChip}
-              tabIndex={-1}
-              aria-expanded={open}
-              aria-label={STR.insights.memoAria(it.memos.length, open)}
-              data-memo-chip
-              data-testid="memo-chip"
-              onClick={() => setMemoOpen((m) => ({ ...m, [it.id]: !open }))}
-            >
-              {STR.insights.memo(it.memos.length)} {open ? "▴" : "▾"}
-            </button>
-          )}
+          {/* 완료일 열(improve-v22-spec 8절): 항목 글 뒤, 모든 줄 같은 오른쪽 열(폭 고정) — 없으면 빈 칸 */}
+          <span className={styles.doneCol} data-testid="timeline-done-col">
+            {(() => {
+              const later = laterDoneDate(it.date, it.doneAt);
+              return (
+                later && (
+                  <span className={styles.doneLater} data-testid="timeline-done-later">
+                    {STR.insights.doneLater(later, DAY_LABELS[dayIndex(later)]!)}
+                  </span>
+                )
+              );
+            })()}
+          </span>
+          <span className={styles.memoCol}>
+            {it.memos.length > 0 && (
+              <button
+                type="button"
+                className={styles.memoChip}
+                tabIndex={-1}
+                aria-expanded={open}
+                aria-label={STR.insights.memoAria(it.memos.length, open)}
+                data-memo-chip
+                data-testid="memo-chip"
+                onClick={() => setMemoOpen((m) => ({ ...m, [it.id]: !open }))}
+              >
+                {STR.insights.memo(it.memos.length)} {open ? "▴" : "▾"}
+              </button>
+            )}
+          </span>
           <span className={styles.openHint} aria-hidden="true">
             {STR.insights.openOnBoard}
           </span>
@@ -365,7 +378,16 @@ export function Timeline({ rows, today, categoryId, query, search, currentMatch,
                   ))}
                 </div>
               )}
-              {r.items.map((it) => item(it, r.weekId))}
+              {/* 요일별 묶음(improve-v21-spec 9절 T1): 요일 + 월/일은 한 번만 */}
+              {dayGroups(r.items).map((g) => (
+                <div key={g.date} className={styles.dayGroup} data-testid="timeline-day" data-date={g.date}>
+                  <div className={styles.dayLabel}>
+                    <b>{DAY_LABELS[dayIndex(g.date)]}</b>
+                    <small>{md(g.date)}</small>
+                  </div>
+                  <div className={styles.dayItems}>{g.items.map((it) => item(it, r.weekId))}</div>
+                </div>
+              ))}
             </div>
           </div>,
         );

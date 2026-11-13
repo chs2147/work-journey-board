@@ -18,6 +18,7 @@ import { localDate } from "../domain/localTime";
 import { isCorruptError, prepareConnection, type SqlDriver } from "./driver";
 import {
   LATEST_SCHEMA_VERSION,
+  NewerSchemaError,
   migrate,
   quickCheck,
   readSchemaVersion,
@@ -66,6 +67,8 @@ export async function openJournalAt(fs: SessionFs, dataDir: string, now: () => D
   const path = journalPath(fs, dataDir);
   const driver = await fs.openDatabase(path);
   try {
+    // 호환성 먼저(improve-v22-spec 2-1): 어떤 PRAGMA·쓰기보다 앞서 DB 버전만 읽는다 — 새 버전이면 바로 닫고 거부
+    await refuseNewerSchema(driver);
     let healthy: boolean;
     try {
       await prepareConnection(driver);
@@ -86,6 +89,36 @@ export async function openJournalAt(fs: SessionFs, dataDir: string, now: () => D
     throw e;
   }
   return driver;
+}
+
+/** 앱보다 새 DB 버전이면 NewerSchemaError(읽기만 — 연결 설정·쓰기 없음). 파손·빈 파일은 여기서 판단하지 않는다 */
+export async function refuseNewerSchema(driver: SqlDriver): Promise<void> {
+  let version: number;
+  try {
+    version = await readSchemaVersion(driver);
+  } catch {
+    return; // 파손 판정은 뒤의 무결성 검사가 맡는다
+  }
+  if (version > LATEST_SCHEMA_VERSION) throw new NewerSchemaError(version);
+}
+
+/**
+ * 호환되지 않는(새 DB 버전) 일지의 업데이트 전 사본(improve-v22-spec 2-2): 연결을 열지 않고 파일만 복사한다.
+ * 이름은 `_pre-update` 규칙 그대로(복원 목록·정리 규칙과 같음). 이미 같은 이름이 있으면 번호를 붙인다.
+ */
+export async function copyIncompatibleForUpdate(fs: SessionFs, dataDir: string, now: Date): Promise<string> {
+  const dir = fs.join(dataDir, BACKUP_DIR);
+  await fs.ensureDir(dir);
+  const d = await fs.openDatabase(journalPath(fs, dataDir));
+  let schema: number;
+  try {
+    schema = await readSchemaVersion(d).catch(() => 0);
+  } finally {
+    await d.close().catch(() => undefined);
+  }
+  const name = await uniqueBackupName(fs.backupFs, dir, versionedBackupName(now, "pre-update", schema));
+  await fs.copyNew(journalPath(fs, dataDir), fs.join(dir, name));
+  return name;
 }
 
 /** 그날 첫 실행이면 자동 백업(일일·월간·롤링). 오늘 일일 사본이 이미 있으면 건너뛴다. */
@@ -144,11 +177,15 @@ export async function preUpdateBackupClosed(fs: SessionFs, dataDir: string, now:
   const path = journalPath(fs, dataDir);
   if (!(await fs.stat(path)).exists) return false;
   const d = await fs.openDatabase(path);
+  let newer = false;
   try {
+    newer = (await readSchemaVersion(d).catch(() => 0)) > LATEST_SCHEMA_VERSION;
+    if (newer) return true; // 아래 finally에서 닫은 뒤 파일 복사로만(연결 설정 없이)
     await prepareConnection(d);
     await runPreUpdateBackup(d, fs.backupFs, dataDir, now, fs.verifyCopy);
   } finally {
     await d.close().catch(() => undefined);
+    if (newer) await copyIncompatibleForUpdate(fs, dataDir, now);
   }
   return true;
 }

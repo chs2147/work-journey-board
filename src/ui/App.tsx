@@ -11,7 +11,7 @@ import { Rail } from "./common/Rail";
 import { TopBar } from "./common/TopBar";
 import { useMediaQuery, useWindowWidth } from "./common/useMediaQuery";
 import { FirstRun } from "./first-run/FirstRun";
-import { IntegrityProblem, MissingFolder } from "./first-run/StartScreens";
+import { IntegrityProblem, MissingFolder, UpdateRequired } from "./first-run/StartScreens";
 import { ImportantPanel } from "./important/ImportantPanel";
 import { SearchBand, SearchPanel } from "./search/SearchViews";
 import { MarkdownExportDialog } from "./note/MarkdownExportDialog";
@@ -31,6 +31,8 @@ import { NoteDock } from "./note/NoteDock";
 import { TodayView } from "./today/TodayView";
 import { InsightsView } from "./insights/InsightsView";
 import { useInsights } from "./insights/insightsStore";
+import { KanbanView } from "./kanban/KanbanView";
+import { useKanban } from "./kanban/kanbanStore";
 import { UniverseView } from "./universe/UniverseView";
 import { useUniverse } from "./universe/universeStore";
 import { useNote } from "./note/noteStore";
@@ -86,7 +88,7 @@ export function App() {
       </footer>
       {exportOpen && journal.state === "ready" && <ExportDialog />}
       {importOpen && journal.state === "ready" && <ImportWizard />}
-      {updateOpen && journal.state === "ready" && <UpdateDialog />}
+      {updateOpen && (journal.state === "ready" || journal.state === "newer") && <UpdateDialog />}
       {creatingWorkspace && journal.state === "ready" && <NewWorkspaceDialog />}
       <Toasts />
     </div>
@@ -103,6 +105,8 @@ function screen(journal: JournalStatus) {
       return <MissingFolder dataDir={journal.dataDir} />;
     case "integrity":
       return <IntegrityProblem dataDir={journal.dataDir} path={journal.path} />;
+    case "newer":
+      return <UpdateRequired dataDir={journal.dataDir} fileVersion={journal.fileVersion} />;
     default:
       return <p className={styles.placeholder}>{statusText(journal)}</p>;
   }
@@ -133,6 +137,8 @@ function Workspace() {
   // Universe(universe-spec 4절): 인사이트처럼 보드 자리를 덮는다 — 둘은 함께 열리지 않는다
   const universeOpen = useUniverse((s) => s.open);
   const insightsOpen = insightsOpen0 || universeOpen;
+  // 칸반 보드(improve-v21-spec 2-1): 보드 자리를 덮는다 — 인사이트·Universe·설정이 열리면 그쪽이 위
+  const kanbanOpen = useKanban((s) => s.open) && !insightsOpen;
   // 설정(improve-1027v5-spec 1-2)도 인사이트처럼 보드 자리를 덮는다 — 보드·인사이트는 그대로 두고 숨김
   const settingsOpen = useAppStore((s) => s.settingsOpen);
   // 메모 도크가 자동 높이면 보드는 필요한 만큼만(남는 공간은 메모) — 접혀 있으면 보드가 다 쓴다
@@ -151,8 +157,9 @@ function Workspace() {
       {insightsOpen0 && !universeOpen && !settingsOpen && <InsightsView />}
       {universeOpen && !settingsOpen && <UniverseView />}
       {settingsOpen && <SettingsView />}
+      {kanbanOpen && !settingsOpen && <KanbanView />}
       <div
-        className={insightsOpen || settingsOpen ? styles.hidden : styles.boardArea}
+        className={insightsOpen || settingsOpen || kanbanOpen ? styles.hidden : styles.boardArea}
         onMouseDown={() => {
           if (narrow && panelOpen) setPanelOpen(false);
           if (summaryOverlay && summaryOpen) setSummaryOpen(false);
@@ -186,7 +193,10 @@ function Workspace() {
       {searchPanelOpen && !insightsOpen && !settingsOpen ? (
         <SearchPanel overlay={summaryOverlay} />
       ) : (
-        summaryOpen && !insightsOpen && !settingsOpen && <SummaryPanel overlay={summaryOverlay} />
+        summaryOpen &&
+        !insightsOpen &&
+        !settingsOpen &&
+        !kanbanOpen && <SummaryPanel overlay={summaryOverlay} />
       )}
     </div>
   );
@@ -206,5 +216,7 @@ function statusText(journal: JournalStatus): string {
       return STR.integrity.title;
     case "error":
       return STR.status.dbError(journal.message);
+    case "newer":
+      return STR.incompatible.title;
   }
 }

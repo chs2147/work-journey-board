@@ -68,8 +68,12 @@ export function splitCategories(input: SummaryInput) {
 }
 
 /** 항목 하나의 줄들: 본 항목 `- (월) 내용`, 세부 항목 `  · 내용`(여러 줄은 이어 쓰기 들여쓰기) — 경과 복사도 같은 표기 */
-export function summaryItemLines(it: { date: DateStr; depth: Depth; text: string }): string[] {
-  return it.depth === 0 ? lines(MAIN + dayTag(it.date), MAIN_CONT, it.text) : lines(SUB, SUB_CONT, it.text);
+export function summaryItemLines(
+  it: { date: DateStr; depth: Depth; text: string },
+  opt: { dayTag?: boolean } = {},
+): string[] {
+  const tag = opt.dayTag === false ? "" : dayTag(it.date);
+  return it.depth === 0 ? lines(MAIN + tag, MAIN_CONT, it.text) : lines(SUB, SUB_CONT, it.text);
 }
 
 export function buildWeeklySummary(input: SummaryInput, opt: SummaryOptions): string {

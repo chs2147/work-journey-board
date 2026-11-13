@@ -466,3 +466,21 @@ section:first-child > .group {
   text-decoration: line-through;
   text-decoration-thickness: 1px;
 }
+
+/* 칸반 사용자 섹션 칩(improve-v23-spec 4절) */
+.secChip {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 6px;
+  padding: 0 5px;
+  border: 1px solid var(--btn-line);
+  border-radius: 0;
+  background: var(--surface-card);
+  color: var(--text-2);
+  font-size: 10.5px;
+  line-height: 16px;
+  white-space: nowrap;
+  vertical-align: 1px;
+}

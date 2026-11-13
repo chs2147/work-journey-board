@@ -1,5 +1,6 @@
 import frame0018 from "./migrations/0018_note_frames.sql?raw";
 import noteLock0019 from "./migrations/0019_note_delete_lock.sql?raw";
+import kanban0020 from "./migrations/0020_kanban.sql?raw";
 import live0017 from "./migrations/0017_live_widgets.sql?raw";
 import cabi0016 from "./migrations/0016_cabi_net.sql?raw";
 // 스키마 마이그레이션(data-spec 7-5): 번호 순 전진 전용, 기존 데이터가 있으면 직전 백업 후 단일 트랜잭션으로 적용.
@@ -49,6 +50,7 @@ export const MIGRATIONS: Migration[] = [
   { version: 17, sql: live0017 },
   { version: 18, sql: frame0018 },
   { version: 19, sql: noteLock0019 },
+  { version: 20, sql: kanban0020 },
 ];
 
 export const LATEST_SCHEMA_VERSION = MIGRATIONS.at(-1)!.version;
@@ -75,10 +77,12 @@ export async function readSchemaVersion(driver: SqlDriver): Promise<number> {
   return row ? Number(row.value) : 0;
 }
 
+/** 일지 데이터(DB 버전)가 이 앱이 지원하는 것보다 새로울 때(improve-v22-spec 2절) — 열지 않고 앱 업데이트를 안내한다. */
 export class NewerSchemaError extends Error {
+  readonly supported = LATEST_SCHEMA_VERSION;
   constructor(readonly fileVersion: number) {
     super(
-      `이 데이터 파일은 더 새 버전의 앱(스키마 v${fileVersion})에서 만들어졌습니다. 앱을 업데이트하세요.`,
+      `이 일지 데이터(DB v${fileVersion})는 지금 앱 버전과 호환되지 않습니다(이 앱은 DB v${LATEST_SCHEMA_VERSION}까지 지원). 앱을 최신 버전으로 업데이트한 뒤 이용해 주세요.`,
     );
   }
 }

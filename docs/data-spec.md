@@ -240,6 +240,15 @@ CREATE TABLE app_meta (
 - 저장소 `removeNote`는 잠금을 다시 검사(`CabiLockedError`)하고 DELETE에도 `delete_locked=0` 조건. 복제 `duplicateNote` = 노트 1행 + 이미지 자산 n행(새 id·새 소유자)을 한 batch.
 - 직전 백업은 `_pre-migration-v19`.
 
+### 3-v20. 스키마 v20 (2026-11-12, `0020_kanban.sql`)
+- 칸반 보드(improve-v21-spec 10절): `kanban_section`(사용자 섹션만 — TODO·DONE은 행 없음, 이름 1~20자·색·순서) · `entry_item.kanban_section_id`(→ `kanban_section` ON DELETE SET NULL, 부분 색인).
+- 섹션 판정(한 곳 — `domain/kanban.ts` `sectionKeyOf`와 트리거가 같은 식): `flagged = 0 AND flag_done_at IS NOT NULL` = DONE, 아니면 `kanban_section_id`, 없으면 TODO. 완료하면 섹션은 비운다.
+- `item_status_log`: 본 항목(depth 0)의 섹션이 바뀔 때마다 트리거 `entry_item_status_log`가 한 줄(이전/이후 키·그때 이름·UTC 시각·출처 `kanban|board|important|bulk|section|import|migrate`·묶음 id). 항목을 지워도 이력은 남긴다(외래 키 없음 — 삭제 되돌리기로 같은 id가 돌아오면 이어짐).
+- `kanban_ctx`(1행): 쓰기 출처·묶음 id·시각 — `KanbanRepository.wrap`이 batch 첫 문장에서 바꾸고 마지막 문장에서 `board`로 되돌린다. 트리거 본문은 `splitSql`이 `;\n`으로 자르지 않게 한 줄(`; END;`).
+- `kanban_bulk`: 일괄 완료 되돌리기 자료(대상 항목·세부의 이전 상태 JSON, `undone_at`).
+- 칸 저장(`saveCells`)은 **새 행에만** `kanban_section_id`를 쓴다(지운 항목 되살리기·다른 날로 옮기기 — 지운 섹션이면 NULL), 있는 행은 칸반 쪽 값을 그대로 둔다. 가져오기 덮어쓰기 되돌리기 자료도 섹션을 보존한다.
+- 기존 완료 본 항목은 완료 시각으로 `todo → done`(`migrate`) 한 줄씩 채운다. 직전 백업은 `_pre-migration-v20`.
+
 ## 4. 카테고리 활성 계산
 
 ### 4-1. 주 W에 보일 카테고리

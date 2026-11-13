@@ -8,7 +8,7 @@ import {
 } from "../../src/domain/cabi";
 import { emptyDoc, parseNoteDoc, type NoteDoc } from "../../src/domain/note";
 import { importCabiMarkdown, exportCabiMarkdown } from "../../src/domain/cabiMarkdown";
-import { migrate, MIGRATIONS, backupStructureMatches } from "../../src/data/migrate";
+import { migrate, MIGRATIONS, backupStructureMatches, LATEST_SCHEMA_VERSION } from "../../src/data/migrate";
 import { openSqlJsMemory, SqlJsDriver, openSqlJs } from "../../src/data/drivers/sqlJs";
 import { JournalRepository } from "../../src/data/repository";
 const content = {
@@ -88,7 +88,7 @@ describe("Cabi.NET date-independent data", () => {
     let backup = false;
     await migrate(db, {
       beforeMigrate: async (from, to) => {
-        expect([from, to]).toEqual([15, 19]);
+        expect([from, to]).toEqual([15, LATEST_SCHEMA_VERSION]);
         backup = true;
       },
     });

@@ -183,7 +183,7 @@ test("#7 정보·오픈소스 라이선스: 버전·소개 사이트·릴리스 
   await expect(oss).toContainText("© 2021 Kil Hyung-jin");
   await expect(oss).toContainText("고운돋움 (Gowun Dodum)");
   await expect(oss).toContainText("© 2021 The Gowun Dodum Project Authors");
-  await expect(oss.locator("table tr")).toHaveCount(16);
+  await expect(oss.locator("table tr")).toHaveCount(17); // v23: Fluent Emoji 줄
   for (const library of [
     "Three.js",
     "mdast-util-from-markdown",
@@ -193,6 +193,7 @@ test("#7 정보·오픈소스 라이선스: 버전·소개 사이트·릴리스 
     "pdf-lib",
     "@pdf-lib/fontkit",
     "Tiptap Table",
+    "Fluent Emoji Flat (칸반 섹션 아이콘 36개)",
   ]) {
     await expect(oss.getByRole("rowheader", { name: library, exact: true })).toBeVisible();
   }

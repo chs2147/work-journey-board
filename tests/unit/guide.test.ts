@@ -38,9 +38,9 @@ describe("scripts/guide", () => {
     for (const s of spans) expect(macKeys(s), s).toBe(macText(s).replace(/Finder/g, "탐색기"));
   });
 
-  it("지금 저장소: 14장면 + 부록, 대응표·그림·만든 HTML·PDF가 원본과 맞다(CI guide.mjs check)", () => {
+  it("지금 저장소: 15장면 + 부록, 대응표·그림·만든 HTML·PDF가 원본과 맞다(CI guide.mjs check)", () => {
     const scenes = readScenes() as { num: number }[];
-    expect(scenes.map((s) => s.num)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 90]);
+    expect(scenes.map((s) => s.num)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 90]);
     expect(check()).toEqual([]);
     expect(buildHtml()).toContain('id="s11"');
   });

@@ -704,3 +704,160 @@ test("v20 노트 삭제 잠금·복제 후 공간 3회 왕복: 사본·이미지
   await expect(row("가상 v20 잠금 노트").getByTestId("cabi-note-locked")).toBeVisible();
   await expect(row("가상 v20 잠금 노트 (사본)").getByTestId("cabi-note-delete")).toBeVisible();
 });
+
+test("v21 칸반 섹션·상태 이력·시작 화면은 공간마다 따로: 공간을 3번 오가도 그 공간 일지에만(CLAUDE.md 4-7)", async ({
+  page,
+}) => {
+  const kanbanCounts = async () => {
+    const c = await journalCounts(page);
+    return { section: c.kanban_section, log: c.item_status_log, bulk: c.kanban_bulk };
+  };
+  const hop = async (n: 1 | 2, name: string) => {
+    await page.keyboard.press(`Control+Alt+Digit${n}`);
+    await expect(page).toHaveTitle(`Work Journey Board — ${name}`);
+  };
+  const base2 = await (async () => {
+    await hop(2, "개인");
+    await expect(page.getByTestId("week-title")).toContainText("2026-W43");
+    const c = await kanbanCounts();
+    await hop(1, "회사");
+    await expect(page.getByTestId("week-title")).toContainText("2026-W43");
+    return c;
+  })();
+  // 회사: 항목 추가 → 섹션 만들기 → 카드를 섹션으로 → 시작 화면 = 칸반
+  await page.keyboard.press("Alt+Digit6");
+  await expect(page.getByTestId("kanban-view")).toBeVisible();
+  await page.locator("[data-testid='kanban-col-todo'] [data-testid='kanban-add-card']").click();
+  const dlg = page.getByTestId("kanban-item-dialog");
+  await dlg.getByTestId("kanban-item-category").selectOption({ index: 0 });
+  await dlg.getByTestId("kanban-item-line").first().fill("가상 공간 칸반 카드");
+  await dlg.getByTestId("kanban-item-save").click();
+  await page.getByTestId("kanban-add-section").click();
+  await page.getByTestId("kanban-section-dialog").getByRole("textbox").fill("가상 섹션");
+  await page.getByTestId("kanban-section-save").click();
+  const theCard = page
+    .getByTestId("kanban-card")
+    .filter({ has: page.getByTestId("kanban-card-text").getByText("가상 공간 칸반 카드", { exact: true }) });
+  await theCard.dragTo(page.getByTestId("kanban-col-section"));
+  await expect(page.getByTestId("kanban-col-section").getByText("가상 공간 칸반 카드")).toBeVisible();
+  await page.getByTestId("rail-settings").click();
+  await page.locator("#settings-tab-screen").click();
+  await page.getByTestId("start-view-select").selectOption("kanban");
+  await expect(page.getByTestId("start-view-select")).toHaveValue("kanban");
+  const company = await kanbanCounts();
+  expect(company.section).toBe(1);
+  expect(company.log).toBeGreaterThanOrEqual(1);
+
+  for (let round = 0; round < 3; round++) {
+    await hop(2, "개인");
+    // 개인: 시작 화면 = 주간 보드(기본), 섹션·이력은 그대로(늘지 않음)
+    await expect(page.getByTestId("week-title")).toContainText("2026-W43");
+    await expect(page.getByTestId("kanban-view")).toHaveCount(0);
+    expect(await kanbanCounts()).toEqual(base2);
+    await hop(1, "회사");
+    // 회사: 시작 화면 = 칸반, 카드는 그 섹션에 그대로
+    await expect(page.getByTestId("kanban-view")).toBeVisible();
+    await expect(page.getByTestId("kanban-col-section").getByTestId("kanban-col-name")).toHaveText(
+      "가상 섹션",
+    );
+    await expect(page.getByTestId("kanban-col-section").getByText("가상 공간 칸반 카드")).toBeVisible();
+    expect(await kanbanCounts()).toEqual(company);
+  }
+});
+
+test("v22 칸반 배치 모드·섹션 순서는 공간마다 따로: 공간을 3번 오가도 그 공간 일지에만(CLAUDE.md 4-7)", async ({
+  page,
+}) => {
+  const hop = async (n: 1 | 2, name: string) => {
+    await page.keyboard.press(`Control+Alt+Digit${n}`);
+    await expect(page).toHaveTitle(`Work Journey Board — ${name}`);
+  };
+  const board = page.getByTestId("kanban-board");
+  await hop(2, "개인");
+  await page.keyboard.press("Alt+Digit6");
+  await expect(board).toHaveAttribute("data-layout", "equal");
+  const base2 = await journalCounts(page);
+  await hop(1, "회사");
+  // 회사: 섹션 둘 → 순서 바꾸기 → 자유 배치 → 상자 크기
+  await page.keyboard.press("Alt+Digit6");
+  for (const n of ["가상 A", "가상 B"]) {
+    await page.getByTestId("kanban-add-section").click();
+    await page.getByTestId("kanban-section-dialog").getByRole("textbox").fill(n);
+    await page.getByTestId("kanban-section-save").click();
+    await expect(page.getByTestId("kanban-section-dialog")).toHaveCount(0);
+  }
+  await page.getByTestId("kanban-col-section").first().getByTestId("kanban-col-head").focus();
+  await page.keyboard.press("Alt+Shift+ArrowRight");
+  const names = () => page.getByTestId("kanban-col-name").allTextContents();
+  await expect.poll(names).toEqual(["TODO", "가상 B", "가상 A", "DONE"]);
+  await page.getByTestId("kanban-layout-free").click();
+  await expect(board).toHaveAttribute("data-layout", "free");
+  const done = page.getByTestId("kanban-free-item").last();
+  const h = (await done.getByTestId("kanban-free-resize").boundingBox())!;
+  await page.mouse.move(h.x + 5, h.y + 5);
+  await page.mouse.down();
+  await page.mouse.move(h.x + 85, h.y - 100, { steps: 5 });
+  await page.mouse.up();
+  const width = Math.round((await done.boundingBox())!.width);
+  const company = await journalCounts(page);
+
+  for (let round = 0; round < 3; round++) {
+    await hop(2, "개인");
+    await page.keyboard.press("Alt+Digit6");
+    await expect(board).toHaveAttribute("data-layout", "equal");
+    await expect.poll(names).toEqual(["TODO", "DONE"]);
+    expect(await journalCounts(page)).toEqual(base2);
+    await hop(1, "회사");
+    await page.keyboard.press("Alt+Digit6");
+    await expect(board).toHaveAttribute("data-layout", "free");
+    await expect.poll(names).toEqual(["TODO", "가상 B", "가상 A", "DONE"]);
+    expect(Math.round((await page.getByTestId("kanban-free-item").last().boundingBox())!.width)).toBe(width);
+    expect(await journalCounts(page)).toEqual(company);
+  }
+});
+
+test("v23 칸반 열 순서(TODO·DONE 포함)·섹션 아이콘은 공간마다 따로: 공간을 3번 오가도 그 공간 일지에만(CLAUDE.md 4-7)", async ({
+  page,
+}) => {
+  const hop = async (n: 1 | 2, name: string) => {
+    await page.keyboard.press(`Control+Alt+Digit${n}`);
+    await expect(page).toHaveTitle(`Work Journey Board — ${name}`);
+  };
+  const names = () => page.getByTestId("kanban-col-name").allTextContents();
+  const todoIcon = () => page.getByTestId("kanban-col-todo").getByTestId("kanban-col-icon").locator("svg");
+  await hop(2, "개인");
+  await page.keyboard.press("Alt+Digit6");
+  await expect.poll(names).toEqual(["TODO", "DONE"]);
+  const base2 = await journalCounts(page);
+  await hop(1, "회사");
+  await page.keyboard.press("Alt+Digit6");
+  // 회사: 섹션 하나 → TODO를 맨 뒤로 → TODO 아이콘 🚀
+  await page.getByTestId("kanban-add-section").click();
+  await page.getByTestId("kanban-section-dialog").getByRole("textbox").fill("가상 검토");
+  await page.getByTestId("kanban-section-save").click();
+  await expect(page.getByTestId("kanban-section-dialog")).toHaveCount(0);
+  const todoHead = page.getByTestId("kanban-col-todo").getByTestId("kanban-col-head");
+  await todoHead.focus();
+  await page.keyboard.press("Alt+Shift+ArrowRight");
+  await expect.poll(names).toEqual(["가상 검토", "TODO", "DONE"]);
+  await todoHead.focus();
+  await page.keyboard.press("Alt+Shift+ArrowRight");
+  await expect.poll(names).toEqual(["가상 검토", "DONE", "TODO"]);
+  await page.getByTestId("kanban-col-todo").getByTestId("kanban-col-icon").click();
+  await page.getByTestId("kanban-icon-picker").locator("button[data-icon='rocket']").click();
+  await expect(todoIcon()).toHaveAttribute("data-icon", "rocket");
+  const company = await journalCounts(page);
+
+  for (let round = 0; round < 3; round++) {
+    await hop(2, "개인");
+    await page.keyboard.press("Alt+Digit6");
+    await expect.poll(names).toEqual(["TODO", "DONE"]);
+    await expect(todoIcon()).toHaveAttribute("data-icon", "clipboard");
+    expect(await journalCounts(page)).toEqual(base2);
+    await hop(1, "회사");
+    await page.keyboard.press("Alt+Digit6");
+    await expect.poll(names).toEqual(["가상 검토", "DONE", "TODO"]);
+    await expect(todoIcon()).toHaveAttribute("data-icon", "rocket");
+    expect(await journalCounts(page)).toEqual(company);
+  }
+});

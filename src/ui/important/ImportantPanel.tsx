@@ -1,4 +1,6 @@
 // 왼쪽 중요 업무 패널(important-repeat-spec 2-3~2-5): 모든 주의 중요 항목을 묶음 › 업무별로(improve-1026v2-spec 8절), 체크 = 처리 완료, 누르면 그 칸으로.
+import { celebrateDone, columnIcon, columnName, revealInKanban, useKanban } from "../kanban/kanbanStore";
+import { SectionIconImg } from "../kanban/SectionIcon";
 import { useEffect, useRef, type KeyboardEvent } from "react";
 import { groupImportant } from "../../domain/important";
 import type { ImportantItem } from "../../domain/types";
@@ -19,6 +21,12 @@ import {
 import { IconDone } from "../common/icons";
 import { dueView } from "../board/dueView";
 import styles from "./ImportantPanel.module.css";
+
+/** 칸반이 보이면 그 카드로(주간 보드로 넘어가지 않음 — improve-v21-spec 2-1), 아니면 주간 보드 그 칸으로 */
+function revealFromPanel(it: Parameters<typeof revealItem>[0]) {
+  if (useKanban.getState().open) return revealInKanban(it.id);
+  return revealItem(it);
+}
 
 /** 처리한 날(내 PC 날짜)로 묶음 — 목록은 이미 최근 순 */
 function doneDays(items: ImportantItem[]): [DateStr, ImportantItem[]][] {
@@ -59,7 +67,8 @@ export function ImportantPanel({ overlay }: { overlay: boolean }) {
     } else if (e.key === " ") {
       e.preventDefault();
       (rows[i + 1] ?? rows[i - 1])?.focus();
-      void completeImportant(it.id);
+      celebrateDone();
+      void completeImportant(it.id, false, "important");
     } else if (e.key === "Escape") {
       e.preventDefault();
       focusStartCell();
@@ -163,7 +172,10 @@ export function ImportantPanel({ overlay }: { overlay: boolean }) {
                               className={styles.check}
                               aria-label={STR.important.complete(it.text)}
                               title={STR.important.completeTitle}
-                              onClick={() => void completeImportant(it.id)}
+                              onClick={() => (
+                                celebrateDone(),
+                                void completeImportant(it.id, false, "important")
+                              )}
                             >
                               ✓
                             </button>
@@ -173,7 +185,7 @@ export function ImportantPanel({ overlay }: { overlay: boolean }) {
                               data-row
                               data-testid="important-row"
                               title={STR.dueDate.rowTitle(it.categoryName, shortDateLabel(it.date))}
-                              onClick={() => void revealItem(it)}
+                              onClick={() => void revealFromPanel(it)}
                               onKeyDown={(e) => onRowKey(e, it)}
                             >
                               <span className={styles.dueLine}>
@@ -182,6 +194,7 @@ export function ImportantPanel({ overlay }: { overlay: boolean }) {
                                   style={{ background: `var(--cat-${it.categoryColor})` }}
                                 />
                                 <span className={styles.dueText}>{it.text}</span>
+                                <SectionChip id={it.kanbanSectionId} />
                               </span>
                             </button>
                           </li>
@@ -206,7 +219,7 @@ export function ImportantPanel({ overlay }: { overlay: boolean }) {
                           className={styles.check}
                           aria-label={STR.important.complete(it.text)}
                           title={STR.important.completeTitle}
-                          onClick={() => void completeImportant(it.id)}
+                          onClick={() => (celebrateDone(), void completeImportant(it.id, false, "important"))}
                         >
                           ✓
                         </button>
@@ -215,11 +228,12 @@ export function ImportantPanel({ overlay }: { overlay: boolean }) {
                           className={styles.main}
                           data-row
                           data-testid="important-row"
-                          onClick={() => void revealItem(it)}
+                          onClick={() => void revealFromPanel(it)}
                           onKeyDown={(e) => onRowKey(e, it)}
                         >
                           {it.parentText && <span className={styles.parent}>{it.parentText} ›</span>}
                           <span className={styles.text}>{it.text}</span>
+                          <SectionChip id={it.kanbanSectionId} />
                           {/* 업무명은 머리에 있으니 빼고, 날짜는 "오늘" 묶음이면 생략(8절) */}
                           {(g.key !== "today" || it.startTime) && (
                             <span className={styles.meta}>
@@ -270,7 +284,11 @@ export function ImportantPanel({ overlay }: { overlay: boolean }) {
                   {items.map((it) => (
                     <li key={it.id} className={styles.doneRow} data-testid="week-done-row">
                       <IconDone size={14} />
-                      <button type="button" className={styles.doneText} onClick={() => void revealItem(it)}>
+                      <button
+                        type="button"
+                        className={styles.doneText}
+                        onClick={() => void revealFromPanel(it)}
+                      >
                         {it.text}
                       </button>
                       <span className={styles.meta}>{shortDateLabel(it.date)}</span>
@@ -278,7 +296,7 @@ export function ImportantPanel({ overlay }: { overlay: boolean }) {
                         type="button"
                         className={styles.restore}
                         aria-label={STR.important.restoreAria(it.text)}
-                        onClick={() => void undoImportant(it.id)}
+                        onClick={() => void undoImportant(it.id, false, "important")}
                       >
                         {STR.important.restore}
                       </button>
@@ -303,4 +321,16 @@ function dueDays(items: ImportantItem[]): [string, ImportantItem[]][] {
     else out.push([it.dueDate!, [it]]);
   }
   return out;
+}
+
+/** 칸반 사용자 섹션에 있는 ★ 항목의 섹션 칩(improve-v23-spec 4절) — TODO는 칩 없음 */
+function SectionChip({ id }: { id?: string | null }) {
+  const st = useKanban();
+  if (!id || !st.sections.some((x) => x.id === id)) return null;
+  return (
+    <span className={styles.secChip} data-testid="important-section-chip">
+      <SectionIconImg id={columnIcon(id, st)} size={12} />
+      {columnName(id, st)}
+    </span>
+  );
 }

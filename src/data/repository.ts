@@ -1,4 +1,5 @@
 import { CabiRepository } from "./cabiRepository";
+import { KanbanRepository } from "./kanbanRepository";
 import { normalizeBackupPolicy } from "./backupPolicy";
 import { copyablePrevious } from "../domain/previousItems";
 // 영속 데이터 접근의 유일한 경로(CLAUDE.md 4-3). UI는 이 클래스만 쓰고 SQL을 직접 실행하지 않는다.
@@ -297,6 +298,8 @@ interface ItemSnapshot {
   start_time?: string | null;
   /** v13부터 */
   due_date?: string | null;
+  /** v20부터 */
+  kanban_section_id?: string | null;
   created_at: string;
   updated_at: string;
   import_id: string | null;
@@ -389,6 +392,7 @@ interface ItemRow {
   recurrence_id: string | null;
   start_time: string | null;
   due_date?: string | null;
+  kanban_section_id?: string | null;
 }
 interface ImportantRow extends ItemRow {
   category_name: string;
@@ -425,7 +429,7 @@ export interface RepeatPreview {
 }
 
 const ITEM_COLUMNS =
-  "id, date, category_id, seq, depth, text, flagged, flag_done_at, completion_was_flagged, recurrence_id, start_time, due_date";
+  "id, date, category_id, seq, depth, text, flagged, flag_done_at, completion_was_flagged, recurrence_id, start_time, due_date, kanban_section_id";
 
 const toCategory = (r: CategoryRow): Category => ({
   id: r.id,
@@ -453,6 +457,7 @@ const toItem = (r: ItemRow): EntryItem => ({
   recurrenceId: r.recurrence_id,
   startTime: r.start_time ?? null,
   dueDate: r.due_date ?? null,
+  kanbanSectionId: r.kanban_section_id ?? null,
 });
 
 /**
@@ -498,6 +503,7 @@ export class JournalRepository {
 
   private readonly sourceDb: SqlDriver;
   readonly cabi: CabiRepository;
+  readonly kanban: KanbanRepository;
   constructor(
     db: SqlDriver,
     private readonly clock: () => Date = () => new Date(),
@@ -539,6 +545,10 @@ export class JournalRepository {
       close: () => db.close(),
     };
     this.cabi = new CabiRepository(this.db, this, this.clock);
+    this.kanban = new KanbanRepository(this.db, this.clock, async () => {
+      const groups = groupPeriods((await this.listCategories()).periods);
+      return new Set([...groups].filter(([, ps]) => !openPeriod(ps)).map(([id]) => id));
+    });
   }
 
   /** 지금까지의 쓰기 횟수(백업 판단용) */
@@ -1392,7 +1402,7 @@ export class JournalRepository {
    */
   async saveCell(date: DateStr, categoryId: string, drafts: ItemDraft[]): Promise<EntryItem[]> {
     const { stmts, items } = this.cellStatements(date, categoryId, drafts);
-    await this.db.batch(stmts);
+    await this.db.batch(this.withBoardCtx(stmts));
     return items;
   }
 
@@ -1403,7 +1413,13 @@ export class JournalRepository {
    */
   async saveCells(cells: { date: DateStr; categoryId: string; items: ItemDraft[] }[]): Promise<void> {
     const stmts = cells.flatMap((c) => this.cellStatements(c.date, c.categoryId, c.items).stmts);
-    await this.db.batch(stmts);
+    await this.db.batch(this.withBoardCtx(stmts));
+  }
+
+  /** 주간 보드 저장도 상태 이력의 출처·시각을 맞춘다(improve-v21-spec 4절) */
+  private withBoardCtx(stmts: SqlStatement[]): SqlStatement[] {
+    const { begin, end } = this.kanban.ctxStatements("board");
+    return [begin, ...stmts, end];
   }
 
   async itemRelations(ids: string[]): Promise<ItemRelations> {
@@ -1633,6 +1649,7 @@ export class JournalRepository {
       recurrenceId: d.recurrenceId ?? null,
       startTime: isStartTime(d.startTime) ? d.startTime : null,
       dueDate: isDueDate(d.dueDate) ? d.dueDate : null,
+      kanbanSectionId: d.depth === 0 ? (d.kanbanSectionId ?? null) : null,
     }));
     const ids = items.map((i) => i.id);
     const ts = this.ts();
@@ -1644,9 +1661,10 @@ export class JournalRepository {
         params: [date, categoryId, ...ids],
       },
       ...items.map((it) => ({
+        // 칸반 섹션은 새 행(지운 항목 되살리기·다른 날로 옮기기)에만 — 있는 행은 칸반 쪽 값을 그대로 둔다. 지운 섹션이면 NULL
         sql: `INSERT INTO entry_item (id, date, category_id, seq, depth, text, flagged, flag_done_at, completion_was_flagged, recurrence_id,
-                                      start_time, due_date, created_at, updated_at)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                      start_time, due_date, created_at, updated_at, kanban_section_id)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, (SELECT id FROM kanban_section WHERE id = ?))
               ON CONFLICT(id) DO UPDATE SET
                 date = excluded.date, category_id = excluded.category_id, seq = excluded.seq,
                 depth = excluded.depth, text = excluded.text, flagged = excluded.flagged,
@@ -1672,6 +1690,7 @@ export class JournalRepository {
           it.dueDate ?? null,
           ts,
           ts,
+          it.flagDoneAt ? null : (it.kanbanSectionId ?? null),
         ],
       })),
     ];
@@ -1682,7 +1701,7 @@ export class JournalRepository {
   private async importantRows(where: string, params: SqlParam[]): Promise<ImportantItem[]> {
     const rows = await this.db.select<ImportantRow>(
       `SELECT e.id, e.date, e.category_id, e.seq, e.depth, e.text, e.flagged, e.flag_done_at, e.completion_was_flagged, e.recurrence_id,
-              e.start_time, e.due_date, c.name AS category_name, c.color AS category_color, c.sort_order AS category_order,
+              e.start_time, e.due_date, e.kanban_section_id, c.name AS category_name, c.color AS category_color, c.sort_order AS category_order,
               CASE WHEN e.depth = 1 THEN (
                 SELECT p.text FROM entry_item p
                 WHERE p.date = e.date AND p.category_id = e.category_id AND p.depth = 0 AND p.seq < e.seq
@@ -1708,6 +1727,7 @@ export class JournalRepository {
       flagDoneAt: r.flag_done_at,
       startTime: r.start_time ?? null,
       dueDate: r.due_date ?? null,
+      kanbanSectionId: r.kanban_section_id ?? null,
     }));
   }
 
@@ -1742,6 +1762,7 @@ export class JournalRepository {
 
   /** 아직 처리하지 않은 중요 항목 전부(모든 주). 묶음·정렬은 domain/important.ts */
   async listImportant(): Promise<ImportantItem[]> {
+    // 미완료 ★는 어느 칸반 섹션에 있든 표시(improve-v23-spec 4절 — v21 D3 되돌림)
     return this.importantRows("e.flagged = 1", []);
   }
 
@@ -1759,33 +1780,72 @@ export class JournalRepository {
     return rows.sort((a, b) => (b.flagDoneAt ?? "").localeCompare(a.flagDoneAt ?? ""));
   }
 
-  /** 중요 업무 목록에서 처리 완료: 강조 해제 + 완료 시각 기록 */
-  async completeFlag(id: string): Promise<{ wasImportant: boolean; at: string } | null> {
+  /**
+   * 처리 완료: 강조 해제 + 완료 시각 기록 + 딸린 세부 항목도 함께 완료(improve-v21-spec D4) + 칸반 섹션 표시 지움.
+   * 주간 보드·중요 업무 목록·칸반이 같은 규칙을 쓴다. `children` = 함께 완료한 세부 항목 id
+   */
+  async completeFlag(
+    id: string,
+    source: "board" | "important" | "kanban" = "board",
+  ): Promise<{ wasImportant: boolean; at: string; children: string[] } | null> {
     const ts = this.ts();
-    await this.db.execute(
-      "UPDATE entry_item SET completion_was_flagged = flagged, flagged = 0, flag_done_at = ?, updated_at = ? WHERE id = ? AND flag_done_at IS NULL",
-      [ts, ts, id],
-    );
+    const kids = await this.kanban.childIds(id);
+    const [before] = await this.db.select<{ depth: number }>("SELECT depth FROM entry_item WHERE id = ?", [
+      id,
+    ]);
+    const children = before && Number(before.depth) === 0 ? kids : [];
+    const open =
+      children.length > 0
+        ? await this.db.select<{ id: string }>(
+            `SELECT id FROM entry_item WHERE id IN (${children.map(() => "?").join(", ")}) AND NOT (flagged = 0 AND flag_done_at IS NOT NULL)`,
+            children,
+          )
+        : [];
+    const { begin, end } = this.kanban.ctxStatements(source);
+    await this.db.batch([
+      begin,
+      ...this.kanban.completeStatements(
+        id,
+        open.map((r) => r.id),
+        ts,
+      ),
+      end,
+    ]);
     const [row] = await this.db.select<{ completion_was_flagged: number; flag_done_at: string | null }>(
       "SELECT completion_was_flagged, flag_done_at FROM entry_item WHERE id = ?",
       [id],
     );
     return row?.flag_done_at
-      ? { wasImportant: row.completion_was_flagged !== 0, at: row.flag_done_at }
+      ? {
+          wasImportant: row.completion_was_flagged !== 0,
+          at: row.flag_done_at,
+          children: open.map((r) => r.id),
+        }
       : null;
   }
 
-  /** 완료 전 중요 표시를 복원한다(일반 항목이면 별표를 만들지 않는다). */
-  async undoComplete(id: string): Promise<boolean> {
-    const [row] = await this.db.select<{ completion_was_flagged: number }>(
-      "SELECT completion_was_flagged FROM entry_item WHERE id = ?",
-      [id],
-    );
+  /** 완료 전 중요 표시를 복원한다(일반 항목이면 별표를 만들지 않는다). 함께 완료된 세부 항목도 되살린다(D7) */
+  async undoComplete(id: string, source: "board" | "important" | "kanban" = "board"): Promise<boolean> {
+    const [row] = await this.db.select<{
+      completion_was_flagged: number;
+      flag_done_at: string | null;
+      depth: number;
+    }>("SELECT completion_was_flagged, flag_done_at, depth FROM entry_item WHERE id = ?", [id]);
     const important = row?.completion_was_flagged !== 0;
-    await this.db.execute(
-      "UPDATE entry_item SET flagged = completion_was_flagged, flag_done_at = NULL, updated_at = ? WHERE id = ?",
-      [this.ts(), id],
-    );
+    const children = row && Number(row.depth) === 0 && row.flag_done_at ? await this.kanban.childIds(id) : [];
+    const { begin, end } = this.kanban.ctxStatements(source);
+    await this.db.batch([
+      begin,
+      ...(row?.flag_done_at
+        ? this.kanban.reopenStatements(id, children, row.flag_done_at, null)
+        : [
+            {
+              sql: "UPDATE entry_item SET flagged = completion_was_flagged, flag_done_at = NULL, updated_at = ? WHERE id = ?",
+              params: [this.ts(), id],
+            },
+          ]),
+      end,
+    ]);
     return important;
   }
 
@@ -3182,7 +3242,7 @@ export class JournalRepository {
       const ids = plan.deleteItemIds.slice(i, i + 500);
       undo.deletedItems.push(
         ...(await this.db.select<ItemSnapshot>(
-          `SELECT id, date, category_id, seq, depth, text, flagged, flag_done_at, completion_was_flagged, recurrence_id, start_time, due_date, created_at, updated_at, import_id
+          `SELECT id, date, category_id, seq, depth, text, flagged, flag_done_at, completion_was_flagged, recurrence_id, start_time, due_date, kanban_section_id, created_at, updated_at, import_id
            FROM entry_item WHERE id IN (${ids.map(() => "?").join(", ")})`,
           ids,
         )),
@@ -3303,8 +3363,8 @@ export class JournalRepository {
     for (const it of undo.deletedItems)
       stmts.push({
         sql: `INSERT OR IGNORE INTO entry_item (id, date, category_id, seq, depth, text, flagged, flag_done_at, completion_was_flagged, recurrence_id,
-                                                start_time, due_date, created_at, updated_at, import_id)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                                                start_time, due_date, created_at, updated_at, import_id, kanban_section_id)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, (SELECT id FROM kanban_section WHERE id = ?))`,
         params: [
           it.id,
           it.date,
@@ -3321,6 +3381,7 @@ export class JournalRepository {
           it.created_at,
           it.updated_at,
           it.import_id,
+          it.kanban_section_id ?? null,
         ],
       });
     for (const n of undo.notes)

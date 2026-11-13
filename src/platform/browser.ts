@@ -27,6 +27,7 @@ import { baseName, dirOf, isOneDriveLike, parseConfig, type AppConfig, type Plat
 //   ?existing=/경로     그 폴더에 샘플이 든 기존 일지를 미리 만들어 둠(첫 실행 "기존 일지 열기" 시험)
 //   ?config=/경로       설정의 저장 폴더를 그 경로로(없는 폴더면 "저장 폴더를 찾을 수 없음" 화면)
 //   ?ws=2               워크스페이스 2개(회사 = 기본 샘플, 개인 = /demo/WorkJourney-개인 빈 일지) — multi-board-spec
+//   ?newer=1 / ?newer=2  기본 공간 / (ws=2일 때) 개인 공간 일지의 DB 버전을 99로 — "앱 업데이트 필요" 화면·전환 거부 시험(improve-v22-spec 2절)
 //   ?update=0.9.0       새 판 확인이 이 판을 돌려준다(가짜 — 인터넷에 묻지 않음) · ?update=fail = 연결 실패 · ?update=bad = SHA 불일치
 const params = new URLSearchParams(globalThis.location?.search ?? "");
 const isDate = (s: string | null) => /^\d{4}-\d{2}-\d{2}$/.test(s ?? "");
@@ -71,6 +72,13 @@ async function makeJournal(dir: string, withSample: boolean | SampleData) {
               ? ((await import("../../fixtures/sample-showcase.json")).default as SampleData)
               : sample,
     );
+  await d.close();
+}
+
+/** 시험용: 그 폴더 일지의 DB 버전을 99로 적는다(다른 PC의 최신 앱이 올린 상황) */
+export async function bumpSchema(dir: string) {
+  const d = await fs.openDatabase(fs.join(dir, DATA_FILE));
+  await d.execute("UPDATE app_meta SET value = '99' WHERE key = 'schema_version'");
   await d.close();
 }
 
@@ -136,6 +144,9 @@ const ready = (async () => {
       { dir: DEMO_DIR_2, name: "개인", color: "c3", icon: "notebook", updatedAt: 1 },
     ];
   }
+  // ?newer=1|2 — 앱보다 새 DB 버전 흉내(다른 PC의 최신 앱이 올린 일지)
+  const newer = params.get("newer");
+  if (newer === "1" || newer === "2") await bumpSchema(newer === "1" ? DEMO_DIR : DEMO_DIR_2);
   // ?theme=dark — 이 PC 설정(config.json)에 테마가 적혀 있는 상태 흉내(improve-1027v5-spec 4-2)
   const theme = params.get("theme");
   if (config && isThemePref(theme)) config.theme = theme;

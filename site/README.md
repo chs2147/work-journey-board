@@ -8,11 +8,13 @@ Work Journey Board 소개를 위한 정적 사이트입니다.
 - `style.css`: 화면 스타일과 반응형 디자인
 - `motion.js`: 화면 등장·업무 기록의 모션 효과
 - `features.css`, `features.js`: Universe 연결망·초점 전환과 Cabi.NET 작업 공간 모션, 반응형 표시·모션 제어(OS 모션 줄이기 설정 따름)
+- `kanban.css`, `kanban.js`: 칸반 보드 소개 섹션 — 7장면 설명 모션(손 커서로 카드 잡기 → 끌기 → DONE 축하 → 날짜별 한 줄 → 섹션 순서 바꾸기·아이콘 → 자유 배치 → 카드 추가 창 세 줄 = 카드 세 장), 장면 고르기(OS 모션 줄이기·사이트 모션 끄기 따름)
+- `board-motion.css`, `board-motion.js`: 첫 화면 주간 보드 모션(오늘 칸에 한 줄 입력 → 세부 → ★ → ⏳ 마감일 → 메모 연결, 키캡 표시, 화면 밖에서는 멈춤) · 모바일 머리 [이용 가이드] 단추(improve-v23-spec 10절)
 - `icon.svg`, `wordmark.svg`: 앱에서 사용하는 아이콘과 워드마크
 - `gowun-dodum.woff2`: 사이트에서 사용하는 고운돋움 서체
 - `font-license.txt`: 고운돋움의 SIL Open Font License 1.1 전문
 - `pretendard-regular.woff2`, `pretendard-license.txt`: 신규 소개 섹션의 Pretendard Regular 공식 글꼴과 SIL OFL 1.1 전문
-- `shots/universe.webp`, `shots/cabi-*.webp`: 실제 앱의 가상 데이터 화면(원본은 가이드 및 Cabi.NET 구현 검토 자료)
+- `shots/*.webp`: 실제 앱(1.35)의 가상 데이터 화면 — `npm run dev`를 띄운 채 `node scripts/site/shots.mjs`로 다시 찍는다(README용 `docs/screenshots/*-signature.png`도 함께). 링크 미리보기 `og-image.png`는 `node scripts/site/og.mjs`
 
 ## 다른 프로젝트에 배포하기
 
@@ -42,3 +44,8 @@ Work Journey Board 소개를 위한 정적 사이트입니다.
 - OS 모션 줄이기 설정을 따르고, 화면 밖/숨김 상태에서는 연속 렌더링을 멈춥니다. 우측 아래 모션 정지/재생 버튼은 2026-11-10 사용자 지시로 없앴습니다.
 - 신규 이미지·글꼴·스크립트는 모두 `site/` 내부 상대 경로로 제공하여 정적 배포에 저장소의 `docs/`나 `node_modules/`가 필요하지 않습니다.
 - Pages 자동 배포는 기존대로 main의 `site/` 변경 때 실행됩니다. 작업 브랜치 푸시는 실제 사이트 게시를 실행하지 않습니다.
+
+## 칸반 보드 소개 (1.35)
+
+- 첫 화면 바로가기·상단 메뉴·페이지 안 이동에 칸반 보드를 더하고, 01 기록 다음 02 섹션으로 소개합니다(이후 섹션 번호 03~08).
+- 설명 모션(TODO → 검토 중 → DONE 축하 → 날짜별 한 줄) · 기능 다섯 가지 · 실제 화면 3장(칸반 보드·자유 배치·카드 추가 창).

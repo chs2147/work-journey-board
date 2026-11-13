@@ -181,3 +181,30 @@
   background: var(--surface-card);
   color: var(--text-1);
 }
+
+/* 앱과 호환되지 않는 일지(improve-v22-spec 2-2) */
+.incompatible {
+  border-left: 5px solid var(--warn, #c9862a);
+  border-radius: 0; /* 띠가 있는 상자는 직각(UI 강조 띠 규칙) */
+  max-width: 720px;
+}
+.facts {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: var(--sp-1) var(--sp-3);
+  margin: var(--sp-3) 0 var(--sp-4);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--surface-sub);
+  border: 1px solid var(--line);
+  font-size: var(--fs-sm);
+}
+.facts dt {
+  color: var(--text-3);
+}
+.facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.bad {
+  color: var(--danger);
+}

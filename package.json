@@ -1,7 +1,7 @@
 {
   "name": "work-journey-board",
   "private": true,
-  "version": "1.24.3",
+  "version": "1.40.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -47,6 +47,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@iconify-json/fluent-emoji-flat": "1.2.6",
     "@playwright/test": "^1.64.1",
     "@tauri-apps/cli": "^2.12.4",
     "@testing-library/dom": "^10.4.2",

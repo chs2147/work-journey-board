@@ -147,7 +147,7 @@ test("경과 복사 = 지금 기간 평문(자동 집계 표기, 연결 메모 [
   expect(text.split("\n")[0]).toBe(`[업무 경과] ${A}`);
   expect(text).toContain("기간 2026-W32 ~ 2026-W43");
   expect(text).toContain("■ 2026-W42 (10/12~10/18)");
-  expect(text).toContain(`- (화) ${LINK_TEXT}\n  [메모] 배포 순서 확인 필요`);
+  expect(text).toContain(`(화) 10/13\n- ${LINK_TEXT}\n  [메모] 배포 순서 확인 필요`);
   expect(text).toContain("(2026-W37~W38 기록 없음)");
   expect(text).not.toContain("★");
 });

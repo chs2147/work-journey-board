@@ -16,7 +16,12 @@ import {
   type BackupControl,
 } from "../../data/backupPolicy";
 import { inspectBackup, manualBackup } from "../../data/session";
-import { integrityCheck } from "../../data/migrate";
+import {
+  integrityCheck,
+  LATEST_SCHEMA_VERSION,
+  NewerSchemaError,
+  readSchemaVersion,
+} from "../../data/migrate";
 import {
   backupIfFirstToday,
   backupOnExit,
@@ -46,6 +51,7 @@ import {
 import { detachSummary, flushDraft, initSummary } from "../summary/summaryStore";
 import { detachNote, finishNote, flushNote, initNote, useNote } from "../note/noteStore";
 import { detachInsights, initInsights, useInsights } from "../insights/insightsStore";
+import { detachKanban, initKanban, openKanban } from "../kanban/kanbanStore";
 import { restoreCabinet, shutdownCabinet, suspendCabinet } from "../cabinet/cabinetStore";
 import { closeInsights } from "../insights/insightsStore";
 import { today as todayOf } from "../../domain/week";
@@ -87,6 +93,8 @@ export async function start() {
   const p = await loadPlatform();
   set({ platform: p });
   p.onExit(onExit);
+  // 창이 다시 활성화되면 열린 일지를 다른 PC의 최신 앱이 올렸는지 확인(improve-v22-spec 2-1 A2)
+  globalThis.addEventListener?.("focus", () => void lockIfIncompatible());
   const config = await p.loadConfig();
   // 테마 정본 = config.json, 없으면 이 창이 이미 적용한 사본(public/theme-early.js).
   // 처음 설치(설정 없음) = 시그니처, 이미 쓰던 사용자가 테마를 고른 적 없으면 = 시스템 설정 그대로(release-phase2-spec 1절)
@@ -213,6 +221,7 @@ async function autoBackup(kind: BackupKind): Promise<void> {
 async function autoBackupWork(kind: BackupKind): Promise<void> {
   const j = get().journal;
   if (j.state !== "ready" || backupRunning || j.driver === closingJournal) return;
+  if (kind !== "exit" && (await lockIfIncompatible())) return;
   const p = platform();
   backupRunning = true;
   if (kind !== "exit") set({ backingUp: true });
@@ -300,6 +309,7 @@ function detachAll() {
   detachSummary();
   detachNote();
   detachInsights();
+  detachKanban();
   for (const f of detachList()) f();
 }
 
@@ -364,10 +374,13 @@ async function activate(driver: SqlDriver, dataDir: string) {
   await initSummary(repo);
   await initNote(repo);
   await initInsights(repo);
+  await initKanban(repo);
   await syncWorkspace(repo, dataDir);
   set({ journal: { state: "ready", driver, repo, dataDir, sqliteVersion: row?.v ?? "?" } });
   closingJournal = null;
   lastBackup = { writes: repo.writeCount, at: p.now().getTime() };
+  // 시작 화면(improve-v21-spec 8절) — 칸반이면 보드 자리에 칸반을 띄운다
+  if ((await repo.getSettings()).ui.startView === "kanban") void openKanban();
   void restoreCabinet().catch(() => undefined);
   void waitInputIdle(START_BACKUP_MAX_WAIT_MS).then(() => {
     const current = get().journal;
@@ -438,8 +451,37 @@ async function restoreBackupWork(
 
 function statusFor(e: unknown, dataDir: string): JournalStatus {
   if (e instanceof FolderMissingError) return { state: "missing", dataDir };
+  if (e instanceof NewerSchemaError) return { state: "newer", dataDir, fileVersion: e.fileVersion };
   if (e instanceof IntegrityError) return { state: "integrity", dataDir, path: e.path };
   return { state: "error", message: errMsg(e) };
+}
+
+/**
+ * 열려 있는 일지를 다른 PC(동기화 폴더)의 최신 버전 앱이 올렸는지(improve-v22-spec 2-1 A2) — 가벼운 읽기 1회.
+ * 올렸으면 더 쓰지 않고 연결을 끊은 뒤 "앱 업데이트 필요" 화면으로. 돌려주는 값 = 잠갔는지.
+ */
+export async function lockIfIncompatible(): Promise<boolean> {
+  const j = get().journal;
+  if (j.state !== "ready" || j.driver === closingJournal) return false;
+  let v: number;
+  try {
+    v = await readSchemaVersion(j.driver);
+  } catch {
+    return false;
+  }
+  if (v <= LATEST_SCHEMA_VERSION || get().journal !== j) return false;
+  stopPeriodic();
+  detachAll();
+  await j.driver.close().catch(() => undefined);
+  set({ journal: { state: "newer", dataDir: j.dataDir, fileVersion: v }, settingsOpen: false });
+  return true;
+}
+
+/** 일지가 없어도(앱 업데이트 필요 화면 등) 새 버전 확인 창을 연다 */
+async function openUpdateFromAnywhere() {
+  const { checkNow, openUpdateDialog } = await import("../update/updateStore");
+  await checkNow();
+  openUpdateDialog();
 }
 
 /** 설정된 폴더의 일지를 연다. 실패하면 상황별 화면으로. */
@@ -668,6 +710,12 @@ export async function switchWorkspace(dir: string, opts: { quiet?: boolean } = {
   try {
     next = await openJournalAt(p, dir, () => p.now());
   } catch (e) {
+    // 호환되지 않는 공간(improve-v22-spec 2-2): 지금 공간은 그대로 두고 업데이트를 안내
+    if (e instanceof NewerSchemaError) {
+      const m = STR.incompatible.switchRefused(name);
+      toast(m, { label: STR.incompatible.checkUpdate, run: () => void openUpdateFromAnywhere() });
+      return m;
+    }
     const m = STR.workspace.openFailed(name, errMsg(e));
     toast(m);
     return m;
@@ -835,6 +883,9 @@ if (typeof window !== "undefined")
           "cabi_board",
           "cabi_asset",
           "cabi_entry_link",
+          "kanban_section",
+          "item_status_log",
+          "kanban_bulk",
         ] as const;
         const counts: Record<string, number> = {};
         for (const table of tables)
@@ -849,6 +900,12 @@ if (typeof window !== "undefined")
           )[0]?.n ?? 0,
         );
         return counts;
+      },
+      /** 브라우저 모드 시험 전용: 지금 일지의 DB 버전을 99로(다른 PC의 최신 앱이 올린 상황 흉내, improve-v22-spec 2-1) */
+      async bumpSchema() {
+        const j = get().journal;
+        if (j.state !== "ready" || platform().kind !== "browser") return;
+        await j.driver.execute("UPDATE app_meta SET value = '99' WHERE key = 'schema_version'");
       },
       async assetCount() {
         const j = get().journal;

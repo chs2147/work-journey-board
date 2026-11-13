@@ -2,6 +2,16 @@
 import { normalizeBackupPolicy, RECOMMENDED_BACKUP_POLICY, type BackupPolicy } from "./backupPolicy";
 import { COMPANY_DATE_RE, LABEL_MAX_HOLIDAY, type HolidaySettings } from "../domain/holidaysKr";
 import { parseMeta, type WorkspaceMeta } from "../domain/workspace";
+import {
+  DEFAULT_KANBAN_FILTER,
+  DEFAULT_KANBAN_COLUMNS,
+  DEFAULT_KANBAN_LAYOUT,
+  KANBAN_FREE,
+  KANBAN_PERIODS,
+  type KanbanFilter,
+  type KanbanColumns,
+  type KanbanLayout,
+} from "../domain/kanban";
 export interface Settings {
   /** 이 일지(워크스페이스)의 이름·색·아이콘(multi-board-spec 7절) — 없으면 이 PC 목록의 사본으로 채운다 */
   workspace: WorkspaceMeta | null;
@@ -60,6 +70,14 @@ export interface Settings {
     weekDoneOpen: boolean;
     /** 설정 화면에서 마지막으로 본 분류(improve-1027v5-spec 1-2) */
     settingsCategory: SettingsCategory;
+    /** 앱을 켰을 때 먼저 보일 화면(improve-v21-spec 8절) — board = 마지막 주간/데일리 뷰 */
+    startView: "board" | "kanban";
+    /** 칸반 보드 필터·정렬(improve-v21-spec 2-5) */
+    kanban: KanbanFilter;
+    /** 칸반 배치 모드(improve-v22-spec 4절) — 공간마다 */
+    kanbanLayout: KanbanLayout;
+    /** 칸반 열 순서(TODO·DONE 포함)·열 아이콘(improve-v23-spec 2·8절) — 공간마다 */
+    kanbanColumns: KanbanColumns;
   };
 }
 
@@ -141,6 +159,10 @@ export const DEFAULT_SETTINGS: Settings = {
     exportSnapshots: false,
     weekDoneOpen: true,
     settingsCategory: "screen",
+    startView: "board",
+    kanban: DEFAULT_KANBAN_FILTER,
+    kanbanLayout: DEFAULT_KANBAN_LAYOUT,
+    kanbanColumns: DEFAULT_KANBAN_COLUMNS,
   },
 };
 
@@ -171,6 +193,12 @@ export function validNudgeWeeks(n: number): boolean {
 /** 기본값 위에 저장값(또는 변경분)을 합치고, 범위를 벗어난 값은 기본값으로 되돌린다. */
 export function mergeSettings(base: Settings, patch: unknown): Settings {
   const s = deepMerge(base, patch);
+  // 칸반 배치 자리(improve-v22-spec 4절)는 키가 섹션 id라 기본값에 없다 — 깊이 합치지 않고 통째로 바꾼다(지운 섹션 자리도 빠짐)
+  if (isObject(patch) && isObject(patch.ui) && "kanbanLayout" in patch.ui)
+    s.ui.kanbanLayout = validKanbanLayout(patch.ui.kanbanLayout);
+  // 열 순서·아이콘도 키가 섹션 id라 통째로 바꾼다(improve-v23-spec 11절)
+  if (isObject(patch) && isObject(patch.ui) && "kanbanColumns" in patch.ui)
+    s.ui.kanbanColumns = validKanbanColumns(patch.ui.kanbanColumns);
   // v0.2.2 이전 저장값(auto 없음): 기본 높이와 다르면 사용자가 끌어서 정한 높이 → 고정으로 둔다
   if (
     isObject(patch) &&
@@ -236,6 +264,10 @@ export function mergeSettings(base: Settings, patch: unknown): Settings {
   if (!(SETTINGS_CATEGORIES as readonly string[]).includes(s.ui.settingsCategory))
     s.ui.settingsCategory = "screen";
   if (!(s.ui.noteDockHeight >= NOTE_DOCK_MIN)) s.ui.noteDockHeight = DEFAULT_SETTINGS.ui.noteDockHeight;
+  if (s.ui.startView !== "board" && s.ui.startView !== "kanban") s.ui.startView = "board";
+  s.ui.kanban = validKanbanFilter(s.ui.kanban);
+  s.ui.kanbanLayout = validKanbanLayout(s.ui.kanbanLayout);
+  s.ui.kanbanColumns = validKanbanColumns(s.ui.kanbanColumns);
   return s;
 }
 
@@ -249,4 +281,55 @@ export function validBoardColW(v: unknown): BoardColW {
     label: num(o.label, BOARD_COL_W.label.min, BOARD_COL_W.label.max),
     days: Array.from({ length: 7 }, (_, i) => num(days[i], BOARD_COL_W.day.min, BOARD_COL_W.day.max)),
   };
+}
+
+/** 칸반 필터 검사 — 모르는 값은 기본 */
+export function validKanbanFilter(v: unknown): KanbanFilter {
+  const o = (v && typeof v === "object" ? v : {}) as Partial<Record<keyof KanbanFilter, unknown>>;
+  const date = (x: unknown) => (typeof x === "string" && /^\d{4}-\d{2}-\d{2}$/.test(x) ? x : null);
+  return {
+    categories: Array.isArray(o.categories)
+      ? o.categories.filter((x): x is string => typeof x === "string")
+      : [],
+    includeEnded: o.includeEnded === true,
+    period: (KANBAN_PERIODS as readonly unknown[]).includes(o.period)
+      ? (o.period as KanbanFilter["period"])
+      : DEFAULT_KANBAN_FILTER.period,
+    from: date(o.from),
+    to: date(o.to),
+    sort: o.sort === "old" || o.sort === "due" ? o.sort : "new",
+  };
+}
+
+/** 칸반 배치 검사 — 모르는 모드는 균등, 이상한 자리는 버림(기본 자리로 다시 놓임) */
+export function validKanbanLayout(v: unknown): KanbanLayout {
+  const o = (v && typeof v === "object" ? v : {}) as { mode?: unknown; rects?: unknown };
+  const rects: KanbanLayout["rects"] = {};
+  if (o.rects && typeof o.rects === "object" && !Array.isArray(o.rects)) {
+    for (const [k, r] of Object.entries(o.rects as Record<string, unknown>)) {
+      const q = (r ?? {}) as Record<string, unknown>;
+      const ok = (x: unknown, min: number) =>
+        typeof x === "number" && Number.isFinite(x) && x >= min && x <= KANBAN_FREE.maxXY;
+      if (ok(q.x, 0) && ok(q.y, 0) && ok(q.w, KANBAN_FREE.minW) && ok(q.h, KANBAN_FREE.minH))
+        rects[k] = { x: q.x as number, y: q.y as number, w: q.w as number, h: q.h as number };
+    }
+  }
+  return { mode: o.mode === "free" ? "free" : "equal", rects };
+}
+
+/** 칸반 열 순서·아이콘 검사 — 글자 키만, 중복 제거, 아이콘 id는 글자(모르는 id는 표시 때 기본으로) */
+export function validKanbanColumns(v: unknown): KanbanColumns {
+  const o = (v && typeof v === "object" ? v : {}) as { order?: unknown; icons?: unknown };
+  const order = Array.isArray(o.order)
+    ? [
+        ...new Set(
+          o.order.filter((x): x is string => typeof x === "string" && x.length > 0 && x.length <= 80),
+        ),
+      ]
+    : [];
+  const icons: Record<string, string> = {};
+  if (o.icons && typeof o.icons === "object" && !Array.isArray(o.icons))
+    for (const [k, id] of Object.entries(o.icons as Record<string, unknown>))
+      if (typeof id === "string" && /^[a-z0-9-]{1,40}$/.test(id) && k.length <= 80) icons[k] = id;
+  return { order, icons };
 }

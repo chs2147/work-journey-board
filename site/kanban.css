@@ -1,0 +1,730 @@
+/* 칸반 보드 소개 섹션(1.35) — 실제 화면 + 동작 설명 모션. 모션은 OS "동작 줄이기"·사이트 모션 끄기를 따른다. */
+.showcase-kanban {
+  font-family: SiteSans, system-ui, sans-serif;
+  padding: 100px 0 84px;
+  background: #f6ede3;
+  color: #3c2f26;
+  position: relative;
+  overflow: hidden;
+}
+.showcase-kanban .showcase-kicker {
+  color: #a45e43;
+}
+.showcase-kanban .showcase-kicker > span {
+  color: #fff;
+  background: #a45e43;
+  border-color: #a45e43;
+}
+.showcase-kanban .showcase-heading h2 em {
+  color: #a45e43;
+}
+.showcase-kanban .showcase-heading > p {
+  color: #7a6656;
+}
+
+/* 동작 설명 무대 — TODO · 검토 중 · DONE */
+.kb-stage {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  padding: 22px;
+  background: #fffaf3;
+  border: 1px solid #e6d6c4;
+  box-shadow: 0 30px 70px rgb(90 60 30 / 0.12);
+  min-height: 360px;
+}
+.kb-col {
+  background: #f3e9dd;
+  border-top: 3px solid #b9aa99;
+  padding: 12px 12px 16px;
+  min-width: 0;
+}
+.kb-col.kb-done {
+  border-top-color: #5a4a3c;
+}
+.kb-col-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  margin-bottom: 12px;
+}
+.kb-col-head small {
+  color: #9a8775;
+  font-weight: 400;
+}
+.kb-card {
+  background: #fffdf9;
+  border-left: 4px solid var(--c, #3d7bd6);
+  border-radius: 0;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  box-shadow: 0 1px 3px rgb(60 40 20 / 0.08);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.kb-card small {
+  display: block;
+  color: #9a8775;
+  font-size: 11px;
+}
+.kb-card .kb-tag {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 0 6px;
+  border: 1px solid #e3b66d;
+  background: #fdf1dc;
+  color: #8a5a12;
+  font-size: 11px;
+}
+.kb-done-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #8f7c6a;
+  text-decoration: line-through;
+  padding: 7px 10px;
+  background: #fffdf9;
+  border-left: 4px solid #2f9e5b;
+  margin-bottom: 8px;
+}
+.kb-done-row span:last-child {
+  text-decoration: none;
+}
+
+/* 움직이는 카드 하나: data-phase 0 = TODO 맨 위 / 1 = 검토 중 / 2 = DONE */
+.kb-mover {
+  position: absolute;
+  top: 70px;
+  left: 34px;
+  width: calc((100% - 44px - 36px) / 3 - 24px);
+  z-index: 3;
+  transition:
+    left 0.9s cubic-bezier(0.45, 0, 0.2, 1),
+    top 0.9s cubic-bezier(0.45, 0, 0.2, 1),
+    transform 0.4s,
+    opacity 0.4s;
+  box-shadow: 0 14px 30px rgb(60 40 20 / 0.22);
+  transform: rotate(-1.5deg) scale(1.03);
+}
+.kb-stage[data-phase="0"] .kb-mover {
+  animation: kb-arrive 0.6s ease-out both;
+}
+.kb-stage[data-phase="1"] .kb-mover {
+  left: calc(22px + (100% - 44px - 36px) / 3 + 18px + 12px);
+}
+.kb-stage[data-phase="2"] .kb-mover,
+.kb-stage[data-phase="3"] .kb-mover {
+  left: calc(22px + ((100% - 44px - 36px) / 3 + 18px) * 2 + 12px);
+}
+.kb-stage[data-phase="3"] .kb-mover {
+  opacity: 0;
+  transform: scale(0.9);
+}
+/* 카드가 떠난 TODO 자리·DONE에 새로 생기는 줄 — 단계에 따라 접히고 펼쳐진다 */
+.kb-slot {
+  height: 62px;
+  margin-bottom: 10px;
+  transition:
+    height 0.5s 0.5s,
+    margin 0.5s 0.5s;
+}
+.kb-stage:not([data-phase="0"]) .kb-slot {
+  height: 0;
+  margin-bottom: 0;
+}
+.kb-new-done {
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  margin-bottom: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition:
+    max-height 0.4s,
+    padding 0.4s,
+    margin 0.4s,
+    opacity 0.4s 0.2s;
+}
+.kb-stage[data-phase="2"] .kb-new-done {
+  max-height: 62px;
+  margin-bottom: 10px;
+}
+.kb-stage[data-phase="3"] .kb-new-done {
+  max-height: 40px;
+  padding: 7px 10px;
+  margin-bottom: 8px;
+  opacity: 1;
+}
+
+/* 완료 축하: 체크 + 색종이(CSS만) */
+.kb-cheer {
+  position: absolute;
+  top: 70px;
+  right: 34px;
+  width: calc((100% - 44px - 36px) / 3 - 24px);
+  height: 80px;
+  pointer-events: none;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+}
+.kb-cheer b {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #2f9e5b;
+  color: #fff;
+  font-size: 24px;
+  line-height: 44px;
+  text-align: center;
+  opacity: 0;
+}
+.kb-cheer i {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 7px;
+  height: 11px;
+  opacity: 0;
+}
+.kb-stage[data-phase="2"] .kb-cheer b {
+  animation: kb-pop 1.2s 0.85s ease-out both;
+}
+.kb-stage[data-phase="2"] .kb-cheer i {
+  animation: kb-burst 1.1s 0.9s cubic-bezier(0.2, 0.7, 0.4, 1) both;
+}
+
+/* 단계 고르기 */
+.kb-steps {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-top: 20px;
+}
+.kb-steps button {
+  font: inherit;
+  text-align: left;
+  padding: 12px 14px;
+  background: transparent;
+  border: 1px solid #dcc8b3;
+  color: #6c5848;
+  cursor: pointer;
+  font-size: 13px;
+}
+.kb-steps b {
+  color: #a45e43;
+  margin-right: 6px;
+}
+.kb-steps small {
+  display: block;
+  color: #9a8775;
+  font-size: 11px;
+  margin-top: 4px;
+}
+.kb-steps button[aria-pressed="true"] {
+  background: #fffaf3;
+  border-color: #a45e43;
+  color: #3c2f26;
+}
+
+/* 기능 다섯 가지 */
+.kb-points {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 22px;
+  margin: 64px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.kb-points li {
+  border-top: 1px solid #d9c4ae;
+  padding-top: 18px;
+}
+.kb-points span {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: #a45e43;
+}
+.kb-points h3 {
+  font-size: 17px;
+  font-weight: 600;
+  margin: 10px 0 8px;
+  letter-spacing: -0.02em;
+}
+.kb-points p {
+  font-size: 13px;
+  line-height: 1.8;
+  color: #7a6656;
+  margin: 0;
+}
+
+/* 실제 화면 */
+.kb-screens {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr;
+  gap: 18px;
+  margin-top: 56px;
+  align-items: start;
+}
+.kb-screens figure {
+  margin: 0;
+  min-width: 0;
+}
+.kb-screens .kb-main {
+  grid-column: 1 / -1;
+}
+.kb-screens img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid #dcc8b3;
+  box-shadow: 0 18px 40px rgb(90 60 30 / 0.1);
+}
+.kb-screens figcaption {
+  font-size: 12px;
+  color: #8f7c6a;
+  margin-top: 12px;
+  line-height: 1.7;
+}
+.kb-caption {
+  font-size: 11px;
+  color: #9a8775;
+  margin: 12px 0 0;
+}
+
+@keyframes kb-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(-14px) rotate(-1.5deg) scale(1.03);
+  }
+}
+@keyframes kb-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  20% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+  30%,
+  75% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+}
+@keyframes kb-burst {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) rotate(0);
+  }
+  55% {
+    opacity: 1;
+    transform: translate(var(--dx), var(--dy)) rotate(var(--r));
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(var(--dx) * 1.15), calc(var(--dy) + 60px)) rotate(calc(var(--r) * 2));
+  }
+}
+html[data-showcase-motion="off"] .showcase-kanban *,
+html[data-showcase-motion="off"] .showcase-kanban *::before {
+  animation: none !important;
+  transition: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .showcase-kanban * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+@media (max-width: 900px) {
+  .kb-points {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .kb-steps {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .kb-screens {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 600px) {
+  .showcase-kanban {
+    padding: 65px 0 45px;
+  }
+  .kb-stage {
+    gap: 8px;
+    padding: 12px;
+    min-height: 300px;
+  }
+  .kb-col {
+    padding: 8px 6px;
+  }
+  .kb-card {
+    font-size: 11px;
+    padding: 7px 8px;
+  }
+  .kb-card small,
+  .kb-card .kb-tag {
+    display: none;
+  }
+  .kb-slot {
+    height: 66px;
+  }
+  .kb-col-head {
+    font-size: 11px;
+  }
+  .kb-col-head small,
+  .kb-done-row span:last-child {
+    display: none;
+  }
+  .kb-done-row {
+    font-size: 10px;
+    padding: 5px 6px;
+  }
+  .kb-mover {
+    top: 56px;
+    left: 18px;
+    width: calc((100% - 24px - 16px) / 3 - 12px);
+  }
+  .kb-stage[data-phase="1"] .kb-mover {
+    left: calc(12px + (100% - 24px - 16px) / 3 + 8px + 6px);
+  }
+  .kb-stage[data-phase="2"] .kb-mover,
+  .kb-stage[data-phase="3"] .kb-mover {
+    left: calc(12px + ((100% - 24px - 16px) / 3 + 8px) * 2 + 6px);
+  }
+  .kb-cheer {
+    top: 56px;
+    right: 18px;
+  }
+  .kb-points {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── v23: 7장면(손 커서·섹션 순서·아이콘·자유 배치·카드 추가) ───────────── */
+.kb-ico {
+  flex: none;
+  vertical-align: -3px;
+  margin-right: 5px;
+}
+.kb-icos {
+  position: relative;
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  margin-right: 5px;
+  vertical-align: -3px;
+}
+.kb-icos > span {
+  position: absolute;
+  inset: 0;
+  transition:
+    opacity 0.3s,
+    transform 0.3s;
+}
+.kb-icos .kb-ico {
+  margin: 0;
+}
+.kb-i2 {
+  opacity: 0;
+  transform: scale(0.4);
+}
+.kb-stage[data-phase="4"] .kb-i1,
+.kb-stage[data-phase="5"] .kb-i1,
+.kb-stage[data-phase="6"] .kb-i1 {
+  opacity: 0;
+}
+.kb-stage[data-phase="4"] .kb-i2,
+.kb-stage[data-phase="5"] .kb-i2,
+.kb-stage[data-phase="6"] .kb-i2 {
+  opacity: 1;
+  transform: scale(1);
+  transition-delay: 1.1s;
+}
+.kb-col {
+  transition: transform 0.8s cubic-bezier(0.45, 0, 0.2, 1);
+  position: relative;
+  z-index: 1;
+}
+/* 장면 03 뒤에는 카드가 DONE 줄로 */
+.kb-stage[data-after="1"] .kb-mover {
+  opacity: 0;
+  transform: scale(0.9);
+  left: calc(22px + ((100% - 44px - 36px) / 3 + 18px) * 2 + 12px);
+}
+.kb-stage[data-after="1"] .kb-slot {
+  height: 0;
+  margin-bottom: 0;
+}
+.kb-stage[data-after="1"] .kb-new-done {
+  max-height: 40px;
+  padding: 7px 10px;
+  margin-bottom: 8px;
+  opacity: 1;
+}
+/* 05: TODO ↔ 검토 중 순서 바꾸기 + TODO 아이콘 📋 → 🚀 */
+.kb-stage[data-phase="4"] .kb-c1 {
+  transform: translateX(calc(100% + 18px));
+  z-index: 2;
+}
+.kb-stage[data-phase="4"] .kb-c2 {
+  transform: translateX(calc(-100% - 18px));
+}
+/* 06: 자유 배치 — DONE 상자가 아래로·작게 */
+.kb-stage[data-phase="5"] .kb-c3 {
+  transform: translate(-46%, 52%) scale(0.72);
+  z-index: 3;
+  box-shadow: 0 14px 30px rgb(60 40 20 / 0.2);
+}
+.kb-stage[data-phase="5"] .kb-c2 {
+  transform: scale(0.94);
+  transform-origin: top left;
+}
+.kb-badge {
+  position: absolute;
+  right: 22px;
+  top: -14px;
+  z-index: 5;
+  padding: 4px 10px;
+  background: #3c2f26;
+  color: #fff;
+  font-size: 12px;
+  opacity: 0;
+  transform: translateY(6px);
+  transition:
+    opacity 0.3s,
+    transform 0.3s;
+}
+.kb-stage[data-phase="5"] .kb-badge {
+  opacity: 1;
+  transform: none;
+}
+/* 07: 카드 추가 창 — 세 줄 = 카드 세 장 */
+.kb-new {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.5s;
+}
+.kb-stage[data-phase="6"] .kb-new {
+  max-height: 160px;
+  transition: max-height 0.6s 2.6s;
+}
+.kb-stage[data-phase="6"] .kb-new .kb-card {
+  animation: kb-new-in 0.5s 2.6s both;
+}
+.kb-stage[data-phase="6"] .kb-new .kb-card + .kb-card {
+  animation-delay: 2.75s;
+}
+.kb-add {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 6;
+  width: min(340px, 86%);
+  padding: 14px 16px;
+  background: #fff;
+  border: 1px solid #dcc8b3;
+  border-radius: 8px;
+  box-shadow: 0 20px 50px rgb(60 40 20 / 0.25);
+  font-size: 12.5px;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -46%);
+}
+.kb-stage[data-phase="6"] .kb-add {
+  animation: kb-add-show 2.9s ease both;
+}
+.kb-add-h {
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+.kb-add-band {
+  border-left: 5px solid #d96c4a;
+  background: #fdeee6;
+  padding: 5px 8px;
+  margin-bottom: 8px;
+  color: #3c2f26;
+}
+.kb-add-l {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 3px 0;
+  opacity: 0;
+}
+.kb-add-l i {
+  font-style: normal;
+  background: #a45e43;
+  color: #fff;
+  font-size: 10.5px;
+  padding: 0 5px;
+}
+.kb-stage[data-phase="6"] .kb-add-l {
+  animation: kb-line 0.3s both;
+}
+.kb-stage[data-phase="6"] .kb-add-l:nth-child(3) {
+  animation-delay: 0.3s;
+}
+.kb-stage[data-phase="6"] .kb-add-l:nth-child(4) {
+  animation-delay: 0.75s;
+}
+.kb-stage[data-phase="6"] .kb-add-l:nth-child(5) {
+  animation-delay: 1.2s;
+}
+.kb-add-f {
+  text-align: right;
+  margin-top: 8px;
+}
+.kb-add-f b {
+  display: inline-block;
+  background: #775a43;
+  color: #fff;
+  font-weight: 400;
+  padding: 5px 10px;
+  border-radius: 5px;
+}
+.kb-stage[data-phase="6"] .kb-add-f b {
+  animation: kb-press 0.4s 1.9s both;
+}
+/* 손 커서 */
+.kb-hand {
+  position: absolute;
+  z-index: 7;
+  left: 120px;
+  top: 96px;
+  font-size: 26px;
+  line-height: 1;
+  pointer-events: none;
+  transition:
+    left 0.9s cubic-bezier(0.45, 0, 0.2, 1),
+    top 0.9s cubic-bezier(0.45, 0, 0.2, 1),
+    opacity 0.3s;
+  filter: drop-shadow(0 3px 4px rgb(0 0 0 / 0.25));
+}
+.kb-hand::before {
+  content: "✋";
+}
+.kb-stage[data-phase="1"] .kb-hand,
+.kb-stage[data-phase="2"] .kb-hand,
+.kb-stage[data-phase="4"] .kb-hand,
+.kb-stage[data-phase="5"] .kb-hand {
+  content: "";
+}
+.kb-stage[data-phase="1"] .kb-hand::before,
+.kb-stage[data-phase="2"] .kb-hand::before,
+.kb-stage[data-phase="4"] .kb-hand::before,
+.kb-stage[data-phase="5"] .kb-hand::before {
+  content: "✊";
+}
+.kb-stage[data-phase="1"] .kb-hand {
+  left: calc(22px + (100% - 44px - 36px) / 3 + 18px + 100px);
+}
+.kb-stage[data-phase="2"] .kb-hand {
+  left: calc(22px + ((100% - 44px - 36px) / 3 + 18px) * 2 + 100px);
+}
+.kb-stage[data-phase="3"] .kb-hand,
+.kb-stage[data-phase="6"] .kb-hand {
+  opacity: 0;
+}
+.kb-stage[data-phase="4"] .kb-hand {
+  top: 30px;
+  left: calc(22px + (100% - 44px - 36px) / 3 + 18px + 60px);
+}
+.kb-stage[data-phase="5"] .kb-hand {
+  top: 52%;
+  left: calc(22px + ((100% - 44px - 36px) / 3 + 18px) * 1.45);
+}
+.kb-steps {
+  grid-template-columns: repeat(7, 1fr);
+}
+.kb-steps button {
+  padding: 10px 10px;
+  font-size: 12.5px;
+}
+@keyframes kb-add-show {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -40%);
+  }
+  10%,
+  78% {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -54%) scale(0.96);
+  }
+}
+@keyframes kb-line {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes kb-press {
+  50% {
+    transform: scale(0.92);
+    background: #5f4737;
+  }
+}
+@keyframes kb-new-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+@media (max-width: 900px) {
+  .kb-steps {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+@media (max-width: 600px) {
+  .kb-steps {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .kb-hand {
+    font-size: 20px;
+    left: 50px;
+    top: 74px;
+  }
+  .kb-stage[data-phase="1"] .kb-hand {
+    left: calc(12px + (100% - 24px - 16px) / 3 + 8px + 30px);
+  }
+  .kb-stage[data-phase="2"] .kb-hand {
+    left: calc(12px + ((100% - 24px - 16px) / 3 + 8px) * 2 + 30px);
+  }
+  .kb-stage[data-phase="4"] .kb-c1 {
+    transform: translateX(calc(100% + 8px));
+  }
+  .kb-stage[data-phase="4"] .kb-c2 {
+    transform: translateX(calc(-100% - 8px));
+  }
+  .kb-stage[data-after="1"] .kb-mover {
+    left: calc(12px + ((100% - 24px - 16px) / 3 + 8px) * 2 + 6px);
+  }
+  .kb-ico {
+    width: 12px;
+    height: 12px;
+    margin-right: 3px;
+  }
+  .kb-icos {
+    width: 12px;
+    height: 12px;
+  }
+}

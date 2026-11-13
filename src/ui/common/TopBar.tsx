@@ -24,6 +24,8 @@ import { TagFilterMenu } from "./TagFilterMenu";
 import { SearchBox } from "../search/SearchViews";
 import { useInsights } from "../insights/insightsStore";
 import { useUniverse } from "../universe/universeStore";
+import { useKanban } from "../kanban/kanbanStore";
+import { KanbanActions, KanbanFilters, KanbanLayoutToggle } from "../kanban/KanbanToolbar";
 import { AddCategoryDialog } from "../board/AddCategoryDialog";
 import styles from "./TopBar.module.css";
 
@@ -55,7 +57,9 @@ export function TopBar() {
   const insights = insightsOpen && !settings;
   // Universe(universe-spec 4절): 인사이트처럼 보드 자리를 덮는다 — 주 단위 기능은 감춘다
   const universe = useUniverse((s) => s.open) && !settings;
-  const week = !insights && !settings && !universe;
+  // 칸반(improve-v21-spec 2-1): 주 단위 기능은 감추고 제목만 — 필터·추가는 칸반 화면 안에
+  const kanban = useKanban((k) => k.open) && !settings && !insights && !universe;
+  const week = !insights && !settings && !universe && !kanban;
 
   const savedAt = useBoard((s) => s.savedAt);
 
@@ -88,6 +92,8 @@ export function TopBar() {
             <span>{STR.insights.subtitle}</span>
           </div>
         )}
+        {/* 칸반(improve-v22-spec 5절): 제목 글자 없이 업무 거르기·기간 아이콘부터 — 주간 보드와 같은 한 줄 */}
+        {ready && journalReady && kanban && <KanbanFilters />}
         {ready && journalReady && universe && (
           <div className={styles.insightTitle} data-testid="universe-title">
             <b>{STR.universe.title}</b>
@@ -164,9 +170,10 @@ export function TopBar() {
           </nav>
         )}
         <div className={styles.spacer} />
-        {ready && journalReady && week && <SearchBox />}
+        {ready && journalReady && (week || kanban) && <SearchBox />}
         {ready && journalReady && !settings && <TagFilterMenu />}
-        {ready && journalReady && week && (
+        {ready && journalReady && kanban && <KanbanLayoutToggle segmentClass={styles.segment ?? ""} />}
+        {ready && journalReady && (week || kanban) && (
           <button
             type="button"
             className={`${styles.textButton} ${styles.actionButton}`}
@@ -177,7 +184,10 @@ export function TopBar() {
             {STR.categoryCreate.button}
           </button>
         )}
-        {ready && journalReady && week && addOpen && <AddCategoryDialog />}
+        {ready && journalReady && (week || kanban) && addOpen && <AddCategoryDialog />}
+        {ready && journalReady && kanban && (
+          <KanbanActions className={`${styles.textButton} ${styles.actionButton}`} />
+        )}
         {ready && journalReady && week && (
           <button
             type="button"

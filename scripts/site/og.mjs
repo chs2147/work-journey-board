@@ -31,7 +31,7 @@ p{margin-top:24px;font-size:22px;line-height:1.7;color:#6c655b}
   <h1>기록은 가볍게,<br><em>흐름은 선명하게.</em></h1>
   <p>매일 2분의 짧은 기록이 한 주의 요약과<br>업무의 흐름이 되는 개인 업무 일지</p>
 </div>
-<div class="chips"><span>주간 보드</span><span>주간 요약·엑셀</span><span>메모 보드</span><span>Cabinet</span></div>
+<div class="chips"><span>주간 보드</span><span>칸반 보드</span><span>주간 요약·엑셀</span><span>Universe</span><span>Cabi.NET</span></div>
 <div class="shot"><img src="${u("shots/board.webp")}"></div>
 </body></html>`;
 
