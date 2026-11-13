@@ -38,11 +38,17 @@ const report = {
   phases: [],
   applied: false,
 };
+// The API's read_only=true runs as supabase_read_only_user, which cannot EXECUTE the private
+// wjb_migration functions (42501). Checks therefore run as the owner role inside a read-only
+// transaction: any write in them fails with 25006 (005 verify used the same owner connection).
 async function sql(query, readOnly) {
   const r = await fetch(`https://api.supabase.com/v1/projects/${ref}/database/query`, {
     method: "POST",
     headers: { authorization: `Bearer ${management}`, "content-type": "application/json" },
-    body: JSON.stringify({ query, read_only: readOnly }),
+    body: JSON.stringify({
+      query: readOnly ? "SET TRANSACTION READ ONLY;\n" + query : query,
+      read_only: false,
+    }),
     redirect: "error",
     signal: AbortSignal.timeout(30000),
   });

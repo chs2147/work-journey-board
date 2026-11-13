@@ -30,7 +30,7 @@
 
 **개발 DB 적용(사용자 확인 필요)** — 007 적용 → 008 점검 → 가상 DB20 표본(계정·공간·작은 이미지)으로 실제 Auth/Storage 이관 → 모든 표본 정리 → 잔여 0 확인. 66문서와 같은 절차이며 001·004·KeepAlive는 다시 적용하지 않는다. 운영 예정 프로젝트·제품 앱·원본 로컬 모델은 그대로다.
 
-## 5. 개발 DB 적용 준비 (2026-11-13, 실행 대기)
+## 5. 개발 DB 적용 준비 (2026-11-13 — 6절에서 실행 완료)
 
 사용자가 개발 DB 적용을 승인했으나, 이 세션은 기본(Default) 환경에서 실행되어 개발 DB 비밀값(`WJB_SUPABASE_DEV_SERVICE_ROLE_KEY`·`WJB_SUPABASE_DEV_MANAGEMENT_TOKEN`)과 개발 호스트 허용이 없다. 연결된 Supabase 도구는 다른 계정(건물수첩 프로젝트)이라 사용하지 않았다. **클라우드에는 아무것도 적용하지 않았다.** 대신 바로 실행할 수 있게 도구를 준비했다.
 
@@ -41,3 +41,18 @@
 | `guards.test.mjs` | 새 도구·`--db20`의 명시 실행·운영 선택 거절·비밀값 없을 때 요청 전 중단 시험 추가(11개 통과) |
 
 실행에 필요한 것: 개발 DB 변수가 있는 환경(이전 개발 DB 작업 세션의 환경)에서 실행하거나, 이 저장소용 환경에 아래를 설정한다 — 일반 변수 `WJB_CLOUD_ENV=development`·`WJB_SUPABASE_DEV_PROJECT_REF=vsphftnmfzfoufasjttd`, 비밀 변수 `WJB_SUPABASE_DEV_SERVICE_ROLE_KEY`·`WJB_SUPABASE_DEV_MANAGEMENT_TOKEN`, 허용 호스트 `api.supabase.com`·`vsphftnmfzfoufasjttd.supabase.co`.
+
+## 6. 개발 DB 적용·실검증 결과 (2026-11-14 KST, 완료)
+
+개발 DB 변수가 있는 환경에서 승인 범위대로 실행했다. 대상은 개발 프로젝트 `vsphftnmfzfoufasjttd`뿐이며 **운영 예정 프로젝트·제품 앱·원본 로컬 모델은 건드리지 않았다.** 001·004·KeepAlive는 다시 적용하지 않았다.
+
+| 단계 | 결과 |
+|---|---|
+| 첫 실행 | 점검(preflight) 읽기 조회가 HTTP 400으로 멈춤(쓰기 전 단계, 적용 없음). 원인 = API `read_only: true`는 `supabase_read_only_user`로 실행되어 비공개 함수 `wjb_migration.workspace_contract` 실행 권한이 없음(42501) |
+| 도구 수정 | `db20-apply.mjs`의 점검 조회를 소유자 역할(`postgres`, 005 점검과 같은 연결) + `SET TRANSACTION READ ONLY` 트랜잭션으로 실행. 같은 방식에서 `CREATE TABLE`이 25006으로 거절되고 시험 테이블이 생기지 않음을 먼저 확인. 안전장치 시험 11개 다시 통과 |
+| 007 적용 | 실행 역할 `postgres`(쓰기, 비superuser) · 사전 004 있음/007 없음/DB20 작업 0 → 007 **한 번** 적용 성공(응답 유실 없음) |
+| 008 점검 | DB20 계약 있음·30테이블·`job_profile_check`에 DB20 프로필·`wjb_migration` 테이블 5/RLS 5·서버 RPC만(클라이언트 RPC 없음)·직접 테이블 접근 없음·비공개 함수 실행 권한 없음·안전하지 않은 search_path 없음 → [설치 증거](evidence/migration-dev-db20-install.json) |
+| 실검증(`live-check --db20`) | **51개 검사 모두 통과** — 설치 기록·해시 대조(001·004·007·008), 가상 계정 2개 로그인·서명 확인, private 버킷 생성·한도, DB20 표본 3건(정상 / 준비·게시 응답 유실 복구 / 준비·삭제 응답 유실 후 취소): 30테이블 채움·물리 업로드 1회·원본 그대로·원본/온라인 manifest 해시 분리·메타데이터에 이미지 본문 없음·전체 왕복·칸반 테이블 왕복·삭제 잠금 유지·다른 계정 거절(RPC·Storage 직접)·취소 후 할당량 0. 요청 147회, Storage 업로드 3회(204바이트) → [실검증 증거](evidence/migration-dev-db20-live-check.json) |
+| 정리 | 객체·버킷·메타데이터·시험 계정 잔여 0(도구 확인) + 별도 읽기 조회로 다시 확인: 작업 0·공간 기록 0·버킷 0·객체 0·시험 계정 0, 007 계약 남음, DB 크기 약 12.2MB |
+
+메일 발송·공개 gateway 배포·운영 접속 없음. 기존 install/KeepAlive 재실행 금지는 그대로다. 다음은 74문서 순서대로 남은 DB20 미지원 차이와 제품 연결 단계다.

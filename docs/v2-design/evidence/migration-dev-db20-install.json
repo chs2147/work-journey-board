@@ -1,0 +1,56 @@
+{
+  "startedAt": "2026-11-13T21:37:48.145Z",
+  "projectRef": "vsphftnmfzfoufasjttd",
+  "autoApply": false,
+  "userRequestedDevIntegration": true,
+  "productionTouched": false,
+  "sources": [
+    {
+      "path": "poc/v2-migration/postgres/007-workspace-db20.sql",
+      "sha256": "3b071513394462f2657473907ba5ebb2d246d4b29a0a47ac36a3d59e95c62a8b"
+    },
+    {
+      "path": "poc/v2-migration/postgres/008-workspace-db20-verify.sql",
+      "sha256": "361ba73e34d874c88d8d5bc15a7a2d50d9b2fefddd97ec58618f1f83c2112fc7"
+    }
+  ],
+  "phases": [
+    {
+      "phase": "preflight",
+      "has004": true,
+      "has007": false,
+      "db20_jobs": 0
+    },
+    {
+      "phase": "apply",
+      "ok": true
+    }
+  ],
+  "applied": true,
+  "executionRole": {
+    "role": "postgres",
+    "read_only": "off",
+    "rolsuper": false,
+    "rolbypassrls": true
+  },
+  "verify": {
+    "tables": 5,
+    "clientRPC": false,
+    "rlsTables": 5,
+    "db20Tables": 30,
+    "serviceRPC": true,
+    "cloudApplied": false,
+    "db20Contract": true,
+    "profileCheck": true,
+    "privateExecute": false,
+    "directTableAccess": false,
+    "unsafeSearchPaths": false,
+    "workspaceProfiles": [
+      "workspace-db18-map-poc-1",
+      "workspace-db19-map-poc-1",
+      "workspace-db20-map-poc-1"
+    ],
+    "productActivationAllowed": false
+  },
+  "finishedAt": "2026-11-13T21:37:55.171Z"
+}
