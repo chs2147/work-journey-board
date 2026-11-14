@@ -9,7 +9,7 @@
 | Preview 로그인·세션 모듈(Rust `online.rs`) | **완료 — 실서버 왕복 8검사 통과**(6절, 2026-11-14) |
 | Preview 계정 카드(화면) | **완료** — 이메일 → 인증번호 → 로그인 → 서버 확인 표시 → 다시 확인·로그아웃 |
 | gateway Edge Function `wjb-gateway` | **동작(v4)** — 사용자가 대시보드에 넣은 비밀 `WJB_GATEWAY_SERVICE_ROLE_JWT`만 읽음(2절) |
-| 로그인 메일 양식에 인증번호 넣기 | **사용자 대시보드 작업 대기** — 관리 토큰에 인증 설정 쓰기 권한 없음(3절) |
+| 로그인 메일 양식에 인증번호 넣기 | **완료** — 사용자 결정 A안: Resend SMTP 연결 + 양식에 `{{ .Token }}`, 발송 확인 200(3절) |
 | 검증용 설치 파일 run 1(6-B) | 성공 — Windows·macOS 산출물(78문서 7절) |
 
 ## 1. 구조
@@ -38,7 +38,7 @@ Preview 화면(PreviewApp) ──IPC──▶ Rust online.rs ──HTTPS──�
 - 해결(2026-11-14): 사용자가 대시보드 Edge Functions › Secrets에 `WJB_GATEWAY_SERVICE_ROLE_JWT`(개발 프로젝트 예전 형식 service_role)를 직접 넣었다. 함수는 그 값만 읽도록 고쳐 v4 배포 → 토큰 없음·가짜 토큰 401, Origin 403. 이 세션은 값을 다루지 않았다.
 - **예전 API 키는 2027년 초 은퇴 예정**(대시보드 안내). 운영 준비(G단계) 전에 gateway REST 어댑터를 새 형식 `sb_secret_` 키로 옮겨 검증하고 이 비밀을 지운다.
 
-## 3. 인증번호 메일 양식 (사용자 작업 대기)
+## 3. 인증번호 메일 (완료, 2026-11-14)
 
 개발 프로젝트 인증 설정: 메일 인증번호 8자리, 메일 발송 한도 시간당 2통(기본 메일), 가입 허용. 그러나 로그인·가입 확인 메일 양식에 `{{ .Token }}`이 없어 **메일에 숫자가 오지 않는다**. 관리 API로 두 양식(한국어 제목·본문 + 인증번호)을 바꾸는 것은 아직 하지 않았다. Supabase 기본 메일은 조직 구성원 주소로만 보낸다.
 
@@ -80,3 +80,10 @@ Preview 화면(PreviewApp) ──IPC──▶ Rust online.rs ──HTTPS──�
 2. 메일 양식에 인증번호(사용자 대시보드, 3절) → 본인 이메일로 실제 메일 로그인
 3. 검증용 설치 파일(로그인 포함)로 Windows·macOS 실기 — 보안 저장소(Credential Manager·Keychain) 실제 동작, 앱 재시작 후 로그인 유지
 4. 운영 전: gateway를 새 형식 키로(2절)
+
+## 7. 메일 발송 — Resend SMTP (2026-11-14)
+
+- Supabase 기본 메일은 양식을 고칠 수 없게 잠겨 있어(대시보드 "Set up custom SMTP to edit templates") D2를 **A안 = 별도 SMTP(Resend)** 로 바꿨다(사용자 결정). Resend는 사용자의 기존 계정(Building NOTE와 같은 계정)에 이 프로젝트 전용 키를 새로 만들어 연결했다 — 무료 발송 한도는 계정 단위로 나눠 쓴다.
+- 사용자가 대시보드에서 SMTP(`smtp.resend.com`·465·`resend`)와 두 양식(로그인·가입 인증번호, 한국어 제목, `{{ .Token }}`)을 넣었다. 이메일 발송 한도는 시간당 30통.
+- 첫 확인: 보내는 주소가 `@gmail.com`이라 발송 500(Resend는 인증한 도메인 주소만 보냄). 사용자가 보내는 주소를 `resend.dev`로 바꾼 뒤 **Resend 시험 주소(`delivered@resend.dev`)로 발송 요청 200**. 요청으로 생긴 시험 계정은 삭제·조회 404, 잔여 0.
+- `resend.dev` 주소로 보내는 동안은 **Resend 계정 주인 이메일로만** 실제 메일이 간다. 운영 전에 인증한 도메인 주소로 바꾼다(G단계).
