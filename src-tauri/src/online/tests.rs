@@ -390,3 +390,76 @@ fn gateway_answer_for_another_account_is_rejected() {
     ));
     assert_eq!(r, Err("ACCOUNT_MISMATCH".into()));
 }
+
+/// 실서버 왕복(개발 프로젝트) — 평소에는 건너뛴다. `poc/v2-gateway/edge/live-preview-auth.mjs`가
+/// 가상 시험 계정과 인증번호(관리 API, 메일 없음)를 만들어 이 시험만 돌리고, 끝나면 계정을 지운다.
+/// 보안 저장소만 메모리 가짜(Linux), HTTP·인증 서버·gateway·세션 확인 RPC는 실제.
+#[test]
+#[ignore]
+fn live_development_round_trip() {
+    let email = std::env::var("WJB_LIVE_EMAIL").expect("WJB_LIVE_EMAIL");
+    let code = std::env::var("WJB_LIVE_OTP").expect("WJB_LIVE_OTP");
+    let http = Reqwest::new("live-test").unwrap();
+    let (st, _d) = store();
+    let state = OnlineState::default();
+    let vault = Mem::default();
+    let mut out = Vec::<(String, bool)>::new();
+    let mut ok = |name: &str, pass: bool| {
+        println!("LIVE_CHECK {name} {pass}");
+        out.push((name.into(), pass));
+    };
+    // 1) 인증번호 로그인 → gateway 세션 확인
+    let s = run(verify_code(&http, &st, &state, &email, &code, || {
+        Ok(vault.clone())
+    }));
+    ok(
+        "verify_signed_in",
+        matches!(&s, Ok(s) if s.state == "signedIn"),
+    );
+    ok(
+        "gateway_me_checked",
+        matches!(&s, Ok(s) if s.server_checked_at.is_some()),
+    );
+    ok(
+        "refresh_token_in_vault_only",
+        vault.tokens().len() == 1
+            && !std::fs::read_to_string(st.path().join("account.json"))
+                .unwrap_or_default()
+                .contains(&vault.tokens()[0]),
+    );
+    let r1 = vault.tokens()[0].clone();
+    // 2) 접근 토큰 만료로 두고 다시 확인 → 실제 갱신·회전
+    run(async { state.0.lock().await.as_mut().unwrap().access_exp = 0 });
+    let s = run(check(&http, &st, &state, || Ok(vault.clone())));
+    ok(
+        "refresh_then_me",
+        matches!(&s, Ok(s) if s.server_checked_at.is_some()),
+    );
+    ok(
+        "refresh_token_rotated",
+        vault.tokens().len() == 1 && vault.tokens()[0] != r1,
+    );
+    let a2 = run(async { state.0.lock().await.as_ref().unwrap().access.clone() });
+    // 3) 로그아웃 → 같은 접근 토큰으로 gateway = 세션 끊김(ACCESS_REVOKED)
+    let s = run(sign_out(&http, &st, &state, || Ok(vault.clone())));
+    ok(
+        "sign_out",
+        matches!(&s, Ok(s) if s.state == "signedOut") && vault.tokens().is_empty(),
+    );
+    let after = run(http.send("GET", GATEWAY_ME, Some(&a2), None));
+    ok(
+        "revoked_after_sign_out",
+        matches!(&after, Ok((401, v)) if v["error"] == json!("ACCESS_REVOKED")),
+    );
+    // 4) 틀린 인증번호 거절
+    let bad = run(verify_code(
+        &http,
+        &st,
+        &OnlineState::default(),
+        &email,
+        "00000000",
+        || Ok(Mem::default()),
+    ));
+    ok("wrong_code_rejected", bad == Err("CODE_REJECTED".into()));
+    assert!(out.iter().all(|(_, p)| *p), "{out:?}");
+}

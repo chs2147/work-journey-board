@@ -1,6 +1,6 @@
 # V2 설계·PoC 중단/재개 기록
 
-**현재 재개 정본:** [79. B단계 — Preview 앱 ↔ 개발 DB 첫 연결](79-preview-dev-connection.md) — Rust 로그인·세션 모듈과 Preview 계정 카드 완료(가짜 서버 시험). gateway Edge Function은 배포됐으나 서버 열쇠 형식 문제로 503, 메일 양식 인증번호 미반영 — 두 가지 사용자 결정 대기(79문서 5절). 앞 단계 [78](78-preview-native-bootstrap.md)(6-B, 검증용 설치 파일 run 1 성공) · [77](77-db20-journal-v4.md) 6절(개발 DB DB20 적용). 이하 체크포인트는 작성 당시 기록이며 가장 최근 결과가 우선한다.
+**현재 재개 정본:** [79. B단계 — Preview 앱 ↔ 개발 DB 첫 연결](79-preview-dev-connection.md) — gateway Edge Function v4 동작, 앱 Rust 로그인 코드로 실서버 왕복 8검사 통과·잔여 0. 남은 것: 메일 양식 인증번호(사용자 대시보드), Windows·macOS 실기(보안 저장소), 운영 전 새 형식 키 전환. 앞 단계 [78](78-preview-native-bootstrap.md) · [77](77-db20-journal-v4.md) 6절. 이하 체크포인트는 작성 당시 기록이며 가장 최근 결과가 우선한다.
 
 2026-11-09 UTC · V2 설계/PoC 중단 지점을 보존한 뒤 복귀했다. 사용자 요청으로 main 1.23.1 패치(`d11a0ca`)를 v2-design에 병합했다.
 

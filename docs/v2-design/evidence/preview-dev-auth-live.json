@@ -1,0 +1,47 @@
+{
+  "startedAt": "2026-11-14T00:09:13.729Z",
+  "projectRef": "vsphftnmfzfoufasjttd",
+  "productionTouched": false,
+  "mailSent": false,
+  "account": "virtual (example.invalid)",
+  "checks": [
+    {
+      "name": "verify_signed_in",
+      "passed": true
+    },
+    {
+      "name": "gateway_me_checked",
+      "passed": true
+    },
+    {
+      "name": "refresh_token_in_vault_only",
+      "passed": true
+    },
+    {
+      "name": "refresh_then_me",
+      "passed": true
+    },
+    {
+      "name": "refresh_token_rotated",
+      "passed": true
+    },
+    {
+      "name": "sign_out",
+      "passed": true
+    },
+    {
+      "name": "revoked_after_sign_out",
+      "passed": true
+    },
+    {
+      "name": "wrong_code_rejected",
+      "passed": true
+    }
+  ],
+  "cleanup": {
+    "deleteStatus": 200,
+    "userAbsent": true
+  },
+  "passed": true,
+  "finishedAt": "2026-11-14T00:09:22.129Z"
+}
