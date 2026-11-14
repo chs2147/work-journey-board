@@ -17,10 +17,11 @@ const definitions = rows.map((line) => {
     Object.freeze({ appId, productName, configDirectory, releaseRepository: releaseRepository || null }),
   ];
 });
+// local-dev = 비공식 로컬 검증판(DEV, docs/release-channel-spec.md) — 정식판과 앱 ID·설정 폴더가 다르고 업데이트 저장소 없음
 if (
-  definitions.length !== 2 ||
-  new Set(definitions.map(([name]) => name)).size !== 2 ||
-  definitions.some(([name]) => !["local-classic", "connected-preview"].includes(name))
+  definitions.length !== 3 ||
+  new Set(definitions.map(([name]) => name)).size !== 3 ||
+  definitions.some(([name]) => !["local-classic", "connected-preview", "local-dev"].includes(name))
 )
   throw Error("PROFILE_RESOURCE_INVALID");
 const profiles = Object.freeze(Object.fromEntries(definitions));

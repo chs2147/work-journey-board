@@ -12,6 +12,7 @@ import { TopBar } from "./common/TopBar";
 import { useMediaQuery, useWindowWidth } from "./common/useMediaQuery";
 import { FirstRun } from "./first-run/FirstRun";
 import { IntegrityProblem, MissingFolder, UpdateRequired } from "./first-run/StartScreens";
+import { DevOfficialRefused, DevSetup } from "./first-run/DevSetup";
 import { ImportantPanel } from "./important/ImportantPanel";
 import { SearchBand, SearchPanel } from "./search/SearchViews";
 import { MarkdownExportDialog } from "./note/MarkdownExportDialog";
@@ -107,6 +108,10 @@ function screen(journal: JournalStatus) {
       return <IntegrityProblem dataDir={journal.dataDir} path={journal.path} />;
     case "newer":
       return <UpdateRequired dataDir={journal.dataDir} fileVersion={journal.fileVersion} />;
+    case "dev-setup":
+      return <DevSetup />;
+    case "dev-official":
+      return <DevOfficialRefused dataDir={journal.dataDir} />;
     default:
       return <p className={styles.placeholder}>{statusText(journal)}</p>;
   }
@@ -218,5 +223,9 @@ function statusText(journal: JournalStatus): string {
       return STR.status.dbError(journal.message);
     case "newer":
       return STR.incompatible.title;
+    case "dev-setup":
+      return STR.devChannel.setupTitle;
+    case "dev-official":
+      return STR.devChannel.officialTitle;
   }
 }

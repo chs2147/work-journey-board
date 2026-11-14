@@ -109,7 +109,8 @@ describe("Preview 온라인 모듈(online.rs) 접속 범위", () => {
 });
 
 describe("Rust 명령 경계(lib.rs)", () => {
-  const classic = handlers('not(feature = "connected-preview")');
+  const classic = handlers('not(any(feature = "connected-preview", feature = "dev-channel"))');
+  const dev = handlers('feature = "dev-channel"');
   const prev = handlers('feature = "connected-preview"');
 
   it("Classic 명령 = 예전 목록 + 프로필 묻기", () => {
@@ -140,6 +141,15 @@ describe("Rust 명령 경계(lib.rs)", () => {
       "cabinet::cabinet_resolve_shortcut",
       "cabinet::cabinet_drag_paths",
       "profile::app_profile",
+    ]);
+  });
+
+  it("DEV 명령 = Classic 명령 + DEV 일지 폴더 확인·준비·정식 일지 복제", () => {
+    expect(dev).toEqual([
+      ...classic,
+      "dev_guard::dev_folder_status",
+      "dev_guard::dev_prepare_folder",
+      "dev_guard::dev_copy_official",
     ]);
   });
 

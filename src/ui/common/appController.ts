@@ -33,7 +33,7 @@ import {
   restoreFromBackup,
 } from "../../data/session";
 import type { SqlDriver } from "../../data/driver";
-import { loadPlatform, type Platform } from "../../platform";
+import { activeProfile, loadPlatform, OfficialJournalError, type Platform } from "../../platform";
 import { STR } from "../../shared/strings";
 import { applyTheme, readStoredTheme, storeTheme, type ThemePref } from "../../shared/theme";
 import {
@@ -99,6 +99,11 @@ export async function start() {
   // 테마 정본 = config.json, 없으면 이 창이 이미 적용한 사본(public/theme-early.js).
   // 처음 설치(설정 없음) = 시그니처, 이미 쓰던 사용자가 테마를 고른 적 없으면 = 시스템 설정 그대로(release-phase2-spec 1절)
   adoptTheme(config ? (config.theme ?? readStoredTheme("system")) : readStoredTheme());
+  // DEV 검증판: 설치(판)마다 쓸 일지를 묻는다 — 정식판 설정은 읽지 않는다(설정 폴더가 다름)
+  if (activeProfile().key === "local-dev" && config?.devSetupVersion !== __APP_VERSION__) {
+    if (config) set({ workspaces: readEntries(config) });
+    return set({ journal: { state: "dev-setup" } });
+  }
   if (!config) return set({ journal: { state: "first-run" } });
   set({ workspaces: readEntries(config) });
   p.splash?.status(STR.splash.opening);
@@ -450,6 +455,7 @@ async function restoreBackupWork(
 }
 
 function statusFor(e: unknown, dataDir: string): JournalStatus {
+  if (e instanceof OfficialJournalError) return { state: "dev-official", dataDir };
   if (e instanceof FolderMissingError) return { state: "missing", dataDir };
   if (e instanceof NewerSchemaError) return { state: "newer", dataDir, fileVersion: e.fileVersion };
   if (e instanceof IntegrityError) return { state: "integrity", dataDir, path: e.path };
@@ -507,6 +513,16 @@ export async function openFolderAsJournal(dataDir: string): Promise<boolean> {
     await platform().saveConfig(had?.theme ? { dataDir } : { dataDir, theme: get().theme });
   }
   return ok;
+}
+
+/** DEV 일지 선택을 마쳤다 — 이 설치 판을 기억(다음 설치 때 다시 묻는다) */
+export async function finishDevSetup() {
+  await platform().saveConfig({ devSetupVersion: __APP_VERSION__ });
+}
+
+/** DEV 일지 선택 화면으로 */
+export function goDevSetup() {
+  set({ journal: { state: "dev-setup" } });
 }
 
 export function goFirstRun() {
@@ -648,7 +664,9 @@ export function currentWorkspace(): WorkspaceEntry | null {
 
 /** 창 제목: 공간이 2개 이상이면 `Work Journey Board — 개인`(spec 3-1) */
 function applyWindowTitle(list: WorkspaceEntry[], name: string) {
-  const title = list.length > 1 ? STR.workspace.windowTitle(STR.appName, name) : STR.appName;
+  // 앱 이름은 실행 프로필에서(DEV = "Work Journey Board DEV")
+  const app = activeProfile().productName;
+  const title = list.length > 1 ? STR.workspace.windowTitle(app, name) : app;
   void platform()
     .setWindowTitle?.(title)
     .catch(() => undefined);

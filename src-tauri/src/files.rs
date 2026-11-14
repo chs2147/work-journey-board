@@ -136,6 +136,7 @@ pub fn fs_list(dir: String) -> Result<Vec<String>, String> {
 
 #[tauri::command]
 pub fn fs_ensure_dir(dir: String) -> Result<(), String> {
+    crate::dev_guard::write_allowed(Path::new(&dir))?;
     fs::create_dir_all(&dir).map_err(err)
 }
 
@@ -207,6 +208,7 @@ pub fn fs_remove_backup(
     expected_size: Option<u64>,
     expected_modified: Option<u64>,
 ) -> Result<(), String> {
+    crate::dev_guard::write_allowed(Path::new(&path))?;
     let name = file_name(&path);
     if !is_deletable(&name) {
         return Err(format!("삭제 금지 파일: {name}"));
@@ -227,6 +229,8 @@ pub fn fs_remove_backup(
 /// 백업 임시 사본(*.db.tmp)을 최종 백업 이름(work-journey_*.db)으로 바꾼다(같은 이름이면 덮어씀).
 #[tauri::command]
 pub fn fs_rename_backup(from: String, to: String) -> Result<(), String> {
+    crate::dev_guard::write_allowed(Path::new(&from))?;
+    crate::dev_guard::write_allowed(Path::new(&to))?;
     let (f, t) = (file_name(&from), file_name(&to));
     if !is_temp(&f) || !(t.starts_with("work-journey_") && t.ends_with(".db")) {
         return Err(format!("허용되지 않은 이름 바꾸기: {f} → {t}"));
@@ -246,6 +250,7 @@ pub fn fs_rename_backup(from: String, to: String) -> Result<(), String> {
 /// 새 파일로만 복사(대상이 있으면 실패 — 덮어쓰지 않는다). 저장 위치 옮기기에서 백업 폴더 복사용.
 #[tauri::command]
 pub fn fs_copy_new(from: String, to: String) -> Result<(), String> {
+    crate::dev_guard::write_allowed(Path::new(&to))?;
     let mut src = fs::File::open(&from).map_err(err)?;
     let mut dst = fs::OpenOptions::new()
         .write(true)
@@ -326,6 +331,7 @@ pub fn restore_journal(
     backup_name: String,
     before_name: String,
 ) -> Result<(), String> {
+    crate::dev_guard::write_allowed(&Path::new(&data_dir).join("work-journey.db"))?;
     if file_name(&backup_name) != backup_name
         || file_name(&before_name) != before_name
         || !is_restorable(&backup_name)
@@ -464,6 +470,7 @@ fn export_path_allowed(path: &str, data_dir: Option<&str>) -> Result<(), String>
 /// 덮어쓰기를 확인한 것이다. 임시 파일에 다 쓴 뒤 바꿔치기(쓰는 도중 꺼져도 반쪽 파일이 남지 않게).
 #[tauri::command]
 pub fn export_write(app: AppHandle, path: String, bytes: Vec<u8>) -> Result<(), String> {
+    crate::dev_guard::write_allowed(Path::new(&path))?;
     export_path_allowed_all(&path, &configured_data_dirs(&app))?;
     let target = PathBuf::from(&path);
     // 마크다운 이미지 폴더(`…_images`)는 없으면 한 단계만 만든다(그 위 폴더는 사용자가 고른 곳이라 이미 있다)
@@ -746,6 +753,8 @@ mod tests {
         fs::write(dir.join("backups/work-journey_2026-10-21.db"), b"good").unwrap();
         fs::write(dir.join("backups/note.txt"), b"keep").unwrap();
         let d = dir.to_string_lossy().into_owned();
+        // DEV 빌드로 시험할 때: 이 시험 폴더는 DEV 일지 폴더(표시 파일) — 정식판 빌드에는 영향 없음
+        fs::write(dir.join(crate::dev_guard::MARKER), b"{}").unwrap();
         // 경로가 섞인 이름·패턴 밖 이름은 거부
         assert!(restore_journal(
             d.clone(),

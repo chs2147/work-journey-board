@@ -47,6 +47,7 @@ test("Rust and Node consume the same checked-in profile manifest", () => {
   const source = read("../v2-native/src/policy.rs");
   assert(source.includes('include_str!("../profiles.tsv")'));
   const manifest = read("../v2-native/profiles.tsv");
-  assert.equal(manifest.trimEnd().split("\n").length, 3);
-  for (const profile of ["local-classic", "connected-preview"]) assert(manifest.includes(profile + "|"));
+  assert.equal(manifest.trimEnd().split("\n").length, 4);
+  for (const profile of ["local-classic", "connected-preview", "local-dev"])
+    assert(manifest.includes(profile + "|"));
 });

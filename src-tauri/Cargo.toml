@@ -12,6 +12,8 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 # connected-preview = 별도 앱 ID·설정 폴더·업데이트 꺼짐·일지 명령 없음 — `tauri.preview.conf.json`과 함께만 빌드한다
 [features]
 connected-preview = ["dep:wjb-native-isolation", "dep:uuid"]
+# DEV 검증판(비공식 로컬판, docs/release-channel-spec.md) — `tauri.dev.conf.json`과 함께만 빌드. 정식판 일지·설정을 건드리지 않음
+dev-channel = []
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }

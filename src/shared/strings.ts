@@ -1422,6 +1422,37 @@ export const STR_BASE = {
     openBackups: "백업 폴더 열기",
     retry: "다시 시도",
   },
+  /** DEV 검증판(비공식 판, docs/release-channel-spec.md) */
+  devChannel: {
+    badge: "DEV",
+    badgeTitle: "비공식 검증판 — 정식판 일지·설정과 따로 동작합니다",
+    setupTitle: "DEV 일지 선택",
+    setupLead: "이 DEV 설치에서 쓸 일지를 골라 주세요. 정식판 일지와 설정은 사용하지 않습니다.",
+    optEmpty: "빈 일지",
+    optSample: "가상 샘플",
+    optCopy: "정식 일지 복제",
+    optCopyHint: "정식 일지를 읽기만 해서 DEV 폴더에 새 파일로 복사합니다. 원본은 바뀌지 않습니다.",
+    devFolder: "DEV 일지 폴더",
+    officialFolder: "복제할 정식 일지 폴더",
+    pick: "폴더 선택…",
+    pickDevTitle: "DEV 일지를 둘 폴더",
+    pickOfficialTitle: "복제할 정식 일지가 있는 폴더",
+    notPicked: "선택 안 함",
+    start: "시작",
+    starting: "준비하는 중…",
+    continuePrev: "지난 DEV 일지 계속 쓰기",
+    errOfficialDest: "정식 일지가 있는 폴더는 DEV 일지 폴더로 쓸 수 없습니다.",
+    errDevDest:
+      "이미 DEV 일지가 있는 폴더입니다. 빈 폴더를 고르거나 [지난 DEV 일지 계속 쓰기]를 눌러 주세요.",
+    errNotOfficial: "고른 폴더에 정식 일지가 없습니다.",
+    errInUse: "정식판이 일지를 쓰는 중입니다. 정식판을 닫고 다시 시도해 주세요.",
+    errFailed: (msg: string) => `준비하지 못했습니다: ${msg}`,
+    officialTitle: "정식판 일지는 DEV에서 열 수 없습니다",
+    officialBody:
+      "DEV 검증판은 정식 일지를 열거나 쓰지 않습니다. DEV 일지를 새로 고르거나, 정식 일지를 복제해 시험해 주세요.",
+    backToSetup: "DEV 일지 선택으로",
+    updatesDisabled: "DEV 판은 업데이트를 확인하지 않습니다",
+  },
   /** Connected Preview 시작 화면(V2 6-B, docs/v2-design/78-preview-native-bootstrap.md) */
   connectedPreview: {
     lead: "온라인 연결 검증판입니다. 기존 로컬 일지는 이 앱에서 열지 않습니다.",

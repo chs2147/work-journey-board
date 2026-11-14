@@ -27,6 +27,7 @@ import { useUniverse } from "../universe/universeStore";
 import { useKanban } from "../kanban/kanbanStore";
 import { KanbanActions, KanbanFilters, KanbanLayoutToggle } from "../kanban/KanbanToolbar";
 import { AddCategoryDialog } from "../board/AddCategoryDialog";
+import { activeProfile } from "../../platform";
 import styles from "./TopBar.module.css";
 
 export function TopBar() {
@@ -69,6 +70,11 @@ export function TopBar() {
       <div className={styles.brandRow}>
         <BrandLockup size="bar" />
         <WorkspaceName />
+        {activeProfile().unofficial && (
+          <span className={styles.devBadge} title={STR.devChannel.badgeTitle} data-testid="dev-badge">
+            {STR.devChannel.badge}
+          </span>
+        )}
       </div>
       {/* 2줄: 연도·주차 이동 · 저장 상태 · 설정 */}
       <div className={styles.bar}>

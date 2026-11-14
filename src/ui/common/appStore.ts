@@ -14,7 +14,11 @@ export type JournalStatus =
   | { state: "ready"; driver: SqlDriver; repo: JournalRepository; dataDir: string; sqliteVersion: string }
   | { state: "error"; message: string }
   /** 일지 데이터(DB 버전)가 이 앱보다 새로움 — 열지 않았다(improve-v22-spec 2절) */
-  | { state: "newer"; dataDir: string; fileVersion: number };
+  | { state: "newer"; dataDir: string; fileVersion: number }
+  /** DEV 검증판: 이번 설치에서 쓸 일지 고르기(docs/release-channel-spec.md 4절) */
+  | { state: "dev-setup" }
+  /** DEV 검증판: 정식판 일지라 열지 않았다 */
+  | { state: "dev-official"; dataDir: string };
 
 interface AppState {
   platform: Platform | null;

@@ -1,7 +1,11 @@
 //! 실행 프로필(V2 6-B, docs/v2-design/78-preview-native-bootstrap.md).
 //! 기본 빌드 = **Local Classic** — 앱 ID·설정 폴더·업데이트·명령 목록이 이 모듈이 생기기 전과 같다.
 //! `connected-preview` 기능을 켠 빌드만 Connected Preview(별도 앱 ID·설정 폴더, 업데이트 꺼짐,
-//! 기존 일지 열기·쓰기 명령 없음). 화면 코드는 OS가 아니라 이 프로필 값만 본다.
+//! 기존 일지 열기·쓰기 명령 없음). `dev-channel` 기능을 켠 빌드는 **DEV 검증판**(별도 앱 ID·설정 폴더,
+//! 업데이트 꺼짐, DEV 표시가 있는 일지 폴더만 — docs/release-channel-spec.md). 화면 코드는 OS가 아니라 이 프로필 값만 본다.
+
+#[cfg(all(feature = "connected-preview", feature = "dev-channel"))]
+compile_error!("connected-preview와 dev-channel은 함께 켤 수 없습니다");
 
 use serde::Serialize;
 
@@ -12,7 +16,7 @@ pub const CLASSIC_CONFIG_DIR: &str = "WorkJourneyBoard";
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AppProfile {
-    /// "local-classic" | "connected-preview"
+    /// "local-classic" | "connected-preview" | "local-dev"
     pub key: &'static str,
     pub app_id: &'static str,
     pub product_name: &'static str,
@@ -23,9 +27,15 @@ pub struct AppProfile {
     pub updates: bool,
     /// 기존 로컬 일지를 열고 쓰는 명령(SQLite·백업·복원·내보내기·Cabinet)이 있는가 — Preview는 늘 false
     pub local_journal: bool,
+    /// 비공식 판(Preview·DEV) — 화면이 DEV 배지·타이틀 색을 보인다
+    pub unofficial: bool,
 }
 
-#[cfg(not(feature = "connected-preview"))]
+/// DEV 검증판 값(공통 정본 profiles.tsv의 local-dev 줄과 같아야 함 — 시험이 확인)
+pub const DEV_APP_ID: &str = "com.chs2147.workjourneyboard.dev";
+pub const DEV_CONFIG_DIR: &str = "WorkJourneyBoardDev";
+
+#[cfg(not(any(feature = "connected-preview", feature = "dev-channel")))]
 pub fn active() -> AppProfile {
     AppProfile {
         key: "local-classic",
@@ -34,7 +44,26 @@ pub fn active() -> AppProfile {
         config_dir: CLASSIC_CONFIG_DIR,
         updates: true,
         local_journal: true,
+        unofficial: false,
     }
+}
+
+#[cfg(feature = "dev-channel")]
+pub fn active() -> AppProfile {
+    AppProfile {
+        key: "local-dev",
+        app_id: DEV_APP_ID,
+        product_name: "Work Journey Board DEV",
+        config_dir: DEV_CONFIG_DIR,
+        updates: false,
+        local_journal: true,
+        unofficial: true,
+    }
+}
+
+/// DEV 검증판인가(일지 폴더 보호 dev_guard가 켜짐)
+pub fn is_dev() -> bool {
+    active().key == "local-dev"
 }
 
 /// Preview 값은 공통 프로필 정본(`poc/v2-native/profiles.tsv`)에서만 읽는다 — 따로 복사하지 않는다
@@ -50,6 +79,7 @@ pub fn active() -> AppProfile {
         config_dir: id.config_directory,
         updates: id.release_repository.is_some(),
         local_journal: false,
+        unofficial: true,
     }
 }
 
@@ -116,13 +146,48 @@ mod tests {
         assert!(prow[4].is_empty(), "Preview는 업데이트 저장소가 없다");
     }
 
-    #[cfg(not(feature = "connected-preview"))]
+    #[test]
+    fn dev_constants_match_shared_profiles_and_dev_conf() {
+        let tsv = include_str!("../../poc/v2-native/profiles.tsv");
+        let row: Vec<&str> = tsv
+            .lines()
+            .find(|l| l.starts_with("local-dev|"))
+            .expect("local-dev 줄")
+            .split('|')
+            .collect();
+        assert_eq!(
+            (row[1], row[2], row[3], row[4]),
+            (DEV_APP_ID, "Work Journey Board DEV", DEV_CONFIG_DIR, "")
+        );
+        let conf: serde_json::Value =
+            serde_json::from_str(include_str!("../tauri.dev.conf.json")).unwrap();
+        assert_eq!(conf["identifier"], DEV_APP_ID);
+        assert_eq!(conf["productName"], "Work Journey Board DEV");
+        assert_ne!(DEV_CONFIG_DIR, CLASSIC_CONFIG_DIR);
+    }
+
+    #[cfg(feature = "dev-channel")]
+    #[test]
+    fn dev_build_is_isolated_from_official() {
+        let p = active();
+        assert_eq!(
+            (p.key, p.app_id, p.config_dir),
+            ("local-dev", DEV_APP_ID, DEV_CONFIG_DIR)
+        );
+        assert!(!p.updates && p.local_journal && p.unofficial && is_dev());
+        assert_eq!(require_updates(), Err("UPDATES_DISABLED".to_string()));
+        assert!(check_identifier(DEV_APP_ID).is_ok());
+        // DEV 빌드를 정식 설정으로 켜면 거절(정식판 설정 폴더·단일 인스턴스를 같이 쓰지 않게)
+        assert!(check_identifier(CLASSIC_APP_ID).is_err());
+    }
+
+    #[cfg(not(any(feature = "connected-preview", feature = "dev-channel")))]
     #[test]
     fn classic_build_keeps_existing_behavior() {
         let p = active();
         assert_eq!(p.key, "local-classic");
         assert_eq!(p.config_dir, "WorkJourneyBoard");
-        assert!(p.updates && p.local_journal);
+        assert!(p.updates && p.local_journal && !p.unofficial && !is_dev());
         assert!(require_updates().is_ok());
         assert!(check_identifier(CLASSIC_APP_ID).is_ok());
         // Classic 빌드를 Preview 설정으로 켜면 거절

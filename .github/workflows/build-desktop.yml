@@ -1,7 +1,10 @@
 # Work Journey Board 데스크톱 설치 파일 빌드 — 하나의 원본, 두 플랫폼(macos-spec 4-1, 2026-11-02 사용자 승인)
 # - 윈도우: NSIS 설치 파일(현재 사용자 전용) WorkJourneyBoard_<v>_setup.exe
 # - 맥: 유니버설(인텔·애플 실리콘) DMG WorkJourneyBoard_<v>_mac.dmg — 애드혹 서명(D1 A안)
-# - 작업 브랜치(claude/**, design-renewal-v2, universe-renewal-v2, improve-v12, improve-v13, improve-v14, improve-v16, improve-v17, cabinet-v2) 푸시: 두 빌드만 하고 Actions 산출물로 업로드(검증용)
+# - 작업 브랜치(claude/**, design-renewal-v2, universe-renewal-v2, improve-v12, improve-v13, improve-v14, improve-v16, improve-v17, cabinet-v2, v2-design) 푸시: 두 빌드만 하고 Actions 산출물로 업로드(검증용)
+#   · 정식판·DEV 운영 정책(docs/release-channel-spec.md, 2026-11-14 확정): main 밖 빌드는 모두 **DEV 검증판**
+#     (`--features dev-channel` + `tauri.dev.conf.json` — 별도 앱 ID·설치·설정 폴더, 업데이트 꺼짐, 정식 일지 보호).
+#     main 빌드만 정식판(지금과 같은 앱 ID·설정·일지)이며 릴리스도 main에서만 만든다
 # - main 푸시: 두 빌드가 **모두 성공해야** 릴리스 v<package.json 버전>를 한 번에 만든다(D3 — 두 플랫폼 판 번호가 늘 같음)
 #   · 0.x·-rc = 사전 릴리스, 정식 판(1.0.0 이상, 꼬리표 없음) = 정식 릴리스(Latest)(release-phase2-spec 4절)
 #   · 릴리스 본문 = docs/release-notes/v<버전>.md + 설치 파일 표, SHA256SUMS.txt = 두 설치 파일을 합친 것
@@ -24,6 +27,7 @@ on:
         "improve-v17",
         "improve-v18",
         "cabinet-v2",
+        "v2-design",
       ]
     paths:
       - "src/**"
@@ -66,6 +70,7 @@ jobs:
       variant: ${{ steps.p.outputs.variant }}
       mac: ${{ steps.p.outputs.mac }}
       version: ${{ steps.p.outputs.version }}
+      channel: ${{ steps.p.outputs.channel }}
     steps:
       - uses: actions/checkout@v4
       - id: p
@@ -75,16 +80,19 @@ jobs:
           variant="${{ inputs.webview }}"; [ -z "$variant" ] && variant=embed
           mac=true; [ "$variant" = "offline" ] && mac=false
           version=$(node -p "require('./package.json').version")
+          # 정식판 = main 빌드만. 그 밖(작업 브랜치·RC)은 DEV 검증판(docs/release-channel-spec.md 2절)
+          channel=dev; [ "${{ github.ref }}" = "refs/heads/main" ] && channel=official
           {
-            echo "formal=$formal"; echo "variant=$variant"; echo "mac=$mac"; echo "version=$version"
+            echo "formal=$formal"; echo "variant=$variant"; echo "mac=$mac"; echo "version=$version"; echo "channel=$channel"
           } >> "$GITHUB_OUTPUT"
-          echo "판 $version · 정식 판: $formal · 윈도우 설치판: $variant · 맥: $mac"
+          echo "판 $version · 정식 판: $formal · 윈도우 설치판: $variant · 맥: $mac · 채널: $channel"
 
   windows:
     needs: plan
     runs-on: windows-latest
     env:
       VARIANT: ${{ needs.plan.outputs.variant }}
+      CHANNEL: ${{ needs.plan.outputs.channel }}
     steps:
       - uses: actions/checkout@v4
 
@@ -105,12 +113,16 @@ jobs:
       - name: Build NSIS installer
         shell: pwsh
         run: |
-          if ($env:VARIANT -eq "offline") { npx tauri build --config src-tauri/tauri.offline.conf.json }
-          else { npx tauri build }
+          $a = @()
+          if ($env:VARIANT -eq "offline") { $a += @("--config", "src-tauri/tauri.offline.conf.json") }
+          if ($env:CHANNEL -eq "dev") { $a += @("--config", "src-tauri/tauri.dev.conf.json", "--features", "dev-channel") }
+          npx tauri build @a
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-      - name: Rust tests (file guards · update · cabinet)
-        run: cargo test --release --lib --manifest-path src-tauri/Cargo.toml
+      - name: Rust tests (file guards · update · cabinet · DEV guard)
+        run: |
+          cargo test --release --lib --manifest-path src-tauri/Cargo.toml
+          cargo test --release --lib --manifest-path src-tauri/Cargo.toml --features dev-channel
 
       - name: Collect installer
         shell: pwsh
@@ -119,13 +131,16 @@ jobs:
           $suffix = if ($env:VARIANT -eq "offline") { "_offline" } else { "" }
           $exe = Get-ChildItem src-tauri/target/release/bundle/nsis/*.exe | Select-Object -First 1
           if (-not $exe) { throw "NSIS 설치 파일을 찾지 못했습니다" }
+          $isDev = $exe.Name -like "Work Journey Board DEV*"
+          if (($env:CHANNEL -eq "dev") -ne $isDev) { throw "채널($env:CHANNEL)과 설치 파일 이름이 맞지 않습니다: $($exe.Name)" }
+          $prefix = if ($env:CHANNEL -eq "dev") { "WorkJourneyBoardDEV" } else { "WorkJourneyBoard" }
           New-Item -ItemType Directory -Force out | Out-Null
-          Copy-Item $exe.FullName "out/WorkJourneyBoard_${v}_setup${suffix}.exe"
+          Copy-Item $exe.FullName "out/${prefix}_${v}_setup${suffix}.exe"
           Get-ChildItem out
 
       - uses: actions/upload-artifact@v4
         with:
-          name: work-journey-board-windows-${{ env.VARIANT }}
+          name: work-journey-board-windows-${{ env.VARIANT }}${{ env.CHANNEL == 'dev' && '-DEV' || '' }}
           path: out/*
           retention-days: 14
 
@@ -133,6 +148,8 @@ jobs:
     needs: plan
     if: needs.plan.outputs.mac == 'true'
     runs-on: macos-latest
+    env:
+      CHANNEL: ${{ needs.plan.outputs.channel }}
     steps:
       - uses: actions/checkout@v4
 
@@ -157,13 +174,17 @@ jobs:
       - name: Build universal DMG
         shell: bash
         run: |
-          if ! CI=false npx tauri build --target universal-apple-darwin; then
+          args="--target universal-apple-darwin"
+          [ "$CHANNEL" = "dev" ] && args="$args --config src-tauri/tauri.dev.conf.json --features dev-channel"
+          if ! CI=false npx tauri build $args; then
             echo "::warning::DMG 꾸미기(Finder 스크립트)에 실패해 꾸밈 없이 다시 묶습니다"
-            CI=true npx tauri build --target universal-apple-darwin
+            CI=true npx tauri build $args
           fi
 
-      - name: Rust tests (file guards · update · cabinet — macOS)
-        run: cargo test --release --lib --manifest-path src-tauri/Cargo.toml
+      - name: Rust tests (file guards · update · cabinet · DEV guard — macOS)
+        run: |
+          cargo test --release --lib --manifest-path src-tauri/Cargo.toml
+          cargo test --release --lib --manifest-path src-tauri/Cargo.toml --features dev-channel
 
       - name: Collect DMG
         shell: bash
@@ -171,8 +192,9 @@ jobs:
           v="${{ needs.plan.outputs.version }}"
           dmg=$(ls src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg | head -1)
           test -n "$dmg" || { echo "DMG를 찾지 못했습니다"; exit 1; }
-          mkdir -p out && cp "$dmg" "out/WorkJourneyBoard_${v}_mac.dmg"
-          hdiutil verify "out/WorkJourneyBoard_${v}_mac.dmg"
+          prefix=WorkJourneyBoard; [ "$CHANNEL" = "dev" ] && prefix=WorkJourneyBoardDEV
+          mkdir -p out && cp "$dmg" "out/${prefix}_${v}_mac.dmg"
+          hdiutil verify "out/${prefix}_${v}_mac.dmg"
           ls -l out
 
       # 배포되는 DMG 안의 앱을 검사한다(Tauri는 DMG를 만든 뒤 bundle/macos의 .app을 남기지 않는다)
@@ -180,8 +202,9 @@ jobs:
         shell: bash
         run: |
           v="${{ needs.plan.outputs.version }}"
+          prefix=WorkJourneyBoard; [ "$CHANNEL" = "dev" ] && prefix=WorkJourneyBoardDEV
           mnt=$(mktemp -d)
-          hdiutil attach -nobrowse -readonly -mountpoint "$mnt" "out/WorkJourneyBoard_${v}_mac.dmg"
+          hdiutil attach -nobrowse -readonly -mountpoint "$mnt" "out/${prefix}_${v}_mac.dmg"
           trap 'hdiutil detach -force "$mnt"' EXIT
           ls -la "$mnt"
           test -L "$mnt/Applications"
@@ -191,11 +214,14 @@ jobs:
           test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$app/Contents/Info.plist")" = "$v"
           /usr/libexec/PlistBuddy -c "Print :CFBundleDevelopmentRegion" "$app/Contents/Info.plist"
           /usr/libexec/PlistBuddy -c "Print :LSMinimumSystemVersion" "$app/Contents/Info.plist"
+          # 채널과 앱 ID가 맞는지(DEV는 정식판과 다른 앱으로 설치·실행)
+          id=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$app/Contents/Info.plist")
+          if [ "$CHANNEL" = "dev" ]; then test "$id" = "com.chs2147.workjourneyboard.dev"; else test "$id" = "com.chs2147.workjourneyboard"; fi
           codesign --verify --deep --strict "$app" && codesign -dv "$app" 2>&1 | grep -E "Signature|Identifier"
 
       - uses: actions/upload-artifact@v4
         with:
-          name: work-journey-board-macos
+          name: work-journey-board-macos${{ env.CHANNEL == 'dev' && '-DEV' || '' }}
           path: out/*
           retention-days: 14
 

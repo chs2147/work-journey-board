@@ -1,6 +1,8 @@
 # V2 프로젝트 — 다국어·온라인 동기화 상세 설계 초안
 
-**최신(2026-11-14):** [79. B단계 — Preview 앱 ↔ 개발 DB 첫 연결](79-preview-dev-connection.md) — gateway 동작·앱 로그인 코드 실서버 왕복 8검사 통과, 메일 양식은 사용자 대시보드 작업 대기.
+**최신(2026-11-14):** [80. 정식판·DEV 검증판 분리](80-release-channel-dev.md) — 비공식 판 = 별도 앱·설정·일지, DEV 배지, 설치마다 일지 선택(정책 `docs/release-channel-spec.md`).
+
+**이전(2026-11-14):** [79. B단계 — Preview 앱 ↔ 개발 DB 첫 연결](79-preview-dev-connection.md) — gateway 동작·앱 로그인 코드 실서버 왕복 8검사 통과, 메일 양식은 사용자 대시보드 작업 대기.
 
 **이전(2026-11-14):** [78. Connected Preview 실행 프로필·Tauri 명령 경계](78-preview-native-bootstrap.md) — Classic 빌드 그대로 + Preview 격리, 검증용 설치 파일 워크플로.
 

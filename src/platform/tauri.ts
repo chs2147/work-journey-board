@@ -25,6 +25,10 @@ import {
   type FolderWindows,
   type Platform,
   type UpdateInfo,
+  type DevFolderStatus,
+  type DevJournalOps,
+  OfficialJournalError,
+  activeProfile,
 } from "./index";
 import { splash } from "./tauriSplash";
 import { OS } from "../shared/os";
@@ -247,8 +251,33 @@ const backupFs: BackupFs = {
   },
 };
 
+// DEV 검증판 일지 폴더(Rust dev_guard.rs — DEV 빌드에만 명령이 있다)
+const devCode = (e: unknown) => (typeof e === "string" ? e : e instanceof Error ? e.message : "UNKNOWN");
+const tauriDev: DevJournalOps = {
+  folderStatus: (dir) => invoke<DevFolderStatus>("dev_folder_status", { dir }),
+  async prepareFolder(dir) {
+    try {
+      await invoke("dev_prepare_folder", { dir });
+    } catch (e) {
+      if (devCode(e) === "OFFICIAL_JOURNAL") throw new OfficialJournalError(dir);
+      throw new Error(devCode(e), { cause: e });
+    }
+  },
+  async copyOfficial(src, dest) {
+    try {
+      await invoke("dev_copy_official", { src, dest });
+    } catch (e) {
+      throw new Error(devCode(e), { cause: e });
+    }
+  },
+};
+
 export const tauriPlatform: Platform = {
   kind: "tauri",
+  /** DEV 프로필일 때만(정식판에는 명령이 없다) */
+  get dev() {
+    return activeProfile().key === "local-dev" ? tauriDev : undefined;
+  },
   cabi: tauriCabiBridge(),
   now: () => new Date(),
 

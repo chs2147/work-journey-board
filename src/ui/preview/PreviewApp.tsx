@@ -13,6 +13,7 @@ import { STR } from "../../shared/strings";
 import { applyTheme, readStoredTheme } from "../../shared/theme";
 import { finishSplash } from "../splash";
 import appStyles from "../App.module.css";
+import topStyles from "../common/TopBar.module.css";
 import styles from "../first-run/FirstRun.module.css";
 
 const P = STR.connectedPreview;
@@ -81,7 +82,12 @@ export function PreviewApp({ profile }: { profile: AppProfileInfo }) {
     <div className={appStyles.shell}>
       <div className={styles.wrap} data-testid="connected-preview">
         <section className={styles.card}>
-          <h1 className={styles.title}>{profile.productName}</h1>
+          <h1 className={styles.title}>
+            {profile.productName}{" "}
+            <span className={topStyles.devBadge} title={STR.devChannel.badgeTitle} data-testid="dev-badge">
+              {STR.devChannel.badge}
+            </span>
+          </h1>
           <p className={styles.lead}>{P.lead}</p>
           <dl className={styles.facts}>
             <dt>{P.profile}</dt>

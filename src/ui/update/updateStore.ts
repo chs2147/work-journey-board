@@ -4,7 +4,7 @@
 import { create } from "zustand";
 import { copyIncompatibleForUpdate, preUpdateBackup, preUpdateBackupClosed } from "../../data/session";
 import { sameDir } from "../../domain/workspace";
-import type { UpdateInfo } from "../../platform";
+import { activeProfile, type UpdateInfo } from "../../platform";
 import { STR } from "../../shared/strings";
 import { flushAll, toast } from "../board/boardStore";
 import { useAppStore } from "../common/appStore";
@@ -84,6 +84,11 @@ export async function checkNow() {
 async function check() {
   const platform = useAppStore.getState().platform;
   if (!platform) return;
+  // 비공식 판(DEV·Preview)은 새 판을 확인하지 않는다 — 정식 릴리스를 받아 자기를 정식판으로 바꾸지 않게
+  if (!activeProfile().updates) {
+    set({ phase: "failed", error: STR.devChannel.updatesDisabled, failKind: null, retryAt: null });
+    return;
+  }
   set({ phase: "checking", error: null });
   try {
     const info = await platform.updateCheck();

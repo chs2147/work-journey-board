@@ -8,10 +8,19 @@ import { prepareConnection } from "../data/driver";
 import { openSqlJs, sqlJsCalls } from "../data/drivers/sqlJs";
 import { migrate } from "../data/migrate";
 import { seedSample, type SampleData } from "../data/seed";
+import { browserDevJournal } from "./browserDevJournal";
 import { isThemePref } from "../shared/theme";
 import { createFakeFs } from "./fakeFs";
 import { makeYearSample } from "./sampleYear";
-import { baseName, dirOf, isOneDriveLike, parseConfig, type AppConfig, type Platform } from "./index";
+import {
+  activeProfile,
+  baseName,
+  dirOf,
+  isOneDriveLike,
+  parseConfig,
+  type AppConfig,
+  type Platform,
+} from "./index";
 
 // 브라우저 모드(개발·E2E): 메모리 위의 가짜 폴더 + sql.js. 새로고침하면 처음 상태로 돌아간다.
 // 주소 옵션
@@ -152,8 +161,14 @@ const ready = (async () => {
   if (config && isThemePref(theme)) config.theme = theme;
 })();
 
+const devOps = browserDevJournal(fs);
+
 export const browserPlatform: Platform = {
   kind: "browser",
+  /** DEV 프로필(?profile=local-dev)일 때만 */
+  get dev() {
+    return activeProfile().key === "local-dev" ? devOps : undefined;
+  },
   cabi: browserCabiBridge(),
   now() {
     const real = new Date();

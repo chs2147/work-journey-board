@@ -3,6 +3,11 @@
    다크 = <html data-theme="dark">(shared/theme.ts·public/theme-early.js가 시스템/라이트/다크 설정으로 정함, improve-1027v5-spec 4-3).
    시그니처 = <html data-theme="signature">(docs/renewal/design-style-spec.md Warm Beige + 고운돋움, design-renewal-v1). */
 :root {
+  /* DEV 검증판(비공식 판) 타이틀 영역 — docs/release-channel-spec.md 5절. 정식판에서는 쓰이지 않는다 */
+  --dev-accent: #c2410c;
+  --dev-on-accent: #ffffff;
+  --dev-band: #fdebd8;
+  --dev-band-text: #7c2d12;
   /* 칸반 섹션 색(improve-v21-spec 2절, 2026-11-12 사용자 지시): 업무 색과 섞이지 않게 무채색 두 가지만 —
      TODO·사용자 섹션 = 같은 연한 회색, DONE = 진한 회색(채도 0) */
   --kanban-section: #a3a3a3;
@@ -169,6 +174,10 @@
 }
 
 :root[data-theme="dark"] {
+  --dev-accent: #f97316;
+  --dev-on-accent: #1a1a19;
+  --dev-band: #3a2416;
+  --dev-band-text: #fdba74;
   --kanban-section: #6b6b6b;
   --kanban-done: #d4d4d4;
   color-scheme: dark;
@@ -265,6 +274,10 @@
 /* 시그니처 테마(docs/renewal/design-style-spec.md 2·3절) — 따뜻한 베이지 면, 짙은 웜그레이 본문, 브라운 강조, 고운돋움.
    로고(워드마크 Journey = --today-mark)는 바꾸지 않는다(라이트 값 그대로, 2026-10-28 사용자 지시). 업무 색은 라이트 값. */
 :root[data-theme="signature"] {
+  --dev-accent: #c2410c;
+  --dev-on-accent: #ffffff;
+  --dev-band: #f8dfc6;
+  --dev-band-text: #7c2d12;
   --kanban-section: #a6a6a6;
   --kanban-done: #404040;
   color-scheme: light;

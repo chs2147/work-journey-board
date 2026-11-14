@@ -13,6 +13,8 @@ import { isThemePref, type ThemePref } from "../shared/theme";
 
 /** `%LOCALAPPDATA%\WorkJourneyBoard\config.json` 내용. DB를 찾기 위한 정보라 DB 안에 둘 수 없다(data-spec 3-4). */
 export interface AppConfig {
+  /** DEV 검증판: 일지를 고른 설치 판 — 판이 바뀌면(새로 설치) 다시 묻는다(docs/release-channel-spec.md 4절) */
+  devSetupVersion?: string;
   dataDir: string;
   backupControlBy?: Record<string, BackupControl>;
   /** 화면 테마(improve-1027v5-spec 4-2) — 이 PC 취향이라 일지가 아니라 여기에. 없으면 시스템 설정 */
@@ -168,6 +170,8 @@ export interface Platform {
 
   /** 시작 스플래시 창(실앱만, docs/splash-spec.md). 브라우저 모드에는 없다. */
   readonly splash?: SplashWindow;
+  /** DEV 검증판 일지 폴더(DEV 프로필에서만 있음) */
+  readonly dev?: DevJournalOps;
 
   // ── Cabinet(features-1102-spec F5) — 등록 폴더를 읽기·열기만(지우기·옮기기 없음), Rust cabinet.rs가 등록 폴더 안인지 재검사 ──
   /** 폴더 여러 개 고르기. 취소하면 null */
@@ -222,11 +226,13 @@ export interface SplashWindow {
  * Connected Preview = 별도 앱 ID·설정 폴더, 업데이트 꺼짐, 기존 로컬 일지를 열지 않음(Rust가 일지 명령을 등록하지 않음).
  */
 export interface AppProfileInfo {
-  key: "local-classic" | "connected-preview";
+  key: "local-classic" | "connected-preview" | "local-dev";
   appId: string;
   productName: string;
   updates: boolean;
   localJournal: boolean;
+  /** 비공식 판(Preview·DEV) — DEV 배지·타이틀 색(docs/release-channel-spec.md) */
+  unofficial: boolean;
 }
 
 export const CLASSIC_PROFILE: AppProfileInfo = {
@@ -235,6 +241,17 @@ export const CLASSIC_PROFILE: AppProfileInfo = {
   productName: "Work Journey Board",
   updates: true,
   localJournal: true,
+  unofficial: false,
+};
+
+/** DEV 검증판(비공식 로컬판) — 정식판과 앱 ID·설정 폴더가 다르고, DEV 표시가 있는 일지만 연다 */
+export const DEV_PROFILE: AppProfileInfo = {
+  key: "local-dev",
+  appId: "com.chs2147.workjourneyboard.dev",
+  productName: "Work Journey Board DEV",
+  updates: false,
+  localJournal: true,
+  unofficial: true,
 };
 
 export const PREVIEW_PROFILE: AppProfileInfo = {
@@ -243,13 +260,41 @@ export const PREVIEW_PROFILE: AppProfileInfo = {
   productName: "Work Journey Board Connected Preview",
   updates: false,
   localJournal: false,
+  unofficial: true,
 };
 
-/** Rust가 알려 준 값만 받는다. Preview라고 답하면 Preview, 그 밖은 Classic */
+/** Rust가 알려 준 값만 받는다. Preview·DEV라고 답하면 그 프로필, 그 밖은 Classic */
 export function parseAppProfile(v: unknown): AppProfileInfo {
   const o = (v ?? {}) as Partial<AppProfileInfo>;
   if (o.key === "connected-preview" && o.appId === PREVIEW_PROFILE.appId) return PREVIEW_PROFILE;
+  if (o.key === "local-dev" && o.appId === DEV_PROFILE.appId) return DEV_PROFILE;
   return CLASSIC_PROFILE;
+}
+
+let active: AppProfileInfo = CLASSIC_PROFILE;
+/** 지금 실행 중인 프로필(시작할 때 main.tsx가 1번 정한다) */
+export const activeProfile = () => active;
+export function setActiveProfile(p: AppProfileInfo) {
+  active = p;
+}
+
+/** DEV 일지 폴더 상태(Rust dev_guard): dev = DEV 표시 · official = 정식 일지 · empty = 일지 없음 · missing */
+export type DevFolderStatus = "dev" | "official" | "empty" | "missing";
+
+/** DEV 검증판 전용 일지 폴더 다루기 — DEV 프로필일 때만 platform.dev가 있다 */
+export interface DevJournalOps {
+  folderStatus(dir: string): Promise<DevFolderStatus>;
+  /** 열기 직전: DEV 표시가 있으면 통과, 일지 없으면 표시를 남김, 정식 일지면 OfficialJournalError */
+  prepareFolder(dir: string): Promise<void>;
+  /** 정식 일지를 읽기만 해서 dest(일지 없는 폴더)에 복사 + DEV 표시 */
+  copyOfficial(src: string, dest: string): Promise<void>;
+}
+
+/** 정식 일지는 DEV에서 열지 않는다(docs/release-channel-spec.md 3절) */
+export class OfficialJournalError extends Error {
+  constructor(readonly dataDir: string) {
+    super(`정식판 일지는 DEV에서 열 수 없습니다: ${dataDir}`);
+  }
 }
 
 /**
@@ -266,7 +311,7 @@ export async function loadAppProfile(): Promise<AppProfileInfo> {
     }
   }
   const q = new URLSearchParams(location.search).get("profile");
-  return q === "connected-preview" ? PREVIEW_PROFILE : CLASSIC_PROFILE;
+  return q === "connected-preview" ? PREVIEW_PROFILE : q === "local-dev" ? DEV_PROFILE : CLASSIC_PROFILE;
 }
 
 /** Connected Preview 온라인 계정 상태(토큰 없음 — Rust `online.rs`가 보안 저장소에 보관) */
@@ -339,6 +384,7 @@ export function parseConfig(raw: string | null): AppConfig | null {
           ]),
       );
     }
+    if (typeof c.devSetupVersion === "string") out.devSetupVersion = c.devSetupVersion;
     if (typeof c.universeAutoMotion === "boolean") out.universeAutoMotion = c.universeAutoMotion;
     if (typeof c.celebrate === "boolean") out.celebrate = c.celebrate;
     if (c.universeAutoStyle === "drift" || c.universeAutoStyle === "orbit")

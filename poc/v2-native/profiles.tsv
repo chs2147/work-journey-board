@@ -1,3 +1,4 @@
 profile|app_id|product_name|config_directory|release_repository
 local-classic|com.chs2147.workjourneyboard|Work Journey Board|WorkJourneyBoard|chs2147/work-journey-board
 connected-preview|com.chs2147.workjourneyboard.connected.preview|Work Journey Board Connected Preview|WorkJourneyBoardConnectedPreview|
+local-dev|com.chs2147.workjourneyboard.dev|Work Journey Board DEV|WorkJourneyBoardDev|

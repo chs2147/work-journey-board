@@ -8,7 +8,7 @@ import { App } from "./ui/App";
 import { FolderWindowApp } from "./ui/cabinet/FolderWindowApp";
 import { CabinetWindowApp } from "./ui/cabinet/CabinetWindowApp";
 import { PreviewApp } from "./ui/preview/PreviewApp";
-import { loadAppProfile, type AppProfileInfo } from "./platform";
+import { loadAppProfile, setActiveProfile, type AppProfileInfo } from "./platform";
 
 applyPaletteCssVars();
 
@@ -20,6 +20,9 @@ const win = new URLSearchParams(location.search).get("win");
  * Preview 시작 화면만 — 기존 일지 열기·첫 실행·새 판 확인 흐름에 들어가지 않는다.
  */
 function render(profile: AppProfileInfo) {
+  setActiveProfile(profile);
+  // 비공식 판(Preview·DEV)은 화면 전체에 표시 — 타이틀 영역 색·DEV 배지(docs/release-channel-spec.md 5절)
+  if (profile.unofficial) document.documentElement.dataset.channel = "dev";
   const preview = profile.key === "connected-preview";
   createRoot(document.getElementById("root")!).render(
     <StrictMode>

@@ -5,6 +5,7 @@
 mod backup_name;
 mod cabinet;
 mod db_batch;
+mod dev_guard;
 mod files;
 #[cfg(target_os = "macos")]
 mod menu;
@@ -43,7 +44,7 @@ pub fn run() {
                 .with_denylist(&["splash"])
                 .build(),
         );
-    // 일지(SQLite)는 Local Classic만 연다 — Preview 빌드에는 플러그인 자체가 없다(등록 순서는 예전 그대로)
+    // 일지(SQLite)는 Local Classic·DEV만 연다 — Preview 빌드에는 플러그인 자체가 없다(등록 순서는 예전 그대로)
     #[cfg(not(feature = "connected-preview"))]
     let builder = builder.plugin(tauri_plugin_sql::Builder::default().build());
     let builder = builder
@@ -76,7 +77,7 @@ pub fn run() {
             Ok(())
         });
     // Local Classic 명령 목록 = 예전 그대로 + 프로필 묻기(읽기 전용)
-    #[cfg(not(feature = "connected-preview"))]
+    #[cfg(not(any(feature = "connected-preview", feature = "dev-channel")))]
     let builder = builder.invoke_handler(tauri::generate_handler![
             db_batch::db_batch,
             splash::splash_finish,
@@ -104,6 +105,39 @@ pub fn run() {
             cabinet::cabinet_resolve_shortcut,
             cabinet::cabinet_drag_paths,
             profile::app_profile
+        ]);
+    // DEV 검증판 = Local Classic 명령 + 일지 폴더 DEV 표시 확인·준비·정식 일지 복제(docs/release-channel-spec.md)
+    #[cfg(feature = "dev-channel")]
+    let builder = builder.invoke_handler(tauri::generate_handler![
+            db_batch::db_batch,
+            splash::splash_finish,
+            files::config_read,
+            files::config_write,
+            files::onedrive_roots,
+            files::fs_stat,
+            files::fs_list,
+            files::fs_ensure_dir,
+            files::fs_remove_backup,
+            files::fs_rename_backup,
+            files::fs_copy_new,
+            files::restore_journal,
+            files::export_write,
+            files::open_folder,
+            files::open_url,
+            update::update_check,
+            update::update_download,
+            update::update_install,
+            cabinet::cabinet_set_roots,
+            cabinet::cabinet_list,
+            cabinet::cabinet_open,
+            cabinet::cabinet_reveal,
+            cabinet::cabinet_drop_bridge,
+            cabinet::cabinet_resolve_shortcut,
+            cabinet::cabinet_drag_paths,
+            profile::app_profile,
+            dev_guard::dev_folder_status,
+            dev_guard::dev_prepare_folder,
+            dev_guard::dev_copy_official
         ]);
     // Connected Preview: 기존 일지를 열거나 쓰는 명령(SQLite 묶음·백업·복원·내보내기·Cabinet)과
     // 새 판 확인·설치 명령을 등록하지 않는다. 스플래시·자기 설정 파일·링크 넘기기·프로필 묻기만

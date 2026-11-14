@@ -38,6 +38,11 @@ export interface SessionFs {
   copyNew(from: string, to: string): Promise<void>;
   openDatabase(path: string): Promise<SqlDriver>;
   verifyCopy: VerifyCopy;
+  /**
+   * DEV 검증판에서만 있음(docs/release-channel-spec.md 3절): 일지 폴더를 열거나 만들기 직전에 부른다.
+   * DEV 표시가 있으면 통과, 일지 없으면 표시를 남김, 정식 일지면 OfficialJournalError(쓰기 0).
+   */
+  readonly dev?: { prepareFolder(dir: string): Promise<void> };
   backupFs: BackupFs;
   /**
    * 복원(optimize-1031-plan O5, data-spec 7-3): ① 지금 일지(있으면)를 `backups\<beforeName>`으로 옮겨 보존 →
@@ -64,6 +69,8 @@ export const journalPath = (fs: SessionFs, dataDir: string) => fs.join(dataDir, 
 export async function openJournalAt(fs: SessionFs, dataDir: string, now: () => Date): Promise<SqlDriver> {
   const dir = await fs.stat(dataDir);
   if (!dir.isDir) throw new FolderMissingError(dataDir);
+  // DEV 검증판: 정식 일지는 열기 전에 거절 — 어떤 연결·백업·마이그레이션보다 먼저(Rust dev_guard가 한 번 더)
+  await fs.dev?.prepareFolder(dataDir);
   const path = journalPath(fs, dataDir);
   const driver = await fs.openDatabase(path);
   try {
@@ -418,6 +425,8 @@ export async function copyJournalTo(
   await step("copy", async () => {
     await fs.ensureDir(toDir);
     if ((await fs.stat(target)).exists) throw new Error("대상 폴더에 이미 일지 파일이 있습니다");
+    // DEV 검증판: 옮길 새 폴더에 DEV 표시를 먼저(정식 일지가 있는 폴더면 거절)
+    await fs.dev?.prepareFolder(toDir);
     await driver.execute(`VACUUM INTO '${target.replace(/'/g, "''")}'`);
   });
   await step("verify", async () => {
