@@ -722,7 +722,7 @@ DEV 설치 파일 = 작업 브랜치 `build-desktop.yml` 산출물 `work-journey
 
 ## 7-48. Connected Preview 온라인 사본 만들기 (V2 C-5, docs/v2-design/85·86)
 
-설치 파일 = `build-preview.yml` run 12 산출물 `connected-preview-windows-1.40.0-preview.03d6ec1`·`connected-preview-macos-1.40.0-preview.03d6ec1`(2026-11-29까지 보관, 설치 아이콘 = 주황 바탕 + DEV 띠). 개발 서버(vsphftnmfzfoufasjttd)만 씀.
+설치 파일 = `build-preview.yml` run 13 산출물 `connected-preview-windows-1.40.0-preview.3b91ea6`·`connected-preview-macos-1.40.0-preview.3b91ea6`(2026-11-29까지 보관, 설치 아이콘 = 주황 바탕 + DEV 띠). 개발 서버(vsphftnmfzfoufasjttd)만 씀.
 **먼저 DEV 일지(가상 샘플)로 1~6을 해 보고**, 이상이 없으면 정식 일지로 7. 정식 일지 내용은 개발 서버에만 올라가며 끝나면 지울 수 있다(86문서 3절).
 2026-11-15 사용자 실기(Windows, run 12): DEV 일지 미리 보기 → 올리기 완료. 서버 확인(개수만, `dev-copy-admin.mjs --report-development`): 게시된 작업 1 · 기록 61행 · 온라인 공간 1 · 그림 1개(30,696바이트)·저장소 객체 1 — 앱 미리 보기·가상 샘플 수와 일치. 앞서 run 8·10에서 `SOURCE_NOT_JOURNAL`·wasm 불러오기 실패를 찾아 고침(86문서 5절).
 1. [x] Preview 설치·실행 → 로그인 유지(B단계와 같음), 계정 카드 아래 "온라인 사본 만들기"
