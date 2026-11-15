@@ -40,7 +40,9 @@ pub async fn db_batch(
     statements: Vec<Statement>,
 ) -> Result<u64, String> {
     // DEV 검증판: 정식 일지(DEV 표시 없는 폴더)에는 쓰지 않는다(dev_guard, 정식판은 그대로 통과)
-    crate::dev_guard::write_allowed(std::path::Path::new(db.strip_prefix("sqlite:").unwrap_or(&db)))?;
+    crate::dev_guard::write_allowed(std::path::Path::new(
+        db.strip_prefix("sqlite:").unwrap_or(&db),
+    ))?;
     let map = instances.0.read().await;
     let pool = match map.get(&db) {
         Some(DbPool::Sqlite(pool)) => pool,

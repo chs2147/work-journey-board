@@ -1,0 +1,70 @@
+{
+  "startedAt": "2026-11-15T03:41:12.406Z",
+  "projectRef": "vsphftnmfzfoufasjttd",
+  "productionTouched": false,
+  "mailSent": false,
+  "engine": "src/preview/migrationEngine.ts + migrationRunner.ts (sql.js, pure-JS SHA-256)",
+  "transport": "edge-gateway-http (same paths/bodies as src-tauri/src/migration.rs)",
+  "checks": [
+    {
+      "name": "login",
+      "passed": true
+    },
+    {
+      "name": "interrupted_after_first_page",
+      "passed": true
+    },
+    {
+      "name": "resumed_and_published",
+      "passed": true,
+      "extra": {
+        "records": 2552,
+        "pages": 3,
+        "assets": 1
+      }
+    },
+    {
+      "name": "read_back_matches_engine_records",
+      "passed": true,
+      "extra": {
+        "records": 2552
+      }
+    },
+    {
+      "name": "image_download_matches",
+      "passed": true
+    },
+    {
+      "name": "source_snapshot_unchanged",
+      "passed": true
+    },
+    {
+      "name": "cancel_after_partial_upload_cleans",
+      "passed": true,
+      "extra": {
+        "usedBytes": 0,
+        "objects": 0,
+        "cancelAssetCalls": 6,
+        "assets": 1
+      }
+    }
+  ],
+  "timing": {
+    "prepareSeconds": 0.394,
+    "uploadPublishSeconds": 18.943,
+    "cancelSeconds": 81.226
+  },
+  "cleanup": {
+    "jobs": 0,
+    "uploads": 0,
+    "records": 0,
+    "workspaces": 0,
+    "assets": 0,
+    "devices": 0,
+    "objects": 0,
+    "users": 0,
+    "zero": true
+  },
+  "passed": true,
+  "finishedAt": "2026-11-15T03:43:32.169Z"
+}

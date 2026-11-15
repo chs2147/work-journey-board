@@ -350,6 +350,52 @@ export interface PreviewSource {
   read(snapshotId: string): Promise<Uint8Array>;
   remove(snapshotId: string): Promise<void>;
 }
+/** C-3 이관 통신(Preview, Rust migration.rs) — 토큰은 Rust 안에서만. 화면은 네트워크를 쓰지 않는다 */
+export interface MigrationJournalAsset {
+  objectId: string;
+  sha256: string;
+  bytes: number;
+  state: "pending" | "uploaded" | "attested" | "absent";
+}
+export type MigrationPhase =
+  | "prepared"
+  | "uploading-records"
+  | "uploading-assets"
+  | "publishing"
+  | "published"
+  | "canceling"
+  | "canceled";
+/** 이어하기 기록 — ID·해시·크기·단계만(기록 내용·그림 없음, Rust가 모르는 칸을 거절) */
+export interface MigrationJournal {
+  version: 1;
+  jobId: string;
+  ownerId: string;
+  workspaceId: string;
+  snapshotId: string;
+  sourceHash: string;
+  mappingHash: string;
+  manifestHash: string | null;
+  publishOperationId: string | null;
+  cancelOperationId: string | null;
+  pages: number;
+  records: number;
+  phase: MigrationPhase;
+  assets: MigrationJournalAsset[];
+  updatedAt: number;
+}
+export interface PreviewMigration {
+  device(): Promise<void>;
+  command(jobId: string, action: string, params: Record<string, unknown>): Promise<Record<string, unknown>>;
+  putAsset(workspaceId: string, objectId: string, sha256: string, bytes: Uint8Array): Promise<void>;
+  cancelAsset(workspaceId: string, objectId: string): Promise<void>;
+  journals(): Promise<MigrationJournal[]>;
+  saveJournal(journal: MigrationJournal): Promise<void>;
+  removeJournal(jobId: string): Promise<void>;
+}
+export async function loadPreviewMigration(): Promise<PreviewMigration | null> {
+  if (!isTauri()) return null;
+  return (await import("./tauriPreviewMigration")).tauriPreviewMigration;
+}
 export async function loadPreviewSource(): Promise<PreviewSource | null> {
   if (!isTauri()) return null;
   return (await import("./tauriPreviewSource")).tauriPreviewSource;

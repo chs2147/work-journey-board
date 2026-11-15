@@ -155,7 +155,7 @@ describe("Rust 명령 경계(lib.rs)", () => {
     ]);
   });
 
-  it("Preview 명령: 일지·백업·복원·내보내기·Cabinet·업데이트 없음, 온라인 계정(B단계)만 더함", () => {
+  it("Preview 명령: 일지·백업·복원·내보내기·Cabinet·업데이트 없음, 온라인 계정(B)·원본 사본(C-2)·이관 통신(C-3)만 더함", () => {
     expect(prev).toEqual([
       "splash::splash_finish",
       "files::config_read",
@@ -170,6 +170,13 @@ describe("Rust 명령 경계(lib.rs)", () => {
       "source_copy::source_snapshot",
       "source_copy::source_snapshot_read",
       "source_copy::source_snapshot_remove",
+      "migration::migration_device",
+      "migration::migration_command",
+      "migration::migration_put_asset",
+      "migration::migration_cancel_asset",
+      "migration::migration_journal_list",
+      "migration::migration_journal_write",
+      "migration::migration_journal_remove",
     ]);
     // 온라인 모듈은 Preview 빌드에만 컴파일된다
     expect(lib).toMatch(/#\[cfg\(feature = "connected-preview"\)\]\nmod online;/);

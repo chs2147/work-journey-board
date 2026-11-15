@@ -5,11 +5,18 @@ import { readFileSync, readdirSync, existsSync, linkSync, unlinkSync } from "nod
 import { dirname, resolve } from "node:path";
 import { randomUUID } from "node:crypto";
 import { hash, transaction, sourceHash } from "./model.mjs";
+import { createCopyCore, SUPPORTED_SCHEMAS } from "../v2-assets/copy-core.mjs";
 const migrations = new URL("../../src/data/migrations/", import.meta.url);
-/** Journal schema versions whose copy contract has been verified (DB18 base, DB19 delete lock, DB20 kanban). */
-export const SUPPORTED_SCHEMAS = Object.freeze([18, 19, 20]);
-/** The only resting state of the DB20 write-source row; anything else means a kanban write was interrupted. */
-export const KANBAN_CTX_REST = Object.freeze({ id: 1, source: "board", batch_id: null, at: null });
+// 판 목록·칸반 쉬는 상태·읽기 검사 규칙은 순수 핵심 한 곳(copy-core.mjs, docs/v2-design/84)
+export { SUPPORTED_SCHEMAS } from "../v2-assets/copy-core.mjs";
+export { KANBAN_CTX_REST } from "../v2-migration/workspace-map-core.mjs";
+const core = createCopyCore({
+  hash,
+  randomUUID,
+  base64ToBytes: (s) => Buffer.from(s, "base64"),
+  bytesToBase64: (b) => Buffer.from(b).toString("base64"),
+});
+const { rows, validate } = core;
 export function guard(path) {
   if (!existsSync(resolve(dirname(path), ".v2-poc-only"))) throw Error("POC_DIRECTORY_REQUIRED");
 }
@@ -35,66 +42,6 @@ export function createWorkspaceDB(path, version) {
   });
   return db;
 }
-function schema(db) {
-  return db
-    .prepare(
-      "SELECT type,name,tbl_name,sql FROM sqlite_master WHERE name NOT LIKE 'sqlite_%' ORDER BY type,name",
-    )
-    .all();
-}
-function rows(db) {
-  const out = {};
-  for (const { name } of db
-    .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name")
-    .all()) {
-    const q = '"' + name.replaceAll('"', '""') + '"';
-    out[name] = db
-      .prepare(`SELECT * FROM ${q}`)
-      .all()
-      .map((r) => ({ ...r }))
-      .sort((a, b) => hash(a).localeCompare(hash(b)));
-  }
-  return out;
-}
-function validate(data, { allowNoteImages = false } = {}) {
-  const entries = new Set(data.entry_item.map((r) => r.id));
-  function board(row, kind) {
-    const doc = JSON.parse(kind === "week" ? row.doc : row.doc);
-    if (doc.v !== 1 || !Array.isArray(doc.boxes)) throw Error("DOCUMENT_FORMAT");
-    const ids = new Set(doc.boxes.map((b) => b.id));
-    if (ids.size !== doc.boxes.length) throw Error("DUPLICATE_BOX");
-    for (const b of doc.boxes) {
-      if (b.asset) {
-        const a = (kind === "week" ? data.note_asset : data.cabi_asset).find((a) => a.id === b.asset);
-        if (
-          !a ||
-          (kind === "week" ? a.week_id !== row.week_id : a.owner_kind !== "board" || a.owner_id !== row.id)
-        )
-          throw Error("ASSET_OWNER");
-      }
-    }
-    for (const e of doc.edges ?? []) if (!ids.has(e.from) || !ids.has(e.to)) throw Error("EDGE_REFERENCE");
-    const links =
-      kind === "week"
-        ? data.note_entry_link.filter((l) => l.note_week_id === row.week_id)
-        : data.cabi_entry_link.filter((l) => l.board_id === row.id);
-    for (const l of links) if (!ids.has(l.box_id) || !entries.has(l.entry_id)) throw Error("LINK_REFERENCE");
-  }
-  for (const r of data.week_note) board(r, "week");
-  for (const r of data.cabi_board) board(r, "board");
-  // Historical staging defaults remain text-only. The connected-copy PoC can
-  // explicitly validate the product's asset-id image nodes without inline bytes.
-  function note(n, ownerId) {
-    if (n.type === "image") {
-      if (!allowNoteImages) throw Error("NOTE_IMAGE_UNSUPPORTED");
-      const asset = data.cabi_asset.find((a) => a.id === n.attrs?.asset);
-      if (!asset || asset.owner_kind !== "note" || asset.owner_id !== ownerId)
-        throw Error("NOTE_IMAGE_OWNER");
-    }
-    for (const c of n.content ?? []) note(c, ownerId);
-  }
-  for (const r of data.cabi_note) note(JSON.parse(r.content), r.id);
-}
 export function capture18(path, options = {}) {
   return captureWorkspace(path, { ...options, expectedVersion: 18 });
 }
@@ -104,34 +51,18 @@ export function captureWorkspace(path, { expectedVersion, ...options } = {}) {
   const db = new DatabaseSync(path, { readOnly: true });
   let result;
   try {
-    const rawVersion = db.prepare("SELECT value FROM app_meta WHERE key='schema_version'").get()?.value;
-    const version = SUPPORTED_SCHEMAS.map(String).includes(rawVersion) ? Number(rawVersion) : NaN;
-    if (
-      !SUPPORTED_SCHEMAS.includes(version) ||
-      (expectedVersion !== undefined && expectedVersion !== version)
-    )
-      throw Error("SCHEMA_VERSION");
-    const expected = createWorkspaceDB(":memory:", version);
-    try {
-      if (hash(schema(db)) !== hash(schema(expected))) throw Error("SCHEMA_UNSUPPORTED");
-    } finally {
-      expected.close();
-    }
-    if (db.prepare("PRAGMA journal_mode").get().journal_mode !== "delete") throw Error("SOURCE_NOT_FROZEN");
-    if (
-      db.prepare("PRAGMA integrity_check").get().integrity_check !== "ok" ||
-      db.prepare("PRAGMA foreign_key_check").all().length
-    )
-      throw Error("DB_INTEGRITY");
-    result = rows(db);
-    if (version >= 19 && result.cabi_note.some((r) => ![0, 1].includes(r.delete_locked)))
-      throw Error("DB_INTEGRITY");
-    if (version >= 20) {
-      const ctx = result.kanban_ctx;
-      if (ctx.length !== 1 || hash(ctx[0]) !== hash({ ...KANBAN_CTX_REST }))
-        throw Error("KANBAN_WRITE_IN_PROGRESS");
-    }
-    validate(result, options);
+    result = core.captureRows(db, {
+      ...options,
+      expectedVersion,
+      expectedSchema(version) {
+        const expected = createWorkspaceDB(":memory:", version);
+        try {
+          return core.schema(expected);
+        } finally {
+          expected.close();
+        }
+      },
+    });
   } finally {
     db.close();
   }

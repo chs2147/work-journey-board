@@ -1,0 +1,401 @@
+// DB18/19/20 -> online metadata envelope — 순수 핵심(Node 가져오기 없음, docs/v2-design/84).
+// Node 껍데기 workspace-map.mjs와 Preview 앱(src/v2/migration)이 같은 규칙을 쓴다. 원본 DB를 읽거나 쓰지 않는다.
+import db18 from "./db18-contract.json" with { type: "json" };
+import db19 from "./db19-contract.json" with { type: "json" };
+import db20 from "./db20-contract.json" with { type: "json" };
+
+export const workspaceMapProfile = "workspace-db18-map-poc-1";
+const contracts = { 18: db18, 19: db19, 20: db20 };
+export const workspaceMapProfiles = Object.freeze({
+  18: workspaceMapProfile,
+  19: "workspace-db19-map-poc-1",
+  20: "workspace-db20-map-poc-1",
+});
+/** DB20 칸반 쓰기 문맥 행의 유일한 쉬는 상태(db18.mjs KANBAN_CTX_REST와 같은 값) */
+export const KANBAN_CTX_REST = Object.freeze({ id: 1, source: "board", batch_id: null, at: null });
+const kanbanFixedKeys = new Set(["todo", "done"]);
+const statusSources = new Set(["kanban", "board", "important", "bulk", "section", "import", "migrate"]);
+const isoTime = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,3})?Z$/;
+const assetTables = new Set(["note_asset", "cabi_asset"]);
+const jsonFields = {
+  week_note: ["doc"],
+  cabi_board: ["doc"],
+  cabi_note: ["content"],
+  knowledge_card_source: ["locator_json"],
+  import_batch: ["undo_json"],
+  kanban_bulk: ["items"],
+};
+const nodes = new Set([
+  "doc",
+  "paragraph",
+  "heading",
+  "bulletList",
+  "orderedList",
+  "listItem",
+  "taskList",
+  "taskItem",
+  "blockquote",
+  "codeBlock",
+  "horizontalRule",
+  "hardBreak",
+  "table",
+  "tableRow",
+  "tableCell",
+  "tableHeader",
+  "image",
+  "text",
+]);
+const marks = new Set([
+  "bold",
+  "italic",
+  "underline",
+  "strike",
+  "fontSize",
+  "textColor",
+  "highlight",
+  "link",
+  "code",
+]);
+
+/**
+ * hash: 정준 JSON SHA-256(model.mjs hash와 같은 규칙), sectionIconIds: 제품 섹션 아이콘 ID 집합.
+ * mapCopy(copy, workspaceId) — copy = inspectConnectedCopy 결과 모양 { manifest, records, blobs }
+ */
+export function createWorkspaceMapper({ hash, sectionIconIds }) {
+  if (typeof hash !== "function" || !(sectionIconIds instanceof Set)) throw TypeError("MAPPER_DEPS");
+  function keysEqual(value, keys) {
+    return (
+      value &&
+      typeof value === "object" &&
+      !Array.isArray(value) &&
+      Object.keys(value).sort().join("\0") === [...keys].sort().join("\0")
+    );
+  }
+  function imageFree(value) {
+    if (value instanceof Uint8Array) throw Error("IMAGE_BODY_IN_METADATA");
+    if (
+      typeof value === "string" &&
+      (/data\s*:\s*image\//i.test(value) ||
+        /(iVBORw0KGgo|\/9j\/|R0lGOD|UklGR[A-Za-z0-9+/]{6}XRUJQ)/.test(value))
+    )
+      throw Error("IMAGE_BODY_IN_METADATA");
+    if (value && typeof value === "object") for (const child of Object.values(value)) imageFree(child);
+  }
+  function json(value) {
+    if (typeof value !== "string") throw Error("JSON_FIELD_REQUIRED");
+    return JSON.parse(value);
+  }
+  function rich(node, owner, assets, depth = 0) {
+    if (!node || !nodes.has(node.type) || depth > 32) throw Error("UNKNOWN_DOCUMENT_NODE");
+    if (node.type === "image") {
+      const a = assets.find(
+        (a) => a.id === node.attrs?.asset && a.owner_kind === "note" && a.owner_id === owner,
+      );
+      if (!a || "src" in (node.attrs || {})) throw Error("NOTE_IMAGE_REFERENCE");
+    }
+    if (node.content !== undefined && !Array.isArray(node.content)) throw Error("DOCUMENT_CONTENT");
+    for (const mark of node.marks || []) {
+      if (!marks.has(mark.type)) throw Error("UNKNOWN_DOCUMENT_MARK");
+      if (mark.type === "link" && !/^https?:\/\//i.test(mark.attrs?.href || ""))
+        throw Error("LOCAL_DOCUMENT_LINK");
+    }
+    for (const n of node.content || []) rich(n, owner, assets, depth + 1);
+  }
+  function board(doc, owner, assetRows, kind) {
+    if (doc.v !== 1 || !Array.isArray(doc.boxes)) throw Error("BOARD_FORMAT");
+    const ids = new Set(doc.boxes.map((b) => b.id));
+    if (ids.size !== doc.boxes.length) throw Error("DUPLICATE_BOX");
+    for (const b of doc.boxes) {
+      if (!["text", "link", "image"].includes(b.kind)) throw Error("UNKNOWN_BOARD_OBJECT");
+      if (b.asset) {
+        const a = assetRows.find((a) => a.id === b.asset);
+        if (!a || (kind === "week" ? a.week_id !== owner : a.owner_kind !== "board" || a.owner_id !== owner))
+          throw Error("BOARD_IMAGE_REFERENCE");
+      }
+      if (b.kind === "image" && !b.asset) throw Error("BOARD_IMAGE_REFERENCE");
+      if (b.kind === "text") rich(b.content, null, []);
+      if (b.kind === "link" && !/^https?:\/\//i.test(b.url || "")) throw Error("LOCAL_DOCUMENT_LINK");
+      if (b.widget) {
+        if (
+          !["elapsed", "timeline", "important"].includes(b.widget.type) ||
+          Object.keys(b.widget).some(
+            (k) => !["type", "basis", "variant", "weeks", "milestoneEntryIds"].includes(k),
+          )
+        )
+          throw Error("UNKNOWN_WIDGET_FORMAT");
+      }
+      if (b.resource) {
+        const r = b.resource;
+        if (
+          r.kind === "memo"
+            ? !keysEqual(r, ["kind", "weekId", "boxId"])
+            : !["note", "folder", "link"].includes(r.kind) || !keysEqual(r, ["kind", "id"])
+        )
+          throw Error("UNKNOWN_RESOURCE_FORMAT");
+      }
+    }
+    for (const e of doc.edges || [])
+      if (!ids.has(e.from) || !ids.has(e.to)) throw Error("BOARD_EDGE_REFERENCE");
+  }
+  function validateSourceRow(table, row, contract) {
+    const cols = contract.tables[table].columns;
+    const names = cols
+      .map((c) => c.name)
+      .filter((n) => !assetTables.has(table) || !["data", "thumb"].includes(n));
+    if (assetTables.has(table)) names.push("dataRef", "thumbRef");
+    if (!keysEqual(row, names)) throw Error("ROW_COLUMNS_CHANGED");
+    for (const c of cols) {
+      if (assetTables.has(table) && ["data", "thumb"].includes(c.name)) continue;
+      const v = row[c.name];
+      if (v === null) {
+        if (!c.nullable || c.pk) throw Error("ROW_NULL");
+        continue;
+      }
+      if (c.type === "TEXT" && typeof v !== "string") throw Error("ROW_TYPE");
+      if (c.type === "INTEGER" && !Number.isSafeInteger(v)) throw Error("ROW_TYPE");
+    }
+    imageFree(row);
+    for (const field of jsonFields[table] || []) imageFree(json(row[field]));
+  }
+  function checkForeignKeys(tables, contract) {
+    for (const [name, schema] of Object.entries(contract.tables)) {
+      for (const row of tables[name])
+        for (const fk of schema.foreignKeys) {
+          if (row[fk.from] !== null && !tables[fk.table].some((r) => r[fk.to] === row[fk.from]))
+            throw Error("FOREIGN_KEY_REFERENCE");
+        }
+    }
+  }
+  function folderBase(path) {
+    return path.replaceAll("\\", "/").split("/").filter(Boolean).at(-1) || "import";
+  }
+  /** DB20: column order/icons are workspace content (they name kanban sections); layout stays per device. */
+  function kanbanColumns(value, sectionIds) {
+    if (!keysEqual(value, ["order", "icons"]) || !Array.isArray(value.order) || !value.icons)
+      throw Error("KANBAN_COLUMNS_FORMAT");
+    if (typeof value.icons !== "object" || Array.isArray(value.icons)) throw Error("KANBAN_COLUMNS_FORMAT");
+    const known = (k) => kanbanFixedKeys.has(k) || sectionIds.has(k);
+    if (
+      value.order.some((k) => typeof k !== "string" || !known(k)) ||
+      new Set(value.order).size !== value.order.length
+    )
+      throw Error("KANBAN_COLUMNS_REFERENCE");
+    for (const [k, icon] of Object.entries(value.icons))
+      if (!known(k) || typeof icon !== "string" || !sectionIconIds.has(icon))
+        throw Error("KANBAN_COLUMNS_REFERENCE");
+    return { order: [...value.order], icons: { ...value.icons } };
+  }
+  function projectSettings(value, exclusions, version = 18, sectionIds = new Set()) {
+    const s = json(value),
+      known = ["workspace", "nudgeWeeks", "backup", "summary", "holiday", "ai", "ui"];
+    if (!s || typeof s !== "object" || Array.isArray(s) || Object.keys(s).some((k) => !known.includes(k)))
+      throw Error("UNKNOWN_SETTINGS_KEY");
+    const out = {};
+    for (const k of ["workspace", "nudgeWeeks", "summary", "holiday"]) if (k in s) out[k] = s[k];
+    if (out.workspace !== null && out.workspace !== undefined) {
+      if (!keysEqual(out.workspace, ["name", "color", "icon", "updatedAt"]))
+        throw Error("WORKSPACE_SETTINGS_FORMAT");
+      const w = out.workspace;
+      if (
+        typeof w.name !== "string" ||
+        typeof w.color !== "string" ||
+        typeof w.icon !== "string" ||
+        !Number.isSafeInteger(w.updatedAt)
+      )
+        throw Error("WORKSPACE_SETTINGS_FORMAT");
+    }
+    if (out.nudgeWeeks !== undefined && !Number.isInteger(out.nudgeWeeks)) throw Error("SETTINGS_FORMAT");
+    if (
+      out.summary !== undefined &&
+      (!keysEqual(out.summary, ["includeMemo"]) || typeof out.summary.includeMemo !== "boolean")
+    )
+      throw Error("SETTINGS_FORMAT");
+    if (out.holiday !== undefined) {
+      const h = out.holiday;
+      if (
+        !keysEqual(h, ["krEnabled", "off", "company", "reasons"]) ||
+        typeof h.krEnabled !== "boolean" ||
+        !Array.isArray(h.off) ||
+        !Array.isArray(h.company) ||
+        !Array.isArray(h.reasons)
+      )
+        throw Error("SETTINGS_FORMAT");
+      if (
+        h.off.some((v) => typeof v !== "string") ||
+        h.reasons.some((v) => typeof v !== "string") ||
+        h.company.some(
+          (c) => !keysEqual(c, ["date", "name"]) || typeof c.date !== "string" || typeof c.name !== "string",
+        )
+      )
+        throw Error("SETTINGS_FORMAT");
+    }
+    if (version >= 20 && s.ui && typeof s.ui === "object" && "kanbanColumns" in s.ui)
+      out.ui = { kanbanColumns: kanbanColumns(s.ui.kanbanColumns, sectionIds) };
+    for (const k of ["backup", "ai", "ui"])
+      if (k in s)
+        exclusions.push({
+          table: "app_meta",
+          key: "settings." + k,
+          reason: "device-preference-not-synced",
+          ...(k === "ui" && out.ui ? { kept: ["kanbanColumns"] } : {}),
+        });
+    return JSON.stringify(out);
+  }
+  function mapCopy(copy, workspaceId) {
+    const contract = contracts[copy.manifest.sourceSchema];
+    if (!contract) throw Error("SCHEMA_VERSION");
+    const grouped = Object.fromEntries(Object.keys(contract.tables).map((t) => [t, []]));
+    for (const record of copy.records) {
+      if (!Object.hasOwn(grouped, record.table_name)) throw Error("TABLE_UNSUPPORTED");
+      const row = JSON.parse(record.value);
+      validateSourceRow(record.table_name, row, contract);
+      if (
+        record.table_name === "cabi_note" &&
+        contract.sourceSchema >= 19 &&
+        ![0, 1].includes(row.delete_locked)
+      )
+        throw Error("DELETE_LOCK_VALUE");
+      grouped[record.table_name].push(row);
+    }
+    for (const table of Object.keys(grouped))
+      if (copy.manifest.sourceRows[table] !== grouped[table].length) throw Error("TABLE_COUNT_CHANGED");
+    if (Object.keys(copy.manifest.sourceRows).sort().join() !== Object.keys(grouped).sort().join())
+      throw Error("TABLE_SET_CHANGED");
+    if (grouped.app_meta.find((r) => r.key === "schema_version")?.value !== String(contract.sourceSchema))
+      throw Error("SCHEMA_VERSION");
+    checkForeignKeys(grouped, contract);
+    for (const row of grouped.cabi_note) rich(json(row.content), row.id, grouped.cabi_asset);
+    for (const row of grouped.week_note) board(json(row.doc), row.week_id, grouped.note_asset, "week");
+    for (const row of grouped.cabi_board) board(json(row.doc), row.id, grouped.cabi_asset, "task");
+    for (const row of grouped.import_batch) {
+      const undo = json(row.undo_json),
+        allowed = ["relations", "deletedItems", "notes", "createdCategories", "periodStarts", "reopened"];
+      if (
+        !undo ||
+        Array.isArray(undo) ||
+        Object.keys(undo).some((k) => !allowed.includes(k)) ||
+        ["deletedItems", "notes", "createdCategories", "periodStarts", "reopened"].some(
+          (k) => !Array.isArray(undo[k]),
+        )
+      )
+        throw Error("UNKNOWN_IMPORT_UNDO_FORMAT");
+      for (const n of undo.notes)
+        if (n.doc !== null) board(json(n.doc), n.weekId, grouped.note_asset, "week");
+    }
+    const sectionIds = new Set((grouped.kanban_section || []).map((r) => r.id));
+    if (contract.sourceSchema >= 20) {
+      if (grouped.kanban_ctx.length !== 1 || hash(grouped.kanban_ctx[0]) !== hash({ ...KANBAN_CTX_REST }))
+        throw Error("KANBAN_WRITE_IN_PROGRESS");
+      for (const r of grouped.item_status_log) {
+        // from/to keep the key that was current then: a deleted section stays as its old id (no FK by design).
+        if (
+          !statusSources.has(r.source) ||
+          !isoTime.test(r.changed_at) ||
+          [r.from_key, r.to_key].some((k) => !k || k.length > 64) ||
+          r.from_key === r.to_key
+        )
+          throw Error("KANBAN_STATUS_LOG_FORMAT");
+      }
+      for (const r of grouped.kanban_bulk) {
+        const items = json(r.items);
+        if (
+          !Array.isArray(items) ||
+          items.length < r.count ||
+          items.some(
+            (p) => !Array.isArray(p) || p.length !== 2 || typeof p[0] !== "string" || !isoTime.test(p[1]),
+          ) ||
+          (r.undone_at !== null && !isoTime.test(r.undone_at))
+        )
+          throw Error("KANBAN_BULK_FORMAT");
+      }
+    }
+    const exclusions = [],
+      records = [],
+      stats = {};
+    const byHash = new Map(copy.blobs.map((b) => [b.id, b]));
+    for (const [table, rows] of Object.entries(grouped)) {
+      let excluded = 0,
+        transformed = 0;
+      const keys = contract.tables[table].columns
+        .filter((c) => c.pk)
+        .sort((a, b) => a.pk - b.pk)
+        .map((c) => c.name);
+      const seen = new Set();
+      for (const original of rows) {
+        const value = structuredClone(original),
+          key = hash([table, keys.map((k) => value[k])]);
+        if (seen.has(key)) throw Error("DUPLICATE_RECORD_KEY");
+        seen.add(key);
+        if (table === "kanban_ctx") {
+          // Write-source row of the local trigger: verified at rest above, recreated by the target schema.
+          excluded++;
+          exclusions.push({ table, key: String(value.id), reason: "local-write-context" });
+          continue;
+        }
+        if (table === "app_meta") {
+          if (value.key === "schema_version") {
+            excluded++;
+            exclusions.push({ table, key: value.key, reason: "source-format-only" });
+            continue;
+          }
+          if (value.key === "settings")
+            value.value = projectSettings(value.value, exclusions, contract.sourceSchema, sectionIds);
+          else if (value.key !== "created_at") throw Error("UNKNOWN_APP_META_KEY");
+        }
+        if (table === "cabinet_item" && value.kind === "folder") {
+          value.target = null;
+          value.targetState = "device-local-unbound";
+          exclusions.push({ table, key: value.id, field: "target", reason: "device-filesystem-path" });
+        }
+        if (table === "import_batch") {
+          value.file_name = folderBase(value.file_name);
+          if (value.file_name !== original.file_name)
+            exclusions.push({ table, key: value.id, field: "file_name", reason: "path-basename-only" });
+        }
+        if (table === "knowledge_card_source") {
+          const locator = json(value.locator_json);
+          if (Object.keys(locator).some((k) => k !== "label")) throw Error("UNKNOWN_LOCATOR_FORMAT");
+        }
+        if (assetTables.has(table))
+          for (const field of ["dataRef", "thumbRef"]) {
+            const ref = value[field];
+            if (ref === null) continue;
+            const blob = byHash.get(ref.blob);
+            if (!blob || blob.bytes !== ref.bytes) throw Error("BLOB_REFERENCE");
+            value[field] = { objectId: blob.object_id, sha256: blob.id, bytes: blob.bytes };
+          }
+        imageFree(value);
+        if (hash(original) !== hash(value)) transformed++;
+        records.push({ table, key, value });
+      }
+      stats[table] = {
+        sourceRows: rows.length,
+        mappedRows: rows.length - excluded,
+        excludedRows: excluded,
+        transformedRows: transformed,
+      };
+    }
+    records.sort((a, b) => a.table.localeCompare(b.table) || a.key.localeCompare(b.key));
+    const envelope = {
+      profile: workspaceMapProfiles[contract.sourceSchema],
+      workspaceId,
+      sourceSchema: contract.sourceSchema,
+      contractFingerprint: contract.fingerprint,
+      sourceManifestHash: hash(copy.manifest),
+      assets: copy.blobs
+        .map((b) => ({ objectId: b.object_id, sha256: b.id, bytes: b.bytes }))
+        .sort((a, b) => a.objectId.localeCompare(b.objectId)),
+      records,
+      tableStats: stats,
+      exclusions,
+      policies: {
+        folderTargets: "device-local-unbound",
+        sourceModel: "permanent-local-unchanged",
+        imageBodies: "private-blob-only",
+      },
+    };
+    imageFree(envelope);
+    return { envelope, mappingHash: hash(envelope), productActivationAllowed: false };
+  }
+  return Object.freeze({ mapCopy });
+}

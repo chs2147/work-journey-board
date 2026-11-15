@@ -12,22 +12,21 @@ import {
   realpathSync,
 } from "node:fs";
 import { join, resolve, dirname, basename } from "node:path";
+import { Buffer } from "node:buffer";
 import { captureWorkspace, guard, SUPPORTED_SCHEMAS } from "../v2-sync/db18.mjs";
+import { createCopyCore, noInlineImages, COPY_FORMAT } from "./copy-core.mjs";
 import { hash, sourceHash } from "../v2-sync/model.mjs";
 import { assertSeparateWorkspacePaths } from "../v2-runtime/isolation.mjs";
 
-const format = "v2-connected-copy-poc-1";
+const format = COPY_FORMAT;
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 const sha = /^[0-9a-f]{64}$/;
-function noInlineImages(value, knownPayloads = []) {
-  if (value instanceof Uint8Array) throw Error("BINARY_IN_METADATA");
-  if (typeof value === "string") {
-    if (/data\s*:\s*image\//i.test(value) || knownPayloads.some((data) => value.includes(data)))
-      throw Error("INLINE_IMAGE_IN_METADATA");
-  } else if (value && typeof value === "object") {
-    for (const child of Object.values(value)) noInlineImages(child, knownPayloads);
-  }
-}
+const core = createCopyCore({
+  hash,
+  randomUUID,
+  base64ToBytes: (s) => Buffer.from(s, "base64"),
+  bytesToBase64: (b) => Buffer.from(b).toString("base64"),
+});
 function inspect(directory, workspaceId, requireReady) {
   if (!uuid.test(workspaceId)) throw Error("WORKSPACE_ID_REQUIRED");
   if (lstatSync(directory).isSymbolicLink()) throw Error("SYMLINK_DENIED");
@@ -131,73 +130,34 @@ export function createConnectedCopy(
   );
   for (const suffix of ["-journal", "-wal", "-shm"])
     if (existsSync(source + suffix)) throw Error("SOURCE_NOT_FROZEN");
-  const captured = captureWorkspace(source, { allowNoteImages: true }),
-    rows = structuredClone(captured.rows),
-    blobs = new Map();
-  const knownPayloads = [];
-  let references = 0,
-    ownsDestination = false,
+  const captured = captureWorkspace(source, { allowNoteImages: true });
+  // 이미지 분리·참조·해시 규칙 = 순수 핵심(Preview 앱과 같은 함수)
+  const copy = core.extractCopy(captured, { workspaceId, sourceWorkspaceId });
+  let ownsDestination = false,
     db;
-  for (const table of ["note_asset", "cabi_asset"])
-    for (const row of rows[table]) {
-      for (const field of ["data", "thumb"]) {
-        const encoded = row[field];
-        delete row[field];
-        row[field + "Ref"] = null;
-        if (encoded === null) continue;
-        if (typeof encoded !== "string") throw Error("ASSET_ENCODING");
-        const bytes = Buffer.from(encoded, "base64");
-        if (
-          !bytes.length ||
-          bytes.toString("base64") !== encoded ||
-          (field === "data" && bytes.length !== row.bytes)
-        )
-          throw Error("ASSET_ENCODING");
-        knownPayloads.push(encoded);
-        const id = hash(bytes);
-        if (!blobs.has(id)) blobs.set(id, { bytes, objectId: randomUUID() });
-        const objectKey = `${workspaceId}/${blobs.get(id).objectId}`;
-        row[field + "Ref"] = { blob: id, bytes: bytes.length, storeId: "supabase-private", objectKey };
-        references++;
-      }
-    }
-  noInlineImages(rows, knownPayloads);
   try {
     mkdirSync(destination, { mode: 0o700 });
     ownsDestination = true;
     mkdirSync(join(destination, "assets"), { mode: 0o700 });
-    for (const [id, blob] of blobs)
-      writeFileSync(join(destination, "assets", id + ".bin"), blob.bytes, { flag: "wx", mode: 0o600 });
+    for (const [id, bytes] of copy.blobBytes)
+      writeFileSync(join(destination, "assets", id + ".bin"), bytes, { flag: "wx", mode: 0o600 });
     checkpoint("files-written");
     db = new DatabaseSync(join(destination, "metadata.db"));
     db.exec(
       "PRAGMA journal_mode=DELETE; PRAGMA synchronous=FULL; CREATE TABLE records(table_name TEXT,ordinal INTEGER,value TEXT NOT NULL,PRIMARY KEY(table_name,ordinal)); CREATE TABLE blob_ref(id TEXT PRIMARY KEY,bytes INTEGER NOT NULL,object_id TEXT NOT NULL,object_key TEXT NOT NULL); CREATE TABLE copy_info(value TEXT NOT NULL);",
     );
     db.exec("BEGIN IMMEDIATE");
-    for (const table of Object.keys(rows).sort())
-      rows[table].forEach((row, i) =>
-        db.prepare("INSERT INTO records VALUES(?,?,?)").run(table, i, JSON.stringify(row)),
-      );
-    for (const [id, blob] of [...blobs].sort(([a], [b]) => a.localeCompare(b)))
-      db.prepare("INSERT INTO blob_ref VALUES(?,?,?,?)").run(
-        id,
-        blob.bytes.length,
-        blob.objectId,
-        `${workspaceId}/${blob.objectId}`,
-      );
-    const manifest = {
-      format,
-      sourceSchema: Number(rows.app_meta.find((r) => r.key === "schema_version").value),
-      sourceWorkspaceId,
-      workspaceId,
-      sourceHash: captured.sourceHash,
-      phase: "local-extracted-not-uploaded",
-      sourceRows: Object.fromEntries(Object.entries(rows).map(([t, r]) => [t, r.length])),
-      assetReferences: references,
-      uniqueFiles: blobs.size,
-      recordHash: hash(db.prepare("SELECT * FROM records ORDER BY table_name,ordinal").all()),
-      blobHash: hash(db.prepare("SELECT * FROM blob_ref ORDER BY id").all()),
-    };
+    for (const r of copy.records)
+      db.prepare("INSERT INTO records VALUES(?,?,?)").run(r.table_name, r.ordinal, r.value);
+    for (const b of copy.blobs)
+      db.prepare("INSERT INTO blob_ref VALUES(?,?,?,?)").run(b.id, b.bytes, b.object_id, b.object_key);
+    const manifest = copy.manifest;
+    // 핵심이 계산한 해시가 실제 저장된 행과 같아야 한다(정렬 규칙 일치 확인)
+    if (
+      hash(db.prepare("SELECT * FROM records ORDER BY table_name,ordinal").all()) !== manifest.recordHash ||
+      hash(db.prepare("SELECT * FROM blob_ref ORDER BY id").all()) !== manifest.blobHash
+    )
+      throw Error("COPY_HASH_MISMATCH");
     db.prepare("INSERT INTO copy_info VALUES(?)").run(JSON.stringify(manifest));
     db.exec("COMMIT");
     db.close();

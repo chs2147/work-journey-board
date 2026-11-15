@@ -14,9 +14,9 @@ use wjb_native_isolation::vault::{AccountScope, Secret, SecureVault, SessionVaul
 use wjb_native_isolation::Error as VaultError;
 
 pub const PROJECT_REF: &str = "vsphftnmfzfoufasjttd";
-const ORIGIN: &str = "https://vsphftnmfzfoufasjttd.supabase.co";
+pub(crate) const ORIGIN: &str = "https://vsphftnmfzfoufasjttd.supabase.co";
 /// 공개 키(publishable) — 비밀 아님. 인증 서버가 어느 프로젝트의 요청인지 알아보는 용도
-const PUBLISHABLE_KEY: &str = "sb_publishable_HgCrm5uiNX4v7Ppw0yowMQ_MREt7E5l";
+pub(crate) const PUBLISHABLE_KEY: &str = "sb_publishable_HgCrm5uiNX4v7Ppw0yowMQ_MREt7E5l";
 const GATEWAY_ME: &str = "/functions/v1/wjb-gateway/v2/me";
 
 fn target() -> CloudTarget {
@@ -165,13 +165,19 @@ impl Store {
     fn clear_account(&self) {
         let _ = fs::remove_file(self.root.join("account.json"));
     }
+    pub(crate) fn root(&self) -> &std::path::Path {
+        &self.root
+    }
+    pub(crate) fn owner_id(&self) -> Option<String> {
+        self.account().map(|a| a.owner_id)
+    }
     #[cfg(test)]
     fn path(&self) -> &std::path::Path {
         &self.root
     }
 }
 
-fn is_uuid(s: &str) -> bool {
+pub(crate) fn is_uuid(s: &str) -> bool {
     s.len() == 36
         && s.bytes().enumerate().all(|(i, c)| {
             if [8, 13, 18, 23].contains(&i) {
@@ -440,6 +446,20 @@ async fn ensure_access<H: Http, B: SecureVault>(
     }
 }
 
+/// 이관 통신(migration.rs)용 — 접근 토큰(필요하면 갱신)과 계정 ID. 토큰은 Rust 안에서만 쓰고 화면에 돌려주지 않는다
+pub(crate) async fn access_for<H: Http, B: SecureVault>(
+    http: &H,
+    store: &Store,
+    state: &OnlineState,
+    factory: impl FnOnce() -> wjb_native_isolation::Result<B>,
+) -> Result<(String, String), String> {
+    ensure_access(http, store, state, factory).await?;
+    match state.0.lock().await.as_ref() {
+        Some(l) => Ok((l.access.clone(), l.owner.clone())),
+        None => Err("SIGNED_OUT".into()),
+    }
+}
+
 /// gateway에 세션 확인(계정 ID가 같아야 함)
 async fn check_me<H: Http>(http: &H, state: &OnlineState) -> Result<Status, String> {
     let (access, owner) = match state.0.lock().await.as_ref() {
@@ -529,10 +549,10 @@ pub fn project_root(app: &AppHandle) -> Result<PathBuf, String> {
     layout.project_root.ok_or_else(|| "STORE".to_string())
 }
 
-fn app_store(app: &AppHandle) -> Result<Store, String> {
+pub(crate) fn app_store(app: &AppHandle) -> Result<Store, String> {
     Ok(Store::new(project_root(app)?))
 }
-fn client(app: &AppHandle) -> Result<Reqwest, String> {
+pub(crate) fn client(app: &AppHandle) -> Result<Reqwest, String> {
     Reqwest::new(&app.package_info().version.to_string())
 }
 
