@@ -78,13 +78,15 @@ describe("Tauri 설정", () => {
     expect(preview.app.security.capabilities.sort()).toEqual(["preview-main", "splash"]);
   });
 
-  it("Preview 메인 창 권한: SQLite·파일 대화상자·창 만들기 없음, Classic 권한의 부분 집합(Classic에 새 권한 없음)", () => {
+  it("Preview 메인 창 권한: SQLite·저장 대화상자·창 만들기 없음(폴더 고르기만), Classic 권한의 부분 집합(Classic에 새 권한 없음)", () => {
     const cap = json("src-tauri/capabilities/preview-main.json");
     const def = json("src-tauri/capabilities/default.json");
     expect(cap.windows).toEqual(["main"]);
     for (const p of cap.permissions as string[]) {
       expect(def.permissions).toContain(p);
-      expect(p).not.toMatch(/^(sql|dialog|clipboard|opener|fs|http|shell)|create-webview/);
+      // 폴더 고르기(dialog:allow-open)만 예외 — C-2 원본 일지 읽기 전용 사본
+      if (p !== "dialog:allow-open")
+        expect(p).not.toMatch(/^(sql|dialog|clipboard|opener|fs|http|shell)|create-webview/);
     }
   });
 });
@@ -165,6 +167,9 @@ describe("Rust 명령 경계(lib.rs)", () => {
       "online::online_verify_code",
       "online::online_check",
       "online::online_sign_out",
+      "source_copy::source_snapshot",
+      "source_copy::source_snapshot_read",
+      "source_copy::source_snapshot_remove",
     ]);
     // 온라인 모듈은 Preview 빌드에만 컴파일된다
     expect(lib).toMatch(/#\[cfg\(feature = "connected-preview"\)\]\nmod online;/);

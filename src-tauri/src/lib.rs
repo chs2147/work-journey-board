@@ -11,6 +11,8 @@ mod files;
 mod menu;
 #[cfg(feature = "connected-preview")]
 mod online;
+#[cfg(feature = "connected-preview")]
+mod source_copy;
 mod profile;
 mod splash;
 mod update;
@@ -154,7 +156,10 @@ pub fn run() {
             online::online_send_code,
             online::online_verify_code,
             online::online_check,
-            online::online_sign_out
+            online::online_sign_out,
+            source_copy::source_snapshot,
+            source_copy::source_snapshot_read,
+            source_copy::source_snapshot_remove
         ]);
     builder.run(context).expect("Work Journey Board 실행 중 오류");
 }

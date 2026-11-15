@@ -335,6 +335,26 @@ export interface PreviewOnline {
   signOut(): Promise<OnlineStatus>;
 }
 
+/** C-2 원본 일지 읽기 전용 사본(Preview, Rust source_copy.rs) — 원본 폴더에는 아무것도 만들지 않는다 */
+export interface SourceSnapshot {
+  snapshotId: string;
+  bytes: number;
+  sha256: string;
+}
+export interface PreviewSource {
+  /** 원본 일지 폴더 고르기(OS 대화상자) — 취소면 null */
+  pickFolder(title: string): Promise<string | null>;
+  /** 고른 폴더의 일지를 읽기만 해서 Preview 폴더에 사본. 쓰는 중이면 SOURCE_IN_USE */
+  snapshot(dir: string): Promise<SourceSnapshot>;
+  /** 사본 바이트(sql.js로 열어 이관 자료를 만든다) */
+  read(snapshotId: string): Promise<Uint8Array>;
+  remove(snapshotId: string): Promise<void>;
+}
+export async function loadPreviewSource(): Promise<PreviewSource | null> {
+  if (!isTauri()) return null;
+  return (await import("./tauriPreviewSource")).tauriPreviewSource;
+}
+
 export async function loadPreviewOnline(): Promise<PreviewOnline> {
   if (isTauri()) return (await import("./tauriPreviewOnline")).tauriPreviewOnline;
   return (await import("./browserPreviewOnline")).browserPreviewOnline;

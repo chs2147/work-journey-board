@@ -517,7 +517,8 @@ pub async fn sign_out<H: Http, B: SecureVault>(
 use tauri::{AppHandle, Manager, State};
 use wjb_native_isolation::system_vault::SystemVault;
 
-fn app_store(app: &AppHandle) -> Result<Store, String> {
+/// Preview 개발 프로젝트 폴더(설정 폴더 아래 development/<ref>) — 기기·계정·원본 임시 사본을 둔다
+pub fn project_root(app: &AppHandle) -> Result<PathBuf, String> {
     let base = app
         .path()
         .local_data_dir()
@@ -525,9 +526,11 @@ fn app_store(app: &AppHandle) -> Result<Store, String> {
     let layout =
         wjb_native_isolation::policy::layout(Profile::ConnectedPreview, &base, Some(target()))
             .map_err(|_| "STORE".to_string())?;
-    Ok(Store::new(
-        layout.project_root.ok_or_else(|| "STORE".to_string())?,
-    ))
+    layout.project_root.ok_or_else(|| "STORE".to_string())
+}
+
+fn app_store(app: &AppHandle) -> Result<Store, String> {
+    Ok(Store::new(project_root(app)?))
 }
 fn client(app: &AppHandle) -> Result<Reqwest, String> {
     Reqwest::new(&app.package_info().version.to_string())
