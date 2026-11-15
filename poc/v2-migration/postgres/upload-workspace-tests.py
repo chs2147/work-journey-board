@@ -214,3 +214,85 @@ def run(g):
         assert scalar(command_def)==base010
         sql((ROOT/'013-workspace-upload-paging.sql').read_text())
     test('015 restores the exact 010 wrapper; 013 re-applies',rollback013)
+
+    # ── 016 (D단계 읽기 + D6 게시 판정) ──
+    base_core=scalar("SELECT pg_get_functiondef('wjb_migration.command_core(jsonb)'::regprocedure);")
+    def rd(action,params,user=A,session=None,device=None,role='service_role'):
+        r={'action':action,'userId':user,'sessionId':session or g['SA'],'deviceId':device or g['DA'],'params':params}
+        return sql(f"BEGIN;SET LOCAL ROLE {role};SELECT public.wjb_v2_workspace_read({g['literal'](r)});COMMIT;",check=False)
+    def rdj(action,params,**kw):
+        r=rd(action,params,**kw);assert r.returncode==0,r.stderr[-400:]
+        return json.loads(r.stdout.strip())
+    def rd_reject(action,params,code,**kw):
+        r=rd(action,params,**kw);assert r.returncode and code in r.stderr,(code,r.stderr[-300:])
+    def apply016():
+        sql((ROOT/'016-workspace-read.sql').read_text())
+        r=sql((ROOT/'016-workspace-read.sql').read_text(),check=False)
+        assert r.returncode and 'MIGRATION_016_ALREADY_APPLIED' in r.stderr
+        v=json.loads(scalar((ROOT/'017-workspace-read-verify.sql').read_text()))
+        assert v['readRPC'] and v['readServiceOnly'] and v['readSearchPath'] and v['publishByIoVersion'] and not v['privateExecute'],v
+    test('016 applies once over 013; 017 verify (read RPC server-only, publish by io_version)',apply016)
+
+    pub={}
+    def read_pages():
+        clean();m={**big['m'],'workspaceId':str(uuid.uuid4())};jid=str(uuid.uuid4())
+        send_all(jid,m);r=up('start_upload',jid,{})
+        sql(f"UPDATE wjb_migration.job SET state='connected' WHERE id='{jid}';")  # 게시 절차는 아래 D6 시험이 따로 본다
+        pub.update(job=jid,ws=m['workspaceId'],mh=r['manifestHash'],m=m)
+        lst=rdj('list',{})['workspaces'];mine=[w for w in lst if w['workspaceId']==m['workspaceId']]
+        assert len(mine)==1 and mine[0]['records']==len(m['records']) and mine[0]['sourceSchema']==20 and mine[0]['manifestHash']==r['manifestHash']
+        h=rdj('header',{'workspaceId':m['workspaceId']})
+        assert h['header']=={k:v for k,v in m.items() if k not in('records','assets')} and h['assets']==sorted(m['assets'],key=lambda a:a['objectId']) and h['records']==len(m['records'])
+        got=[];after=None;pages=0
+        while True:
+            p=rdj('records',{'workspaceId':m['workspaceId'],'manifestHash':r['manifestHash'],'after':after,'limit':700})
+            got+=p['records'];pages+=1
+            assert len(p['records'])<=700
+            if not p['more']: assert p['next'] is None;break
+            after=p['next']
+        assert pages==-(-len(m['records'])//700),pages
+        assert got==m['records'],'records in manifest order, lossless'
+        # 900KB 예산: 큰 기록이 있으면 한도 전에 끊는다
+        big_page=rdj('records',{'workspaceId':m['workspaceId'],'manifestHash':r['manifestHash'],'after':None,'limit':1000})
+        assert len(json.dumps(big_page))<1_100_000
+    test('016 read: list/header/records keyset pages return the published envelope losslessly in manifest order',read_pages)
+
+    def read_guards():
+        ws,mh=pub['ws'],pub['mh']
+        rd_reject('records',{'workspaceId':ws,'manifestHash':'0'*64,'after':None,'limit':10},'READ_MANIFEST_CHANGED')
+        rd_reject('header',{'workspaceId':ws},'READ_NOT_FOUND',user=B,session=SB,device=DB)
+        assert all(w['workspaceId']!=ws for w in rdj('list',{},user=B,session=SB,device=DB)['workspaces'])
+        rd_reject('header',{'workspaceId':ws},'READ_ACCESS_DENIED',device=DB)
+        rd_reject('records',{'workspaceId':ws,'manifestHash':mh,'after':None,'limit':1001},'READ_INVALID_REQUEST')
+        rd_reject('records',{'workspaceId':ws,'manifestHash':mh,'after':['x'],'limit':10},'READ_INVALID_REQUEST')
+        rd_reject('drop',{},'READ_INVALID_REQUEST')
+        r=rd('list',{},role='authenticated');assert r.returncode and 'permission denied' in r.stderr
+        # 게시 전(staging)·취소된 작업은 목록·읽기에 없다
+        sql(f"UPDATE wjb_migration.job SET state='staging' WHERE id='{pub['job']}';")
+        rd_reject('header',{'workspaceId':ws},'READ_NOT_FOUND')
+        sql(f"UPDATE wjb_migration.job SET state='connected' WHERE id='{pub['job']}';")
+    test('016 read guards: other account/device, changed manifest, bad params, client roles, unpublished jobs',read_guards)
+
+    def publish_by_io_version():
+        f=g['fixture']();g['ready'](f);g['attest'](f)
+        # 확인한 지 10분 지났어도 입출력 판이 그대로면 게시(010: 60초 넘으면 MIGRATION_NOT_VERIFIED)
+        sql(f"UPDATE wjb_migration.asset SET verified_at=clock_timestamp()-interval '10 minutes' WHERE job_id='{f['job']}';")
+        t=g['ticket'](f);res=g['publish'](f,t)
+        assert res.get('status')=='poc-verified' or res.get('state')=='connected',res
+        # 확인 뒤 입출력 판이 바뀌면 거절
+        f2=g['fixture']();g['ready'](f2);g['attest'](f2)
+        sql(f"UPDATE wjb_gateway.asset SET io_version=io_version+1 WHERE workspace_id='{f2['ws']}';")
+        t2=g['ticket'](f2)
+        r=sql(query(request('publish',f2['job'],{**t2,'manifestHash':f2['hash']})),check=False)
+        assert r.returncode and 'MIGRATION_NOT_VERIFIED' in r.stderr,r.stderr[-300:]
+    test('D6: publish accepts an old attest when io_version is unchanged; a changed io_version is still refused',publish_by_io_version)
+
+    def rollback016():
+        clean()
+        sql((ROOT/'018-workspace-read-rollback.sql').read_text())
+        assert scalar("SELECT to_regprocedure('public.wjb_v2_workspace_read(jsonb)') IS NULL;")=='t'
+        sql((ROOT/'016-workspace-read.sql').read_text())
+        sql((ROOT/'018-workspace-read-rollback.sql').read_text())
+        assert scalar("SELECT pg_get_functiondef('wjb_migration.command_core(jsonb)'::regprocedure);")==base_core
+        sql((ROOT/'016-workspace-read.sql').read_text())
+    test('018 drops the read RPC and restores the exact 010 command_core; 016 re-applies',rollback016)

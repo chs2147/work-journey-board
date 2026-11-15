@@ -407,3 +407,99 @@ END $$;
 GRANT EXECUTE ON FUNCTION public.wjb_v2_migration_command(jsonb) TO service_role;
 COMMIT;
 """)
+
+# ── 016 D단계 읽기 + D6 게시 판정 (docs/v2-design/87) — 016 apply / 017 verify / 018 rollback ─────────────
+# D-1: public.wjb_v2_workspace_read (server-only): list my published workspaces, header (+assets), records by keyset pages
+#      under a byte budget. Owner/device/session checks like the migration command. Reads only.
+# D6: publish no longer needs every attest within 60 seconds — verified io_version = current io_version, no live lease
+#     and no unsettled I/O (already checked) decide. Large image sets could not re-attest within 60s.
+read016 = r"""CREATE FUNCTION public.wjb_v2_workspace_read(p_request jsonb) RETURNS jsonb
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $$
+DECLARE action text:=p_request->>'action';u uuid;s uuid;dev uuid;p jsonb:=p_request->'params';j wjb_migration.job;
+ ws uuid;lim integer;after_t text;after_k text;r record;out jsonb:='[]';n integer:=0;used integer:=0;sz integer;
+ more boolean:=false;last_t text;last_k text;
+BEGIN
+ IF action IS NULL OR action NOT IN('list','header','records') THEN RAISE EXCEPTION 'READ_INVALID_REQUEST'; END IF;
+ IF NOT wjb_migration.keys_exact(p_request,ARRAY['action','userId','sessionId','deviceId','params']) OR jsonb_typeof(p)<>'object'
+    OR octet_length(p_request::text)>8192 THEN RAISE EXCEPTION 'READ_INVALID_REQUEST'; END IF;
+ u:=(p_request->>'userId')::uuid;s:=(p_request->>'sessionId')::uuid;dev:=(p_request->>'deviceId')::uuid;
+ PERFORM 1 FROM wjb_gateway.device WHERE id=dev AND user_id=u AND session_id=s AND NOT revoked;
+ IF NOT FOUND OR NOT public.wjb_v2_session_active(u,s) THEN RAISE EXCEPTION 'READ_ACCESS_DENIED'; END IF;
+ IF action='list' THEN
+  IF NOT wjb_migration.keys_exact(p,ARRAY[]::text[]) THEN RAISE EXCEPTION 'READ_INVALID_REQUEST'; END IF;
+  RETURN jsonb_build_object('workspaces',coalesce((SELECT jsonb_agg(jsonb_build_object(
+    'workspaceId',j2.workspace_id,'jobId',j2.id,'createdAt',j2.created_at,'profile',j2.profile,
+    'sourceSchema',(h.value->>'sourceSchema')::integer,'manifestHash',j2.manifest_hash,
+    'records',(SELECT count(*) FROM wjb_migration.workspace_record x WHERE x.job_id=j2.id),
+    'assets',(SELECT count(*) FROM wjb_migration.asset a WHERE a.job_id=j2.id),
+    'assetBytes',(SELECT coalesce(sum(a.bytes),0) FROM wjb_migration.asset a WHERE a.job_id=j2.id)) ORDER BY j2.created_at DESC,j2.id)
+   FROM wjb_migration.job j2 JOIN wjb_migration.workspace_header h ON h.job_id=j2.id
+   WHERE j2.owner_id=u AND j2.state='connected' AND j2.profile<>'migration-document-poc-1'),'[]'));
+ END IF;
+ ws:=(p->>'workspaceId')::uuid;
+ IF ws IS NULL THEN RAISE EXCEPTION 'READ_INVALID_REQUEST'; END IF;
+ SELECT * INTO j FROM wjb_migration.job WHERE workspace_id=ws AND owner_id=u AND state='connected' AND profile<>'migration-document-poc-1';
+ IF NOT FOUND THEN RAISE EXCEPTION 'READ_NOT_FOUND'; END IF;
+ IF action='header' THEN
+  IF NOT wjb_migration.keys_exact(p,ARRAY['workspaceId']) THEN RAISE EXCEPTION 'READ_INVALID_REQUEST'; END IF;
+  RETURN jsonb_build_object('workspaceId',ws,'jobId',j.id,'manifestHash',j.manifest_hash,'createdAt',j.created_at,
+   'header',(SELECT h.value FROM wjb_migration.workspace_header h WHERE h.job_id=j.id),
+   'assets',(SELECT coalesce(jsonb_agg(jsonb_build_object('objectId',a.object_id,'sha256',a.sha256,'bytes',a.bytes) ORDER BY a.object_id),'[]') FROM wjb_migration.asset a WHERE a.job_id=j.id),
+   'records',(SELECT count(*) FROM wjb_migration.workspace_record x WHERE x.job_id=j.id));
+ END IF;
+ -- records: keyset pages in the manifest order (table COLLATE "C", key); at most `limit` rows and about 900KB
+ IF NOT wjb_migration.keys_exact(p,ARRAY['workspaceId','manifestHash','after','limit']) OR jsonb_typeof(p->'limit')<>'number'
+    OR (p->>'limit') !~ '^[1-9][0-9]{0,3}$' OR (p->>'limit')::integer>1000
+    OR NOT (jsonb_typeof(p->'after')='null' OR (jsonb_typeof(p->'after')='array' AND jsonb_array_length(p->'after')=2
+      AND jsonb_typeof(p->'after'->0)='string' AND jsonb_typeof(p->'after'->1)='string')) THEN RAISE EXCEPTION 'READ_INVALID_REQUEST'; END IF;
+ IF p->>'manifestHash' IS DISTINCT FROM j.manifest_hash THEN RAISE EXCEPTION 'READ_MANIFEST_CHANGED'; END IF;
+ lim:=(p->>'limit')::integer;after_t:=p->'after'->>0;after_k:=p->'after'->>1;
+ FOR r IN SELECT x.table_name t,x.record_key k,x.value v FROM wjb_migration.workspace_record x
+   WHERE x.job_id=j.id AND (after_t IS NULL OR x.table_name COLLATE "C">after_t COLLATE "C" OR (x.table_name=after_t AND x.record_key COLLATE "C">after_k COLLATE "C"))
+   ORDER BY x.table_name COLLATE "C",x.record_key COLLATE "C" LIMIT lim+1 LOOP
+  sz:=octet_length(r.v::text)+octet_length(r.t)+96;
+  IF n>=lim OR (n>0 AND used+sz>900000) THEN more:=true; EXIT; END IF;
+  out:=out||jsonb_build_array(jsonb_build_object('table',r.t,'key',r.k,'value',r.v));used:=used+sz;n:=n+1;last_t:=r.t;last_k:=r.k;
+ END LOOP;
+ RETURN jsonb_build_object('records',out,'more',more,'next',CASE WHEN more THEN jsonb_build_array(last_t,last_k) ELSE NULL END);
+EXCEPTION WHEN invalid_text_representation OR numeric_value_out_of_range THEN RAISE EXCEPTION 'READ_INVALID_REQUEST';
+END $$;
+REVOKE ALL ON FUNCTION public.wjb_v2_workspace_read(jsonb) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.wjb_v2_workspace_read(jsonb) TO service_role;
+"""
+fresh=" OR m.verified_at<clock_timestamp()-interval '60 seconds'"
+core016=edit(core,fresh,"").replace('CREATE FUNCTION wjb_migration.command_core(','CREATE OR REPLACE FUNCTION wjb_migration.command_core(',1)
+core010=core.replace('CREATE FUNCTION wjb_migration.command_core(','CREATE OR REPLACE FUNCTION wjb_migration.command_core(',1)
+(ROOT/'016-workspace-read.sql').write_text(f"""-- GENERATED by build-workspace-sql.py. REVIEW ONLY; no cloud auto-apply.
+-- Apply once after 013. D단계(docs/v2-design/87): server-only read RPC (list/header/records pages) + D6 publish check
+-- by verified io_version (drops the 60-second attest window). Tables, limits, upload wrapper and asset module unchanged.
+BEGIN;
+SET LOCAL lock_timeout='5s'; SET LOCAL statement_timeout='60s';
+DO $$ BEGIN
+ IF NOT (SELECT prosrc LIKE '%013 D-d%' FROM pg_proc WHERE oid='public.wjb_v2_migration_command(jsonb)'::regprocedure) THEN RAISE EXCEPTION 'MIGRATION_013_REQUIRED'; END IF;
+ IF to_regprocedure('public.wjb_v2_workspace_read(jsonb)') IS NOT NULL THEN RAISE EXCEPTION 'MIGRATION_016_ALREADY_APPLIED'; END IF;
+END $$;
+{read016}{core016}REVOKE ALL ON ALL FUNCTIONS IN SCHEMA wjb_migration FROM PUBLIC,anon,authenticated,service_role;
+COMMIT;
+""")
+(ROOT/'017-workspace-read-verify.sql').write_text("""-- SELECT only. 016 installed: read RPC server-only, publish check without the 60-second window.
+SELECT jsonb_build_object(
+ 'readRPC',to_regprocedure('public.wjb_v2_workspace_read(jsonb)') IS NOT NULL,
+ 'readServiceOnly',has_function_privilege('service_role','public.wjb_v2_workspace_read(jsonb)','EXECUTE')
+   AND NOT has_function_privilege('authenticated','public.wjb_v2_workspace_read(jsonb)','EXECUTE')
+   AND NOT has_function_privilege('anon','public.wjb_v2_workspace_read(jsonb)','EXECUTE'),
+ 'readSearchPath',(SELECT 'search_path=pg_catalog'=ANY(coalesce(proconfig,'{}'::text[])) FROM pg_proc WHERE oid='public.wjb_v2_workspace_read(jsonb)'::regprocedure),
+ 'publishByIoVersion',(SELECT prosrc NOT LIKE '%60 seconds%' AND prosrc LIKE '%verified_version IS DISTINCT FROM x.io_version%' FROM pg_proc WHERE oid='wjb_migration.command_core(jsonb)'::regprocedure),
+ 'privateExecute',EXISTS(SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='wjb_migration' AND (has_function_privilege('service_role',p.oid,'EXECUTE') OR has_function_privilege('anon',p.oid,'EXECUTE') OR has_function_privilege('authenticated',p.oid,'EXECUTE'))),
+ 'cloudApplied',false,'productActivationAllowed',false);
+""")
+(ROOT/'018-workspace-read-rollback.sql').write_text(f"""-- Back to 013: drop the read RPC, restore the exact 010 command_core (60-second publish window).
+BEGIN;
+SET LOCAL lock_timeout='5s'; SET LOCAL statement_timeout='30s';
+DO $$ BEGIN
+ IF to_regprocedure('public.wjb_v2_workspace_read(jsonb)') IS NULL THEN RAISE EXCEPTION 'MIGRATION_016_REQUIRED'; END IF;
+END $$;
+DROP FUNCTION public.wjb_v2_workspace_read(jsonb);
+{core010}REVOKE ALL ON ALL FUNCTIONS IN SCHEMA wjb_migration FROM PUBLIC,anon,authenticated,service_role;
+COMMIT;
+""")

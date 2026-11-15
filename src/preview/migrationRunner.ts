@@ -140,12 +140,8 @@ export async function runMigration(t: PreviewMigration, p: PreparedCopy, o: RunO
   }
   await save({ phase: "publishing" });
 
-  // 3) 게시 직전 다시 확인(서버는 60초 안의 확인만 인정, 004) → 게시
-  for (let i = 0; i < j.assets.length; i++) {
-    stopIf(o.signal);
-    await attest(j.assets[i]!);
-    o.onProgress?.({ kind: "verify", done: i + 1, total: j.assets.length });
-  }
+  // 3) 게시 — 서버는 "확인한 입출력 판 = 지금 판"으로 판정(016, D6). 게시 직전 그림 재확인은 하지 않는다
+  stopIf(o.signal);
   o.onProgress?.({ kind: "publish" });
   if (!j.publishOperationId) await save({ publishOperationId: uuid() });
   const operationId = j.publishOperationId!;

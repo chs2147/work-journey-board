@@ -182,11 +182,18 @@ describe.skipIf(!live)("C-3 실서버(개발 프로젝트)", () => {
         await expect(runMigration(t, p, opts)).rejects.toThrow("NETWORK");
         interrupt = null;
         check("interrupted_after_first_page", journals.get(job)?.phase === "uploading-records");
+        // D6(016): 게시 직전에 끊고, 그림 확인 시각을 10분 전으로 돌린 뒤 이어서 게시 → 입출력 판이 그대로면 게시된다
+        interrupt = (a) => a === "publication";
+        await expect(runMigration(t, p, opts)).rejects.toThrow("NETWORK");
+        interrupt = null;
+        await sql(
+          `UPDATE wjb_migration.asset SET verified_at=clock_timestamp()-interval '10 minutes' WHERE job_id='${job}';`,
+        );
         t0 = Date.now();
         const receipt = await runMigration(t, p, opts);
         (report.timing as Record<string, number>).uploadPublishSeconds = (Date.now() - t0) / 1000;
         check(
-          "resumed_and_published",
+          "published_with_old_attest_d6",
           (receipt as { status?: string; receipt?: { status?: string } }).status === "poc-verified" ||
             (receipt as { receipt?: { status?: string } }).receipt?.status === "poc-verified",
           { records: p.recordsTotal, pages: p.pages.length, assets: p.assets.length },
@@ -217,6 +224,45 @@ describe.skipIf(!live)("C-3 실서버(개발 프로젝트)", () => {
           got.status === 200 && sha(new Uint8Array(await got.arrayBuffer())) === a0.sha256,
         );
         check("source_snapshot_unchanged", sha(snapshot) === sha(readFileSync(file)));
+        // D-1 읽기 경로(016·gateway v10): 목록 → 머리 → 기록 페이지 = 앱 엔진이 만든 기록
+        const rd = (action: string, params: unknown) =>
+          send("POST", `/v2/read/${action}`, { deviceId, params });
+        const list = (await rd("list", {})).workspaces as {
+          workspaceId: string;
+          records: number;
+          manifestHash: string;
+        }[];
+        const mine = list.find((w) => w.workspaceId === ws);
+        const head = await rd("header", { workspaceId: ws });
+        const recs: { table: string; key: string; value: unknown }[] = [];
+        let after: unknown = null,
+          readPages = 0;
+        for (;;) {
+          const pg = await rd("records", {
+            workspaceId: ws,
+            manifestHash: head.manifestHash,
+            after,
+            limit: 1000,
+          });
+          recs.push(...pg.records);
+          readPages++;
+          if (!pg.more) break;
+          after = pg.next;
+        }
+        check(
+          "read_list_header_pages_match",
+          mine?.records === p.recordsTotal &&
+            head.assets.length === p.assets.length &&
+            JSON.stringify(canon(recs)) === JSON.stringify(canon(p.pages.flat())),
+          { records: recs.length, readPages },
+        );
+        let changed = "";
+        try {
+          await rd("records", { workspaceId: ws, manifestHash: "0".repeat(64), after: null, limit: 10 });
+        } catch (e) {
+          changed = (e as Error).message;
+        }
+        check("read_refuses_changed_manifest", changed === "READ_MANIFEST_CHANGED");
 
         stage = "cancel";
         // 2) 두 번째 작업: 그림 1개 올린 뒤 멈춤 → 취소(올린 그림 지우기 + 예약만 된 것) → 할당량 0
@@ -225,8 +271,8 @@ describe.skipIf(!live)("C-3 실서버(개발 프로젝트)", () => {
         const p2 = prepareCopy(SQL, snapshot, { workspaceId: ws2, sourceWorkspaceId: randomUUID() });
         const job2 = randomUUID();
         created.jobs.push(job2);
-        let attests = 0;
-        interrupt = (a) => a === "attest" && ++attests === 2;
+        // 그림을 올리고 확인까지 한 뒤 게시 직전에 끊김 → 취소(올린 그림 지우기)
+        interrupt = (a) => a === "publication";
         await expect(
           runMigration(t, p2, { jobId: job2, ownerId: u.body.id, snapshotId: randomUUID(), journalEvery: 1 }),
         ).rejects.toThrow("NETWORK");
@@ -284,7 +330,7 @@ describe.skipIf(!live)("C-3 실서버(개발 프로젝트)", () => {
             await admin("DELETE", `/auth/v1/admin/users/${id}`);
           }
           const left = await sql(
-            `SELECT (SELECT count(*) FROM wjb_migration.job) jobs,(SELECT count(*) FROM wjb_migration.upload) uploads,(SELECT count(*) FROM wjb_migration.workspace_record) records,(SELECT count(*) FROM wjb_gateway.workspace) workspaces,(SELECT count(*) FROM wjb_gateway.asset) assets,(SELECT count(*) FROM wjb_gateway.device) devices,(SELECT count(*) FROM storage.objects WHERE bucket_id='${bucket}') objects,(SELECT count(*) FROM auth.users WHERE email LIKE 'wjb-c3-%') users;`,
+            `SELECT (SELECT count(*) FROM wjb_migration.job) jobs,(SELECT count(*) FROM wjb_migration.upload) uploads,(SELECT count(*) FROM wjb_migration.workspace_record) records,(SELECT count(*) FROM wjb_gateway.workspace) workspaces,(SELECT count(*) FROM wjb_gateway.asset) assets,(SELECT count(*) FROM wjb_gateway.device WHERE id='${deviceId}') devices,(SELECT count(*) FROM storage.objects WHERE bucket_id='${bucket}') objects,(SELECT count(*) FROM auth.users WHERE email LIKE 'wjb-c3-%') users;`,
           );
           Object.assign(cleanup, left[0]);
           cleanup.zero = Object.values(left[0]).every((n) => String(n) === "0");
@@ -294,7 +340,7 @@ describe.skipIf(!live)("C-3 실서버(개발 프로젝트)", () => {
         rmSync(dir, { recursive: true, force: true });
         report.cleanup = cleanup;
         report.passed =
-          !report.failure && checks.length >= 8 && checks.every((c) => c.passed) && cleanup.zero === true;
+          !report.failure && checks.length >= 10 && checks.every((c) => c.passed) && cleanup.zero === true;
         report.finishedAt = new Date().toISOString();
         writeFileSync(
           "docs/v2-design/evidence/preview-dev-c3-engine-live.json",

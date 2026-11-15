@@ -1,0 +1,30 @@
+{
+  "module": "wjb-workspace-read-poc-1",
+  "profile": "development",
+  "projectRef": "vsphftnmfzfoufasjttd",
+  "autoApply": false,
+  "cloudApplied": false,
+  "userApproved": "D4~D6 recommendation (2026-11-15)",
+  "requires": ["013-workspace-upload-paging.sql (installed)"],
+  "changes": {
+    "newPublicRPCs": ["public.wjb_v2_workspace_read (service_role only)"],
+    "replacedFunctions": ["wjb_migration.command_core"],
+    "publishCheck": "verified io_version = current io_version (60-second attest window removed)"
+  },
+  "rollback": "018 drops the read RPC and restores the exact 010 command_core",
+  "localEvidence": "docs/v2-design/evidence/migration-paged-upload-pass.json",
+  "sources": [
+    {
+      "path": "poc/v2-migration/postgres/016-workspace-read.sql",
+      "sha256": "053c74c32f53c1865b0afba0a772fc012cf69be49a8bd3ca7bf4f1c78c46f1a9"
+    },
+    {
+      "path": "poc/v2-migration/postgres/017-workspace-read-verify.sql",
+      "sha256": "61aef06e633e1e30a59c1db382c8e98cec300d6016ec41dcde325e8ec4acd7cf"
+    },
+    {
+      "path": "poc/v2-migration/postgres/018-workspace-read-rollback.sql",
+      "sha256": "b0229755896830f928c40959f9093cbd286c11cddd6af5bc67738d0a3c59ed45"
+    }
+  ]
+}

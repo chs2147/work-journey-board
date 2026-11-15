@@ -86,10 +86,9 @@ function fakeServer(opts: { failAt?: (action: string, n: number) => boolean } = 
         case "prepare_publish":
           return { token: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee", fence: "3" };
         case "publish":
-          // 60초 규칙 흉내: 마지막 확인이 최근 N번 호출 안이어야
+          // 016(D6) 규칙 흉내: 확인한 뒤 그대로인 그림만(확인 시각은 따지지 않음)
           for (const a of s.assets.values())
-            if (a.state !== "ready" || a.verifiedAt === null || clock - a.verifiedAt > 10)
-              throw new Error("MIGRATION_NOT_VERIFIED");
+            if (a.state !== "ready" || a.verifiedAt === null) throw new Error("MIGRATION_NOT_VERIFIED");
           s.published = true;
           return { status: "poc-verified" };
         case "cancel":
@@ -137,15 +136,15 @@ function fakeServer(opts: { failAt?: (action: string, n: number) => boolean } = 
 const opts = { jobId: JOB, ownerId: OWNER, snapshotId: SNAP, journalEvery: 1 };
 
 describe("C-3 이관 실행기", () => {
-  it("기록 → 그림 → 게시 직전 다시 확인 → 게시", async () => {
+  it("기록 → 그림(올리고 확인) → 게시, 게시 직전 재확인 없음(016 D6)", async () => {
     const { t, s } = fakeServer();
     const steps: string[] = [];
     const r = await runMigration(t, prepared(), { ...opts, onProgress: (p) => steps.push(p.kind) });
     expect(r).toEqual({ status: "poc-verified" });
     expect(s.published).toBe(true);
     expect(s.puts).toBe(4);
-    expect(s.calls.filter((c) => c === "attest").length).toBe(8); // 올린 뒤 4 + 게시 전 4
-    expect(steps).toContain("verify");
+    expect(s.calls.filter((c) => c === "attest").length).toBe(4); // 그림마다 올린 뒤 한 번
+    expect(steps).not.toContain("verify");
     expect(s.journals.get(JOB)!.phase).toBe("published");
     // 다시 불러도 다시 올리지 않는다
     await runMigration(t, prepared(), opts);

@@ -1,5 +1,5 @@
 {
-  "startedAt": "2026-11-15T04:11:09.081Z",
+  "startedAt": "2026-11-15T09:35:44.013Z",
   "projectRef": "vsphftnmfzfoufasjttd",
   "productionTouched": false,
   "mailSent": false,
@@ -23,7 +23,7 @@
       "passed": true
     },
     {
-      "name": "resumed_and_published",
+      "name": "published_with_old_attest_d6",
       "passed": true,
       "extra": {
         "records": 2552,
@@ -47,6 +47,18 @@
       "passed": true
     },
     {
+      "name": "read_list_header_pages_match",
+      "passed": true,
+      "extra": {
+        "records": 2552,
+        "readPages": 3
+      }
+    },
+    {
+      "name": "read_refuses_changed_manifest",
+      "passed": true
+    },
+    {
       "name": "cancel_after_partial_upload_cleans",
       "passed": true,
       "extra": {
@@ -58,9 +70,9 @@
     }
   ],
   "timing": {
-    "prepareSeconds": 0.388,
-    "uploadPublishSeconds": 21.516,
-    "cancelSeconds": 82.904
+    "prepareSeconds": 0.43,
+    "uploadPublishSeconds": 1.931,
+    "cancelSeconds": 84.128
   },
   "cleanup": {
     "jobs": 0,
@@ -74,5 +86,5 @@
     "zero": true
   },
   "passed": true,
-  "finishedAt": "2026-11-15T04:13:42.992Z"
+  "finishedAt": "2026-11-15T09:38:09.857Z"
 }

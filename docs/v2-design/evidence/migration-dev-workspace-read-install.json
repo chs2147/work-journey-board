@@ -1,0 +1,45 @@
+{
+  "startedAt": "2026-11-15T09:32:03.570Z",
+  "projectRef": "vsphftnmfzfoufasjttd",
+  "autoApply": false,
+  "userRequestedDevIntegration": true,
+  "productionTouched": false,
+  "sources": [
+    {
+      "path": "poc/v2-migration/postgres/016-workspace-read.sql",
+      "sha256": "053c74c32f53c1865b0afba0a772fc012cf69be49a8bd3ca7bf4f1c78c46f1a9"
+    },
+    {
+      "path": "poc/v2-migration/postgres/017-workspace-read-verify.sql",
+      "sha256": "61aef06e633e1e30a59c1db382c8e98cec300d6016ec41dcde325e8ec4acd7cf"
+    }
+  ],
+  "phases": [
+    {
+      "phase": "preflight",
+      "has013": true,
+      "has016": false
+    },
+    {
+      "phase": "apply",
+      "ok": true
+    }
+  ],
+  "applied": true,
+  "executionRole": {
+    "role": "postgres",
+    "read_only": "off",
+    "rolsuper": false,
+    "rolbypassrls": true
+  },
+  "verify": {
+    "readRPC": true,
+    "cloudApplied": false,
+    "privateExecute": false,
+    "readSearchPath": true,
+    "readServiceOnly": true,
+    "publishByIoVersion": true,
+    "productActivationAllowed": false
+  },
+  "finishedAt": "2026-11-15T09:32:10.390Z"
+}

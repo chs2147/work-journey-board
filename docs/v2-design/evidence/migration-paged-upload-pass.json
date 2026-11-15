@@ -1,42 +1,42 @@
 {
-  "checkedAt": "2026-11-15T04:09:00.167773+00:00",
+  "checkedAt": "2026-11-15T09:30:51.332090+00:00",
   "postgres": "17.11 (Debian 17.11-1.pgdg12+2)",
   "image": "postgres@sha256:665dc7b37ac52a17e298511414c21d23ffa4e6a6ef6225b3e5d59c7afb35e994",
   "tests": [
     {
       "name": "preflight confirms separate unused module and existing prerequisites",
       "status": "PASS",
-      "ms": 99
+      "ms": 119
     },
     {
       "name": "unused rollback removes only new objects; existing gateway definition preserved",
       "status": "PASS",
-      "ms": 682
+      "ms": 691
     },
     {
       "name": "client RPC and direct table access denied, including bypass-RLS service role",
       "status": "PASS",
-      "ms": 726
+      "ms": 789
     },
     {
       "name": "other owner, session mismatch and banned user denied",
       "status": "PASS",
-      "ms": 763
+      "ms": 860
     },
     {
       "name": "start replay matches exact canonical manifest; changed payload rejected",
       "status": "PASS",
-      "ms": 513
+      "ms": 452
     },
     {
       "name": "inline data URL rejected atomically",
       "status": "PASS",
-      "ms": 575
+      "ms": 602
     },
     {
       "name": "raw WebP base64 signature rejected in metadata text",
       "status": "PASS",
-      "ms": 582
+      "ms": 560
     },
     {
       "name": "image node cannot embed data or src",
@@ -46,570 +46,595 @@
     {
       "name": "unknown image reference rejected",
       "status": "PASS",
-      "ms": 558
+      "ms": 564
     },
     {
       "name": "duplicate asset IDs rejected",
       "status": "PASS",
-      "ms": 563
+      "ms": 544
     },
     {
       "name": "bytea/base64-style extra root field rejected",
       "status": "PASS",
-      "ms": 578
+      "ms": 572
     },
     {
       "name": "unsupported block format rejected",
       "status": "PASS",
-      "ms": 586
+      "ms": 572
     },
     {
       "name": "old gateway cannot reserve unlisted assets in migration workspace",
       "status": "PASS",
-      "ms": 334
+      "ms": 316
     },
     {
       "name": "pending files cannot publish",
       "status": "PASS",
-      "ms": 520
+      "ms": 583
     },
     {
       "name": "ready alone is insufficient; server attestation yields scoped PoC receipt",
       "status": "PASS",
-      "ms": 1427
+      "ms": 1507
     },
     {
       "name": "attestation hash/size and IO version bound",
       "status": "PASS",
-      "ms": 1074
+      "ms": 1162
     },
     {
       "name": "stale attestation blocks publish until readback re-attestation",
       "status": "PASS",
-      "ms": 1913
+      "ms": 2069
     },
     {
       "name": "server metadata drift detected by canonical digest",
       "status": "PASS",
-      "ms": 1573
+      "ms": 1516
     },
     {
       "name": "ready asset with older unsettled IO remains blocked",
       "status": "PASS",
-      "ms": 2157
+      "ms": 2175
     },
     {
       "name": "cancel requires absent confirmation and quota released only once",
       "status": "PASS",
-      "ms": 1381
+      "ms": 1338
     },
     {
       "name": "cancel waits for old IO settlement; no timeout shortcut",
       "status": "PASS",
-      "ms": 1626
+      "ms": 1640
     },
     {
       "name": "old gateway write lease cannot start IO after cancel fence",
       "status": "PASS",
-      "ms": 562
+      "ms": 637
     },
     {
       "name": "lost publish response replays same receipt; connected space never canceled",
       "status": "PASS",
-      "ms": 1854
+      "ms": 1918
     },
     {
       "name": "reconciliation fences expired publish and delayed prepare requests",
       "status": "PASS",
-      "ms": 2001
+      "ms": 2134
     },
     {
       "name": "cancel invalidates previously issued publication ticket",
       "status": "PASS",
-      "ms": 1743
+      "ms": 1883
     },
     {
       "name": "empty image inventory is valid without invented Blob",
       "status": "PASS",
-      "ms": 510
+      "ms": 591
     },
     {
       "name": "expired reservation can renew only within active migration",
       "status": "PASS",
-      "ms": 1211
+      "ms": 1305
     },
     {
       "name": "new trigger preserves non-migration gateway workspaces",
       "status": "PASS",
-      "ms": 220
+      "ms": 254
     },
     {
       "name": "two PG connections: publish commits first, cancel retains connected assets",
       "status": "PASS",
-      "ms": 1857
+      "ms": 1985
     },
     {
       "name": "two PG connections: cancel commits first, late publish rejected",
       "status": "PASS",
-      "ms": 1830
+      "ms": 1974
     },
     {
       "name": "RLS and image-free schema with non-superuser migration owner",
       "status": "PASS",
-      "ms": 317
+      "ms": 371
     },
     {
       "name": "UUID normalization preserves semantic manifest replay",
       "status": "PASS",
-      "ms": 347
+      "ms": 355
     },
     {
       "name": "existing session revocation blocks migration RPC",
       "status": "PASS",
-      "ms": 560
+      "ms": 580
     },
     {
       "name": "cancel replay does not increment fence or release quota twice",
       "status": "PASS",
-      "ms": 797
+      "ms": 775
     },
     {
       "name": "different publication operation cannot reuse a ticket",
       "status": "PASS",
-      "ms": 1386
+      "ms": 1466
     },
     {
       "name": "reservation renewal refuses outstanding IO",
       "status": "PASS",
-      "ms": 899
+      "ms": 994
     },
     {
       "name": "actual SQL PoC receipt is rejected by product activation guard",
       "status": "PASS",
-      "ms": 1477
+      "ms": 1483
     },
     {
       "name": "module reapplication fails atomically without changing jobs",
       "status": "PASS",
-      "ms": 306
+      "ms": 339
     },
     {
       "name": "rollback refuses used module and retains all jobs",
       "status": "PASS",
-      "ms": 338
+      "ms": 326
     },
     {
       "name": "trusted migration RPC adapter crosses loopback HTTP to actual PG with dual manifest binding",
       "status": "PASS",
-      "ms": 1491
+      "ms": 1575
     },
     {
       "name": "full extension ACL/RLS and empty rollback preserve historical document jobs",
       "status": "PASS",
-      "ms": 651
+      "ms": 673
     },
     {
       "name": "actual DB18 envelope stages all tables, reads losslessly, replays and publishes only after attestation",
       "status": "PASS",
-      "ms": 2453
+      "ms": 2394
     },
     {
       "name": "actual DB19 envelope stages all tables, reads losslessly, replays and publishes only after attestation",
       "status": "PASS",
-      "ms": 2192
+      "ms": 2404
     },
     {
       "name": "full manifest rejects unknown profile atomically",
       "status": "PASS",
-      "ms": 556
+      "ms": 605
     },
     {
       "name": "full manifest rejects wrong contract fingerprint atomically",
       "status": "PASS",
-      "ms": 538
+      "ms": 623
     },
     {
       "name": "full manifest rejects unsupported schema atomically",
       "status": "PASS",
-      "ms": 631
+      "ms": 624
     },
     {
       "name": "full manifest rejects extra root binary field atomically",
       "status": "PASS",
-      "ms": 669
+      "ms": 617
     },
     {
       "name": "full manifest rejects raw inline image atomically",
       "status": "PASS",
-      "ms": 567
+      "ms": 618
     },
     {
       "name": "full manifest rejects escaped inline image in stringified rich JSON atomically",
       "status": "PASS",
-      "ms": 563
+      "ms": 570
     },
     {
       "name": "full manifest rejects unknown row column atomically",
       "status": "PASS",
-      "ms": 593
+      "ms": 561
     },
     {
       "name": "full manifest rejects changed record key atomically",
       "status": "PASS",
-      "ms": 590
+      "ms": 584
     },
     {
       "name": "full manifest rejects duplicate record atomically",
       "status": "PASS",
-      "ms": 534
+      "ms": 628
     },
     {
       "name": "full manifest rejects missing foreign record atomically",
       "status": "PASS",
-      "ms": 596
+      "ms": 561
     },
     {
       "name": "full manifest rejects missing physical reference atomically",
       "status": "PASS",
-      "ms": 656
+      "ms": 557
     },
     {
       "name": "full manifest rejects invalid delete lock atomically",
       "status": "PASS",
-      "ms": 716
+      "ms": 642
     },
     {
       "name": "full manifest rejects row count drift atomically",
       "status": "PASS",
-      "ms": 628
+      "ms": 598
     },
     {
       "name": "full manifest rejects missing table accounting atomically",
       "status": "PASS",
-      "ms": 562
+      "ms": 527
     },
     {
       "name": "full manifest rejects missing exclusion audit atomically",
       "status": "PASS",
-      "ms": 597
+      "ms": 580
     },
     {
       "name": "full manifest rejects forbidden original policy atomically",
       "status": "PASS",
-      "ms": 590
+      "ms": 580
     },
     {
       "name": "full manifest rejects oversize image atomically",
       "status": "PASS",
-      "ms": 564
+      "ms": 631
     },
     {
       "name": "full manifest rejects local folder target atomically",
       "status": "PASS",
-      "ms": 594
+      "ms": 593
     },
     {
       "name": "full manifest rejects device setting atomically",
       "status": "PASS",
-      "ms": 574
+      "ms": 598
     },
     {
       "name": "full manifest rejects nested device setting atomically",
       "status": "PASS",
-      "ms": 571
+      "ms": 630
     },
     {
       "name": "full manifest rejects missing rich content atomically",
       "status": "PASS",
-      "ms": 581
+      "ms": 619
     },
     {
       "name": "full manifest rejects string for integer atomically",
       "status": "PASS",
-      "ms": 549
+      "ms": 591
     },
     {
       "name": "full manifest rejects null row accounting atomically",
       "status": "PASS",
-      "ms": 576
+      "ms": 624
     },
     {
       "name": "full manifest rejects unknown live widget atomically",
       "status": "PASS",
-      "ms": 589
+      "ms": 591
     },
     {
       "name": "full manifest rejects dangling board edge atomically",
       "status": "PASS",
-      "ms": 538
+      "ms": 701
     },
     {
       "name": "full manifest rejects image reference owner mismatch atomically",
       "status": "PASS",
-      "ms": 553
+      "ms": 595
     },
     {
       "name": "full manifest rejects oversize metadata atomically",
       "status": "PASS",
-      "ms": 552
+      "ms": 597
     },
     {
       "name": "full manifest rejects unknown document node atomically",
       "status": "PASS",
-      "ms": 552
+      "ms": 695
     },
     {
       "name": "full envelope retrieval enforces identity and server-only RPC with no direct table ACL",
       "status": "PASS",
-      "ms": 1256
+      "ms": 1335
     },
     {
       "name": "full metadata drift blocks readback and publication before image state checks",
       "status": "PASS",
-      "ms": 986
+      "ms": 960
     },
     {
       "name": "missing full header fails closed instead of bypassing nullable digest comparison",
       "status": "PASS",
-      "ms": 956
+      "ms": 890
     },
     {
       "name": "full cancel fences publication and retains metadata without exposing canceled workspace",
       "status": "PASS",
-      "ms": 1087
+      "ms": 978
     },
     {
       "name": "used full extension cannot roll back or delete staged/canceled metadata",
       "status": "PASS",
-      "ms": 313
+      "ms": 287
     },
     {
       "name": "legacy minimal document profile still publishes through unchanged attestation rules",
       "status": "PASS",
-      "ms": 1398
+      "ms": 1257
     },
     {
       "name": "actual HTTP/PG plus persistent journal reconciles lost start with >64KiB metadata",
       "status": "PASS",
-      "ms": 1634
+      "ms": 1600
     },
     {
       "name": "actual HTTP/PG plus persistent journal reconciles lost publish with >64KiB metadata",
       "status": "PASS",
-      "ms": 1690
+      "ms": 1716
     },
     {
       "name": "actual HTTP/PG plus persistent journal reconciles lost cancel with >64KiB metadata",
       "status": "PASS",
-      "ms": 1447
+      "ms": 1489
     },
     {
       "name": "007 applies over a used 004 once and refuses a second run without change",
       "status": "PASS",
-      "ms": 317
+      "ms": 332
     },
     {
       "name": "008 review ACL/RLS and unused 009 rollback restore exact 004 functions, keeping DB18/19 jobs",
       "status": "PASS",
-      "ms": 1007
+      "ms": 988
     },
     {
       "name": "actual DB20 envelope stages 30 tables, excludes write context, reads losslessly and publishes only after attestation",
       "status": "PASS",
-      "ms": 2425
+      "ms": 2420
     },
     {
       "name": "DB18 envelopes still stage and read back unchanged after 007",
       "status": "PASS",
-      "ms": 540
+      "ms": 548
     },
     {
       "name": "DB19 envelopes still stage and read back unchanged after 007",
       "status": "PASS",
-      "ms": 523
+      "ms": 540
     },
     {
       "name": "DB20 manifest rejects write-context record smuggled in atomically",
       "status": "PASS",
-      "ms": 590
+      "ms": 612
     },
     {
       "name": "DB20 manifest rejects missing write-context exclusion atomically",
       "status": "PASS",
-      "ms": 595
+      "ms": 625
     },
     {
       "name": "DB20 manifest rejects write-context accounting drift atomically",
       "status": "PASS",
-      "ms": 570
+      "ms": 611
     },
     {
       "name": "DB20 manifest rejects overlong section name atomically",
       "status": "PASS",
-      "ms": 622
+      "ms": 623
     },
     {
       "name": "DB20 manifest rejects unknown status source atomically",
       "status": "PASS",
-      "ms": 601
+      "ms": 609
     },
     {
       "name": "DB20 manifest rejects status line without change atomically",
       "status": "PASS",
-      "ms": 594
+      "ms": 629
     },
     {
       "name": "DB20 manifest rejects non-ISO status time atomically",
       "status": "PASS",
-      "ms": 607
+      "ms": 614
     },
     {
       "name": "DB20 manifest rejects malformed bulk undo items atomically",
       "status": "PASS",
-      "ms": 637
+      "ms": 655
     },
     {
       "name": "DB20 manifest rejects bulk count above items atomically",
       "status": "PASS",
-      "ms": 545
+      "ms": 581
     },
     {
       "name": "DB20 manifest rejects item in a missing section atomically",
       "status": "PASS",
-      "ms": 673
+      "ms": 572
     },
     {
       "name": "DB20 manifest rejects column order naming a missing section atomically",
       "status": "PASS",
-      "ms": 601
+      "ms": 618
     },
     {
       "name": "DB20 manifest rejects duplicate column order key atomically",
       "status": "PASS",
-      "ms": 681
+      "ms": 593
     },
     {
       "name": "DB20 manifest rejects unknown column icon atomically",
       "status": "PASS",
-      "ms": 586
+      "ms": 598
     },
     {
       "name": "DB20 manifest rejects per-device kanban layout atomically",
       "status": "PASS",
-      "ms": 614
+      "ms": 616
     },
     {
       "name": "DB20 manifest rejects kept marker on another exclusion atomically",
       "status": "PASS",
-      "ms": 567
+      "ms": 709
     },
     {
       "name": "DB20 manifest rejects profile/schema mismatch atomically",
       "status": "PASS",
-      "ms": 570
+      "ms": 641
     },
     {
       "name": "DB20 manifest rejects unknown DB21 schema atomically",
       "status": "PASS",
-      "ms": 567
+      "ms": 710
     },
     {
       "name": "DB19 envelope still refuses any ui settings after 007",
       "status": "PASS",
-      "ms": 572
+      "ms": 611
     },
     {
       "name": "DB20 retrieval keeps identity checks and server-only RPC",
       "status": "PASS",
-      "ms": 706
+      "ms": 772
     },
     {
       "name": "used DB20 extension cannot roll back or delete DB20 metadata",
       "status": "PASS",
-      "ms": 490
+      "ms": 564
     },
     {
       "name": "DB20 actual HTTP/PG plus v4 journal reconciles lost start with >64KiB metadata",
       "status": "PASS",
-      "ms": 1636
+      "ms": 1706
     },
     {
       "name": "DB20 actual HTTP/PG plus v4 journal reconciles lost publish with >64KiB metadata",
       "status": "PASS",
-      "ms": 1649
+      "ms": 1891
     },
     {
       "name": "DB20 actual HTTP/PG plus v4 journal reconciles lost cancel with >64KiB metadata",
       "status": "PASS",
-      "ms": 1449
+      "ms": 1541
     },
     {
       "name": "010 applies once over used 004/007 and refuses a second run",
       "status": "PASS",
-      "ms": 260
+      "ms": 264
     },
     {
       "name": "012 review ACL/RLS; unused 011 restores the exact 004 command and 007 validation",
       "status": "PASS",
-      "ms": 937
+      "ms": 1040
     },
     {
       "name": "direct start (single request) still stages and reads back after 010",
       "status": "PASS",
-      "ms": 541
+      "ms": 642
     },
     {
       "name": "5,052-row DB20 envelope (over the old 2,048 limit) uploads in 6 pages, stages and reads back losslessly",
       "status": "PASS",
-      "ms": 5153
+      "ms": 5320
     },
     {
       "name": "interrupted upload resumes with missing pages only; changed/out-of-range pages and changed header refused",
       "status": "PASS",
-      "ms": 3225
+      "ms": 3475
     },
     {
       "name": "other account cannot see, add to or start an upload; client roles cannot call the RPC",
       "status": "PASS",
-      "ms": 955
+      "ms": 942
     },
     {
       "name": "limits (20,000 rows, header without records) and unchanged validation (foreign key) on assembled pages",
       "status": "PASS",
-      "ms": 1164
+      "ms": 1225
     },
     {
       "name": "5MB image (over the old 64KiB) reserves in a 200MB workspace; over 10MB refused atomically",
       "status": "PASS",
-      "ms": 957
+      "ms": 1051
     },
     {
       "name": "device registration: own session only, idempotent, foreign/revoked device refused, server-only",
       "status": "PASS",
-      "ms": 875
+      "ms": 896
     },
     {
       "name": "013 applies once over 010; 014 verify (free paging, cleanup, ACL unchanged)",
       "status": "PASS",
-      "ms": 340
+      "ms": 390
     },
     {
       "name": "013 D-a: 7 uneven pages (1..1000 rows) assemble losslessly; impossible counts still refused",
       "status": "PASS",
-      "ms": 4511
+      "ms": 4406
     },
     {
       "name": "013 D-d: never-started uploads older than 24 hours are removed with their pages; fresh ones stay",
       "status": "PASS",
-      "ms": 1239
+      "ms": 1401
     },
     {
       "name": "015 restores the exact 010 wrapper; 013 re-applies",
       "status": "PASS",
-      "ms": 421
+      "ms": 466
+    },
+    {
+      "name": "016 applies once over 013; 017 verify (read RPC server-only, publish by io_version)",
+      "status": "PASS",
+      "ms": 334
+    },
+    {
+      "name": "016 read: list/header/records keyset pages return the published envelope losslessly in manifest order",
+      "status": "PASS",
+      "ms": 6465
+    },
+    {
+      "name": "016 read guards: other account/device, changed manifest, bad params, client roles, unpublished jobs",
+      "status": "PASS",
+      "ms": 1231
+    },
+    {
+      "name": "D6: publish accepts an old attest when io_version is unchanged; a changed io_version is still refused",
+      "status": "PASS",
+      "ms": 2951
+    },
+    {
+      "name": "018 drops the read RPC and restores the exact 010 command_core; 016 re-applies",
+      "status": "PASS",
+      "ms": 825
     }
   ],
-  "passed": 121,
+  "passed": 126,
   "cloudApplied": false,
   "storageBytesReadbackTested": false,
   "fullWorkspaceProfileTested": true,
@@ -635,12 +660,15 @@
     "poc/v2-migration/postgres/013-workspace-upload-paging.sql": "d247de2f79492951aa1cd78164f8fb8554ba2f1666ec2a27f1c5bf213cd80b2f",
     "poc/v2-migration/postgres/014-workspace-upload-paging-verify.sql": "9b8af71741218d9302a37d285d1035357ef843273c6a5acafe0ef0afe5317197",
     "poc/v2-migration/postgres/015-workspace-upload-paging-rollback.sql": "a9f87a9b30889da0e1720545c6f0f704b0f327c00c9f926ec0c01dfbaccc88b6",
+    "poc/v2-migration/postgres/016-workspace-read.sql": "053c74c32f53c1865b0afba0a772fc012cf69be49a8bd3ca7bf4f1c78c46f1a9",
+    "poc/v2-migration/postgres/017-workspace-read-verify.sql": "61aef06e633e1e30a59c1db382c8e98cec300d6016ec41dcde325e8ec4acd7cf",
+    "poc/v2-migration/postgres/018-workspace-read-rollback.sql": "b0229755896830f928c40959f9093cbd286c11cddd6af5bc67738d0a3c59ed45",
     "poc/v2-migration/postgres/run-local.py": "ad6242124a23188e87c1e1f672ccc8e56f129b5cff6be1499419fcff908707f2",
-    "poc/v2-migration/postgres/build-workspace-sql.py": "01c829d6b460a61e6b02aed1bc12f02a352129d1abbd4e588fc7392955c36920",
+    "poc/v2-migration/postgres/build-workspace-sql.py": "5cf1d3dcbf19b4c1969aea0b8bc85e628b4b4f7aedafc8bacbb5aa2e4710f106",
     "poc/v2-migration/postgres/full-workspace-tests.py": "d9497ca19696de2d487e4237bbac1bc4e65c407ab1360acd7b657d6be2620455",
     "poc/v2-migration/postgres/storage-workspace-tests.py": "7e8d5fae7c6b157d4a13fb5278201cf7ee1578be902162c2e696f59fe13159cc",
     "poc/v2-migration/postgres/db20-workspace-tests.py": "0a90ab274d15e762e61aab413b4c42dbdf5f89bf1f7834edd0a3d99c6055b92c",
-    "poc/v2-migration/postgres/upload-workspace-tests.py": "a7a4913a8d88f8a9f7f636e1d603fd6b57a0acf9b9d6f611642e39bfe4217001",
+    "poc/v2-migration/postgres/upload-workspace-tests.py": "bf0a599004dbb144211321297d11776571f0c367d792446053c43c0ab507b4d3",
     "poc/v2-migration/db20-contract.json": "17f184bc1c2bec48e7db03327e6e3852fea72b4d2be49679eb8ed4b8247b8003",
     "poc/v2-migration/fixture-db20.mjs": "4f5fa04dacaad1737d7af316888fc837f565015a5809f36d3a160fd5ba390362",
     "poc/v2-migration/workspace-storage.mjs": "e602be2ecc23ccb2a1df08e1194f2bf023048335ff2d5c49ab3af1f99c6c86ee",
@@ -655,9 +683,9 @@
     "poc/v2-migration/workspace-session-pg-client.mjs": "22b0daa3411b672f5678275081a575fd017fe1517b1cfe6cbc130bc45f9baab9",
     "poc/v2-migration/journal.mjs": "540c8ca5e845ed2c7ba2a852e768c96847f8be161da19ff9a0892e018f4b7383",
     "poc/v2-assets/connected-copy.mjs": "c5ff522b6ae603827d336091358798c9511574fe977924bbcc558b2d2c4f8b1e",
-    "poc/v2-sync/db18.mjs": "daea3ef3ab3397de8e2a494abf89eec210a19df5b690703e339682250510d891",
+    "poc/v2-sync/db18.mjs": "56097261209afe3699dde01eb16e339b85fe34d3206e113df5b6d42c103ec396",
     "poc/v2-migration/workspace-map.mjs": "f6d0fb3c2ecd6c029efcc0ac3c216e5e74e4162fbed1bcf7ea99f7b7420cfb3c",
-    "poc/v2-migration/server-rpc.mjs": "3dfcbd82bd4eb4e30c9e502cee7cca980985412c097e9e1c05c1f9dc1724854f",
+    "poc/v2-migration/server-rpc.mjs": "245c80e41fdff48c8a801455d16bcc7a5fd21beb51cdb31881b6d2bdbf5fcad2",
     "poc/v2-migration/rpc-pg-client.mjs": "291c4f80d8215409062710ccebf6981e5e97d060ef0426be6d39b2dde87d23f3",
     "poc/v2-cloud/session-guard.sql": "3be17e719a5a5c8cf91268c46b2ce99aeff3c6127b5b43bd8b8f250467a374c9",
     "poc/v2-gateway/postgres-metadata.sql": "b8d789769cf529456757092ef59ac484dda451686bf8ca2139895b79fabe9bda",
