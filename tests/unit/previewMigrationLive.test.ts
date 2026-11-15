@@ -163,7 +163,16 @@ describe.skipIf(!live)("C-3 실서버(개발 프로젝트)", () => {
         let t0 = Date.now();
         const ws = randomUUID();
         created.workspaces.push(ws);
-        const p = prepareCopy(SQL, snapshot, { workspaceId: ws, sourceWorkspaceId: randomUUID() });
+        // 013(D-a): 크기 예산을 작게 해 페이지 수 ≠ 올림(기록/1000)을 실서버에서 확인
+        const p = prepareCopy(SQL, snapshot, {
+          workspaceId: ws,
+          sourceWorkspaceId: randomUUID(),
+          pageBytes: 300_000,
+        });
+        check("size_based_pages", p.pages.length > Math.ceil(p.recordsTotal / 1000), {
+          pages: p.pages.length,
+          byRows: Math.ceil(p.recordsTotal / 1000),
+        });
         (report.timing as Record<string, number>).prepareSeconds = (Date.now() - t0) / 1000;
         const job = randomUUID();
         created.jobs.push(job);
@@ -285,7 +294,7 @@ describe.skipIf(!live)("C-3 실서버(개발 프로젝트)", () => {
         rmSync(dir, { recursive: true, force: true });
         report.cleanup = cleanup;
         report.passed =
-          !report.failure && checks.length >= 7 && checks.every((c) => c.passed) && cleanup.zero === true;
+          !report.failure && checks.length >= 8 && checks.every((c) => c.passed) && cleanup.zero === true;
         report.finishedAt = new Date().toISOString();
         writeFileSync(
           "docs/v2-design/evidence/preview-dev-c3-engine-live.json",

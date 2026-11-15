@@ -79,6 +79,8 @@ export async function runMigration(t: PreviewMigration, p: PreparedCopy, o: RunO
     await t.saveJournal(j);
   };
   if (j.phase === "published") return { state: "connected", resumed: true };
+  // 첫 통신 전에 기록부터 남긴다(바로 멈추거나 끊겨도 이어하기·취소 목록에 보이게)
+  await save();
   await t.device();
   stopIf(o.signal);
 

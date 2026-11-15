@@ -1,5 +1,5 @@
 {
-  "startedAt": "2026-11-15T03:41:12.406Z",
+  "startedAt": "2026-11-15T04:11:09.081Z",
   "projectRef": "vsphftnmfzfoufasjttd",
   "productionTouched": false,
   "mailSent": false,
@@ -11,6 +11,14 @@
       "passed": true
     },
     {
+      "name": "size_based_pages",
+      "passed": true,
+      "extra": {
+        "pages": 4,
+        "byRows": 3
+      }
+    },
+    {
       "name": "interrupted_after_first_page",
       "passed": true
     },
@@ -19,7 +27,7 @@
       "passed": true,
       "extra": {
         "records": 2552,
-        "pages": 3,
+        "pages": 4,
         "assets": 1
       }
     },
@@ -50,9 +58,9 @@
     }
   ],
   "timing": {
-    "prepareSeconds": 0.394,
-    "uploadPublishSeconds": 18.943,
-    "cancelSeconds": 81.226
+    "prepareSeconds": 0.388,
+    "uploadPublishSeconds": 21.516,
+    "cancelSeconds": 82.904
   },
   "cleanup": {
     "jobs": 0,
@@ -66,5 +74,5 @@
     "zero": true
   },
   "passed": true,
-  "finishedAt": "2026-11-15T03:43:32.169Z"
+  "finishedAt": "2026-11-15T04:13:42.992Z"
 }

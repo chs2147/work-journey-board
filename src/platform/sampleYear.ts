@@ -49,7 +49,9 @@ async function fakeShot(seed: number): Promise<{ data: string; bytes: number }> 
   for (let i = 0; i < img.data.length; i += 4) if (r() < 0.08) img.data[i] = Math.floor(r() * 255);
   g.putImageData(img, 0, 0);
   const data = c.toDataURL("image/png").replace(/^data:[^,]*,/, "");
-  return { data, bytes: Math.floor((data.length * 3) / 4) };
+  // 실제 바이트 수(끝의 = 채움 글자 제외) — 실앱은 blob.size를 적는다(이관 엔진이 크기 불일치를 거절)
+  const pad = data.endsWith("==") ? 2 : data.endsWith("=") ? 1 : 0;
+  return { data, bytes: (data.length * 3) / 4 - pad };
 }
 
 export async function makeYearSample(withImages: boolean, endDate = "2026-10-30"): Promise<SampleData> {

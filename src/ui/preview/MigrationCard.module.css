@@ -1,0 +1,80 @@
+/* C-4 온라인 사본 만들기 카드 — FirstRun 카드 틀 + 진행 막대·작업 목록(띠는 직각, CLAUDE.md UI 강조 띠 규칙) */
+.title {
+  margin: 0;
+  font-size: var(--fs-lg);
+}
+
+.path {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+}
+
+.progressBox {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.bar {
+  position: relative;
+  height: 8px;
+  overflow: hidden;
+  background: var(--surface-sub);
+  border: 1px solid var(--line-strong);
+}
+
+.bar > span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0;
+  background: var(--accent);
+  transition: width 0.2s ease-out;
+}
+
+.bar[data-indeterminate] > span {
+  width: 30%;
+  animation: slide 1.2s ease-in-out infinite;
+}
+
+@keyframes slide {
+  from {
+    left: -30%;
+  }
+  to {
+    left: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bar[data-indeterminate] > span {
+    animation: none;
+    width: 100%;
+    opacity: 0.4;
+  }
+}
+
+.pending {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--line);
+}
+
+.label {
+  margin: 0;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+}
+
+.pendingRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}

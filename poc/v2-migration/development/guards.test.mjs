@@ -8,7 +8,8 @@ const dev = { ...clean, WJB_CLOUD_ENV: "development", WJB_SUPABASE_DEV_PROJECT_R
 const live = new URL("./live-check.mjs", import.meta.url),
   inspect = new URL("./inspect.mjs", import.meta.url),
   apply20 = new URL("./db20-apply.mjs", import.meta.url),
-  apply10 = new URL("./paged-apply.mjs", import.meta.url);
+  apply10 = new URL("./paged-apply.mjs", import.meta.url),
+  apply13 = new URL("./paging-apply.mjs", import.meta.url);
 for (const [name, file, args, env, code] of [
   ["live requires explicit invocation", live, [], dev, "EXPLICIT_DEV_FIXTURE_REQUIRED"],
   [
@@ -41,6 +42,21 @@ for (const [name, file, args, env, code] of [
   ],
   ["DB20 apply requires explicit invocation", apply20, [], dev, "EXPLICIT_DEV_APPLY_REQUIRED"],
   ["paged upload apply requires explicit invocation", apply10, [], dev, "EXPLICIT_DEV_APPLY_REQUIRED"],
+  ["paging apply requires explicit invocation", apply13, [], dev, "EXPLICIT_DEV_APPLY_REQUIRED"],
+  [
+    "paging apply refuses production selection",
+    apply13,
+    ["--apply-013-development", "--free-usage-confirmed"],
+    { ...dev, WJB_CLOUD_ENV: "production" },
+    "EXPLICIT_DEV_APPLY_REQUIRED",
+  ],
+  [
+    "paging apply needs DEV credentials before requests",
+    apply13,
+    ["--apply-013-development", "--free-usage-confirmed"],
+    dev,
+    "DEV_CREDENTIALS_REQUIRED",
+  ],
   [
     "paged upload apply refuses production selection",
     apply10,

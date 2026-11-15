@@ -12,6 +12,8 @@ import {
 import { STR } from "../../shared/strings";
 import { applyTheme, readStoredTheme } from "../../shared/theme";
 import { finishSplash } from "../splash";
+import { MigrationCard } from "./MigrationCard";
+import own from "./PreviewApp.module.css";
 import appStyles from "../App.module.css";
 import topStyles from "../common/TopBar.module.css";
 import styles from "../first-run/FirstRun.module.css";
@@ -80,7 +82,7 @@ export function PreviewApp({ profile }: { profile: AppProfileInfo }) {
 
   return (
     <div className={appStyles.shell}>
-      <div className={styles.wrap} data-testid="connected-preview">
+      <div className={`${styles.wrap} ${own.cards}`} data-testid="connected-preview">
         <section className={styles.card}>
           <h1 className={styles.title}>
             {profile.productName}{" "}
@@ -226,6 +228,7 @@ export function PreviewApp({ profile }: { profile: AppProfileInfo }) {
             </p>
           )}
         </section>
+        <MigrationCard ownerId={signedIn ? status.accountId : null} />
       </div>
     </div>
   );

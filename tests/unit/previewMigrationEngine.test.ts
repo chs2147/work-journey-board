@@ -143,13 +143,26 @@ describe("C-3 이관 엔진 = PoC Node 경로", () => {
     expect(strip(a)).toEqual(strip(r));
   });
 
-  it("큰 일지: 5,000개 더한 기록을 1,000행 페이지로(서버 010 규칙: 페이지 수 = 올림(기록/1000))", () => {
+  it("큰 일지: 1,000행·크기 예산으로 나눈다(서버 013 D-a), 순서 그대로", () => {
     const { bytes } = source(20, 5000);
-    const app = prepareCopy(SQL, bytes, { workspaceId: WS, sourceWorkspaceId: SRC });
+    const app = prepareCopy(SQL, bytes, { workspaceId: WS, sourceWorkspaceId: SRC, randomUUID: seq() });
     expect(app.recordsTotal).toBeGreaterThan(5000);
+    expect(app.pages.every((p) => p.length <= 1000)).toBe(true);
     expect(app.pages.length).toBe(Math.ceil(app.recordsTotal / 1000));
-    expect(app.pages.slice(0, -1).every((p) => p.length === 1000)).toBe(true);
-    expect(app.pages.length).toBeLessThanOrEqual(LIMITS.pages);
+    const small = prepareCopy(SQL, bytes, {
+      workspaceId: WS,
+      sourceWorkspaceId: SRC,
+      randomUUID: seq(),
+      pageBytes: 200_000,
+    });
+    expect(small.pages.length).toBeGreaterThan(app.pages.length);
+    expect(small.pages.length).toBeLessThanOrEqual(LIMITS.pages);
+    for (const p of small.pages)
+      expect(new TextEncoder().encode(JSON.stringify(p)).length).toBeLessThanOrEqual(200_000);
+    expect(small.pages.flat()).toEqual(app.pages.flat());
+    expect(() =>
+      prepareCopy(SQL, bytes, { workspaceId: WS, sourceWorkspaceId: SRC, pageBytes: 300 }),
+    ).toThrow(/RECORD_TOO_LARGE|COPY_TOO_LARGE/);
   });
 
   it("거절: 쓰는 중(칸반 쓰기 중단)·구조가 다른 일지·망가진 파일", () => {

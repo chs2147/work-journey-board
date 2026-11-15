@@ -1,0 +1,45 @@
+{
+  "startedAt": "2026-11-15T04:10:21.359Z",
+  "projectRef": "vsphftnmfzfoufasjttd",
+  "autoApply": false,
+  "userRequestedDevIntegration": true,
+  "productionTouched": false,
+  "sources": [
+    {
+      "path": "poc/v2-migration/postgres/013-workspace-upload-paging.sql",
+      "sha256": "d247de2f79492951aa1cd78164f8fb8554ba2f1666ec2a27f1c5bf213cd80b2f"
+    },
+    {
+      "path": "poc/v2-migration/postgres/014-workspace-upload-paging-verify.sql",
+      "sha256": "9b8af71741218d9302a37d285d1035357ef843273c6a5acafe0ef0afe5317197"
+    }
+  ],
+  "phases": [
+    {
+      "phase": "preflight",
+      "has010": true,
+      "has013": false
+    },
+    {
+      "phase": "apply",
+      "ok": true
+    }
+  ],
+  "applied": true,
+  "executionRole": {
+    "role": "postgres",
+    "read_only": "off",
+    "rolsuper": false,
+    "rolbypassrls": true
+  },
+  "verify": {
+    "clientRPC": false,
+    "pagingFree": true,
+    "searchPath": true,
+    "serviceRPC": true,
+    "cloudApplied": false,
+    "staleCleanup": true,
+    "productActivationAllowed": false
+  },
+  "finishedAt": "2026-11-15T04:10:28.134Z"
+}

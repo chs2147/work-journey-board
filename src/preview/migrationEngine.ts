@@ -92,16 +92,27 @@ export interface PreparedCopy {
 export class CopyLimitError extends Error {}
 
 const utf8 = new TextEncoder();
-function paginate(records: MappedRecord[]) {
+/**
+ * 페이지 나누기(서버 013, D-a): 한 페이지 ≤1,000행이면서 직렬화 ≤pageBytes. 한 기록이 예산보다 크면 보내기 전에 멈춘다.
+ * 순서는 봉투 기록 순서 그대로(서버가 페이지 순서로 다시 잇는다).
+ */
+export function paginate(records: MappedRecord[], pageBytes: number = LIMITS.pageBytes) {
   if (!records.length || records.length > LIMITS.records) throw new CopyLimitError("COPY_TOO_LARGE");
   const pages: MappedRecord[][] = [];
-  for (let i = 0; i < records.length; i += LIMITS.pageRows) {
-    const page = records.slice(i, i + LIMITS.pageRows);
-    // 서버는 페이지 수 = ceil(기록/1000)을 요구한다(010) — 페이지가 너무 크면 나누지 못하고 멈춘다
-    if (utf8.encode(JSON.stringify(page)).length > LIMITS.pageBytes)
-      throw new CopyLimitError("PAGE_TOO_LARGE");
-    pages.push(page);
+  let page: MappedRecord[] = [],
+    size = 2; // "[]"
+  for (const r of records) {
+    const n = utf8.encode(JSON.stringify(r)).length + 1; // 쉼표
+    if (n + 2 > pageBytes) throw new CopyLimitError("RECORD_TOO_LARGE");
+    if (page.length && (page.length >= LIMITS.pageRows || size + n > pageBytes)) {
+      pages.push(page);
+      page = [];
+      size = 2;
+    }
+    page.push(r);
+    size += n;
   }
+  pages.push(page);
   if (pages.length > LIMITS.pages) throw new CopyLimitError("COPY_TOO_LARGE");
   return pages;
 }
@@ -117,7 +128,8 @@ export function prepareCopy(
     workspaceId,
     sourceWorkspaceId,
     randomUUID = () => crypto.randomUUID(),
-  }: { workspaceId: string; sourceWorkspaceId: string; randomUUID?: () => string },
+    pageBytes = LIMITS.pageBytes,
+  }: { workspaceId: string; sourceWorkspaceId: string; randomUUID?: () => string; pageBytes?: number },
 ): PreparedCopy {
   const core = createCopyCore({ hash, randomUUID, base64ToBytes, bytesToBase64 });
   const mapper = createWorkspaceMapper({ hash, sectionIconIds: new Set(SECTION_ICONS.map((i) => i.id)) });
@@ -156,7 +168,7 @@ export function prepareCopy(
     sourceHash,
     mappingHash,
     header,
-    pages: paginate(records),
+    pages: paginate(records, pageBytes),
     recordsTotal: records.length,
     assets: envelope.assets,
     assetBytes,

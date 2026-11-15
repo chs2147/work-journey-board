@@ -392,13 +392,13 @@ export interface PreviewMigration {
   saveJournal(journal: MigrationJournal): Promise<void>;
   removeJournal(jobId: string): Promise<void>;
 }
-export async function loadPreviewMigration(): Promise<PreviewMigration | null> {
-  if (!isTauri()) return null;
-  return (await import("./tauriPreviewMigration")).tauriPreviewMigration;
+export async function loadPreviewMigration(): Promise<PreviewMigration> {
+  if (isTauri()) return (await import("./tauriPreviewMigration")).tauriPreviewMigration;
+  return (await import("./browserPreviewMigration")).browserPreviewMigration;
 }
-export async function loadPreviewSource(): Promise<PreviewSource | null> {
-  if (!isTauri()) return null;
-  return (await import("./tauriPreviewSource")).tauriPreviewSource;
+export async function loadPreviewSource(): Promise<PreviewSource> {
+  if (isTauri()) return (await import("./tauriPreviewSource")).tauriPreviewSource;
+  return (await import("./browserPreviewSource")).browserPreviewSource;
 }
 
 export async function loadPreviewOnline(): Promise<PreviewOnline> {

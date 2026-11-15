@@ -1,0 +1,30 @@
+{
+  "module": "wjb-workspace-upload-paging-poc-1",
+  "profile": "development",
+  "projectRef": "vsphftnmfzfoufasjttd",
+  "autoApply": false,
+  "cloudApplied": false,
+  "userApproved": "C-3 D-a·D-d recommendation (2026-11-15)",
+  "requires": ["010-workspace-paged-upload.sql (installed)"],
+  "changes": {
+    "replacedFunctions": ["public.wjb_v2_migration_command"],
+    "pageCount": "1..32, records ≥ pages, ≤1000 per page (was exactly ceil(records/1000))",
+    "staleUploads": "never-started uploads older than 24 hours removed on upload_begin (pages cascade)"
+  },
+  "rollback": "015 restores the exact 010 wrapper while no staged upload depends on free paging",
+  "localEvidence": "docs/v2-design/evidence/migration-paged-upload-pass.json",
+  "sources": [
+    {
+      "path": "poc/v2-migration/postgres/013-workspace-upload-paging.sql",
+      "sha256": "d247de2f79492951aa1cd78164f8fb8554ba2f1666ec2a27f1c5bf213cd80b2f"
+    },
+    {
+      "path": "poc/v2-migration/postgres/014-workspace-upload-paging-verify.sql",
+      "sha256": "9b8af71741218d9302a37d285d1035357ef843273c6a5acafe0ef0afe5317197"
+    },
+    {
+      "path": "poc/v2-migration/postgres/015-workspace-upload-paging-rollback.sql",
+      "sha256": "a9f87a9b30889da0e1720545c6f0f704b0f327c00c9f926ec0c01dfbaccc88b6"
+    }
+  ]
+}

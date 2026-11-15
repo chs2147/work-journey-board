@@ -139,7 +139,7 @@ export function createMigrationRPC({
         !uuid.test(deviceId)
       )
         throw new GatewayError("MIGRATION_SCOPE_REQUIRED");
-      // 010 페이지 업로드: 머리(기록 없는 봉투) → 페이지(≤1000행) → 상태 → 조립·시작. 페이지 해시는 여기(서버)서 계산
+      // 010·013 페이지 업로드: 머리(기록 없는 봉투) → 페이지(≤1000행) → 상태 → 조립·시작. 페이지 해시는 여기(서버)서 계산
       const upload = ["upload_begin", "upload_page", "upload_status", "start_upload"].includes(action);
       if (upload) {
         if (!allowWorkspaceProfiles) throw new GatewayError("MIGRATION_PROFILE_UNSUPPORTED");
@@ -172,7 +172,8 @@ export function createMigrationRPC({
             params.records < 1 ||
             params.records > 20000 ||
             params.records > params.pages * 1000 ||
-            params.records <= (params.pages - 1) * 1000
+            // 013(D-a): 페이지 수 자유 — 앱이 크기로 나눈다. 페이지마다 1행 이상
+            params.records < params.pages
           )
             throw new GatewayError("INVALID_RPC");
         } else if (action === "upload_page") {

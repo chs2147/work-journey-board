@@ -75,7 +75,7 @@ test("malformed upload shapes never reach the transport", async () => {
   const bad = [
     ["upload_begin", { header: { ...header, records: [] }, pages: 1, records: 1 }],
     ["upload_begin", { header, pages: 1, records: 1001 }],
-    ["upload_begin", { header, pages: 3, records: 1500 }],
+    ["upload_begin", { header, pages: 3, records: 2 }],
     ["upload_begin", { header, pages: 21, records: 20001 }],
     ["upload_begin", { header: { ...header, profile: "migration-document-poc-1" }, pages: 1, records: 1 }],
     ["upload_page", { index: 0, records: [] }],

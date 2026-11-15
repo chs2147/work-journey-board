@@ -167,3 +167,50 @@ def run(g):
         sql(f"UPDATE wjb_gateway.device SET revoked=true WHERE id='{new}';")
         r=reg(new,A,g['SA']);assert r.returncode and 'DEVICE_REVOKED' in r.stderr
     test('device registration: own session only, idempotent, foreign/revoked device refused, server-only',devices)
+
+    # ── 013 (C-3 D-a·D-d): free page count, stale cleanup, exact rollback to 010 ──
+    base010=scalar(command_def)
+    def apply013():
+        sql((ROOT/'013-workspace-upload-paging.sql').read_text())
+        r=sql((ROOT/'013-workspace-upload-paging.sql').read_text(),check=False)
+        assert r.returncode and 'MIGRATION_013_ALREADY_APPLIED' in r.stderr
+        v=json.loads(scalar((ROOT/'014-workspace-upload-paging-verify.sql').read_text()))
+        assert v['pagingFree'] and v['staleCleanup'] and v['serviceRPC'] and not v['clientRPC'] and v['searchPath'],v
+    test('013 applies once over 010; 014 verify (free paging, cleanup, ACL unchanged)',apply013)
+
+    def size_paging():
+        clean();m={**big['m'],'workspaceId':str(uuid.uuid4())};jid=str(uuid.uuid4())
+        recs=m['records'];sizes=[1000,1,400,999,1000,1000,652]
+        assert sum(sizes)==len(recs)
+        ps=[];i=0
+        for n in sizes: ps.append(recs[i:i+n]);i+=n
+        up('upload_begin',jid,{'header':header(m),'pages':len(ps),'records':len(recs)})
+        for k,pg in enumerate(ps): up('upload_page',jid,{'index':k,'sha256':sha(pg),'records':pg})
+        r=up('start_upload',jid,{})
+        assert r['state']=='staging'
+        back=g['call']('workspace',{'job':jid,'ws':m['workspaceId'],'hash':r['manifestHash']})['envelope']
+        assert back==m
+        # 페이지 수 > 기록 수, 1,000행 넘는 페이지는 여전히 거절
+        up_reject('upload_begin',str(uuid.uuid4()),{'header':header(m),'pages':5,'records':4},'MIGRATION_INVALID_PARAMS')
+        up_reject('upload_begin',str(uuid.uuid4()),{'header':header(m),'pages':2,'records':2001},'MIGRATION_INVALID_PARAMS')
+    test('013 D-a: 7 uneven pages (1..1000 rows) assemble losslessly; impossible counts still refused',size_paging)
+
+    def stale_cleanup():
+        clean();m=emit(20);old=str(uuid.uuid4());fresh=str(uuid.uuid4());ps=pages_of(m)
+        up('upload_begin',old,{'header':header(m),'pages':len(ps),'records':len(m['records'])})
+        up('upload_page',old,{'index':0,'sha256':sha(ps[0]),'records':ps[0]})
+        up('upload_begin',fresh,{'header':header(m),'pages':len(ps),'records':len(m['records'])},user=B,session=SB,device=DB)
+        sql(f"UPDATE wjb_migration.upload SET created_at=clock_timestamp()-interval '25 hours' WHERE id='{old}';")
+        up('upload_begin',str(uuid.uuid4()),{'header':header(m),'pages':len(ps),'records':len(m['records'])})
+        assert scalar(f"SELECT count(*) FROM wjb_migration.upload WHERE id='{old}';")=='0'
+        assert scalar(f"SELECT count(*) FROM wjb_migration.upload_page WHERE upload_id='{old}';")=='0'
+        assert scalar(f"SELECT count(*) FROM wjb_migration.upload WHERE id='{fresh}';")=='1'  # 24시간 안 된 것은 그대로
+        up_reject('upload_status',old,{},'MIGRATION_UPLOAD_NOT_FOUND')
+    test('013 D-d: never-started uploads older than 24 hours are removed with their pages; fresh ones stay',stale_cleanup)
+
+    def rollback013():
+        clean()
+        sql((ROOT/'015-workspace-upload-paging-rollback.sql').read_text())
+        assert scalar(command_def)==base010
+        sql((ROOT/'013-workspace-upload-paging.sql').read_text())
+    test('015 restores the exact 010 wrapper; 013 re-applies',rollback013)
