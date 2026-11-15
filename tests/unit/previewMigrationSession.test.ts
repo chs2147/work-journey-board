@@ -75,6 +75,21 @@ describe("C-5: 구조 비교는 의미로(오래 쓴 일지의 표 정의 글자
     expect(() => prepareCopy(SQL, bytes, ids(job))).not.toThrow();
   });
 
+  it("윈도우에서 빌드된 앱이 올린 구조(정의 줄 끝 \\r\\n — C-5 맥 실기 원인)도 통과", async () => {
+    const SQL = await initSqlJs();
+    const db = new SQL.Database(await journal());
+    db.run("PRAGMA writable_schema=ON");
+    db.run(
+      "UPDATE sqlite_master SET sql=replace(sql, char(10), char(13)||char(10)) WHERE name IN ('kanban_ctx','kanban_section','item_status_log','kanban_bulk','entry_item_status_log')",
+    );
+    db.run("PRAGMA writable_schema=OFF");
+    const bytes = db.export();
+    const crlf = new SQL.Database(bytes).exec("SELECT sql FROM sqlite_master WHERE name='kanban_ctx'")[0]!
+      .values[0]![0];
+    expect(String(crlf)).toContain("\r\n");
+    expect(() => prepareCopy(SQL, bytes, ids(job))).not.toThrow();
+  });
+
   it("열이 더 있거나 색인이 없으면 거절 + 다른 곳 이름(내용 없음)", async () => {
     const SQL = await initSqlJs();
     const db = new SQL.Database(await journal());
