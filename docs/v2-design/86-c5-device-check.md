@@ -48,4 +48,8 @@ node poc/v2-gateway/edge/dev-copy-admin.mjs --purge-owner-development <Preview �
 - **2026-11-15 `SOURCE_NOT_JOURNAL`**(사용자 실기, run 8): DEV 일지 상위 폴더를 고르면 일지 파일(`work-journey.db`)이 바로 안에 없어 거절됐고, 이 코드의 한국어 문구가 빠져 코드가 그대로 보였다.
   - 고른 폴더에 일지가 없으면 **바로 아래 하위 폴더(한 단계)**, 그래도 없으면 **바로 위 폴더**(일지 폴더 안의 `backups`가 선택된 채 확인한 경우)에서 일지를 찾는다. 실패 문구에 실제로 받은 폴더 경로를 함께 보인다 — 하나면 그대로 진행, 여럿이면 "복제할 일지" 목록에서 고른다. Rust `source_candidates`(목록만 읽음, 더 깊은 폴더·심볼릭 링크 보지 않음, 최대 20개).
   - `source_copy.rs`의 모든 오류 코드에 한국어 문구(단위 시험이 빠짐을 막음).
+- **2026-11-15 `both async and sync fetching of the wasm failed`**(run 10): 폴더는 찾았으나 sql.js가 WebAssembly 파일을 받지 못함. Preview 화면 CSP의 `connect-src`가 앱 내부 통신뿐이라 웹 화면의 `fetch`가 막힘(브라우저 모드 시험 CSP는 `connect-src 'self'`를 더해 놓아 못 잡았다).
+  - 접속 범위는 넓히지 않고 wasm 바이트를 코드에 넣어 직접 넘김(`vite.config.ts` `sql-wasm-base64` → `loadSql`의 `wasmBinary`, 온라인 사본 단계에서만 불러오는 조각).
+  - 상시 시험: `csp-app.spec.ts`에 **Tauri Preview CSP를 그대로** 씌운 프로덕션 빌드로 원본 읽기 → 미리 보기 → 게시, CSP 차단 0.
+  - 화면 경로에서 윈도우 `\\?\` 접두어 제거.
 

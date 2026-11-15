@@ -18,10 +18,24 @@ const PREVIEW_CSP = tauriCsp
   .replace("connect-src ipc: http://ipc.localhost", "connect-src 'self' ipc: http://ipc.localhost")
   .concat("; script-src 'self' 'wasm-unsafe-eval'");
 
+// Connected Preview 원본 읽기(C-4)용 sql.js WASM 바이트를 base64 모듈로 — Preview 화면 CSP는 connect-src가 앱 내부 통신뿐이라
+// wasm 파일을 fetch로 받을 수 없다(C-5 실기). 이 모듈은 온라인 사본 단계에서만 따로 불러오는 조각에 들어간다.
+const SQL_WASM_ID = "virtual:sql-wasm-base64";
+const sqlWasmBase64 = {
+  name: "sql-wasm-base64",
+  resolveId: (id: string) => (id === SQL_WASM_ID ? "\0" + SQL_WASM_ID : null),
+  load(id: string) {
+    if (id !== "\0" + SQL_WASM_ID) return null;
+    const bytes = readFileSync(new URL("./node_modules/sql.js/dist/sql-wasm.wasm", import.meta.url));
+    return `export default ${JSON.stringify(bytes.toString("base64"))};`;
+  },
+};
+
 // Tauri 개발 서버 규약: 고정 포트, 실패 시 다른 포트로 넘어가지 않음.
 export default defineConfig({
   plugins: [
     react(),
+    sqlWasmBase64,
     // 스플래시 창(splash.html)의 버전 표시
     { name: "app-version-html", transformIndexHtml: (html) => html.replaceAll("%APP_VERSION%", pkg.version) },
   ],

@@ -1,6 +1,7 @@
 // 프로덕션 빌드를 실앱 CSP(+ Tauri처럼 nonce) 아래에서 띄워, 화면 전체·메모 편집기·메모 이미지·기존 일지 가져오기·엑셀 내보내기가 CSP를 어기지 않는지.
 // (vite.config.ts preview 헤더 = src-tauri/tauri.conf.json의 CSP + 가짜 nonce → 'unsafe-inline'이 무시되는 실앱과 같은 조건)
 import { expect, test, type Page } from "@playwright/test";
+import { readFileSync } from "node:fs";
 import { checkPdfRendering } from "./pdf-render-helper";
 import { openSettings } from "./settings-helper";
 
@@ -366,4 +367,37 @@ test("메모 보드 스냅샷(PNG 저장·엑셀 메모 보드 시트) — CSP �
   await page.getByTestId("export-dialog").getByRole("button", { name: "저장 위치 선택…" }).click();
   await xlsx;
   expect(await violations(page)).toEqual([]);
+});
+
+// C-5 실기에서 발견: Preview 화면 CSP(connect-src = 앱 내부 통신만)에서는 sql.js가 wasm 파일을 fetch할 수 없다.
+// 프로덕션 빌드에 Tauri Preview CSP를 그대로 씌워 온라인 사본(원본 읽기 → 미리 보기 → 게시)이 도는지
+test("Preview CSP 그대로: 온라인 사본 — wasm을 받아 오지 않고 미리 보기·게시, CSP 차단 0", async ({
+  page,
+}) => {
+  const csp = (
+    JSON.parse(readFileSync("src-tauri/tauri.preview.conf.json", "utf8")) as {
+      app: { security: { csp: string } };
+    }
+  ).app.security.csp.replace(
+    "style-src 'self' 'unsafe-inline'",
+    "style-src 'self' 'unsafe-inline' 'nonce-wjbTest'",
+  );
+  const blocked: string[] = [];
+  page.on("console", (m) => {
+    if (/Content Security Policy|Refused/.test(m.text())) blocked.push(m.text());
+  });
+  await page.route("**/*", async (route) => {
+    const r = await route.fetch();
+    await route.fulfill({ response: r, headers: { ...r.headers(), "content-security-policy": csp } });
+  });
+  await page.goto("/?profile=connected-preview");
+  await page.getByTestId("preview-email-input").fill("virtual@example.invalid");
+  await page.getByRole("button", { name: "인증번호 받기" }).click();
+  await page.getByTestId("preview-code-input").fill("12345678");
+  await page.getByRole("button", { name: "로그인" }).click();
+  await page.getByTestId("copy-pick").click();
+  await expect(page.getByTestId("copy-summary")).toBeVisible({ timeout: 30_000 });
+  await page.getByTestId("copy-start").click();
+  await expect(page.getByTestId("copy-done")).toBeVisible({ timeout: 30_000 });
+  expect(blocked).toEqual([]);
 });

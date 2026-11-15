@@ -38,10 +38,18 @@ export function summarize(p: PreparedCopy): CopySummary {
 }
 
 let sql: Promise<import("sql.js").SqlJsStatic> | null = null;
-async function loadSql() {
-  sql ??= Promise.all([import("sql.js"), import("sql.js/dist/sql-wasm.wasm?url")]).then(([m, w]) =>
-    m.default({ locateFile: () => w.default }),
-  );
+/**
+ * sql.js 불러오기 — WebAssembly 바이트를 코드에 넣어(vite.config.ts `sql-wasm-base64`) 직접 넘긴다.
+ * Preview 화면 CSP는 `connect-src`가 앱 내부 통신뿐이라 wasm 파일을 fetch로 받을 수 없다(C-5 실기에서 발견).
+ * 접속 범위는 넓히지 않는다 — 컴파일만 `script-src 'wasm-unsafe-eval'`.
+ */
+export async function loadSql() {
+  sql ??= Promise.all([import("sql.js"), import("virtual:sql-wasm-base64")]).then(([m, w]) => {
+    const bin = atob(w.default);
+    const wasmBinary = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) wasmBinary[i] = bin.charCodeAt(i);
+    return m.default({ wasmBinary: wasmBinary.buffer });
+  });
   return sql;
 }
 

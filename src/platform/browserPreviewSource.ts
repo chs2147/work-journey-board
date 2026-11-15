@@ -1,6 +1,5 @@
 // 브라우저 모드(개발·E2E)용 가짜 원본 사본 — 가상 샘플 일지를 sql.js로 만들어 메모리에만 둔다(실제 업무 기록 아님)
-import wasmUrl from "sql.js/dist/sql-wasm.wasm?url";
-import { openSqlJs } from "../data/drivers/sqlJs";
+import { SqlJsDriver } from "../data/drivers/sqlJs";
 import { migrate } from "../data/migrate";
 import { seedSample } from "../data/seed";
 import type { PreviewSource, SourceSnapshot } from "./index";
@@ -15,7 +14,9 @@ export const browserPreviewSource: PreviewSource = {
     return new URLSearchParams(location.search).get("copyParent") ? [`${dir}\\회사`, `${dir}\\개인`] : [dir];
   },
   async snapshot(): Promise<SourceSnapshot> {
-    const driver = await openSqlJs(wasmUrl);
+    // 실앱과 같은 sql.js 불러오기(wasm을 fetch하지 않음 — Preview CSP에서도 동작)
+    const { loadSql } = await import("../preview/migrationSession");
+    const driver = new SqlJsDriver(new (await loadSql()).Database());
     await migrate(driver);
     // ?sample=year-img — 가상 1년치(그림 포함): 큰 일지 진행 화면 확인용
     const which = new URLSearchParams(location.search).get("sample");

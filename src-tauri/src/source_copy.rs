@@ -120,8 +120,16 @@ pub fn candidates(source_dir: &Path) -> Result<Vec<String>, String> {
     }
     let dir = fs::canonicalize(source_dir).map_err(|_| "SOURCE_MISSING".to_string())?;
     let is_journal = |d: &Path| fs::symlink_metadata(d.join(JOURNAL)).is_ok_and(|m| m.is_file());
+    // 윈도우 canonicalize의 `\\?\` 접두어는 화면에 보이지 않게(경로 자체는 같음)
+    let show = |p: &Path| {
+        let t = p.to_string_lossy().into_owned();
+        match t.strip_prefix(r"\\?\") {
+            Some(rest) if !rest.starts_with("UNC\\") => rest.to_string(),
+            _ => t,
+        }
+    };
     if is_journal(&dir) {
-        return Ok(vec![dir.to_string_lossy().into_owned()]);
+        return Ok(vec![show(&dir)]);
     }
     let mut out: Vec<String> = fs::read_dir(&dir)
         .map_err(|_| "SOURCE_UNREADABLE".to_string())?
@@ -129,14 +137,14 @@ pub fn candidates(source_dir: &Path) -> Result<Vec<String>, String> {
         .filter(|e| e.file_type().is_ok_and(|t| t.is_dir()))
         .map(|e| e.path())
         .filter(|p| is_journal(p))
-        .map(|p| p.to_string_lossy().into_owned())
+        .map(|p| show(&p))
         .collect();
     out.sort();
     out.truncate(20);
     // 하위에도 없으면 바로 위 폴더(일지 폴더 안의 backups 등을 고른 경우 — 윈도우 폴더 선택 창에서 하위 폴더가 선택된 채 확인)
     if out.is_empty() {
         if let Some(up) = dir.parent().filter(|p| is_journal(p)) {
-            out.push(up.to_string_lossy().into_owned());
+            out.push(show(up));
         }
     }
     Ok(out)
