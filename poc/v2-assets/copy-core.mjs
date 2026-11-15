@@ -27,6 +27,69 @@ export function createCopyCore({ hash, randomUUID, base64ToBytes, bytesToBase64 
       )
       .all();
   }
+  /**
+   * 구조 비교용 모형(C-5 실기에서 바꿈): 원문 글자 대신 의미로 비교한다 — 오래 쓴 일지는 판을 거치며(ALTER) 표 정의 글자의
+   * 공백·따옴표가 달라질 수 있다. 표 = 열(이름·형식·NOT NULL·기본값·기본 키)·외래 키, 색인·트리거·뷰 = 주석·공백·식별자 따옴표를 뺀 정의.
+   */
+  function schemaModel(db) {
+    const norm = (sql) =>
+      String(sql ?? "")
+        .replace(/--[^\n]*/g, " ")
+        .replace(/\/\*[\s\S]*?\*\//g, " ")
+        .replace(/["`[\]]/g, "")
+        .replace(/\s+/g, " ")
+        .replace(/\s*([(),;=])\s*/g, "$1")
+        .trim();
+    const q = (n) => '"' + n.replaceAll('"', '""') + '"';
+    const model = {};
+    for (const o of schema(db)) {
+      if (o.type === "table") {
+        const cols = db
+          .prepare(`PRAGMA table_info(${q(o.name)})`)
+          .all()
+          .map((c) =>
+            [
+              c.name,
+              String(c.type ?? "")
+                .trim()
+                .toUpperCase(),
+              c.notnull,
+              norm(c.dflt_value),
+              c.pk,
+            ].join("|"),
+          )
+          .sort();
+        const fks = db
+          .prepare(`PRAGMA foreign_key_list(${q(o.name)})`)
+          .all()
+          .map((f) => [f.table, f.from, f.to, f.on_update, f.on_delete].join("|"))
+          .sort();
+        model[`table:${o.name}`] = { cols, fks };
+      } else model[`${o.type}:${o.name}`] = { on: o.tbl_name, sql: norm(o.sql) };
+    }
+    return model;
+  }
+  /** 다른 곳 목록(이름만 — 기록 내용 없음): "table:x 없음" · "table:x 열 c 다름" … */
+  function schemaDiff(actual, expected) {
+    const out = [];
+    for (const k of Object.keys(expected).sort()) {
+      if (!(k in actual)) out.push(`${k} 없음`);
+      else if (hash(actual[k]) !== hash(expected[k])) {
+        if (k.startsWith("table:")) {
+          const name = (r) => r.split("|")[0];
+          const a = new Map(actual[k].cols.map((r) => [name(r), r])),
+            e = new Map(expected[k].cols.map((r) => [name(r), r]));
+          for (const [c, r] of e)
+            if (!a.has(c)) out.push(`${k} 열 ${c} 없음`);
+            else if (a.get(c) !== r) out.push(`${k} 열 ${c} 다름`);
+          for (const c of a.keys()) if (!e.has(c)) out.push(`${k} 열 ${c} 더 있음`);
+          if (hash(actual[k].fks) !== hash(expected[k].fks)) out.push(`${k} 외래 키 다름`);
+        } else out.push(`${k} 다름`);
+      }
+    }
+    for (const k of Object.keys(actual).sort()) if (!(k in expected)) out.push(`${k} 더 있음`);
+    return out;
+  }
   function rows(db) {
     const out = {};
     for (const { name } of db
@@ -86,7 +149,7 @@ export function createCopyCore({ hash, randomUUID, base64ToBytes, bytesToBase64 
   }
   /**
    * 열린 원본 연결에서 행을 읽고 검사한다(쓰기 없음). expectedSchema(version) = 그 판의 제품 마이그레이션만 적용한
-   * 빈 DB의 sqlite_master 행 — 원본 구조가 정확히 같아야 한다.
+   * 빈 DB의 schemaModel — 원본 구조가 의미상 같아야 한다(다르면 SCHEMA_UNSUPPORTED + details = 다른 곳 이름).
    */
   function captureRows(db, { expectedVersion, expectedSchema, ...options } = {}) {
     const rawVersion = db.prepare("SELECT value FROM app_meta WHERE key='schema_version'").get()?.value;
@@ -96,7 +159,8 @@ export function createCopyCore({ hash, randomUUID, base64ToBytes, bytesToBase64 
       (expectedVersion !== undefined && expectedVersion !== version)
     )
       throw Error("SCHEMA_VERSION");
-    if (hash(schema(db)) !== hash(expectedSchema(version))) throw Error("SCHEMA_UNSUPPORTED");
+    const diff = schemaDiff(schemaModel(db), expectedSchema(version));
+    if (diff.length) throw Object.assign(Error("SCHEMA_UNSUPPORTED"), { details: diff.slice(0, 20) });
     if (db.prepare("PRAGMA journal_mode").get().journal_mode !== "delete") throw Error("SOURCE_NOT_FROZEN");
     if (
       db.prepare("PRAGMA integrity_check").get().integrity_check !== "ok" ||
@@ -183,5 +247,5 @@ export function createCopyCore({ hash, randomUUID, base64ToBytes, bytesToBase64 
       knownPayloads,
     };
   }
-  return Object.freeze({ captureRows, extractCopy, schema, rows, validate });
+  return Object.freeze({ captureRows, extractCopy, schema, schemaModel, schemaDiff, rows, validate });
 }

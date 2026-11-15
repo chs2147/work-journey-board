@@ -41,6 +41,8 @@ export interface CopyCore {
     ids: { workspaceId: string; sourceWorkspaceId: string },
   ): ExtractedCopy;
   schema(db: ReadDb): Record<string, unknown>[];
+  schemaModel(db: ReadDb): Record<string, unknown>;
+  schemaDiff(actual: Record<string, unknown>, expected: Record<string, unknown>): string[];
 }
 export function createCopyCore(deps: {
   hash(value: unknown): string;

@@ -192,7 +192,11 @@ export function MigrationCard({ ownerId }: { ownerId: string | null }) {
       setPhase({ kind: "ready", folder, jobId, snapshotId: snap.snapshotId, copy, summary });
     } catch (e) {
       // 어느 폴더에서 실패했는지 함께(실기 진단)
-      setError(`${errText(e)} (${folder})`);
+      // 구조가 다르면 다른 곳 이름(표·색인 이름만, 기록 내용 없음)을 함께 — 실기 진단용
+      const details = (e as { details?: unknown }).details;
+      const more =
+        Array.isArray(details) && details.length ? ` — ${C.schemaDiff}: ${details.join(", ")}` : "";
+      setError(`${errText(e)} (${folder})${more}`);
       setPhase({ kind: "idle" });
     }
   }

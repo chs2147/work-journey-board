@@ -62,7 +62,7 @@ function nodeReference(file: string, randomUUIDFn: () => string) {
       expectedSchema(v) {
         const e = createWorkspaceDB(":memory:", v);
         try {
-          return core.schema(e);
+          return core.schemaModel(e);
         } finally {
           e.close();
         }

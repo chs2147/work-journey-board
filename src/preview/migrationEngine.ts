@@ -67,7 +67,7 @@ function expectedSchemaFor(SQL: SqlJsStatic, core: ReturnType<typeof createCopyC
       try {
         for (const [name, sql] of files) if (Number(name.slice(0, 4)) <= version) db.exec(sql);
         db.run("INSERT INTO app_meta(key,value) VALUES('schema_version',?)", [String(version)]);
-        cache.set(version, core.schema(readOnlyAdapter(db)));
+        cache.set(version, core.schemaModel(readOnlyAdapter(db)));
       } finally {
         db.close();
       }

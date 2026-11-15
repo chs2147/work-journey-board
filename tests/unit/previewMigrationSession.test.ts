@@ -42,3 +42,56 @@ describe("C-4 준비", () => {
     );
   });
 });
+
+describe("C-5: 구조 비교는 의미로(오래 쓴 일지의 표 정의 글자 차이 허용), 다르면 다른 곳 이름", () => {
+  async function journal() {
+    const d = await openSqlJs();
+    await migrate(d);
+    await seedSample(d, sample as never);
+    return d.exportBytes();
+  }
+  const ids = (job: string) => {
+    let n = 0;
+    return {
+      workspaceId: derivedId(job, "workspace"),
+      sourceWorkspaceId: derivedId(job, "source"),
+      randomUUID: () => derivedId(job, `object-${++n}`),
+    };
+  };
+  const job = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+
+  it("표 정의 글자의 공백·따옴표·줄바꿈이 달라도(ALTER를 거친 일지) 통과", async () => {
+    const SQL = await initSqlJs();
+    const db = new SQL.Database(await journal());
+    const row = db.exec("SELECT sql FROM sqlite_master WHERE name='category'")[0]!.values[0]![0] as string;
+    const reformatted = row.replace(/\s+/g, "  ").replace("category", '"category"').replace(/,/g, " ,\n ");
+    db.run("PRAGMA writable_schema=ON");
+    db.run("UPDATE sqlite_master SET sql=? WHERE name='category'", [reformatted]);
+    db.run("PRAGMA writable_schema=OFF");
+    const bytes = db.export();
+    expect(
+      new SQL.Database(bytes).exec("SELECT sql FROM sqlite_master WHERE name='category'")[0]!.values[0]![0],
+    ).not.toBe(row);
+    expect(() => prepareCopy(SQL, bytes, ids(job))).not.toThrow();
+  });
+
+  it("열이 더 있거나 색인이 없으면 거절 + 다른 곳 이름(내용 없음)", async () => {
+    const SQL = await initSqlJs();
+    const db = new SQL.Database(await journal());
+    db.run("ALTER TABLE category ADD COLUMN legacy_note TEXT");
+    const idx = db.exec(
+      "SELECT name FROM sqlite_master WHERE type='index' AND name NOT LIKE 'sqlite_%' LIMIT 1",
+    )[0]!.values[0]![0] as string;
+    db.run(`DROP INDEX "${idx}"`);
+    let err: (Error & { details?: string[] }) | null = null;
+    try {
+      prepareCopy(SQL, db.export(), ids(job));
+    } catch (e) {
+      err = e as Error & { details?: string[] };
+    }
+    expect(err?.message).toBe("SCHEMA_UNSUPPORTED");
+    expect(err?.details).toEqual(
+      expect.arrayContaining(["table:category 열 legacy_note 더 있음", `index:${idx} 없음`]),
+    );
+  });
+});

@@ -57,7 +57,7 @@ export function captureWorkspace(path, { expectedVersion, ...options } = {}) {
       expectedSchema(version) {
         const expected = createWorkspaceDB(":memory:", version);
         try {
-          return core.schema(expected);
+          return core.schemaModel(expected);
         } finally {
           expected.close();
         }

@@ -1538,6 +1538,7 @@ export const STR_BASE = {
     again: "다른 일지 복제",
     unfinished: "끝나지 않은 작업",
     chooseFolder: "복제할 일지",
+    schemaDiff: "다른 곳",
     chooseThis: "이 일지 복제",
     unfinishedItem: (when: string, n: number) => `${when} · 기록 ${n.toLocaleString("ko-KR")}행`,
     errors: {
@@ -1555,7 +1556,7 @@ export const STR_BASE = {
       STORE: "이 앱의 폴더에 사본을 쓰지 못했습니다.",
       SNAPSHOT_MISSING: "읽어 둔 사본이 없습니다. 작업을 취소하고 다시 시작해 주세요.",
       SCHEMA_VERSION: "이 일지 구조(판)는 아직 복제할 수 없습니다.",
-      SCHEMA_UNSUPPORTED: "일지 구조가 지원하는 판과 다릅니다.",
+      SCHEMA_UNSUPPORTED: "일지 구조가 이 판의 기준과 다릅니다. 아무것도 올리지 않았습니다.",
       SOURCE_NOT_FROZEN: "일지가 쓰기 중 상태입니다. 앱에서 일지를 닫고 다시 시도해 주세요.",
       DB_INTEGRITY: "일지 파일 점검에서 오류가 나 멈췄습니다.",
       KANBAN_WRITE_IN_PROGRESS:

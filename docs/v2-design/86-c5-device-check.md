@@ -52,4 +52,8 @@ node poc/v2-gateway/edge/dev-copy-admin.mjs --purge-owner-development <Preview �
   - 접속 범위는 넓히지 않고 wasm 바이트를 코드에 넣어 직접 넘김(`vite.config.ts` `sql-wasm-base64` → `loadSql`의 `wasmBinary`, 온라인 사본 단계에서만 불러오는 조각).
   - 상시 시험: `csp-app.spec.ts`에 **Tauri Preview CSP를 그대로** 씌운 프로덕션 빌드로 원본 읽기 → 미리 보기 → 게시, CSP 차단 0.
   - 화면 경로에서 윈도우 `\\?\` 접두어 제거.
+- **2026-11-15 `SCHEMA_UNSUPPORTED`**(macOS, 실제 정식 일지 v20): 예상했던 최대 위험이 실제로 걸림 — 구조를 **원문 글자 한 글자까지** 비교해서, 여러 판을 거쳐 올라온(ALTER) 실제 일지의 표 정의 글자 차이로 거절된 것으로 추정.
+  - 비교를 **의미 기준**으로: 표 = 열(이름·형식·NOT NULL·기본값·기본 키)·외래 키, 색인·트리거·뷰 = 주석·공백·식별자 따옴표를 뺀 정의(`copy-core.mjs` `schemaModel`·`schemaDiff`, Node PoC·앱 공용).
+  - 그래도 다르면 화면에 **다른 곳 이름**(예: `table:category 열 legacy_note 더 있음`, `index:… 없음`)을 함께 보인다 — 표·열·색인 이름만, 기록 내용 없음.
+  - 시험: 표 정의 글자를 바꾼 일지는 통과, 열이 더 있거나 색인이 없는 일지는 거절 + 이름.
 
