@@ -71,7 +71,11 @@ export function createOnlinePlatform(opts: {
     openDatabase: async (p) => opts.wrap(await fs.openDatabase(p)),
     verifyCopy: (p) => fs.verifyCopy(p),
     backupFs: fs.backupFs,
-    onExit: () => undefined,
+    // 메인 창을 닫으면 별도 창(노트·메모보드·파일 목록·폴더)도 함께 닫는다 — 읽기 전용이라 저장할 것이 없어
+    // 정식판처럼 저장을 기다리지 않고 바로 닫는다(실기: 메인을 닫아도 노트 창이 남던 문제)
+    onExit() {
+      if (isTauri()) void closeWithChildren();
+    },
     pickFolders: async () => null,
     cabinetSetRoots: none,
     cabinetList: async () => [],
@@ -83,4 +87,28 @@ export function createOnlinePlatform(opts: {
     updateDownload: none,
     updateInstall: none,
   };
+}
+
+/** 별도 창(메인·스플래시 밖)을 모두 없앤다 — 저장 확인 없이(온라인 공간은 읽기 전용) */
+export async function destroyChildWindows() {
+  if (!isTauri()) return;
+  const { getAllWebviewWindows } = await import("@tauri-apps/api/webviewWindow");
+  const all = await getAllWebviewWindows();
+  await Promise.all(
+    all
+      .filter((w) => w.label !== "main" && w.label !== "splash")
+      .map((w) => w.destroy().catch(() => undefined)),
+  );
+}
+async function closeWithChildren() {
+  const { getCurrentWindow } = await import("@tauri-apps/api/window");
+  const win = getCurrentWindow();
+  let closing = false;
+  await win.onCloseRequested(async (event) => {
+    if (closing) return;
+    closing = true;
+    event.preventDefault();
+    await destroyChildWindows();
+    await win.destroy();
+  });
 }

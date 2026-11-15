@@ -7,7 +7,7 @@ import {
   type OnlineSpaceInfo,
   type PreviewSpaces,
 } from "../../platform";
-import { createOnlinePlatform } from "../../platform/onlinePlatform";
+import { createOnlinePlatform, destroyChildWindows } from "../../platform/onlinePlatform";
 import { isTauri } from "@tauri-apps/api/core";
 import { restoreFromCache, readOnlyGate } from "../../preview/onlineWorkspace";
 import { loadSql } from "../../preview/migrationSession";
@@ -173,8 +173,9 @@ export function OnlineSpacesCard({
 
 /** 목록으로: 열려 있는 별도 창(노트·메모보드·파일 목록·폴더)을 닫고 창을 새로 불러 Preview 첫 화면으로 */
 async function closeSpace() {
+  // 저장 확인 없이 바로(읽기 전용) — 실앱은 별도 창을 없애고, 브라우저 모드는 팝업 다리로 닫는다
   const p = useAppStore.getState().platform;
-  await Promise.allSettled([p?.cabi.closeAll(), p?.cabinetWindow?.close(), p?.folderWindows?.closeAll()]);
+  await Promise.allSettled([destroyChildWindows(), p?.cabi.closeAll()]);
   location.reload();
 }
 
