@@ -21,6 +21,8 @@ export function createOnlinePlatform(opts: {
   openJournal: () => Promise<SpaceDriver>;
   workspaceId: string;
   theme?: ThemePref;
+  /** 일지에 실제로 바뀐 쓰기가 있을 때(동기화 보내기 예약) */
+  onWrite?: () => void;
   /** 별도 창 다리(실앱 = Tauri 창). 없으면 브라우저 팝업 다리(브라우저 모드) */
   windows?: { cabi: CabiBridge; folderWindows?: FolderWindows; cabinetWindow?: CabinetWindowBridge };
 }): Platform {
@@ -37,7 +39,11 @@ export function createOnlinePlatform(opts: {
       label: d.label,
       async execute(sql, params) {
         const m = /^VACUUM INTO '(.+)'$/s.exec(sql.trim());
-        if (!m) return d.execute(sql, params);
+        if (!m) {
+          const r = await d.execute(sql, params);
+          if (r.changes) opts.onWrite?.();
+          return r;
+        }
         const target = m[1]!.replace(/''/g, "'");
         if (!target.startsWith(`${dataDir}/`)) throw new Error(`unable to open database: ${target}`);
         if ((await fs.stat(target)).exists) throw new Error(`output file already exists: ${target}`);
@@ -46,7 +52,11 @@ export function createOnlinePlatform(opts: {
         return { changes: 0 };
       },
       select: (sql, params) => d.select(sql, params),
-      batch: (st) => d.batch(st),
+      async batch(st) {
+        const n = await d.batch(st);
+        if (n) opts.onWrite?.();
+        return n;
+      },
       close: () => d.close(),
     };
   };

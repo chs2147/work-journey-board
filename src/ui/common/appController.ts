@@ -593,6 +593,21 @@ export async function closeOnlineSpace() {
   await closeCurrent();
 }
 
+/** Connected Preview 동기화(docs/v2-design/91): 지금 열린 일지의 연결·차례 줄(앱 쓰기와 섞이지 않게). 없으면 null */
+export function onlineJournal(): { driver: SqlDriver; exclusive<T>(w: () => Promise<T>): Promise<T> } | null {
+  const j = get().journal;
+  if (j.state !== "ready" || j.driver === closingJournal) return null;
+  return { driver: j.driver, exclusive: (w) => j.repo.exclusive(w) };
+}
+/** 다른 기기 변경을 받아 이 기기 일지에 적용한 뒤 화면을 새로(한 길: 저장 → 닫기 → 같은 일지 다시 열기, CLAUDE.md 4-7) */
+export async function reloadOnlineSpace(): Promise<boolean> {
+  const j = get().journal;
+  if (j.state !== "ready") return false;
+  const dir = j.dataDir;
+  await closeOnlineSpace();
+  return openAt(dir);
+}
+
 /** 설정 > 저장 위치: 다른 폴더의 기존 일지로 전환(지금 일지는 그대로). 새 일지를 먼저 열어 보고 성공해야 바꾼다. */
 export async function switchTo(dataDir: string): Promise<string | null> {
   const p = platform();
@@ -904,6 +919,11 @@ if (typeof window !== "undefined")
         );
         if (!t[0]?.n) return null;
         return (await j.driver.select<{ n: number }>("SELECT count(*) AS n FROM wjb_sync_outbox"))[0]!.n;
+      },
+      async syncOutboxRows() {
+        const j = get().journal;
+        if (j.state !== "ready" || platform().kind !== "browser") return null;
+        return j.driver.select("SELECT tbl, pk FROM wjb_sync_outbox");
       },
       /** Read-only browser assertion: copying may grow relations, never shared objects/assets. */
       async journalCounts() {

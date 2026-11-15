@@ -20,6 +20,8 @@ mod profile;
 mod source_copy;
 #[cfg(feature = "connected-preview")]
 mod space_db;
+#[cfg(feature = "connected-preview")]
+mod space_sync;
 mod splash;
 mod update;
 mod update_policy;
@@ -186,7 +188,10 @@ pub fn run() {
             space_db::space_db_select,
             space_db::space_db_execute,
             space_db::space_db_batch,
-            space_db::space_db_export
+            space_db::space_db_export,
+            space_sync::space_sync_call,
+            space_sync::space_asset_upload,
+            space_sync::space_asset_fetch
         ]);
     builder
         .run(context)

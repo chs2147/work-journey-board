@@ -46,3 +46,81 @@
   flex: 1 1 auto;
   min-height: 0;
 }
+
+/* E-5 동기화 상태·충돌 목록 */
+.status {
+  flex: 0 0 auto;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+.status[data-phase="offline"],
+.status[data-phase="error"] {
+  color: var(--danger);
+}
+.warn {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+.back:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.panel {
+  position: fixed;
+  top: 48px;
+  right: var(--sp-5);
+  width: min(640px, calc(100vw - 32px));
+  max-height: calc(100vh - 72px);
+  overflow: auto;
+  z-index: 50;
+  padding: var(--sp-4);
+  background: var(--surface-card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg, 0 8px 24px rgb(0 0 0 / 18%));
+  font-size: var(--fs-sm);
+}
+.panelHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--sp-3);
+}
+.panelEmpty {
+  margin: 0;
+  color: var(--text-2);
+}
+.item {
+  padding: var(--sp-3) 0;
+  border-top: 1px solid var(--line);
+}
+.itemTitle {
+  font-weight: var(--fw-bold);
+  margin-bottom: var(--sp-2);
+}
+.sides {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-3);
+}
+.side {
+  color: var(--text-2);
+  margin-bottom: var(--sp-1);
+}
+.body {
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 160px;
+  overflow: auto;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+@media (max-width: 520px) {
+  .sides {
+    grid-template-columns: 1fr;
+  }
+}

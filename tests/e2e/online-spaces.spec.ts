@@ -37,7 +37,8 @@ test("D-4·E-1: 복제 → 내 온라인 공간 목록 → 열기 → 앱 화면
     page.evaluate(() =>
       (globalThis as unknown as { __wjbApp: { syncOutbox(): Promise<number | null> } }).__wjbApp.syncOutbox(),
     );
-  expect(await outbox()).toBe(0);
+  // 열 때 앱이 이 기기 설정을 한 번 쓴다 — 공용 설정은 그대로라 보내지 않고 대기열에서 지운다
+  await expect.poll(outbox, { timeout: 10_000 }).toBe(0);
   const entry = page.locator("textarea").first();
   await entry.click();
   await page.keyboard.press("End");
@@ -64,4 +65,76 @@ test("D-4: 온라인 공간의 업무 메모보드·업무노트는 정식판처
   await expect(board.getByTestId("note-scroll")).toBeVisible({ timeout: 15_000 });
   expect(new URL(board.url()).searchParams.get("id")).toBe(categoryId);
   await board.close();
+});
+
+async function openCopied(page: Page) {
+  await page.getByTestId("copy-pick").click();
+  await page.getByTestId("copy-start").click({ timeout: 30_000 });
+  await expect(page.getByTestId("copy-done")).toBeVisible({ timeout: 30_000 });
+  const ws = await page.getByTestId("online-space-row").locator("span[title]").first().getAttribute("title");
+  await page.getByTestId("online-space-open").click();
+  await expect(page.getByTestId("rail-settings")).toBeVisible({ timeout: 30_000 });
+  return ws!;
+}
+const syncStatus = (page: Page) => page.getByTestId("online-sync-status");
+
+test("E-3·E-5: 고치면 약 1초 뒤 보내 '동기화됨', 다른 기기 변경은 [지금 동기화]로 받아 화면에", async ({
+  page,
+}) => {
+  const requests: string[] = [];
+  page.on("request", (r) => requests.push(r.url()));
+  await signIn(page);
+  const ws = await openCopied(page);
+  await expect(syncStatus(page)).toContainText(/동기화됨|이 기기에 저장됨/, { timeout: 15_000 });
+  const entry = page.locator("textarea").first();
+  await entry.click();
+  await page.keyboard.press("End");
+  await page.keyboard.type(" 동기화");
+  await page.keyboard.press("Escape");
+  await page.locator("body").click({ position: { x: 5, y: 5 } });
+  await expect(syncStatus(page)).toContainText("동기화됨", { timeout: 15_000 });
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        (
+          globalThis as unknown as { __wjbApp: { syncOutbox(): Promise<number | null> } }
+        ).__wjbApp.syncOutbox(),
+      ),
+    )
+    .toBe(0);
+  // 다른 기기가 화면에 보이는 기록 하나를 고침 → 지금 동기화 → 화면에 보인다
+  const shown = await page.locator("[data-item-id]").last().getAttribute("data-item-id");
+  await page.evaluate(
+    ([w, id]) =>
+      (
+        globalThis as unknown as {
+          __wjbFakeSync: { editEntryElsewhere(w: string, t: string, id?: string): Promise<string> };
+        }
+      ).__wjbFakeSync.editEntryElsewhere(w!, "다른 기기에서 고친 가상 기록", id!),
+    [ws, shown],
+  );
+  await page.getByTestId("online-sync-now").click();
+  await expect
+    .poll(
+      () => page.locator("textarea").evaluateAll((els) => els.map((e) => (e as HTMLTextAreaElement).value)),
+      {
+        timeout: 15_000,
+      },
+    )
+    .toContain("다른 기기에서 고친 가상 기록");
+  expect(external(requests)).toEqual([]);
+});
+
+test("E-5: 서버에 닿지 못하면 '오프라인 · 이 기기에 저장됨 · 대기 N건'", async ({ page }) => {
+  await signIn(page, "&syncOffline=1");
+  await openCopied(page);
+  const entry = page.locator("textarea").first();
+  await entry.click();
+  await page.keyboard.press("End");
+  await page.keyboard.type(" 오프라인");
+  await page.keyboard.press("Escape");
+  await expect(syncStatus(page)).toContainText(/오프라인 · 이 기기에 저장됨 · 대기 \d+건/, {
+    timeout: 15_000,
+  });
+  await expect(syncStatus(page)).toHaveAttribute("data-phase", "offline");
 });

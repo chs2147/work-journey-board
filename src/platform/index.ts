@@ -428,6 +428,8 @@ export interface PreviewSpaces {
   remove(workspaceId: string): Promise<void>;
   /** E-1 이 기기 일지(파일 경로는 Rust가 정함 — 공간 ID만 넘긴다) */
   journal: SpaceJournalStore;
+  /** E-3 동기화 통신(보내기·받기·새 그림 올리기·그림 받기) */
+  transport: import("../preview/spaceSync").SyncTransport;
 }
 /** E-1 온라인 공간의 이 기기 일지(docs/v2-design/89) */
 export interface SpaceJournalStore {

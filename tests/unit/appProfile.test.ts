@@ -239,6 +239,9 @@ describe("Rust 명령 경계(lib.rs)", () => {
       "space_db::space_db_execute",
       "space_db::space_db_batch",
       "space_db::space_db_export",
+      "space_sync::space_sync_call",
+      "space_sync::space_asset_upload",
+      "space_sync::space_asset_fetch",
     ]);
     // 온라인 모듈은 Preview 빌드에만 컴파일된다
     expect(lib).toMatch(/#\[cfg\(feature = "connected-preview"\)\]\nmod online;/);

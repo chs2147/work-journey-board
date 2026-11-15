@@ -62,6 +62,7 @@ async function cacheFromSample() {
     read: async (_w, name) => files.get(name)!,
     remove: async () => undefined,
     journal: memJournal(SQL),
+    transport: {} as never,
   };
   return { SQL, spaces, p, files, src: d };
 }

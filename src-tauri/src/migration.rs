@@ -14,7 +14,8 @@ pub(crate) const GATEWAY: &str = "/functions/v1/wjb-gateway";
 /// gateway 본문 한도(Edge `readLimited` 1,100,000바이트)와 그림 한도(io.mjs MAX_ASSET_BYTES)
 pub const MAX_REQUEST_BYTES: usize = 1_100_000;
 pub const MAX_ASSET_BYTES: usize = 10 * 1024 * 1024;
-const MAX_RESPONSE_BYTES: usize = 1024 * 1024;
+// 동기화 받기 페이지(약 900KB + JSON 여유)까지
+const MAX_RESPONSE_BYTES: usize = 2 * 1024 * 1024;
 const MAX_JOURNAL_BYTES: usize = 1024 * 1024;
 /// 앱이 부를 수 있는 이관 명령(Edge CLIENT_ACTIONS + 서버 확인 정산 2종)
 pub const ACTIONS: &[&str] = &[

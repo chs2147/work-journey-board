@@ -397,5 +397,65 @@ export function createWorkspaceMapper({ hash, sectionIconIds }) {
     imageFree(envelope);
     return { envelope, mappingHash: hash(envelope), productActivationAllowed: false };
   }
-  return Object.freeze({ mapCopy });
+  /**
+   * E-3 행 하나 → 온라인 기록(docs/v2-design/91) — mapCopy와 같은 행 규칙(열·형식 검사, 설정 투영, 폴더 경로 빼기,
+   * 가져오기 파일 이름, 그림 → 참조, 그림 본문 없음). 표 사이 검사(외래 키·문서 참조)는 하지 않는다(서버·이 기기 일지가 지킴).
+   * row = 이 기기 일지의 SELECT * 행. assetRef(base64) → {objectId, sha256, bytes}. 동기화하지 않는 행이면 null.
+   */
+  function mapRow(sourceSchema, table, row, { sectionIds = new Set(), assetRef } = {}) {
+    const contract = contracts[sourceSchema];
+    if (!contract) throw Error("SCHEMA_VERSION");
+    if (!Object.hasOwn(contract.tables, table)) throw Error("TABLE_UNSUPPORTED");
+    if (table === "kanban_ctx") return null;
+    if (table === "app_meta" && row.key === "schema_version") return null;
+    const value = structuredClone(row);
+    if (assetTables.has(table))
+      for (const field of ["data", "thumb"]) {
+        const encoded = value[field];
+        delete value[field];
+        value[field + "Ref"] = null;
+        if (encoded === null || encoded === undefined) continue;
+        if (typeof encoded !== "string" || typeof assetRef !== "function") throw Error("ASSET_ENCODING");
+        const ref = assetRef(encoded, field);
+        if (!ref || !keysEqual(ref, ["objectId", "sha256", "bytes"])) throw Error("BLOB_REFERENCE");
+        if (field === "data" && ref.bytes !== value.bytes) throw Error("ASSET_ENCODING");
+        value[field + "Ref"] = { ...ref };
+      }
+    // 검사는 mapCopy와 같은 모양(참조 칸은 검사 뒤 서버 모양으로)
+    const probe = assetTables.has(table) ? { ...value } : value;
+    validateSourceRow(table, probe, contract);
+    if (table === "cabi_note" && contract.sourceSchema >= 19 && ![0, 1].includes(value.delete_locked))
+      throw Error("DELETE_LOCK_VALUE");
+    const keys = contract.tables[table].columns
+      .filter((c) => c.pk)
+      .sort((a, b) => a.pk - b.pk)
+      .map((c) => c.name);
+    const key = hash([table, keys.map((k) => value[k])]);
+    if (table === "app_meta") {
+      if (value.key === "settings")
+        value.value = projectSettings(value.value, [], contract.sourceSchema, sectionIds);
+      else if (value.key !== "created_at") throw Error("UNKNOWN_APP_META_KEY");
+    }
+    if (table === "cabinet_item" && value.kind === "folder") {
+      value.target = null;
+      value.targetState = "device-local-unbound";
+    }
+    if (table === "import_batch") value.file_name = folderBase(value.file_name);
+    if (table === "knowledge_card_source") {
+      const locator = json(value.locator_json);
+      if (Object.keys(locator).some((k) => k !== "label")) throw Error("UNKNOWN_LOCATOR_FORMAT");
+    }
+    imageFree(value);
+    return { table, key, value };
+  }
+  /** 표의 기본 키 열(순서대로) */
+  function primaryKey(sourceSchema, table) {
+    const contract = contracts[sourceSchema];
+    if (!contract || !Object.hasOwn(contract.tables, table)) throw Error("TABLE_UNSUPPORTED");
+    return contract.tables[table].columns
+      .filter((c) => c.pk)
+      .sort((a, b) => a.pk - b.pk)
+      .map((c) => c.name);
+  }
+  return Object.freeze({ mapCopy, mapRow, primaryKey });
 }

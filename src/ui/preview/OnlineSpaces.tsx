@@ -10,7 +10,20 @@ import {
 } from "../../platform";
 import { createOnlinePlatform, destroyChildWindows } from "../../platform/onlinePlatform";
 import { isTauri } from "@tauri-apps/api/core";
-import { ensureSpaceJournal } from "../../preview/spaceJournal";
+import { ensureSpaceJournal, upgradeSyncTables, type CachedHeaderLike } from "../../preview/spaceJournal";
+import type { ConflictItem } from "../../preview/spaceSync";
+import { BOTH_TABLES } from "../../preview/spaceSync";
+import {
+  applyReceived,
+  closeConflicts,
+  loadConflicts,
+  resolveConflict,
+  schedulePush,
+  startOnlineSync,
+  stopOnlineSync,
+  syncNow,
+  useOnlineSync,
+} from "./onlineSync";
 import { loadSql } from "../../preview/migrationSession";
 import { closeOnlineSpace } from "../common/appController";
 import { formatBytes, STR } from "../../shared/strings";
@@ -93,6 +106,16 @@ export function OnlineSpacesCard({
       const sync = await spaces.sync(w.workspaceId);
       const SQL = await loadSql();
       await ensureSpaceJournal(SQL, spaces, spaces.journal, w.workspaceId);
+      // E-1 때 만든 이 기기 일지면 E-3 동기화 표·트리거를 더한다(한 번, 같은 묶음)
+      const head = JSON.parse(
+        new TextDecoder().decode(await spaces.read(w.workspaceId, "header.json")),
+      ) as CachedHeaderLike;
+      const d = await spaces.journal.open(w.workspaceId);
+      try {
+        await upgradeSyncTables(d, head.assets, Number(head.header.sourceSchema));
+      } finally {
+        await d.close();
+      }
       // 실앱: 업무노트·메모보드·파일 목록을 정식판과 같은 별도 OS 창으로(Tauri 창 다리)
       const native = isTauri() ? (await import("../../platform/tauri")).tauriPlatform : null;
       setPlatformOverride(
@@ -104,8 +127,10 @@ export function OnlineSpacesCard({
           openJournal: () => spaces.journal.open(w.workspaceId),
           workspaceId: w.workspaceId,
           theme: readStoredTheme(),
+          onWrite: schedulePush,
         }),
       );
+      startOnlineSync(w.workspaceId, spaces.transport);
       onOpened({ workspaceId: w.workspaceId, label: when(w.createdAt), stale: sync.stale });
     } catch (e) {
       setError(errText(e));
@@ -165,14 +190,26 @@ export function OnlineSpacesCard({
 
 /** 목록으로: 입력 중인 글·별도 창(노트·메모보드) 저장 → 일지 닫기 → 남은 창 정리 → 창을 새로 불러 Preview 첫 화면으로 */
 async function closeSpace() {
+  stopOnlineSync();
   await closeOnlineSpace().catch(() => undefined);
   const p = useAppStore.getState().platform;
   await Promise.allSettled([destroyChildWindows(), p?.cabi.closeAll()]);
   location.reload();
 }
 
-/** 열린 온라인 공간: 위 띠(읽기 전용·목록으로) + 지금 앱 화면 */
+const Y = S.sync;
+const clock = (t: number) => new Date(t).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" });
+function syncText(s: ReturnType<typeof useOnlineSync.getState>["status"]) {
+  if (s.phase === "syncing") return Y.syncing;
+  if (s.phase === "offline") return Y.offline(s.pending);
+  if (s.phase === "error") return Y.error(s.error ?? "UNKNOWN");
+  if (s.pending) return Y.pending(s.pending);
+  return s.lastSyncedAt ? Y.synced(clock(s.lastSyncedAt)) : Y.saved;
+}
+
+/** 열린 온라인 공간: 위 띠(동기화 상태·지금 동기화·충돌·목록으로) + 지금 앱 화면 */
 export function OnlineWorkspaceShell({ space }: { space: OpenedSpace }) {
+  const { status, received, conflicts } = useOnlineSync();
   return (
     <div className={shell.frame} data-testid="online-workspace">
       <div className={shell.band} role="note">
@@ -181,6 +218,38 @@ export function OnlineWorkspaceShell({ space }: { space: OpenedSpace }) {
           {S.bandMeta(space.label)}
           {space.stale ? ` · ${S.stale}` : ""}
         </span>
+        <span className={shell.status} data-testid="online-sync-status" data-phase={status.phase}>
+          {syncText(status)}
+        </span>
+        {received > 0 && (
+          <button
+            type="button"
+            className={shell.back}
+            onClick={() => void applyReceived()}
+            data-testid="online-sync-reload"
+          >
+            {Y.received(received)} · {Y.reload}
+          </button>
+        )}
+        {status.conflicts > 0 && (
+          <button
+            type="button"
+            className={`${shell.back} ${shell.warn}`}
+            onClick={() => void loadConflicts()}
+            data-testid="online-sync-conflicts"
+          >
+            {Y.conflicts(status.conflicts)}
+          </button>
+        )}
+        <button
+          type="button"
+          className={shell.back}
+          disabled={status.phase === "syncing"}
+          onClick={() => void syncNow()}
+          data-testid="online-sync-now"
+        >
+          {Y.now}
+        </button>
         <button
           type="button"
           className={shell.back}
@@ -193,6 +262,109 @@ export function OnlineWorkspaceShell({ space }: { space: OpenedSpace }) {
       <div className={shell.app}>
         <App />
       </div>
+      {conflicts && <ConflictPanel items={conflicts} />}
+    </div>
+  );
+}
+
+/** 문서·기록을 짧은 글로(나란히 보기) */
+function summary(table: string, v: Record<string, unknown> | null): string {
+  if (!v) return Y.deleted;
+  const text = (node: unknown): string => {
+    if (!node || typeof node !== "object") return "";
+    const n = node as { text?: string; content?: unknown[] };
+    return (n.text ?? "") + (n.content ?? []).map(text).join(" ");
+  };
+  try {
+    if (table === "entry_item") return String(v.text ?? "");
+    if (table === "week_note" || table === "cabi_board") {
+      const doc = JSON.parse(String(v.doc)) as {
+        boxes: { content?: unknown; title?: string; url?: string }[];
+      };
+      const words = doc.boxes
+        .map((b) => text(b.content) || b.title || b.url || "")
+        .filter(Boolean)
+        .join(" / ");
+      return `${Y.boxes(doc.boxes.length)}${words ? ` — ${words}` : ""}`;
+    }
+    if (table === "cabi_note") return `${String(v.title ?? "")} — ${text(JSON.parse(String(v.content)))}`;
+    if (table === "category") return String(v.name ?? "");
+  } catch {
+    /* 아래 일반 표시 */
+  }
+  return JSON.stringify(v).slice(0, 300);
+}
+
+function ConflictPanel({ items }: { items: ConflictItem[] }) {
+  const [busy, setBusy] = useState(false);
+  const act = async (c: ConflictItem, choice: "mine" | "server" | "both") => {
+    setBusy(true);
+    try {
+      await resolveConflict(c, choice);
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div className={shell.panel} role="dialog" aria-label={Y.panelTitle} data-testid="online-conflicts">
+      <div className={shell.panelHead}>
+        <strong>{Y.panelTitle}</strong>
+        <button
+          type="button"
+          className={shell.back}
+          onClick={closeConflicts}
+          data-testid="online-conflicts-close"
+        >
+          {Y.close}
+        </button>
+      </div>
+      {items.length === 0 && <p className={shell.panelEmpty}>{Y.panelEmpty}</p>}
+      {items.map((c) => (
+        <div key={`${c.table}:${c.key}`} className={shell.item} data-testid="online-conflict">
+          <div className={shell.itemTitle}>{Y.tables[c.table] ?? Y.other(c.table)}</div>
+          <div className={shell.sides}>
+            <div>
+              <div className={shell.side}>{Y.mine}</div>
+              <div className={shell.body}>{summary(c.table, c.local)}</div>
+            </div>
+            <div>
+              <div className={shell.side}>{Y.server}</div>
+              <div className={shell.body}>{summary(c.table, c.server)}</div>
+            </div>
+          </div>
+          <div className={shell.actions}>
+            <button
+              type="button"
+              className={shell.back}
+              disabled={busy}
+              onClick={() => void act(c, "mine")}
+              data-testid="conflict-mine"
+            >
+              {Y.keepMine}
+            </button>
+            <button
+              type="button"
+              className={shell.back}
+              disabled={busy}
+              onClick={() => void act(c, "server")}
+              data-testid="conflict-server"
+            >
+              {Y.keepServer}
+            </button>
+            {BOTH_TABLES.has(c.table) && c.local && c.server && (
+              <button
+                type="button"
+                className={shell.back}
+                disabled={busy}
+                onClick={() => void act(c, "both")}
+                data-testid="conflict-both"
+              >
+                {Y.keepBoth}
+              </button>
+            )}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

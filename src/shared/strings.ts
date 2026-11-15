@@ -1587,6 +1587,41 @@ export const STR_BASE = {
     bandMeta: (when: string) => `${when} 복제본`,
     stale: "서버에 연결하지 못해 이 기기에 받아 둔 내용",
     close: "목록으로",
+    /** E-5 동기화 상태(docs/v2-design/91) */
+    sync: {
+      syncing: "동기화 중…",
+      synced: (at: string) => `동기화됨 · ${at}`,
+      pending: (n: number) => `이 기기에 저장됨 · 대기 ${n.toLocaleString("ko-KR")}건`,
+      offline: (n: number) =>
+        n
+          ? `오프라인 · 이 기기에 저장됨 · 대기 ${n.toLocaleString("ko-KR")}건`
+          : "오프라인 · 이 기기에 저장됨",
+      error: (code: string) => `동기화하지 못했습니다(${code})`,
+      saved: "이 기기에 저장됨",
+      now: "지금 동기화",
+      conflicts: (n: number) => `충돌 ${n}건`,
+      received: (n: number) => `다른 기기 변경 ${n}건`,
+      reload: "화면 새로 고침",
+      panelTitle: "충돌 목록",
+      panelEmpty: "충돌이 없습니다.",
+      close: "닫기",
+      mine: "이 기기",
+      server: "서버",
+      keepMine: "이 기기 것으로",
+      keepServer: "서버 것으로",
+      keepBoth: "둘 다 보존",
+      deleted: "(지워짐)",
+      tables: {
+        entry_item: "업무 기록",
+        week_note: "주간 메모",
+        cabi_board: "업무 메모보드",
+        cabi_note: "업무노트",
+        category: "업무",
+        app_meta: "공간 설정",
+      } as Record<string, string>,
+      other: (table: string) => `기록(${table})`,
+      boxes: (n: number) => `상자 ${n}개`,
+    },
     errors: {
       READ_NOT_FOUND: "이 온라인 공간을 찾을 수 없습니다. 목록을 새로 고쳐 주세요.",
       READ_ACCESS_DENIED: "이 기기에서 읽을 권한이 없습니다. 다시 로그인해 주세요.",

@@ -20,4 +20,21 @@ export const tauriPreviewSpaces: PreviewSpaces = {
   },
   remove: (workspaceId) => call<void>("space_remove", { workspaceId }),
   journal: tauriSpaceJournal,
+  transport: {
+    call: (action, params) => call<Record<string, unknown>>("space_sync_call", { action, params }),
+    async uploadAsset(workspaceId, objectId, sha256, bytes) {
+      try {
+        await invoke("space_asset_upload", bytes, {
+          headers: { "x-wjb-workspace": workspaceId, "x-wjb-object": objectId, "x-wjb-sha256": sha256 },
+        });
+      } catch (e) {
+        throw new Error(code(e), { cause: e });
+      }
+    },
+    async fetchAsset(workspaceId, objectId, sha256, bytes) {
+      return new Uint8Array(
+        await call<ArrayBuffer>("space_asset_fetch", { workspaceId, objectId, sha256, bytes }),
+      );
+    },
+  },
 };

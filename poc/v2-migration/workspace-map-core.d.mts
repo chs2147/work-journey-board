@@ -28,4 +28,11 @@ export function createWorkspaceMapper(deps: { hash(value: unknown): string; sect
     copy: { manifest: unknown; records: unknown[]; blobs: unknown[] },
     workspaceId: string,
   ): { envelope: WorkspaceEnvelope; mappingHash: string; productActivationAllowed: false };
+  mapRow(
+    sourceSchema: number,
+    table: string,
+    row: Record<string, unknown>,
+    opts?: { sectionIds?: Set<string>; assetRef?: (base64: string, field: string) => MappedAsset | null },
+  ): MappedRecord | null;
+  primaryKey(sourceSchema: number, table: string): string[];
 };
