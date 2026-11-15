@@ -75,7 +75,7 @@ describe("DEV 프로필·설정", () => {
       parseConfig(JSON.stringify({ dataDir: "/d", devSetupVersion: "1.41.0-rc.1" }))?.devSetupVersion,
     ).toBe("1.41.0-rc.1");
   });
-  it("tauri.dev.conf.json: 앱 ID·이름·실행 파일 이름·창 제목만 다르고 권한·CSP는 정식판 그대로", () => {
+  it("tauri.dev.conf.json: 앱 ID·이름·실행 파일 이름·창 제목·설치 아이콘(icons-dev)만 다르고 권한·CSP는 정식판 그대로", () => {
     const base = json("src-tauri/tauri.conf.json");
     const dev = json("src-tauri/tauri.dev.conf.json");
     expect(dev.identifier).toBe(DEV_PROFILE.appId);
@@ -84,11 +84,17 @@ describe("DEV 프로필·설정", () => {
     expect(Object.keys(dev).sort()).toEqual([
       "$schema",
       "app",
+      "bundle",
       "identifier",
       "mainBinaryName",
       "productName",
     ]);
     expect(Object.keys(dev.app)).toEqual(["windows"]);
+    // 비공식 판 설치 아이콘(release-channel-spec 6절): 정식판 icons/와 같은 파일 구성, 폴더만 icons-dev/
+    expect(dev.bundle).toEqual({
+      icon: base.bundle.icon.map((p: string) => p.replace(/^icons\//, "icons-dev/")),
+      windows: { nsis: { installerIcon: "icons-dev/icon.ico" } },
+    });
     const strip = (ws: { title: string }[]) => ws.map((w) => ({ ...w, title: "" }));
     expect(strip(dev.app.windows)).toEqual(strip(base.app.windows));
     for (const w of dev.app.windows) expect(w.title).toBe("Work Journey Board DEV");
@@ -108,5 +114,20 @@ describe("DEV 프로필·설정", () => {
       expect(files.slice(at, files.indexOf("\n}\n", at)), cmd).toContain("crate::dev_guard::write_allowed");
     }
     expect(readFileSync("src-tauri/src/db_batch.rs", "utf8")).toContain("crate::dev_guard::write_allowed");
+  });
+});
+
+describe("비공식 판 설치 아이콘(release-channel-spec 6절)", () => {
+  it("icons-dev/는 정식판 icons/와 파일 구성이 같고 내용은 다르다(주황 바탕 + DEV 띠)", async () => {
+    const { readdirSync } = await import("node:fs");
+    const official = readdirSync("src-tauri/icons").sort();
+    expect(readdirSync("src-tauri/icons-dev").sort()).toEqual(official);
+    for (const f of official)
+      expect(readFileSync(`src-tauri/icons-dev/${f}`).equals(readFileSync(`src-tauri/icons/${f}`))).toBe(
+        false,
+      );
+    // 정식판 설정은 icons/만 쓴다
+    const base = JSON.parse(readFileSync("src-tauri/tauri.conf.json", "utf8"));
+    expect(JSON.stringify(base.bundle)).not.toContain("icons-dev");
   });
 });

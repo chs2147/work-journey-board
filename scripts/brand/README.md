@@ -24,6 +24,12 @@ python3 scripts/brand/pack_icons.py /tmp/wjb-icons src-tauri/icons
 ```
 `icon.svg`를 바꿨다면 `splash.html`의 `.logo` 안 SVG도 같이 바꾼다(위와 같은 이유·같은 테스트).
 
+비공식 판(DEV·Preview) 설치 아이콘도 함께 다시 만든다(release-channel-spec 5절):
+```bash
+PW_CHROMIUM_PATH=/opt/pw-browsers/chromium node scripts/brand/render_icons.mjs /tmp/wjb-icons-dev --variant dev
+python3 scripts/brand/pack_icons.py /tmp/wjb-icons-dev src-tauri/icons-dev
+```
+
 ## 설치 프로그램 그림(release-phase2-spec 3절 A안·5절 B3)
 
 ```bash

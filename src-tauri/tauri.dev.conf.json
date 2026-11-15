@@ -3,6 +3,20 @@
   "productName": "Work Journey Board DEV",
   "identifier": "com.chs2147.workjourneyboard.dev",
   "mainBinaryName": "work-journey-board-dev",
+  "bundle": {
+    "icon": [
+      "icons-dev/32x32.png",
+      "icons-dev/128x128.png",
+      "icons-dev/128x128@2x.png",
+      "icons-dev/icon.icns",
+      "icons-dev/icon.ico"
+    ],
+    "windows": {
+      "nsis": {
+        "installerIcon": "icons-dev/icon.ico"
+      }
+    }
+  },
   "app": {
     "windows": [
       {

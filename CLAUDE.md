@@ -191,7 +191,7 @@ fixtures/     sample-*.json — 가상 업무 기록만
 - **정식판 = `main` 빌드만.** 그 밖의 모든 빌드(작업 브랜치·RC·Preview)는 **비공식 판**이다 — 로컬판은 **DEV 검증판**(`--features dev-channel` + `src-tauri/tauri.dev.conf.json`, 앱 ID `com.chs2147.workjourneyboard.dev`·이름 "Work Journey Board DEV"·실행 파일 `work-journey-board-dev`·설정 폴더 `WorkJourneyBoardDev`), 온라인 검증은 Connected Preview(V2 78문서). `build-desktop.yml`이 `main` 밖에서는 자동으로 DEV로 빌드한다.
 - 비공식 판은 **정식판과 별도의 앱으로 설치·제거**되고, 정식판의 설정(`WorkJourneyBoard\config.json`)·일지를 **읽지도 쓰지도 않는다**. 업데이트 확인 꺼짐, 릴리스·기존 업데이트 피드에 올리지 않음(Actions 산출물만). 환경변수가 필요하면 `WJB_DEV_*`·`WJB_PREVIEW_*` 전용 이름만.
 - DEV는 **DEV 일지만**: DEV가 만든·복제한 폴더의 표시 파일 `.wjb-dev-journal`. 정식 일지(표시 없음)는 화면(`openJournalAt` 첫 단계)과 Rust(`dev_guard.rs` — `db_batch`·백업·복원·내보내기)에서 이중으로 거절한다. 설치(판)마다 일지를 묻는다 — 빈 일지(기본)·가상 샘플·정식 일지 복제(원본 읽기만).
-- 비공식 판은 상단 타이틀 줄 주황 띠 + **DEV** 배지(`html[data-channel="dev"]`). 정식판 화면·앱 ID·설정·명령 목록은 이 정책 전과 같아야 한다(`appProfile`·`devChannel` 단위 시험, Rust `profile.rs` 시험이 고정).
+- 비공식 판은 상단 타이틀 줄 주황 띠 + **DEV** 배지(`html[data-channel="dev"]`), **설치·실행 아이콘도 정식판과 다르게**(주황 바탕 + DEV 띠, `src-tauri/icons-dev/`, 2026-11-15 사용자 지시 — 앱 안 그림은 그대로 가능). 정식판 화면·앱 ID·설정·명령 목록은 이 정책 전과 같아야 한다(`appProfile`·`devChannel` 단위 시험, Rust `profile.rs` 시험이 고정).
 - 이 정책을 바꾸거나 정식판 동작에 영향을 주는 변경은 사용자 승인. 새 비공식 판 종류를 만들 때도 같은 조건(별도 앱·설정·일지)을 먼저 갖춘다.
 
 ## 5. 명령

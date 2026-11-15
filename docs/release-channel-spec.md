@@ -46,6 +46,11 @@ DEV를 처음 켜거나 **다른 판을 설치하면**(설정의 `devSetupVersio
 - 비공식 판(DEV·Preview)은 `<html data-channel="dev">`: 상단 타이틀 줄을 주황 계열 띠 + 위쪽 3px 선(직각, UI 강조 띠 규칙) + 오른쪽 **DEV** 배지. 라이트·다크·시그니처 각각 토큰(`--dev-accent`·`--dev-band`…, `tokens.css`).
 - 창 제목·설치 이름 = Work Journey Board DEV. Preview 시작 화면 제목 옆에도 DEV 배지.
 - 업데이트 확인은 하지 않는다(설정 화면: “DEV 판은 업데이트를 확인하지 않습니다”).
+- **설치·실행 아이콘(2026-11-15 사용자 지시)**: 비공식 판(DEV·Preview, 앞으로 생길 비공식 판 포함)은 **정식판과 다른 설치 아이콘**을 쓴다 — 바탕을 DEV 주황(`--dev-accent` #c2410c)으로, 48px 이상은 아래에 흰 글자 **DEV** 띠(#7c2d12, 직각). 16~32px 작은 판은 주황 바탕만. 바탕화면·시작 메뉴·작업 표시줄·Dock·설치 프로그램 아이콘에서 정식판(파란 바탕)과 바로 구분된다.
+  - 파일 = `src-tauri/icons-dev/`(정식판 `icons/`와 같은 구성), `tauri.dev.conf.json`·`tauri.preview.conf.json`의 `bundle.icon`·`bundle.windows.nsis.installerIcon`이 가리킨다. 정식판 설정은 `icons/`만.
+  - 앱 안 그림(스플래시·화면 로고)은 그대로 둬도 된다(앱 안에서는 DEV 띠·배지로 구분).
+  - 만들기: `node scripts/brand/render_icons.mjs <폴더> --variant dev` → `python3 scripts/brand/pack_icons.py <폴더> src-tauri/icons-dev`. 정식 아이콘을 바꾸면 DEV 판도 함께 다시 만든다.
+  - 시험: `devChannel.test.ts`(구성 같음·내용 다름·정식판 설정에 없음) · `appProfile.test.ts`(Preview도 같은 아이콘).
 
 ## 6. 검증
 

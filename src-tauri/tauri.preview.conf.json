@@ -3,6 +3,20 @@
   "productName": "Work Journey Board Connected Preview",
   "identifier": "com.chs2147.workjourneyboard.connected.preview",
   "mainBinaryName": "work-journey-board-connected-preview",
+  "bundle": {
+    "icon": [
+      "icons-dev/32x32.png",
+      "icons-dev/128x128.png",
+      "icons-dev/128x128@2x.png",
+      "icons-dev/icon.icns",
+      "icons-dev/icon.ico"
+    ],
+    "windows": {
+      "nsis": {
+        "installerIcon": "icons-dev/icon.ico"
+      }
+    }
+  },
   "app": {
     "windows": [
       {

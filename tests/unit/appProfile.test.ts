@@ -56,12 +56,13 @@ describe("Tauri 설정", () => {
     expect(base.bundle.fileAssociations).toBeUndefined();
   });
 
-  it("Preview 덮어쓰기 = 앱 ID·이름·실행 파일 이름·창 제목·권한 목록·CSP(wasm)만 다르다", () => {
+  it("Preview 덮어쓰기 = 앱 ID·이름·실행 파일 이름·창 제목·권한 목록·CSP(wasm)·설치 아이콘만 다르다", () => {
     expect(preview.identifier).toBe(tsv["connected-preview"].appId);
     expect(preview.productName).toBe(tsv["connected-preview"].productName);
     expect(Object.keys(preview).sort()).toEqual([
       "$schema",
       "app",
+      "bundle",
       "identifier",
       "mainBinaryName",
       "productName",
@@ -71,6 +72,8 @@ describe("Tauri 설정", () => {
     expect(preview.mainBinaryName).toBe("work-journey-board-connected-preview");
     expect(Object.keys(preview.app).sort()).toEqual(["security", "windows"]);
     expect(Object.keys(preview.app.security)).toEqual(["csp", "capabilities"]);
+    // 비공식 판 설치 아이콘 = DEV와 같은 icons-dev(release-channel-spec 6절)
+    expect(preview.bundle).toEqual(json("src-tauri/tauri.dev.conf.json").bundle);
     // 창 배열은 통째로 바뀌므로(merge patch) 제목 말고는 기본 설정과 같아야 한다
     const strip = (ws: { title: string }[]) => ws.map((w) => ({ ...w, title: "" }));
     expect(strip(preview.app.windows)).toEqual(strip(base.app.windows));
