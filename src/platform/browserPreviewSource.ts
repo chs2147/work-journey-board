@@ -10,6 +10,10 @@ export const browserPreviewSource: PreviewSource = {
   async pickFolder() {
     return "C:\\Users\\가상 사용자\\Documents\\WorkJourney";
   },
+  /** 가짜: ?copyParent=1 이면 고른 폴더 아래 두 공간(하위 폴더 고르기 화면 확인용) */
+  async candidates(dir) {
+    return new URLSearchParams(location.search).get("copyParent") ? [`${dir}\\회사`, `${dir}\\개인`] : [dir];
+  },
   async snapshot(): Promise<SourceSnapshot> {
     const driver = await openSqlJs(wasmUrl);
     await migrate(driver);

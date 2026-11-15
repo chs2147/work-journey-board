@@ -344,6 +344,8 @@ export interface SourceSnapshot {
 export interface PreviewSource {
   /** 원본 일지 폴더 고르기(OS 대화상자) — 취소면 null */
   pickFolder(title: string): Promise<string | null>;
+  /** 고른 폴더(일지가 있으면 그 폴더) 또는 바로 아래 하위 폴더 중 일지가 있는 곳 — 목록만 읽음 */
+  candidates(dir: string): Promise<string[]>;
   /** 고른 폴더의 일지를 읽기만 해서 Preview 폴더에 사본. 쓰는 중이면 SOURCE_IN_USE */
   snapshot(dir: string): Promise<SourceSnapshot>;
   /** 사본 바이트(sql.js로 열어 이관 자료를 만든다) */

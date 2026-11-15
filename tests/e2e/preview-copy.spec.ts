@@ -43,3 +43,13 @@ test("C-4: 끊김 → 이어서 올리기, 멈추기 → 작업 취소", async (
   await page.getByTestId("copy-cancel").click();
   await expect(page.getByTestId("copy-canceled")).toBeVisible();
 });
+
+test("C-4: 고른 폴더 아래 일지가 여럿이면 고르기 → 고른 일지로 미리 보기", async ({ page }) => {
+  await signIn(page, "&copyParent=1");
+  await page.getByTestId("copy-pick").click();
+  const choose = page.getByTestId("copy-choose");
+  await expect(choose).toContainText("회사");
+  await expect(choose).toContainText("개인");
+  await choose.getByRole("button", { name: "이 일지 복제" }).nth(1).click();
+  await expect(page.getByTestId("copy-summary")).toContainText("개인", { timeout: 30_000 });
+});

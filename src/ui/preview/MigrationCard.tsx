@@ -32,6 +32,7 @@ const errText = (e: unknown) => {
 type Phase =
   | { kind: "idle" }
   | { kind: "copying" | "preparing"; folder: string }
+  | { kind: "choose"; parent: string; folders: string[] }
   | {
       kind: "ready";
       folder: string;
@@ -156,8 +157,30 @@ export function MigrationCard({ ownerId }: { ownerId: string | null }) {
   async function pick() {
     if (!source) return;
     setError(null);
-    const folder = await source.pickFolder(C.pickTitle);
-    if (!folder) return;
+    const parent = await source.pickFolder(C.pickTitle);
+    if (!parent) return;
+    // 고른 폴더에 일지가 없으면 바로 아래 하위 폴더(공간 폴더 등)에서 찾는다 — 하나면 그대로, 여럿이면 고르기
+    let found: string[];
+    try {
+      found = await source.candidates(parent);
+    } catch (e) {
+      setError(errText(e));
+      return;
+    }
+    if (found.length === 0) {
+      setError(C.errors.SOURCE_NOT_JOURNAL ?? null);
+      return;
+    }
+    if (found.length > 1) {
+      setPhase({ kind: "choose", parent, folders: found });
+      return;
+    }
+    await copyFrom(found[0]!);
+  }
+
+  async function copyFrom(folder: string) {
+    if (!source) return;
+    setError(null);
     setPhase({ kind: "copying", folder });
     try {
       const snap = await source.snapshot(folder);
@@ -303,6 +326,27 @@ export function MigrationCard({ ownerId }: { ownerId: string | null }) {
             </div>
           )}
         </>
+      )}
+
+      {phase.kind === "choose" && (
+        <div className={own.pending} data-testid="copy-choose">
+          <p className={own.label}>{C.chooseFolder}</p>
+          {phase.folders.map((f) => (
+            <div key={f} className={own.pendingRow}>
+              <span className={own.path} title={f}>
+                {f.startsWith(phase.parent) ? f.slice(phase.parent.length).replace(/^[\\/]/, "") : f}
+              </span>
+              <button type="button" className={styles.secondary} onClick={() => void copyFrom(f)}>
+                {C.chooseThis}
+              </button>
+            </div>
+          ))}
+          <div className={styles.row}>
+            <button type="button" className={styles.secondary} onClick={() => setPhase({ kind: "idle" })}>
+              {C.discard}
+            </button>
+          </div>
+        </div>
       )}
 
       {(phase.kind === "copying" || phase.kind === "preparing") && (

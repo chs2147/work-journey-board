@@ -161,6 +161,7 @@ pub fn run() {
             online::online_sign_out,
             source_copy::source_snapshot,
             source_copy::source_snapshot_read,
+            source_copy::source_candidates,
             source_copy::source_snapshot_remove,
             migration::migration_device,
             migration::migration_command,

@@ -17,6 +17,7 @@ export const tauriPreviewSource: PreviewSource = {
     const p = await open({ directory: true, multiple: false, title });
     return typeof p === "string" ? p : null;
   },
+  candidates: (dir) => call<string[]>("source_candidates", { dir }),
   snapshot: (dir) => call<SourceSnapshot>("source_snapshot", { dir }),
   async read(snapshotId) {
     const raw = await call<ArrayBuffer>("source_snapshot_read", { snapshotId });

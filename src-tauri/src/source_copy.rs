@@ -112,6 +112,30 @@ pub fn snapshot(root: &Path, source_dir: &Path, id: &str) -> Result<Snapshot, St
     done
 }
 
+/// 고른 폴더 바로 아래(한 단계) 하위 폴더 중 일지 파일이 있는 곳 — 이름순, 최대 20개.
+/// 목록만 읽는다(파일 내용·더 깊은 폴더·바로 가기/심볼릭 링크는 보지 않음). 고른 폴더 자체에 일지가 있으면 그것 하나.
+pub fn candidates(source_dir: &Path) -> Result<Vec<String>, String> {
+    if !source_dir.is_absolute() {
+        return Err("INVALID_PATH".into());
+    }
+    let dir = fs::canonicalize(source_dir).map_err(|_| "SOURCE_MISSING".to_string())?;
+    let is_journal = |d: &Path| fs::symlink_metadata(d.join(JOURNAL)).is_ok_and(|m| m.is_file());
+    if is_journal(&dir) {
+        return Ok(vec![dir.to_string_lossy().into_owned()]);
+    }
+    let mut out: Vec<String> = fs::read_dir(&dir)
+        .map_err(|_| "SOURCE_UNREADABLE".to_string())?
+        .flatten()
+        .filter(|e| e.file_type().is_ok_and(|t| t.is_dir()))
+        .map(|e| e.path())
+        .filter(|p| is_journal(p))
+        .map(|p| p.to_string_lossy().into_owned())
+        .collect();
+    out.sort();
+    out.truncate(20);
+    Ok(out)
+}
+
 fn snapshot_path(root: &Path, id: &str) -> Result<PathBuf, String> {
     if !is_id(id) {
         return Err("INVALID_SNAPSHOT".into());
@@ -153,6 +177,10 @@ pub fn source_snapshot_read(
     snapshot_id: String,
 ) -> Result<tauri::ipc::Response, String> {
     Ok(tauri::ipc::Response::new(read(&root(&app)?, &snapshot_id)?))
+}
+#[tauri::command]
+pub fn source_candidates(dir: String) -> Result<Vec<String>, String> {
+    candidates(Path::new(&dir))
 }
 #[tauri::command]
 pub fn source_snapshot_remove(app: AppHandle, snapshot_id: String) -> Result<(), String> {
@@ -217,6 +245,34 @@ mod tests {
         remove(&root, ID).unwrap();
         assert_eq!(read(&root, ID), Err("SNAPSHOT_MISSING".into()));
         assert!(src.join(JOURNAL).exists());
+    }
+
+    #[test]
+    fn candidates_find_journal_one_level_down_only() {
+        let (t, src, _root) = setup();
+        // 고른 폴더에 일지가 있으면 그것 하나
+        assert_eq!(
+            candidates(&src).unwrap(),
+            vec![src.to_string_lossy().into_owned()]
+        );
+        // 상위 폴더: 한 단계 아래 일지 폴더만(더 깊은 곳·일지 없는 폴더·파일은 아님)
+        let parent = t.0.clone();
+        fs::create_dir_all(parent.join("empty-dir")).unwrap();
+        fs::create_dir_all(parent.join("deep").join("inner")).unwrap();
+        fs::write(parent.join("deep").join("inner").join(JOURNAL), b"x").unwrap();
+        fs::write(parent.join("loose.txt"), b"x").unwrap();
+        assert_eq!(
+            candidates(&parent).unwrap(),
+            vec![src.to_string_lossy().into_owned()]
+        );
+        assert_eq!(
+            candidates(Path::new("relative")),
+            Err("INVALID_PATH".into())
+        );
+        assert_eq!(
+            candidates(&parent.join("nope")),
+            Err("SOURCE_MISSING".into())
+        );
     }
 
     #[test]

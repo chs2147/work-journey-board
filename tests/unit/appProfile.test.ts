@@ -182,6 +182,7 @@ describe("Rust 명령 경계(lib.rs)", () => {
       "online::online_sign_out",
       "source_copy::source_snapshot",
       "source_copy::source_snapshot_read",
+      "source_copy::source_candidates",
       "source_copy::source_snapshot_remove",
       "migration::migration_device",
       "migration::migration_command",
@@ -196,5 +197,16 @@ describe("Rust 명령 경계(lib.rs)", () => {
     expect(lib).toMatch(
       /#\[cfg\(not\(feature = "connected-preview"\)\)\]\n\s+let builder = builder\.plugin\(tauri_plugin_sql/,
     );
+  });
+});
+
+describe("원본 사본 오류 문구(C-4)", () => {
+  it("source_copy.rs가 돌려주는 오류 코드마다 한국어 문구가 있다", async () => {
+    const { STR } = await import("../../src/shared/strings");
+    const codes = new Set(
+      [...read("src-tauri/src/source_copy.rs").matchAll(/"([A-Z][A-Z_]{3,})"/g)].map((m) => m[1]!),
+    );
+    expect(codes.size).toBeGreaterThan(5);
+    for (const c of codes) expect(STR.previewCopy.errors[c], c).toBeTruthy();
   });
 });
