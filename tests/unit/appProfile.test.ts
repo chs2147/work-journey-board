@@ -204,7 +204,7 @@ describe("Rust 명령 경계(lib.rs)", () => {
     ]);
   });
 
-  it("Preview 명령: 일지·백업·복원·내보내기·Cabinet·업데이트 없음, 온라인 계정(B)·원본 사본(C-2)·이관 통신(C-3)만 더함", () => {
+  it("Preview 명령: 일지·백업·복원·내보내기·Cabinet·업데이트 없음, 온라인 계정(B)·원본 사본(C-2)·이관 통신(C-3)·온라인 공간(D)·이 기기 공간 일지(E-1)만 더함", () => {
     expect(prev).toEqual([
       "splash::splash_finish",
       "files::config_read",
@@ -231,6 +231,14 @@ describe("Rust 명령 경계(lib.rs)", () => {
       "online_space::space_sync",
       "online_space::space_read",
       "online_space::space_remove",
+      "space_db::space_db_exists",
+      "space_db::space_db_create",
+      "space_db::space_db_open",
+      "space_db::space_db_close",
+      "space_db::space_db_select",
+      "space_db::space_db_execute",
+      "space_db::space_db_batch",
+      "space_db::space_db_export",
     ]);
     // 온라인 모듈은 Preview 빌드에만 컴파일된다
     expect(lib).toMatch(/#\[cfg\(feature = "connected-preview"\)\]\nmod online;/);

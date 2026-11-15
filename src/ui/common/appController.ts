@@ -584,6 +584,15 @@ async function closeCurrent() {
   }
 }
 
+/**
+ * Connected Preview 온라인 공간 닫기(docs/v2-design/89 E-1) — 별도 창 저장 후 닫기 → 지금 일지를 한 길(closeCurrent)로 닫는다.
+ * 그 뒤 화면은 창을 새로 불러 Preview 첫 화면으로 간다(화면 저장소가 남지 않게, CLAUDE.md 4-7).
+ */
+export async function closeOnlineSpace() {
+  await closeCabiWindows().catch(() => undefined);
+  await closeCurrent();
+}
+
 /** 설정 > 저장 위치: 다른 폴더의 기존 일지로 전환(지금 일지는 그대로). 새 일지를 먼저 열어 보고 성공해야 바꾼다. */
 export async function switchTo(dataDir: string): Promise<string | null> {
   const p = platform();
@@ -885,6 +894,16 @@ if (typeof window !== "undefined")
           doc: (await j.repo.getWeekNote(useBoard.getState().weekId)).doc,
           canUndo: useNote.getState().canUndo,
         };
+      },
+      /** 브라우저 E2E 전용(읽기만): 온라인 공간 이 기기 일지의 보낼 목록(대기열) 건수 — 없으면 null(docs/v2-design/89) */
+      async syncOutbox() {
+        const j = get().journal;
+        if (j.state !== "ready" || platform().kind !== "browser") return null;
+        const t = await j.driver.select<{ n: number }>(
+          "SELECT count(*) AS n FROM sqlite_master WHERE type='table' AND name='wjb_sync_outbox'",
+        );
+        if (!t[0]?.n) return null;
+        return (await j.driver.select<{ n: number }>("SELECT count(*) AS n FROM wjb_sync_outbox"))[0]!.n;
       },
       /** Read-only browser assertion: copying may grow relations, never shared objects/assets. */
       async journalCounts() {

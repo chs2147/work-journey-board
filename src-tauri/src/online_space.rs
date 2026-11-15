@@ -324,9 +324,16 @@ pub fn space_read(
     Ok(tauri::ipc::Response::new(read_file(&dir, &name)?))
 }
 #[tauri::command]
-pub fn space_remove(app: AppHandle, workspace_id: String) -> Result<(), String> {
+pub async fn space_remove(
+    app: AppHandle,
+    db: State<'_, crate::space_db::SpaceDbState>,
+    workspace_id: String,
+) -> Result<(), String> {
     let store = crate::online::app_store(&app)?;
-    remove(&space_dir(store.root(), &owner(&store)?, &workspace_id)?)
+    let dir = space_dir(store.root(), &owner(&store)?, &workspace_id)?;
+    // 이 기기 일지가 열려 있으면 먼저 닫는다(E-1)
+    db.close(&dir).await;
+    remove(&dir)
 }
 
 #[cfg(test)]

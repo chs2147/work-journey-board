@@ -1583,11 +1583,10 @@ export const STR_BASE = {
     open: "열기",
     opening: "여는 중…",
     refresh: "목록 새로 고침",
-    bandLabel: "온라인 공간 · 읽기 전용",
+    bandLabel: "온라인 공간",
     bandMeta: (when: string) => `${when} 복제본`,
     stale: "서버에 연결하지 못해 이 기기에 받아 둔 내용",
     close: "목록으로",
-    readOnlyToast: "온라인 공간은 지금 읽기 전용입니다. 고친 내용은 저장되지 않습니다.",
     errors: {
       READ_NOT_FOUND: "이 온라인 공간을 찾을 수 없습니다. 목록을 새로 고쳐 주세요.",
       READ_ACCESS_DENIED: "이 기기에서 읽을 권한이 없습니다. 다시 로그인해 주세요.",
@@ -1599,6 +1598,9 @@ export const STR_BASE = {
       CACHE_MISSING: "이 기기에 받아 둔 내용이 없습니다.",
       RESTORE_ASSET_MISMATCH: "그림 파일이 기록과 달라 열지 않았습니다.",
       RESTORE_SCHEMA_VERSION: "이 앱이 모르는 일지 구조입니다.",
+      JOURNAL_MISSING: "이 기기에 저장된 공간 일지를 찾지 못했습니다. 다시 열어 주세요.",
+      INVALID_JOURNAL: "이 기기에 공간 일지를 만들지 못했습니다(받은 내용이 일지 형식이 아님).",
+      STORE: "이 기기에 저장하지 못했습니다. 디스크 공간을 확인해 주세요.",
     } as Record<string, string>,
   },
   /** 새 판 확인·설치(improve-1027v4-spec 1절 B안) */

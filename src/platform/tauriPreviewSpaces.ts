@@ -1,5 +1,6 @@
 // D단계 내 온라인 공간 — Rust online_space.rs 명령(Preview 빌드에만 등록)
 import { invoke } from "@tauri-apps/api/core";
+import { tauriSpaceJournal } from "./tauriSpaceJournal";
 import type { OnlineSpaceInfo, PreviewSpaces, SpaceSyncResult } from "./index";
 
 const code = (e: unknown) => (typeof e === "string" && /^[A-Z0-9_]{3,60}$/.test(e) ? e : "UNKNOWN");
@@ -18,4 +19,5 @@ export const tauriPreviewSpaces: PreviewSpaces = {
     return new Uint8Array(await call<ArrayBuffer>("space_read", { workspaceId, name }));
   },
   remove: (workspaceId) => call<void>("space_remove", { workspaceId }),
+  journal: tauriSpaceJournal,
 };

@@ -1,7 +1,7 @@
 // 브라우저 모드(개발·E2E)용 가짜 "내 온라인 공간" — 가짜 이관 서버(browserPreviewMigration)가 게시한 공간을 읽는다.
 // 네트워크 없음, 메모리 캐시. ?spacesOffline=1 이면 서버에 닿지 못한 상황(받아 둔 공간만)
 import { fakePublishedSpaces } from "./browserPreviewMigration";
-import type { OnlineSpaceInfo, PreviewSpaces } from "./index";
+import type { OnlineSpaceInfo, PreviewSpaces, SpaceDriver, SpaceJournalStore } from "./index";
 
 const MH = "c".repeat(64);
 const cache = new Map<string, Map<string, Uint8Array>>();
@@ -16,6 +16,35 @@ const info = (s: ReturnType<typeof fakePublishedSpaces>[number]): OnlineSpaceInf
   createdAt: s.createdAt,
   sourceSchema: Number(s.header.sourceSchema),
 });
+
+/** E-1 이 기기 일지 흉내 — 메모리(창을 새로 불러오면 사라짐). 닫을 때 바이트로 남겨 다시 열 수 있다 */
+const journals = new Map<string, Uint8Array>();
+export const browserSpaceJournal: SpaceJournalStore = {
+  exists: async (ws) => journals.has(ws),
+  async create(ws, bytes) {
+    if (journals.has(ws)) throw new Error("JOURNAL_EXISTS");
+    journals.set(ws, bytes.slice());
+  },
+  async open(ws): Promise<SpaceDriver> {
+    const bytes = journals.get(ws);
+    if (!bytes) throw new Error("JOURNAL_MISSING");
+    const { loadSql } = await import("../preview/migrationSession");
+    const { SqlJsDriver } = await import("../data/drivers/sqlJs");
+    const d = new SqlJsDriver(new (await loadSql()).Database(bytes), "온라인 공간(이 기기, 브라우저 모드)");
+    const keep = () => journals.set(ws, d.exportBytes());
+    return {
+      label: d.label,
+      select: (sql, params) => d.select(sql, params),
+      execute: (sql, params) => d.execute(sql, params),
+      batch: (statements) => d.batch(statements),
+      exportBytes: async () => d.exportBytes(),
+      async close() {
+        keep();
+        await d.close();
+      },
+    };
+  },
+};
 
 export const browserPreviewSpaces: PreviewSpaces = {
   async list() {
@@ -64,5 +93,7 @@ export const browserPreviewSpaces: PreviewSpaces = {
   },
   async remove(workspaceId) {
     cache.delete(workspaceId);
+    journals.delete(workspaceId);
   },
+  journal: browserSpaceJournal,
 };

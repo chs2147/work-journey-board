@@ -1,7 +1,6 @@
-// D-3 온라인 공간 되살리기(Connected Preview, docs/v2-design/87) — 이 기기 캐시(머리·기록·그림 파일) → 메모리 안 앱 일지.
-// 되살린 일지는 메모리에만 있다(파일로 쓰지 않음). 원본 로컬 일지·정식판·DEV와 무관.
+// D-3 온라인 공간 되살리기(Connected Preview, docs/v2-design/87) — 이 기기 캐시(머리·기록·그림 파일) → 앱 일지 바이트.
+// E-1부터는 이 바이트로 이 기기 일지를 처음 한 번 만든다(spaceJournal.ts). 원본 로컬 일지·정식판·DEV와 무관.
 import type { SqlJsStatic } from "sql.js";
-import type { SqlDriver } from "../data/driver";
 import type { PreviewSpaces } from "../platform";
 import { bytesToBase64, hash } from "../../poc/v2-sync/hash-core.mjs";
 import type {
@@ -46,69 +45,8 @@ export async function restoreFromCache(SQL: SqlJsStatic, spaces: PreviewSpaces, 
       },
       rows,
     );
-    return { bytes: db.export(), head, records: records.length };
+    return { bytes: db.export(), head, records: records.length, list: records };
   } finally {
     db.close();
   }
-}
-
-/** 구조를 바꾸는 문(행 수로 잡히지 않음)은 늘 거절 — VACUUM INTO(백업 사본)는 일지를 바꾸지 않는다 */
-const DDL = /^\s*(create|drop|alter|reindex|vacuum(?!\s+into)|pragma\s+\w+\s*=)/i;
-export class OnlineReadOnlyError extends Error {
-  constructor() {
-    super("ONLINE_READ_ONLY");
-  }
-}
-/**
- * 앱이 공간을 다 띄운 뒤(lock)부터 **실제로 내용을 바꾸는 쓰기**를 거절하는 드라이버(바뀌면 되돌리고 오류).
- * "없으면 만들기(INSERT OR IGNORE)"처럼 바뀌는 게 없는 문은 그대로 통과 — 메모보드 열기 등이 막히지 않게(실기에서 발견).
- * 메모리 위 sql.js 연결 하나라 저장점으로 감싸 판정한다. 편집·동기화는 E단계.
- */
-export function readOnlyGate(onBlocked?: () => void) {
-  let locked = false;
-  return {
-    lock() {
-      locked = true;
-    },
-    get locked() {
-      return locked;
-    },
-    wrap(d: SqlDriver): SqlDriver {
-      const total = async () => (await d.select<{ n: number }>("SELECT total_changes() AS n"))[0]?.n ?? 0;
-      const refuse = () => {
-        onBlocked?.();
-        return new OnlineReadOnlyError();
-      };
-      async function guarded(sqls: { sql: string; params?: unknown[] }[]) {
-        if (sqls.some((s) => DDL.test(s.sql))) throw refuse();
-        await d.execute("SAVEPOINT wjb_online_ro");
-        let changes = 0,
-          ok = false;
-        try {
-          const before = await total();
-          for (const s of sqls) changes += (await d.execute(s.sql, s.params as never)).changes;
-          ok = (await total()) === before;
-        } finally {
-          if (!ok) await d.execute("ROLLBACK TO wjb_online_ro");
-          await d.execute("RELEASE wjb_online_ro");
-        }
-        if (!ok) throw refuse();
-        return changes;
-      }
-      return {
-        label: "온라인 공간(읽기 전용)",
-        select: (sql, params) => d.select(sql, params),
-        async execute(sql, params) {
-          if (!locked) return d.execute(sql, params);
-          if (/^\s*vacuum\s+into/i.test(sql)) return d.execute(sql, params);
-          return { changes: await guarded([{ sql, params }]) };
-        },
-        async batch(statements) {
-          if (!locked) return d.batch(statements);
-          return guarded(statements);
-        },
-        close: () => d.close(),
-      };
-    },
-  };
 }

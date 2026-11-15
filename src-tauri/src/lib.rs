@@ -18,6 +18,8 @@ mod online_space;
 mod profile;
 #[cfg(feature = "connected-preview")]
 mod source_copy;
+#[cfg(feature = "connected-preview")]
+mod space_db;
 mod splash;
 mod update;
 mod update_policy;
@@ -150,6 +152,7 @@ pub fn run() {
     #[cfg(feature = "connected-preview")]
     let builder = builder
         .manage(online::OnlineState::default())
+        .manage(space_db::SpaceDbState::default())
         .invoke_handler(tauri::generate_handler![
             splash::splash_finish,
             files::config_read,
@@ -175,7 +178,15 @@ pub fn run() {
             online_space::space_list,
             online_space::space_sync,
             online_space::space_read,
-            online_space::space_remove
+            online_space::space_remove,
+            space_db::space_db_exists,
+            space_db::space_db_create,
+            space_db::space_db_open,
+            space_db::space_db_close,
+            space_db::space_db_select,
+            space_db::space_db_execute,
+            space_db::space_db_batch,
+            space_db::space_db_export
         ]);
     builder
         .run(context)

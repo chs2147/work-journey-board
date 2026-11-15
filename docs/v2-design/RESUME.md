@@ -1,6 +1,6 @@
 # V2 설계·PoC 중단/재개 기록
 
-**현재 재개 정본:** [88. E단계 설계 — 온라인 공간 편집·여러 기기 동기화](88-e-stage-sync-design.md)(결정 대기 E1 이 기기 저장·E2 범위·E3 시점·E4 충돌 화면). D단계 완료·Windows↔macOS 상호 확인([87](87-d-stage-open-design.md), m1-check 7-49). 이하 체크포인트는 작성 당시 기록이며 가장 최근 결과가 우선한다.
+**현재 재개 정본:** [89. E-1 이 기기 일지·보낼 목록](89-e1-device-journal.md)(구현) — 설계 [88](88-e-stage-sync-design.md) E1~E4 추천안 승인(2026-11-15). 다음 = E-2 서버 push/pull. D단계 완료·Windows↔macOS 상호 확인([87](87-d-stage-open-design.md), m1-check 7-49). 이하 체크포인트는 작성 당시 기록이며 가장 최근 결과가 우선한다.
 
 2026-11-09 UTC · V2 설계/PoC 중단 지점을 보존한 뒤 복귀했다. 사용자 요청으로 main 1.23.1 패치(`d11a0ca`)를 v2-design에 병합했다.
 

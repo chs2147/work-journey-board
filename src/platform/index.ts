@@ -424,7 +424,21 @@ export interface PreviewSpaces {
   sync(workspaceId: string): Promise<SpaceSyncResult>;
   /** header.json · records.json · complete.json · <sha256>.bin — 완성 캐시에서만 */
   read(workspaceId: string, name: string): Promise<Uint8Array>;
+  /** 캐시와 이 기기 일지를 함께 지운다 */
   remove(workspaceId: string): Promise<void>;
+  /** E-1 이 기기 일지(파일 경로는 Rust가 정함 — 공간 ID만 넘긴다) */
+  journal: SpaceJournalStore;
+}
+/** E-1 온라인 공간의 이 기기 일지(docs/v2-design/89) */
+export interface SpaceJournalStore {
+  exists(workspaceId: string): Promise<boolean>;
+  /** 처음 만들기 — 파일이 없을 때만(있으면 JOURNAL_EXISTS) */
+  create(workspaceId: string, bytes: Uint8Array): Promise<void>;
+  open(workspaceId: string): Promise<SpaceDriver>;
+}
+export interface SpaceDriver extends SqlDriver {
+  /** 지금 내용의 일관된 사본 바이트(앱의 백업 사본용) */
+  exportBytes(): Promise<Uint8Array>;
 }
 export async function loadPreviewSpaces(): Promise<PreviewSpaces> {
   if (isTauri()) return (await import("./tauriPreviewSpaces")).tauriPreviewSpaces;

@@ -1,5 +1,6 @@
-// D-4 내 온라인 공간(Connected Preview, docs/v2-design/87) — 목록 → [열기] → 이 기기 캐시 채우기 → 메모리 일지로 되살려
-// 지금 앱 화면 그대로(읽기 전용). 닫으면 창을 새로 불러 Preview 첫 화면으로(화면 저장소 상태가 남지 않게 — CLAUDE.md 4-7).
+// 내 온라인 공간(Connected Preview, docs/v2-design/87·89) — 목록 → [열기] → 이 기기 캐시 채우기 →
+// (처음이면) 캐시에서 이 기기 일지 만들기 → 그 일지로 지금 앱 화면 그대로(편집 = 이 기기에 저장 + 보낼 목록).
+// 닫으면 저장을 마치고 일지를 닫은 뒤 창을 새로 불러 Preview 첫 화면으로(화면 저장소 상태가 남지 않게 — CLAUDE.md 4-7).
 import { lazy, useEffect, useState } from "react";
 import {
   loadPreviewSpaces,
@@ -9,12 +10,12 @@ import {
 } from "../../platform";
 import { createOnlinePlatform, destroyChildWindows } from "../../platform/onlinePlatform";
 import { isTauri } from "@tauri-apps/api/core";
-import { restoreFromCache, readOnlyGate } from "../../preview/onlineWorkspace";
+import { ensureSpaceJournal } from "../../preview/spaceJournal";
 import { loadSql } from "../../preview/migrationSession";
+import { closeOnlineSpace } from "../common/appController";
 import { formatBytes, STR } from "../../shared/strings";
 import { readStoredTheme } from "../../shared/theme";
 import { useAppStore } from "../common/appStore";
-import { toast } from "../board/boardStore";
 import styles from "../first-run/FirstRun.module.css";
 import own from "./MigrationCard.module.css";
 import shell from "./OnlineSpaces.module.css";
@@ -78,7 +79,7 @@ export function OnlineSpacesCard({
     });
   }, [ownerId]);
   useEffect(() => {
-    if (spaces && refreshKey) void refresh(spaces);
+    if (spaces && refreshKey) void Promise.resolve(spaces).then(refresh);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshKey]);
 
@@ -91,8 +92,7 @@ export function OnlineSpacesCard({
     try {
       const sync = await spaces.sync(w.workspaceId);
       const SQL = await loadSql();
-      const restored = await restoreFromCache(SQL, spaces, w.workspaceId);
-      const gate = readOnlyGate(() => toast(S.readOnlyToast));
+      await ensureSpaceJournal(SQL, spaces, spaces.journal, w.workspaceId);
       // 실앱: 업무노트·메모보드·파일 목록을 정식판과 같은 별도 OS 창으로(Tauri 창 다리)
       const native = isTauri() ? (await import("../../platform/tauri")).tauriPlatform : null;
       setPlatformOverride(
@@ -101,19 +101,11 @@ export function OnlineSpacesCard({
             ? { cabi: native.cabi, folderWindows: native.folderWindows, cabinetWindow: native.cabinetWindow }
             : undefined,
           SQL,
-          journal: restored.bytes,
+          openJournal: () => spaces.journal.open(w.workspaceId),
           workspaceId: w.workspaceId,
           theme: readStoredTheme(),
-          wrap: gate.wrap,
         }),
       );
-      // 앱이 공간을 다 띄우면 그때부터 쓰기를 막는다
-      const stop = useAppStore.subscribe((s) => {
-        if (s.journal.state === "ready") {
-          gate.lock();
-          stop();
-        }
-      });
       onOpened({ workspaceId: w.workspaceId, label: when(w.createdAt), stale: sync.stale });
     } catch (e) {
       setError(errText(e));
@@ -171,9 +163,9 @@ export function OnlineSpacesCard({
   );
 }
 
-/** 목록으로: 열려 있는 별도 창(노트·메모보드·파일 목록·폴더)을 닫고 창을 새로 불러 Preview 첫 화면으로 */
+/** 목록으로: 입력 중인 글·별도 창(노트·메모보드) 저장 → 일지 닫기 → 남은 창 정리 → 창을 새로 불러 Preview 첫 화면으로 */
 async function closeSpace() {
-  // 저장 확인 없이 바로(읽기 전용) — 실앱은 별도 창을 없애고, 브라우저 모드는 팝업 다리로 닫는다
+  await closeOnlineSpace().catch(() => undefined);
   const p = useAppStore.getState().platform;
   await Promise.allSettled([destroyChildWindows(), p?.cabi.closeAll()]);
   location.reload();

@@ -12,7 +12,9 @@ async function signIn(page: Page, query = "") {
 const external = (requests: string[]) =>
   requests.filter((u) => !/^https?:\/\/(localhost|127\.0\.0\.1)[:/]/.test(u) && !u.startsWith("data:"));
 
-test("D-4: 복제 → 내 온라인 공간 목록 → 열기 → 앱 화면(읽기 전용 띠) → 목록으로", async ({ page }) => {
+test("D-4·E-1: 복제 → 내 온라인 공간 목록 → 열기 → 앱 화면 → 고치면 이 기기 대기열에 → 목록으로", async ({
+  page,
+}) => {
   const requests: string[] = [];
   page.on("request", (r) => requests.push(r.url()));
   await signIn(page);
@@ -26,10 +28,22 @@ test("D-4: 복제 → 내 온라인 공간 목록 → 열기 → 앱 화면(읽�
   await row.getByTestId("online-space-open").click();
   // 지금 앱 화면 그대로 + 위 띠
   await expect(page.getByTestId("online-workspace")).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByText("온라인 공간 · 읽기 전용")).toBeVisible();
+  await expect(page.getByTestId("online-workspace")).toContainText("온라인 공간");
   await expect(page.getByTestId("rail-settings")).toBeVisible({ timeout: 30_000 });
   // 복제된 가상 업무가 보인다(가상 샘플 showcase의 업무 이름 중 하나)
   await expect(page.locator("body")).toContainText(/정산|보안|가상/);
+  // E-1: 읽기 전용이 아니다 — 기록을 고치면 이 기기 일지에 저장되고 보낼 목록(대기열)에 쌓인다
+  const outbox = () =>
+    page.evaluate(() =>
+      (globalThis as unknown as { __wjbApp: { syncOutbox(): Promise<number | null> } }).__wjbApp.syncOutbox(),
+    );
+  expect(await outbox()).toBe(0);
+  const entry = page.locator("textarea").first();
+  await entry.click();
+  await page.keyboard.press("End");
+  await page.keyboard.type(" 고침");
+  await page.keyboard.press("Escape");
+  await expect.poll(outbox, { timeout: 10_000 }).toBeGreaterThan(0);
   expect(external(requests)).toEqual([]);
   await page.getByTestId("online-workspace-close").click();
   await expect(page.getByTestId("connected-preview")).toBeVisible();
