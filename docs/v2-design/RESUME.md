@@ -1,6 +1,6 @@
 # V2 설계·PoC 중단/재개 기록
 
-**현재 재개 정본:** [86. C-5 실기 확인](86-c5-device-check.md) — Preview run 8(`d7db3e0`) 설치 파일로 m1-check 7-48(DEV 일지 → 정식 일지 → 큰 그림 → macOS), 실기 뒤 서버 자료 확인·지우기 도구 `dev-copy-admin.mjs`. 사용자 실기 대기. 앞 [85 C-4](85-c4-copy-screen.md). 이하 체크포인트는 작성 당시 기록이며 가장 최근 결과가 우선한다.
+**현재 재개 정본:** [86. C-5 실기 확인](86-c5-device-check.md) — Preview run 10(`e0da3cc`) 설치 파일로 m1-check 7-48(DEV 일지 → 정식 일지 → 큰 그림 → macOS), 실기 뒤 서버 자료 확인·지우기 도구 `dev-copy-admin.mjs`. 사용자 실기 대기. 앞 [85 C-4](85-c4-copy-screen.md). 이하 체크포인트는 작성 당시 기록이며 가장 최근 결과가 우선한다.
 
 2026-11-09 UTC · V2 설계/PoC 중단 지점을 보존한 뒤 복귀했다. 사용자 요청으로 main 1.23.1 패치(`d11a0ca`)를 v2-design에 병합했다.
 
