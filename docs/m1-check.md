@@ -735,3 +735,5 @@ DEV 설치 파일 = 작업 브랜치 `build-desktop.yml` 산출물 `work-journey
 8. [ ] 5~10MB 그림이 든 일지(메모 보드에 큰 사진) → 올리기 완료(그림 개당 시간 기록)
 9. [x] macOS에서 2·3 반복(Keychain 로그인 유지 상태) — 2026-11-15 run 13
 
+2026-11-15 Windows에서도 정식 일지 확인 완료(사용자). 확인 뒤 사용자 요청으로 개발 서버의 이 계정 온라인 사본 전부 삭제(`dev-copy-admin.mjs --purge-owner-development`): 작업 3·기록 97행·공간 3·그림·저장소 객체 → 0. 로그인 계정 1·기기 2(Windows·macOS Preview)는 남김.
+
