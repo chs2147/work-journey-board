@@ -7,7 +7,7 @@ import { createRecoveryWorker } from "./recovery.mjs";
 
 // Server-only composition. Does not read env, fetch JWKS, listen or deploy.
 // Management PATs must never be substituted for this explicit runtime credential.
-export function createDevelopmentGateway({ projectRef, serviceRoleKey, jwks, fetchTransport }) {
+export function createDevelopmentGateway({ projectRef, serviceRoleKey, jwks, fetchTransport, bucket }) {
   if (projectRef !== CLOUD_TARGETS.development.projectRef)
     throw new TypeError("Development project required");
   if (typeof serviceRoleKey === "string" && serviceRoleKey.startsWith("sb_secret_"))
@@ -16,7 +16,7 @@ export function createDevelopmentGateway({ projectRef, serviceRoleKey, jwks, fet
     );
   if (typeof serviceRoleKey === "string" && serviceRoleKey.startsWith("sbp_"))
     throw new TypeError("Management PAT is not a gateway runtime credential");
-  const rest = createSupabaseRest({ projectRef, serviceRoleKey, fetchTransport });
+  const rest = createSupabaseRest({ projectRef, serviceRoleKey, fetchTransport, bucket });
   const verifyAccessToken = createSessionVerifier({ projectRef, jwks, callServerRpc: rest.callServerRpc });
   const metadata = createPostgresMetadata({ callServerRpc: rest.callServerRpc });
   return Object.freeze({

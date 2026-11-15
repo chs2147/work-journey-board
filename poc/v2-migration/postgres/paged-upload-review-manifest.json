@@ -1,5 +1,5 @@
 {
-  "module": "wjb-full-workspace-paged-upload-poc-1",
+  "module": "wjb-full-workspace-paged-upload-assets-poc-1",
   "profile": "development",
   "projectRef": "vsphftnmfzfoufasjttd",
   "region": "ap-northeast-2",
@@ -10,38 +10,48 @@
   "requires": [
     "001-migration.sql (installed)",
     "004-workspace.sql (installed, unchanged bytes)",
-    "007-workspace-db20.sql (installed, unchanged bytes)"
+    "007-workspace-db20.sql (installed, unchanged bytes)",
+    "C2 gateway asset module (installed; wjb_v2_asset_command text identical to poc/v2-gateway/postgres-metadata.sql)"
   ],
   "limits": {
     "pageRecords": 1000,
     "pages": 32,
     "records": 20000,
     "envelopeBytes": 67108864,
-    "assets": 8,
-    "assetBytes": 65536,
-    "activeUploadsPerOwner": 4
+    "assets": 2000,
+    "assetBytes": 10485760,
+    "activeUploadsPerOwner": 4,
+    "workspaceQuotaBytesDefault": 209715200,
+    "devicesPerUser": 16
   },
   "newObjects": {
     "tables": 2,
     "rlsTables": 2,
-    "newPublicRPCs": 0,
+    "newPublicRPCs": 1,
+    "newPublicRPCNames": ["public.wjb_v2_device_register (service_role only)"],
     "newPrivateFunctions": ["wjb_migration.command_core"],
-    "replacedFunctions": ["public.wjb_v2_migration_command", "wjb_migration.normalize_workspace"]
+    "replacedFunctions": [
+      "public.wjb_v2_migration_command",
+      "wjb_migration.normalize_workspace",
+      "public.wjb_v2_asset_command"
+    ],
+    "widenedConstraints": ["wjb_gateway.asset.asset_bytes_check", "wjb_migration.asset.asset_bytes_check"],
+    "changedDefaults": ["wjb_gateway.workspace.quota_bytes 1048576→209715200"]
   },
-  "rollback": "011 only while no upload is staged; restores the exact 004 command and 007 validation text; jobs/records stay",
+  "rollback": "011 only while no upload is staged and no asset exceeds 64KiB; restores the exact 004 command, 007 validation and C2 asset command text, limits and quota default; drops the device RPC; jobs/records/devices stay",
   "localEvidence": "docs/v2-design/evidence/migration-paged-upload-pass.json",
   "sources": [
     {
       "path": "poc/v2-migration/postgres/010-workspace-paged-upload.sql",
-      "sha256": "3f9e1e9934b076880010dbe2c465c5a832a579f615a584ed3d284e9fe3cf8540"
+      "sha256": "7bd1f6651f65de491b2ae65d9a90175cfafe2d4799b46a9066d2d8ee635c955b"
     },
     {
       "path": "poc/v2-migration/postgres/012-workspace-paged-upload-verify.sql",
-      "sha256": "a6e807bb80b79a9feb7303a134cdaaf19b29b1325ec56d750cd7ef0e1e2b3238"
+      "sha256": "618fe2734c0a6d19ab62a41c576ae1f43f0583c6e0e6c0a8868ef8e210c21791"
     },
     {
       "path": "poc/v2-migration/postgres/011-workspace-paged-upload-rollback-empty.sql",
-      "sha256": "e5fc173bb1dd16910e70f570d7f00b7d5fb1a34bdcc446d36666907b1e0d7d15"
+      "sha256": "896d599ff81355badad75c65141401c15c7287460f38e50fb16a9882253bfb2f"
     }
   ]
 }

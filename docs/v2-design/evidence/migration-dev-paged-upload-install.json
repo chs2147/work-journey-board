@@ -1,0 +1,54 @@
+{
+  "startedAt": "2026-11-15T01:57:15.410Z",
+  "projectRef": "vsphftnmfzfoufasjttd",
+  "autoApply": false,
+  "userRequestedDevIntegration": true,
+  "productionTouched": false,
+  "sources": [
+    {
+      "path": "poc/v2-migration/postgres/010-workspace-paged-upload.sql",
+      "sha256": "7bd1f6651f65de491b2ae65d9a90175cfafe2d4799b46a9066d2d8ee635c955b"
+    },
+    {
+      "path": "poc/v2-migration/postgres/012-workspace-paged-upload-verify.sql",
+      "sha256": "618fe2734c0a6d19ab62a41c576ae1f43f0583c6e0e6c0a8868ef8e210c21791"
+    }
+  ],
+  "phases": [
+    {
+      "phase": "preflight",
+      "has007": true,
+      "has010": false
+    },
+    {
+      "phase": "apply",
+      "ok": true
+    }
+  ],
+  "applied": true,
+  "executionRole": {
+    "role": "postgres",
+    "read_only": "off",
+    "rolsuper": false,
+    "rolbypassrls": true
+  },
+  "verify": {
+    "core": true,
+    "tables": 7,
+    "clientRPC": false,
+    "deviceRPC": true,
+    "rlsTables": 7,
+    "serviceRPC": true,
+    "cloudApplied": false,
+    "pagedActions": true,
+    "quotaDefault": "209715200",
+    "uploadTables": 2,
+    "assetLimit10MB": true,
+    "privateExecute": false,
+    "recordLimit20000": true,
+    "directTableAccess": false,
+    "unsafeSearchPaths": false,
+    "productActivationAllowed": false
+  },
+  "finishedAt": "2026-11-15T01:57:23.030Z"
+}

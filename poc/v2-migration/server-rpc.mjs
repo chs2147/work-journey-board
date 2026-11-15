@@ -1,4 +1,5 @@
 // Server-only DEV migration control transport; no env reads or implicit requests.
+import { Buffer } from "node:buffer";
 import { createHash } from "node:crypto";
 import { GatewayError, readLimited } from "../v2-gateway/io.mjs";
 const dev = "vsphftnmfzfoufasjttd";
@@ -163,7 +164,7 @@ export function createMigrationRPC({
             !sha.test(h.sourceManifestHash) ||
             !sha.test(h.contractFingerprint) ||
             !Array.isArray(h.assets) ||
-            h.assets.length > 8 ||
+            h.assets.length > 2000 ||
             !Number.isInteger(params.pages) ||
             !Number.isInteger(params.records) ||
             params.pages < 1 ||
@@ -211,7 +212,7 @@ export function createMigrationRPC({
             !Array.isArray(params.records) ||
             params.records.length > 2048 ||
             !Array.isArray(params.assets) ||
-            params.assets.length > 8
+            params.assets.length > 2000
           )
             throw new GatewayError("INVALID_RPC");
         } else if (!keys(params, ["workspaceId", "sourceManifestHash", "assets", "documents"]))
@@ -244,7 +245,7 @@ export function createMigrationRPC({
         if ("sha256" in params && !sha.test(params.sha256)) throw new GatewayError("INVALID_RPC");
         if (
           "bytes" in params &&
-          (!Number.isInteger(params.bytes) || params.bytes < 1 || params.bytes > 65536)
+          (!Number.isInteger(params.bytes) || params.bytes < 1 || params.bytes > 10485760)
         )
           throw new GatewayError("INVALID_RPC");
       }
@@ -293,7 +294,7 @@ export function createMigrationRPC({
       }
       try {
         const v = JSON.parse(
-          (await readLimited(response, action === "workspace" ? 1048576 + 8192 : 8192)).toString("utf8"),
+          (await readLimited(response, action === "workspace" ? 67108864 + 8192 : 8192)).toString("utf8"),
         );
         if (!v || typeof v !== "object" || Array.isArray(v)) throw Error();
         if (
@@ -355,7 +356,7 @@ export function createMigrationRPC({
             !sha.test(v.sha256) ||
             !Number.isInteger(v.bytes) ||
             v.bytes < 1 ||
-            v.bytes > 65536)
+            v.bytes > 10485760)
         )
           throw Error();
         if (

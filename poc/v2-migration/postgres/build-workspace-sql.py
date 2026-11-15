@@ -162,6 +162,9 @@ w21=w20
 w21=edit(w21,"octet_length(v::text)>1048576 OR jsonb_typeof(v->'records')","octet_length(v::text)>67108864 OR jsonb_typeof(v->'records')")
 w21=edit(w21,"jsonb_array_length(v->'records')>2048 OR","jsonb_array_length(v->'records')>20000 OR")
 w21=edit(w21,"(st->>col) !~ '^[0-9]+$' OR (st->>col)::bigint>4096","(st->>col) !~ '^[0-9]+$' OR (st->>col)::bigint>20000")
+# C-1b: images 8 → 2000, 64KiB → 10MB (bytes still verified by the gateway read-back before attest)
+w21=edit(w21,"jsonb_array_length(v->'assets')>8 OR jsonb_array_length(v->'exclusions')","jsonb_array_length(v->'assets')>2000 OR jsonb_array_length(v->'exclusions')")
+w21=edit(w21,"(a->>'bytes')::bigint NOT BETWEEN 1 AND 65536 THEN RAISE EXCEPTION 'MIGRATION_INVALID_ASSET'","(a->>'bytes')::bigint NOT BETWEEN 1 AND 10485760 THEN RAISE EXCEPTION 'MIGRATION_INVALID_ASSET'")
 w21=edit(w21,"setting jsonb;names text[];total integer;version integer;","setting jsonb;names text[];total integer;version integer;assetrecs jsonb;")
 w21=edit(w21," FOR r IN SELECT value FROM jsonb_array_elements(v->'records') LOOP\n"," -- image-reference checks only need the asset rows (was the whole record list per node)\n assetrecs:=(SELECT coalesce(jsonb_agg(x),'[]') FROM jsonb_array_elements(v->'records') x WHERE x->>'table' IN('note_asset','cabi_asset'));\n FOR r IN SELECT value FROM jsonb_array_elements(v->'records') LOOP\n")
 fk_loop=w21[w21.index("  FOR fk IN SELECT value FROM jsonb_array_elements(contract->'tables'->t->'foreignKeys') LOOP"):]
@@ -260,6 +263,44 @@ BEGIN
 EXCEPTION WHEN invalid_text_representation OR numeric_value_out_of_range THEN RAISE EXCEPTION 'MIGRATION_INVALID_REQUEST';
 END $$;
 """
+# C-1b gateway asset module (C2, installed in DEV): same function text as postgres-metadata.sql with two limits raised
+gw=(REPO/'poc/v2-gateway/postgres-metadata.sql').read_text()
+asset_cmd=gw[gw.index('CREATE FUNCTION public.wjb_v2_asset_command('):]
+asset_cmd=asset_cmd[:asset_cmd.index('$$;')+3]+"\n"
+asset_cmd_new=edit(asset_cmd.replace('CREATE FUNCTION','CREATE OR REPLACE FUNCTION',1),"v_bytes>65536","v_bytes>10485760")
+asset_cmd_new=edit(asset_cmd_new,"WHERE workspace_id=v_ws)>=256 THEN RAISE EXCEPTION 'ASSET_LIMIT'","WHERE workspace_id=v_ws)>=2000 THEN RAISE EXCEPTION 'ASSET_LIMIT'")
+asset_cmd_old=asset_cmd.replace('CREATE FUNCTION','CREATE OR REPLACE FUNCTION',1)
+limits010="""DO $$ DECLARE c text; BEGIN
+ FOR c IN SELECT conname FROM pg_constraint WHERE conrelid='wjb_gateway.asset'::regclass AND contype='c' AND pg_get_constraintdef(oid) LIKE '%bytes <= 65536%' LOOP
+  EXECUTE format('ALTER TABLE wjb_gateway.asset DROP CONSTRAINT %I',c); END LOOP;
+END $$;
+ALTER TABLE wjb_gateway.asset ADD CONSTRAINT asset_bytes_check CHECK(bytes BETWEEN 1 AND 10485760);
+ALTER TABLE wjb_migration.asset DROP CONSTRAINT asset_bytes_check;
+ALTER TABLE wjb_migration.asset ADD CONSTRAINT asset_bytes_check CHECK(bytes BETWEEN 1 AND 10485760);
+-- per new online workspace: 200MB (Free plan storage 1GB). Existing rows keep their quota.
+ALTER TABLE wjb_gateway.workspace ALTER COLUMN quota_bytes SET DEFAULT 209715200;
+"""
+device010="""-- Device registration for the signed-in session (server-only; gateway calls it with the verified principal)
+CREATE FUNCTION public.wjb_v2_device_register(p_user uuid,p_session uuid,p_device uuid) RETURNS jsonb
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $$
+DECLARE d wjb_gateway.device;
+BEGIN
+ IF p_user IS NULL OR p_session IS NULL OR p_device IS NULL OR NOT public.wjb_v2_session_active(p_user,p_session) THEN RAISE EXCEPTION 'DEVICE_ACCESS_DENIED'; END IF;
+ PERFORM pg_advisory_xact_lock(hashtextextended('device-register:'||p_user::text,0));
+ SELECT * INTO d FROM wjb_gateway.device WHERE id=p_device FOR UPDATE;
+ IF FOUND THEN
+  IF d.user_id<>p_user THEN RAISE EXCEPTION 'DEVICE_ACCESS_DENIED'; END IF;
+  IF d.revoked THEN RAISE EXCEPTION 'DEVICE_REVOKED'; END IF;
+  UPDATE wjb_gateway.device SET session_id=p_session WHERE id=p_device;
+ ELSE
+  IF (SELECT count(*) FROM wjb_gateway.device WHERE user_id=p_user AND NOT revoked)>=16 THEN RAISE EXCEPTION 'DEVICE_LIMIT'; END IF;
+  INSERT INTO wjb_gateway.device(id,user_id,session_id) VALUES(p_device,p_user,p_session);
+ END IF;
+ RETURN jsonb_build_object('deviceId',p_device,'registered',true);
+END $$;
+REVOKE ALL ON FUNCTION public.wjb_v2_device_register(uuid,uuid,uuid) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.wjb_v2_device_register(uuid,uuid,uuid) TO service_role;
+"""
 tables010="""CREATE TABLE wjb_migration.upload(id uuid PRIMARY KEY,owner_id uuid NOT NULL,device_id uuid NOT NULL,header jsonb NOT NULL,
  pages integer NOT NULL CHECK(pages BETWEEN 1 AND 32),records integer NOT NULL CHECK(records BETWEEN 1 AND 20000),created_at timestamptz NOT NULL DEFAULT clock_timestamp());
 CREATE TABLE wjb_migration.upload_page(upload_id uuid NOT NULL REFERENCES wjb_migration.upload(id) ON DELETE CASCADE,page_index integer NOT NULL CHECK(page_index BETWEEN 0 AND 31),
@@ -269,15 +310,16 @@ ALTER TABLE wjb_migration.upload_page ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON wjb_migration.upload,wjb_migration.upload_page FROM PUBLIC,anon,authenticated,service_role;
 """
 (ROOT/'010-workspace-paged-upload.sql').write_text(f"""-- GENERATED by build-workspace-sql.py. REVIEW ONLY; no cloud auto-apply.
--- Apply once after 007 (DEV has 001/004/007: never re-run those). Paged record upload + record limit 20000 (C-1a,
--- docs/v2-design/81). The former public command body is moved unchanged to wjb_migration.command_core. Asset limits stay.
+-- Apply once after 007 (DEV has 001/004/007: never re-run those). C-1 (docs/v2-design/81·82): paged record upload,
+-- records 20000, images 2000 × 10MB (migration + gateway asset module), workspace quota 200MB, device registration RPC.
+-- The former public command body is moved unchanged to wjb_migration.command_core.
 BEGIN;
 SET LOCAL lock_timeout='5s'; SET LOCAL statement_timeout='60s';
 DO $$ BEGIN
  IF wjb_migration.workspace_contract(20) IS NULL THEN RAISE EXCEPTION 'MIGRATION_007_REQUIRED'; END IF;
  IF to_regclass('wjb_migration.upload') IS NOT NULL THEN RAISE EXCEPTION 'MIGRATION_010_ALREADY_APPLIED'; END IF;
 END $$;
-{tables010}{w21}{core}{wrapper}
+{tables010}{limits010}{w21}{core}{wrapper}{asset_cmd_new}{device010}
 REVOKE ALL ON ALL FUNCTIONS IN SCHEMA wjb_migration FROM PUBLIC,anon,authenticated,service_role;
 REVOKE ALL ON FUNCTION public.wjb_v2_migration_command(jsonb) FROM PUBLIC,anon,authenticated;
 GRANT EXECUTE ON FUNCTION public.wjb_v2_migration_command(jsonb) TO service_role;
@@ -291,6 +333,11 @@ SELECT jsonb_build_object(
  'pagedActions',(SELECT prosrc LIKE '%upload_begin%' AND prosrc LIKE '%start_upload%' FROM pg_proc WHERE oid='public.wjb_v2_migration_command(jsonb)'::regprocedure),
  'core',to_regprocedure('wjb_migration.command_core(jsonb)') IS NOT NULL,
  'recordLimit20000',(SELECT prosrc LIKE '%jsonb_array_length(v->''records'')>20000%' FROM pg_proc WHERE oid='wjb_migration.normalize_workspace(jsonb)'::regprocedure),
+ 'assetLimit10MB',(SELECT prosrc LIKE '%v_bytes>10485760%' AND prosrc LIKE '%>=2000%' FROM pg_proc WHERE oid='public.wjb_v2_asset_command(jsonb)'::regprocedure)
+   AND (SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid='wjb_gateway.asset'::regclass AND conname='asset_bytes_check') LIKE '%10485760%'
+   AND (SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid='wjb_migration.asset'::regclass AND conname='asset_bytes_check') LIKE '%10485760%',
+ 'quotaDefault',(SELECT pg_get_expr(d.adbin,d.adrelid) FROM pg_attrdef d JOIN pg_attribute a ON a.attrelid=d.adrelid AND a.attnum=d.adnum WHERE d.adrelid='wjb_gateway.workspace'::regclass AND a.attname='quota_bytes'),
+ 'deviceRPC',has_function_privilege('service_role','public.wjb_v2_device_register(uuid,uuid,uuid)','EXECUTE') AND NOT has_function_privilege('authenticated','public.wjb_v2_device_register(uuid,uuid,uuid)','EXECUTE') AND NOT has_function_privilege('anon','public.wjb_v2_device_register(uuid,uuid,uuid)','EXECUTE'),
  'clientRPC',has_function_privilege('anon','public.wjb_v2_migration_command(jsonb)','EXECUTE') OR has_function_privilege('authenticated','public.wjb_v2_migration_command(jsonb)','EXECUTE'),
  'serviceRPC',has_function_privilege('service_role','public.wjb_v2_migration_command(jsonb)','EXECUTE'),
  'directTableAccess',EXISTS(SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='wjb_migration' AND c.relkind='r' AND has_table_privilege('service_role',c.oid,'SELECT,INSERT,UPDATE,DELETE')),
@@ -304,8 +351,15 @@ SET LOCAL lock_timeout='5s'; SET LOCAL statement_timeout='30s';
 DO $$ BEGIN
  IF to_regclass('wjb_migration.upload') IS NULL THEN RAISE EXCEPTION 'MIGRATION_010_REQUIRED'; END IF;
  IF EXISTS(SELECT 1 FROM wjb_migration.upload) OR EXISTS(SELECT 1 FROM wjb_migration.upload_page) THEN RAISE EXCEPTION 'MIGRATION_UPLOAD_ROLLBACK_NOT_EMPTY'; END IF;
+ IF EXISTS(SELECT 1 FROM wjb_gateway.asset WHERE bytes>65536) OR EXISTS(SELECT 1 FROM wjb_migration.asset WHERE bytes>65536) THEN RAISE EXCEPTION 'MIGRATION_ASSET_ROLLBACK_NOT_EMPTY'; END IF;
 END $$;
-{fullcommand}{w20}DROP FUNCTION wjb_migration.command_core(jsonb);
+ALTER TABLE wjb_gateway.asset DROP CONSTRAINT asset_bytes_check;
+ALTER TABLE wjb_gateway.asset ADD CONSTRAINT asset_bytes_check CHECK(bytes BETWEEN 1 AND 65536);
+ALTER TABLE wjb_migration.asset DROP CONSTRAINT asset_bytes_check;
+ALTER TABLE wjb_migration.asset ADD CONSTRAINT asset_bytes_check CHECK(bytes BETWEEN 1 AND 65536);
+ALTER TABLE wjb_gateway.workspace ALTER COLUMN quota_bytes SET DEFAULT 1048576;
+DROP FUNCTION public.wjb_v2_device_register(uuid,uuid,uuid);
+{asset_cmd_old}{fullcommand}{w20}DROP FUNCTION wjb_migration.command_core(jsonb);
 DROP TABLE wjb_migration.upload_page;
 DROP TABLE wjb_migration.upload;
 REVOKE ALL ON ALL FUNCTIONS IN SCHEMA wjb_migration FROM PUBLIC,anon,authenticated,service_role;

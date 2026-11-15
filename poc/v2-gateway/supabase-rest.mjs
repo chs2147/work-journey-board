@@ -1,16 +1,18 @@
 import { CLOUD_TARGETS } from "../v2-cloud/cloud-environment.mjs";
 import { URL } from "node:url";
-import { GatewayError, readLimited, uuid } from "./io.mjs";
-const bucket = "wjb-v2-poc-private";
+import { GatewayError, MAX_ASSET_BYTES, readLimited, uuid } from "./io.mjs";
+const pocBucket = "wjb-v2-poc-private";
+export { MAX_ASSET_BYTES } from "./io.mjs";
 
 // Explicit trusted transport required. No environment values or client URLs read.
-export function createSupabaseRest({ projectRef, serviceRoleKey, fetchTransport }) {
+export function createSupabaseRest({ projectRef, serviceRoleKey, fetchTransport, bucket = pocBucket }) {
   if (
     !Object.values(CLOUD_TARGETS).some((target) => target.projectRef === projectRef) ||
     typeof serviceRoleKey !== "string" ||
     !serviceRoleKey ||
     /[\r\n]/.test(serviceRoleKey) ||
-    typeof fetchTransport !== "function"
+    typeof fetchTransport !== "function" ||
+    !/^wjb-v2-[a-z0-9-]{3,40}$/.test(bucket)
   ) {
     throw new TypeError("Invalid server-only transport configuration");
   }
@@ -21,10 +23,11 @@ export function createSupabaseRest({ projectRef, serviceRoleKey, fetchTransport 
   };
   async function request(path, options = {}) {
     try {
+      const { timeoutMs = 5000, ...rest } = options;
       return await fetchTransport(new URL(path, origin), {
-        ...options,
+        ...rest,
         redirect: "error",
-        signal: globalThis.AbortSignal.timeout(5000),
+        signal: globalThis.AbortSignal.timeout(timeoutMs),
         headers: {
           apikey: serviceRoleKey,
           authorization: `Bearer ${serviceRoleKey}`,
@@ -37,9 +40,11 @@ export function createSupabaseRest({ projectRef, serviceRoleKey, fetchTransport 
     }
   }
   async function get(scope, maxBytes) {
-    if (!Number.isInteger(maxBytes) || maxBytes < 1 || maxBytes > 65536)
+    if (!Number.isInteger(maxBytes) || maxBytes < 1 || maxBytes > MAX_ASSET_BYTES)
       throw new GatewayError("INVALID_LIMIT");
-    const res = await request(`/storage/v1/object/authenticated/${bucket}/${pathFor(scope)}`);
+    const res = await request(`/storage/v1/object/authenticated/${bucket}/${pathFor(scope)}`, {
+      timeoutMs: 30000,
+    });
     if (res.status === 404) {
       await res.body?.cancel();
       throw new GatewayError("OBJECT_MISSING", 404);
@@ -66,7 +71,7 @@ export function createSupabaseRest({ projectRef, serviceRoleKey, fetchTransport 
       throw new GatewayError("STORAGE_UNAVAILABLE", 503);
     }
     try {
-      return await readLimited(res, maxBytes);
+      return await readLimited(res, maxBytes, { timeoutMs: 30000 });
     } catch {
       void res.body?.cancel().catch(() => {});
       throw new GatewayError("STORAGE_UNAVAILABLE", 503);
@@ -75,10 +80,11 @@ export function createSupabaseRest({ projectRef, serviceRoleKey, fetchTransport 
   return {
     storage: {
       async putIfAbsent(scope, bytes) {
-        if (!(bytes instanceof Uint8Array) || bytes.byteLength < 1 || bytes.byteLength > 65536)
+        if (!(bytes instanceof Uint8Array) || bytes.byteLength < 1 || bytes.byteLength > MAX_ASSET_BYTES)
           throw new GatewayError("INVALID_LIMIT");
         const res = await request(`/storage/v1/object/${bucket}/${pathFor(scope)}`, {
           method: "POST",
+          timeoutMs: 30000,
           headers: { "content-type": "application/octet-stream", "x-upsert": "false" },
           body: bytes,
         });
@@ -114,7 +120,7 @@ export function createSupabaseRest({ projectRef, serviceRoleKey, fetchTransport 
         await res.body?.cancel();
         // Do not release quota until absence is observed, even after a 2xx DELETE.
         try {
-          await get(scope, 65536);
+          await get(scope, MAX_ASSET_BYTES);
         } catch (e) {
           if (e.code === "OBJECT_MISSING") return;
           throw e;
@@ -123,7 +129,15 @@ export function createSupabaseRest({ projectRef, serviceRoleKey, fetchTransport 
       },
     },
     async callServerRpc(name, args) {
-      if (name === "wjb_v2_session_active") {
+      if (name === "wjb_v2_device_register") {
+        if (
+          !uuid.test(args?.p_user) ||
+          !uuid.test(args?.p_session) ||
+          !uuid.test(args?.p_device) ||
+          Object.keys(args).sort().join(",") !== "p_device,p_session,p_user"
+        )
+          throw new GatewayError("INVALID_RPC");
+      } else if (name === "wjb_v2_session_active") {
         if (
           !uuid.test(args?.p_user) ||
           !uuid.test(args?.p_session) ||

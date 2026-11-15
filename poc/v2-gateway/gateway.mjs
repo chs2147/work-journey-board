@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { URL } from "node:url";
-import { GatewayError, readLimited, scopeValid } from "./io.mjs";
+import { GatewayError, MAX_ASSET_BYTES, readLimited, scopeValid } from "./io.mjs";
 const hash = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const response = (value, status = 200) =>
   new globalThis.Response(JSON.stringify(value), {
@@ -67,7 +67,7 @@ export function createGateway({ verifyAccessToken, metadata, storage }) {
           !/^[0-9a-f]{64}$/.test(body.sha256) ||
           !Number.isInteger(body.bytes) ||
           body.bytes < 1 ||
-          body.bytes > 65536
+          body.bytes > MAX_ASSET_BYTES
         )
           throw new GatewayError("INVALID_REQUEST");
         const row = await metadata.reserve(principal, scope, { sha256: body.sha256, bytes: body.bytes });
@@ -118,7 +118,8 @@ export function createGateway({ verifyAccessToken, metadata, storage }) {
         throw new GatewayError("INVALID_CONTENT_TYPE", 415);
       return await metadata.withAsset(principal, scope, "write", async (ctx) => {
         if (!["reserved", "ready"].includes(ctx.row.state)) throw new GatewayError("ASSET_NOT_PENDING", 409);
-        const bytes = await readLimited(request, ctx.row.bytes);
+        // 그림 본문(최대 10MB): 느린 회선도 받게 120초(Edge 무료 실행 한도 150초 안)
+        const bytes = await readLimited(request, ctx.row.bytes, { timeoutMs: 120000 });
         verifyBytes(bytes, ctx.row);
         if (ctx.row.state === "ready") return response({ assetId, state: "ready" });
         await ctx.recheck();

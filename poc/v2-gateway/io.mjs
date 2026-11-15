@@ -1,5 +1,7 @@
 import { Buffer } from "node:buffer";
 import { setTimeout, clearTimeout } from "node:timers";
+/** 그림 한 장 최대(C-1b, docs/v2-design/82) — SQL 010의 asset_bytes_check와 같다. gateway 전체가 이 값 하나를 쓴다 */
+export const MAX_ASSET_BYTES = 10485760;
 export class GatewayError extends Error {
   constructor(code, status = 400) {
     super(code);

@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { GatewayError, scopeValid, uuid } from "./io.mjs";
+import { GatewayError, MAX_ASSET_BYTES, scopeValid, uuid } from "./io.mjs";
 const codes = new Set([
   "ACCESS_DENIED",
   "ACCESS_REVOKED",
@@ -32,7 +32,7 @@ export function createPostgresMetadata({ callServerRpc, onReleaseError = () => {
       !/^[0-9a-f]{64}$/.test(row.sha256) ||
       !Number.isInteger(row.bytes) ||
       row.bytes < 1 ||
-      row.bytes > 65536 ||
+      row.bytes > MAX_ASSET_BYTES ||
       !["reserved", "ready", "cleanup", "canceled"].includes(row.state) ||
       typeof row.ioVersion !== "string" ||
       !/^[0-9]+$/.test(row.ioVersion)

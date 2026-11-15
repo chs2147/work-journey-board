@@ -1,0 +1,13 @@
+{
+  "checkedAt": "2026-11-15T01:57:39.967Z",
+  "projectRef": "vsphftnmfzfoufasjttd",
+  "productionTouched": false,
+  "bucket": "wjb-v2-dev-assets",
+  "created": true,
+  "public": false,
+  "fileSizeLimit": 10485760,
+  "allowedMimeTypes": [
+    "application/octet-stream"
+  ],
+  "ok": true
+}

@@ -35,6 +35,8 @@ def run(g):
             up('upload_page',jid,{'index':i,'sha256':sha(pg),'records':pg})
         return ps,b
     command_def="SELECT pg_get_functiondef('public.wjb_v2_migration_command(jsonb)'::regprocedure);"
+    asset_def="SELECT pg_get_functiondef('public.wjb_v2_asset_command(jsonb)'::regprocedure)||(SELECT string_agg(pg_get_constraintdef(oid),'|' ORDER BY conrelid::regclass::text) FROM pg_constraint WHERE conname='asset_bytes_check' OR (conrelid='wjb_gateway.asset'::regclass AND pg_get_constraintdef(oid) LIKE '%bytes%'));"
+    base_asset=scalar(asset_def)
     normalize_def="SELECT pg_get_functiondef('wjb_migration.normalize_workspace(jsonb)'::regprocedure);"
     base_command=scalar(command_def);base_normalize=scalar(normalize_def)
 
@@ -47,8 +49,12 @@ def run(g):
         v=json.loads(scalar((ROOT/'012-workspace-paged-upload-verify.sql').read_text()))
         assert v['uploadTables']==2 and v['tables']==7 and v['rlsTables']==7 and v['pagedActions'] and v['core'] and v['recordLimit20000']
         assert v['serviceRPC'] and not v['clientRPC'] and not v['directTableAccess'] and not v['privateExecute'] and not v['unsafeSearchPaths']
+        assert v['assetLimit10MB'] and v['quotaDefault']=='209715200' and v['deviceRPC']
         sql((ROOT/'011-workspace-paged-upload-rollback-empty.sql').read_text())
         assert scalar(command_def)==base_command and scalar(normalize_def)==base_normalize
+        assert scalar("SELECT pg_get_functiondef('public.wjb_v2_asset_command(jsonb)'::regprocedure);") in base_asset
+        assert scalar("SELECT to_regprocedure('public.wjb_v2_device_register(uuid,uuid,uuid)') IS NULL;")=='t'
+        assert scalar("SELECT pg_get_expr(d.adbin,d.adrelid) FROM pg_attrdef d JOIN pg_attribute a ON a.attrelid=d.adrelid AND a.attnum=d.adnum WHERE d.adrelid='wjb_gateway.workspace'::regclass AND a.attname='quota_bytes';")=='1048576'
         assert scalar("SELECT to_regclass('wjb_migration.upload') IS NULL AND to_regprocedure('wjb_migration.command_core(jsonb)') IS NULL;")=='t'
         sql((ROOT/'010-workspace-paged-upload.sql').read_text())
     test('012 review ACL/RLS; unused 011 restores the exact 004 command and 007 validation',verify_and_rollback)
@@ -125,3 +131,39 @@ def run(g):
         assert scalar('SELECT count(*) FROM wjb_migration.job;')==before
         assert scalar(f"SELECT count(*) FROM wjb_migration.upload_page WHERE upload_id='{jid}';")==str(len(pages_of(bad)))
     test('limits (20,000 rows, header without records) and unchanged validation (foreign key) on assembled pages',limits_and_rules)
+
+    def big_images():
+        clean();m=emit(20);m['workspaceId']=str(uuid.uuid4())
+        assert m['assets'],'fixture has images'
+        a=m['assets'][0];old=a['bytes'];a['bytes']=5*1024*1024
+        for r in m['records']:
+            if r['table'] in('note_asset','cabi_asset'):
+                for k in('dataRef','thumbRef'):
+                    if isinstance(r['value'].get(k),dict) and r['value'][k]['objectId']==a['objectId']: r['value'][k]['bytes']=a['bytes']
+                if r['value'].get('dataRef',{}) and r['value']['dataRef'].get('objectId')==a['objectId']: r['value']['bytes']=a['bytes']
+        f={'job':str(uuid.uuid4()),'ws':m['workspaceId']}
+        res=g['call']('start',f,m)
+        assert res['state']=='staging'
+        assert scalar(f"SELECT bytes FROM wjb_gateway.asset WHERE workspace_id='{m['workspaceId']}' AND id='{a['objectId']}';")==str(5*1024*1024)
+        assert scalar(f"SELECT quota_bytes FROM wjb_gateway.workspace WHERE id='{m['workspaceId']}';")=='209715200'
+        # 10MB 넘는 그림은 거절(작업 생기지 않음)
+        m2=json.loads(json.dumps(m));m2['workspaceId']=str(uuid.uuid4());m2['assets'][0]['bytes']=10*1024*1024+1
+        before=scalar('SELECT count(*) FROM wjb_migration.job;')
+        r=sql(query(request('start',str(uuid.uuid4()),m2)),check=False)
+        assert r.returncode and 'MIGRATION_INVALID_ASSET' in r.stderr,r.stderr[-300:]
+        assert scalar('SELECT count(*) FROM wjb_migration.job;')==before
+    test('5MB image (over the old 64KiB) reserves in a 200MB workspace; over 10MB refused atomically',big_images)
+
+    def devices():
+        new=str(uuid.uuid4())
+        reg=lambda d,u,sess:sql(f"BEGIN; SET LOCAL ROLE service_role; SELECT public.wjb_v2_device_register('{u}','{sess}','{d}'); COMMIT;",check=False)
+        r=reg(new,A,g['SA']);assert r.returncode==0,r.stderr
+        assert scalar(f"SELECT user_id||'/'||session_id FROM wjb_gateway.device WHERE id='{new}';")==f"{A}/{g['SA']}"
+        r=reg(new,A,g['SA']);assert r.returncode==0  # 같은 기기 다시 등록 = 그대로
+        r=reg(new,B,SB);assert r.returncode and 'DEVICE_ACCESS_DENIED' in r.stderr  # 남의 기기 ID
+        r=reg(str(uuid.uuid4()),A,SB);assert r.returncode and 'DEVICE_ACCESS_DENIED' in r.stderr  # 세션이 그 사용자 것 아님
+        r=sql(f"BEGIN; SET LOCAL ROLE authenticated; SELECT public.wjb_v2_device_register('{A}','{g['SA']}','{uuid.uuid4()}'); COMMIT;",check=False)
+        assert r.returncode and 'permission denied' in r.stderr
+        sql(f"UPDATE wjb_gateway.device SET revoked=true WHERE id='{new}';")
+        r=reg(new,A,g['SA']);assert r.returncode and 'DEVICE_REVOKED' in r.stderr
+    test('device registration: own session only, idempotent, foreign/revoked device refused, server-only',devices)

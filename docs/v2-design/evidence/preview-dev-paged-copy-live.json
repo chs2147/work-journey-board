@@ -1,0 +1,98 @@
+{
+  "startedAt": "2026-11-15T02:08:52.392Z",
+  "projectRef": "vsphftnmfzfoufasjttd",
+  "productionTouched": false,
+  "mailSent": false,
+  "transport": "edge-gateway-http-only",
+  "checks": [
+    {
+      "name": "login_with_code",
+      "passed": true
+    },
+    {
+      "name": "device_registered",
+      "passed": true
+    },
+    {
+      "name": "resume_reports_missing_page",
+      "passed": true,
+      "extra": {
+        "received": [
+          0,
+          1,
+          2,
+          4,
+          5
+        ]
+      }
+    },
+    {
+      "name": "paged_upload_started",
+      "passed": true,
+      "extra": {
+        "records": 5052,
+        "pages": 6
+      }
+    },
+    {
+      "name": "large_image_uploaded_and_attested",
+      "passed": true,
+      "extra": {
+        "assets": 1,
+        "firstBytes": 524288
+      }
+    },
+    {
+      "name": "asset_read_requires_token",
+      "passed": true
+    },
+    {
+      "name": "published_poc_receipt",
+      "passed": true,
+      "extra": {
+        "keys": [
+          "status",
+          "profile",
+          "generation",
+          "workspaceId",
+          "manifestHash",
+          "publicationId",
+          "sourceManifestHash"
+        ]
+      }
+    },
+    {
+      "name": "read_back_lossless",
+      "passed": true,
+      "extra": {
+        "records": 5052
+      }
+    },
+    {
+      "name": "image_download_matches",
+      "passed": true
+    },
+    {
+      "name": "cancel_cleans_quota",
+      "passed": true
+    }
+  ],
+  "timing": {
+    "recordsSeconds": 13.669,
+    "assetsSeconds": 7.278,
+    "readBackSeconds": 4.769
+  },
+  "cleanup": {
+    "jobs": 0,
+    "uploads": 0,
+    "records": 0,
+    "workspaces": 0,
+    "assets": 0,
+    "devices": 0,
+    "objects": 0,
+    "users": 0,
+    "zero": true
+  },
+  "passed": true,
+  "finishedAt": "2026-11-15T02:09:51.210Z"
+}

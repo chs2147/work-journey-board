@@ -97,6 +97,9 @@ try {
     verify.pagedActions === true &&
     verify.core === true &&
     verify.recordLimit20000 === true &&
+    verify.assetLimit10MB === true &&
+    verify.quotaDefault === "209715200" &&
+    verify.deviceRPC === true &&
     verify.serviceRPC === true &&
     !verify.clientRPC &&
     !verify.directTableAccess &&

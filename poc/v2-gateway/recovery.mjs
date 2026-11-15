@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
-import { GatewayError, uuid, scopeValid } from "./io.mjs";
+import { GatewayError, MAX_ASSET_BYTES, uuid, scopeValid } from "./io.mjs";
 const sha = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const snapshot = (row) => ({
   state: row.state,
@@ -65,7 +65,7 @@ export function createRecoveryWorker({
       !/^[0-9]+$/.test(item.ioVersion) ||
       !Number.isInteger(item.bytes) ||
       item.bytes < 1 ||
-      item.bytes > 65536 ||
+      item.bytes > MAX_ASSET_BYTES ||
       !/^[0-9a-f]{64}$/.test(item.sha256) ||
       !Number.isInteger(item.unsettled) ||
       item.unsettled < 0 ||

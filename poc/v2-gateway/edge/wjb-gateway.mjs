@@ -7,6 +7,28 @@ import { createDevelopmentGateway } from "../development-gateway.mjs";
 import { CLOUD_TARGETS } from "../../v2-cloud/cloud-environment.mjs";
 import { createSupabaseRest } from "../supabase-rest.mjs";
 import { createSessionVerifier } from "../../v2-auth/session-adapter.mjs";
+import { createMigrationRPC } from "../../v2-migration/server-rpc.mjs";
+import { GatewayError, readLimited, uuid } from "../io.mjs";
+
+/** 개발용 영구 비공개 버킷(C-1b, docs/v2-design/82) — 시험마다 만들고 지우는 POC 버킷과 다르다 */
+export const DEV_BUCKET = "wjb-v2-dev-assets";
+// 앱이 직접 부를 수 있는 이관 명령(attest·confirm_absent는 서버가 바이트를 확인한 뒤에만 — 아래 전용 경로)
+const CLIENT_ACTIONS = new Set([
+  "upload_begin",
+  "upload_page",
+  "upload_status",
+  "start_upload",
+  "status",
+  "workspace",
+  "renew",
+  "observe",
+  "prepare_publish",
+  "publish",
+  "publication",
+  "cancel",
+  "finish_cancel",
+]);
+const sha = /^[0-9a-f]{64}$/;
 
 const projectRef = CLOUD_TARGETS.development.projectRef;
 const prefix = "/wjb-gateway";
@@ -36,10 +58,22 @@ async function setup() {
     if (url.origin !== `https://${projectRef}.supabase.co`) throw new Error("DESTINATION_DENIED");
     return fetch(url, init);
   };
-  const gateway = createDevelopmentGateway({ projectRef, serviceRoleKey, jwks, fetchTransport });
-  const rest = createSupabaseRest({ projectRef, serviceRoleKey, fetchTransport });
+  const gateway = createDevelopmentGateway({
+    projectRef,
+    serviceRoleKey,
+    jwks,
+    fetchTransport,
+    bucket: DEV_BUCKET,
+  });
+  const rest = createSupabaseRest({ projectRef, serviceRoleKey, fetchTransport, bucket: DEV_BUCKET });
   const verify = createSessionVerifier({ projectRef, jwks, callServerRpc: rest.callServerRpc });
-  return { gateway, verify };
+  const rpc = createMigrationRPC({
+    projectRef,
+    serviceRoleKey,
+    fetchTransport,
+    allowWorkspaceProfiles: true,
+  });
+  return { gateway, verify, rest, rpc };
 }
 
 export async function handle(request) {
@@ -48,7 +82,7 @@ export async function handle(request) {
       ready = null;
       throw e;
     });
-    const { gateway, verify } = await ready;
+    const { gateway, verify, rest, rpc } = await ready;
     const url = new URL(request.url);
     const path = url.pathname.startsWith(prefix + "/") ? url.pathname.slice(prefix.length) : url.pathname;
     if (path === "/v2/me") {
@@ -66,6 +100,8 @@ export async function handle(request) {
         return json({ error: code }, code === "AUTH_UNAVAILABLE" ? 503 : 401);
       }
     }
+    const route = path.match(/^\/v2\/(?:devices|migrations\/([^/]+)\/([a-z_-]+))$/);
+    if (route) return await control(request, url, route, { verify, rest, rpc });
     const inner = new URL(path, url.origin);
     return await gateway.handler(new Request(inner, request));
   } catch (e) {
@@ -76,6 +112,111 @@ export async function handle(request) {
         ? "SETUP_TYPE"
         : "SETUP";
     return json({ error: "GATEWAY_UNAVAILABLE", stage }, 503);
+  }
+}
+
+/** 기기 등록·이관 명령(C-1b). 사용자 토큰 → 서버 확인 → 서버 전용 RPC. 요청 본문에서 계정·세션을 받지 않는다 */
+async function control(request, url, route, { verify, rest, rpc }) {
+  try {
+    if (request.method !== "POST" || url.search) throw new GatewayError("NOT_FOUND", 404);
+    if (request.headers.has("origin")) throw new GatewayError("ORIGIN_DENIED", 403);
+    if (request.headers.get("content-type")?.split(";")[0].trim() !== "application/json")
+      throw new GatewayError("INVALID_CONTENT_TYPE", 415);
+    const auth = request.headers.get("authorization") ?? "";
+    if (!/^Bearer [^\s,]+$/.test(auth)) throw new GatewayError("AUTH_REQUIRED", 401);
+    let principal;
+    try {
+      principal = await verify(auth.slice(7));
+    } catch (e) {
+      const code =
+        e?.code === "AUTH_UNAVAILABLE"
+          ? "AUTH_UNAVAILABLE"
+          : e?.code === "ACCESS_REVOKED"
+            ? "ACCESS_REVOKED"
+            : "AUTH_REQUIRED";
+      throw new GatewayError(code, code === "AUTH_UNAVAILABLE" ? 503 : 401);
+    }
+    let body;
+    try {
+      body = JSON.parse((await readLimited(request, 1100000, { timeoutMs: 30000 })).toString("utf8"));
+    } catch (e) {
+      if (e instanceof GatewayError) throw e;
+      throw new GatewayError("INVALID_JSON");
+    }
+    if (!body || typeof body !== "object" || Array.isArray(body) || !uuid.test(body.deviceId))
+      throw new GatewayError("INVALID_REQUEST");
+    const deviceId = body.deviceId.toLowerCase();
+    if (!route[1]) {
+      if (Object.keys(body).join() !== "deviceId") throw new GatewayError("INVALID_REQUEST");
+      const r = await rest.callServerRpc("wjb_v2_device_register", {
+        p_user: principal.userId,
+        p_session: principal.sessionId,
+        p_device: deviceId,
+      });
+      if (r?.deviceId !== deviceId || r.registered !== true)
+        throw new GatewayError("DEVICE_UNAVAILABLE", 503);
+      return json({ deviceId, registered: true });
+    }
+    const jobId = route[1].toLowerCase(),
+      action = route[2];
+    if (!uuid.test(jobId) || Object.keys(body).sort().join() !== "deviceId,params")
+      throw new GatewayError("INVALID_REQUEST");
+    const params = body.params;
+    if (CLIENT_ACTIONS.has(action))
+      return json(await rpc.call({ action, jobId, params }, principal, deviceId));
+    if (action !== "attest" && action !== "confirm-absent") throw new GatewayError("NOT_FOUND", 404);
+    // 서버 확인 후 정산: 관측(상태·입출력 판) → Storage에서 바이트 다시 읽기/부재 확인 → attest/confirm_absent
+    if (
+      !params ||
+      Object.keys(params).sort().join() !== "manifestHash,objectId" ||
+      !sha.test(params.manifestHash) ||
+      !uuid.test(params.objectId)
+    )
+      throw new GatewayError("INVALID_REQUEST");
+    const ob = await rpc.call({ action: "observe", jobId, params }, principal, deviceId);
+    const status = await rpc.call(
+      { action: "status", jobId, params: { manifestHash: params.manifestHash } },
+      principal,
+      deviceId,
+    );
+    const scope = { workspaceId: status.workspaceId, assetId: params.objectId, deviceId, generation: "1" };
+    if (!ob.operationSettled) throw new GatewayError("MIGRATION_IO_UNSETTLED", 409);
+    if (action === "attest") {
+      if (ob.assetState !== "ready") throw new GatewayError("ASSET_NOT_READY", 409);
+      const bytes = await rest.storage.get(scope, ob.bytes);
+      const digest = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)), (b) =>
+        b.toString(16).padStart(2, "0"),
+      ).join("");
+      if (bytes.length !== ob.bytes || digest !== ob.sha256)
+        throw new GatewayError("INTEGRITY_MISMATCH", 409);
+      return json(
+        await rpc.call(
+          {
+            action: "attest",
+            jobId,
+            params: { ...params, ioVersion: ob.ioVersion, sha256: digest, bytes: bytes.length },
+          },
+          principal,
+          deviceId,
+        ),
+      );
+    }
+    try {
+      await rest.storage.get(scope, ob.bytes);
+      throw new GatewayError("DELETE_NOT_CONFIRMED", 409);
+    } catch (e) {
+      if (e?.code !== "OBJECT_MISSING") throw e;
+    }
+    return json(
+      await rpc.call(
+        { action: "confirm_absent", jobId, params: { ...params, ioVersion: ob.ioVersion } },
+        principal,
+        deviceId,
+      ),
+    );
+  } catch (e) {
+    if (e instanceof GatewayError) return json({ error: e.code }, e.status);
+    return json({ error: "GATEWAY_UNAVAILABLE" }, 503);
   }
 }
 
