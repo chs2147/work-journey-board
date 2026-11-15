@@ -34,3 +34,20 @@ test("D-4: 복제 → 내 온라인 공간 목록 → 열기 → 앱 화면(읽�
   await page.getByTestId("online-workspace-close").click();
   await expect(page.getByTestId("connected-preview")).toBeVisible();
 });
+
+test("D-4: 온라인 공간의 업무 메모보드·업무노트는 정식판처럼 별도 창으로 열린다", async ({ page }) => {
+  await signIn(page);
+  await page.getByTestId("copy-pick").click();
+  await page.getByTestId("copy-start").click({ timeout: 30_000 });
+  await expect(page.getByTestId("copy-done")).toBeVisible({ timeout: 30_000 });
+  await page.getByTestId("online-space-open").click();
+  await expect(page.getByTestId("rail-settings")).toBeVisible({ timeout: 30_000 });
+  const categoryId = await page.getByTestId("category-header").first().getAttribute("data-category-id");
+  // 업무 이름의 메모보드 바로가기 → 별도 창(브라우저 모드 = 팝업, 실앱 = OS 창)
+  const boardWindow = page.waitForEvent("popup");
+  await page.getByTestId("task-board-cat-badge").first().click();
+  const board = await boardWindow;
+  await expect(board.getByTestId("note-scroll")).toBeVisible({ timeout: 15_000 });
+  expect(new URL(board.url()).searchParams.get("id")).toBe(categoryId);
+  await board.close();
+});

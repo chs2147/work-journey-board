@@ -78,19 +78,55 @@ describe("Tauri 설정", () => {
     const strip = (ws: { title: string }[]) => ws.map((w) => ({ ...w, title: "" }));
     expect(strip(preview.app.windows)).toEqual(strip(base.app.windows));
     for (const w of preview.app.windows) expect(w.title).toBe(preview.productName);
-    expect(preview.app.security.capabilities.sort()).toEqual(["preview-main", "splash"]);
+    expect([...preview.app.security.capabilities].sort()).toEqual([
+      "preview-cabi",
+      "preview-cabinet",
+      "preview-folder",
+      "preview-main",
+      "splash",
+    ]);
   });
 
-  it("Preview 메인 창 권한: SQLite·저장 대화상자·창 만들기 없음(폴더 고르기만), Classic 권한의 부분 집합(Classic에 새 권한 없음)", () => {
+  it("Preview 메인 창 권한: SQLite·저장 대화상자·파일 없음, Classic 권한의 부분 집합(Classic에 새 권한 없음)", () => {
     const cap = json("src-tauri/capabilities/preview-main.json");
     const def = json("src-tauri/capabilities/default.json");
     expect(cap.windows).toEqual(["main"]);
+    // 예외: 폴더 고르기(C-2 원본 읽기 전용 사본), 별도 창 만들기·클립보드 글(D단계 온라인 공간의 노트·메모보드·파일 목록 창)
+    const allowed = new Set([
+      "dialog:allow-open",
+      "core:webview:allow-create-webview-window",
+      "clipboard-manager:allow-write-text",
+    ]);
     for (const p of cap.permissions as string[]) {
       expect(def.permissions).toContain(p);
-      // 폴더 고르기(dialog:allow-open)만 예외 — C-2 원본 일지 읽기 전용 사본
-      if (p !== "dialog:allow-open")
+      if (!allowed.has(p))
         expect(p).not.toMatch(/^(sql|dialog|clipboard|opener|fs|http|shell)|create-webview/);
     }
+    expect(cap.permissions).not.toContain("dialog:allow-save");
+    expect(cap.permissions.some((p: string) => p.startsWith("sql"))).toBe(false);
+  });
+
+  it("Preview 별도 창 권한(노트·메모보드·파일 목록·폴더) = 정식판 창 권한의 부분 집합, 저장 대화상자·SQLite 없음", () => {
+    for (const [prev, classic] of [
+      ["preview-cabi", "cabi"],
+      ["preview-cabinet", "cabinet"],
+      ["preview-folder", "folder"],
+    ]) {
+      const p = json(`src-tauri/capabilities/${prev}.json`);
+      const c = json(`src-tauri/capabilities/${classic}.json`);
+      expect(p.identifier).toBe(prev);
+      expect(p.windows).toEqual(c.windows);
+      for (const x of p.permissions as string[]) expect(c.permissions).toContain(x);
+      expect(p.permissions).not.toContain("dialog:allow-save");
+      expect(p.permissions.some((x: string) => x.startsWith("sql"))).toBe(false);
+    }
+    expect(preview.app.security.capabilities).toEqual([
+      "preview-main",
+      "splash",
+      "preview-cabi",
+      "preview-cabinet",
+      "preview-folder",
+    ]);
   });
 });
 

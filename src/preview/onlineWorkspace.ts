@@ -52,17 +52,17 @@ export async function restoreFromCache(SQL: SqlJsStatic, spaces: PreviewSpaces, 
   }
 }
 
-/** 읽기 전용 문(조회·백업 사본) 외 쓰기를 막는 문장 판정 — VACUUM INTO(백업 사본)는 일지를 바꾸지 않는다 */
-const WRITE =
-  /^\s*(insert|update|delete|replace|create|drop|alter|reindex|vacuum(?!\s+into)|pragma\s+\w+\s*=)/i;
+/** 구조를 바꾸는 문(행 수로 잡히지 않음)은 늘 거절 — VACUUM INTO(백업 사본)는 일지를 바꾸지 않는다 */
+const DDL = /^\s*(create|drop|alter|reindex|vacuum(?!\s+into)|pragma\s+\w+\s*=)/i;
 export class OnlineReadOnlyError extends Error {
   constructor() {
     super("ONLINE_READ_ONLY");
   }
 }
 /**
- * 앱이 공간을 다 띄운 뒤(lock)부터 쓰기를 거절하는 드라이버. 띄우는 동안의 설정 정리 쓰기는 메모리 일지에만 간다.
- * 편집·동기화는 E단계 — 지금은 화면에 "읽기 전용" 띠와 안내.
+ * 앱이 공간을 다 띄운 뒤(lock)부터 **실제로 내용을 바꾸는 쓰기**를 거절하는 드라이버(바뀌면 되돌리고 오류).
+ * "없으면 만들기(INSERT OR IGNORE)"처럼 바뀌는 게 없는 문은 그대로 통과 — 메모보드 열기 등이 막히지 않게(실기에서 발견).
+ * 메모리 위 sql.js 연결 하나라 저장점으로 감싸 판정한다. 편집·동기화는 E단계.
  */
 export function readOnlyGate(onBlocked?: () => void) {
   let locked = false;
@@ -74,22 +74,38 @@ export function readOnlyGate(onBlocked?: () => void) {
       return locked;
     },
     wrap(d: SqlDriver): SqlDriver {
-      const check = (sql: string) => {
-        if (locked && WRITE.test(sql)) {
-          onBlocked?.();
-          throw new OnlineReadOnlyError();
-        }
+      const total = async () => (await d.select<{ n: number }>("SELECT total_changes() AS n"))[0]?.n ?? 0;
+      const refuse = () => {
+        onBlocked?.();
+        return new OnlineReadOnlyError();
       };
+      async function guarded(sqls: { sql: string; params?: unknown[] }[]) {
+        if (sqls.some((s) => DDL.test(s.sql))) throw refuse();
+        await d.execute("SAVEPOINT wjb_online_ro");
+        let changes = 0,
+          ok = false;
+        try {
+          const before = await total();
+          for (const s of sqls) changes += (await d.execute(s.sql, s.params as never)).changes;
+          ok = (await total()) === before;
+        } finally {
+          if (!ok) await d.execute("ROLLBACK TO wjb_online_ro");
+          await d.execute("RELEASE wjb_online_ro");
+        }
+        if (!ok) throw refuse();
+        return changes;
+      }
       return {
         label: "온라인 공간(읽기 전용)",
         select: (sql, params) => d.select(sql, params),
         async execute(sql, params) {
-          check(sql);
-          return d.execute(sql, params);
+          if (!locked) return d.execute(sql, params);
+          if (/^\s*vacuum\s+into/i.test(sql)) return d.execute(sql, params);
+          return { changes: await guarded([{ sql, params }]) };
         },
         async batch(statements) {
-          for (const s of statements) check(s.sql);
-          return d.batch(statements);
+          if (!locked) return d.batch(statements);
+          return guarded(statements);
         },
         close: () => d.close(),
       };

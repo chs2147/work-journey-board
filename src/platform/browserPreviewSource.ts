@@ -25,6 +25,19 @@ export const browserPreviewSource: PreviewSource = {
         ? await (await import("./sampleYear")).makeYearSample(which === "year-img")
         : (await import("../../fixtures/sample-showcase.json")).default;
     await seedSample(driver, sample as never);
+    // 가상 업무노트·업무 메모보드 하나씩(온라인 공간에서 별도 창 열기 확인용)
+    const { JournalRepository } = await import("../data/repository");
+    const { CabiRepository } = await import("../data/cabiRepository");
+    const [cat] = await driver.select<{ id: string }>("SELECT id FROM category ORDER BY sort_order LIMIT 1");
+    if (cat) {
+      const cabi = new CabiRepository(
+        driver,
+        new JournalRepository(driver, () => new Date()),
+        () => new Date(),
+      );
+      await cabi.createNote(cat.id, "가상 업무노트");
+      await cabi.board(cat.id, true);
+    }
     // 원본 판이 쓰는 journal_mode=DELETE 그대로(브라우저 sql.js 기본)
     const bytes = driver.exportBytes();
     const id = crypto.randomUUID();

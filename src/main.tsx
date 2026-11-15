@@ -24,14 +24,15 @@ function render(profile: AppProfileInfo) {
   // 비공식 판(Preview·DEV)은 화면 전체에 표시 — 타이틀 영역 색·DEV 배지(docs/release-channel-spec.md 5절)
   if (profile.unofficial) document.documentElement.dataset.channel = "dev";
   const preview = profile.key === "connected-preview";
+  // 별도 창 화면(노트·메모보드 = cabi, 폴더, Cabi.NET 파일 목록) — Preview도 이것만 받고, 그 밖은 Preview 시작 화면
+  const childWin = win === "cabi" || win === "folder" || win === "cabinet";
   createRoot(document.getElementById("root")!).render(
     <StrictMode>
       <Suspense fallback={null}>
-        {preview ? (
-          win ? null : (
-            <PreviewApp profile={profile} />
-          )
-        ) : /* Cabinet 폴더 창(features-1102-spec F5) — 별도 OS 창이 같은 화면을 ?win=folder로 띄운다 */
+        {preview && !childWin ? (
+          <PreviewApp profile={profile} />
+        ) : /* Preview 온라인 공간의 별도 창도 정식판과 같은 창 화면(자식 창은 DB를 열지 않고 메인 창이 읽어 줌, docs/v2-design/87) */
+        /* Cabinet 폴더 창(features-1102-spec F5) — 별도 OS 창이 같은 화면을 ?win=folder로 띄운다 */
         win === "cabi" ? (
           <CabiWindowLazy />
         ) : win === "folder" ? (

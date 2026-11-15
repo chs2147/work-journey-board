@@ -1,0 +1,13 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "preview-folder",
+  "description": "Connected Preview 온라인 공간 별도 창(읽기 전용) — 정식판 folder.json의 부분 집합(저장 대화상자 없음)",
+  "windows": ["folder-*"],
+  "permissions": [
+    "core:default",
+    "core:window:allow-set-title",
+    "core:window:allow-set-focus",
+    "clipboard-manager:allow-write-text",
+    "window-state:default"
+  ]
+}

@@ -50,7 +50,7 @@
     ],
     "security": {
       "csp": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; connect-src ipc: http://ipc.localhost; img-src 'self' data:; style-src 'self' 'unsafe-inline'",
-      "capabilities": ["preview-main", "splash"]
+      "capabilities": ["preview-main", "splash", "preview-cabi", "preview-cabinet", "preview-folder"]
     }
   }
 }

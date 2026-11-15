@@ -50,10 +50,19 @@ test("Preview 계정(브라우저 모드 가짜): 인증번호 로그인 → 서
   ).toEqual([]);
 });
 
-test("Preview: 별도 창 주소(?win=cabinet 등)로 열어도 기존 창을 그리지 않는다", async ({ page }) => {
+test("Preview: 별도 창 주소는 그 창 화면만(D단계 온라인 공간의 노트·메모보드·파일 목록 창) — 기존 앱 메인 화면은 그리지 않는다", async ({
+  page,
+}) => {
+  // 정식판과 같은 별도 창 화면(자식 창은 DB를 열지 않고 메인 창이 읽어 줌, docs/v2-design/87)
   await page.goto("/?profile=connected-preview&win=cabinet");
-  await page.waitForTimeout(500);
-  expect(await page.locator("#root").innerHTML()).toBe("");
+  await page.waitForTimeout(800);
+  await expect(page.getByTestId("rail-settings")).toHaveCount(0);
+  await expect(page.getByTestId("journal-status")).toHaveCount(0);
+  await expect(page.getByTestId("connected-preview")).toHaveCount(0);
+  // 모르는 창 이름 = Preview 시작 화면(기존 앱으로 빠지지 않음)
+  await page.goto("/?profile=connected-preview&win=unknown");
+  await expect(page.getByTestId("connected-preview")).toBeVisible();
+  await expect(page.getByTestId("rail-settings")).toHaveCount(0);
 });
 
 test("Classic(기본): 지금처럼 앱이 뜬다", async ({ page }) => {

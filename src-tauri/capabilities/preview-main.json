@@ -1,13 +1,19 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "preview-main",
-  "description": "Connected Preview 메인 창 권한(tauri.preview.conf.json에서만 켬): 창 상태·창 제목·테마, 원본 일지 폴더 고르기(dialog:allow-open — C-2 읽기 전용 사본용). SQLite·파일 쓰기·저장 대화상자·클립보드·창 만들기·네트워크 권한 없음. Classic 메인 창 권한(default)의 부분 집합",
+  "description": "Connected Preview 메인 창 권한(tauri.preview.conf.json에서만 켬): 창 상태·창 제목·테마, 원본 일지 폴더 고르기(dialog:allow-open — C-2 읽기 전용 사본용), 온라인 공간의 업무노트·메모보드·Cabi.NET 파일 목록 별도 창 만들기·닫기·앞으로(D단계), 클립보드 글 쓰기. SQLite·파일 쓰기·저장 대화상자·네트워크 권한 없음. Classic 메인 창 권한(default)의 부분 집합",
   "windows": ["main"],
   "permissions": [
     "core:default",
     "window-state:default",
     "core:window:allow-set-theme",
     "core:window:allow-set-title",
-    "dialog:allow-open"
+    "dialog:allow-open",
+    "core:webview:allow-create-webview-window",
+    "core:window:allow-set-focus",
+    "core:window:allow-unminimize",
+    "core:window:allow-close",
+    "core:window:allow-destroy",
+    "clipboard-manager:allow-write-text"
   ]
 }

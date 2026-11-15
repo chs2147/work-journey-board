@@ -8,6 +8,7 @@ import {
   type PreviewSpaces,
 } from "../../platform";
 import { createOnlinePlatform } from "../../platform/onlinePlatform";
+import { isTauri } from "@tauri-apps/api/core";
 import { restoreFromCache, readOnlyGate } from "../../preview/onlineWorkspace";
 import { loadSql } from "../../preview/migrationSession";
 import { formatBytes, STR } from "../../shared/strings";
@@ -92,8 +93,13 @@ export function OnlineSpacesCard({
       const SQL = await loadSql();
       const restored = await restoreFromCache(SQL, spaces, w.workspaceId);
       const gate = readOnlyGate(() => toast(S.readOnlyToast));
+      // 실앱: 업무노트·메모보드·파일 목록을 정식판과 같은 별도 OS 창으로(Tauri 창 다리)
+      const native = isTauri() ? (await import("../../platform/tauri")).tauriPlatform : null;
       setPlatformOverride(
         createOnlinePlatform({
+          windows: native
+            ? { cabi: native.cabi, folderWindows: native.folderWindows, cabinetWindow: native.cabinetWindow }
+            : undefined,
           SQL,
           journal: restored.bytes,
           workspaceId: w.workspaceId,
@@ -165,6 +171,13 @@ export function OnlineSpacesCard({
   );
 }
 
+/** 목록으로: 열려 있는 별도 창(노트·메모보드·파일 목록·폴더)을 닫고 창을 새로 불러 Preview 첫 화면으로 */
+async function closeSpace() {
+  const p = useAppStore.getState().platform;
+  await Promise.allSettled([p?.cabi.closeAll(), p?.cabinetWindow?.close(), p?.folderWindows?.closeAll()]);
+  location.reload();
+}
+
 /** 열린 온라인 공간: 위 띠(읽기 전용·목록으로) + 지금 앱 화면 */
 export function OnlineWorkspaceShell({ space }: { space: OpenedSpace }) {
   return (
@@ -178,7 +191,7 @@ export function OnlineWorkspaceShell({ space }: { space: OpenedSpace }) {
         <button
           type="button"
           className={shell.back}
-          onClick={() => location.reload()}
+          onClick={() => void closeSpace()}
           data-testid="online-workspace-close"
         >
           {S.close}

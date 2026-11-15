@@ -85,18 +85,27 @@ describe("온라인 공간 되살리기·읽기 전용", () => {
     await expect(restoreFromCache(SQL, spaces, p.workspaceId)).rejects.toThrow("RESTORE_ASSET_MISMATCH");
   });
 
-  it("문지기: 잠그기 전엔 그대로, 잠근 뒤 쓰기만 거절(조회·VACUUM INTO 사본은 됨)", async () => {
+  it("문지기: 잠근 뒤 내용을 바꾸는 쓰기만 거절(되돌림), 바뀌는 게 없는 쓰기·조회·VACUUM INTO는 됨", async () => {
     const SQL = await initSqlJs();
     let blocked = 0;
     const gate = readOnlyGate(() => blocked++);
     const d = gate.wrap(new SqlJsDriver(new SQL.Database()));
-    await d.execute("CREATE TABLE t(x)");
-    await d.execute("INSERT INTO t VALUES(1)");
+    await d.execute("CREATE TABLE t(id INTEGER PRIMARY KEY, x)");
+    await d.execute("INSERT INTO t VALUES(1, 1)");
     gate.lock();
-    await expect(d.execute("INSERT INTO t VALUES(2)")).rejects.toBeInstanceOf(OnlineReadOnlyError);
-    await expect(d.batch([{ sql: "  update t SET x=3" }])).rejects.toBeInstanceOf(OnlineReadOnlyError);
+    // 이미 있는 행 "없으면 만들기" = 바뀌는 것 없음 → 통과(메모보드 열기)
+    expect(await d.execute("INSERT OR IGNORE INTO t VALUES(1, 9)")).toEqual({ changes: 0 });
+    expect(await d.execute("UPDATE t SET x=5 WHERE id=99")).toEqual({ changes: 0 });
+    // 실제로 바뀌면 거절 + 되돌림
+    await expect(d.execute("INSERT INTO t VALUES(2, 2)")).rejects.toBeInstanceOf(OnlineReadOnlyError);
+    await expect(d.batch([{ sql: "UPDATE t SET x=3" }, { sql: "SELECT 1" }])).rejects.toBeInstanceOf(
+      OnlineReadOnlyError,
+    );
+    await expect(d.execute("CREATE TABLE u(x)")).rejects.toBeInstanceOf(OnlineReadOnlyError);
     await expect(d.execute("PRAGMA user_version = 3")).rejects.toBeInstanceOf(OnlineReadOnlyError);
-    expect(await d.select("SELECT x FROM t")).toEqual([{ x: 1 }]);
-    expect(blocked).toBe(3);
+    expect(await d.select("SELECT id, x FROM t")).toEqual([{ id: 1, x: 1 }]);
+    expect(blocked).toBe(4);
+    // 거절 뒤에도 연결이 정상(저장점 정리)
+    expect(await d.execute("INSERT OR IGNORE INTO t VALUES(1, 0)")).toEqual({ changes: 0 });
   });
 });
