@@ -1,6 +1,6 @@
 # V2 설계·PoC 중단/재개 기록
 
-**현재 재개 정본:** [85. C-4 온라인 사본 화면 · 013](85-c4-copy-screen.md) — D-a(크기 기준 페이지)·D-d(24시간 지난 업로드 정리) 서버 013 개발 DB 적용·gateway v9, Preview 온라인 사본 카드(고르기→미리 보기→올리기·멈춤·이어서·취소→완료, 화면 `mockups/c4/`), Preview만 CSP `wasm-unsafe-eval`. 보류 D-b·D-c. 앞 [84 C-3](84-c3-migration-engine.md). 다음 = C-5 실기. 이하 체크포인트는 작성 당시 기록이며 가장 최근 결과가 우선한다.
+**현재 재개 정본:** [86. C-5 실기 확인](86-c5-device-check.md) — Preview run 7(`ac4ce2a`) 설치 파일로 m1-check 7-48(DEV 일지 → 정식 일지 → 큰 그림 → macOS), 실기 뒤 서버 자료 확인·지우기 도구 `dev-copy-admin.mjs`. 사용자 실기 대기. 앞 [85 C-4](85-c4-copy-screen.md). 이하 체크포인트는 작성 당시 기록이며 가장 최근 결과가 우선한다.
 
 2026-11-09 UTC · V2 설계/PoC 중단 지점을 보존한 뒤 복귀했다. 사용자 요청으로 main 1.23.1 패치(`d11a0ca`)를 v2-design에 병합했다.
 
