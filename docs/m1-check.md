@@ -710,11 +710,12 @@
 
 ## 7-47. 정식판·DEV 검증판 분리 (docs/release-channel-spec.md — 2026-11-14 확정, v2-design부터)
 
+2026-11-14 사용자 실기(run 79, `WorkJourneyBoardDEV_1.40.0`): 설치·첫 실행 일지 선택/DEV 표시·정식 일지 복제 후 원본 그대로·정식판 기존 일지/설정 그대로 확인.
 DEV 설치 파일 = 작업 브랜치 `build-desktop.yml` 산출물 `work-journey-board-windows-embed-DEV`·`work-journey-board-macos-DEV`.
-- [ ] 정식판이 설치·실행 중인 상태에서 DEV 설치 — 정식판을 닫으라고 하지 않음, 설치 폴더·시작 메뉴/응용 프로그램 이름 "Work Journey Board DEV"가 따로
+- [x] 정식판이 설치·실행 중인 상태에서 DEV 설치 — 정식판을 닫으라고 하지 않음, 설치 폴더·시작 메뉴/응용 프로그램 이름 "Work Journey Board DEV"가 따로
 - [ ] 정식판과 DEV 동시 실행 — 각각 한 창, 두 번째 실행은 자기 창만 앞으로
-- [ ] DEV 첫 실행 = DEV 일지 선택(기본 빈 일지·가상 샘플·정식 일지 복제), 상단 타이틀 줄 주황 띠 + DEV 배지, 창 제목 DEV
-- [ ] DEV에서 정식 일지 폴더를 DEV 폴더로 고름 → 거절 · 정식 일지 복제 → 정식 일지 파일 수정 시각·`backups` 그대로, 원본 폴더에 `.wjb-dev-journal` 없음
-- [ ] 정식판을 다시 켜면 기존 정식 일지·설정 그대로(`%LOCALAPPDATA%\WorkJourneyBoard\config.json` 수정 시각 그대로)
+- [x] DEV 첫 실행 = DEV 일지 선택(기본 빈 일지·가상 샘플·정식 일지 복제), 상단 타이틀 줄 주황 띠 + DEV 배지, 창 제목 DEV
+- [ ] DEV에서 정식 일지 폴더를 DEV 폴더로 고름 → 거절 · [x] 정식 일지 복제 → 정식 일지 파일 수정 시각·`backups` 그대로, 원본 폴더에 `.wjb-dev-journal` 없음
+- [x] 정식판을 다시 켜면 기존 정식 일지·설정 그대로(`%LOCALAPPDATA%\WorkJourneyBoard\config.json` 수정 시각 그대로)
 - [ ] DEV를 새 판으로 다시 설치 → 일지 선택을 다시 물음, [지난 DEV 일지 계속 쓰기] 보임
 - [ ] DEV 제거 → 정식판 그대로 실행 · 정식판 업데이트 확인 정상, DEV 설정 화면은 "DEV 판은 업데이트를 확인하지 않습니다"
