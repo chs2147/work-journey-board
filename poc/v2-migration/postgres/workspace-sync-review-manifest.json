@@ -1,0 +1,39 @@
+{
+  "module": "wjb-workspace-sync-poc-1",
+  "profile": "development",
+  "projectRef": "vsphftnmfzfoufasjttd",
+  "autoApply": false,
+  "cloudApplied": false,
+  "userApproved": "E1~E4 recommendation (2026-11-15)",
+  "requires": [
+    "016-workspace-read.sql (installed)"
+  ],
+  "changes": {
+    "newSchemas": [
+      "wjb_sync (space, record, applied, asset_declared — RLS, no grants)"
+    ],
+    "newPublicRPCs": [
+      "public.wjb_v2_workspace_sync (service_role only): push / pull / asset_declare"
+    ],
+    "replacedFunctions": [
+      "wjb_migration.asset_gate (also admits images declared for a synced workspace)"
+    ],
+    "imageBodies": "refused (data URL / base64); asset references must be ready private assets of the same workspace"
+  },
+  "rollback": "021 refuses while pushed changes or declared images exist; otherwise drops wjb_sync and restores the exact 001 asset_gate",
+  "localEvidence": "docs/v2-design/evidence/migration-sync-workspace-pass.json",
+  "sources": [
+    {
+      "path": "poc/v2-migration/postgres/019-workspace-sync.sql",
+      "sha256": "dcad9e8279efe8015fef96bba386eaea1199f1b37e8fa3eacbf00b659667489c"
+    },
+    {
+      "path": "poc/v2-migration/postgres/020-workspace-sync-verify.sql",
+      "sha256": "98cd7616501a17b04c0f40aafff500cb8c6c646a609fd0353317378d955964fb"
+    },
+    {
+      "path": "poc/v2-migration/postgres/021-workspace-sync-rollback.sql",
+      "sha256": "5a5f603b63fafd09665d9253eb55cb0a3ecde108d334cd476797b0114070db1c"
+    }
+  ]
+}

@@ -9,6 +9,7 @@ import { createSupabaseRest } from "../supabase-rest.mjs";
 import { createSessionVerifier } from "../../v2-auth/session-adapter.mjs";
 import { createMigrationRPC } from "../../v2-migration/server-rpc.mjs";
 import { createWorkspaceReadRPC, READ_ACTIONS } from "../../v2-migration/read-rpc.mjs";
+import { createWorkspaceSyncRPC, SYNC_ACTIONS, SYNC_BODY_LIMIT } from "../../v2-migration/sync-rpc.mjs";
 import { GatewayError, readLimited, uuid } from "../io.mjs";
 
 /** 개발용 영구 비공개 버킷(C-1b, docs/v2-design/82) — 시험마다 만들고 지우는 POC 버킷과 다르다 */
@@ -75,7 +76,8 @@ async function setup() {
     allowWorkspaceProfiles: true,
   });
   const reader = createWorkspaceReadRPC({ projectRef, serviceRoleKey, fetchTransport });
-  return { gateway, verify, rest, rpc, reader };
+  const syncer = createWorkspaceSyncRPC({ projectRef, serviceRoleKey, fetchTransport });
+  return { gateway, verify, rest, rpc, reader, syncer };
 }
 
 export async function handle(request) {
@@ -84,7 +86,7 @@ export async function handle(request) {
       ready = null;
       throw e;
     });
-    const { gateway, verify, rest, rpc, reader } = await ready;
+    const { gateway, verify, rest, rpc, reader, syncer } = await ready;
     const url = new URL(request.url);
     const path = url.pathname.startsWith(prefix + "/") ? url.pathname.slice(prefix.length) : url.pathname;
     if (path === "/v2/me") {
@@ -105,7 +107,21 @@ export async function handle(request) {
     const route = path.match(/^\/v2\/(?:devices|migrations\/([^/]+)\/([a-z_-]+))$/);
     if (route) return await control(request, url, route, { verify, rest, rpc });
     const readRoute = path.match(/^\/v2\/read\/([a-z]+)$/);
-    if (readRoute) return await read(request, url, readRoute[1], { verify, reader });
+    if (readRoute)
+      return await serverCall(request, url, readRoute[1], {
+        verify,
+        actions: READ_ACTIONS,
+        limit: 8192,
+        call: (a, p, who, dev) => reader.read(a, p, who, dev),
+      });
+    const syncRoute = path.match(/^\/v2\/sync\/([a-z_]+)$/);
+    if (syncRoute)
+      return await serverCall(request, url, syncRoute[1], {
+        verify,
+        actions: SYNC_ACTIONS,
+        limit: SYNC_BODY_LIMIT,
+        call: (a, p, who, dev) => syncer.call(a, p, who, dev),
+      });
     const inner = new URL(path, url.origin);
     return await gateway.handler(new Request(inner, request));
   } catch (e) {
@@ -119,10 +135,13 @@ export async function handle(request) {
   }
 }
 
-/** D단계 읽기(87): 내 온라인 공간 목록·머리·기록 페이지. 사용자 토큰 → 서버 확인 → 서버 전용 RPC */
-async function read(request, url, action, { verify, reader }) {
+/**
+ * 서버 전용 RPC 경로: D단계 읽기(87, /v2/read/*) · E-2 동기화(90, /v2/sync/*).
+ * 사용자 토큰 → 서버 확인 → 서버 전용 RPC(service role은 gateway 안에서만)
+ */
+async function serverCall(request, url, action, { verify, actions, limit, call }) {
   try {
-    if (request.method !== "POST" || url.search || !READ_ACTIONS.includes(action))
+    if (request.method !== "POST" || url.search || !actions.includes(action))
       throw new GatewayError("NOT_FOUND", 404);
     if (request.headers.has("origin")) throw new GatewayError("ORIGIN_DENIED", 403);
     if (request.headers.get("content-type")?.split(";")[0].trim() !== "application/json")
@@ -138,7 +157,7 @@ async function read(request, url, action, { verify, reader }) {
     }
     let body;
     try {
-      body = JSON.parse((await readLimited(request, 8192, { timeoutMs: 15000 })).toString("utf8"));
+      body = JSON.parse((await readLimited(request, limit, { timeoutMs: 30000 })).toString("utf8"));
     } catch (e) {
       if (e instanceof GatewayError) throw e;
       throw new GatewayError("INVALID_JSON");
@@ -151,7 +170,7 @@ async function read(request, url, action, { verify, reader }) {
       !uuid.test(body.deviceId)
     )
       throw new GatewayError("INVALID_REQUEST");
-    return json(await reader.read(action, body.params, principal, body.deviceId.toLowerCase()));
+    return json(await call(action, body.params, principal, body.deviceId.toLowerCase()));
   } catch (e) {
     if (e instanceof GatewayError) return json({ error: e.code }, e.status);
     return json({ error: "GATEWAY_UNAVAILABLE" }, 503);

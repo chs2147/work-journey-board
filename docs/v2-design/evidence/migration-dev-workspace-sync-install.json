@@ -1,0 +1,51 @@
+{
+  "startedAt": "2026-11-15T13:25:26.324Z",
+  "projectRef": "vsphftnmfzfoufasjttd",
+  "autoApply": false,
+  "userRequestedDevIntegration": true,
+  "productionTouched": false,
+  "sources": [
+    {
+      "path": "poc/v2-migration/postgres/019-workspace-sync.sql",
+      "sha256": "dcad9e8279efe8015fef96bba386eaea1199f1b37e8fa3eacbf00b659667489c"
+    },
+    {
+      "path": "poc/v2-migration/postgres/020-workspace-sync-verify.sql",
+      "sha256": "98cd7616501a17b04c0f40aafff500cb8c6c646a609fd0353317378d955964fb"
+    }
+  ],
+  "phases": [
+    {
+      "phase": "preflight",
+      "has016": true,
+      "has019": false
+    },
+    {
+      "phase": "apply",
+      "ok": true
+    }
+  ],
+  "applied": true,
+  "executionRole": {
+    "role": "postgres",
+    "read_only": "off",
+    "rolsuper": false,
+    "rolbypassrls": true
+  },
+  "verify": {
+    "tables": 4,
+    "syncRPC": true,
+    "rlsTables": 4,
+    "schemaUsage": false,
+    "cloudApplied": false,
+    "assetGateSync": true,
+    "privateExecute": false,
+    "syncSearchPath": true,
+    "syncServiceOnly": true,
+    "inlineImageGuard": true,
+    "directTableAccess": false,
+    "unsafeSearchPaths": 0,
+    "productActivationAllowed": false
+  },
+  "finishedAt": "2026-11-15T13:25:33.227Z"
+}

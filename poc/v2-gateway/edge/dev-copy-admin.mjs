@@ -64,6 +64,12 @@ if (report) {
     }
   }
   await sql(`BEGIN;
+DO $s$ BEGIN IF to_regnamespace('wjb_sync') IS NOT NULL THEN
+ DELETE FROM wjb_sync.applied WHERE workspace_id IN (SELECT workspace_id FROM wjb_sync.space WHERE owner_id='${owner}');
+ DELETE FROM wjb_sync.asset_declared WHERE workspace_id IN (SELECT workspace_id FROM wjb_sync.space WHERE owner_id='${owner}');
+ DELETE FROM wjb_sync.record WHERE workspace_id IN (SELECT workspace_id FROM wjb_sync.space WHERE owner_id='${owner}');
+ DELETE FROM wjb_sync.space WHERE owner_id='${owner}';
+END IF; END $s$;
 DELETE FROM wjb_migration.upload WHERE owner_id='${owner}';
 DELETE FROM wjb_migration.workspace_record WHERE job_id IN (SELECT id FROM wjb_migration.job WHERE owner_id='${owner}');
 DELETE FROM wjb_migration.workspace_header WHERE job_id IN (SELECT id FROM wjb_migration.job WHERE owner_id='${owner}');

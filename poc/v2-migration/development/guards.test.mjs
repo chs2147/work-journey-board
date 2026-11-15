@@ -10,7 +10,8 @@ const live = new URL("./live-check.mjs", import.meta.url),
   apply20 = new URL("./db20-apply.mjs", import.meta.url),
   apply10 = new URL("./paged-apply.mjs", import.meta.url),
   apply13 = new URL("./paging-apply.mjs", import.meta.url),
-  apply16 = new URL("./read-apply.mjs", import.meta.url);
+  apply16 = new URL("./read-apply.mjs", import.meta.url),
+  apply19 = new URL("./sync-apply.mjs", import.meta.url);
 for (const [name, file, args, env, code] of [
   ["live requires explicit invocation", live, [], dev, "EXPLICIT_DEV_FIXTURE_REQUIRED"],
   [
@@ -45,6 +46,21 @@ for (const [name, file, args, env, code] of [
   ["paged upload apply requires explicit invocation", apply10, [], dev, "EXPLICIT_DEV_APPLY_REQUIRED"],
   ["paging apply requires explicit invocation", apply13, [], dev, "EXPLICIT_DEV_APPLY_REQUIRED"],
   ["read apply requires explicit invocation", apply16, [], dev, "EXPLICIT_DEV_APPLY_REQUIRED"],
+  ["sync apply requires explicit invocation", apply19, [], dev, "EXPLICIT_DEV_APPLY_REQUIRED"],
+  [
+    "sync apply refuses production selection",
+    apply19,
+    ["--apply-019-development", "--free-usage-confirmed"],
+    { ...dev, WJB_CLOUD_ENV: "production" },
+    "EXPLICIT_DEV_APPLY_REQUIRED",
+  ],
+  [
+    "sync apply needs DEV credentials before requests",
+    apply19,
+    ["--apply-019-development", "--free-usage-confirmed"],
+    dev,
+    "DEV_CREDENTIALS_REQUIRED",
+  ],
   [
     "read apply refuses production selection",
     apply16,

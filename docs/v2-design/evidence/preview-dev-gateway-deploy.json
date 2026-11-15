@@ -1,12 +1,12 @@
 {
-  "deployedAt": "2026-11-15T09:32:22.482Z",
+  "deployedAt": "2026-11-15T13:25:39.526Z",
   "projectRef": "vsphftnmfzfoufasjttd",
   "productionTouched": false,
   "function": "wjb-gateway",
   "verifyJwt": false,
-  "bundleSha256": "ae669e915b2e370ebf12a6fda7f501485d2ff44e3c807197b5949b471493afcf",
-  "bundleBytes": 82517,
+  "bundleSha256": "9adafe269980b01b0b9dc43e8ff4fdf06d428698e78ca971646947137280d198",
+  "bundleBytes": 86946,
   "status": 201,
-  "version": 10,
+  "version": 11,
   "functionStatus": "ACTIVE"
 }

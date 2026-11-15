@@ -140,6 +140,8 @@ describe.skipIf(!live)("C-3 실서버(개발 프로젝트)", () => {
         timing: {},
       };
       const SQL = await initSqlJs();
+      const counts = `SELECT (SELECT count(*) FROM wjb_migration.job) jobs,(SELECT count(*) FROM wjb_migration.upload) uploads,(SELECT count(*) FROM wjb_migration.workspace_record) records,(SELECT count(*) FROM wjb_gateway.workspace) workspaces,(SELECT count(*) FROM wjb_gateway.asset) assets,(SELECT count(*) FROM wjb_gateway.device WHERE id='${deviceId}') devices,(SELECT count(*) FROM storage.objects WHERE bucket_id='${bucket}') objects,(SELECT count(*) FROM auth.users WHERE email LIKE 'wjb-c3-%') users,(SELECT count(*) FROM wjb_sync.space) sync_spaces,(SELECT count(*) FROM wjb_sync.record) sync_records;`;
+      const baseline = (await sql(counts))[0];
       try {
         const file = join(dir, "s", "source.db");
         buildSourceFixture(file, 20, 2500);
@@ -264,6 +266,118 @@ describe.skipIf(!live)("C-3 실서버(개발 프로젝트)", () => {
         }
         check("read_refuses_changed_manifest", changed === "READ_MANIFEST_CHANGED");
 
+        stage = "sync";
+        // E-2 동기화 경로(019·gateway v11): 받기 → 보내기 → 같은 요청 재전송 → 늦은 기기 충돌 → 새 그림 신고·올리기·참조
+        const sy = (action: string, params: unknown) =>
+          send("POST", `/v2/sync/${action}`, { deviceId, params });
+        const syErr = async (action: string, params: unknown) => {
+          try {
+            await sy(action, params);
+            return "";
+          } catch (e) {
+            return (e as Error).message;
+          }
+        };
+        const first = await sy("pull", { workspaceId: ws, after: "0", limit: 1000 });
+        check("sync_first_pull_empty", first.changes.length === 0 && first.head === "0");
+        const e0 = p.pages.flat().find((r) => r.table === "entry_item")!;
+        const v1 = { ...(e0.value as Record<string, unknown>), text: "가상 동기화 고침" };
+        const op = randomUUID();
+        const pushBody = {
+          workspaceId: ws,
+          opId: op,
+          changes: [{ table: "entry_item", key: e0.key, baseRev: 0, value: v1 }],
+        };
+        const pushed = await sy("push", pushBody);
+        const again = await sy("push", pushBody);
+        check(
+          "sync_push_then_replay_same_result",
+          pushed.applied === true &&
+            pushed.records[0].rev === 1 &&
+            again.replayed === true &&
+            again.head === pushed.head,
+        );
+        const late = await sy("push", {
+          workspaceId: ws,
+          opId: randomUUID(),
+          changes: [{ table: "entry_item", key: e0.key, baseRev: 0, value: { ...v1, text: "늦은 기기" } }],
+        });
+        check(
+          "sync_stale_base_conflict_keeps_server",
+          late.applied === false &&
+            late.conflicts[0].rev === 1 &&
+            late.conflicts[0].value.text === "가상 동기화 고침",
+        );
+        const pulled = await sy("pull", { workspaceId: ws, after: "0", limit: 1000 });
+        check(
+          "sync_pull_returns_change",
+          pulled.changes.length === 1 &&
+            pulled.changes[0].key === e0.key &&
+            pulled.changes[0].value.text === v1.text,
+        );
+        // 새 그림: 신고 없이는 예약 거절 → 신고 → 예약 → 올리기(ready) → 참조 기록 보내기
+        const img = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10, 1, 2, 3, 4, 5, 6, 7, 8]);
+        const obj = randomUUID(),
+          digest = sha(img);
+        const reserve = () =>
+          send("POST", `/v2/workspaces/${ws}/assets/${obj}/reserve`, {
+            deviceId,
+            generation: "1",
+            bytes: img.length,
+            sha256: digest,
+          }).then(
+            () => "",
+            (e) => (e as Error).message,
+          );
+        const undeclared = await reserve();
+        await sy("asset_declare", { workspaceId: ws, objectId: obj, sha256: digest, bytes: img.length });
+        const reserved = await reserve();
+        const put = await send("PUT", `/v2/workspaces/${ws}/assets/${obj}/content`, img, {
+          "x-wjb-device-id": deviceId,
+          "x-wjb-generation": "1",
+        });
+        const n0 = p.pages.flat().find((r) => r.table === "note_asset");
+        let refApplied = false;
+        if (n0) {
+          const ref = { objectId: obj, sha256: digest, bytes: img.length };
+          const r = await sy("push", {
+            workspaceId: ws,
+            opId: randomUUID(),
+            changes: [
+              {
+                table: "note_asset",
+                key: "e".repeat(64),
+                baseRev: null,
+                value: {
+                  ...(n0.value as Record<string, unknown>),
+                  id: "live-new-image",
+                  dataRef: ref,
+                  thumbRef: null,
+                },
+              },
+            ],
+          });
+          refApplied = r.applied === true;
+        }
+        check(
+          "sync_new_image_declare_reserve_upload_ref",
+          undeclared !== "" && (reserved === "" || reserved === "HTTP_201") && put.state === "ready" && refApplied,
+          { undeclared, reserved, putState: put?.state ?? null, refApplied, hasNoteAsset: !!n0 },
+        );
+        const inline = await syErr("push", {
+          workspaceId: ws,
+          opId: randomUUID(),
+          changes: [
+            {
+              table: "entry_item",
+              key: e0.key,
+              baseRev: 1,
+              value: { ...v1, text: "data:image/png;base64,AAAA" },
+            },
+          ],
+        });
+        check("sync_refuses_inline_image", inline === "SYNC_INLINE_IMAGE", { inline });
+
         stage = "cancel";
         // 2) 두 번째 작업: 그림 1개 올린 뒤 멈춤 → 취소(올린 그림 지우기 + 예약만 된 것) → 할당량 0
         const ws2 = randomUUID();
@@ -317,7 +431,11 @@ describe.skipIf(!live)("C-3 실서버(개발 프로젝트)", () => {
             const j = created.jobs[i],
               w = created.workspaces[i];
             await sql(
-              `BEGIN;DELETE FROM wjb_migration.upload_page WHERE upload_id='${j}';DELETE FROM wjb_migration.upload WHERE id='${j}';DELETE FROM wjb_migration.workspace_record WHERE job_id='${j}';DELETE FROM wjb_migration.workspace_header WHERE job_id='${j}';DELETE FROM wjb_migration.document WHERE job_id='${j}';DELETE FROM wjb_migration.asset WHERE job_id='${j}';DELETE FROM wjb_migration.job WHERE id='${j}';` +
+              `BEGIN;` +
+                (w
+                  ? `DO $s$ BEGIN IF to_regnamespace('wjb_sync') IS NOT NULL THEN DELETE FROM wjb_sync.applied WHERE workspace_id='${w}';DELETE FROM wjb_sync.asset_declared WHERE workspace_id='${w}';DELETE FROM wjb_sync.record WHERE workspace_id='${w}';DELETE FROM wjb_sync.space WHERE workspace_id='${w}';END IF; END $s$;`
+                  : "") +
+                `DELETE FROM wjb_migration.upload_page WHERE upload_id='${j}';DELETE FROM wjb_migration.upload WHERE id='${j}';DELETE FROM wjb_migration.workspace_record WHERE job_id='${j}';DELETE FROM wjb_migration.workspace_header WHERE job_id='${j}';DELETE FROM wjb_migration.document WHERE job_id='${j}';DELETE FROM wjb_migration.asset WHERE job_id='${j}';DELETE FROM wjb_migration.job WHERE id='${j}';` +
                 (w
                   ? `DELETE FROM wjb_gateway.recovery_audit WHERE workspace_id='${w}';DELETE FROM wjb_gateway.io_intent WHERE workspace_id='${w}';DELETE FROM wjb_gateway.asset WHERE workspace_id='${w}';DELETE FROM wjb_gateway.workspace WHERE id='${w}';`
                   : "") +
@@ -329,11 +447,11 @@ describe.skipIf(!live)("C-3 실서버(개발 프로젝트)", () => {
             await sql(`DELETE FROM wjb_v2_cloud.blocked_session WHERE user_id='${id}';`);
             await admin("DELETE", `/auth/v1/admin/users/${id}`);
           }
-          const left = await sql(
-            `SELECT (SELECT count(*) FROM wjb_migration.job) jobs,(SELECT count(*) FROM wjb_migration.upload) uploads,(SELECT count(*) FROM wjb_migration.workspace_record) records,(SELECT count(*) FROM wjb_gateway.workspace) workspaces,(SELECT count(*) FROM wjb_gateway.asset) assets,(SELECT count(*) FROM wjb_gateway.device WHERE id='${deviceId}') devices,(SELECT count(*) FROM storage.objects WHERE bucket_id='${bucket}') objects,(SELECT count(*) FROM auth.users WHERE email LIKE 'wjb-c3-%') users;`,
-          );
+          const left = await sql(counts);
           Object.assign(cleanup, left[0]);
-          cleanup.zero = Object.values(left[0]).every((n) => String(n) === "0");
+          // 시험 전과 같아야 한다(사용자가 개발 서버에 둔 자기 공간은 세되 건드리지 않음)
+          cleanup.before = baseline;
+          cleanup.zero = JSON.stringify(left[0]) === JSON.stringify(baseline);
         } catch (e) {
           cleanup.error = String((e as Error).message).slice(0, 120);
         }

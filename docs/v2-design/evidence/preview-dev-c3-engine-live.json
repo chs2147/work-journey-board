@@ -1,5 +1,5 @@
 {
-  "startedAt": "2026-11-15T09:35:44.013Z",
+  "startedAt": "2026-11-15T13:36:03.963Z",
   "projectRef": "vsphftnmfzfoufasjttd",
   "productionTouched": false,
   "mailSent": false,
@@ -59,6 +59,40 @@
       "passed": true
     },
     {
+      "name": "sync_first_pull_empty",
+      "passed": true
+    },
+    {
+      "name": "sync_push_then_replay_same_result",
+      "passed": true
+    },
+    {
+      "name": "sync_stale_base_conflict_keeps_server",
+      "passed": true
+    },
+    {
+      "name": "sync_pull_returns_change",
+      "passed": true
+    },
+    {
+      "name": "sync_new_image_declare_reserve_upload_ref",
+      "passed": true,
+      "extra": {
+        "undeclared": "METADATA_UNAVAILABLE",
+        "reserved": "HTTP_201",
+        "putState": "ready",
+        "refApplied": true,
+        "hasNoteAsset": true
+      }
+    },
+    {
+      "name": "sync_refuses_inline_image",
+      "passed": true,
+      "extra": {
+        "inline": "SYNC_INLINE_IMAGE"
+      }
+    },
+    {
       "name": "cancel_after_partial_upload_cleans",
       "passed": true,
       "extra": {
@@ -70,21 +104,35 @@
     }
   ],
   "timing": {
-    "prepareSeconds": 0.43,
-    "uploadPublishSeconds": 1.931,
-    "cancelSeconds": 84.128
+    "prepareSeconds": 0.384,
+    "uploadPublishSeconds": 1.981,
+    "cancelSeconds": 85.348
   },
   "cleanup": {
-    "jobs": 0,
+    "jobs": 2,
     "uploads": 0,
-    "records": 0,
-    "workspaces": 0,
+    "records": 38,
+    "workspaces": 2,
     "assets": 0,
     "devices": 0,
     "objects": 0,
     "users": 0,
+    "sync_spaces": 0,
+    "sync_records": 0,
+    "before": {
+      "jobs": 2,
+      "uploads": 0,
+      "records": 38,
+      "workspaces": 2,
+      "assets": 0,
+      "devices": 0,
+      "objects": 0,
+      "users": 0,
+      "sync_spaces": 0,
+      "sync_records": 0
+    },
     "zero": true
   },
   "passed": true,
-  "finishedAt": "2026-11-15T09:38:09.857Z"
+  "finishedAt": "2026-11-15T13:38:40.708Z"
 }
