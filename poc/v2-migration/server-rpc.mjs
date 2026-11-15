@@ -1,4 +1,5 @@
 // Server-only DEV migration control transport; no env reads or implicit requests.
+import { createHash } from "node:crypto";
 import { GatewayError, readLimited } from "../v2-gateway/io.mjs";
 const dev = "vsphftnmfzfoufasjttd";
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -45,6 +46,10 @@ const errors = new Set([
   "MIGRATION_IO_UNSETTLED",
   "MIGRATION_ATTESTATION_REJECTED",
   "MIGRATION_INVALID_ACTION",
+  // 010 paged upload (C-1a, docs/v2-design/81)
+  "MIGRATION_UPLOAD_NOT_FOUND",
+  "MIGRATION_UPLOAD_INCOMPLETE",
+  "MIGRATION_PAGE_CHANGED",
   ...[
     "WORKSPACE_FORMAT",
     "WORKSPACE_SCHEMA",
@@ -133,7 +138,59 @@ export function createMigrationRPC({
         !uuid.test(deviceId)
       )
         throw new GatewayError("MIGRATION_SCOPE_REQUIRED");
-      if (action === "start") {
+      // 010 페이지 업로드: 머리(기록 없는 봉투) → 페이지(≤1000행) → 상태 → 조립·시작. 페이지 해시는 여기(서버)서 계산
+      const upload = ["upload_begin", "upload_page", "upload_status", "start_upload"].includes(action);
+      if (upload) {
+        if (!allowWorkspaceProfiles) throw new GatewayError("MIGRATION_PROFILE_UNSUPPORTED");
+        if (action === "upload_begin") {
+          const h = params?.header;
+          if (
+            !keys(params, ["header", "pages", "records"]) ||
+            !keys(h, [
+              "profile",
+              "workspaceId",
+              "sourceSchema",
+              "contractFingerprint",
+              "sourceManifestHash",
+              "assets",
+              "tableStats",
+              "exclusions",
+              "policies",
+            ]) ||
+            !workspaceProfiles.includes(h.profile) ||
+            h.sourceSchema !== workspaceSchemas[h.profile] ||
+            !uuid.test(h.workspaceId) ||
+            !sha.test(h.sourceManifestHash) ||
+            !sha.test(h.contractFingerprint) ||
+            !Array.isArray(h.assets) ||
+            h.assets.length > 8 ||
+            !Number.isInteger(params.pages) ||
+            !Number.isInteger(params.records) ||
+            params.pages < 1 ||
+            params.pages > 32 ||
+            params.records < 1 ||
+            params.records > 20000 ||
+            params.records > params.pages * 1000 ||
+            params.records <= (params.pages - 1) * 1000
+          )
+            throw new GatewayError("INVALID_RPC");
+        } else if (action === "upload_page") {
+          if (
+            !keys(params, ["index", "records"]) ||
+            !Number.isInteger(params.index) ||
+            params.index < 0 ||
+            params.index > 31 ||
+            !Array.isArray(params.records) ||
+            params.records.length < 1 ||
+            params.records.length > 1000
+          )
+            throw new GatewayError("INVALID_RPC");
+          params = {
+            ...params,
+            sha256: createHash("sha256").update(JSON.stringify(params.records)).digest("hex"),
+          };
+        } else if (!keys(params, [])) throw new GatewayError("INVALID_RPC");
+      } else if (action === "start") {
         const full = allowWorkspaceProfiles && workspaceProfiles.includes(params?.profile);
         if (full) {
           if (
@@ -203,7 +260,7 @@ export function createMigrationRPC({
       });
       if (
         Buffer.byteLength(body) >
-        (action === "start" && workspaceProfiles.includes(params.profile) ? 1048576 : 65536)
+        ((action === "start" && workspaceProfiles.includes(params.profile)) || upload ? 1048576 : 65536)
       )
         throw new GatewayError("INVALID_RPC");
       let response;
@@ -239,6 +296,26 @@ export function createMigrationRPC({
           (await readLimited(response, action === "workspace" ? 1048576 + 8192 : 8192)).toString("utf8"),
         );
         if (!v || typeof v !== "object" || Array.isArray(v)) throw Error();
+        if (
+          ["upload_begin", "upload_page"].includes(action) ||
+          (action === "upload_status" && v.started === false)
+        ) {
+          if (v.uploadId !== jobId) throw Error();
+          if (action === "upload_page" && (v.index !== params.index || v.stored !== true)) throw Error();
+          return v;
+        }
+        if (action === "start_upload" || (action === "upload_status" && v.started === true)) {
+          if (
+            v.jobId !== jobId ||
+            !uuid.test(v.workspaceId) ||
+            !sha.test(v.sourceManifestHash) ||
+            !allowedProfiles.has(v.profile) ||
+            !sha.test(v.manifestHash) ||
+            !["staging", "connected", "cancel_fenced", "canceled"].includes(v.state)
+          )
+            throw Error();
+          return v;
+        }
         if (
           action === "start" &&
           (v.jobId !== jobId ||

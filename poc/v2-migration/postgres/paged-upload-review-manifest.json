@@ -1,0 +1,47 @@
+{
+  "module": "wjb-full-workspace-paged-upload-poc-1",
+  "profile": "development",
+  "projectRef": "vsphftnmfzfoufasjttd",
+  "region": "ap-northeast-2",
+  "autoApply": false,
+  "cloudApplied": false,
+  "productCompatible": false,
+  "monthlyBudgetKRW": 0,
+  "requires": [
+    "001-migration.sql (installed)",
+    "004-workspace.sql (installed, unchanged bytes)",
+    "007-workspace-db20.sql (installed, unchanged bytes)"
+  ],
+  "limits": {
+    "pageRecords": 1000,
+    "pages": 32,
+    "records": 20000,
+    "envelopeBytes": 67108864,
+    "assets": 8,
+    "assetBytes": 65536,
+    "activeUploadsPerOwner": 4
+  },
+  "newObjects": {
+    "tables": 2,
+    "rlsTables": 2,
+    "newPublicRPCs": 0,
+    "newPrivateFunctions": ["wjb_migration.command_core"],
+    "replacedFunctions": ["public.wjb_v2_migration_command", "wjb_migration.normalize_workspace"]
+  },
+  "rollback": "011 only while no upload is staged; restores the exact 004 command and 007 validation text; jobs/records stay",
+  "localEvidence": "docs/v2-design/evidence/migration-paged-upload-pass.json",
+  "sources": [
+    {
+      "path": "poc/v2-migration/postgres/010-workspace-paged-upload.sql",
+      "sha256": "3f9e1e9934b076880010dbe2c465c5a832a579f615a584ed3d284e9fe3cf8540"
+    },
+    {
+      "path": "poc/v2-migration/postgres/012-workspace-paged-upload-verify.sql",
+      "sha256": "a6e807bb80b79a9feb7303a134cdaaf19b29b1325ec56d750cd7ef0e1e2b3238"
+    },
+    {
+      "path": "poc/v2-migration/postgres/011-workspace-paged-upload-rollback-empty.sql",
+      "sha256": "e5fc173bb1dd16910e70f570d7f00b7d5fb1a34bdcc446d36666907b1e0d7d15"
+    }
+  ]
+}

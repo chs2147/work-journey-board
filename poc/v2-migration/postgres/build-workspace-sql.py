@@ -153,3 +153,161 @@ ALTER TABLE wjb_migration.job ADD CONSTRAINT job_profile_check CHECK(profile IN(
 REVOKE ALL ON ALL FUNCTIONS IN SCHEMA wjb_migration FROM PUBLIC,anon,authenticated,service_role;
 COMMIT;
 """)
+
+# ── 010 paged upload + record limit (C-1a, docs/v2-design/81) — 010 apply / 012 verify / 011 empty rollback ─────────
+# 004/007 stay installed byte-identical. 010: records arrive in pages (≤1000 each, staged), the envelope is assembled
+# server-side and handed to the unchanged start logic (moved to wjb_migration.command_core). Record limit 2048→20000,
+# envelope 1MiB→64MiB. FK checks become one set-based query (was O(n²)); asset limits (8, 64KiB) stay for C-1b.
+w21=w20
+w21=edit(w21,"octet_length(v::text)>1048576 OR jsonb_typeof(v->'records')","octet_length(v::text)>67108864 OR jsonb_typeof(v->'records')")
+w21=edit(w21,"jsonb_array_length(v->'records')>2048 OR","jsonb_array_length(v->'records')>20000 OR")
+w21=edit(w21,"(st->>col) !~ '^[0-9]+$' OR (st->>col)::bigint>4096","(st->>col) !~ '^[0-9]+$' OR (st->>col)::bigint>20000")
+w21=edit(w21,"setting jsonb;names text[];total integer;version integer;","setting jsonb;names text[];total integer;version integer;assetrecs jsonb;")
+w21=edit(w21," FOR r IN SELECT value FROM jsonb_array_elements(v->'records') LOOP\n"," -- image-reference checks only need the asset rows (was the whole record list per node)\n assetrecs:=(SELECT coalesce(jsonb_agg(x),'[]') FROM jsonb_array_elements(v->'records') x WHERE x->>'table' IN('note_asset','cabi_asset'));\n FOR r IN SELECT value FROM jsonb_array_elements(v->'records') LOOP\n")
+fk_loop=w21[w21.index("  FOR fk IN SELECT value FROM jsonb_array_elements(contract->'tables'->t->'foreignKeys') LOOP"):]
+fk_loop=fk_loop[:fk_loop.index("  END LOOP;\n")+len("  END LOOP;\n")]
+assert 'MIGRATION_FOREIGN_KEY' in fk_loop and fk_loop.count('\n')==3,fk_loop
+w21=edit(w21,fk_loop,"")
+w21=edit(w21," IF EXISTS(SELECT 1 FROM jsonb_array_elements(v->'records') x GROUP BY x->>'table',x->>'key' HAVING count(*)>1)",""" -- foreign keys: one hashed anti-join over all rows (same rule and code as the former per-row scan)
+ IF EXISTS(
+  WITH recs AS MATERIALIZED (SELECT x->>'table' t,x->'value' val FROM jsonb_array_elements(v->'records') x),
+   fks AS MATERIALIZED (SELECT e.key t,f->>'table' tt,f->>'from' fc,f->>'to' tc FROM jsonb_each(contract->'tables') e,jsonb_array_elements(e.value->'foreignKeys') f),
+   want AS MATERIALIZED (SELECT DISTINCT k.tt,k.tc,r.val->k.fc w FROM recs r JOIN fks k ON k.t=r.t WHERE r.val->k.fc<>'null'::jsonb),
+   have AS MATERIALIZED (SELECT DISTINCT k.tt,k.tc,r.val->k.tc h FROM (SELECT DISTINCT tt,tc FROM fks) k JOIN recs r ON r.t=k.tt)
+  SELECT 1 FROM want LEFT JOIN have ON have.tt=want.tt AND have.tc=want.tc AND have.h=want.w WHERE have.tt IS NULL)
+ THEN RAISE EXCEPTION 'MIGRATION_FOREIGN_KEY'; END IF;
+ IF EXISTS(SELECT 1 FROM jsonb_array_elements(v->'records') x GROUP BY x->>'table',x->>'key' HAVING count(*)>1)""")
+n_before=w21.count("v->'records')")
+w21=re.sub(r"((?:rich|board)_valid\([^;]*?),v->'records'\)",r"\1,assetrecs)",w21)
+assert w21.count("assetrecs)")>=3,w21.count("assetrecs)")
+core=fullcommand.replace('CREATE OR REPLACE FUNCTION public.wjb_v2_migration_command(','CREATE FUNCTION wjb_migration.command_core(',1)
+core=edit(core,"OR octet_length(p_request::text)>1048576 THEN","OR octet_length(p_request::text)>(CASE WHEN current_setting('wjb.upload_start',true)='1' THEN 134217728 ELSE 1048576 END) THEN")
+wrapper=r"""CREATE OR REPLACE FUNCTION public.wjb_v2_migration_command(p_request jsonb) RETURNS jsonb
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $$
+DECLARE action text:=p_request->>'action';u uuid;s uuid;dev uuid;jid uuid;p jsonb:=p_request->'params';
+ up wjb_migration.upload;j wjb_migration.job;idx integer;recs jsonb;have jsonb;env jsonb;res jsonb;
+BEGIN
+ IF action IS NULL OR action NOT IN('upload_begin','upload_page','upload_status','start_upload') THEN RETURN wjb_migration.command_core(p_request); END IF;
+ u:=(p_request->>'userId')::uuid;s:=(p_request->>'sessionId')::uuid;dev:=(p_request->>'deviceId')::uuid;jid:=(p_request->>'jobId')::uuid;
+ IF NOT wjb_migration.keys_exact(p_request,ARRAY['action','userId','sessionId','deviceId','jobId','params']) OR
+    u IS NULL OR s IS NULL OR dev IS NULL OR jid IS NULL OR jsonb_typeof(p)<>'object' OR octet_length(p_request::text)>1048576
+    THEN RAISE EXCEPTION 'MIGRATION_INVALID_REQUEST'; END IF;
+ PERFORM 1 FROM wjb_gateway.device WHERE id=dev AND user_id=u AND session_id=s AND NOT revoked FOR SHARE;
+ IF NOT FOUND OR NOT public.wjb_v2_session_active(u,s) THEN RAISE EXCEPTION 'MIGRATION_ACCESS_DENIED'; END IF;
+ IF action='upload_begin' THEN
+  -- header = the envelope without records (assets, tableStats, exclusions …); pages/records = what will follow
+  IF NOT wjb_migration.keys_exact(p,ARRAY['header','pages','records']) OR jsonb_typeof(p->'header')<>'object' OR p->'header' ? 'records'
+     OR jsonb_typeof(p->'pages')<>'number' OR jsonb_typeof(p->'records')<>'number' OR (p->>'pages') !~ '^[1-9][0-9]*$' OR (p->>'records') !~ '^[1-9][0-9]*$'
+     OR (p->>'pages')::integer>32 OR (p->>'records')::integer>20000 OR (p->>'records')::integer>(p->>'pages')::integer*1000
+     OR (p->>'records')::integer<=((p->>'pages')::integer-1)*1000 THEN RAISE EXCEPTION 'MIGRATION_INVALID_PARAMS'; END IF;
+  PERFORM pg_advisory_xact_lock(hashtextextended('migration-start:'||u::text,0));
+  SELECT * INTO up FROM wjb_migration.upload WHERE id=jid;
+  IF FOUND THEN
+   IF up.owner_id<>u OR up.device_id<>dev THEN RAISE EXCEPTION 'MIGRATION_ACCESS_DENIED'; END IF;
+   IF up.header<>p->'header' OR up.pages<>(p->>'pages')::integer OR up.records<>(p->>'records')::integer THEN RAISE EXCEPTION 'MIGRATION_IDEMPOTENCY_MISMATCH'; END IF;
+  ELSE
+   IF EXISTS(SELECT 1 FROM wjb_migration.job WHERE id=jid) THEN RAISE EXCEPTION 'MIGRATION_IDEMPOTENCY_MISMATCH'; END IF;
+   IF (SELECT count(*) FROM wjb_migration.upload WHERE owner_id=u)>=4 THEN RAISE EXCEPTION 'MIGRATION_LIMIT'; END IF;
+   INSERT INTO wjb_migration.upload(id,owner_id,device_id,header,pages,records) VALUES(jid,u,dev,p->'header',(p->>'pages')::integer,(p->>'records')::integer) RETURNING * INTO up;
+  END IF;
+  RETURN jsonb_build_object('uploadId',jid,'pages',up.pages,'records',up.records,
+   'received',(SELECT coalesce(jsonb_agg(page_index ORDER BY page_index),'[]') FROM wjb_migration.upload_page WHERE upload_id=jid));
+ END IF;
+ SELECT * INTO up FROM wjb_migration.upload WHERE id=jid AND owner_id=u AND device_id=dev FOR UPDATE;
+ IF action='upload_page' THEN
+  IF NOT FOUND THEN RAISE EXCEPTION 'MIGRATION_UPLOAD_NOT_FOUND'; END IF;
+  -- sha256 = gateway hash of the exact page bytes it received (trusted server parameter, not recomputed here)
+  IF NOT wjb_migration.keys_exact(p,ARRAY['index','sha256','records']) OR jsonb_typeof(p->'index')<>'number' OR (p->>'index') !~ '^(0|[1-9][0-9]*)$'
+     OR coalesce(p->>'sha256','') !~ '^[0-9a-f]{64}$' OR jsonb_typeof(p->'records')<>'array' OR jsonb_array_length(p->'records') NOT BETWEEN 1 AND 1000
+     THEN RAISE EXCEPTION 'MIGRATION_INVALID_PARAMS'; END IF;
+  idx:=(p->>'index')::integer;
+  IF idx>=up.pages THEN RAISE EXCEPTION 'MIGRATION_INVALID_PARAMS'; END IF;
+  SELECT body INTO have FROM wjb_migration.upload_page WHERE upload_id=jid AND page_index=idx;
+  IF FOUND THEN
+   IF have<>p->'records' THEN RAISE EXCEPTION 'MIGRATION_PAGE_CHANGED'; END IF;
+  ELSE
+   INSERT INTO wjb_migration.upload_page(upload_id,page_index,sha256,body) VALUES(jid,idx,p->>'sha256',p->'records');
+  END IF;
+  RETURN jsonb_build_object('uploadId',jid,'index',idx,'stored',true);
+ END IF;
+ IF action='upload_status' THEN
+  IF NOT wjb_migration.keys_exact(p,ARRAY[]::text[]) THEN RAISE EXCEPTION 'MIGRATION_INVALID_PARAMS'; END IF;
+  IF NOT FOUND THEN
+   SELECT * INTO j FROM wjb_migration.job WHERE id=jid AND owner_id=u AND device_id=dev;
+   IF NOT FOUND THEN RAISE EXCEPTION 'MIGRATION_UPLOAD_NOT_FOUND'; END IF;
+   RETURN jsonb_build_object('uploadId',jid,'started',true,'jobId',j.id,'state',j.state,'manifestHash',j.manifest_hash,'profile',j.profile,'workspaceId',j.workspace_id,'sourceManifestHash',j.source_manifest_hash);
+  END IF;
+  RETURN jsonb_build_object('uploadId',jid,'started',false,'pages',up.pages,'records',up.records,
+   'received',(SELECT coalesce(jsonb_agg(page_index ORDER BY page_index),'[]') FROM wjb_migration.upload_page WHERE upload_id=jid));
+ END IF;
+ -- start_upload: all pages present → assemble → unchanged start logic → staged pages removed
+ IF NOT wjb_migration.keys_exact(p,ARRAY[]::text[]) THEN RAISE EXCEPTION 'MIGRATION_INVALID_PARAMS'; END IF;
+ IF NOT FOUND THEN
+  SELECT * INTO j FROM wjb_migration.job WHERE id=jid AND owner_id=u AND device_id=dev;
+  IF NOT FOUND THEN RAISE EXCEPTION 'MIGRATION_UPLOAD_NOT_FOUND'; END IF;
+  RETURN jsonb_build_object('jobId',j.id,'state',j.state,'manifestHash',j.manifest_hash,'profile',j.profile,'workspaceId',j.workspace_id,'sourceManifestHash',j.source_manifest_hash);
+ END IF;
+ IF (SELECT count(*) FROM wjb_migration.upload_page WHERE upload_id=jid)<>up.pages THEN RAISE EXCEPTION 'MIGRATION_UPLOAD_INCOMPLETE'; END IF;
+ recs:=(SELECT coalesce(jsonb_agg(e.val ORDER BY pg.page_index,e.o),'[]') FROM wjb_migration.upload_page pg,jsonb_array_elements(pg.body) WITH ORDINALITY e(val,o) WHERE pg.upload_id=jid);
+ IF jsonb_array_length(recs)<>up.records THEN RAISE EXCEPTION 'MIGRATION_UPLOAD_INCOMPLETE'; END IF;
+ env:=up.header||jsonb_build_object('records',recs);
+ PERFORM set_config('wjb.upload_start','1',true);
+ res:=wjb_migration.command_core(jsonb_build_object('action','start','userId',u,'sessionId',s,'deviceId',dev,'jobId',jid,'params',env));
+ PERFORM set_config('wjb.upload_start','',true);
+ DELETE FROM wjb_migration.upload_page WHERE upload_id=jid;
+ DELETE FROM wjb_migration.upload WHERE id=jid;
+ RETURN res;
+EXCEPTION WHEN invalid_text_representation OR numeric_value_out_of_range THEN RAISE EXCEPTION 'MIGRATION_INVALID_REQUEST';
+END $$;
+"""
+tables010="""CREATE TABLE wjb_migration.upload(id uuid PRIMARY KEY,owner_id uuid NOT NULL,device_id uuid NOT NULL,header jsonb NOT NULL,
+ pages integer NOT NULL CHECK(pages BETWEEN 1 AND 32),records integer NOT NULL CHECK(records BETWEEN 1 AND 20000),created_at timestamptz NOT NULL DEFAULT clock_timestamp());
+CREATE TABLE wjb_migration.upload_page(upload_id uuid NOT NULL REFERENCES wjb_migration.upload(id) ON DELETE CASCADE,page_index integer NOT NULL CHECK(page_index BETWEEN 0 AND 31),
+ sha256 text NOT NULL CHECK(sha256 ~ '^[0-9a-f]{64}$'),body jsonb NOT NULL CHECK(jsonb_typeof(body)='array'),PRIMARY KEY(upload_id,page_index));
+ALTER TABLE wjb_migration.upload ENABLE ROW LEVEL SECURITY;
+ALTER TABLE wjb_migration.upload_page ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON wjb_migration.upload,wjb_migration.upload_page FROM PUBLIC,anon,authenticated,service_role;
+"""
+(ROOT/'010-workspace-paged-upload.sql').write_text(f"""-- GENERATED by build-workspace-sql.py. REVIEW ONLY; no cloud auto-apply.
+-- Apply once after 007 (DEV has 001/004/007: never re-run those). Paged record upload + record limit 20000 (C-1a,
+-- docs/v2-design/81). The former public command body is moved unchanged to wjb_migration.command_core. Asset limits stay.
+BEGIN;
+SET LOCAL lock_timeout='5s'; SET LOCAL statement_timeout='60s';
+DO $$ BEGIN
+ IF wjb_migration.workspace_contract(20) IS NULL THEN RAISE EXCEPTION 'MIGRATION_007_REQUIRED'; END IF;
+ IF to_regclass('wjb_migration.upload') IS NOT NULL THEN RAISE EXCEPTION 'MIGRATION_010_ALREADY_APPLIED'; END IF;
+END $$;
+{tables010}{w21}{core}{wrapper}
+REVOKE ALL ON ALL FUNCTIONS IN SCHEMA wjb_migration FROM PUBLIC,anon,authenticated,service_role;
+REVOKE ALL ON FUNCTION public.wjb_v2_migration_command(jsonb) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.wjb_v2_migration_command(jsonb) TO service_role;
+COMMIT;
+""")
+(ROOT/'012-workspace-paged-upload-verify.sql').write_text("""-- SELECT only. 010 installed: upload tables (RLS, no direct access), paged actions, server-only RPC.
+SELECT jsonb_build_object(
+ 'uploadTables',(SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='wjb_migration' AND c.relname IN('upload','upload_page') AND c.relkind='r' AND c.relrowsecurity),
+ 'tables',(SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='wjb_migration' AND c.relkind='r'),
+ 'rlsTables',(SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='wjb_migration' AND c.relkind='r' AND c.relrowsecurity),
+ 'pagedActions',(SELECT prosrc LIKE '%upload_begin%' AND prosrc LIKE '%start_upload%' FROM pg_proc WHERE oid='public.wjb_v2_migration_command(jsonb)'::regprocedure),
+ 'core',to_regprocedure('wjb_migration.command_core(jsonb)') IS NOT NULL,
+ 'recordLimit20000',(SELECT prosrc LIKE '%jsonb_array_length(v->''records'')>20000%' FROM pg_proc WHERE oid='wjb_migration.normalize_workspace(jsonb)'::regprocedure),
+ 'clientRPC',has_function_privilege('anon','public.wjb_v2_migration_command(jsonb)','EXECUTE') OR has_function_privilege('authenticated','public.wjb_v2_migration_command(jsonb)','EXECUTE'),
+ 'serviceRPC',has_function_privilege('service_role','public.wjb_v2_migration_command(jsonb)','EXECUTE'),
+ 'directTableAccess',EXISTS(SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='wjb_migration' AND c.relkind='r' AND has_table_privilege('service_role',c.oid,'SELECT,INSERT,UPDATE,DELETE')),
+ 'privateExecute',EXISTS(SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='wjb_migration' AND (has_function_privilege('service_role',p.oid,'EXECUTE') OR has_function_privilege('anon',p.oid,'EXECUTE') OR has_function_privilege('authenticated',p.oid,'EXECUTE'))),
+ 'unsafeSearchPaths',EXISTS(SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='wjb_migration' AND NOT('search_path=pg_catalog'=ANY(coalesce(p.proconfig,'{}'::text[])))),
+ 'cloudApplied',false,'productActivationAllowed',false);
+""")
+(ROOT/'011-workspace-paged-upload-rollback-empty.sql').write_text(f"""-- Unused 010 only: back to the exact 004 command and 007 validation text. Refuses while any upload is staged.
+BEGIN;
+SET LOCAL lock_timeout='5s'; SET LOCAL statement_timeout='30s';
+DO $$ BEGIN
+ IF to_regclass('wjb_migration.upload') IS NULL THEN RAISE EXCEPTION 'MIGRATION_010_REQUIRED'; END IF;
+ IF EXISTS(SELECT 1 FROM wjb_migration.upload) OR EXISTS(SELECT 1 FROM wjb_migration.upload_page) THEN RAISE EXCEPTION 'MIGRATION_UPLOAD_ROLLBACK_NOT_EMPTY'; END IF;
+END $$;
+{fullcommand}{w20}DROP FUNCTION wjb_migration.command_core(jsonb);
+DROP TABLE wjb_migration.upload_page;
+DROP TABLE wjb_migration.upload;
+REVOKE ALL ON ALL FUNCTIONS IN SCHEMA wjb_migration FROM PUBLIC,anon,authenticated,service_role;
+COMMIT;
+""")
