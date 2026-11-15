@@ -361,7 +361,10 @@ describe.skipIf(!live)("C-3 실서버(개발 프로젝트)", () => {
         }
         check(
           "sync_new_image_declare_reserve_upload_ref",
-          undeclared !== "" && (reserved === "" || reserved === "HTTP_201") && put.state === "ready" && refApplied,
+          undeclared !== "" &&
+            (reserved === "" || reserved === "HTTP_201") &&
+            put.state === "ready" &&
+            refApplied,
           { undeclared, reserved, putState: put?.state ?? null, refApplied, hasNoteAsset: !!n0 },
         );
         const inline = await syErr("push", {

@@ -5,19 +5,11 @@
   "autoApply": false,
   "cloudApplied": false,
   "userApproved": "E1~E4 recommendation (2026-11-15)",
-  "requires": [
-    "016-workspace-read.sql (installed)"
-  ],
+  "requires": ["016-workspace-read.sql (installed)"],
   "changes": {
-    "newSchemas": [
-      "wjb_sync (space, record, applied, asset_declared — RLS, no grants)"
-    ],
-    "newPublicRPCs": [
-      "public.wjb_v2_workspace_sync (service_role only): push / pull / asset_declare"
-    ],
-    "replacedFunctions": [
-      "wjb_migration.asset_gate (also admits images declared for a synced workspace)"
-    ],
+    "newSchemas": ["wjb_sync (space, record, applied, asset_declared — RLS, no grants)"],
+    "newPublicRPCs": ["public.wjb_v2_workspace_sync (service_role only): push / pull / asset_declare"],
+    "replacedFunctions": ["wjb_migration.asset_gate (also admits images declared for a synced workspace)"],
     "imageBodies": "refused (data URL / base64); asset references must be ready private assets of the same workspace"
   },
   "rollback": "021 refuses while pushed changes or declared images exist; otherwise drops wjb_sync and restores the exact 001 asset_gate",
