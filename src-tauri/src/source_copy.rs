@@ -112,7 +112,7 @@ pub fn snapshot(root: &Path, source_dir: &Path, id: &str) -> Result<Snapshot, St
     done
 }
 
-/// 고른 폴더 바로 아래(한 단계) 하위 폴더 중 일지 파일이 있는 곳 — 이름순, 최대 20개.
+/// 고른 폴더 바로 아래(한 단계) 하위 폴더 중 일지 파일이 있는 곳 — 이름순, 최대 20개. 없으면 바로 위 폴더.
 /// 목록만 읽는다(파일 내용·더 깊은 폴더·바로 가기/심볼릭 링크는 보지 않음). 고른 폴더 자체에 일지가 있으면 그것 하나.
 pub fn candidates(source_dir: &Path) -> Result<Vec<String>, String> {
     if !source_dir.is_absolute() {
@@ -133,6 +133,12 @@ pub fn candidates(source_dir: &Path) -> Result<Vec<String>, String> {
         .collect();
     out.sort();
     out.truncate(20);
+    // 하위에도 없으면 바로 위 폴더(일지 폴더 안의 backups 등을 고른 경우 — 윈도우 폴더 선택 창에서 하위 폴더가 선택된 채 확인)
+    if out.is_empty() {
+        if let Some(up) = dir.parent().filter(|p| is_journal(p)) {
+            out.push(up.to_string_lossy().into_owned());
+        }
+    }
     Ok(out)
 }
 

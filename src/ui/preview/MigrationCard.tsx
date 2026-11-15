@@ -168,7 +168,7 @@ export function MigrationCard({ ownerId }: { ownerId: string | null }) {
       return;
     }
     if (found.length === 0) {
-      setError(C.errors.SOURCE_NOT_JOURNAL ?? null);
+      setError(`${C.errors.SOURCE_NOT_JOURNAL} (${parent})`);
       return;
     }
     if (found.length > 1) {
@@ -191,7 +191,8 @@ export function MigrationCard({ ownerId }: { ownerId: string | null }) {
       prepared.current.set(jobId, { copy, summary });
       setPhase({ kind: "ready", folder, jobId, snapshotId: snap.snapshotId, copy, summary });
     } catch (e) {
-      setError(errText(e));
+      // 어느 폴더에서 실패했는지 함께(실기 진단)
+      setError(`${errText(e)} (${folder})`);
       setPhase({ kind: "idle" });
     }
   }
