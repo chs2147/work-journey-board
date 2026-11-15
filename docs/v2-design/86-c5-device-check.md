@@ -4,12 +4,12 @@
 
 ## 1. 설치 파일
 
-`Build Connected Preview (verification)` run 7(`ac4ce2a`) 산출물 — 2026-11-29까지 보관, 릴리스·업데이트 피드에는 없음.
+`Build Connected Preview (verification)` run 8(`d7db3e0`, 비공식 판 아이콘 포함) 산출물 — 2026-11-29까지 보관, 릴리스·업데이트 피드에는 없음.
 
 | OS | 산출물 |
 |---|---|
-| Windows | `connected-preview-windows-1.40.0-preview.ac4ce2a` (NSIS, 현재 사용자) |
-| macOS | `connected-preview-macos-1.40.0-preview.ac4ce2a` (유니버설 DMG) |
+| Windows | `connected-preview-windows-1.40.0-preview.d7db3e0` (NSIS, 현재 사용자) |
+| macOS | `connected-preview-macos-1.40.0-preview.d7db3e0` (유니버설 DMG) |
 
 같은 날 CI·DEV 설치 파일 빌드도 성공. 개발 서버 상태: 013 적용·gateway v9, 남은 작업·공간·그림 **0**(실기 전 확인).
 

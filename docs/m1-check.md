@@ -722,7 +722,7 @@ DEV 설치 파일 = 작업 브랜치 `build-desktop.yml` 산출물 `work-journey
 
 ## 7-48. Connected Preview 온라인 사본 만들기 (V2 C-5, docs/v2-design/85·86)
 
-설치 파일 = `build-preview.yml` run 7 산출물 `connected-preview-windows-1.40.0-preview.ac4ce2a`·`connected-preview-macos-1.40.0-preview.ac4ce2a`(2026-11-29까지 보관). 개발 서버(vsphftnmfzfoufasjttd)만 씀.
+설치 파일 = `build-preview.yml` run 8 산출물 `connected-preview-windows-1.40.0-preview.d7db3e0`·`connected-preview-macos-1.40.0-preview.d7db3e0`(2026-11-29까지 보관, 설치 아이콘 = 주황 바탕 + DEV 띠). 개발 서버(vsphftnmfzfoufasjttd)만 씀.
 **먼저 DEV 일지(가상 샘플)로 1~6을 해 보고**, 이상이 없으면 정식 일지로 7. 정식 일지 내용은 개발 서버에만 올라가며 끝나면 지울 수 있다(86문서 3절).
 1. [ ] Preview 설치·실행 → 로그인 유지(B단계와 같음), 계정 카드 아래 "온라인 사본 만들기"
 2. [ ] [로컬 일지 폴더 고르기…] → DEV 일지 폴더 → 미리 보기(일지 구조 v20·업무·업무 기록·그림 개수/용량·보낼 묶음)가 맞음
