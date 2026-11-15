@@ -191,6 +191,10 @@ describe("Rust 명령 경계(lib.rs)", () => {
       "migration::migration_journal_list",
       "migration::migration_journal_write",
       "migration::migration_journal_remove",
+      "online_space::space_list",
+      "online_space::space_sync",
+      "online_space::space_read",
+      "online_space::space_remove",
     ]);
     // 온라인 모듈은 Preview 빌드에만 컴파일된다
     expect(lib).toMatch(/#\[cfg\(feature = "connected-preview"\)\]\nmod online;/);

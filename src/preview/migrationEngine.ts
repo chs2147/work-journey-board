@@ -54,25 +54,33 @@ export function readOnlyAdapter(db: Database): ReadDb {
   };
 }
 
-/** 제품 마이그레이션만 적용한 빈 DB의 구조(원본 구조가 정확히 같아야 한다) */
-function expectedSchemaFor(SQL: SqlJsStatic, core: ReturnType<typeof createCopyCore>) {
-  const files = Object.entries(migrationSql)
+const migrationFiles = () =>
+  Object.entries(migrationSql)
     .map(([path, sql]) => [path.split("/").pop() ?? "", sql] as const)
     .filter(([name]) => /^00\d\d_.*\.sql$/.test(name))
     .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
+
+/** 제품 마이그레이션만 적용한 빈 일지(그 판) — 원본 구조 비교와 온라인 공간 되살리기(D-3)에 쓴다 */
+export function emptyJournal(SQL: SqlJsStatic, version: number): Database {
+  const db = new SQL.Database();
+  for (const [name, sql] of migrationFiles()) if (Number(name.slice(0, 4)) <= version) db.exec(sql);
+  db.run("INSERT INTO app_meta(key,value) VALUES('schema_version',?)", [String(version)]);
+  return db;
+}
+
+/** 제품 마이그레이션만 적용한 빈 DB의 구조(원본 구조가 의미상 같아야 한다) */
+function expectedSchemaFor(SQL: SqlJsStatic, core: ReturnType<typeof createCopyCore>) {
   const cache = new Map<number, unknown>();
   return (version: number) => {
     if (!cache.has(version)) {
-      const db = new SQL.Database();
+      const db = emptyJournal(SQL, version);
       try {
-        for (const [name, sql] of files) if (Number(name.slice(0, 4)) <= version) db.exec(sql);
-        db.run("INSERT INTO app_meta(key,value) VALUES('schema_version',?)", [String(version)]);
         cache.set(version, core.schemaModel(readOnlyAdapter(db)));
       } finally {
         db.close();
       }
     }
-    return cache.get(version);
+    return cache.get(version) as Record<string, unknown>;
   };
 }
 

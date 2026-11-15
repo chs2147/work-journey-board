@@ -1,0 +1,48 @@
+/* D-4 열린 온라인 공간 — 위 띠(직각, UI 강조 띠 규칙) + 앱 화면 */
+.frame {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.band {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: var(--sp-2) var(--sp-5);
+  background: var(--accent-soft);
+  border-bottom: 1px solid var(--accent);
+  font-size: var(--fs-sm);
+}
+
+.label {
+  font-weight: var(--fw-bold);
+  color: var(--accent);
+}
+
+.meta {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-2);
+}
+
+.back {
+  flex: 0 0 auto;
+  height: 28px;
+  padding: 0 var(--sp-4);
+  border: 1px solid var(--btn-line);
+  border-radius: var(--radius-md);
+  background: var(--btn-bg);
+  color: var(--text-1);
+  font: inherit;
+  cursor: pointer;
+}
+
+.app {
+  flex: 1 1 auto;
+  min-height: 0;
+}

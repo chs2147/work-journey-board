@@ -13,6 +13,8 @@ mod menu;
 mod migration;
 #[cfg(feature = "connected-preview")]
 mod online;
+#[cfg(feature = "connected-preview")]
+mod online_space;
 mod profile;
 #[cfg(feature = "connected-preview")]
 mod source_copy;
@@ -169,7 +171,11 @@ pub fn run() {
             migration::migration_cancel_asset,
             migration::migration_journal_list,
             migration::migration_journal_write,
-            migration::migration_journal_remove
+            migration::migration_journal_remove,
+            online_space::space_list,
+            online_space::space_sync,
+            online_space::space_read,
+            online_space::space_remove
         ]);
     builder
         .run(context)

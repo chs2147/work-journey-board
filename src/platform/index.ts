@@ -398,6 +398,45 @@ export async function loadPreviewMigration(): Promise<PreviewMigration> {
   if (isTauri()) return (await import("./tauriPreviewMigration")).tauriPreviewMigration;
   return (await import("./browserPreviewMigration")).browserPreviewMigration;
 }
+/** D단계 내 온라인 공간(Preview, Rust online_space.rs) — 목록·이 기기 캐시 채우기·캐시 파일 읽기 */
+export interface OnlineSpaceInfo {
+  workspaceId: string;
+  manifestHash: string;
+  records: number;
+  assets: number;
+  assetBytes?: number;
+  createdAt: string | null;
+  sourceSchema: number;
+  syncedAt?: number;
+}
+export interface SpaceSyncResult {
+  workspaceId: string;
+  manifestHash: string;
+  records: number;
+  assets: number;
+  downloaded?: number;
+  fromCache: boolean;
+  stale: boolean;
+}
+export interface PreviewSpaces {
+  /** 서버에 닿지 못하면 이 기기에 받아 둔 공간만(offline: true) */
+  list(): Promise<{ workspaces: OnlineSpaceInfo[]; offline?: boolean }>;
+  sync(workspaceId: string): Promise<SpaceSyncResult>;
+  /** header.json · records.json · complete.json · <sha256>.bin — 완성 캐시에서만 */
+  read(workspaceId: string, name: string): Promise<Uint8Array>;
+  remove(workspaceId: string): Promise<void>;
+}
+export async function loadPreviewSpaces(): Promise<PreviewSpaces> {
+  if (isTauri()) return (await import("./tauriPreviewSpaces")).tauriPreviewSpaces;
+  return (await import("./browserPreviewSpaces")).browserPreviewSpaces;
+}
+
+/** 앱 화면에 쓸 플랫폼을 바꿔 끼운다(Preview가 온라인 공간을 제품 화면으로 열 때 — D-4). null = 원래대로 */
+let platformOverride: Platform | null = null;
+export function setPlatformOverride(p: Platform | null) {
+  platformOverride = p;
+}
+
 export async function loadPreviewSource(): Promise<PreviewSource> {
   if (isTauri()) return (await import("./tauriPreviewSource")).tauriPreviewSource;
   return (await import("./browserPreviewSource")).browserPreviewSource;
@@ -415,6 +454,7 @@ export async function loadSplash(): Promise<SplashWindow | undefined> {
 }
 
 export async function loadPlatform(): Promise<Platform> {
+  if (platformOverride) return platformOverride;
   if (isTauri()) return (await import("./tauri")).tauriPlatform;
   return (await import("./browser")).browserPlatform;
 }

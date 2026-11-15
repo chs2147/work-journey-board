@@ -13,6 +13,7 @@ import { STR } from "../../shared/strings";
 import { applyTheme, readStoredTheme } from "../../shared/theme";
 import { finishSplash } from "../splash";
 import { MigrationCard } from "./MigrationCard";
+import { OnlineSpacesCard, OnlineWorkspaceShell, type OpenedSpace } from "./OnlineSpaces";
 import own from "./PreviewApp.module.css";
 import appStyles from "../App.module.css";
 import topStyles from "../common/TopBar.module.css";
@@ -34,6 +35,8 @@ export function PreviewApp({ profile }: { profile: AppProfileInfo }) {
   const [email, setEmail] = useState("");
   const [sentTo, setSentTo] = useState<string | null>(null);
   const [code, setCode] = useState("");
+  const [opened, setOpened] = useState<OpenedSpace | null>(null);
+  const [published, setPublished] = useState(0);
 
   useEffect(() => {
     applyTheme(readStoredTheme());
@@ -79,6 +82,9 @@ export function PreviewApp({ profile }: { profile: AppProfileInfo }) {
           ? P.onlineOk(clock(status.serverCheckedAt))
           : P.onlineNotChecked
         : P.onlineSignedOut;
+
+  // 온라인 공간을 열면 지금 앱 화면 그대로(읽기 전용) — 닫으면 창을 새로 불러 이 화면으로
+  if (opened) return <OnlineWorkspaceShell space={opened} />;
 
   return (
     <div className={appStyles.shell}>
@@ -228,7 +234,15 @@ export function PreviewApp({ profile }: { profile: AppProfileInfo }) {
             </p>
           )}
         </section>
-        <MigrationCard ownerId={signedIn ? status.accountId : null} />
+        <OnlineSpacesCard
+          ownerId={signedIn ? status.accountId : null}
+          onOpened={setOpened}
+          refreshKey={published}
+        />
+        <MigrationCard
+          ownerId={signedIn ? status.accountId : null}
+          onPublished={() => setPublished((n) => n + 1)}
+        />
       </div>
     </div>
   );

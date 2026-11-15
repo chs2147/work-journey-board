@@ -6,10 +6,32 @@ const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const delay = () => Number(new URLSearchParams(location.search).get("migrationDelay") ?? 40);
 /** ?migrationFail=publication — 그 명령에서 한 번 끊김(이어하기 확인용) */
 let failOnce = new URLSearchParams(location.search).get("migrationFail");
-const jobs = new Map<
-  string,
-  { pages: Set<number>; started: boolean; assets: Map<string, string>; state: string }
->();
+interface FakeJob {
+  pages: Set<number>;
+  started: boolean;
+  assets: Map<string, string>;
+  state: string;
+  header?: Record<string, unknown>;
+  records: Map<number, unknown[]>;
+  createdAt: string;
+}
+const jobs = new Map<string, FakeJob>();
+/** 가짜 서버에 올라간 그림 본문(objectId → 바이트) — 가짜 "내 온라인 공간"(browserPreviewSpaces)이 읽는다 */
+const assetBodies = new Map<string, Uint8Array>();
+/** 게시된 가짜 공간(D단계 브라우저 모드 E2E) */
+export function fakePublishedSpaces() {
+  return [...jobs.values()]
+    .filter((j) => j.state === "connected" && j.header)
+    .map((j) => ({
+      header: j.header as Record<string, unknown> & {
+        workspaceId: string;
+        assets: { objectId: string; sha256: string }[];
+      },
+      records: [...j.records.entries()].sort(([a], [b]) => a - b).flatMap(([, r]) => r),
+      createdAt: j.createdAt,
+      body: (objectId: string) => assetBodies.get(objectId),
+    }));
+}
 const journals = new Map<string, MigrationJournal>();
 const MH = "c".repeat(64);
 
@@ -23,15 +45,24 @@ export const browserPreviewMigration: PreviewMigration = {
       failOnce = null;
       throw new Error("NETWORK");
     }
-    const j = jobs.get(jobId) ?? { pages: new Set(), started: false, assets: new Map(), state: "uploading" };
+    const j: FakeJob = jobs.get(jobId) ?? {
+      pages: new Set(),
+      started: false,
+      assets: new Map(),
+      state: "uploading",
+      records: new Map(),
+      createdAt: new Date().toISOString(),
+    };
     jobs.set(jobId, j);
     switch (action) {
       case "upload_begin":
+        j.header = params.header as Record<string, unknown>;
         return { uploadId: jobId };
       case "upload_status":
         return { received: [...j.pages].sort((a, b) => a - b) };
       case "upload_page":
         j.pages.add(params.index as number);
+        j.records.set(params.index as number, params.records as unknown[]);
         return { stored: true };
       case "start_upload":
         j.started = true;
@@ -60,8 +91,9 @@ export const browserPreviewMigration: PreviewMigration = {
     }
     throw new Error("UNKNOWN");
   },
-  async putAsset(_ws, objectId) {
+  async putAsset(_ws, objectId, _sha, bytes) {
     await wait(delay() * 2);
+    assetBodies.set(objectId, bytes);
     for (const j of jobs.values()) if (j.started) j.assets.set(objectId, "ready");
   },
   async cancelAsset() {

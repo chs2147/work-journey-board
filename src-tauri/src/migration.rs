@@ -10,7 +10,7 @@ use sha2::{Digest, Sha256};
 use std::fs;
 use std::path::{Path, PathBuf};
 
-const GATEWAY: &str = "/functions/v1/wjb-gateway";
+pub(crate) const GATEWAY: &str = "/functions/v1/wjb-gateway";
 /// gateway 본문 한도(Edge `readLimited` 1,100,000바이트)와 그림 한도(io.mjs MAX_ASSET_BYTES)
 pub const MAX_REQUEST_BYTES: usize = 1_100_000;
 pub const MAX_ASSET_BYTES: usize = 10 * 1024 * 1024;
@@ -50,6 +50,18 @@ pub trait Gateway {
         headers: &[(&'static str, String)],
         body: Body,
     ) -> Result<(u16, Value), String>;
+}
+
+/// 그림 내려받기(원시 바이트) — GET만, 크기 한도
+#[allow(async_fn_in_trait)]
+pub trait Download {
+    async fn get_bytes(
+        &self,
+        path: &str,
+        bearer: &str,
+        headers: &[(&'static str, String)],
+        max: usize,
+    ) -> Result<(u16, Vec<u8>), String>;
 }
 
 pub struct GatewayClient(reqwest::Client);
@@ -108,13 +120,46 @@ impl Gateway for GatewayClient {
     }
 }
 
-fn is_sha(s: &str) -> bool {
+impl Download for GatewayClient {
+    async fn get_bytes(
+        &self,
+        path: &str,
+        bearer: &str,
+        headers: &[(&'static str, String)],
+        max: usize,
+    ) -> Result<(u16, Vec<u8>), String> {
+        if !online::path_allowed(path) || !path.starts_with(GATEWAY) {
+            return Err("DESTINATION_DENIED".into());
+        }
+        let mut req = self
+            .0
+            .get(format!("{ORIGIN}{path}"))
+            .header("apikey", PUBLISHABLE_KEY)
+            .header("authorization", format!("Bearer {bearer}"))
+            .header("cache-control", "no-store");
+        for (k, v) in headers {
+            req = req.header(*k, v);
+        }
+        let res = req.send().await.map_err(|_| "NETWORK".to_string())?;
+        let status = res.status().as_u16();
+        if res.content_length().is_some_and(|n| n as usize > max) {
+            return Err("RESPONSE_TOO_LARGE".into());
+        }
+        let bytes = res.bytes().await.map_err(|_| "NETWORK".to_string())?;
+        if bytes.len() > max {
+            return Err("RESPONSE_TOO_LARGE".into());
+        }
+        Ok((status, bytes.to_vec()))
+    }
+}
+
+pub(crate) fn is_sha(s: &str) -> bool {
     s.len() == 64
         && s.bytes()
             .all(|c| c.is_ascii_digit() || (b'a'..=b'f').contains(&c))
 }
 /// 오류 응답 → 단계 코드(대문자·밑줄만, 그 밖은 HTTP_<상태>)
-fn error_code(status: u16, v: &Value) -> String {
+pub(crate) fn error_code(status: u16, v: &Value) -> String {
     // 이관 경로 = {"error":"CODE"}, 그림 경로(gateway.mjs) = {"error":{"code":"CODE"}}
     match v["error"].as_str().or_else(|| v["error"]["code"].as_str()) {
         Some(e) if e.len() <= 60 && e.bytes().all(|c| c.is_ascii_uppercase() || c == b'_') => {
@@ -372,17 +417,20 @@ pub fn journal_remove(root: &Path, owner: &str, job: &str) -> Result<(), String>
 use tauri::{AppHandle, State};
 use wjb_native_isolation::system_vault::SystemVault;
 
-async fn session(app: &AppHandle, state: &OnlineState) -> Result<(Store, String, String), String> {
+pub(crate) async fn session(
+    app: &AppHandle,
+    state: &OnlineState,
+) -> Result<(Store, String, String), String> {
     let store = online::app_store(app)?;
     let (access, _owner) =
         online::access_for(&online::client(app)?, &store, state, SystemVault::new).await?;
     let device = store.device_id()?;
     Ok((store, access, device))
 }
-fn gateway(app: &AppHandle) -> Result<GatewayClient, String> {
+pub(crate) fn gateway(app: &AppHandle) -> Result<GatewayClient, String> {
     GatewayClient::new(&app.package_info().version.to_string())
 }
-fn owner(store: &Store) -> Result<String, String> {
+pub(crate) fn owner(store: &Store) -> Result<String, String> {
     store.owner_id().ok_or_else(|| "SIGNED_OUT".to_string())
 }
 

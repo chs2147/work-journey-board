@@ -371,7 +371,7 @@ test("메모 보드 스냅샷(PNG 저장·엑셀 메모 보드 시트) — CSP �
 
 // C-5 실기에서 발견: Preview 화면 CSP(connect-src = 앱 내부 통신만)에서는 sql.js가 wasm 파일을 fetch할 수 없다.
 // 프로덕션 빌드에 Tauri Preview CSP를 그대로 씌워 온라인 사본(원본 읽기 → 미리 보기 → 게시)이 도는지
-test("Preview CSP 그대로: 온라인 사본 — wasm을 받아 오지 않고 미리 보기·게시, CSP 차단 0", async ({
+test("Preview CSP 그대로: 온라인 사본 — wasm을 받아 오지 않고 미리 보기·게시·온라인 공간 열기, CSP 차단 0", async ({
   page,
 }) => {
   const csp = (
@@ -399,5 +399,9 @@ test("Preview CSP 그대로: 온라인 사본 — wasm을 받아 오지 않고 �
   await expect(page.getByTestId("copy-summary")).toBeVisible({ timeout: 30_000 });
   await page.getByTestId("copy-start").click();
   await expect(page.getByTestId("copy-done")).toBeVisible({ timeout: 30_000 });
+  // D-4: 내 온라인 공간 → 열기 → 앱 화면(같은 CSP 아래)
+  await page.getByTestId("online-space-open").click();
+  await expect(page.getByTestId("online-workspace")).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId("rail-settings")).toBeVisible({ timeout: 30_000 });
   expect(blocked).toEqual([]);
 });

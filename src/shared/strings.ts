@@ -1573,6 +1573,34 @@ export const STR_BASE = {
       QUOTA_EXCEEDED: "온라인 공간 용량(200MB)을 넘습니다.",
     } as Record<string, string>,
   },
+  /** D-4 내 온라인 공간(Connected Preview, docs/v2-design/87) */
+  onlineSpaces: {
+    title: "내 온라인 공간",
+    empty: "아직 온라인 공간이 없습니다. 위에서 로컬 일지를 복제하면 여기에 나옵니다.",
+    offline: "서버에 연결하지 못해 이 기기에 받아 둔 공간만 보입니다.",
+    item: (when: string, records: number, assets: number, size: string, schema: number) =>
+      `${when} · 기록 ${records.toLocaleString("ko-KR")}행 · 그림 ${assets}개(${size}) · v${schema}`,
+    open: "열기",
+    opening: "여는 중…",
+    refresh: "목록 새로 고침",
+    bandLabel: "온라인 공간 · 읽기 전용",
+    bandMeta: (when: string) => `${when} 복제본`,
+    stale: "서버에 연결하지 못해 이 기기에 받아 둔 내용",
+    close: "목록으로",
+    readOnlyToast: "온라인 공간은 지금 읽기 전용입니다. 고친 내용은 저장되지 않습니다.",
+    errors: {
+      READ_NOT_FOUND: "이 온라인 공간을 찾을 수 없습니다. 목록을 새로 고쳐 주세요.",
+      READ_ACCESS_DENIED: "이 기기에서 읽을 권한이 없습니다. 다시 로그인해 주세요.",
+      READ_MANIFEST_CHANGED: "읽는 동안 공간이 바뀌었습니다. 다시 열어 주세요.",
+      INTEGRITY_MISMATCH: "받은 그림이 서버 기록과 달라 열지 않았습니다.",
+      RECORD_COUNT_MISMATCH: "받은 기록 수가 서버 기록과 달라 열지 않았습니다.",
+      CACHE_INCOMPLETE:
+        "이 기기에 받아 둔 내용이 완성되지 않았습니다. 서버에 연결된 상태에서 다시 열어 주세요.",
+      CACHE_MISSING: "이 기기에 받아 둔 내용이 없습니다.",
+      RESTORE_ASSET_MISMATCH: "그림 파일이 기록과 달라 열지 않았습니다.",
+      RESTORE_SCHEMA_VERSION: "이 앱이 모르는 일지 구조입니다.",
+    } as Record<string, string>,
+  },
   /** 새 판 확인·설치(improve-1027v4-spec 1절 B안) */
   update: {
     section: "업데이트",

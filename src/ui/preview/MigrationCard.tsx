@@ -123,7 +123,13 @@ function Summary({ s, folder }: { s: CopySummary; folder?: string }) {
   );
 }
 
-export function MigrationCard({ ownerId }: { ownerId: string | null }) {
+export function MigrationCard({
+  ownerId,
+  onPublished,
+}: {
+  ownerId: string | null;
+  onPublished?: () => void;
+}) {
   const [source, setSource] = useState<PreviewSource | null>(null);
   const [mig, setMig] = useState<PreviewMigration | null>(null);
   const [phase, setPhase] = useState<Phase>({ kind: "idle" });
@@ -232,6 +238,7 @@ export function MigrationCard({ ownerId }: { ownerId: string | null }) {
       await source.remove(snapshotId).catch(() => {});
       prepared.current.delete(jobId);
       setPhase({ kind: "done", workspaceId: copy.workspaceId, summary });
+      onPublished?.();
     } catch (e) {
       setPhase({
         kind: "paused",
