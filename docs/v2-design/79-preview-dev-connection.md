@@ -87,3 +87,7 @@ Preview 화면(PreviewApp) ──IPC──▶ Rust online.rs ──HTTPS──�
 - 사용자가 대시보드에서 SMTP(`smtp.resend.com`·465·`resend`)와 두 양식(로그인·가입 인증번호, 한국어 제목, `{{ .Token }}`)을 넣었다. 이메일 발송 한도는 시간당 30통.
 - 첫 확인: 보내는 주소가 `@gmail.com`이라 발송 500(Resend는 인증한 도메인 주소만 보냄). 사용자가 보내는 주소를 `resend.dev`로 바꾼 뒤 **Resend 시험 주소(`delivered@resend.dev`)로 발송 요청 200**. 요청으로 생긴 시험 계정은 삭제·조회 404, 잔여 0.
 - `resend.dev` 주소로 보내는 동안은 **Resend 계정 주인 이메일로만** 실제 메일이 간다. 운영 전에 인증한 도메인 주소로 바꾼다(G단계).
+
+## 8. Windows·macOS 실기 (2026-11-15, 사용자)
+
+Preview run 4(`1.40.0-preview.f080148`)로 **Resend 실메일 인증번호 로그인 → 개발 서버 확인됨, 앱 재실행 후 로그인 유지(OS 보안 저장소), 로그아웃 후 저장 항목 삭제** 모두 정상. B단계 완료. 다음 = C단계([81문서](81-c-stage-copy-design.md)).

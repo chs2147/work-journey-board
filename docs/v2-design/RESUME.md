@@ -1,6 +1,6 @@
 # V2 설계·PoC 중단/재개 기록
 
-**현재 재개 정본:** [80. 정식판·DEV 검증판 분리](80-release-channel-dev.md)(정책 정본 `docs/release-channel-spec.md`, CLAUDE.md 4-8) — main 밖 빌드 = DEV(별도 앱·설정·일지, DEV 배지), 설치마다 일지 선택. 바로 앞 [79. B단계 Preview ↔ 개발 DB](79-preview-dev-connection.md) — 실서버 왕복 8검사·Resend 메일 발송 200. 남은 것: Windows·macOS 실기(Preview 로그인·보안 저장소, DEV 동시 설치), 운영 전 새 형식 키·인증 도메인 메일. 이하 체크포인트는 작성 당시 기록이며 가장 최근 결과가 우선한다.
+**현재 재개 정본:** [81. C단계 — 앱에서 온라인 사본 만들기](81-c-stage-copy-design.md)(설계, 개발 서버 변경 승인 대기). B단계는 실기까지 완료([79](79-preview-dev-connection.md) 8절). 정식판·DEV 정책 [80](80-release-channel-dev.md). 이하 체크포인트는 작성 당시 기록이며 가장 최근 결과가 우선한다.
 
 2026-11-09 UTC · V2 설계/PoC 중단 지점을 보존한 뒤 복귀했다. 사용자 요청으로 main 1.23.1 패치(`d11a0ca`)를 v2-design에 병합했다.
 
