@@ -1686,6 +1686,7 @@ export const STR_BASE = {
         intro: "온라인 워크스페이스에 쓰는 계정입니다. 로그인 정보는 이 기기 보안 저장소에만 있습니다.",
       },
       cardTitle: "로그인",
+      inviteOnly: "초대 전용",
       spaces: "온라인 공간",
       spacesValue: (n: number) => `${n.toLocaleString("ko-KR")}개`,
       signOutDots: "로그아웃…",

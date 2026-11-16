@@ -6,6 +6,7 @@ async function signIn(page: Page, query = "") {
   // 로그인 전에는 만들기가 없다
   await expect(page.getByTestId("preview-email-input")).toBeVisible();
   await expect(page.getByTestId("online-create-open")).toHaveCount(0);
+  await expect(page.getByTestId("invite-only-badge")).toHaveText("초대 전용");
   await page.getByTestId("preview-email-input").fill("virtual@example.invalid");
   await page.getByRole("button", { name: "인증번호 받기" }).click();
   await page.getByTestId("preview-code-input").fill("12345678");

@@ -71,7 +71,7 @@ U1~U7은 추천안으로 확정. U8 구현: `WorkspaceMark`의 `online` 속성(`
 - 수정: ① 온라인 공간을 연 동안 설정 › 워크스페이스 = 이 계정의 온라인 공간 목록(끼움 자리 `WorkspaceSettings`) — 지금 공간 [이름·색·아이콘](일지 설정 → 동기화 → 서버 목록, 레일·메뉴에 바로), 다른 공간 [열기](한 길 전환), 이 PC 새 공간·기존 폴더 추가·목록에서 빼기 없음. 공간 메뉴 [워크스페이스 관리…]도 이 화면으로 ② 온라인 플랫폼은 그 공간 폴더 밖에 폴더·일지·사본을 만들지 않음(`ONLINE_SPACE_ONLY`) ③ 동기화 엔진은 지금 일지가 그 공간의 이 기기 일지일 때만 읽고 쓴다.
 - 시험: 단위(폴더 밖 거절), E2E(설정 목록·새 공간 단추 없음·이름 바꾸기·다른 공간 열기 후 동기화 오류 없음).
 
-### 계정 화면 디자인 수정 시안(2026-11-16, 결정 대기)
+### 계정 화면 디자인 수정(2026-11-16 시안 승인·구현)
 
 - 실기 의견: 설정 › 계정만 다른 설정 화면과 상자·여백이 달랐음(첫 화면 카드의 회색 정보 상자를 그대로 넣음). 가입 제한은 설명 없이 배지만.
 - 시안(실제 화면 그림): [설정 › 계정](mockups/ux/account/settings-account.png) · [로그아웃 확인](mockups/ux/account/settings-signout.png) · [비교: 데이터·백업](mockups/ux/account/ref-data.png) · [첫 화면 로그인 전](mockups/ux/account/home-signedout.png) · [인증번호](mockups/ux/account/home-code.png) · [로그인 후](mockups/ux/account/home-signedin.png)

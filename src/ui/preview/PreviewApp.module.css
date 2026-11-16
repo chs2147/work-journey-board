@@ -39,3 +39,11 @@
     padding: var(--sp-4) var(--sp-4) var(--sp-5);
   }
 }
+
+/* 설정 카드(Card) 안 자유 내용 — 제목·설정 행과 같은 좌우·아래 여백 */
+.cardBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: 0 var(--settings-card-inset, var(--sp-5)) var(--settings-card-inset, var(--sp-5));
+}

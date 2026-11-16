@@ -285,6 +285,9 @@ test("UX-4: 설정 › 계정(온라인 공간에서만) → 로그아웃… 확
   const card = page.getByTestId("account-settings");
   await expect(card).toContainText("virtual@example.invalid");
   await expect(card.getByTestId("account-spaces")).toHaveText("1개");
+  // 설정 공용 카드·행 모양(다른 설정과 같은 여백), 가입 제한은 배지만
+  await expect(card.getByTestId("invite-only-badge")).toHaveText("초대 전용");
+  await expect(card.locator("[class*=setRow]")).toHaveCount(4);
   // 로그아웃은 확인을 거친다
   await card.getByTestId("preview-sign-out").click();
   await expect(card.getByTestId("sign-out-confirm")).toContainText("보내지 못한 변경은 이 기기에 남아");

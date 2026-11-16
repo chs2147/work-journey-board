@@ -17,12 +17,12 @@ import {
   useOnlineSpaces,
 } from "./onlineSpaceStore";
 import { initAccount, useOnlineAccount } from "./onlineAccount";
-import { AccountPanel } from "./AccountPanel";
+import { AccountCard } from "./AccountPanel";
+import { Card, Row } from "../settings/SettingsCard";
 import own from "./PreviewApp.module.css";
 import appStyles from "../App.module.css";
 import topStyles from "../common/TopBar.module.css";
 import { BrandLockup } from "../common/Brand";
-import styles from "../first-run/FirstRun.module.css";
 
 const P = STR.connectedPreview;
 
@@ -84,24 +84,17 @@ export function PreviewApp({ profile }: { profile: AppProfileInfo }) {
             <h1>{profile.productName}</h1>
             <p>{P.lead}</p>
           </div>
-          <section className={own.card}>
-            <h2 className={own.cardTitle}>{STR.onlineSpaces.account.cat.name}</h2>
-            <AccountPanel />
-          </section>
+          <AccountCard />
           <OnlineSpacesCard ownerId={accountId} refreshKey={published} onCreate={() => setCreating(true)} />
-          <section className={own.card}>
-            <h2 className={own.cardTitle}>{P.about}</h2>
-            <dl className={styles.facts}>
-              <dt>{P.profile}</dt>
-              <dd>{P.profileValue}</dd>
-              <dt>{P.appVersion}</dt>
-              <dd>{__APP_VERSION__}</dd>
-              <dt>{P.updates}</dt>
-              <dd data-testid="preview-updates">{P.updatesOff}</dd>
-              <dt>{P.localJournal}</dt>
-              <dd data-testid="preview-local-journal">{P.localJournalOff}</dd>
-            </dl>
-          </section>
+          <Card id="preview-about" title={P.about}>
+            <Row label={P.profile} desc={P.profileValue} />
+            <Row label={P.appVersion} desc={__APP_VERSION__} />
+            <Row label={P.updates} desc={<span data-testid="preview-updates">{P.updatesOff}</span>} />
+            <Row
+              label={P.localJournal}
+              desc={<span data-testid="preview-local-journal">{P.localJournalOff}</span>}
+            />
+          </Card>
         </div>
       </main>
       {creating && accountId && (

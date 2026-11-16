@@ -9,6 +9,7 @@ import { closeConflicts, resolveConflict, useOnlineSync } from "./onlineSync";
 import { formatBytes, STR } from "../../shared/strings";
 import { setOnlineSlots } from "../common/onlineSlots";
 import { WorkspaceMark } from "../common/workspaceIcons";
+import { Card } from "../settings/SettingsCard";
 import { OnlineRailButton, OnlineStatusPill, OnlineWorkspaceSettings } from "./OnlineChrome";
 import { AccountSettingsCard } from "./AccountPanel";
 import {
@@ -48,64 +49,65 @@ export function OnlineSpacesCard({
   if (!ownerId) return null;
 
   return (
-    <section className={home.card} data-testid="online-spaces">
-      <h2 className={home.cardTitle}>{S.title}</h2>
-      {offline && <p className={styles.small}>{S.offline}</p>}
-      {list && list.length === 0 && <p className={styles.small}>{S.empty}</p>}
-      {list && list.length > 0 && (
-        <div className={own.pending}>
-          {list.map((w) => (
-            <div key={w.workspaceId} className={own.pendingRow} data-testid="online-space-row">
-              <SpaceName w={w} />
-              <span className={styles.small} title={w.workspaceId}>
-                {S.item(
-                  when(w.createdAt),
-                  w.records,
-                  w.assets,
-                  formatBytes(w.assetBytes ?? 0),
-                  w.sourceSchema,
-                )}
-              </span>
-              <button
-                type="button"
-                className={styles.primary}
-                disabled={busy !== null}
-                onClick={() => void openOnlineSpace(w)}
-                data-testid="online-space-open"
-              >
-                {busy === w.workspaceId ? S.opening : S.open}
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-      <div className={styles.row}>
-        {onCreate && (
+    <Card id="online-spaces-title" title={S.title} testId="online-spaces">
+      <div className={home.cardBody}>
+        {offline && <p className={styles.small}>{S.offline}</p>}
+        {list && list.length === 0 && <p className={styles.small}>{S.empty}</p>}
+        {list && list.length > 0 && (
+          <div className={own.pending}>
+            {list.map((w) => (
+              <div key={w.workspaceId} className={own.pendingRow} data-testid="online-space-row">
+                <SpaceName w={w} />
+                <span className={styles.small} title={w.workspaceId}>
+                  {S.item(
+                    when(w.createdAt),
+                    w.records,
+                    w.assets,
+                    formatBytes(w.assetBytes ?? 0),
+                    w.sourceSchema,
+                  )}
+                </span>
+                <button
+                  type="button"
+                  className={styles.primary}
+                  disabled={busy !== null}
+                  onClick={() => void openOnlineSpace(w)}
+                  data-testid="online-space-open"
+                >
+                  {busy === w.workspaceId ? S.opening : S.open}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+        <div className={styles.row}>
+          {onCreate && (
+            <button
+              type="button"
+              className={styles.primary}
+              disabled={busy !== null}
+              onClick={onCreate}
+              data-testid="online-create-open"
+            >
+              {STR.onlineSpaces.menu.create}
+            </button>
+          )}
           <button
             type="button"
-            className={styles.primary}
+            className={styles.secondary}
             disabled={busy !== null}
-            onClick={onCreate}
-            data-testid="online-create-open"
+            onClick={() => void refreshSpaces()}
           >
-            {STR.onlineSpaces.menu.create}
+            {S.refresh}
           </button>
+        </div>
+        {error && (
+          <p className={styles.small} role="alert" data-testid="online-spaces-error">
+            {error}
+          </p>
         )}
-        <button
-          type="button"
-          className={styles.secondary}
-          disabled={busy !== null}
-          onClick={() => void refreshSpaces()}
-        >
-          {S.refresh}
-        </button>
       </div>
-      {error && (
-        <p className={styles.small} role="alert" data-testid="online-spaces-error">
-          {error}
-        </p>
-      )}
-    </section>
+    </Card>
   );
 }
 

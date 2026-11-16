@@ -1,18 +1,55 @@
-/* 온라인 계정 패널(95 S4) */
-.panel {
-  display: grid;
-  gap: var(--sp-3);
-}
-.confirm {
-  display: grid;
-  gap: var(--sp-2);
-  padding: var(--sp-3);
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-md, 10px);
-  background: var(--surface-sub, var(--surface-card));
+/* 온라인 계정 카드(95 S4) — 설정 공용 카드·행(Settings.module.css)에 없는 것만 */
+
+/* 제목 옆 상태 배지(설정 카드의 .badge와 같은 크기·모양 — 가입 = 초대 전용) */
+.badge {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--surface-sub);
+  color: var(--text-2);
+  font-size: var(--fs-xs);
+  line-height: 1.6;
+  white-space: nowrap;
 }
 
-/* 설정 카드 안: 제목·설정 행과 같은 좌우·아래 여백(--settings-card-inset, CLAUDE.md 새 텍스트 영역 정렬) */
-.inset {
-  padding: 0 var(--settings-card-inset, var(--sp-5)) var(--settings-card-inset, var(--sp-5));
+/* 행 오른쪽 입력칸 — 설정 단추와 같은 높이·선 */
+.input {
+  width: min(240px, 100%);
+  height: 30px;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-page);
+  color: var(--text-1);
+  font: inherit;
+}
+.input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* 로그아웃 확인 = 설정 행과 같은 여백·선(행 자리에 펼침) */
+.confirm {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-5);
+  padding: var(--sp-4) var(--settings-card-inset, var(--sp-5));
+  border-top: 1px solid var(--line);
+  background: var(--surface-sub);
+}
+.confirmButtons {
+  flex: 0 0 auto;
+  display: flex;
+  gap: var(--sp-2);
+}
+.error {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--danger);
+}
+@media (max-width: 640px) {
+  .confirm {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
