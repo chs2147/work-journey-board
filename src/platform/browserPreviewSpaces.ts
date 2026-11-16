@@ -16,7 +16,24 @@ const info = (s: ReturnType<typeof fakePublishedSpaces>[number]): OnlineSpaceInf
   assetBytes: (s.header.assets as { bytes?: number }[]).reduce((n, a) => n + (a.bytes ?? 0), 0),
   createdAt: s.createdAt,
   sourceSchema: Number(s.header.sourceSchema),
+  workspace: label(s),
 });
+/** 025와 같은 규칙: 동기화된 설정 값이 있으면 그것, 없으면 게시본의 설정 — 이름·색·아이콘만 */
+function label(s: ReturnType<typeof fakePublishedSpaces>[number]): OnlineSpaceInfo["workspace"] {
+  const pub = (s.records as { table: string; key: string; value: { key?: string; value?: unknown } }[]).find(
+    (r) => r.table === "app_meta" && r.value.key === "settings",
+  );
+  if (!pub) return null;
+  const synced = fakeServer.record(s.header.workspaceId, "app_meta", pub.key);
+  const v = (synced ? synced.value : pub.value) as { value?: unknown } | null;
+  try {
+    const w = (JSON.parse(String(v?.value)) as { workspace?: Record<string, unknown> }).workspace;
+    if (typeof w?.name !== "string" || typeof w.color !== "string" || typeof w.icon !== "string") return null;
+    return { name: w.name, color: w.color, icon: w.icon };
+  } catch {
+    return null;
+  }
+}
 
 /** E-1 이 기기 일지 흉내 — 메모리(창을 새로 불러오면 사라짐). 실앱처럼 공간마다 연결 하나를 같이 쓴다 */
 const journals = new Map<string, Uint8Array>();

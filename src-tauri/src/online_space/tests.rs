@@ -169,3 +169,35 @@ fn corrupt_image_or_missing_cache_is_refused() {
     assert!(space_dir(&root, OWNER, "../x").is_err());
     fs::remove_dir_all(&root).ok();
 }
+
+#[test]
+fn list_labels_are_validated_and_kept_only_for_downloaded_spaces() {
+    let root = tmp();
+    let dir = space_dir(&root, OWNER, WS).unwrap();
+    let gw = Fake::new(3);
+    run(sync(&gw, "ACCESS", DEV, &dir, WS, 7)).unwrap();
+    let other = "77777777-7777-4777-8777-777777777777";
+    let list = json!({ "workspaces": [
+        { "workspaceId": WS, "workspace": { "name": "회사", "color": "c3", "icon": "briefcase", "extra": 1 } },
+        { "workspaceId": other, "workspace": { "name": "개인", "color": "c1", "icon": "memo" } },
+    ]});
+    remember_labels(&root, OWNER, &list);
+    // 받아 둔 공간만 이름표, 받지 않은 공간은 폴더를 만들지 않는다
+    assert!(!space_dir(&root, OWNER, other).unwrap().exists());
+    let c = cached(&root, OWNER);
+    assert_eq!(
+        c[0]["workspace"],
+        json!({ "name": "회사", "color": "c3", "icon": "briefcase" })
+    );
+    // 형식이 틀린 값은 버린다
+    for bad in [
+        json!({ "name": "", "color": "c1", "icon": "memo" }),
+        json!({ "name": "a", "color": "c9", "icon": "memo" }),
+        json!({ "name": "a", "color": "c1", "icon": "../x" }),
+        json!({ "name": "x".repeat(81), "color": "c1", "icon": "memo" }),
+        json!(null),
+    ] {
+        assert!(label_ok(&bad).is_none(), "{bad}");
+    }
+    fs::remove_dir_all(&root).ok();
+}

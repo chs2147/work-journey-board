@@ -78,3 +78,11 @@
   justify-content: space-between;
   gap: var(--sp-3);
 }
+
+/* 온라인 공간 이름표(95 UX-2): 구름 표시 모노그램 + 이름 */
+.spaceName {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}

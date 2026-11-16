@@ -410,6 +410,8 @@ export interface OnlineSpaceInfo {
   createdAt: string | null;
   sourceSchema: number;
   syncedAt?: number;
+  /** 공간 이름·색·아이콘(SQL 025, 동기화된 설정 값 우선) — 서버가 형식을 확인, 화면은 parseMeta로 한 번 더 */
+  workspace?: { name: string; color: string; icon: string } | null;
 }
 export interface SpaceSyncResult {
   workspaceId: string;

@@ -259,11 +259,44 @@ pub fn cached(root: &Path, owner: &str) -> Vec<Value> {
             }
             let c = complete(&e.path())?;
             let h = read_json(&e.path().join("header.json"))?;
-            Some(json!({ "workspaceId": name, "manifestHash": c["manifestHash"], "records": c["records"], "assets": c["assets"], "createdAt": h["createdAt"], "sourceSchema": h["header"]["sourceSchema"], "syncedAt": c["syncedAt"] }))
+            let label = read_json(&e.path().join("label.json")).and_then(|l| label_ok(&l));
+            Some(json!({ "workspaceId": name, "manifestHash": c["manifestHash"], "records": c["records"], "assets": c["assets"], "createdAt": h["createdAt"], "sourceSchema": h["header"]["sourceSchema"], "syncedAt": c["syncedAt"], "workspace": label }))
         })
         .collect();
     out.sort_by(|a, b| b["syncedAt"].as_u64().cmp(&a["syncedAt"].as_u64()));
     out
+}
+/// 공간 이름·색·아이콘(서버 목록 025) — 세 글자열만, 길이 제한. 아니면 없음
+pub fn label_ok(v: &Value) -> Option<Value> {
+    let name = v["name"]
+        .as_str()
+        .filter(|n| !n.is_empty() && n.chars().count() <= 80)?;
+    let color = v["color"]
+        .as_str()
+        .filter(|c| c.len() == 2 && c.starts_with('c') && matches!(c.as_bytes()[1], b'1'..=b'8'))?;
+    let icon = v["icon"].as_str().filter(|i| {
+        !i.is_empty()
+            && i.len() <= 24
+            && i.bytes()
+                .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-')
+    })?;
+    Some(json!({ "name": name, "color": color, "icon": icon }))
+}
+/// 서버 목록을 받으면 이 기기에 받아 둔 공간 폴더에 이름표를 남긴다(오프라인 목록용). 받아 두지 않은 공간은 폴더를 만들지 않는다
+pub fn remember_labels(root: &Path, owner: &str, list: &Value) {
+    let Some(items) = list["workspaces"].as_array() else {
+        return;
+    };
+    for w in items {
+        let (Some(id), Some(label)) = (w["workspaceId"].as_str(), label_ok(&w["workspace"])) else {
+            continue;
+        };
+        if let Ok(dir) = space_dir(root, owner, id) {
+            if dir.is_dir() && read_json(&dir.join("label.json")).as_ref() != Some(&label) {
+                let _ = write_atomic(&dir.join("label.json"), label.to_string().as_bytes());
+            }
+        }
+    }
 }
 pub fn remove(dir: &Path) -> Result<(), String> {
     if dir.exists() {
@@ -292,7 +325,10 @@ pub async fn space_list(app: AppHandle, state: State<'_, OnlineState>) -> Result
         .await
         .unwrap_or(device);
     match list(&gw, &access, &device).await {
-        Ok(v) => Ok(v),
+        Ok(v) => {
+            remember_labels(store.root(), &owner(&store)?, &v);
+            Ok(v)
+        }
         // 서버에 닿지 못하면 이 기기에 받아 둔 공간만
         Err(e) if e == "NETWORK" || e.starts_with("HTTP_5") || e.ends_with("_UNAVAILABLE") => {
             Ok(json!({ "workspaces": cached(store.root(), &owner(&store)?), "offline": true }))

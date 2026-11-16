@@ -294,3 +294,55 @@ def run(g):
         assert r.returncode and 'MIGRATION_022_REQUIRED' in r.stderr
         sql((ROOT/'022-workspace-sync-retention.sql').read_text())
     test('024 restores the exact 019 RPC and drops the index; 022 re-applies', rollback022)
+
+    # ── 025 (UX-2 목록에 공간 이름·색·아이콘) ──
+    read_def = "SELECT prosrc FROM pg_proc WHERE oid='public.wjb_v2_workspace_read(jsonb)'::regprocedure;"
+    base016 = scalar(read_def)
+
+    def listed(ws, **kw):
+        r = {'action': 'list', 'userId': kw.get('user', A), 'sessionId': kw.get('session', SA),
+             'deviceId': kw.get('device', DA), 'params': {}}
+        out = sql(f"BEGIN;SET LOCAL ROLE service_role;SELECT public.wjb_v2_workspace_read({literal(r)});COMMIT;", check=False)
+        assert out.returncode == 0, out.stderr[-400:]
+        rows = [w for w in json.loads(out.stdout.strip())['workspaces'] if w['workspaceId'] == ws]
+        return rows[0] if rows else None
+
+    def apply025():
+        sql((ROOT/'025-workspace-list-label.sql').read_text())
+        r = sql((ROOT/'025-workspace-list-label.sql').read_text(), check=False)
+        assert r.returncode and 'MIGRATION_025_ALREADY_APPLIED' in r.stderr
+        v = json.loads(scalar((ROOT/'026-workspace-list-label-verify.sql').read_text()))
+        assert v['label'] and v['helper'] and v['readServiceOnly'] and v['readSearchPath'], v
+    test('025 applies once over 019; 026 verify (list labels, helper not callable by API roles, read RPC server-only)', apply025)
+
+    def labels():
+        p = publish()
+        w = listed(p['ws'])
+        assert w['workspace'] == {'name': '개인', 'color': 'c1', 'icon': 'memo'}, w
+        # 목록에는 이름·색·아이콘 세 가지만(설정의 다른 값은 나가지 않음)
+        assert set(w['workspace']) == {'name', 'color', 'icon'}
+        st = [r for r in p['m']['records'] if r['table'] == 'app_meta' and r['value']['key'] == 'settings'][0]
+        s = json.loads(st['value']['value'])
+
+        def set_ws(ws_meta, base):
+            v = json.dumps({**s, 'workspace': ws_meta}, ensure_ascii=False)
+            r = push(p['ws'], [{'table': 'app_meta', 'key': st['key'], 'baseRev': base, 'value': {'key': 'settings', 'value': v}}])
+            assert r['applied'] is True, r
+        set_ws({'name': '회사', 'color': 'c3', 'icon': 'briefcase', 'updatedAt': 2}, 0)
+        assert listed(p['ws'])['workspace'] == {'name': '회사', 'color': 'c3', 'icon': 'briefcase'}
+        # 동기화 값이 형식에 맞지 않으면 옛 값으로 돌아가지 않고 비운다(화면이 기본 모양)
+        set_ws({'name': '', 'color': 'c9', 'icon': 'BAD!', 'updatedAt': 3}, 1)
+        assert listed(p['ws'])['workspace'] is None
+        # 다른 계정은 이 공간을 보지 않는다
+        assert listed(p['ws'], user=B, session=SB, device=DB) is None
+        # 깨진 글(JSON 아님)은 오류 없이 비운다
+        assert scalar("SELECT wjb_migration.workspace_label('{\"key\":\"settings\",\"value\":\"{not json\"}'::jsonb) IS NULL;") == 't'
+    test('025: list carries name/color/icon — published copy, then the synced value (precedence even when malformed → null); other owners unaffected', labels)
+
+    def rollback025():
+        sql((ROOT/'027-workspace-list-label-rollback.sql').read_text())
+        assert scalar(read_def) == base016 and scalar("SELECT to_regprocedure('wjb_migration.workspace_label(jsonb)') IS NULL;") == 't'
+        r = sql((ROOT/'027-workspace-list-label-rollback.sql').read_text(), check=False)
+        assert r.returncode and 'MIGRATION_025_REQUIRED' in r.stderr
+        sql((ROOT/'025-workspace-list-label.sql').read_text())
+    test('027 restores the exact 016 read RPC and drops the helper; 025 re-applies', rollback025)

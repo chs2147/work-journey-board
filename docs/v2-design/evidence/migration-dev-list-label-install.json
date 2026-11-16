@@ -1,0 +1,44 @@
+{
+  "startedAt": "2026-11-16T08:11:25.749Z",
+  "projectRef": "vsphftnmfzfoufasjttd",
+  "autoApply": false,
+  "userRequestedDevIntegration": true,
+  "productionTouched": false,
+  "sources": [
+    {
+      "path": "poc/v2-migration/postgres/025-workspace-list-label.sql",
+      "sha256": "2c937a781eed66ab34caf959442fd400a559d219fa7100e3dd4cbef5284adecf"
+    },
+    {
+      "path": "poc/v2-migration/postgres/026-workspace-list-label-verify.sql",
+      "sha256": "95f5a6deaab601a7a991311349b5e95c38a98d5c71c30506f1754cecfaf1afa7"
+    }
+  ],
+  "phases": [
+    {
+      "phase": "preflight",
+      "has019": true,
+      "has025": false
+    },
+    {
+      "phase": "apply",
+      "ok": true
+    }
+  ],
+  "applied": true,
+  "executionRole": {
+    "role": "postgres",
+    "read_only": "off",
+    "rolsuper": false,
+    "rolbypassrls": true
+  },
+  "verify": {
+    "label": true,
+    "helper": true,
+    "cloudApplied": false,
+    "readSearchPath": true,
+    "readServiceOnly": true,
+    "productActivationAllowed": false
+  },
+  "finishedAt": "2026-11-16T08:11:32.189Z"
+}

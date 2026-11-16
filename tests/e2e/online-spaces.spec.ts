@@ -25,6 +25,10 @@ test("D-4·E-1: 복제 → 내 온라인 공간 목록 → 열기 → 앱 화면
   const row = page.getByTestId("online-space-row");
   await expect(row).toHaveCount(1);
   await expect(row).toContainText(/기록 \d+행 · 그림 1개/);
+  // UX-2(95): 공간 이름표 = 구름 표시 모노그램 + 이름(서버 목록의 설정 값)
+  const name = row.getByTestId("online-space-name");
+  await expect(name.getByTestId("workspace-cloud")).toBeVisible();
+  await expect(name.locator("b")).not.toHaveText("");
   await row.getByTestId("online-space-open").click();
   // 지금 앱 화면 그대로 + 위 띠
   await expect(page.getByTestId("online-workspace")).toBeVisible({ timeout: 30_000 });
@@ -71,7 +75,11 @@ async function openCopied(page: Page) {
   await page.getByTestId("copy-pick").click();
   await page.getByTestId("copy-start").click({ timeout: 30_000 });
   await expect(page.getByTestId("copy-done")).toBeVisible({ timeout: 30_000 });
-  const ws = await page.getByTestId("online-space-row").locator("span[title]").first().getAttribute("title");
+  const ws = await page
+    .getByTestId("online-space-row")
+    .locator(":scope > span[title]")
+    .first()
+    .getAttribute("title");
   await page.getByTestId("online-space-open").click();
   await expect(page.getByTestId("rail-settings")).toBeVisible({ timeout: 30_000 });
   return ws!;

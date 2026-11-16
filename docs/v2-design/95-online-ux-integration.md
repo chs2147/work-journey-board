@@ -54,7 +54,7 @@ U1~U7은 추천안으로 확정. U8 구현: `WorkspaceMark`의 `online` 속성(`
 | 단계 | 내용 |
 |---|---|
 | UX-1 | 구름 표시(U8)·결정 기록·시안 갱신 |
-| UX-2 | 서버 목록에 공간 이름·색·아이콘(SQL 025, 동기화 값 우선) |
+| UX-2 | 서버 목록에 공간 이름·색·아이콘(SQL 025, 동기화 값 우선) — **완료**: 025/026/027(`poc/v2-migration/postgres/`, 검토 `list-label-review-manifest.json`), 로컬 PG 105 통과, 개발 프로젝트 적용(`label-apply.mjs`, 증거 `evidence/migration-dev-list-label-install.json`). 목록에 `workspace {name,color,icon}`만 나간다(형식 틀리면 null, 동기화 값이 있으면 그 값이 우선 — 옛 이름으로 돌아가지 않음). 이 기기에 받아 둔 공간 폴더에 `label.json`을 남겨 오프라인 목록에도 이름. "내 온라인 공간" 줄 = 구름 표시 모노그램 + 이름 |
 | UX-3 | 레일 공간 메뉴·상단 알약·동기화 패널, 위 띠 제거, 계정 바뀌면 목록 즉시 |
 | UX-4 | 설정 › 계정·로그아웃 흐름(U6)·충돌 전체 화면(U5) |
 | UX-5 | Preview 시작 화면 정리·만들기 4단계(U4) |

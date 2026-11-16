@@ -1,0 +1,31 @@
+{
+  "module": "wjb-list-label-poc-1",
+  "profile": "development",
+  "projectRef": "vsphftnmfzfoufasjttd",
+  "autoApply": false,
+  "cloudApplied": false,
+  "userApproved": "온라인 UX 통합 추천안 진행(2026-11-16 사용자 지시, docs/v2-design/95 UX-2)",
+  "requires": ["019-workspace-sync.sql (installed)", "016-workspace-read.sql (installed)"],
+  "changes": {
+    "replacedFunctions": [
+      "public.wjb_v2_workspace_read (list also returns workspace {name,color,icon} from the settings record: synced value first, then the published copy; validated, else null)"
+    ],
+    "newFunctions": ["wjb_migration.workspace_label (private helper, no API role can execute)"]
+  },
+  "rollback": "027 restores the exact 016 read RPC and drops the helper",
+  "localEvidence": "docs/v2-design/evidence/migration-sync-workspace-pass.json",
+  "sources": [
+    {
+      "path": "poc/v2-migration/postgres/025-workspace-list-label.sql",
+      "sha256": "2c937a781eed66ab34caf959442fd400a559d219fa7100e3dd4cbef5284adecf"
+    },
+    {
+      "path": "poc/v2-migration/postgres/026-workspace-list-label-verify.sql",
+      "sha256": "95f5a6deaab601a7a991311349b5e95c38a98d5c71c30506f1754cecfaf1afa7"
+    },
+    {
+      "path": "poc/v2-migration/postgres/027-workspace-list-label-rollback.sql",
+      "sha256": "faad066cc6dd12769fe0d9f6768238495726ea2abf036935f18a645aefcbae20"
+    }
+  ]
+}

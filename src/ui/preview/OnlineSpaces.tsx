@@ -30,6 +30,8 @@ import { closeOnlineSpace } from "../common/appController";
 import { formatBytes, STR } from "../../shared/strings";
 import { readStoredTheme } from "../../shared/theme";
 import { useAppStore } from "../common/appStore";
+import { WorkspaceMark } from "../common/workspaceIcons";
+import { parseMeta } from "../../domain/workspace";
 import styles from "../first-run/FirstRun.module.css";
 import own from "./MigrationCard.module.css";
 import shell from "./OnlineSpaces.module.css";
@@ -150,6 +152,7 @@ export function OnlineSpacesCard({
         <div className={own.pending}>
           {list.map((w) => (
             <div key={w.workspaceId} className={own.pendingRow} data-testid="online-space-row">
+              <SpaceName w={w} />
               <span className={styles.small} title={w.workspaceId}>
                 {S.item(
                   when(w.createdAt),
@@ -188,6 +191,17 @@ export function OnlineSpacesCard({
         </p>
       )}
     </section>
+  );
+}
+
+/** 공간 이름표: 구름 표시 모노그램 + 이름(서버 목록 025, 없으면 기본 모양과 "온라인 워크스페이스") */
+function SpaceName({ w }: { w: OnlineSpaceInfo }) {
+  const m = parseMeta(w.workspace);
+  return (
+    <span className={own.spaceName} data-testid="online-space-name">
+      <WorkspaceMark icon={m?.icon ?? "folder"} color={m?.color ?? "c1"} size={26} online />
+      <b>{m?.name ?? STR.workspace.onlineMark}</b>
+    </span>
   );
 }
 
