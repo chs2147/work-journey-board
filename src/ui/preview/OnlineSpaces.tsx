@@ -18,7 +18,7 @@ import {
   useOnlineSpaces,
   when,
   type OpenedSpace,
-} from "./onlineSpaces";
+} from "./onlineSpaceStore";
 import styles from "../first-run/FirstRun.module.css";
 import own from "./MigrationCard.module.css";
 import shell from "./OnlineSpaces.module.css";

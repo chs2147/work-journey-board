@@ -14,7 +14,7 @@ import { applyTheme, readStoredTheme } from "../../shared/theme";
 import { finishSplash } from "../splash";
 import { MigrationCard } from "./MigrationCard";
 import { OnlineSpacesCard, OnlineWorkspaceShell } from "./OnlineSpaces";
-import { lastOpened, openOnlineSpace, setAccount, useOnlineSpaces } from "./onlineSpaces";
+import { lastOpened, openOnlineSpace, setAccount, useOnlineSpaces } from "./onlineSpaceStore";
 import own from "./PreviewApp.module.css";
 import appStyles from "../App.module.css";
 import topStyles from "../common/TopBar.module.css";

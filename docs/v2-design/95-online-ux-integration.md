@@ -55,7 +55,7 @@ U1~U7은 추천안으로 확정. U8 구현: `WorkspaceMark`의 `online` 속성(`
 |---|---|
 | UX-1 | 구름 표시(U8)·결정 기록·시안 갱신 |
 | UX-2 | 서버 목록에 공간 이름·색·아이콘(SQL 025, 동기화 값 우선) — **완료**: 025/026/027(`poc/v2-migration/postgres/`, 검토 `list-label-review-manifest.json`), 로컬 PG 105 통과, 개발 프로젝트 적용(`label-apply.mjs`, 증거 `evidence/migration-dev-list-label-install.json`). 목록에 `workspace {name,color,icon}`만 나간다(형식 틀리면 null, 동기화 값이 있으면 그 값이 우선 — 옛 이름으로 돌아가지 않음). 이 기기에 받아 둔 공간 폴더에 `label.json`을 남겨 오프라인 목록에도 이름. "내 온라인 공간" 줄 = 구름 표시 모노그램 + 이름 |
-| UX-3 | 레일 공간 메뉴·상단 알약·동기화 패널, 위 띠 제거, 계정 바뀌면 목록 즉시 — **완료**: 정식 화면에는 끼움 자리 `src/ui/common/onlineSlots.ts`만(비어 있으면 레일·"저장됨"·`Ctrl+Alt+숫자` 그대로), Preview가 `OnlineChrome.tsx`(구름 표시 레일 단추·"온라인 · 이메일" 공간 메뉴·상단 동기화 알약·S3 패널: 이 기기/서버·보낼 변경·충돌·[지금 동기화]·[온라인 공간 목록으로])를 끼운다. 목록·지금 공간 = `onlineSpaces.ts`(계정 바뀌면 즉시 비움, 늦은 응답 버림). 공간 전환 = 보낼 변경 먼저 보내기(최대 4초) → `appController.switchOnlineSpace`(한 길: 별도 창 저장·닫기 → closeCurrent → 새 공간 플랫폼으로 openAt, 창을 새로 불러오지 않음). 마지막으로 연 공간은 다음 실행에 바로 열고, [목록으로]로 나오면 잊는다. 시험: 단위(계정 전환), E2E(구름 단추·알약·패널, 두 공간 3번 왕복 + 행 수 그대로) |
+| UX-3 | 레일 공간 메뉴·상단 알약·동기화 패널, 위 띠 제거, 계정 바뀌면 목록 즉시 — **완료**: 정식 화면에는 끼움 자리 `src/ui/common/onlineSlots.ts`만(비어 있으면 레일·"저장됨"·`Ctrl+Alt+숫자` 그대로), Preview가 `OnlineChrome.tsx`(구름 표시 레일 단추·"온라인 · 이메일" 공간 메뉴·상단 동기화 알약·S3 패널: 이 기기/서버·보낼 변경·충돌·[지금 동기화]·[온라인 공간 목록으로])를 끼운다. 목록·지금 공간 = `onlineSpaceStore.ts`(계정 바뀌면 즉시 비움, 늦은 응답 버림). 공간 전환 = 보낼 변경 먼저 보내기(최대 4초) → `appController.switchOnlineSpace`(한 길: 별도 창 저장·닫기 → closeCurrent → 새 공간 플랫폼으로 openAt, 창을 새로 불러오지 않음). 마지막으로 연 공간은 다음 실행에 바로 열고, [목록으로]로 나오면 잊는다. 시험: 단위(계정 전환), E2E(구름 단추·알약·패널, 두 공간 3번 왕복 + 행 수 그대로) |
 | UX-4 | 설정 › 계정·로그아웃 흐름(U6)·충돌 전체 화면(U5) |
 | UX-5 | Preview 시작 화면 정리·만들기 4단계(U4) |
 

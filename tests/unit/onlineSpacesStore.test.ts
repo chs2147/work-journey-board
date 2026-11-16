@@ -10,7 +10,7 @@ vi.mock("../../src/platform", async (orig) => ({
 }));
 
 const { setAccount, useOnlineSpaces, resetOnlineSpaces, lastOpened, forgetLastOpened } =
-  await import("../../src/ui/preview/onlineSpaces");
+  await import("../../src/ui/preview/onlineSpaceStore");
 const row = (id: string) => ({
   workspaceId: id,
   manifestHash: "a".repeat(64),
@@ -38,7 +38,7 @@ describe("온라인 공간 목록 — 계정 전환", () => {
     // A의 두 번째 요청이 아직 안 끝난 사이 B로 바뀜
     setAccount("owner-a", "a@example.invalid"); // 같은 계정 = 다시 받지 않음
     expect(calls).toHaveLength(1);
-    void import("../../src/ui/preview/onlineSpaces").then((m) => m.refreshSpaces());
+    void import("../../src/ui/preview/onlineSpaceStore").then((m) => m.refreshSpaces());
     await tick();
     setAccount("owner-b", "b@example.invalid");
     expect(useOnlineSpaces.getState().list).toBeNull();

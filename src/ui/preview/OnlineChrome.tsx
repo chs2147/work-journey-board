@@ -16,7 +16,7 @@ import {
   when,
   useOnlineSpaces,
   type OpenedSpace,
-} from "./onlineSpaces";
+} from "./onlineSpaceStore";
 import { applyReceived, loadConflicts, syncNow, useOnlineSync } from "./onlineSync";
 import styles from "./OnlineChrome.module.css";
 
