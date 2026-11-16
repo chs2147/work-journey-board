@@ -1,0 +1,44 @@
+{
+  "startedAt": "2026-11-16T04:17:09.027Z",
+  "projectRef": "vsphftnmfzfoufasjttd",
+  "autoApply": false,
+  "userRequestedDevIntegration": true,
+  "productionTouched": false,
+  "sources": [
+    {
+      "path": "poc/v2-migration/postgres/022-workspace-sync-retention.sql",
+      "sha256": "bf77bab6dbc4552ec8ef207d33e29902c25c147bc3525b8748a9a6421843c05f"
+    },
+    {
+      "path": "poc/v2-migration/postgres/023-workspace-sync-retention-verify.sql",
+      "sha256": "e0e27d69156e68cd411441dfeecafa08c2e11681b85905610089255792a26eca"
+    }
+  ],
+  "phases": [
+    {
+      "phase": "preflight",
+      "has019": true,
+      "has022": false
+    },
+    {
+      "phase": "apply",
+      "ok": true
+    }
+  ],
+  "applied": true,
+  "executionRole": {
+    "role": "postgres",
+    "read_only": "off",
+    "rolsuper": false,
+    "rolbypassrls": true
+  },
+  "verify": {
+    "index": true,
+    "retention": true,
+    "cloudApplied": false,
+    "syncSearchPath": true,
+    "syncServiceOnly": true,
+    "productActivationAllowed": false
+  },
+  "finishedAt": "2026-11-16T04:17:15.868Z"
+}

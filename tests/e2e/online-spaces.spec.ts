@@ -127,6 +127,8 @@ test("E-3·E-5: 고치면 약 1초 뒤 보내 '동기화됨', 다른 기기 변�
       },
     )
     .toContain("다른 기기에서 고친 가상 기록");
+  // E+: 일지를 다시 열지 않고 화면만 새로 고쳐 반영(깜박임·입력 끊김 없음)
+  await expect(syncStatus(page)).toHaveAttribute("data-refreshed", "1");
   expect(external(requests)).toEqual([]);
 });
 

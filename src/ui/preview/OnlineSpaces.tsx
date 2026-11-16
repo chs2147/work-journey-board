@@ -211,7 +211,7 @@ function syncText(s: ReturnType<typeof useOnlineSync.getState>["status"]) {
 
 /** 열린 온라인 공간: 위 띠(동기화 상태·지금 동기화·충돌·목록으로) + 지금 앱 화면 */
 export function OnlineWorkspaceShell({ space }: { space: OpenedSpace }) {
-  const { status, received, conflicts, runs } = useOnlineSync();
+  const { status, received, conflicts, runs, refreshed } = useOnlineSync();
   return (
     <div className={shell.frame} data-testid="online-workspace">
       <div className={shell.band} role="note">
@@ -225,6 +225,7 @@ export function OnlineWorkspaceShell({ space }: { space: OpenedSpace }) {
           data-testid="online-sync-status"
           data-phase={status.phase}
           data-runs={runs}
+          data-refreshed={refreshed}
         >
           {syncText(status)}
         </span>

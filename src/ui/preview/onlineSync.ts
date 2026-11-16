@@ -11,16 +11,31 @@ import {
   type SyncTransport,
 } from "../../preview/spaceSync";
 import { onlineJournal, reloadOnlineSpace } from "../common/appController";
+import { flushAll, refreshImportant, refreshTags, reload } from "../board/boardStore";
+import { flushNote, reloadNote } from "../note/noteStore";
+import { flushDraft } from "../summary/summaryStore";
+import { cabiWindowsOpen, flushCabiWindows } from "../cabinet/cabiService";
+import { load as loadKanban, useKanban } from "../kanban/kanbanStore";
+import { loadInsights, useInsights } from "../insights/insightsStore";
+import { useUniverse } from "../universe/universeStore";
 import { rawJournalDriver, showClosingOverlay } from "../../platform/onlinePlatform";
 import { STR } from "../../shared/strings";
 
 export const PUSH_DELAY_MS = 1000;
+/** 받기 간격: 창이 활성일 때 30초에서 시작, 받을 것이 없으면 두 배씩 최대 5분. 고치거나 받으면 다시 30초(E+, 비용) */
 export const PULL_EVERY_MS = 30_000;
+export const PULL_MAX_MS = 5 * 60_000;
+/** 창으로 돌아올 때 받기 — 바로 전에 받았으면(10초 안) 건너뜀 */
+export const FOCUS_GAP_MS = 10_000;
 
 interface State {
   status: SyncStatus;
   /** 동기화를 실제로 돌린 횟수(시험·진단용 — 화면 글에는 쓰지 않음) */
   runs: number;
+  /** 받은 변경을 화면만 새로 고쳐 반영한 횟수(시험·진단용) */
+  refreshed: number;
+  /** 지금 받기 간격(ms, 시험·진단용) */
+  pullDelay: number;
   /** 닫는 중(앱 종료·목록으로) — 화면을 막는다 */
   closing: "exit" | "list" | null;
   /** 받아서 적용했지만 화면에 아직 반영하지 않은 기록 수 */
@@ -30,6 +45,8 @@ interface State {
 export const useOnlineSync = create<State>(() => ({
   status: { phase: "idle", pending: 0, conflicts: 0, lastSyncedAt: null, error: null },
   runs: 0,
+  refreshed: 0,
+  pullDelay: 30_000,
   closing: null,
   received: 0,
   conflicts: null,
@@ -37,27 +54,74 @@ export const useOnlineSync = create<State>(() => ({
 
 let engine: SpaceSync | null = null;
 let pushTimer: ReturnType<typeof setTimeout> | null = null;
-let pullTimer: ReturnType<typeof setInterval> | null = null;
+let pullTimer: ReturnType<typeof setTimeout> | null = null;
+let pullDelay = PULL_EVERY_MS;
+let lastPull = 0;
+function schedulePull() {
+  if (pullTimer) clearTimeout(pullTimer);
+  pullTimer = setTimeout(() => {
+    pullTimer = null;
+    if (!engine) return;
+    if (document.hasFocus()) void run();
+    else schedulePull(); // 창이 비활성이면 받지 않고 다음 차례만
+  }, pullDelay);
+  useOnlineSync.setState({ pullDelay });
+}
 const editing = () => {
   const a = document.activeElement as HTMLElement | null;
   return !!a && (a.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(a.tagName));
 };
 
+/**
+ * 화면에 아직 저장 안 된 입력(칸·메모·요약 초안·별도 창)을 일지에 먼저 — 받기 전에 대기열에 들어가 있어야
+ * 받은 값이 그 위를 덮지 않고(엔진은 대기열에 있는 기록에는 받은 값을 바로 적용하지 않음) 충돌 규칙을 탄다
+ */
+async function flushUi() {
+  await flushAll().catch(() => undefined);
+  await flushDraft().catch(() => undefined);
+  await flushNote().catch(() => undefined);
+  await flushCabiWindows().catch(() => undefined);
+}
+
 async function run(opts: { pull?: boolean } = {}) {
   if (!engine || !onlineJournal()) return;
   useOnlineSync.setState((s) => ({ runs: s.runs + 1 }));
+  const pulling = opts.pull !== false;
+  if (pulling) await flushUi();
   const got = await engine.syncNow(opts);
+  if (pulling) {
+    lastPull = Date.now();
+    // 받을 것이 없으면 간격을 늘리고, 받았으면 처음 간격으로
+    pullDelay = got > 0 ? PULL_EVERY_MS : Math.min(pullDelay * 2, PULL_MAX_MS);
+    if (engine) schedulePull();
+  }
   if (got > 0) {
     const received = useOnlineSync.getState().received + got;
-    if (editing()) useOnlineSync.setState({ received });
+    // 입력 중이거나 별도 창(노트·메모보드)이 열려 있으면 띠의 [화면 새로 고침]으로 미룬다
+    if (editing() || (await cabiWindowsOpen())) useOnlineSync.setState({ received });
     else await applyReceived();
   }
   if (useOnlineSync.getState().conflicts) await loadConflicts();
 }
-/** 받은 변경을 화면에 반영(일지를 같은 길로 다시 연다) */
+/**
+ * 받은 변경을 화면에 반영(E+, docs/v2-design/93). 데이터는 이미 이 기기 일지에 들어가 있으므로 보고 있는 화면만 다시 읽는다
+ * (가져오기 뒤와 같은 길 — 보드·메모·중요 업무·태그, 열려 있으면 칸반·인사이트). 일지를 다시 열지 않아 깜박임·입력 끊김이 없다.
+ * Universe를 보고 있거나 별도 창(노트·메모보드)이 열려 있으면 예전처럼 일지를 같은 길로 다시 연다(별도 창은 저장 후 닫힘).
+ */
 export async function applyReceived() {
   useOnlineSync.setState({ received: 0 });
-  await reloadOnlineSpace();
+  if (useUniverse.getState().open || (await cabiWindowsOpen())) {
+    await reloadOnlineSpace();
+    return;
+  }
+  await flushUi();
+  await reload();
+  await reloadNote();
+  await refreshImportant();
+  await refreshTags();
+  if (useKanban.getState().open) await loadKanban();
+  if (useInsights.getState().open) await loadInsights();
+  useOnlineSync.setState((s) => ({ refreshed: s.refreshed + 1 }));
 }
 
 /** "동기화 중…"은 0.6초 넘게 걸릴 때만 보인다(짧은 동기화마다 띠가 깜박이지 않게 — E-3 실기) */
@@ -89,18 +153,19 @@ export function startOnlineSync(workspaceId: string, transport: SyncTransport) {
     randomUUID: () => crypto.randomUUID(),
     onStatus: showStatus,
   });
-  pullTimer = setInterval(() => {
-    if (document.hasFocus()) void run();
-  }, PULL_EVERY_MS);
+  pullDelay = PULL_EVERY_MS;
+  lastPull = 0;
   globalThis.addEventListener?.("focus", onFocus);
   // 앱 닫기(플랫폼 쪽)가 가져오기 없이 바로 멈출 수 있게
   (globalThis as { __wjbStopOnlineSync?: () => void }).__wjbStopOnlineSync = stopOnlineSync;
   void engine.refresh().then(() => run());
 }
-const onFocus = () => void run();
+const onFocus = () => {
+  if (Date.now() - lastPull >= FOCUS_GAP_MS) void run();
+};
 export function stopOnlineSync() {
   if (pushTimer) clearTimeout(pushTimer);
-  if (pullTimer) clearInterval(pullTimer);
+  if (pullTimer) clearTimeout(pullTimer);
   pushTimer = pullTimer = null;
   globalThis.removeEventListener?.("focus", onFocus);
   if (syncingTimer) clearTimeout(syncingTimer);
@@ -109,10 +174,15 @@ export function stopOnlineSync() {
 }
 /** 이 기기 일지에 쓰기가 있을 때 — 약 1초 묶어 보내기 */
 export function schedulePush() {
+  // 고치는 중이면 받기도 다시 자주(다른 기기와 함께 쓰는 중일 가능성)
+  if (pullDelay !== PULL_EVERY_MS) {
+    pullDelay = PULL_EVERY_MS;
+    if (engine) schedulePull();
+  }
   if (pushTimer) clearTimeout(pushTimer);
   pushTimer = setTimeout(() => {
     pushTimer = null;
-    // 고친 뒤에는 보내기만(받기는 30초 주기·창 복귀·[지금 동기화]) — 서버 호출 수를 줄인다
+    // 고친 뒤에는 보내기만(받기는 주기·창 복귀·[지금 동기화]) — 서버 호출 수를 줄인다
     void engine?.refresh().then(() => run({ pull: false }));
   }, PUSH_DELAY_MS);
 }

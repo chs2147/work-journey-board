@@ -1,0 +1,31 @@
+{
+  "module": "wjb-sync-retention-poc-1",
+  "profile": "development",
+  "projectRef": "vsphftnmfzfoufasjttd",
+  "autoApply": false,
+  "cloudApplied": false,
+  "userApproved": "E+ 동기화 안정화(2026-11-16 추천 순서 진행 지시)",
+  "requires": ["019-workspace-sync.sql (installed)"],
+  "changes": {
+    "replacedFunctions": [
+      "public.wjb_v2_workspace_sync (push also deletes the same workspace's applied requests older than 7 days)"
+    ],
+    "newIndexes": ["wjb_sync.applied_by_age (workspace_id, created_at)"]
+  },
+  "rollback": "024 drops the index and restores the exact 019 sync RPC",
+  "localEvidence": "docs/v2-design/evidence/migration-sync-workspace-pass.json",
+  "sources": [
+    {
+      "path": "poc/v2-migration/postgres/022-workspace-sync-retention.sql",
+      "sha256": "bf77bab6dbc4552ec8ef207d33e29902c25c147bc3525b8748a9a6421843c05f"
+    },
+    {
+      "path": "poc/v2-migration/postgres/023-workspace-sync-retention-verify.sql",
+      "sha256": "e0e27d69156e68cd411441dfeecafa08c2e11681b85905610089255792a26eca"
+    },
+    {
+      "path": "poc/v2-migration/postgres/024-workspace-sync-retention-rollback.sql",
+      "sha256": "3b20fad5df298fc36a7e4afc0eb19727f18f880c6fd749297f299597ce30216d"
+    }
+  ]
+}

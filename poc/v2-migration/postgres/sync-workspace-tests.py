@@ -251,3 +251,46 @@ def run(g):
         assert scalar(gate).strip() == (ROOT/'001-migration.sql').read_text().split('CREATE FUNCTION wjb_migration.asset_gate() RETURNS trigger')[1].split('$$')[1].strip()
         sql((ROOT/'019-workspace-sync.sql').read_text())
     test('021 refuses while pushed changes exist; with none it drops only wjb_sync (published data and 016 kept); 019 re-applies', rollback)
+
+    # ── 022 (E+ 처리한 요청 기록 7일 보관) ──
+    fn_def = "SELECT prosrc FROM pg_proc WHERE oid='public.wjb_v2_workspace_sync(jsonb)'::regprocedure;"
+    base019 = scalar(fn_def)
+
+    def apply022():
+        sql((ROOT/'022-workspace-sync-retention.sql').read_text())
+        r = sql((ROOT/'022-workspace-sync-retention.sql').read_text(), check=False)
+        assert r.returncode and 'MIGRATION_022_ALREADY_APPLIED' in r.stderr
+        v = json.loads(scalar((ROOT/'023-workspace-sync-retention-verify.sql').read_text()))
+        assert v['retention'] and v['index'] and v['syncServiceOnly'] and v['syncSearchPath'], v
+    test('022 applies once over 019; 023 verify (7-day cleanup in push, index, server-only)', apply022)
+
+    def retention():
+        p1, p2 = publish(), publish()
+        e1 = [r for r in p1['m']['records'] if r['table'] == 'entry_item'][0]
+        e2 = [r for r in p2['m']['records'] if r['table'] == 'entry_item'][0]
+        old_op = str(uuid.uuid4())
+        ch1 = [{'table': 'entry_item', 'key': e1['key'], 'baseRev': 0, 'value': {**e1['value'], 'text': '오래된 요청'}}]
+        push(p1['ws'], ch1, old_op)
+        push(p2['ws'], [{'table': 'entry_item', 'key': e2['key'], 'baseRev': 0, 'value': {**e2['value'], 'text': '다른 공간'}}])
+        sql("UPDATE wjb_sync.applied SET created_at=clock_timestamp()-interval '8 days';")
+        recent_op = str(uuid.uuid4())
+        ch2 = [{'table': 'entry_item', 'key': e1['key'], 'baseRev': 1, 'value': {**e1['value'], 'text': '새 요청'}}]
+        push(p1['ws'], ch2, recent_op)
+        # 같은 공간의 8일 지난 기록만 지워지고, 다른 공간·방금 것은 남는다
+        assert scalar(f"SELECT count(*) FROM wjb_sync.applied WHERE workspace_id='{p1['ws']}' AND op_id='{old_op}';") == '0'
+        assert scalar(f"SELECT count(*) FROM wjb_sync.applied WHERE workspace_id='{p1['ws']}' AND op_id='{recent_op}';") == '1'
+        assert scalar(f"SELECT count(*) FROM wjb_sync.applied WHERE workspace_id='{p2['ws']}';") == '1'
+        # 방금 요청은 그대로 재전송 안전
+        assert push(p1['ws'], ch2, recent_op).get('replayed') is True
+        # 보관 기간이 지난 번호로 같은 내용을 다시 보내면 새 요청 — 기대 판이 지나 충돌로 돌아온다(덮어쓰지 않음)
+        r = push(p1['ws'], ch1, old_op)
+        assert r['applied'] is False and r['conflicts'][0]['rev'] == 2
+    test('022: applied requests older than 7 days are cleaned per workspace on push; recent replays stay safe; an expired id is a new request (conflict, no overwrite)', retention)
+
+    def rollback022():
+        sql((ROOT/'024-workspace-sync-retention-rollback.sql').read_text())
+        assert scalar(fn_def) == base019 and scalar("SELECT to_regclass('wjb_sync.applied_by_age') IS NULL;") == 't'
+        r = sql((ROOT/'024-workspace-sync-retention-rollback.sql').read_text(), check=False)
+        assert r.returncode and 'MIGRATION_022_REQUIRED' in r.stderr
+        sql((ROOT/'022-workspace-sync-retention.sql').read_text())
+    test('024 restores the exact 019 RPC and drops the index; 022 re-applies', rollback022)

@@ -236,6 +236,11 @@ export async function flushCabiWindows(lock = false, noteId?: string) {
     for (const target of targets) void bridge!.publish({ type: "flush", id, lock }, target).catch(reject);
   });
 }
+/** 메인 창에서 열려 있는 Cabi.NET 별도 창(노트·메모보드)이 있는가 — 온라인 공간 동기화가 화면 반영 방식을 고를 때 */
+export async function cabiWindowsOpen(): Promise<boolean> {
+  if (!isMain() || !bridge) return false;
+  return (await bridge.opened().catch(() => [])).length > 0;
+}
 export async function closeCabiWindows() {
   try {
     await flushCabiWindows(true);

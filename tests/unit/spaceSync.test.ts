@@ -10,7 +10,7 @@ import sample from "../../fixtures/sample-showcase.json";
 import { prepareCopy } from "../../src/preview/migrationEngine";
 import { derivedId } from "../../src/preview/migrationSession";
 import { ensureSpaceJournal } from "../../src/preview/spaceJournal";
-import { createSpaceSync, merge3, type SyncTransport } from "../../src/preview/spaceSync";
+import { createSpaceSync, merge3, OUTBOX_PAGE, type SyncTransport } from "../../src/preview/spaceSync";
 import { createFakeSyncServer } from "../../src/preview/fakeSyncServer";
 import { createWorkspaceMapper } from "../../poc/v2-migration/workspace-map-core.mjs";
 import { base64ToBytes, bytesToBase64, hash, sha256Hex } from "../../poc/v2-sync/hash-core.mjs";
@@ -336,6 +336,35 @@ describe("E-3 동기화 엔진(두 기기 + 가짜 서버)", () => {
     await L.sync.syncNow();
     expect(server.head(p.workspaceId)).toBe(head); // 다시 보낸 요청은 새로 적용되지 않음
     expect(L.sync.status).toMatchObject({ phase: "idle", pending: 0, conflicts: 0 });
+  });
+
+  it("오래 오프라인 뒤 대기열이 한 번에 읽는 수(2,000)보다 많아도 한 번의 동기화로 모두 보낸다", async () => {
+    const { device, server, p } = await setup();
+    const A = await device("A"),
+      B = await device("B");
+    const e = await one<Record<string, unknown>>(A.driver, "SELECT * FROM entry_item LIMIT 1");
+    const n = OUTBOX_PAGE + 150;
+    const cols = Object.keys(e);
+    await A.driver.batch(
+      Array.from({ length: n }, (_, i) => ({
+        sql: `INSERT INTO entry_item(${cols.join(",")}) VALUES(${cols.map(() => "?").join(",")})`,
+        params: cols.map((c) =>
+          c === "id" ? `offline-${i}` : c === "text" ? `오프라인 기록 ${i}` : e[c],
+        ) as never,
+      })),
+    );
+    expect(await outbox(A.driver)).toBe(n);
+    server.setOffline(true);
+    await A.sync.syncNow();
+    expect(A.sync.status.pending).toBe(n);
+    server.setOffline(false);
+    await A.sync.syncNow();
+    expect(await outbox(A.driver)).toBe(0);
+    await B.sync.syncNow();
+    expect(
+      (await one<{ c: number }>(B.driver, "SELECT count(*) c FROM entry_item WHERE id LIKE 'offline-%'")).c,
+    ).toBe(n);
+    expect(server.head(p.workspaceId)).toBe(n);
   });
 
   it("merge3: 기준이 없으면 합치지 않는다", () => {

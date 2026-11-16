@@ -45,6 +45,8 @@ export interface ConflictItem {
 export type Resolution = "mine" | "server" | "both";
 
 const PUSH_MAX_CHANGES = 400;
+/** 한 번에 읽는 대기열 수 — 넘으면 같은 동기화 안에서 이어서 보낸다(오래 오프라인 뒤 많이 고친 경우) */
+export const OUTBOX_PAGE = 2000;
 const PUSH_MAX_BYTES = 800_000;
 const PULL_LIMIT = 500;
 /** 같은 칸을 양쪽에서 고치면 칸 합치기 대신 문서째 보존하는 표(주간 메모·메모보드·업무노트) */
@@ -260,7 +262,7 @@ export function createSpaceSync(deps: {
       ),
     );
     const outbox = await d.select<{ tbl: string; pk: string; at: number }>(
-      "SELECT tbl, pk, at FROM wjb_sync_outbox ORDER BY at, tbl, pk LIMIT 2000",
+      `SELECT tbl, pk, at FROM wjb_sync_outbox ORDER BY at, tbl, pk LIMIT ${OUTBOX_PAGE}`,
     );
     const rows: { e: Entry; row: Row | null }[] = [];
     for (const o of outbox) {
@@ -296,7 +298,7 @@ export function createSpaceSync(deps: {
         change: { table: e.tbl, key: m.key, baseRev: base ? base.rev : null, value: m.value },
       });
     }
-    return { schema, changes, drop, uploads };
+    return { schema, changes, drop, uploads, full: outbox.length >= OUTBOX_PAGE };
   }
   const dropEntries = (es: Entry[]): SqlStatement[] =>
     es.map((e) => ({
@@ -441,6 +443,8 @@ export function createSpaceSync(deps: {
       });
       if (!r.applied) return pushed + (await pushOnce());
     }
+    // 대기열이 한 번에 읽는 수보다 많았으면 이어서(진전이 있을 때만 — 충돌로 막힌 것만 남으면 멈춤)
+    if (cap?.full && cap.changes.length + cap.drop.length > 0) return pushed + (await pushOnce());
     return pushed;
   }
 
