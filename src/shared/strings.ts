@@ -1625,6 +1625,7 @@ export const STR_BASE = {
       closingExit: "저장하고 종료하는 중…",
       closingList: "저장하고 닫는 중…",
       closingSignOut: "보내고 저장한 뒤 로그아웃하는 중…",
+      opening: "서버와 맞추는 중…",
       panelTitle: "충돌 목록",
       panelEmpty: "충돌이 없습니다.",
       backToBoard: "← 주간 보드로",

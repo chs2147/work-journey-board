@@ -22,6 +22,7 @@ import {
   type MigrationStep,
 } from "../../preview/migrationRunner";
 import {
+  derivedId,
   labelOf,
   prepareEmpty,
   prepareFromSnapshot,
@@ -42,8 +43,12 @@ const errText = (e: unknown) => {
 };
 
 const W = C.wizard;
-/** 새로 시작하기 작업 = 사본 없음(이 표시로 구분, 원본 사본 저장소에 없는 이름) */
-const NEW_PREFIX = "new:";
+/**
+ * 새로 시작하기 작업 = 원본 사본 없음. 작업 기록(Rust migration.rs)은 사본 ID도 UUID만 받으므로 작업마다 정해진 UUID를 쓰고,
+ * 이 화면이 만든 것만 기억한다(실기: "new:…"를 넣어 게시 전에 거절됨). 앱을 다시 켜면 사본이 없어 이어 갈 수 없다(취소 안내)
+ */
+const freshSnapshots = new Set<string>();
+const isFresh = (id: string) => freshSnapshots.has(id);
 type Label = { name: string; color: CategoryColorKey; icon: WorkspaceIcon };
 
 type Phase =
@@ -256,7 +261,9 @@ export function CreateOnlineDialog({
       const copy = await prepareEmpty(jobId, { ...look, name: look.name.trim() });
       const summary = summarize(copy);
       prepared.current.set(jobId, { copy, summary });
-      setPhase({ kind: "ready", folder: null, jobId, snapshotId: NEW_PREFIX + jobId, copy, summary });
+      const snapshotId = derivedId(jobId, "empty-source");
+      freshSnapshots.add(snapshotId);
+      setPhase({ kind: "ready", folder: null, jobId, snapshotId, copy, summary });
     } catch (e) {
       setError(errText(e));
       setPhase({ kind: "fresh" });
@@ -270,7 +277,7 @@ export function CreateOnlineDialog({
     try {
       if (!entry) {
         // 새로 시작한 작업은 사본이 없어 앱을 다시 켠 뒤 이어 갈 수 없다
-        if (snapshotId.startsWith(NEW_PREFIX)) throw new Error("RESUME_NEW");
+        if (isFresh(snapshotId)) throw new Error("RESUME_NEW");
         // 앱을 다시 켠 뒤 이어하기: 같은 사본·같은 작업 ID → 같은 자료
         const copy = await prepareFromSnapshot(source, snapshotId, jobId);
         entry = { copy, summary: summarize(copy) };
@@ -293,7 +300,7 @@ export function CreateOnlineDialog({
         signal: ac.signal,
         onProgress: (step) => setPhase({ kind: "running", jobId, step, summary }),
       });
-      if (!snapshotId.startsWith(NEW_PREFIX)) await source.remove(snapshotId).catch(() => {});
+      if (!isFresh(snapshotId)) await source.remove(snapshotId).catch(() => {});
       prepared.current.delete(jobId);
       setPhase({ kind: "done", workspaceId: copy.workspaceId, summary, label: toLabel(labelOf(copy)) });
       onPublished?.();
@@ -317,7 +324,7 @@ export function CreateOnlineDialog({
     const j = (await mig.journals()).find((x) => x.jobId === jobId);
     const snap = j?.snapshotId ?? snapshotId;
     const removeSnap = async () => {
-      if (snap && !snap.startsWith(NEW_PREFIX)) await source?.remove(snap).catch(() => {});
+      if (snap && !isFresh(snap)) await source?.remove(snap).catch(() => {});
     };
     if (!j) {
       // 서버와 한 번도 통신하기 전에 멈춘 작업 — 이 기기 사본만 지운다
@@ -349,7 +356,7 @@ export function CreateOnlineDialog({
   }
 
   async function discard(snapshotId: string, jobId: string) {
-    if (!snapshotId.startsWith(NEW_PREFIX)) await source?.remove(snapshotId).catch(() => {});
+    if (!isFresh(snapshotId)) await source?.remove(snapshotId).catch(() => {});
     prepared.current.delete(jobId);
     setPhase({ kind: mode === "fresh" ? "fresh" : "idle" });
   }

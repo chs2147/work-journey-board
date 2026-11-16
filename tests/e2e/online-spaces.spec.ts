@@ -344,3 +344,37 @@ test("UX-4: 충돌은 설정과 같은 전체 화면 — 이 기기 / 서버 나
   await expect(view).toHaveCount(0);
   await expect(syncStatus(page)).not.toContainText("충돌", { timeout: 15_000 });
 });
+
+test("실기: 다른 기기에서 고친 것이 열 때 바로 들어와 있다 — 열 때 첫 동기화를 끝낸 뒤 화면(고치기·지금 동기화 없이)", async ({
+  page,
+}) => {
+  await signIn(page);
+  await copyOnce(page);
+  const ws = await page
+    .getByTestId("online-space-row")
+    .locator(":scope > span[title]")
+    .first()
+    .getAttribute("title");
+  // 이 기기가 열기 전에 다른 기기가 서버에서 기록 하나를 고침
+  const id = await page.evaluate(
+    (w) =>
+      (
+        globalThis as unknown as {
+          __wjbFakeSync: { editEntryElsewhere(w: string, t: string, id?: string): Promise<string> };
+        }
+      ).__wjbFakeSync.editEntryElsewhere(w, "다른 기기에서 먼저 고친 가상 글"),
+    ws!,
+  );
+  await page.getByTestId("online-space-open").click();
+  await expect(page.getByTestId("rail-settings")).toBeVisible({ timeout: 30_000 });
+  // 화면이 열린 순간 이미 이 기기 일지에 들어와 있다(30초 주기·창 복귀·지금 동기화를 기다리지 않음)
+  const text = await page.evaluate(
+    (i) =>
+      (
+        globalThis as unknown as { __wjbApp: { entryText(id: string): Promise<string | null> } }
+      ).__wjbApp.entryText(i),
+    id,
+  );
+  expect(text).toBe("다른 기기에서 먼저 고친 가상 글");
+  await expect(syncStatus(page)).not.toContainText("충돌");
+});

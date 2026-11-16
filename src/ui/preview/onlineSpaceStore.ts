@@ -12,6 +12,8 @@ import {
 } from "../../platform";
 import { createOnlinePlatform, destroyChildWindows, within } from "../../platform/onlinePlatform";
 import { ensureSpaceJournal, upgradeSyncTables, type CachedHeaderLike } from "../../preview/spaceJournal";
+import { createSpaceSync } from "../../preview/spaceSync";
+import { hideClosingOverlay, showClosingOverlay } from "../common/closingOverlay";
 import { loadSql } from "../../preview/migrationSession";
 import { parseMeta, type WorkspaceMeta } from "../../domain/workspace";
 import { readStoredTheme } from "../../shared/theme";
@@ -139,6 +141,15 @@ async function prepare(w: OnlineSpaceInfo): Promise<{ platform: Platform; opened
   const d = await sp.journal.open(w.workspaceId);
   try {
     await upgradeSyncTables(d, head.assets, Number(head.header.sourceSchema));
+    // 첫 동기화(실기: 다른 기기에서 고친 것이 열 때 바로 보이지 않고, 이 기기에서 고친 뒤에야 충돌로 나타남):
+    // 화면을 그리기 전에 이 기기 일지에서 받기 → 보내기를 한 번 끝낸다. 서버에 닿지 못하면 받아 둔 내용으로 연다
+    const first = createSpaceSync({
+      workspaceId: w.workspaceId,
+      transport: sp.transport,
+      journal: () => ({ driver: d, exclusive: (work) => work() }),
+      randomUUID: () => crypto.randomUUID(),
+    });
+    await first.syncNow().catch(() => 0);
   } finally {
     await d.close();
   }
@@ -168,6 +179,8 @@ export async function openOnlineSpace(w: OnlineSpaceInfo): Promise<boolean> {
   const cur = get().current;
   if (cur?.workspaceId === w.workspaceId || get().busy) return true;
   set({ busy: w.workspaceId, error: null });
+  // 열고 첫 동기화가 끝날 때까지 화면을 막는다(받기 전에 고치면 충돌이 되므로)
+  showClosingOverlay(STR.onlineSpaces.sync.opening);
   try {
     const { platform, opened } = await prepare(w);
     const sp = await api();
@@ -185,6 +198,8 @@ export async function openOnlineSpace(w: OnlineSpaceInfo): Promise<boolean> {
   } catch (e) {
     set({ busy: null, error: errText(e) });
     return false;
+  } finally {
+    hideClosingOverlay();
   }
 }
 

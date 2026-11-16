@@ -944,6 +944,15 @@ if (typeof window !== "undefined")
         if (!t[0]?.n) return null;
         return (await j.driver.select<{ n: number }>("SELECT count(*) AS n FROM wjb_sync_outbox"))[0]!.n;
       },
+      /** 브라우저 E2E 전용(읽기만): 기록 하나의 글 — 다른 기기 변경이 열 때 들어왔는지(95 실기) */
+      async entryText(id: string) {
+        const j = get().journal;
+        if (j.state !== "ready" || platform().kind !== "browser") return null;
+        return (
+          (await j.driver.select<{ text: string }>("SELECT text FROM entry_item WHERE id = ?", [id]))[0]
+            ?.text ?? null
+        );
+      },
       async syncOutboxRows() {
         const j = get().journal;
         if (j.state !== "ready" || platform().kind !== "browser") return null;

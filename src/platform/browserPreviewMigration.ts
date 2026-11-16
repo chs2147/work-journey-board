@@ -103,6 +103,10 @@ export const browserPreviewMigration: PreviewMigration = {
     return [...journals.values()].map((j) => structuredClone(j));
   },
   async saveJournal(j) {
+    // 실앱(Rust migration.rs Journal::valid)과 같은 형식 검사 — 작업·소유자·공간·사본 ID는 UUID만
+    const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+    if (![j.jobId, j.ownerId, j.workspaceId, j.snapshotId].every((v) => uuid.test(v)))
+      throw new Error("STORE");
     journals.set(j.jobId, structuredClone(j));
   },
   async removeJournal(id) {

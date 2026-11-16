@@ -58,6 +58,7 @@ let pushTimer: ReturnType<typeof setTimeout> | null = null;
 let pullTimer: ReturnType<typeof setTimeout> | null = null;
 let pullDelay = PULL_EVERY_MS;
 let lastPull = 0;
+let retryTimer: ReturnType<typeof setTimeout> | null = null;
 function schedulePull() {
   if (pullTimer) clearTimeout(pullTimer);
   pullTimer = setTimeout(() => {
@@ -85,7 +86,16 @@ async function flushUi() {
 }
 
 async function run(opts: { pull?: boolean } = {}) {
-  if (!engine || !onlineJournal()) return;
+  if (!engine) return;
+  // 일지가 아직 열리지 않았으면(앱 화면이 막 시작) 버리지 않고 곧 다시 — 실기: 첫 받기가 사라져 30초 주기도 시작되지 않음
+  if (!onlineJournal()) {
+    if (retryTimer) clearTimeout(retryTimer);
+    retryTimer = setTimeout(() => {
+      retryTimer = null;
+      void run(opts);
+    }, 300);
+    return;
+  }
   useOnlineSync.setState((s) => ({ runs: s.runs + 1 }));
   const pulling = opts.pull !== false;
   if (pulling) await flushUi();
@@ -172,7 +182,8 @@ const onFocus = () => {
 export function stopOnlineSync() {
   if (pushTimer) clearTimeout(pushTimer);
   if (pullTimer) clearTimeout(pullTimer);
-  pushTimer = pullTimer = null;
+  if (retryTimer) clearTimeout(retryTimer);
+  pushTimer = pullTimer = retryTimer = null;
   globalThis.removeEventListener?.("focus", onFocus);
   if (syncingTimer) clearTimeout(syncingTimer);
   syncingTimer = null;
