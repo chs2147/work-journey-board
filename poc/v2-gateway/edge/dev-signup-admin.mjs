@@ -93,7 +93,8 @@ if (cmd.kind === "status") {
   } catch (e) {
     // 관리 토큰에 인증 설정 쓰기 권한이 없으면 대시보드 스위치로(Authentication › Sign In / Providers ›
     // "Allow new users to sign up") — 바꾼 뒤 --status-development로 확인
-    if (String(e.message) === "DEV_API_403") throw Error("AUTH_CONFIG_WRITE_NOT_ALLOWED_USE_DASHBOARD", { cause: e });
+    if (String(e.message) === "DEV_API_403")
+      throw Error("AUTH_CONFIG_WRITE_NOT_ALLOWED_USE_DASHBOARD", { cause: e });
     throw e;
   }
   Object.assign(result, { signup: await mode() });
