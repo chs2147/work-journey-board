@@ -1,4 +1,5 @@
-// 브라우저 모드(개발·E2E)용 가짜 Preview 계정 — 네트워크 없음. 인증번호 12345678만 통과, 메모리 상태
+// 브라우저 모드(개발·E2E)용 가짜 Preview 계정 — 네트워크 없음. 인증번호 12345678만 통과, 메모리 상태.
+// ?inviteOnly=1 = 초대 전용 서버 흉내(invited@example.invalid만 초대된 계정, 그 밖은 SIGNUP_INVITE_ONLY)
 import type { OnlineStatus, PreviewOnline } from "./index";
 
 const OUT: OnlineStatus = { state: "signedOut", email: null, accountId: null, serverCheckedAt: null };
@@ -12,6 +13,9 @@ export const browserPreviewOnline: PreviewOnline = {
   },
   async sendCode(email) {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) throw new Error("INVALID_EMAIL");
+    const inviteOnly = new URLSearchParams(location.search).get("inviteOnly") === "1";
+    if (inviteOnly && email.trim().toLowerCase() !== "invited@example.invalid")
+      throw new Error("SIGNUP_INVITE_ONLY");
     sentTo = email.trim();
   },
   async verifyCode(email, code) {

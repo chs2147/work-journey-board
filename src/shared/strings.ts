@@ -1491,6 +1491,7 @@ export const STR_BASE = {
       CODE_REJECTED: "인증번호가 맞지 않거나 만료됐습니다.",
       RATE_LIMITED: "요청이 너무 잦습니다. 잠시 뒤 다시 시도해 주세요.",
       SEND_FAILED: "인증번호 메일을 보내지 못했습니다.",
+      SIGNUP_INVITE_ONLY: "초대받은 이메일만 가입할 수 있습니다. 초대받은 주소인지 확인해 주세요.",
       NETWORK: "서버에 연결하지 못했습니다(네트워크 확인).",
       SERVER_UNAVAILABLE: "서버가 응답하지 않습니다. 잠시 뒤 다시 확인해 주세요.",
       VAULT_UNAVAILABLE: "보안 저장소를 쓸 수 없어 로그인하지 않았습니다.",

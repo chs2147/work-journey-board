@@ -22,6 +22,23 @@ test("Preview: 시작 화면만 — 일지(sql.js)·첫 실행·새 판 확인 �
   ).toEqual([]);
 });
 
+test("초대 전용 서버: 초대받지 않은 이메일은 '초대받은 이메일만', 초대받은 이메일은 인증번호 로그인(94문서)", async ({
+  page,
+}) => {
+  await page.goto("/?profile=connected-preview&inviteOnly=1");
+  await page.getByTestId("preview-email-input").fill("stranger@example.invalid");
+  await page.getByRole("button", { name: "인증번호 받기" }).click();
+  await expect(page.getByTestId("preview-error")).toHaveText(
+    "초대받은 이메일만 가입할 수 있습니다. 초대받은 주소인지 확인해 주세요.",
+  );
+  await page.getByTestId("preview-email-input").fill("invited@example.invalid");
+  await page.getByRole("button", { name: "인증번호 받기" }).click();
+  await expect(page.getByText("invited@example.invalid(으)로 인증번호를 보냈습니다.")).toBeVisible();
+  await page.getByTestId("preview-code-input").fill("12345678");
+  await page.getByRole("button", { name: "로그인" }).click();
+  await expect(page.getByTestId("preview-online")).toHaveText(/^개발 서버 확인됨 · /);
+});
+
 test("Preview 계정(브라우저 모드 가짜): 인증번호 로그인 → 서버 확인 표시 → 로그아웃", async ({ page }) => {
   const requests: string[] = [];
   page.on("request", (req) => requests.push(req.url()));

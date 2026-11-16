@@ -303,7 +303,24 @@ pub async fn status<B: SecureVault>(
     }
 }
 
-/// 인증번호 메일 보내기 — 처음이면 계정을 만든다(메일 확인 = 인증번호)
+/// 가입을 막아 둔(초대 전용) 서버가 처음 보는 이메일을 거절한 응답인가 — 수파베이스 `signup_disabled`
+/// (docs/v2-design/94: 초대한 사람만 — 관리 도구로 계정을 미리 만들고, 스위치로 아무나 가입 전환)
+pub fn is_signup_disabled(status: u16, body: &Value) -> bool {
+    if !(400..500).contains(&status) {
+        return false;
+    }
+    let code = body["error_code"]
+        .as_str()
+        .or(body["code"].as_str())
+        .unwrap_or("");
+    let msg = body["msg"]
+        .as_str()
+        .or(body["message"].as_str())
+        .unwrap_or("");
+    code == "signup_disabled" || msg.to_ascii_lowercase().contains("signups not allowed")
+}
+
+/// 인증번호 메일 보내기 — 처음이면 계정을 만든다(메일 확인 = 인증번호). 초대 전용 서버면 초대받은(미리 만든) 계정만
 pub async fn send_code<H: Http>(http: &H, email: &str) -> Result<(), String> {
     let email = email.trim();
     if !valid_email(email) {
@@ -320,6 +337,7 @@ pub async fn send_code<H: Http>(http: &H, email: &str) -> Result<(), String> {
     {
         (200, _) => Ok(()),
         (429, _) => Err("RATE_LIMITED".into()),
+        (s, v) if is_signup_disabled(s, &v) => Err("SIGNUP_INVITE_ONLY".into()),
         (s, _) if s >= 500 => Err("SERVER_UNAVAILABLE".into()),
         _ => Err("SEND_FAILED".into()),
     }

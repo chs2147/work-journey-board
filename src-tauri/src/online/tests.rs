@@ -463,3 +463,33 @@ fn live_development_round_trip() {
     ok("wrong_code_rejected", bad == Err("CODE_REJECTED".into()));
     assert!(out.iter().all(|(_, p)| *p), "{out:?}");
 }
+
+#[test]
+fn invite_only_server_refusal_maps_to_its_own_code() {
+    // 수파베이스: 가입을 끈 서버가 처음 보는 이메일에 인증번호를 거절하는 응답
+    let http = Fake::default().reply(
+        422,
+        json!({ "code": 422, "error_code": "signup_disabled", "msg": "Signups not allowed for otp" }),
+    );
+    assert_eq!(
+        run(send_code(&http, "new@example.invalid")),
+        Err("SIGNUP_INVITE_ONLY".into())
+    );
+    assert!(is_signup_disabled(
+        400,
+        &json!({ "message": "Signups not allowed for this instance" })
+    ));
+    assert!(!is_signup_disabled(
+        500,
+        &json!({ "error_code": "signup_disabled" })
+    ));
+    assert!(!is_signup_disabled(
+        422,
+        &json!({ "error_code": "validation_failed" })
+    ));
+    let other = Fake::default().reply(400, json!({ "error_code": "email_address_invalid" }));
+    assert_eq!(
+        run(send_code(&other, "x@example.invalid")),
+        Err("SEND_FAILED".into())
+    );
+}
