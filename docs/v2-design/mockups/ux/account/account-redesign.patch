@@ -1,0 +1,636 @@
+diff --git a/src/shared/strings.ts b/src/shared/strings.ts
+index 9b6ff7d..b8c374a 100644
+--- a/src/shared/strings.ts
++++ b/src/shared/strings.ts
+@@ -1686,6 +1686,7 @@ export const STR_BASE = {
+         intro: "온라인 워크스페이스에 쓰는 계정입니다. 로그인 정보는 이 기기 보안 저장소에만 있습니다.",
+       },
+       cardTitle: "로그인",
++      inviteOnly: "초대 전용",
+       spaces: "온라인 공간",
+       spacesValue: (n: number) => `${n.toLocaleString("ko-KR")}개`,
+       signOutDots: "로그아웃…",
+diff --git a/src/ui/preview/AccountPanel.module.css b/src/ui/preview/AccountPanel.module.css
+index fa7b3e2..cf0f072 100644
+--- a/src/ui/preview/AccountPanel.module.css
++++ b/src/ui/preview/AccountPanel.module.css
+@@ -1,18 +1,55 @@
+-/* 온라인 계정 패널(95 S4) */
+-.panel {
+-  display: grid;
+-  gap: var(--sp-3);
++/* 온라인 계정 카드(95 S4) — 설정 공용 카드·행(Settings.module.css)에 없는 것만 */
++
++/* 제목 옆 상태 배지(설정 카드의 .badge와 같은 크기·모양 — 가입 = 초대 전용) */
++.badge {
++  display: inline-block;
++  padding: 1px 7px;
++  border-radius: 999px;
++  background: var(--surface-sub);
++  color: var(--text-2);
++  font-size: var(--fs-xs);
++  line-height: 1.6;
++  white-space: nowrap;
+ }
+-.confirm {
+-  display: grid;
+-  gap: var(--sp-2);
+-  padding: var(--sp-3);
++
++/* 행 오른쪽 입력칸 — 설정 단추와 같은 높이·선 */
++.input {
++  width: min(240px, 100%);
++  height: 30px;
++  padding: 0 var(--sp-3);
+   border: 1px solid var(--line-strong);
+-  border-radius: var(--radius-md, 10px);
+-  background: var(--surface-sub, var(--surface-card));
++  border-radius: var(--radius-md);
++  background: var(--surface-page);
++  color: var(--text-1);
++  font: inherit;
++}
++.input:focus-visible {
++  outline: 2px solid var(--accent);
++  outline-offset: 1px;
+ }
+ 
+-/* 설정 카드 안: 제목·설정 행과 같은 좌우·아래 여백(--settings-card-inset, CLAUDE.md 새 텍스트 영역 정렬) */
+-.inset {
+-  padding: 0 var(--settings-card-inset, var(--sp-5)) var(--settings-card-inset, var(--sp-5));
++/* 로그아웃 확인 = 설정 행과 같은 여백·선(행 자리에 펼침) */
++.confirm {
++  display: flex;
++  align-items: center;
++  gap: var(--sp-5);
++  padding: var(--sp-4) var(--settings-card-inset, var(--sp-5));
++  border-top: 1px solid var(--line);
++  background: var(--surface-sub);
++}
++.confirmButtons {
++  flex: 0 0 auto;
++  display: flex;
++  gap: var(--sp-2);
++}
++.error {
++  margin: 0;
++  font-size: var(--fs-sm);
++  color: var(--danger);
++}
++@media (max-width: 640px) {
++  .confirm {
++    flex-direction: column;
++    align-items: stretch;
++  }
+ }
+diff --git a/src/ui/preview/AccountPanel.tsx b/src/ui/preview/AccountPanel.tsx
+index 0c4eb32..bab373b 100644
+--- a/src/ui/preview/AccountPanel.tsx
++++ b/src/ui/preview/AccountPanel.tsx
+@@ -1,6 +1,7 @@
+-// 온라인 계정 패널(docs/v2-design/95 S4, U3) — Preview 첫 화면 카드와 설정 › 계정이 같은 내용을 쓴다.
+-// 로그인 전 = 이메일 → 인증번호, 로그인 후 = 이메일·서버 확인·온라인 공간 수 + [다시 확인]·[로그아웃…].
+-// 온라인 공간을 연 동안의 로그아웃은 보낼 변경을 보내고 저장한 뒤 닫는다(U6).
++// 온라인 계정 카드(docs/v2-design/95 S4, U3) — Preview 첫 화면과 설정 › 계정이 같은 카드를 쓴다.
++// 설정 공용 부품(Card·Row·CardMessage)과 같은 모양: 행 = 왼쪽 이름·값 / 오른쪽 조작, 행 사이 선, 같은 좌우 여백.
++// 로그인 전 = 이메일 → 인증번호, 로그인 후 = 이메일·서버·온라인 공간·계정 ID + [다시 확인]·[로그아웃…].
++// 가입은 지금 초대 전용 — 제목 옆 배지만(설명 글 없음). 온라인 공간을 연 동안의 로그아웃은 보내고 저장한 뒤 닫는다(U6).
+ import { useState } from "react";
+ import { STR } from "../../shared/strings";
+ import { loadPreviewOnline } from "../../platform";
+@@ -14,8 +15,9 @@ import {
+   verifyCode,
+ } from "./onlineAccount";
+ import { signOutFromSpace, useOnlineSpaces } from "./onlineSpaceStore";
+-import { Card } from "../settings/SettingsCard";
+-import styles from "../first-run/FirstRun.module.css";
++import { openSettingsAt } from "../common/appController";
++import { Card, CardMessage, Row } from "../settings/SettingsCard";
++import settings from "../settings/Settings.module.css";
+ import own from "./AccountPanel.module.css";
+ 
+ const P = STR.connectedPreview;
+@@ -23,7 +25,7 @@ const A = STR.onlineSpaces.account;
+ const clock = (sec: number) =>
+   new Date(sec * 1000).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" });
+ 
+-export function AccountPanel({ inSpace = false }: { inSpace?: boolean }) {
++export function AccountCard({ inSpace = false }: { inSpace?: boolean }) {
+   const { status, busy, error, sentTo } = useOnlineAccount();
+   const spaces = useOnlineSpaces((s) => s.list);
+   const [email, setEmail] = useState("");
+@@ -48,164 +50,165 @@ export function AccountPanel({ inSpace = false }: { inSpace?: boolean }) {
+   };
+ 
+   return (
+-    <div className={own.panel} data-testid="account-panel">
+-      <dl className={styles.facts}>
+-        <dt>{P.online}</dt>
+-        <dd data-testid="preview-online">{server}</dd>
+-        {signedIn && (
+-          <>
+-            <dt>{P.email}</dt>
+-            <dd data-testid="preview-email">{status.email}</dd>
+-            <dt>{A.spaces}</dt>
+-            <dd data-testid="account-spaces">{spaces ? A.spacesValue(spaces.length) : "—"}</dd>
+-            <dt>{P.accountId}</dt>
+-            <dd title={status.accountId ?? undefined}>{status.accountId?.slice(0, 8)}</dd>
+-          </>
+-        )}
+-      </dl>
+-
+-      {status?.state === "vaultUnavailable" && <p className={styles.small}>{P.vaultUnavailable}</p>}
+-
+-      {status?.state === "signedOut" && !sentTo && (
+-        <form
+-          className={styles.stack}
+-          onSubmit={(e) => {
+-            e.preventDefault();
+-            void sendCode(email);
+-          }}
+-        >
+-          <label className={styles.small} htmlFor="preview-email-input">
+-            {P.email}
+-          </label>
+-          <input
+-            id="preview-email-input"
+-            className={styles.input}
+-            type="email"
+-            autoComplete="email"
+-            placeholder={P.emailPlaceholder}
+-            value={email}
+-            onChange={(e) => setEmail(e.target.value)}
+-            data-testid="preview-email-input"
+-          />
+-          <button type="submit" className={styles.primary} disabled={!email.trim() || busy !== null}>
+-            {busy === "send" ? P.sending : P.sendCode}
+-          </button>
+-        </form>
+-      )}
++    <Card
++      id="online-account"
++      title={A.cardTitle}
++      desc={
++        <span className={own.badge} data-testid="invite-only-badge">
++          {A.inviteOnly}
++        </span>
++      }
++      testId={inSpace ? "account-settings" : "account-card"}
++    >
++      <div data-testid="account-panel">
++        {status?.state === "vaultUnavailable" && <CardMessage>{P.vaultUnavailable}</CardMessage>}
+ 
+-      {status?.state === "signedOut" && sentTo && (
+-        <form
+-          className={styles.stack}
+-          onSubmit={(e) => {
+-            e.preventDefault();
+-            void verifyCode(code).then(() => setCode(""));
+-          }}
+-        >
+-          <p className={styles.small}>{P.sentTo(sentTo)}</p>
+-          <label className={styles.small} htmlFor="preview-code-input">
+-            {P.code}
+-          </label>
+-          <input
+-            id="preview-code-input"
+-            className={styles.input}
+-            inputMode="numeric"
+-            autoComplete="one-time-code"
+-            maxLength={10}
+-            placeholder={P.codePlaceholder}
+-            value={code}
+-            onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+-            data-testid="preview-code-input"
+-          />
+-          <button type="submit" className={styles.primary} disabled={code.length < 6 || busy !== null}>
+-            {busy === "verify" ? P.verifying : P.verify}
+-          </button>
+-          <div className={styles.row}>
+-            <button
+-              type="button"
+-              className={styles.secondary}
+-              disabled={busy !== null}
+-              onClick={() => void resendCode()}
+-            >
+-              {P.resend}
+-            </button>
+-            <button
+-              type="button"
+-              className={styles.secondary}
+-              disabled={busy !== null}
+-              onClick={() => {
+-                otherEmail();
+-                setCode("");
+-              }}
+-            >
+-              {P.otherEmail}
+-            </button>
+-          </div>
+-        </form>
+-      )}
+-
+-      {signedIn && !confirm && (
+-        <div className={styles.row}>
+-          <button
+-            type="button"
+-            className={styles.secondary}
+-            disabled={busy !== null}
+-            onClick={() => void recheck()}
+-            data-testid="preview-recheck"
++        {status?.state === "signedOut" && !sentTo && (
++          <form
++            onSubmit={(e) => {
++              e.preventDefault();
++              void sendCode(email);
++            }}
+           >
+-            {P.recheck}
+-          </button>
+-          <button
+-            type="button"
+-            className={styles.secondary}
+-            disabled={busy !== null}
+-            onClick={() => (inSpace ? setConfirm(true) : doSignOut())}
+-            data-testid="preview-sign-out"
++            <Row label={<label htmlFor="preview-email-input">{P.email}</label>} desc={server}>
++              <input
++                id="preview-email-input"
++                className={own.input}
++                type="email"
++                autoComplete="email"
++                placeholder={P.emailPlaceholder}
++                value={email}
++                onChange={(e) => setEmail(e.target.value)}
++                data-testid="preview-email-input"
++              />
++              <button type="submit" className={settings.primary} disabled={!email.trim() || busy !== null}>
++                {busy === "send" ? P.sending : P.sendCode}
++              </button>
++            </Row>
++          </form>
++        )}
++
++        {status?.state === "signedOut" && sentTo && (
++          <form
++            onSubmit={(e) => {
++              e.preventDefault();
++              void verifyCode(code).then(() => setCode(""));
++            }}
+           >
+-            {inSpace ? A.signOutDots : P.signOut}
+-          </button>
+-        </div>
+-      )}
+-      {signedIn && confirm && (
+-        <div
+-          className={own.confirm}
+-          role="alertdialog"
+-          aria-label={A.signOutTitle}
+-          data-testid="sign-out-confirm"
+-        >
+-          <b>{A.signOutTitle}</b>
+-          <p className={styles.small}>{A.signOutBody}</p>
+-          <div className={styles.row}>
+-            <button type="button" className={styles.secondary} onClick={() => setConfirm(false)}>
+-              {STR.workspace.cancel}
+-            </button>
+-            <button
+-              type="button"
+-              className={styles.primary}
+-              onClick={doSignOut}
+-              data-testid="sign-out-confirm-ok"
++            <Row label={<label htmlFor="preview-code-input">{P.code}</label>} desc={P.sentTo(sentTo)}>
++              <input
++                id="preview-code-input"
++                className={own.input}
++                inputMode="numeric"
++                autoComplete="one-time-code"
++                maxLength={10}
++                placeholder={P.codePlaceholder}
++                value={code}
++                onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
++                data-testid="preview-code-input"
++              />
++              <button type="submit" className={settings.primary} disabled={code.length < 6 || busy !== null}>
++                {busy === "verify" ? P.verifying : P.verify}
++              </button>
++            </Row>
++            <Row label={P.email} desc={sentTo}>
++              <button type="button" disabled={busy !== null} onClick={() => void resendCode()}>
++                {P.resend}
++              </button>
++              <button
++                type="button"
++                disabled={busy !== null}
++                onClick={() => {
++                  otherEmail();
++                  setCode("");
++                }}
++              >
++                {P.otherEmail}
++              </button>
++            </Row>
++          </form>
++        )}
++
++        {signedIn && (
++          <>
++            <Row label={P.email} desc={<span data-testid="preview-email">{status.email}</span>}>
++              {!confirm && (
++                <button
++                  type="button"
++                  disabled={busy !== null}
++                  onClick={() => (inSpace ? setConfirm(true) : doSignOut())}
++                  data-testid="preview-sign-out"
++                >
++                  {inSpace ? A.signOutDots : P.signOut}
++                </button>
++              )}
++            </Row>
++            {confirm && (
++              <div
++                className={own.confirm}
++                role="alertdialog"
++                aria-label={A.signOutTitle}
++                data-testid="sign-out-confirm"
++              >
++                <span className={settings.rowText}>
++                  <span className={settings.rowLabel}>{A.signOutTitle}</span>
++                  <span className={settings.rowDesc}>{A.signOutBody}</span>
++                </span>
++                <span className={own.confirmButtons}>
++                  <button type="button" onClick={() => setConfirm(false)}>
++                    {STR.workspace.cancel}
++                  </button>
++                  <button
++                    type="button"
++                    className={settings.primary}
++                    onClick={doSignOut}
++                    data-testid="sign-out-confirm-ok"
++                  >
++                    {P.signOut}
++                  </button>
++                </span>
++              </div>
++            )}
++            <Row label={P.online} desc={<span data-testid="preview-online">{server}</span>}>
++              <button
++                type="button"
++                disabled={busy !== null}
++                onClick={() => void recheck()}
++                data-testid="preview-recheck"
++              >
++                {P.recheck}
++              </button>
++            </Row>
++            <Row
++              label={A.spaces}
++              desc={<span data-testid="account-spaces">{spaces ? A.spacesValue(spaces.length) : "—"}</span>}
+             >
+-              {P.signOut}
+-            </button>
+-          </div>
+-        </div>
+-      )}
++              {inSpace && (
++                <button type="button" onClick={() => void openSettingsAt("workspace")}>
++                  {STR.workspace.manage}
++                </button>
++              )}
++            </Row>
++            <Row
++              label={P.accountId}
++              desc={<span title={status.accountId ?? undefined}>{status.accountId?.slice(0, 8)}</span>}
++            />
++          </>
++        )}
+ 
+-      {error && (
+-        <p className={styles.small} role="alert" data-testid="preview-error">
+-          {error}
+-        </p>
+-      )}
+-    </div>
++        {error && (
++          <CardMessage>
++            <p className={own.error} role="alert" data-testid="preview-error">
++              {error}
++            </p>
++          </CardMessage>
++        )}
++      </div>
++    </Card>
+   );
+ }
+ 
+ /** 설정 › 계정(온라인 공간을 연 동안) */
+ export function AccountSettingsCard() {
+-  return (
+-    <Card id="account" title={STR.onlineSpaces.account.cardTitle} testId="account-settings">
+-      <div className={own.inset}>
+-        <AccountPanel inSpace />
+-      </div>
+-    </Card>
+-  );
++  return <AccountCard inSpace />;
+ }
+diff --git a/src/ui/preview/OnlineSpaces.tsx b/src/ui/preview/OnlineSpaces.tsx
+index 0cdc344..b25e5a9 100644
+--- a/src/ui/preview/OnlineSpaces.tsx
++++ b/src/ui/preview/OnlineSpaces.tsx
+@@ -9,6 +9,7 @@ import { closeConflicts, resolveConflict, useOnlineSync } from "./onlineSync";
+ import { formatBytes, STR } from "../../shared/strings";
+ import { setOnlineSlots } from "../common/onlineSlots";
+ import { WorkspaceMark } from "../common/workspaceIcons";
++import { Card } from "../settings/SettingsCard";
+ import { OnlineRailButton, OnlineStatusPill, OnlineWorkspaceSettings } from "./OnlineChrome";
+ import { AccountSettingsCard } from "./AccountPanel";
+ import {
+@@ -48,64 +49,65 @@ export function OnlineSpacesCard({
+   if (!ownerId) return null;
+ 
+   return (
+-    <section className={home.card} data-testid="online-spaces">
+-      <h2 className={home.cardTitle}>{S.title}</h2>
+-      {offline && <p className={styles.small}>{S.offline}</p>}
+-      {list && list.length === 0 && <p className={styles.small}>{S.empty}</p>}
+-      {list && list.length > 0 && (
+-        <div className={own.pending}>
+-          {list.map((w) => (
+-            <div key={w.workspaceId} className={own.pendingRow} data-testid="online-space-row">
+-              <SpaceName w={w} />
+-              <span className={styles.small} title={w.workspaceId}>
+-                {S.item(
+-                  when(w.createdAt),
+-                  w.records,
+-                  w.assets,
+-                  formatBytes(w.assetBytes ?? 0),
+-                  w.sourceSchema,
+-                )}
+-              </span>
+-              <button
+-                type="button"
+-                className={styles.primary}
+-                disabled={busy !== null}
+-                onClick={() => void openOnlineSpace(w)}
+-                data-testid="online-space-open"
+-              >
+-                {busy === w.workspaceId ? S.opening : S.open}
+-              </button>
+-            </div>
+-          ))}
+-        </div>
+-      )}
+-      <div className={styles.row}>
+-        {onCreate && (
++    <Card id="online-spaces-title" title={S.title} testId="online-spaces">
++      <div className={home.cardBody}>
++        {offline && <p className={styles.small}>{S.offline}</p>}
++        {list && list.length === 0 && <p className={styles.small}>{S.empty}</p>}
++        {list && list.length > 0 && (
++          <div className={own.pending}>
++            {list.map((w) => (
++              <div key={w.workspaceId} className={own.pendingRow} data-testid="online-space-row">
++                <SpaceName w={w} />
++                <span className={styles.small} title={w.workspaceId}>
++                  {S.item(
++                    when(w.createdAt),
++                    w.records,
++                    w.assets,
++                    formatBytes(w.assetBytes ?? 0),
++                    w.sourceSchema,
++                  )}
++                </span>
++                <button
++                  type="button"
++                  className={styles.primary}
++                  disabled={busy !== null}
++                  onClick={() => void openOnlineSpace(w)}
++                  data-testid="online-space-open"
++                >
++                  {busy === w.workspaceId ? S.opening : S.open}
++                </button>
++              </div>
++            ))}
++          </div>
++        )}
++        <div className={styles.row}>
++          {onCreate && (
++            <button
++              type="button"
++              className={styles.primary}
++              disabled={busy !== null}
++              onClick={onCreate}
++              data-testid="online-create-open"
++            >
++              {STR.onlineSpaces.menu.create}
++            </button>
++          )}
+           <button
+             type="button"
+-            className={styles.primary}
++            className={styles.secondary}
+             disabled={busy !== null}
+-            onClick={onCreate}
+-            data-testid="online-create-open"
++            onClick={() => void refreshSpaces()}
+           >
+-            {STR.onlineSpaces.menu.create}
++            {S.refresh}
+           </button>
++        </div>
++        {error && (
++          <p className={styles.small} role="alert" data-testid="online-spaces-error">
++            {error}
++          </p>
+         )}
+-        <button
+-          type="button"
+-          className={styles.secondary}
+-          disabled={busy !== null}
+-          onClick={() => void refreshSpaces()}
+-        >
+-          {S.refresh}
+-        </button>
+       </div>
+-      {error && (
+-        <p className={styles.small} role="alert" data-testid="online-spaces-error">
+-          {error}
+-        </p>
+-      )}
+-    </section>
++    </Card>
+   );
+ }
+ 
+diff --git a/src/ui/preview/PreviewApp.module.css b/src/ui/preview/PreviewApp.module.css
+index f1d9dd1..e933875 100644
+--- a/src/ui/preview/PreviewApp.module.css
++++ b/src/ui/preview/PreviewApp.module.css
+@@ -39,3 +39,11 @@
+     padding: var(--sp-4) var(--sp-4) var(--sp-5);
+   }
+ }
++
++/* 설정 카드(Card) 안 자유 내용 — 제목·설정 행과 같은 좌우·아래 여백 */
++.cardBody {
++  display: flex;
++  flex-direction: column;
++  gap: var(--sp-3);
++  padding: 0 var(--settings-card-inset, var(--sp-5)) var(--settings-card-inset, var(--sp-5));
++}
+diff --git a/src/ui/preview/PreviewApp.tsx b/src/ui/preview/PreviewApp.tsx
+index 56ab317..25a8e05 100644
+--- a/src/ui/preview/PreviewApp.tsx
++++ b/src/ui/preview/PreviewApp.tsx
+@@ -17,12 +17,12 @@ import {
+   useOnlineSpaces,
+ } from "./onlineSpaceStore";
+ import { initAccount, useOnlineAccount } from "./onlineAccount";
+-import { AccountPanel } from "./AccountPanel";
++import { AccountCard } from "./AccountPanel";
++import { Card, Row } from "../settings/SettingsCard";
+ import own from "./PreviewApp.module.css";
+ import appStyles from "../App.module.css";
+ import topStyles from "../common/TopBar.module.css";
+ import { BrandLockup } from "../common/Brand";
+-import styles from "../first-run/FirstRun.module.css";
+ 
+ const P = STR.connectedPreview;
+ 
+@@ -84,24 +84,17 @@ export function PreviewApp({ profile }: { profile: AppProfileInfo }) {
+             <h1>{profile.productName}</h1>
+             <p>{P.lead}</p>
+           </div>
+-          <section className={own.card}>
+-            <h2 className={own.cardTitle}>{STR.onlineSpaces.account.cat.name}</h2>
+-            <AccountPanel />
+-          </section>
++          <AccountCard />
+           <OnlineSpacesCard ownerId={accountId} refreshKey={published} onCreate={() => setCreating(true)} />
+-          <section className={own.card}>
+-            <h2 className={own.cardTitle}>{P.about}</h2>
+-            <dl className={styles.facts}>
+-              <dt>{P.profile}</dt>
+-              <dd>{P.profileValue}</dd>
+-              <dt>{P.appVersion}</dt>
+-              <dd>{__APP_VERSION__}</dd>
+-              <dt>{P.updates}</dt>
+-              <dd data-testid="preview-updates">{P.updatesOff}</dd>
+-              <dt>{P.localJournal}</dt>
+-              <dd data-testid="preview-local-journal">{P.localJournalOff}</dd>
+-            </dl>
+-          </section>
++          <Card id="preview-about" title={P.about}>
++            <Row label={P.profile} desc={P.profileValue} />
++            <Row label={P.appVersion} desc={__APP_VERSION__} />
++            <Row label={P.updates} desc={<span data-testid="preview-updates">{P.updatesOff}</span>} />
++            <Row
++              label={P.localJournal}
++              desc={<span data-testid="preview-local-journal">{P.localJournalOff}</span>}
++            />
++          </Card>
+         </div>
+       </main>
+       {creating && accountId && (
