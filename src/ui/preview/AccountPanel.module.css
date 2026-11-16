@@ -1,0 +1,18 @@
+/* 온라인 계정 패널(95 S4) */
+.panel {
+  display: grid;
+  gap: var(--sp-3);
+}
+.confirm {
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md, 10px);
+  background: var(--surface-sub, var(--surface-card));
+}
+
+/* 설정 카드 안: 제목·설정 행과 같은 좌우·아래 여백(--settings-card-inset, CLAUDE.md 새 텍스트 영역 정렬) */
+.inset {
+  padding: 0 var(--settings-card-inset, var(--sp-5)) var(--settings-card-inset, var(--sp-5));
+}

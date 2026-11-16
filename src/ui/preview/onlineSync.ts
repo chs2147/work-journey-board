@@ -210,9 +210,10 @@ export async function pushBeforeLeave(limit = 4000) {
 }
 
 /** 앱을 닫거나 [목록으로] 중 — 화면을 막고 "저장하고 닫는 중"을 보인다 */
-export function markClosing(kind: "exit" | "list") {
-  useOnlineSync.setState({ closing: kind });
-  showClosingOverlay(kind === "exit" ? STR.onlineSpaces.sync.closingExit : STR.onlineSpaces.sync.closingList);
+export function markClosing(kind: "exit" | "list" | "signOut") {
+  useOnlineSync.setState({ closing: kind === "exit" ? "exit" : "list" });
+  const Y = STR.onlineSpaces.sync;
+  showClosingOverlay(kind === "exit" ? Y.closingExit : kind === "signOut" ? Y.closingSignOut : Y.closingList);
 }
 
 export async function loadConflicts() {

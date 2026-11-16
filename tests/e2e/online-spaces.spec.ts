@@ -274,3 +274,72 @@ test("UX-3 실기: 온라인 공간의 설정 › 워크스페이스 = 온라인
   await expect(syncStatus(page)).toContainText(/동기화됨|이 기기에 저장됨/, { timeout: 15_000 });
   await expect(syncStatus(page)).not.toHaveAttribute("data-phase", "error");
 });
+
+test("UX-4: 설정 › 계정(온라인 공간에서만) → 로그아웃… 확인 → 보내고 저장 후 첫 화면(로그인 전)", async ({
+  page,
+}) => {
+  await signIn(page);
+  await openCopied(page);
+  await page.getByTestId("rail-settings").click();
+  const tab = page.getByRole("tab", { name: /계정/ });
+  await expect(tab).toBeVisible();
+  await tab.click();
+  const card = page.getByTestId("account-settings");
+  await expect(card).toContainText("virtual@example.invalid");
+  await expect(card.getByTestId("account-spaces")).toHaveText("1개");
+  // 로그아웃은 확인을 거친다
+  await card.getByTestId("preview-sign-out").click();
+  await expect(card.getByTestId("sign-out-confirm")).toContainText("보내지 못한 변경은 이 기기에 남아");
+  await card.getByTestId("sign-out-confirm-ok").click();
+  // 창을 새로 불러 첫 화면 — 로그인 전(브라우저 모드는 가짜 서버가 메모리라 새로 시작)
+  await expect(page.getByTestId("connected-preview")).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByTestId("preview-email-input")).toBeVisible();
+});
+
+test("UX-4: 충돌은 설정과 같은 전체 화면 — 이 기기 / 서버 나란히, 고르면 사라진다", async ({ page }) => {
+  await signIn(page);
+  const ws = await openCopied(page);
+  await expect(syncStatus(page)).toContainText(/동기화됨|이 기기에 저장됨/, { timeout: 15_000 });
+  // 이번 주에 기록 하나를 만들고 서버에 보낸다
+  await page.locator("textarea").first().click();
+  await page.keyboard.type("충돌 시험 가상 기록");
+  await page.keyboard.press("Escape");
+  await page.locator("body").click({ position: { x: 5, y: 5 } });
+  await expect(syncStatus(page)).toContainText("동기화됨", { timeout: 15_000 });
+  const item = page.locator("[data-item-id]").last();
+  const id = await item.getAttribute("data-item-id");
+  // 다른 기기가 서버에서 먼저 고침 → 이 기기도 같은 기록을 고침(받기 전) → 보내면 충돌
+  await page.evaluate(
+    ([w, i]) =>
+      (
+        globalThis as unknown as {
+          __wjbFakeSync: { editEntryElsewhere(w: string, t: string, id?: string): Promise<string> };
+        }
+      ).__wjbFakeSync.editEntryElsewhere(w!, "다른 기기 쪽 가상 글", i!),
+    [ws, id],
+  );
+  await item.locator("textarea").click();
+  await page.keyboard.press("End");
+  await page.keyboard.type(" 이 기기 쪽");
+  await page.keyboard.press("Escape");
+  await page.locator("body").click({ position: { x: 5, y: 5 } });
+  await expect(syncStatus(page)).toContainText("충돌 1건", { timeout: 15_000 });
+  await syncPanel(page);
+  await page.getByTestId("online-sync-conflicts").click();
+  const view = page.getByTestId("online-conflicts");
+  await expect(view).toBeVisible();
+  // 전체 화면(창 크기만큼)
+  const box = await view.boundingBox();
+  const vp = page.viewportSize()!;
+  expect(box!.width).toBeGreaterThanOrEqual(vp.width - 1);
+  expect(box!.height).toBeGreaterThanOrEqual(vp.height - 1);
+  const c = view.getByTestId("online-conflict");
+  await expect(c).toHaveCount(1);
+  await expect(c).toContainText("이 기기 쪽");
+  await expect(c).toContainText("다른 기기 쪽 가상 글");
+  await c.getByTestId("conflict-mine").click();
+  await expect(view.getByTestId("online-conflict")).toHaveCount(0, { timeout: 15_000 });
+  await view.getByTestId("online-conflicts-close").click();
+  await expect(view).toHaveCount(0);
+  await expect(syncStatus(page)).not.toContainText("충돌", { timeout: 15_000 });
+});

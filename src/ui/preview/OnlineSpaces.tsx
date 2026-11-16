@@ -10,6 +10,7 @@ import { formatBytes, STR } from "../../shared/strings";
 import { setOnlineSlots } from "../common/onlineSlots";
 import { WorkspaceMark } from "../common/workspaceIcons";
 import { OnlineRailButton, OnlineStatusPill, OnlineWorkspaceSettings } from "./OnlineChrome";
+import { AccountSettingsCard } from "./AccountPanel";
 import {
   metaOf,
   openOnlineSpace,
@@ -109,6 +110,12 @@ const onlineChrome = {
   RailButton: OnlineRailButton,
   StatusPill: OnlineStatusPill,
   WorkspaceSettings: OnlineWorkspaceSettings,
+  workspaceIntro: STR.onlineSpaces.settings.intro,
+  account: {
+    Component: AccountSettingsCard,
+    ...STR.onlineSpaces.account.cat,
+    icon: "M9 8.2a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM3.2 15.8a5.8 5.8 0 0 1 11.6 0",
+  },
   switchAt: openOnlineSpaceAt,
 };
 
@@ -165,66 +172,83 @@ function ConflictPanel({ items }: { items: ConflictItem[] }) {
       setBusy(false);
     }
   };
+  const time = (t: number) =>
+    new Date(t).toLocaleString("ko-KR", {
+      month: "numeric",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  // U5: 설정과 같은 전체 화면(← 주간 보드로) — 항목마다 이 기기 / 서버 나란히
   return (
-    <div className={shell.panel} role="dialog" aria-label={Y.panelTitle} data-testid="online-conflicts">
-      <div className={shell.panelHead}>
-        <strong>{Y.panelTitle}</strong>
+    <section className={shell.page} role="dialog" aria-label={Y.panelTitle} data-testid="online-conflicts">
+      <header className={shell.pageHead}>
         <button
           type="button"
           className={shell.back}
           onClick={closeConflicts}
           data-testid="online-conflicts-close"
         >
-          {Y.close}
+          {Y.backToBoard}
         </button>
-      </div>
-      {items.length === 0 && <p className={shell.panelEmpty}>{Y.panelEmpty}</p>}
-      {items.map((c) => (
-        <div key={`${c.table}:${c.key}`} className={shell.item} data-testid="online-conflict">
-          <div className={shell.itemTitle}>{Y.tables[c.table] ?? Y.other(c.table)}</div>
-          <div className={shell.sides}>
-            <div>
-              <div className={shell.side}>{Y.mine}</div>
-              <div className={shell.body}>{summary(c.table, c.local)}</div>
+        <strong>{Y.panelTitle}</strong>
+      </header>
+      <div className={shell.pageBody}>
+        <div className={shell.pageInner}>
+          <p className={shell.pageLead}>{items.length ? Y.pageLead(items.length) : Y.panelEmpty}</p>
+          {items.map((c) => (
+            <div key={`${c.table}:${c.key}`} className={shell.item} data-testid="online-conflict">
+              <div className={shell.itemTitle}>{Y.tables[c.table] ?? Y.other(c.table)}</div>
+              <div className={shell.sides}>
+                <div className={shell.sideBox}>
+                  <div className={shell.side}>
+                    {Y.mine} · {time(c.at)}
+                  </div>
+                  <div className={shell.body}>{summary(c.table, c.local)}</div>
+                </div>
+                <div className={shell.sideBox}>
+                  <div className={shell.side}>
+                    {Y.server}
+                    {c.serverRev !== null ? ` · ${Y.rev(c.serverRev)}` : ""}
+                  </div>
+                  <div className={shell.body}>{summary(c.table, c.server)}</div>
+                </div>
+              </div>
+              <div className={shell.actions}>
+                <button
+                  type="button"
+                  className={shell.back}
+                  disabled={busy}
+                  onClick={() => void act(c, "mine")}
+                  data-testid="conflict-mine"
+                >
+                  {Y.keepMine}
+                </button>
+                <button
+                  type="button"
+                  className={shell.back}
+                  disabled={busy}
+                  onClick={() => void act(c, "server")}
+                  data-testid="conflict-server"
+                >
+                  {Y.keepServer}
+                </button>
+                {BOTH_TABLES.has(c.table) && c.local && c.server && (
+                  <button
+                    type="button"
+                    className={shell.back}
+                    disabled={busy}
+                    onClick={() => void act(c, "both")}
+                    data-testid="conflict-both"
+                  >
+                    {Y.keepBoth}
+                  </button>
+                )}
+              </div>
             </div>
-            <div>
-              <div className={shell.side}>{Y.server}</div>
-              <div className={shell.body}>{summary(c.table, c.server)}</div>
-            </div>
-          </div>
-          <div className={shell.actions}>
-            <button
-              type="button"
-              className={shell.back}
-              disabled={busy}
-              onClick={() => void act(c, "mine")}
-              data-testid="conflict-mine"
-            >
-              {Y.keepMine}
-            </button>
-            <button
-              type="button"
-              className={shell.back}
-              disabled={busy}
-              onClick={() => void act(c, "server")}
-              data-testid="conflict-server"
-            >
-              {Y.keepServer}
-            </button>
-            {BOTH_TABLES.has(c.table) && c.local && c.server && (
-              <button
-                type="button"
-                className={shell.back}
-                disabled={busy}
-                onClick={() => void act(c, "both")}
-                data-testid="conflict-both"
-              >
-                {Y.keepBoth}
-              </button>
-            )}
-          </div>
+          ))}
         </div>
-      ))}
-    </div>
+      </div>
+    </section>
   );
 }

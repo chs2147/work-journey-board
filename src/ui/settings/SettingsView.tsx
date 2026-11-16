@@ -1,6 +1,6 @@
 // 설정 화면(improve-1027v5-spec 1절): 보드 자리를 덮는 전체 화면 — 왼쪽 분류 5개, 오른쪽 고른 분류의 카드.
 // 기능·문구는 예전 설정 패널(overview 10-9·10-10) 그대로, 자리와 모양만 옮겼다.
-import { onlineSlots } from "../common/onlineSlots";
+import { onlineSlots, takeAccountRequest } from "../common/onlineSlots";
 import {
   useCallback,
   useEffect,
@@ -63,6 +63,8 @@ type Pending =
   | { kind: "done"; message: string; oldDir: string }
   | { kind: "failed"; message: string };
 
+type ViewCat = SettingsCategory | "account";
+
 const NUDGE_OPTIONS = [0, 2, 3, 4, 5, 6, 7, 8];
 
 /** 분류 아이콘(18px 선 그림) */
@@ -92,7 +94,11 @@ export function SettingsView() {
   const ready = journal.state === "ready" ? journal : null;
   const updateDot = useUpdate(hasUpdate);
   const [settings, setSettings] = useState<Settings | null>(null);
-  const [cat, setCat] = useState<SettingsCategory | null>(null);
+  // "account" = 온라인 계정(Preview에서 온라인 공간을 연 동안만, 일지에 저장하지 않는 보기 분류)
+  const account = onlineSlots()?.account;
+  const allCats: ViewCat[] = account ? ["account", ...SETTINGS_CATEGORIES] : [...SETTINGS_CATEGORIES];
+  const catInfo = (c: ViewCat) => (c === "account" ? account! : STR.settings.cats[c]);
+  const [cat, setCat] = useState<ViewCat | null>(null);
   const [size, setSize] = useState<number | null>(null);
   const [last, setLast] = useState<BackupInfo | null>(null);
   const [imageUse, setImageUse] = useState<{ count: number; bytes: number } | null>(null);
@@ -111,7 +117,7 @@ export function SettingsView() {
     setRestoreScope(ready?.dataDir);
     setRestoreOpen(false);
   }
-  const tabRefs = useRef<Partial<Record<SettingsCategory, HTMLButtonElement | null>>>({});
+  const tabRefs = useRef<Partial<Record<ViewCat, HTMLButtonElement | null>>>({});
   const pendingRef = useRef(pending);
   useEffect(() => {
     pendingRef.current = pending;
@@ -122,7 +128,15 @@ export function SettingsView() {
     const s = await ready.repo.getSettings();
     setSettings(s);
     // 처음 열 때만: 마지막 본 분류, 새 판 점이 켜져 있으면 업데이트·정보(spec 1-2)
-    setCat((c) => c ?? (hasUpdate(useUpdate.getState()) ? "update" : s.ui.settingsCategory));
+    setCat(
+      (c) =>
+        c ??
+        (onlineSlots()?.account && takeAccountRequest()
+          ? "account"
+          : hasUpdate(useUpdate.getState())
+            ? "update"
+            : s.ui.settingsCategory),
+    );
     setSize((await platform.stat(journalPath(platform, ready.dataDir))).size);
     setLast(await lastBackupOf(platform, ready.dataDir));
     setBackupStats(await backupFolderStats(platform, ready.dataDir));
@@ -181,15 +195,16 @@ export function SettingsView() {
 
   if (!ready) return null;
 
-  const choose = (c: SettingsCategory, focus = false) => {
+  const choose = (c: ViewCat, focus = false) => {
     setCat(c);
     if (focus) tabRefs.current[c]?.focus();
-    void ready.repo.updateSettings({ ui: { settingsCategory: c } }).catch(() => undefined);
+    if (c !== "account")
+      void ready.repo.updateSettings({ ui: { settingsCategory: c } }).catch(() => undefined);
   };
 
   const onTabKey = (e: ReactKeyboardEvent) => {
-    const i = SETTINGS_CATEGORIES.indexOf(cat ?? "screen");
-    const n = SETTINGS_CATEGORIES.length;
+    const i = allCats.indexOf(cat ?? "screen");
+    const n = allCats.length;
     const to =
       e.key === "ArrowDown" || e.key === "ArrowRight"
         ? (i + 1) % n
@@ -202,7 +217,7 @@ export function SettingsView() {
               : -1;
     if (to < 0) return;
     e.preventDefault();
-    choose(SETTINGS_CATEGORIES[to]!, true);
+    choose(allCats[to]!, true);
   };
 
   const pickLocation = async () => {
@@ -718,7 +733,8 @@ export function SettingsView() {
     </>
   );
 
-  const content: Record<SettingsCategory, ReactNode> = {
+  const content: Record<ViewCat, ReactNode> = {
+    account: account ? <account.Component /> : null,
     workspace: (() => {
       const Online = onlineSlots()?.WorkspaceSettings;
       return Online ? <Online /> : <WorkspaceSettings />;
@@ -740,7 +756,7 @@ export function SettingsView() {
           aria-label={STR.settings.catsLabel}
           onKeyDown={onTabKey}
         >
-          {SETTINGS_CATEGORIES.map((c) => {
+          {allCats.map((c) => {
             const on = c === cat;
             return (
               <button
@@ -769,11 +785,11 @@ export function SettingsView() {
                   strokeLinejoin="round"
                   aria-hidden="true"
                 >
-                  <path d={CAT_ICON[c]} />
+                  <path d={c === "account" ? account!.icon : CAT_ICON[c]} />
                 </svg>
                 <span className={styles.catText}>
-                  <span className={styles.catName}>{STR.settings.cats[c].name}</span>
-                  <span className={styles.catDesc}>{STR.settings.cats[c].desc}</span>
+                  <span className={styles.catName}>{catInfo(c).name}</span>
+                  <span className={styles.catDesc}>{catInfo(c).desc}</span>
                 </span>
                 {c === "update" && updateDot && (
                   <span className={styles.catDot} data-testid="settings-update-dot" />
@@ -793,8 +809,12 @@ export function SettingsView() {
         {cat && (
           <div className={styles.inner} data-testid={`settings-cat-${cat}`}>
             <div className={styles.catHead}>
-              <h2>{STR.settings.cats[cat].name}</h2>
-              <p>{STR.settings.cats[cat].intro}</p>
+              <h2>{catInfo(cat).name}</h2>
+              <p>
+                {cat === "workspace" && onlineSlots()?.workspaceIntro
+                  ? onlineSlots()!.workspaceIntro
+                  : catInfo(cat).intro}
+              </p>
             </div>
             {content[cat]}
           </div>

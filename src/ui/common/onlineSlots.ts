@@ -16,6 +16,10 @@ export interface OnlineSlots {
   StatusPill: ComponentType<SaveStatusProps>;
   /** 설정 › 워크스페이스 목록 자리 — 온라인 공간 목록(이 PC 새 공간·기존 폴더 추가는 온라인 공간 안에서 만들지 않음) */
   WorkspaceSettings: ComponentType;
+  /** 설정 › 워크스페이스 소개 글(온라인 공간용) */
+  workspaceIntro?: string;
+  /** 설정 맨 앞 "계정" 분류(일지에 저장하는 분류 목록과 별개 — 보기 전용) */
+  account?: { Component: ComponentType; name: string; desc: string; intro: string; icon: string };
   /** Ctrl+Alt+n = n번째 온라인 공간 */
   switchAt(n: number): void;
 }
@@ -27,4 +31,15 @@ export function setOnlineSlots(s: OnlineSlots | null) {
 }
 export function onlineSlots(): OnlineSlots | null {
   return slots;
+}
+
+/** 다음에 여는 설정을 "계정" 분류로(한 번 쓰면 지움) */
+let accountNext = false;
+export function requestAccountSettings() {
+  accountNext = true;
+}
+export function takeAccountRequest(): boolean {
+  const v = accountNext;
+  accountNext = false;
+  return v;
 }

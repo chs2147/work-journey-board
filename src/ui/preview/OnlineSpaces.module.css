@@ -27,34 +27,58 @@
   opacity: 0.55;
   cursor: default;
 }
-.panel {
+/* U5 충돌 = 설정과 같은 전체 화면 */
+.page {
   position: fixed;
-  top: 48px;
-  right: var(--sp-5);
-  width: min(640px, calc(100vw - 32px));
-  max-height: calc(100vh - 72px);
-  overflow: auto;
+  inset: 0;
   z-index: 50;
-  padding: var(--sp-4);
-  background: var(--surface-card);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-lg, 0 8px 24px rgb(0 0 0 / 18%));
-  font-size: var(--fs-sm);
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-page);
+  color: var(--text-1);
 }
-.panelHead {
+.pageHead {
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--sp-3);
+  gap: var(--sp-4);
+  padding: var(--sp-3) var(--sp-5);
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-card);
 }
-.panelEmpty {
+.pageBody {
+  flex: 1 1 auto;
+  overflow: auto;
+  padding: 28px 40px 40px;
+}
+.pageInner {
+  max-width: 900px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+.pageLead {
   margin: 0;
   color: var(--text-2);
 }
+.sideBox {
+  min-width: 0;
+  padding: var(--sp-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-page);
+}
+@media (max-width: 640px) {
+  .pageBody {
+    padding: var(--sp-4) var(--sp-4) var(--sp-5);
+  }
+}
 .item {
-  padding: var(--sp-3) 0;
-  border-top: 1px solid var(--line);
+  padding: var(--sp-4) var(--sp-5);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+  font-size: var(--fs-sm);
 }
 .itemTitle {
   font-weight: var(--fw-bold);

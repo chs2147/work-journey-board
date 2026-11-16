@@ -1603,8 +1603,13 @@ export const STR_BASE = {
       reload: "화면 새로 고침",
       closingExit: "저장하고 종료하는 중…",
       closingList: "저장하고 닫는 중…",
+      closingSignOut: "보내고 저장한 뒤 로그아웃하는 중…",
       panelTitle: "충돌 목록",
       panelEmpty: "충돌이 없습니다.",
+      backToBoard: "← 주간 보드로",
+      pageLead: (n: number) =>
+        `${n}건 — 이 기기와 서버가 같은 기록을 따로 고쳤습니다. 남길 쪽을 고르면 다른 기기에도 그대로 보냅니다.`,
+      rev: (n: number) => `${n}판`,
       close: "닫기",
       mine: "이 기기",
       server: "서버",
@@ -1652,9 +1657,25 @@ export const STR_BASE = {
       showConflicts: "충돌 보기",
       toList: "온라인 공간 목록으로",
     },
+    /** UX-4 계정(S4) — 설정 › 계정·첫 화면 */
+    account: {
+      cat: {
+        name: "계정",
+        desc: "로그인 · 서버 확인 · 로그아웃",
+        intro: "온라인 워크스페이스에 쓰는 계정입니다. 로그인 정보는 이 기기 보안 저장소에만 있습니다.",
+      },
+      cardTitle: "로그인",
+      spaces: "온라인 공간",
+      spacesValue: (n: number) => `${n.toLocaleString("ko-KR")}개`,
+      signOutDots: "로그아웃…",
+      signOutTitle: "로그아웃할까요?",
+      signOutBody:
+        "열린 온라인 공간의 보낼 변경을 보내고 저장한 뒤 닫습니다. 보내지 못한 변경은 이 기기에 남아 다음 로그인 때 이어서 보냅니다.",
+    },
     /** UX-3 설정 › 워크스페이스(온라인 공간을 연 동안) */
     settings: {
       lead: (email: string) => `온라인 · ${email}`,
+      intro: "이 계정의 온라인 워크스페이스입니다. 여러 기기에서 같은 공간을 열고, 이 기기에도 저장됩니다.",
     },
     errors: {
       READ_NOT_FOUND: "이 온라인 공간을 찾을 수 없습니다. 목록을 새로 고쳐 주세요.",

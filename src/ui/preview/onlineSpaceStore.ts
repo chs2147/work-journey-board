@@ -221,6 +221,22 @@ export async function closeToList() {
   location.reload();
 }
 
+/**
+ * 로그아웃(U6): 열린 온라인 공간의 보낼 변경을 보내고(못 보내면 이 기기 사본에 남아 다음 로그인 때 이어서) 저장 → 일지 닫기(한 길) →
+ * 로그아웃 → 창을 새로 불러 첫 화면으로. 다음 실행에 그 공간을 바로 열지 않는다.
+ */
+export async function signOutFromSpace(signOut: () => Promise<unknown>) {
+  markClosing("signOut");
+  forgetLastOpened();
+  await pushBeforeLeave(4000);
+  stopOnlineSync();
+  await within(closeOnlineSpace(), 5000);
+  const p = useAppStore.getState().platform;
+  await Promise.allSettled([destroyChildWindows(), p?.cabi.closeAll()]);
+  await within(signOut(), 5000);
+  location.reload();
+}
+
 /** 시험·진단용 */
 export function resetOnlineSpaces() {
   spaces = null;
