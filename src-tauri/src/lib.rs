@@ -6,6 +6,8 @@ mod backup_name;
 mod cabinet;
 mod db_batch;
 mod dev_guard;
+#[cfg(not(feature = "connected-preview"))]
+mod exit_guard;
 mod files;
 #[cfg(target_os = "macos")]
 mod menu;
@@ -88,7 +90,17 @@ pub fn run() {
             }
             Ok(())
         });
-    // Local Classic 명령 목록 = 예전 그대로 + 프로필 묻기(읽기 전용)
+    // 정식판·DEV 닫기 안전장치(docs/v2-design/91 5-4): 메인 창 닫기 요청마다 60초 안전장치를 건다
+    // (화면이 저장 실패로 창을 남기면 exit_guard_cancel로 푼다). Preview는 preview_close.rs
+    #[cfg(not(feature = "connected-preview"))]
+    let builder = builder.on_window_event(|w, e| {
+        if w.label() == "main" {
+            if let tauri::WindowEvent::CloseRequested { .. } = e {
+                exit_guard::arm();
+            }
+        }
+    });
+    // Local Classic 명령 목록 = 예전 그대로 + 프로필 묻기(읽기 전용) + 닫기 안전장치 풀기
     #[cfg(not(any(feature = "connected-preview", feature = "dev-channel")))]
     let builder = builder.invoke_handler(tauri::generate_handler![
         db_batch::db_batch,
@@ -116,7 +128,8 @@ pub fn run() {
         cabinet::cabinet_drop_bridge,
         cabinet::cabinet_resolve_shortcut,
         cabinet::cabinet_drag_paths,
-        profile::app_profile
+        profile::app_profile,
+        exit_guard::exit_guard_cancel
     ]);
     // DEV 검증판 = Local Classic 명령 + 일지 폴더 DEV 표시 확인·준비·정식 일지 복제(docs/release-channel-spec.md)
     #[cfg(feature = "dev-channel")]
@@ -147,6 +160,7 @@ pub fn run() {
         cabinet::cabinet_resolve_shortcut,
         cabinet::cabinet_drag_paths,
         profile::app_profile,
+        exit_guard::exit_guard_cancel,
         dev_guard::dev_folder_status,
         dev_guard::dev_prepare_folder,
         dev_guard::dev_copy_official

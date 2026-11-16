@@ -12,6 +12,8 @@ import { browserCabiBridge, type CabiBridge } from "./cabiBridge";
 import { createFakeFs } from "./fakeFs";
 import { invoke, isTauri } from "@tauri-apps/api/core";
 import { STR } from "../shared/strings";
+import { showClosingOverlay } from "../ui/common/closingOverlay";
+export { showClosingOverlay };
 import type { AppConfig, CabinetWindowBridge, FolderWindows, Platform, SpaceDriver } from "./index";
 
 export const ONLINE_ROOT = "/online";
@@ -149,36 +151,6 @@ export async function destroyChildWindows() {
       .map((w) => w.destroy().catch(() => undefined)),
   );
 }
-/**
- * 닫는 중 덮개 — React를 거치지 않고 바로 DOM에(신호를 받은 순간 그려지게). 클릭·입력을 막는다.
- * [목록으로]와 앱 닫기가 같은 덮개를 쓴다.
- */
-export function showClosingOverlay(text: string) {
-  if (typeof document === "undefined" || document.getElementById("wjb-closing")) return;
-  const el = document.createElement("div");
-  el.id = "wjb-closing";
-  el.setAttribute("role", "alertdialog");
-  el.setAttribute("aria-busy", "true");
-  el.dataset.testid = "online-closing";
-  el.style.cssText =
-    "position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;" +
-    "background:rgb(0 0 0 / 28%);cursor:progress";
-  const box = document.createElement("div");
-  box.style.cssText =
-    "padding:16px 24px;background:var(--surface-card,#fff);color:var(--text-1,#222);" +
-    "border:1px solid var(--line,#ccc);border-radius:var(--radius-md,8px);font-size:var(--fs-md,14px)";
-  box.textContent = text;
-  el.appendChild(box);
-  const stop = (e: Event) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
-  for (const t of ["keydown", "keyup", "keypress", "mousedown", "click", "wheel"])
-    el.addEventListener(t, stop, true);
-  document.body.appendChild(el);
-  (document.activeElement as HTMLElement | null)?.blur?.();
-}
-
 /**
  * 앱 닫기(Rust가 주도, src-tauri/src/preview_close.rs): Rust가 닫기를 막고 `preview-closing`을 보내면
  * 즉시 덮개 → 동기화 멈춤 → 저장(2.5초 제한) → 일지 닫기(1초 제한) → `preview_exit`(단계·경과 ms 진단용).

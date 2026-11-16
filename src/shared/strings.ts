@@ -1640,6 +1640,11 @@ export const STR_BASE = {
       STORE: "이 기기에 저장하지 못했습니다. 디스크 공간을 확인해 주세요.",
     } as Record<string, string>,
   },
+  /** 앱 닫기 안내(정식판, docs/v2-design/91 5-4) */
+  closing: {
+    exit: "저장하고 종료하는 중…",
+    slow: "종료가 늦어지고 있습니다 — 잠시만 기다려 주세요…",
+  },
   /** 새 판 확인·설치(improve-1027v4-spec 1절 B안) */
   update: {
     section: "업데이트",

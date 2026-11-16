@@ -1,6 +1,6 @@
 // 온라인 공간 닫는 중 덮개(91문서 5-3): 바로 DOM에 그려지고, 클릭·키 입력이 뒤 화면에 닿지 않는다
 import { describe, expect, it } from "vitest";
-import { showClosingOverlay } from "../../src/platform/onlinePlatform";
+import { showClosingOverlay } from "../../src/ui/common/closingOverlay";
 
 describe("닫는 중 덮개", () => {
   it("한 번만 그려지고, 아래 화면으로 가는 클릭·키를 막는다", () => {

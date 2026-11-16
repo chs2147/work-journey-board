@@ -164,7 +164,7 @@ describe("Rust 명령 경계(lib.rs)", () => {
   const dev = handlers('feature = "dev-channel"');
   const prev = handlers('feature = "connected-preview"');
 
-  it("Classic 명령 = 예전 목록 + 프로필 묻기", () => {
+  it("Classic 명령 = 예전 목록 + 프로필 묻기 + 닫기 안전장치 풀기(91문서 5-4)", () => {
     expect(classic).toEqual([
       "db_batch::db_batch",
       "splash::splash_finish",
@@ -192,6 +192,7 @@ describe("Rust 명령 경계(lib.rs)", () => {
       "cabinet::cabinet_resolve_shortcut",
       "cabinet::cabinet_drag_paths",
       "profile::app_profile",
+      "exit_guard::exit_guard_cancel",
     ]);
   });
 
