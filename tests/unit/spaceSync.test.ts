@@ -164,7 +164,7 @@ describe("E-3 동기화 엔진(두 기기 + 가짜 서버)", () => {
       e.id,
     ]);
     await B.driver.execute("UPDATE entry_item SET depth = ?, updated_at = ? WHERE id = ?", [
-      e.depth + 1,
+      1 - e.depth,
       "2026-11-15T02:00:00.000Z",
       e.id,
     ]);
@@ -173,7 +173,7 @@ describe("E-3 동기화 엔진(두 기기 + 가짜 서버)", () => {
     await A.sync.syncNow();
     for (const X of [A, B]) {
       const r = await entry(X.driver, e.id);
-      expect(r).toMatchObject({ text: "A 글", depth: e.depth + 1, updated_at: "2026-11-15T02:00:00.000Z" });
+      expect(r).toMatchObject({ text: "A 글", depth: 1 - e.depth, updated_at: "2026-11-15T02:00:00.000Z" });
       expect(await outbox(X.driver)).toBe(0);
     }
     // 같은 칸
