@@ -9,6 +9,17 @@ async function signIn(page: Page, query = "") {
   await page.getByRole("button", { name: "로그인" }).click();
   await expect(page.getByTestId("online-spaces")).toBeVisible();
 }
+/** 만들기 대화상자 → 오프라인 기록으로 시작 → 폴더 → 올리기 → 게시 → 닫기(첫 화면 목록) */
+async function copyOnce(page: Page) {
+  if (!(await page.getByTestId("preview-copy").isVisible()))
+    await page.getByTestId("online-create-open").click();
+  await page.getByTestId("create-mode-local").click();
+  await page.getByTestId("create-next").click();
+  await page.getByTestId("copy-pick").click();
+  await page.getByTestId("copy-start").click({ timeout: 30_000 });
+  await expect(page.getByTestId("copy-done")).toBeVisible({ timeout: 30_000 });
+  await page.getByTestId("create-online-close").click();
+}
 const external = (requests: string[]) =>
   requests.filter((u) => !/^https?:\/\/(localhost|127\.0\.0\.1)[:/]/.test(u) && !u.startsWith("data:"));
 
@@ -19,9 +30,7 @@ test("D-4·E-1: 복제 → 내 온라인 공간 목록 → 열기 → 앱 화면
   page.on("request", (r) => requests.push(r.url()));
   await signIn(page);
   await expect(page.getByTestId("online-spaces")).toContainText("아직 온라인 공간이 없습니다");
-  await page.getByTestId("copy-pick").click();
-  await page.getByTestId("copy-start").click({ timeout: 30_000 });
-  await expect(page.getByTestId("copy-done")).toBeVisible({ timeout: 30_000 });
+  await copyOnce(page);
   const row = page.getByTestId("online-space-row");
   await expect(row).toHaveCount(1);
   await expect(row).toContainText(/기록 \d+행 · 그림 1개/);
@@ -59,9 +68,7 @@ test("D-4·E-1: 복제 → 내 온라인 공간 목록 → 열기 → 앱 화면
 
 test("D-4: 온라인 공간의 업무 메모보드·업무노트는 정식판처럼 별도 창으로 열린다", async ({ page }) => {
   await signIn(page);
-  await page.getByTestId("copy-pick").click();
-  await page.getByTestId("copy-start").click({ timeout: 30_000 });
-  await expect(page.getByTestId("copy-done")).toBeVisible({ timeout: 30_000 });
+  await copyOnce(page);
   await page.getByTestId("online-space-open").click();
   await expect(page.getByTestId("rail-settings")).toBeVisible({ timeout: 30_000 });
   const categoryId = await page.getByTestId("category-header").first().getAttribute("data-category-id");
@@ -75,9 +82,7 @@ test("D-4: 온라인 공간의 업무 메모보드·업무노트는 정식판처
 });
 
 async function openCopied(page: Page) {
-  await page.getByTestId("copy-pick").click();
-  await page.getByTestId("copy-start").click({ timeout: 30_000 });
-  await expect(page.getByTestId("copy-done")).toBeVisible({ timeout: 30_000 });
+  await copyOnce(page);
   const ws = await page
     .getByTestId("online-space-row")
     .locator(":scope > span[title]")
@@ -164,13 +169,6 @@ test("E-5: 서버에 닿지 못하면 '오프라인 · 이 기기에 저장됨 �
   await expect(syncStatus(page)).toHaveAttribute("data-phase", "offline");
 });
 
-async function copyOnce(page: Page) {
-  const again = page.getByRole("button", { name: "다른 일지 복제" });
-  if (await again.isVisible()) await again.click();
-  await page.getByTestId("copy-pick").click();
-  await page.getByTestId("copy-start").click({ timeout: 30_000 });
-  await expect(page.getByTestId("copy-done")).toBeVisible({ timeout: 30_000 });
-}
 const counts = (page: Page) =>
   page.evaluate(() =>
     (

@@ -210,7 +210,8 @@ export function openOnlineSpaceAt(n: number) {
  * 온라인 공간 목록(Preview 첫 화면)으로: 보낼 변경을 보내고 입력·별도 창 저장 → 일지 닫기(한 길) → 남은 창 정리 →
  * 창을 새로 불러 첫 화면으로(화면 저장소 상태가 남지 않게 — CLAUDE.md 4-7). 다음 실행에 바로 열지 않는다.
  */
-export async function closeToList() {
+export async function closeToList(opts: { create?: boolean } = {}) {
+  if (opts.create) requestCreate();
   markClosing("list");
   forgetLastOpened();
   await pushBeforeLeave(2500);
@@ -235,6 +236,25 @@ export async function signOutFromSpace(signOut: () => Promise<unknown>) {
   await Promise.allSettled([destroyChildWindows(), p?.cabi.closeAll()]);
   await within(signOut(), 5000);
   location.reload();
+}
+
+/** 첫 화면에서 만들기 대화상자를 바로 열기(창을 새로 부르는 사이에 남기는 한 번짜리 표시 — 탭마다, 없어도 동작) */
+const CREATE = "wjb.preview.openCreate";
+function requestCreate() {
+  try {
+    sessionStorage.setItem(CREATE, "1");
+  } catch {
+    /* 못 쓰면 첫 화면에서 직접 */
+  }
+}
+export function takeCreateRequest(): boolean {
+  try {
+    const v = sessionStorage.getItem(CREATE) === "1";
+    sessionStorage.removeItem(CREATE);
+    return v;
+  } catch {
+    return false;
+  }
 }
 
 /** 시험·진단용 */

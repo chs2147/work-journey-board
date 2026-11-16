@@ -1456,6 +1456,7 @@ export const STR_BASE = {
   /** Connected Preview 시작 화면(V2 6-B, docs/v2-design/78-preview-native-bootstrap.md) */
   connectedPreview: {
     lead: "온라인 연결 검증판입니다. 기존 로컬 일지는 이 앱에서 열지 않습니다.",
+    about: "검증판 정보",
     profile: "실행 프로필",
     profileValue: "Connected Preview",
     appVersion: "앱 버전",
@@ -1542,6 +1543,26 @@ export const STR_BASE = {
     schemaDiff: "다른 곳",
     chooseThis: "이 일지 복제",
     unfinishedItem: (when: string, n: number) => `${when} · 기록 ${n.toLocaleString("ko-KR")}행`,
+    /** UX-5 만들기 4단계(docs/v2-design/95 S6) */
+    wizard: {
+      title: "온라인 워크스페이스 만들기",
+      steps: ["시작 방식", "원본", "확인", "올리기"],
+      fresh: "새로 시작하기",
+      freshSub: "빈 온라인 공간",
+      fromLocal: "오프라인 기록으로 시작",
+      fromLocalSub: "이 PC의 일지를 복제 · 원본은 그대로",
+      next: "다음",
+      back: "이전",
+      close: "닫기",
+      nameTitle: "새 공간의 이름·색·아이콘",
+      sourceSide: "원본",
+      sourceKeep: "그대로 유지",
+      sourceEmpty: "빈 일지",
+      newSide: "새 공간",
+      open: "온라인 워크스페이스 열기",
+      resumeNew:
+        "새로 시작한 공간은 앱을 다시 켠 뒤 이어 올릴 수 없습니다. 작업을 취소하고 다시 만들어 주세요.",
+    },
     errors: {
       SOURCE_IN_USE: "일지를 쓰는 중입니다. 정식판·DEV에서 일지를 닫고 다시 시도해 주세요.",
       SOURCE_CHANGED: "읽는 동안 일지가 바뀌었습니다. 다시 시도해 주세요.",
@@ -1577,7 +1598,7 @@ export const STR_BASE = {
   /** D-4 내 온라인 공간(Connected Preview, docs/v2-design/87) */
   onlineSpaces: {
     title: "내 온라인 공간",
-    empty: "아직 온라인 공간이 없습니다. 위에서 로컬 일지를 복제하면 여기에 나옵니다.",
+    empty: "아직 온라인 공간이 없습니다. [온라인 워크스페이스 만들기…]로 만들 수 있습니다.",
     offline: "서버에 연결하지 못해 이 기기에 받아 둔 공간만 보입니다.",
     item: (when: string, records: number, assets: number, size: string, schema: number) =>
       `${when} · 기록 ${records.toLocaleString("ko-KR")}행 · 그림 ${assets}개(${size}) · v${schema}`,

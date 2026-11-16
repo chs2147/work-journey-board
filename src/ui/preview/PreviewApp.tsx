@@ -6,14 +6,22 @@ import { loadSplash, type AppProfileInfo } from "../../platform";
 import { STR } from "../../shared/strings";
 import { applyTheme, readStoredTheme } from "../../shared/theme";
 import { finishSplash } from "../splash";
-import { MigrationCard } from "./MigrationCard";
+import { CreateOnlineDialog } from "./CreateOnlineDialog";
 import { OnlineSpacesCard, OnlineWorkspaceShell } from "./OnlineSpaces";
-import { lastOpened, openOnlineSpace, setAccount, useOnlineSpaces } from "./onlineSpaceStore";
+import {
+  lastOpened,
+  openOnlineSpace,
+  refreshSpaces,
+  setAccount,
+  takeCreateRequest,
+  useOnlineSpaces,
+} from "./onlineSpaceStore";
 import { initAccount, useOnlineAccount } from "./onlineAccount";
 import { AccountPanel } from "./AccountPanel";
 import own from "./PreviewApp.module.css";
 import appStyles from "../App.module.css";
 import topStyles from "../common/TopBar.module.css";
+import { BrandLockup } from "../common/Brand";
 import styles from "../first-run/FirstRun.module.css";
 
 const P = STR.connectedPreview;
@@ -24,6 +32,8 @@ export function PreviewApp({ profile }: { profile: AppProfileInfo }) {
   const list = useOnlineSpaces((s) => s.list);
   const autoTried = useRef(false);
   const [published, setPublished] = useState(0);
+  // 공간 메뉴·설정의 [온라인 워크스페이스 만들기…]로 왔으면 바로 연다
+  const [creating, setCreating] = useState(() => takeCreateRequest());
 
   useEffect(() => {
     applyTheme(readStoredTheme());
@@ -51,36 +61,58 @@ export function PreviewApp({ profile }: { profile: AppProfileInfo }) {
   // 온라인 공간을 열면 지금 앱 화면 그대로 — 닫으면 창을 새로 불러 이 화면으로
   if (opened) return <OnlineWorkspaceShell />;
 
+  // 다 만든 공간 바로 열기(목록을 새로 받아 그 공간)
+  const openCreated = async (workspaceId: string) => {
+    setCreating(false);
+    await refreshSpaces();
+    const w = useOnlineSpaces.getState().list?.find((x) => x.workspaceId === workspaceId);
+    if (w) await openOnlineSpace(w);
+  };
+
+  // S4·S5: 설정과 같은 모양 — 위 한 줄(이름·DEV) + 가운데 카드(계정 · 내 온라인 공간 · 검증 정보)
   return (
     <div className={appStyles.shell}>
-      <div className={`${styles.wrap} ${own.cards}`} data-testid="connected-preview">
-        <section className={styles.card}>
-          <h1 className={styles.title}>
-            {profile.productName}{" "}
-            <span className={topStyles.devBadge} title={STR.devChannel.badgeTitle} data-testid="dev-badge">
-              {STR.devChannel.badge}
-            </span>
-          </h1>
-          <p className={styles.lead}>{P.lead}</p>
-          <dl className={styles.facts}>
-            <dt>{P.profile}</dt>
-            <dd>{P.profileValue}</dd>
-            <dt>{P.appVersion}</dt>
-            <dd>{__APP_VERSION__}</dd>
-            <dt>{P.updates}</dt>
-            <dd data-testid="preview-updates">{P.updatesOff}</dd>
-            <dt>{P.localJournal}</dt>
-            <dd data-testid="preview-local-journal">{P.localJournalOff}</dd>
-          </dl>
-          <AccountPanel />
-        </section>
-        <OnlineSpacesCard ownerId={accountId} refreshKey={published} />
-        <MigrationCard
-          key={signedIn ? (accountId ?? "") : "signed-out"}
+      <header className={topStyles.brandRow}>
+        <BrandLockup size="bar" />
+        <span className={topStyles.devBadge} title={STR.devChannel.badgeTitle} data-testid="dev-badge">
+          {STR.devChannel.badge}
+        </span>
+      </header>
+      <main className={own.page} data-testid="connected-preview">
+        <div className={own.inner}>
+          <div className={own.head}>
+            <h1>{profile.productName}</h1>
+            <p>{P.lead}</p>
+          </div>
+          <section className={own.card}>
+            <h2 className={own.cardTitle}>{STR.onlineSpaces.account.cat.name}</h2>
+            <AccountPanel />
+          </section>
+          <OnlineSpacesCard ownerId={accountId} refreshKey={published} onCreate={() => setCreating(true)} />
+          <section className={own.card}>
+            <h2 className={own.cardTitle}>{P.about}</h2>
+            <dl className={styles.facts}>
+              <dt>{P.profile}</dt>
+              <dd>{P.profileValue}</dd>
+              <dt>{P.appVersion}</dt>
+              <dd>{__APP_VERSION__}</dd>
+              <dt>{P.updates}</dt>
+              <dd data-testid="preview-updates">{P.updatesOff}</dd>
+              <dt>{P.localJournal}</dt>
+              <dd data-testid="preview-local-journal">{P.localJournalOff}</dd>
+            </dl>
+          </section>
+        </div>
+      </main>
+      {creating && accountId && (
+        <CreateOnlineDialog
           ownerId={accountId}
+          email={email}
           onPublished={() => setPublished((n) => n + 1)}
+          onOpen={(ws) => void openCreated(ws)}
+          onClose={() => setCreating(false)}
         />
-      </div>
+      )}
     </div>
   );
 }

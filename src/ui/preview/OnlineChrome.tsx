@@ -197,7 +197,7 @@ function OnlineMenu() {
         role="menuitem"
         className={`${sw.item} ${sw.action}`}
         data-testid="online-create"
-        onClick={() => void closeToList()}
+        onClick={() => void closeToList({ create: true })}
       >
         {M.create}
       </button>
@@ -444,7 +444,7 @@ export function OnlineWorkspaceSettings() {
           type="button"
           className={settingsStyles.primary}
           data-testid="online-create"
-          onClick={() => void closeToList()}
+          onClick={() => void closeToList({ create: true })}
         >
           {M.create}
         </button>

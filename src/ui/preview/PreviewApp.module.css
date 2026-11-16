@@ -1,5 +1,41 @@
-/* 계정 카드 + 온라인 사본 카드를 위아래로 붙여 가운데 정렬(격자 행이 화면 높이를 나눠 갖지 않게) */
-.cards {
-  align-content: center;
+/* Preview 첫 화면(docs/v2-design/95 S4·S5) — 설정 화면과 같은 바탕·카드·여백 */
+.page {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 28px 40px 40px;
+  background: var(--surface-page);
+}
+.inner {
+  max-width: 720px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
   gap: var(--sp-5);
+}
+.head h1 {
+  margin: 0;
+  font-size: 22px;
+}
+.head p {
+  margin: var(--sp-2) 0 0;
+  color: var(--text-2);
+}
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-5);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+}
+.cardTitle {
+  margin: 0;
+  font-size: var(--fs-md);
+}
+@media (max-width: 640px) {
+  .page {
+    padding: var(--sp-4) var(--sp-4) var(--sp-5);
+  }
 }

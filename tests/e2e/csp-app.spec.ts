@@ -400,10 +400,13 @@ test("Preview CSP 그대로: 온라인 사본 — wasm을 받아 오지 않고 �
   await page.getByRole("button", { name: "인증번호 받기" }).click();
   await page.getByTestId("preview-code-input").fill("12345678");
   await page.getByRole("button", { name: "로그인" }).click();
+  await page.getByTestId("online-create-open").click();
+  await page.getByTestId("create-next").click();
   await page.getByTestId("copy-pick").click();
   await expect(page.getByTestId("copy-summary")).toBeVisible({ timeout: 30_000 });
   await page.getByTestId("copy-start").click();
   await expect(page.getByTestId("copy-done")).toBeVisible({ timeout: 30_000 });
+  await page.getByTestId("create-online-close").click();
   // D-4: 내 온라인 공간 → 열기 → 앱 화면(같은 CSP 아래)
   await page.getByTestId("online-space-open").click();
   await expect(page.getByTestId("online-workspace")).toBeVisible({ timeout: 30_000 });

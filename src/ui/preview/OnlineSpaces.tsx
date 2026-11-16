@@ -23,6 +23,7 @@ import {
 import styles from "../first-run/FirstRun.module.css";
 import own from "./MigrationCard.module.css";
 import shell from "./OnlineSpaces.module.css";
+import home from "./PreviewApp.module.css";
 
 const S = STR.onlineSpaces;
 const App = lazy(() => import("../App").then((m) => ({ default: m.App })));
@@ -31,10 +32,13 @@ export type { OpenedSpace };
 export function OnlineSpacesCard({
   ownerId,
   refreshKey = 0,
+  onCreate,
 }: {
   ownerId: string | null;
   /** 바뀌면 목록을 다시 받는다(복제 완료 뒤) */
   refreshKey?: number;
+  /** [온라인 워크스페이스 만들기…] */
+  onCreate?: () => void;
 }) {
   const { list, offline, busy, error } = useOnlineSpaces();
   useEffect(() => {
@@ -44,8 +48,8 @@ export function OnlineSpacesCard({
   if (!ownerId) return null;
 
   return (
-    <section className={styles.card} data-testid="online-spaces">
-      <h2 className={own.title}>{S.title}</h2>
+    <section className={home.card} data-testid="online-spaces">
+      <h2 className={home.cardTitle}>{S.title}</h2>
       {offline && <p className={styles.small}>{S.offline}</p>}
       {list && list.length === 0 && <p className={styles.small}>{S.empty}</p>}
       {list && list.length > 0 && (
@@ -76,6 +80,17 @@ export function OnlineSpacesCard({
         </div>
       )}
       <div className={styles.row}>
+        {onCreate && (
+          <button
+            type="button"
+            className={styles.primary}
+            disabled={busy !== null}
+            onClick={onCreate}
+            data-testid="online-create-open"
+          >
+            {STR.onlineSpaces.menu.create}
+          </button>
+        )}
         <button
           type="button"
           className={styles.secondary}

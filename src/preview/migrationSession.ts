@@ -63,3 +63,48 @@ export async function prepareFromSnapshot(source: PreviewSource, snapshotId: str
     randomUUID: () => derivedId(jobId, `object-${++n}`),
   });
 }
+
+/**
+ * UX-5 "새로 시작하기"(docs/v2-design/95 U4): 빈 일지(지금 구조, 업무 없음)를 메모리에서 만들어 이름·색·아이콘만 넣는다.
+ * 이후는 오프라인 기록 복제와 같은 길(미리 보기 → 올리기 → 게시). 이 PC 폴더에는 아무것도 만들지 않는다.
+ */
+export async function prepareEmpty(
+  jobId: string,
+  meta: { name: string; color: string; icon: string },
+  now: () => Date = () => new Date(),
+) {
+  const SQL = await loadSql();
+  const { SqlJsDriver } = await import("../data/drivers/sqlJs");
+  const { migrate } = await import("../data/migrate");
+  const { JournalRepository } = await import("../data/repository");
+  const d = new SqlJsDriver(new SQL.Database(), "새 온라인 공간");
+  await migrate(d, { now });
+  await new JournalRepository(d, now).updateSettings({
+    workspace: { ...meta, updatedAt: now().getTime() } as never,
+  });
+  const bytes = d.exportBytes();
+  await d.close();
+  let n = 0;
+  return prepareCopy(SQL, bytes, {
+    workspaceId: derivedId(jobId, "workspace"),
+    sourceWorkspaceId: derivedId(jobId, "source"),
+    randomUUID: () => derivedId(jobId, `object-${++n}`),
+  });
+}
+
+/** 미리 보기의 새 공간 이름표(설정 기록의 workspace) — 없으면 null */
+export function labelOf(p: PreparedCopy): { name: string; color: string; icon: string } | null {
+  for (const page of p.pages)
+    for (const r of page) {
+      const v = r.value as { key?: string; value?: unknown };
+      if (r.table !== "app_meta" || v.key !== "settings") continue;
+      try {
+        const w = (JSON.parse(String(v.value)) as { workspace?: Record<string, unknown> }).workspace;
+        if (typeof w?.name === "string" && typeof w.color === "string" && typeof w.icon === "string")
+          return { name: w.name, color: w.color, icon: w.icon };
+      } catch {
+        /* 없음 */
+      }
+    }
+  return null;
+}
