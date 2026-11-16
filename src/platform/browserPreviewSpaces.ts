@@ -51,6 +51,11 @@ const fakeServer = createFakeSyncServer((ws) => {
 });
 if (typeof location !== "undefined" && new URLSearchParams(location.search).get("syncOffline") === "1")
   fakeServer.setOffline(true);
+// ?syncSlow=ms 이면 느린 연결(첫 동기화 상한 시험)
+if (typeof location !== "undefined") {
+  const slow = Number(new URLSearchParams(location.search).get("syncSlow") ?? 0);
+  if (slow > 0) fakeServer.setDelay(slow);
+}
 /** 브라우저 E2E 전용: 다른 기기가 서버에 먼저 고친 것을 흉내(가상 공간·가짜 서버에만, 실앱에는 없음) */
 export const browserFakeSyncServer = fakeServer;
 if (typeof window !== "undefined")

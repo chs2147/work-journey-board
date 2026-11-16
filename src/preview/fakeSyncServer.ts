@@ -35,8 +35,11 @@ export function createFakeSyncServer(
     return s;
   };
   let offline = false;
+  /** 느린 연결 흉내(ms) — 응답마다 이만큼 늦게 */
+  let delay = 0;
   const transport = (device = "fake-device"): SyncTransport => ({
     async call(action, p) {
+      if (delay) await new Promise((r) => setTimeout(r, delay));
       if (offline) throw Error("NETWORK");
       const ws = String(p.workspaceId);
       const s = space(ws);
@@ -127,6 +130,9 @@ export function createFakeSyncServer(
     transport,
     setOffline(v: boolean) {
       offline = v;
+    },
+    setDelay(ms: number) {
+      delay = ms;
     },
     /** 시험 확인용 */
     record(ws: string, table: string, key: string) {

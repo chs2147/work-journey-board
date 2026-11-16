@@ -378,3 +378,18 @@ test("실기: 다른 기기에서 고친 것이 열 때 바로 들어와 있다 
   expect(text).toBe("다른 기기에서 먼저 고친 가상 글");
   await expect(syncStatus(page)).not.toContainText("충돌");
 });
+
+test("연결이 느리면 첫 동기화를 10초까지만 기다리고 이 기기 내용으로 연다 — 이어서 뒤에서 동기화", async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  // 서버 응답마다 12초 — 첫 동기화가 10초 안에 끝나지 않는다
+  await signIn(page, "&syncSlow=12000");
+  await copyOnce(page);
+  await page.getByTestId("online-space-open").click();
+  const t0 = Date.now();
+  await expect(page.getByTestId("rail-settings")).toBeVisible({ timeout: 20_000 });
+  expect(Date.now() - t0).toBeLessThan(16_000);
+  // 열린 뒤 쓸 수 있고, 뒤에서 이어지는 동기화가 끝나면 동기화됨
+  await expect(syncStatus(page)).toContainText(/동기화됨/, { timeout: 60_000 });
+});

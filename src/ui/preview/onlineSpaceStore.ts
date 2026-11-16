@@ -13,6 +13,7 @@ import {
 import { createOnlinePlatform, destroyChildWindows, within } from "../../platform/onlinePlatform";
 import { ensureSpaceJournal, upgradeSyncTables, type CachedHeaderLike } from "../../preview/spaceJournal";
 import { createSpaceSync } from "../../preview/spaceSync";
+import type { SqlDriver } from "../../data/driver";
 import { hideClosingOverlay, showClosingOverlay } from "../common/closingOverlay";
 import { loadSql } from "../../preview/migrationSession";
 import { parseMeta, type WorkspaceMeta } from "../../domain/workspace";
@@ -128,6 +129,9 @@ export async function refreshSpaces() {
   }
 }
 
+/** 열 때 첫 동기화를 기다리는 최대 시간(2026-11-16 사용자 결정 10초) — 넘으면 이 기기 내용으로 열고 뒤에서 이어서 */
+export const FIRST_SYNC_MS = 10_000;
+
 /** 이 기기 일지를 준비하고(받기·만들기·동기화 표) 그 공간용 플랫폼을 만든다 */
 async function prepare(w: OnlineSpaceInfo): Promise<{ platform: Platform; opened: OpenedSpace }> {
   const sp = await api();
@@ -142,14 +146,33 @@ async function prepare(w: OnlineSpaceInfo): Promise<{ platform: Platform; opened
   try {
     await upgradeSyncTables(d, head.assets, Number(head.header.sourceSchema));
     // 첫 동기화(실기: 다른 기기에서 고친 것이 열 때 바로 보이지 않고, 이 기기에서 고친 뒤에야 충돌로 나타남):
-    // 화면을 그리기 전에 이 기기 일지에서 받기 → 보내기를 한 번 끝낸다. 서버에 닿지 못하면 받아 둔 내용으로 연다
+    // 화면을 그리기 전에 이 기기 일지에서 받기 → 보내기를 한 번 끝낸다. 서버에 닿지 못하면 받아 둔 내용으로 연다.
+    // 연결이 불안정해 FIRST_SYNC_MS 안에 끝나지 않으면 기다리지 않고 연다 — 이 엔진은 일지에서 손을 떼고(늦게 온 응답도 쓰지 않음)
+    // 이어서는 앱의 동기화가 맡는다(보내던 묶음은 pendingPush로 같은 번호 재전송 — 중복 적용 없음)
+    let abandoned = false;
+    // 손을 뗀 뒤에는 이 손잡이로 어떤 읽기·쓰기도 하지 않는다(실앱 손잡이는 공간 ID로 연결을 찾으므로, 앱이 다시 연 연결에 늦게 쓰지 않게)
+    const gone = () => Promise.reject(new Error("SYNC_JOURNAL_CLOSED"));
+    const guarded: SqlDriver = {
+      label: d.label,
+      select: (q, p) => (abandoned ? gone() : d.select(q, p)),
+      execute: (q, p) => (abandoned ? gone() : d.execute(q, p)),
+      batch: (st) => (abandoned ? gone() : d.batch(st)),
+      close: async () => undefined,
+    };
     const first = createSpaceSync({
       workspaceId: w.workspaceId,
       transport: sp.transport,
-      journal: () => ({ driver: d, exclusive: (work) => work() }),
+      journal: () => (abandoned ? null : { driver: guarded, exclusive: (work) => work() }),
       randomUUID: () => crypto.randomUUID(),
     });
-    await first.syncNow().catch(() => 0);
+    const done = await Promise.race([
+      first
+        .syncNow()
+        .catch(() => 0)
+        .then(() => true),
+      new Promise<false>((r) => setTimeout(() => r(false), FIRST_SYNC_MS)),
+    ]);
+    if (!done) abandoned = true;
   } finally {
     await d.close();
   }
