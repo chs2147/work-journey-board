@@ -152,6 +152,50 @@ impl Store {
         self.write_atomic("device.json", &json!({ "deviceId": id }))?;
         Ok(id)
     }
+    /// 서버(gateway)에 등록하는 기기 ID — **계정마다 따로**(서버는 한 기기 ID를 한 계정에만 묶는다).
+    /// 처음 쓰는 계정은 예전 PC 기기 ID(`device.json`)를 이어받고(다른 계정이 이미 쓰지 않을 때), 아니면 새로 만든다.
+    /// 보안 저장소 범위는 예전처럼 PC 기기 ID(`device_id`)를 쓴다 — 바꾸면 저장된 로그인이 풀린다.
+    /// (2026-11-16 실기: 같은 PC에서 두 번째 계정이 기기 등록을 거절당해 목록을 못 받던 문제)
+    pub fn gateway_device_id(&self, owner: &str) -> Result<String, String> {
+        if !is_uuid(owner) {
+            return Err("INVALID_ACCOUNT".into());
+        }
+        let mut map = self
+            .read("gateway-devices.json")
+            .and_then(|v| v.as_object().cloned())
+            .unwrap_or_default();
+        if let Some(id) = map
+            .get(owner)
+            .and_then(|v| v.as_str())
+            .filter(|s| is_uuid(s))
+        {
+            return Ok(id.to_string());
+        }
+        let legacy = self.device_id()?;
+        let taken = map.values().any(|v| v.as_str() == Some(legacy.as_str()));
+        let id = if taken {
+            uuid::Uuid::new_v4().to_string()
+        } else {
+            legacy
+        };
+        map.insert(owner.to_string(), json!(id));
+        self.write_atomic("gateway-devices.json", &Value::Object(map))?;
+        Ok(id)
+    }
+    /// 서버가 그 기기 ID를 다른 계정 것이라고 거절했을 때 — 이 계정용 새 ID
+    pub fn reset_gateway_device_id(&self, owner: &str) -> Result<String, String> {
+        if !is_uuid(owner) {
+            return Err("INVALID_ACCOUNT".into());
+        }
+        let mut map = self
+            .read("gateway-devices.json")
+            .and_then(|v| v.as_object().cloned())
+            .unwrap_or_default();
+        let id = uuid::Uuid::new_v4().to_string();
+        map.insert(owner.to_string(), json!(id));
+        self.write_atomic("gateway-devices.json", &Value::Object(map))?;
+        Ok(id)
+    }
     fn account(&self) -> Option<Account> {
         let a: Account = serde_json::from_value(self.read("account.json")?).ok()?;
         is_uuid(&a.owner_id).then_some(a)

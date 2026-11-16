@@ -287,9 +287,10 @@ fn now() -> u64 {
 pub async fn space_list(app: AppHandle, state: State<'_, OnlineState>) -> Result<Value, String> {
     let (store, access, device) = session(&app, &state).await?;
     let gw = gateway(&app)?;
-    crate::migration::register_device(&gw, &access, &device)
+    // 등록이 네트워크로 실패하면 지금 ID로 계속(아래 목록이 오프라인 처리)
+    let device = crate::migration::ensure_device(&gw, &store, &owner(&store)?, &access, &device)
         .await
-        .ok();
+        .unwrap_or(device);
     match list(&gw, &access, &device).await {
         Ok(v) => Ok(v),
         // 서버에 닿지 못하면 이 기기에 받아 둔 공간만
@@ -308,9 +309,9 @@ pub async fn space_sync(
     let (store, access, device) = session(&app, &state).await?;
     let dir = space_dir(store.root(), &owner(&store)?, &workspace_id)?;
     let gw = gateway(&app)?;
-    crate::migration::register_device(&gw, &access, &device)
+    let device = crate::migration::ensure_device(&gw, &store, &owner(&store)?, &access, &device)
         .await
-        .ok();
+        .unwrap_or(device);
     sync(&gw, &access, &device, &dir, &workspace_id, now()).await
 }
 #[tauri::command]

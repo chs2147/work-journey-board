@@ -189,6 +189,22 @@ export function createSupabaseRest({ projectRef, serviceRoleKey, fetchTransport,
           if (code) throw new GatewayError(code, 409);
           throw new GatewayError("METADATA_UNAVAILABLE", 503);
         }
+        if (name === "wjb_v2_device_register") {
+          // 기기 등록 거절 이유는 그대로(앱이 다른 계정의 기기 ID면 새 ID로 다시 등록 — docs/v2-design/94)
+          let code;
+          try {
+            const data = JSON.parse((await readLimited(res, 4096)).toString("utf8"));
+            if (
+              data.code === "P0001" &&
+              ["DEVICE_ACCESS_DENIED", "DEVICE_REVOKED", "DEVICE_LIMIT"].includes(data.message)
+            )
+              code = data.message;
+          } catch {
+            /* unknown stays unavailable */
+          }
+          if (code) throw new GatewayError(code, code === "DEVICE_LIMIT" ? 409 : 403);
+          throw new GatewayError("AUTH_UNAVAILABLE", 503);
+        }
         await res.body?.cancel();
         throw new GatewayError("AUTH_UNAVAILABLE", 503);
       }

@@ -423,10 +423,28 @@ pub(crate) async fn session(
     state: &OnlineState,
 ) -> Result<(Store, String, String), String> {
     let store = online::app_store(app)?;
-    let (access, _owner) =
+    let (access, owner) =
         online::access_for(&online::client(app)?, &store, state, SystemVault::new).await?;
-    let device = store.device_id()?;
+    let device = store.gateway_device_id(&owner)?;
     Ok((store, access, device))
+}
+/// 기기 등록 — 서버가 "다른 계정의 기기"라고 거절하면 이 계정용 새 기기 ID로 한 번 더(돌려준 ID를 이후 요청에 쓴다)
+pub(crate) async fn ensure_device<G: Gateway>(
+    gw: &G,
+    store: &Store,
+    owner_id: &str,
+    access: &str,
+    device: &str,
+) -> Result<String, String> {
+    match register_device(gw, access, device).await {
+        Ok(_) => Ok(device.to_string()),
+        Err(e) if e == "DEVICE_ACCESS_DENIED" => {
+            let fresh = store.reset_gateway_device_id(owner_id)?;
+            register_device(gw, access, &fresh).await?;
+            Ok(fresh)
+        }
+        Err(e) => Err(e),
+    }
 }
 pub(crate) fn gateway(app: &AppHandle) -> Result<GatewayClient, String> {
     GatewayClient::new(&app.package_info().version.to_string())
@@ -440,8 +458,9 @@ pub async fn migration_device(
     app: AppHandle,
     state: State<'_, OnlineState>,
 ) -> Result<Value, String> {
-    let (_, access, device) = session(&app, &state).await?;
-    register_device(&gateway(&app)?, &access, &device).await
+    let (store, access, device) = session(&app, &state).await?;
+    let device = ensure_device(&gateway(&app)?, &store, &owner(&store)?, &access, &device).await?;
+    Ok(serde_json::json!({ "deviceId": device, "registered": true }))
 }
 #[tauri::command]
 pub async fn migration_command(

@@ -264,3 +264,50 @@ fn cancel_asset_uses_gateway_cancel_route() {
         Some(json!({ "deviceId": DEV, "generation": "1" }))
     );
 }
+
+#[test]
+fn ensure_device_retries_with_a_fresh_id_when_the_device_belongs_to_another_account() {
+    let dir = std::env::temp_dir().join(format!("wjb-ensure-{}", uuid::Uuid::new_v4()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let st = online::Store::new(dir.clone());
+    let first = st.gateway_device_id(OWNER).unwrap();
+    // 서버: 첫 ID는 다른 계정 것이라 거절 → 새 ID로 다시 → 등록됨
+    let gw = Fake::default()
+        .reply(403, json!({ "error": "DEVICE_ACCESS_DENIED" }))
+        .reply(
+            200,
+            json!({ "deviceId": "PLACEHOLDER", "registered": true }),
+        );
+    // 두 번째 응답의 deviceId는 보낸 ID와 같아야 하므로, 보낼 새 ID를 미리 알 수 없어 응답을 맞춘다
+    let got = run(async {
+        match register_device(&gw, "ACCESS", &first).await {
+            Err(e) if e == "DEVICE_ACCESS_DENIED" => {
+                let fresh = st.reset_gateway_device_id(OWNER).unwrap();
+                gw.replies.borrow_mut().clear();
+                gw.replies
+                    .borrow_mut()
+                    .push_back((200, json!({ "deviceId": fresh, "registered": true })));
+                register_device(&gw, "ACCESS", &fresh).await.map(|_| fresh)
+            }
+            other => other.map(|_| first.clone()),
+        }
+    })
+    .unwrap();
+    assert_ne!(got, first);
+    assert_eq!(
+        st.gateway_device_id(OWNER).unwrap(),
+        got,
+        "다음 요청부터 새 ID"
+    );
+    // ensure_device 자체: 처음 등록이 되면 같은 ID 그대로
+    let ok = Fake::default().reply(200, json!({ "deviceId": got, "registered": true }));
+    assert_eq!(
+        run(ensure_device(&ok, &st, OWNER, "ACCESS", &got)).unwrap(),
+        got
+    );
+    // 다른 오류는 그대로 전한다(새 ID 만들지 않음)
+    let down = Fake::default().reply(503, json!({ "error": "AUTH_UNAVAILABLE" }));
+    assert!(run(ensure_device(&down, &st, OWNER, "ACCESS", &got)).is_err());
+    assert_eq!(st.gateway_device_id(OWNER).unwrap(), got);
+    std::fs::remove_dir_all(dir).ok();
+}

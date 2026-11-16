@@ -493,3 +493,28 @@ fn invite_only_server_refusal_maps_to_its_own_code() {
         Err("SEND_FAILED".into())
     );
 }
+
+#[test]
+fn gateway_device_id_is_per_account_and_keeps_the_vault_device() {
+    let (st, _d) = store();
+    let a = "0a0b0c0d-0e0f-4a1b-8c2d-3e4f5a6b7c8d";
+    let b = "1a1b1c1d-1e1f-4a1b-8c2d-3e4f5a6b7c8d";
+    let pc = st.device_id().unwrap();
+    // 처음 쓰는 계정은 예전 PC 기기 ID를 이어받고, 두 번째 계정은 새 ID
+    let da = st.gateway_device_id(a).unwrap();
+    assert_eq!(da, pc);
+    let db = st.gateway_device_id(b).unwrap();
+    assert_ne!(db, da);
+    assert_eq!(st.gateway_device_id(a).unwrap(), da, "계정마다 그대로");
+    assert_eq!(st.gateway_device_id(b).unwrap(), db);
+    // 서버가 거절하면 그 계정만 새 ID, 보안 저장소용 PC 기기 ID는 그대로(로그인 유지)
+    let db2 = st.reset_gateway_device_id(b).unwrap();
+    assert_ne!(db2, db);
+    assert_eq!(st.gateway_device_id(b).unwrap(), db2);
+    assert_eq!(st.gateway_device_id(a).unwrap(), da);
+    assert_eq!(st.device_id().unwrap(), pc);
+    assert_eq!(
+        st.gateway_device_id("not-a-uuid"),
+        Err("INVALID_ACCOUNT".into())
+    );
+}

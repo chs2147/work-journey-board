@@ -235,11 +235,14 @@ export function PreviewApp({ profile }: { profile: AppProfileInfo }) {
           )}
         </section>
         <OnlineSpacesCard
+          // 계정이 바뀌면 새로 만들어 이전 계정의 목록·오류가 남지 않게(94문서 실기)
+          key={signedIn ? (status.accountId ?? "") : "signed-out"}
           ownerId={signedIn ? status.accountId : null}
           onOpened={setOpened}
           refreshKey={published}
         />
         <MigrationCard
+          key={signedIn ? (status.accountId ?? "") : "signed-out"}
           ownerId={signedIn ? status.accountId : null}
           onPublished={() => setPublished((n) => n + 1)}
         />

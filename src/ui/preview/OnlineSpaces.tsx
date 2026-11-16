@@ -82,6 +82,8 @@ export function OnlineSpacesCard({
       setList(r.workspaces);
       setOffline(!!r.offline);
     } catch (e) {
+      // 받지 못했으면 이전 목록을 남기지 않는다(다른 계정의 목록이 보이지 않게 — 94문서 실기)
+      setList(null);
       setError(errText(e));
     }
   };
