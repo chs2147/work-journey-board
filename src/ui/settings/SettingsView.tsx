@@ -1,5 +1,6 @@
 // 설정 화면(improve-1027v5-spec 1절): 보드 자리를 덮는 전체 화면 — 왼쪽 분류 5개, 오른쪽 고른 분류의 카드.
 // 기능·문구는 예전 설정 패널(overview 10-9·10-10) 그대로, 자리와 모양만 옮겼다.
+import { onlineSlots } from "../common/onlineSlots";
 import {
   useCallback,
   useEffect,
@@ -718,7 +719,10 @@ export function SettingsView() {
   );
 
   const content: Record<SettingsCategory, ReactNode> = {
-    workspace: <WorkspaceSettings />,
+    workspace: (() => {
+      const Online = onlineSlots()?.WorkspaceSettings;
+      return Online ? <Online /> : <WorkspaceSettings />;
+    })(),
     screen,
     data,
     import: importCat,

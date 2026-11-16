@@ -1652,6 +1652,10 @@ export const STR_BASE = {
       showConflicts: "충돌 보기",
       toList: "온라인 공간 목록으로",
     },
+    /** UX-3 설정 › 워크스페이스(온라인 공간을 연 동안) */
+    settings: {
+      lead: (email: string) => `온라인 · ${email}`,
+    },
     errors: {
       READ_NOT_FOUND: "이 온라인 공간을 찾을 수 없습니다. 목록을 새로 고쳐 주세요.",
       READ_ACCESS_DENIED: "이 기기에서 읽을 권한이 없습니다. 다시 로그인해 주세요.",

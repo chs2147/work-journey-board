@@ -127,7 +127,7 @@ export function WorkspaceSettings() {
                   </button>
                 </span>
               </div>
-              {editing === w.dir && <EditRow entry={w} onDone={() => setEditing(null)} />}
+              {editing === w.dir && <WorkspaceEditRow entry={w} onDone={() => setEditing(null)} />}
               {confirm === w.dir && (
                 <div
                   className={styles.wsConfirm}
@@ -180,7 +180,14 @@ export function WorkspaceSettings() {
   );
 }
 
-function EditRow({ entry, onDone }: { entry: WorkspaceEntry; onDone: () => void }) {
+export function WorkspaceEditRow({
+  entry,
+  onDone,
+}: {
+  entry: WorkspaceEntry;
+  /** 저장했으면 고친 값(취소 = 없음) */
+  onDone: (saved?: Pick<WorkspaceEntry, "name" | "color" | "icon">) => void;
+}) {
   const [name, setName] = useState(entry.name);
   const [color, setColor] = useState(entry.color);
   const [icon, setIcon] = useState(entry.icon);
@@ -196,7 +203,7 @@ function EditRow({ entry, onDone }: { entry: WorkspaceEntry; onDone: () => void 
         onIcon={setIcon}
       />
       <div className={styles.wsConfirmButtons}>
-        <button type="button" onClick={onDone}>
+        <button type="button" onClick={() => onDone()}>
           {STR.workspace.cancel}
         </button>
         <button
@@ -204,7 +211,11 @@ function EditRow({ entry, onDone }: { entry: WorkspaceEntry; onDone: () => void 
           className={styles.primary}
           data-testid="ws-edit-save"
           disabled={!name.trim()}
-          onClick={() => void updateWorkspaceMeta(entry.dir, { name, color, icon }).then(onDone)}
+          onClick={() =>
+            void updateWorkspaceMeta(entry.dir, { name, color, icon }).then(() =>
+              onDone({ name: name.trim(), color, icon }),
+            )
+          }
         >
           {STR.workspace.save}
         </button>

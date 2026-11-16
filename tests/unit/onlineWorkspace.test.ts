@@ -164,6 +164,14 @@ describe("온라인 공간 되살리기·이 기기 일지", () => {
     expect((await plat.stat(`${dir}/backups/x.db.tmp`)).size).toBeGreaterThan(1000);
     await expect(d.execute(`VACUUM INTO '${dir}/backups/x.db.tmp'`)).rejects.toThrow("already exists");
     await expect(d.execute("VACUUM INTO '/tmp/elsewhere.db'")).rejects.toThrow("unable to open");
+    // UX-3 실기: 공간 폴더 밖(이 PC 새 공간 = 메모리 가짜 폴더)에는 폴더·일지·사본을 만들지 않는다
+    const beside = `${dir}-test`;
+    await expect(plat.ensureDir(beside)).rejects.toThrow("ONLINE_SPACE_ONLY");
+    await expect(plat.openDatabase(`${beside}/work-journey.db`)).rejects.toThrow("ONLINE_SPACE_ONLY");
+    await expect(plat.copyNew(`${dir}/backups/x.db.tmp`, "/online/other/x.db")).rejects.toThrow(
+      "ONLINE_SPACE_ONLY",
+    );
+    await plat.ensureDir(`${dir}/backups`); // 안쪽은 그대로
     await d.close();
   });
 });

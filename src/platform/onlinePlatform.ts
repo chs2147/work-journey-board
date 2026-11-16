@@ -78,6 +78,9 @@ export function createOnlinePlatform(opts: {
     rawOf.set(wrapped, d);
     return wrapped;
   };
+  const inside = async (p: string) => {
+    if (p !== dataDir && !p.startsWith(`${dataDir}/`)) throw new Error("ONLINE_SPACE_ONLY");
+  };
   let config: AppConfig = { dataDir, ...(opts.theme ? { theme: opts.theme } : {}) };
   const none = async () => undefined;
   return {
@@ -99,8 +102,10 @@ export function createOnlinePlatform(opts: {
     pickFolder: async () => null,
     isOneDrivePath: async () => false,
     stat: (p) => fs.stat(p),
-    ensureDir: (p) => fs.ensureDir(p),
-    copyNew: (a, b) => fs.copyNew(a, b),
+    // 이 공간 폴더 밖에는 만들지 않는다 — 온라인 공간 안에서 이 PC 새 공간(가짜 폴더 = 메모리, 다시 켜면 사라짐)이
+    // 생기지 않게(UX-3 실기: 새 워크스페이스가 일반 일지로 만들어져 동기화가 깨짐)
+    ensureDir: (p) => inside(p).then(() => fs.ensureDir(p)),
+    copyNew: (a, b) => inside(b).then(() => fs.copyNew(a, b)),
     restoreJournal: async () => {
       throw new Error("ONLINE_READ_ONLY");
     },
@@ -119,7 +124,7 @@ export function createOnlinePlatform(opts: {
       await navigator.clipboard?.writeText(text).catch(() => undefined);
     },
     join: fs.join,
-    openDatabase: (p) => (p === journalFile ? journalDriver() : fs.openDatabase(p)),
+    openDatabase: (p) => (p === journalFile ? journalDriver() : inside(p).then(() => fs.openDatabase(p))),
     verifyCopy: (p) => fs.verifyCopy(p),
     backupFs: fs.backupFs,
     // 메인 창을 닫으면: 앱의 종료 처리(입력 중 저장·노트 창 저장 후 닫기) → 일지 닫기 → 남은 별도 창 정리 → 창 닫기

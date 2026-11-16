@@ -9,7 +9,7 @@ import { closeConflicts, resolveConflict, useOnlineSync } from "./onlineSync";
 import { formatBytes, STR } from "../../shared/strings";
 import { setOnlineSlots } from "../common/onlineSlots";
 import { WorkspaceMark } from "../common/workspaceIcons";
-import { OnlineRailButton, OnlineStatusPill } from "./OnlineChrome";
+import { OnlineRailButton, OnlineStatusPill, OnlineWorkspaceSettings } from "./OnlineChrome";
 import {
   metaOf,
   openOnlineSpace,
@@ -108,6 +108,7 @@ const Y = S.sync;
 const onlineChrome = {
   RailButton: OnlineRailButton,
   StatusPill: OnlineStatusPill,
+  WorkspaceSettings: OnlineWorkspaceSettings,
   switchAt: openOnlineSpaceAt,
 };
 

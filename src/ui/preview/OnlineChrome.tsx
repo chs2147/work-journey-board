@@ -5,14 +5,20 @@ import { MAX_SHORTCUT } from "../../domain/workspace";
 import { osText } from "../../shared/platformText";
 import { STR } from "../../shared/strings";
 import { useAppStore } from "../common/appStore";
+import { openSettingsAt } from "../common/appController";
 import { SaveStatus } from "../common/SaveStatus";
 import type { SaveStatusProps } from "../common/onlineSlots";
 import { WorkspaceMark } from "../common/workspaceIcons";
+import { Card } from "../settings/SettingsCard";
+import { WorkspaceEditRow } from "../settings/WorkspaceSettings";
+import settingsStyles from "../settings/Settings.module.css";
+import { sameDir } from "../../domain/workspace";
 import sw from "../common/WorkspaceSwitcher.module.css";
 import {
   closeToList,
   metaOf,
   openOnlineSpace,
+  patchCurrentMeta,
   when,
   useOnlineSpaces,
   type OpenedSpace,
@@ -200,7 +206,10 @@ function OnlineMenu() {
         role="menuitem"
         className={sw.item}
         data-testid="workspace-manage"
-        onClick={() => void closeToList()}
+        onClick={() => {
+          close();
+          void openSettingsAt("workspace");
+        }}
       >
         {M.manage}
       </button>
@@ -342,5 +351,104 @@ function SyncPanel({ saving, onDone }: { saving: boolean; onDone: () => void }) 
         {P.toList}
       </button>
     </div>
+  );
+}
+
+/**
+ * 설정 › 워크스페이스(온라인 공간을 연 동안): 이 계정의 온라인 공간 목록. 지금 공간 = 이름·색·아이콘(일지 설정 →
+ * 동기화 → 서버 목록), 다른 공간 = [열기](한 길 전환). 이 PC 새 공간·기존 폴더 추가는 여기서 하지 않는다.
+ */
+export function OnlineWorkspaceSettings() {
+  const { list, email, busy, current } = useOnlineSpaces();
+  const entries = useAppStore((s) => s.workspaces);
+  const dir = useAppStore((s) => (s.journal.state === "ready" ? s.journal.dataDir : null));
+  const status = useOnlineSync((s) => s.status);
+  const [editing, setEditing] = useState(false);
+  const entry = entries.find((e) => dir && sameDir(e.dir, dir));
+  return (
+    <Card
+      id="ws-list"
+      title={STR.workspace.listTitle}
+      desc={email ? STR.onlineSpaces.settings.lead(email) : M.groupPlain}
+      testId="workspace-settings"
+    >
+      <ul className={settingsStyles.wsList} data-testid="workspace-list">
+        {(list ?? []).map((w, i) => {
+          const isCur = current?.workspaceId === w.workspaceId;
+          const m = isCur && current?.meta ? current.meta : metaOf(w);
+          return (
+            <li
+              key={w.workspaceId}
+              className={settingsStyles.wsRow}
+              data-testid="workspace-row"
+              data-online=""
+            >
+              <div className={settingsStyles.wsMain}>
+                <WorkspaceMark icon={m?.icon ?? "folder"} color={m?.color ?? "c1"} size={30} online />
+                <span className={settingsStyles.wsText}>
+                  <span className={settingsStyles.wsName}>
+                    {m?.name ?? STR.workspace.onlineMark}
+                    {isCur && <span className={settingsStyles.wsTag}>{STR.workspace.current}</span>}
+                  </span>
+                  <span className={styles.meta}>
+                    <span className={styles.type}>
+                      <CloudIcon size={11} />
+                      {M.type}
+                    </span>
+                    {isCur ? (
+                      <>
+                        <span className={styles.dot} data-tone={tone(status)} aria-hidden="true" />
+                        {syncText(status)}
+                      </>
+                    ) : (
+                      M.copied(when(w.createdAt))
+                    )}
+                  </span>
+                </span>
+                <span className={settingsStyles.wsMeta}>
+                  {i < MAX_SHORTCUT ? osText(STR.workspace.shortcut(i + 1)) : ""}
+                </span>
+                <span className={settingsStyles.wsActions}>
+                  {isCur && entry && (
+                    <button type="button" data-testid="ws-edit" onClick={() => setEditing(!editing)}>
+                      {STR.workspace.edit}
+                    </button>
+                  )}
+                  {!isCur && (
+                    <button
+                      type="button"
+                      data-testid="ws-open"
+                      disabled={!!busy}
+                      onClick={() => void openOnlineSpace(w)}
+                    >
+                      {busy === w.workspaceId ? M.opening : STR.workspace.open}
+                    </button>
+                  )}
+                </span>
+              </div>
+              {isCur && editing && entry && (
+                <WorkspaceEditRow
+                  entry={{ ...entry, ...(m ?? {}) } as typeof entry}
+                  onDone={(meta) => {
+                    setEditing(false);
+                    if (meta) patchCurrentMeta(meta);
+                  }}
+                />
+              )}
+            </li>
+          );
+        })}
+      </ul>
+      <div className={settingsStyles.wsButtons}>
+        <button
+          type="button"
+          className={settingsStyles.primary}
+          data-testid="online-create"
+          onClick={() => void closeToList()}
+        >
+          {M.create}
+        </button>
+      </div>
+    </Card>
   );
 }

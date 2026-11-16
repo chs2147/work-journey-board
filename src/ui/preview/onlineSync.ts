@@ -18,7 +18,8 @@ import { cabiWindowsOpen, flushCabiWindows } from "../cabinet/cabiService";
 import { load as loadKanban, useKanban } from "../kanban/kanbanStore";
 import { loadInsights, useInsights } from "../insights/insightsStore";
 import { useUniverse } from "../universe/universeStore";
-import { rawJournalDriver, showClosingOverlay } from "../../platform/onlinePlatform";
+import { ONLINE_ROOT, rawJournalDriver, showClosingOverlay } from "../../platform/onlinePlatform";
+import { useAppStore } from "../common/appStore";
 import { STR } from "../../shared/strings";
 
 export const PUSH_DELAY_MS = 1000;
@@ -146,7 +147,10 @@ export function startOnlineSync(workspaceId: string, transport: SyncTransport) {
     workspaceId,
     transport,
     // 엔진은 안쪽 드라이버로 쓴다 — 엔진 자신의 쓰기가 "앱이 고침" 신호(보내기 예약)를 내지 않게
+    // 지금 열린 일지가 이 공간의 이 기기 일지일 때만(다른 일지로 바뀌었으면 손대지 않음 — CLAUDE.md 4-7)
     journal: () => {
+      const st = useAppStore.getState().journal;
+      if (st.state !== "ready" || st.dataDir !== `${ONLINE_ROOT}/${workspaceId}`) return null;
       const j = onlineJournal();
       return j && { driver: rawJournalDriver(j.driver), exclusive: j.exclusive };
     },

@@ -188,6 +188,18 @@ export async function openOnlineSpace(w: OnlineSpaceInfo): Promise<boolean> {
   }
 }
 
+/** 지금 공간의 이름·색·아이콘을 고친 뒤(설정) — 레일·메뉴에 바로. 서버 목록은 보낸 뒤 다음 목록에서 같은 값 */
+export function patchCurrentMeta(meta: NonNullable<OpenedSpace["meta"]>) {
+  const cur = get().current;
+  if (!cur) return;
+  set({
+    current: { ...cur, meta },
+    list:
+      get().list?.map((w) => (w.workspaceId === cur.workspaceId ? { ...w, workspace: { ...meta } } : w)) ??
+      null,
+  });
+}
+
 /** Ctrl+Alt+n — 목록의 n번째 */
 export function openOnlineSpaceAt(n: number) {
   const w = get().list?.[n - 1];

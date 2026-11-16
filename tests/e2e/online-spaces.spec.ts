@@ -234,3 +234,43 @@ test("UX-3: 레일 공간 메뉴로 온라인 공간을 오간다 — 구름 표
     expect(JSON.stringify(await counts(page))).toBe(first);
   }
 });
+
+test("UX-3 실기: 온라인 공간의 설정 › 워크스페이스 = 온라인 공간 목록 — 이 PC 새 공간은 만들지 않고, 이름을 고치면 레일·메뉴에 바로", async ({
+  page,
+}) => {
+  await signIn(page);
+  await copyOnce(page);
+  await copyOnce(page);
+  await page.getByTestId("online-space-open").first().click();
+  await expect(page.getByTestId("rail-settings")).toBeVisible({ timeout: 30_000 });
+  await page.getByTestId("workspace-button").click();
+  await page.getByTestId("workspace-manage").click();
+  const view = page.getByTestId("workspace-settings");
+  await expect(view).toBeVisible();
+  await expect(view).toContainText("온라인 · virtual@example.invalid");
+  const rows = view.getByTestId("workspace-row");
+  await expect(rows).toHaveCount(2);
+  await expect(rows.nth(0).getByTestId("workspace-cloud")).toBeVisible();
+  // 이 PC 새 공간·기존 폴더 추가 단추가 없다(온라인 공간 안에서 일반 일지를 만들던 실기 문제)
+  await expect(page.getByTestId("ws-settings-new")).toHaveCount(0);
+  await expect(view.getByTestId("ws-remove")).toHaveCount(0);
+  // 지금 공간의 이름·색·아이콘 → 레일 단추·메뉴에 바로
+  await rows.nth(0).getByTestId("ws-edit").click();
+  const edit = view.getByTestId("ws-edit-row");
+  await edit.getByTestId("ws-name").fill("가상 온라인");
+  await edit.getByTestId("ws-icons").locator('[data-icon="chartUp"]').click();
+  await edit.getByTestId("ws-edit-save").click();
+  await expect(rows.nth(0)).toContainText("가상 온라인");
+  await expect(page.getByTestId("workspace-button").locator("[data-icon]")).toHaveAttribute(
+    "data-icon",
+    "chartUp",
+  );
+  // 다른 공간 [열기] = 한 길 전환, 동기화는 그 공간 일지로(오류 없음)
+  await rows.nth(1).getByTestId("ws-open").click();
+  await expect(page.getByTestId("rail-settings")).toBeVisible({ timeout: 30_000 });
+  await expect(syncStatus(page)).not.toHaveAttribute("data-phase", "error", { timeout: 5_000 });
+  await syncStatus(page).click();
+  await page.getByTestId("online-sync-now").click();
+  await expect(syncStatus(page)).toContainText(/동기화됨|이 기기에 저장됨/, { timeout: 15_000 });
+  await expect(syncStatus(page)).not.toHaveAttribute("data-phase", "error");
+});
