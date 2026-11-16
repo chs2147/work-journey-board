@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "product": "Work Journey Board",
-  "catalogVersion": "1.40.0",
-  "asOfDate": "2026-11-13",
-  "baseRelease": "1.40.0",
+  "catalogVersion": "1.40.1",
+  "asOfDate": "2026-11-16",
+  "baseRelease": "1.40.1",
   "sourceCommit": "6d769c4",
   "appSchemaVersion": 20,
   "versionDefinition": "최초 제공 = 비RC 출시 이력에서 기능 제공이 확인된 최초 버전(0.x 개발판 포함); RC는 preview로 별도 기록",
@@ -12672,6 +12672,47 @@
       "reviewNote": "사용자 A+C 아이콘 전환 승인.",
       "lastChanged": "1.23.0",
       "schemaRequirement": "DB v18 유지. PC 설정 추가"
+    },
+    {
+      "id": "WJB-DIST-013",
+      "area": "플랫폼·배포",
+      "section": "공통",
+      "kind": "배포·플랫폼",
+      "name": "앱 닫기 안내·안전장치",
+      "description": "앱을 닫으면 바로 \"저장하고 종료하는 중…\" 안내(클릭·입력 차단), 10초 넘으면 늦어짐 안내, 45초 넘으면 저장을 기다리지 않고 창 닫기, 화면이 멈춰도 60초 뒤 프로세스 종료. 저장 실패면 오류 창·창 유지(안전장치 해제).",
+      "entry": "플랫폼·배포",
+      "introduced": "1.40.1",
+      "preview": null,
+      "status": "active",
+      "platforms": [
+        "windows",
+        "macos"
+      ],
+      "platformSince": {
+        "windows": "1.40.1",
+        "macos": "1.40.1"
+      },
+      "history": [
+        {
+          "version": "1.40.1",
+          "type": "added",
+          "description": "앱을 닫으면 바로 \"저장하고 종료하는 중…\" 안내(클릭·입력 차단), 10초 넘으면 늦어짐 안내, 45초 넘으면 저장을 기다리지 않고 창 닫기, 화면이 멈춰도 60초 뒤 프로세스 종료. 저장 실패면 오류 창·창 유지(안전장치 해제).",
+          "source": "docs/release-notes/v1.40.1.md"
+        }
+      ],
+      "sources": [
+        "docs/release-notes/v1.40.1.md"
+      ],
+      "implementation": [
+        "src/platform/tauri.ts",
+        "src/ui/common/closingOverlay.ts",
+        "src-tauri/src/exit_guard.rs"
+      ],
+      "verification": "단위·Rust 시험. V2 개발 브랜치 DEV 판 Windows 실기 종료 확인(2026-11-16). 정식 설치판 실기는 릴리스 노트 '설치 후 확인'.",
+      "reviewStatus": "미검토",
+      "reviewNote": "사용자 요청 main 직접 패치(1.40.1).",
+      "lastChanged": "1.40.1",
+      "schemaRequirement": "DB v20"
     }
   ],
   "productId": "work-journey-board",
