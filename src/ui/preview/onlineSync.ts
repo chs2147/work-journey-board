@@ -11,7 +11,8 @@ import {
   type SyncTransport,
 } from "../../preview/spaceSync";
 import { onlineJournal, reloadOnlineSpace } from "../common/appController";
-import { rawJournalDriver } from "../../platform/onlinePlatform";
+import { rawJournalDriver, showClosingOverlay } from "../../platform/onlinePlatform";
+import { STR } from "../../shared/strings";
 
 export const PUSH_DELAY_MS = 1000;
 export const PULL_EVERY_MS = 30_000;
@@ -92,6 +93,8 @@ export function startOnlineSync(workspaceId: string, transport: SyncTransport) {
     if (document.hasFocus()) void run();
   }, PULL_EVERY_MS);
   globalThis.addEventListener?.("focus", onFocus);
+  // 앱 닫기(플랫폼 쪽)가 가져오기 없이 바로 멈출 수 있게
+  (globalThis as { __wjbStopOnlineSync?: () => void }).__wjbStopOnlineSync = stopOnlineSync;
   void engine.refresh().then(() => run());
 }
 const onFocus = () => void run();
@@ -118,6 +121,7 @@ export const syncNow = () => run();
 /** 앱을 닫거나 [목록으로] 중 — 화면을 막고 "저장하고 닫는 중"을 보인다 */
 export function markClosing(kind: "exit" | "list") {
   useOnlineSync.setState({ closing: kind });
+  showClosingOverlay(kind === "exit" ? STR.onlineSpaces.sync.closingExit : STR.onlineSpaces.sync.closingList);
 }
 
 export async function loadConflicts() {

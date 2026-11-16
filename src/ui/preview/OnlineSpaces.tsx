@@ -211,7 +211,7 @@ function syncText(s: ReturnType<typeof useOnlineSync.getState>["status"]) {
 
 /** 열린 온라인 공간: 위 띠(동기화 상태·지금 동기화·충돌·목록으로) + 지금 앱 화면 */
 export function OnlineWorkspaceShell({ space }: { space: OpenedSpace }) {
-  const { status, received, conflicts, runs, closing } = useOnlineSync();
+  const { status, received, conflicts, runs } = useOnlineSync();
   return (
     <div className={shell.frame} data-testid="online-workspace">
       <div className={shell.band} role="note">
@@ -270,14 +270,6 @@ export function OnlineWorkspaceShell({ space }: { space: OpenedSpace }) {
         <App />
       </div>
       {conflicts && <ConflictPanel items={conflicts} />}
-      {closing && (
-        <div className={shell.closing} role="alertdialog" aria-busy="true" data-testid="online-closing">
-          <div className={shell.closingBox}>
-            <span className={shell.spinner} aria-hidden="true" />
-            {closing === "exit" ? Y.closingExit : Y.closingList}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

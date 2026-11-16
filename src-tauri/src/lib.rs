@@ -15,6 +15,8 @@ mod migration;
 mod online;
 #[cfg(feature = "connected-preview")]
 mod online_space;
+#[cfg(feature = "connected-preview")]
+mod preview_close;
 mod profile;
 #[cfg(feature = "connected-preview")]
 mod source_copy;
@@ -155,12 +157,11 @@ pub fn run() {
     let builder = builder
         .manage(online::OnlineState::default())
         .manage(space_db::SpaceDbState::default())
-        // 종료 안전장치(E-3 실기: X를 눌러도 끝나지 않고 작업 관리자로도 안 꺼짐): 메인 창 닫기 요청 뒤
-        // 일정 시간 안에 정상 종료가 안 되면 프로세스를 끝낸다. 이 기기 일지는 DELETE 저장 방식이라 안전하다
+        // 닫기는 Rust가 주도(preview_close.rs — E-3 실기: 화면 쪽 닫기 처리가 기대대로 돌지 않아 안내 없이 오래 기다림)
         .on_window_event(|w, e| {
             if w.label() == "main" {
-                if let tauri::WindowEvent::CloseRequested { .. } = e {
-                    space_db::arm_exit_watchdog();
+                if let tauri::WindowEvent::CloseRequested { api, .. } = e {
+                    preview_close::on_close_requested(w.app_handle(), api);
                 }
             }
         })
@@ -198,7 +199,7 @@ pub fn run() {
             space_db::space_db_execute,
             space_db::space_db_batch,
             space_db::space_db_export,
-            space_db::preview_exit,
+            preview_close::preview_exit,
             space_sync::space_sync_call,
             space_sync::space_asset_upload,
             space_sync::space_asset_fetch

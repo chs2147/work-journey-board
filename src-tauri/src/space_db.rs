@@ -216,7 +216,7 @@ pub fn create(dir: &Path, bytes: &[u8]) -> Result<(), String> {
     fs::rename(&tmp, &path).map_err(|_| "STORE".to_string())
 }
 
-const CLOSE_LIMIT: std::time::Duration = std::time::Duration::from_secs(3);
+const CLOSE_LIMIT: std::time::Duration = std::time::Duration::from_millis(1500);
 /// 시간 안에 못 닫아도 넘어간다 — DELETE 저장 방식이라 끝나지 않은 트랜잭션은 다음에 열 때 되돌려진다
 async fn close_within(p: SqlitePool) {
     let (tx, rx) = std::sync::mpsc::channel();
@@ -239,6 +239,11 @@ impl SpaceDbState {
         if let Some(p) = pool {
             close_within(p).await;
         }
+    }
+    /// 열린 공간 일지가 있는가(앱 닫기 때 저장할 것이 있는지)
+    /// (창 이벤트 스레드에서 기다리지 않게 — 잠겨 있으면 열려 있다고 본다)
+    pub fn any_open_now(&self) -> bool {
+        self.0.try_lock().map(|m| !m.is_empty()).unwrap_or(true)
     }
     /// 열린 공간 일지를 모두 닫는다(앱 종료)
     pub async fn close_all(&self) {
@@ -307,26 +312,6 @@ pub async fn space_db_close(
     workspace_id: String,
 ) -> Result<(), String> {
     state.close(&dir_of(&app, &workspace_id)?).await;
-    Ok(())
-}
-/// 닫기 요청 뒤 이 시간 안에 끝나지 않으면 프로세스를 끝낸다(한 번만 건다)
-pub const EXIT_WATCHDOG: std::time::Duration = std::time::Duration::from_secs(15);
-static WATCHDOG: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
-pub fn arm_exit_watchdog() {
-    if WATCHDOG.swap(true, std::sync::atomic::Ordering::SeqCst) {
-        return;
-    }
-    std::thread::spawn(|| {
-        std::thread::sleep(EXIT_WATCHDOG);
-        std::process::exit(0);
-    });
-}
-
-/// Preview 앱 종료(온라인 공간 창 닫기의 마지막 단계) — 열린 공간 일지를 닫고(시간 제한) 프로세스를 끝낸다
-#[tauri::command]
-pub async fn preview_exit(app: AppHandle, state: State<'_, SpaceDbState>) -> Result<(), String> {
-    state.close_all().await;
-    app.exit(0);
     Ok(())
 }
 #[tauri::command]
