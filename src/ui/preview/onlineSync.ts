@@ -20,6 +20,8 @@ interface State {
   status: SyncStatus;
   /** 동기화를 실제로 돌린 횟수(시험·진단용 — 화면 글에는 쓰지 않음) */
   runs: number;
+  /** 닫는 중(앱 종료·목록으로) — 화면을 막는다 */
+  closing: "exit" | "list" | null;
   /** 받아서 적용했지만 화면에 아직 반영하지 않은 기록 수 */
   received: number;
   conflicts: ConflictItem[] | null;
@@ -27,6 +29,7 @@ interface State {
 export const useOnlineSync = create<State>(() => ({
   status: { phase: "idle", pending: 0, conflicts: 0, lastSyncedAt: null, error: null },
   runs: 0,
+  closing: null,
   received: 0,
   conflicts: null,
 }));
@@ -39,10 +42,10 @@ const editing = () => {
   return !!a && (a.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(a.tagName));
 };
 
-async function run() {
+async function run(opts: { pull?: boolean } = {}) {
   if (!engine || !onlineJournal()) return;
   useOnlineSync.setState((s) => ({ runs: s.runs + 1 }));
-  const got = await engine.syncNow();
+  const got = await engine.syncNow(opts);
   if (got > 0) {
     const received = useOnlineSync.getState().received + got;
     if (editing()) useOnlineSync.setState({ received });
@@ -89,7 +92,7 @@ export function startOnlineSync(workspaceId: string, transport: SyncTransport) {
     if (document.hasFocus()) void run();
   }, PULL_EVERY_MS);
   globalThis.addEventListener?.("focus", onFocus);
-  void engine.refresh().then(run);
+  void engine.refresh().then(() => run());
 }
 const onFocus = () => void run();
 export function stopOnlineSync() {
@@ -106,10 +109,16 @@ export function schedulePush() {
   if (pushTimer) clearTimeout(pushTimer);
   pushTimer = setTimeout(() => {
     pushTimer = null;
-    void engine?.refresh().then(run);
+    // 고친 뒤에는 보내기만(받기는 30초 주기·창 복귀·[지금 동기화]) — 서버 호출 수를 줄인다
+    void engine?.refresh().then(() => run({ pull: false }));
   }, PUSH_DELAY_MS);
 }
 export const syncNow = () => run();
+
+/** 앱을 닫거나 [목록으로] 중 — 화면을 막고 "저장하고 닫는 중"을 보인다 */
+export function markClosing(kind: "exit" | "list") {
+  useOnlineSync.setState({ closing: kind });
+}
 
 export async function loadConflicts() {
   if (!engine) return;

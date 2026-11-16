@@ -537,15 +537,19 @@ export function createSpaceSync(deps: {
     emit(await j.exclusive(() => counts(j.driver)));
   }
 
-  /** 보내고 받기(한 번에 하나). 받아서 이 기기에 적용한 기록 수를 돌려준다 */
-  function syncNow(): Promise<number> {
+  /**
+   * 보내고 받기(한 번에 하나). 받아서 이 기기에 적용한 기록 수를 돌려준다.
+   * pull: false = 보내기만(고친 뒤 — 서버 호출을 반으로, 받기는 주기·창 복귀·[지금 동기화]에서)
+   */
+  function syncNow(opts: { pull?: boolean } = {}): Promise<number> {
     if (running) return running;
+    const pull = opts.pull !== false;
     running = (async () => {
       emit({ phase: "syncing", error: null });
       try {
         await pushOnce();
-        const got = await pullOnce();
-        await pushOnce(); // 받는 동안 합친 것
+        const got = pull ? await pullOnce() : 0;
+        if (pull) await pushOnce(); // 받는 동안 합친 것
         emit({ phase: "idle", lastSyncedAt: now() });
         await refresh();
         return got;

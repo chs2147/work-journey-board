@@ -1602,6 +1602,8 @@ export const STR_BASE = {
       conflicts: (n: number) => `충돌 ${n}건`,
       received: (n: number) => `다른 기기 변경 ${n}건`,
       reload: "화면 새로 고침",
+      closingExit: "저장하고 종료하는 중…",
+      closingList: "저장하고 닫는 중…",
       panelTitle: "충돌 목록",
       panelEmpty: "충돌이 없습니다.",
       close: "닫기",

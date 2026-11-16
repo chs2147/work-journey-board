@@ -172,6 +172,8 @@ export interface Platform {
   readonly splash?: SplashWindow;
   /** DEV 검증판 일지 폴더(DEV 프로필에서만 있음) */
   readonly dev?: DevJournalOps;
+  /** 백업 사본이 앱이 꺼지면 사라지는 곳(Preview 온라인 공간 = 메모리)이면 자동 백업(첫 실행·종료)을 하지 않는다 */
+  readonly ephemeralBackups?: boolean;
 
   // ── Cabinet(features-1102-spec F5) — 등록 폴더를 읽기·열기만(지우기·옮기기 없음), Rust cabinet.rs가 등록 폴더 안인지 재검사 ──
   /** 폴더 여러 개 고르기. 취소하면 null */

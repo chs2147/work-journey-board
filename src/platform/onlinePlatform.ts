@@ -79,6 +79,7 @@ export function createOnlinePlatform(opts: {
   const none = async () => undefined;
   return {
     kind: "browser",
+    ephemeralBackups: true,
     cabi: opts.windows?.cabi ?? browserCabiBridge(),
     ...(opts.windows?.folderWindows ? { folderWindows: opts.windows.folderWindows } : {}),
     ...(opts.windows?.cabinetWindow ? { cabinetWindow: opts.windows.cabinetWindow } : {}),
@@ -158,7 +159,8 @@ async function closeWithChildren(handler: () => Promise<void>) {
     // 무엇이 막혀도 끝난다: 동기화 멈춤 → 저장(시간 제한) → 일지 닫기(시간 제한) → 별도 창 정리 → 프로세스 종료.
     // 이 기기 일지는 쓴 만큼 이미 파일에 있다(트랜잭션 단위) — 저장이 늦거나 실패해도 닫는다.
     // Rust 쪽에도 닫기 요청 뒤 일정 시간이 지나면 강제로 끝내는 안전장치가 있다(lib.rs, Preview만)
-    const { stopOnlineSync } = await import("../ui/preview/onlineSync");
+    const { markClosing, stopOnlineSync } = await import("../ui/preview/onlineSync");
+    markClosing("exit"); // 바로 화면을 막고 "저장하고 종료하는 중"
     stopOnlineSync();
     await within(handler(), 5000);
     const { closeOnlineSpace } = await import("../ui/common/appController");

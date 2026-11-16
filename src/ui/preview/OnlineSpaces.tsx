@@ -8,7 +8,7 @@ import {
   type OnlineSpaceInfo,
   type PreviewSpaces,
 } from "../../platform";
-import { createOnlinePlatform, destroyChildWindows } from "../../platform/onlinePlatform";
+import { createOnlinePlatform, destroyChildWindows, within } from "../../platform/onlinePlatform";
 import { isTauri } from "@tauri-apps/api/core";
 import { ensureSpaceJournal, upgradeSyncTables, type CachedHeaderLike } from "../../preview/spaceJournal";
 import type { ConflictItem } from "../../preview/spaceSync";
@@ -16,6 +16,7 @@ import { BOTH_TABLES } from "../../preview/spaceSync";
 import {
   applyReceived,
   closeConflicts,
+  markClosing,
   loadConflicts,
   resolveConflict,
   schedulePush,
@@ -190,8 +191,9 @@ export function OnlineSpacesCard({
 
 /** 목록으로: 입력 중인 글·별도 창(노트·메모보드) 저장 → 일지 닫기 → 남은 창 정리 → 창을 새로 불러 Preview 첫 화면으로 */
 async function closeSpace() {
+  markClosing("list");
   stopOnlineSync();
-  await closeOnlineSpace().catch(() => undefined);
+  await within(closeOnlineSpace(), 5000);
   const p = useAppStore.getState().platform;
   await Promise.allSettled([destroyChildWindows(), p?.cabi.closeAll()]);
   location.reload();
@@ -209,7 +211,7 @@ function syncText(s: ReturnType<typeof useOnlineSync.getState>["status"]) {
 
 /** 열린 온라인 공간: 위 띠(동기화 상태·지금 동기화·충돌·목록으로) + 지금 앱 화면 */
 export function OnlineWorkspaceShell({ space }: { space: OpenedSpace }) {
-  const { status, received, conflicts, runs } = useOnlineSync();
+  const { status, received, conflicts, runs, closing } = useOnlineSync();
   return (
     <div className={shell.frame} data-testid="online-workspace">
       <div className={shell.band} role="note">
@@ -268,6 +270,14 @@ export function OnlineWorkspaceShell({ space }: { space: OpenedSpace }) {
         <App />
       </div>
       {conflicts && <ConflictPanel items={conflicts} />}
+      {closing && (
+        <div className={shell.closing} role="alertdialog" aria-busy="true" data-testid="online-closing">
+          <div className={shell.closingBox}>
+            <span className={shell.spinner} aria-hidden="true" />
+            {closing === "exit" ? Y.closingExit : Y.closingList}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

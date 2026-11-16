@@ -226,6 +226,9 @@ async function autoBackup(kind: BackupKind): Promise<void> {
 async function autoBackupWork(kind: BackupKind): Promise<void> {
   const j = get().journal;
   if (j.state !== "ready" || backupRunning || j.driver === closingJournal) return;
+  // Preview 온라인 공간: 사본이 메모리에만 남아 꺼지면 사라진다 — 일지 전체 복사·검사로 시작·종료만 늦어져 하지 않는다
+  // (E-3 실기: X 뒤 종료가 몇 초 늦던 원인). 온라인 공간의 보관은 이 기기 일지 파일 + 서버
+  if (platform().ephemeralBackups) return;
   if (kind !== "exit" && (await lockIfIncompatible())) return;
   const p = platform();
   backupRunning = true;
