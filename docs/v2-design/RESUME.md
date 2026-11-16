@@ -1,6 +1,6 @@
 # V2 설계·PoC 중단/재개 기록
 
-**현재 재개 정본:** 로드맵(2026-11-16 사용자 결정) = E단계 실기 마무리(m1-check 7-50 2~7번) → **E+ 동기화 안정화**([93](93-e-plus-sync-hardening.md) 구현) → 정식판 1.40.1(닫기 안내·안전장치) → G 운영 준비 → F 다국어([92](92-f-stage-i18n-design.md), 설계 보존·보류). E단계 기록 [88](88-e-stage-sync-design.md)~[91](91-e3-client-sync.md).
+**현재 재개 정본:** [95. 온라인 UX 통합 시안](95-online-ux-integration.md)(결정 대기 U1~U7) — 로드맵: E+([93](93-e-plus-sync-hardening.md))·1.40.1·초대 전용 가입([94](94-invite-only-signup.md)) 완료 → **UX 통합** → G 운영 준비 → F 다국어([92](92-f-stage-i18n-design.md), 보류).
 
 2026-11-09 UTC · V2 설계/PoC 중단 지점을 보존한 뒤 복귀했다. 사용자 요청으로 main 1.23.1 패치(`d11a0ca`)를 v2-design에 병합했다.
 
