@@ -30,10 +30,12 @@ test("D-4·E-1: 복제 → 내 온라인 공간 목록 → 열기 → 앱 화면
   await expect(name.getByTestId("workspace-cloud")).toBeVisible();
   await expect(name.locator("b")).not.toHaveText("");
   await row.getByTestId("online-space-open").click();
-  // 지금 앱 화면 그대로 + 위 띠
+  // 지금 앱 화면 그대로 — 위 띠 없이 레일 공간 단추(구름 표시)·상단 동기화 알약(UX-3, 95 U1·U2·U8)
   await expect(page.getByTestId("online-workspace")).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByTestId("online-workspace")).toContainText("온라인 공간");
   await expect(page.getByTestId("rail-settings")).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId("workspace-button").getByTestId("workspace-cloud")).toBeVisible();
+  await expect(page.getByTestId("online-sync-status")).toBeVisible();
+  await expect(page.getByTestId("save-state")).toHaveCount(0);
   // 복제된 가상 업무가 보인다(가상 샘플 showcase의 업무 이름 중 하나)
   await expect(page.locator("body")).toContainText(/정산|보안|가상/);
   // E-1: 읽기 전용이 아니다 — 기록을 고치면 이 기기 일지에 저장되고 보낼 목록(대기열)에 쌓인다
@@ -50,6 +52,7 @@ test("D-4·E-1: 복제 → 내 온라인 공간 목록 → 열기 → 앱 화면
   await page.keyboard.press("Escape");
   await expect.poll(outbox, { timeout: 10_000 }).toBeGreaterThan(0);
   expect(external(requests)).toEqual([]);
+  await syncPanel(page);
   await page.getByTestId("online-workspace-close").click();
   await expect(page.getByTestId("connected-preview")).toBeVisible();
 });
@@ -85,6 +88,11 @@ async function openCopied(page: Page) {
   return ws!;
 }
 const syncStatus = (page: Page) => page.getByTestId("online-sync-status");
+/** S3 동기화 패널 열기(알약을 누름) */
+async function syncPanel(page: Page) {
+  if (!(await page.getByTestId("online-sync-panel").isVisible())) await syncStatus(page).click();
+  await expect(page.getByTestId("online-sync-panel")).toBeVisible();
+}
 
 test("E-3·E-5: 고치면 약 1초 뒤 보내 '동기화됨', 다른 기기 변경은 [지금 동기화]로 받아 화면에", async ({
   page,
@@ -126,6 +134,8 @@ test("E-3·E-5: 고치면 약 1초 뒤 보내 '동기화됨', 다른 기기 변�
       ).__wjbFakeSync.editEntryElsewhere(w!, "다른 기기에서 고친 가상 기록", id!),
     [ws, shown],
   );
+  await syncPanel(page);
+  await expect(page.getByTestId("online-sync-panel")).toContainText("virtual@example.invalid");
   await page.getByTestId("online-sync-now").click();
   await expect
     .poll(
@@ -152,4 +162,75 @@ test("E-5: 서버에 닿지 못하면 '오프라인 · 이 기기에 저장됨 �
     timeout: 15_000,
   });
   await expect(syncStatus(page)).toHaveAttribute("data-phase", "offline");
+});
+
+async function copyOnce(page: Page) {
+  const again = page.getByRole("button", { name: "다른 일지 복제" });
+  if (await again.isVisible()) await again.click();
+  await page.getByTestId("copy-pick").click();
+  await page.getByTestId("copy-start").click({ timeout: 30_000 });
+  await expect(page.getByTestId("copy-done")).toBeVisible({ timeout: 30_000 });
+}
+const counts = (page: Page) =>
+  page.evaluate(() =>
+    (
+      globalThis as unknown as { __wjbApp: { journalCounts(): Promise<Record<string, number> | null> } }
+    ).__wjbApp.journalCounts(),
+  );
+
+test("UX-3: 레일 공간 메뉴로 온라인 공간을 오간다 — 구름 표시·계정 묶음, 고친 내용은 그 공간에만(3번 왕복, CLAUDE.md 4-7)", async ({
+  page,
+}) => {
+  await signIn(page);
+  await copyOnce(page);
+  await copyOnce(page);
+  await expect(page.getByTestId("online-space-row")).toHaveCount(2);
+  await page.getByTestId("online-space-open").first().click();
+  await expect(page.getByTestId("rail-settings")).toBeVisible({ timeout: 30_000 });
+  const before = JSON.stringify(await counts(page));
+  // 첫 공간 기록 하나를 고친다
+  const entry = page.locator("textarea").first();
+  await entry.click();
+  await page.keyboard.press("End");
+  await page.keyboard.type(" 첫 공간만");
+  await page.keyboard.press("Escape");
+  // 저장된 뒤의 행 수를 기준으로(빈 칸에 쓰면 기록이 하나 생긴다)
+  await expect.poll(async () => JSON.stringify(await counts(page)), { timeout: 10_000 }).not.toBe(before);
+  const first = JSON.stringify(await counts(page));
+  const menu = page.getByTestId("workspace-menu");
+  await page.getByTestId("workspace-button").click();
+  await expect(menu).toContainText("온라인 · virtual@example.invalid");
+  const items = menu.getByTestId("workspace-item");
+  await expect(items).toHaveCount(2);
+  await expect(items.nth(0).getByTestId("workspace-cloud")).toBeVisible();
+  await expect(items.nth(0)).toHaveAttribute("data-current", "true");
+  for (let i = 0; i < 3; i++) {
+    // 둘째 공간으로 — 고친 글은 거기 없다
+    if (!(await menu.isVisible())) await page.getByTestId("workspace-button").click();
+    await items.nth(1).click();
+    await expect
+      .poll(
+        () =>
+          page
+            .locator("textarea")
+            .evaluateAll((els) => els.some((e) => (e as HTMLTextAreaElement).value.includes("첫 공간만"))),
+        { timeout: 15_000 },
+      )
+      .toBe(false);
+    await page.getByTestId("workspace-button").click();
+    await expect(items.nth(1)).toHaveAttribute("data-current", "true");
+    await page.keyboard.press("Escape");
+    // Ctrl+Alt+1 = 첫 공간으로 — 고친 글이 그대로, 저장소 행 수도 그대로
+    await page.keyboard.press("Control+Alt+Digit1");
+    await expect
+      .poll(
+        () =>
+          page
+            .locator("textarea")
+            .evaluateAll((els) => els.some((e) => (e as HTMLTextAreaElement).value.includes("첫 공간만"))),
+        { timeout: 15_000 },
+      )
+      .toBe(true);
+    expect(JSON.stringify(await counts(page))).toBe(first);
+  }
 });

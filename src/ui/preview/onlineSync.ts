@@ -155,6 +155,8 @@ export function startOnlineSync(workspaceId: string, transport: SyncTransport) {
   });
   pullDelay = PULL_EVERY_MS;
   lastPull = 0;
+  // 다른 공간으로 바꾼 뒤에도 이전 공간의 받은 수·충돌 목록이 남지 않게
+  useOnlineSync.setState({ received: 0, conflicts: null });
   globalThis.addEventListener?.("focus", onFocus);
   // 앱 닫기(플랫폼 쪽)가 가져오기 없이 바로 멈출 수 있게
   (globalThis as { __wjbStopOnlineSync?: () => void }).__wjbStopOnlineSync = stopOnlineSync;
@@ -187,6 +189,21 @@ export function schedulePush() {
   }, PUSH_DELAY_MS);
 }
 export const syncNow = () => run();
+/** 다른 공간으로 바꾸기·로그아웃 전: 입력을 저장하고 보낼 변경을 보낸다(최대 limit ms — 못 보내면 이 기기 사본에 남아 다음에 이어서) */
+export async function pushBeforeLeave(limit = 4000) {
+  if (!engine) return;
+  if (pushTimer) clearTimeout(pushTimer);
+  pushTimer = null;
+  await flushUi();
+  const e = engine;
+  await Promise.race([
+    e
+      .refresh()
+      .then(() => run({ pull: false }))
+      .catch(() => undefined),
+    new Promise((r) => setTimeout(r, limit)),
+  ]);
+}
 
 /** 앱을 닫거나 [목록으로] 중 — 화면을 막고 "저장하고 닫는 중"을 보인다 */
 export function markClosing(kind: "exit" | "list") {

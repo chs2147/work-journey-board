@@ -1,7 +1,7 @@
 // Connected Preview 시작 화면(V2 6-B·B단계, docs/v2-design/78·79).
 // 기존 앱 시작 흐름(appController.start — 설정 읽기·첫 실행·일지 열기·새 판 확인)을 부르지 않는다.
 // 계정: 이메일 인증번호 로그인 → 개발 서버(gateway) 세션 확인. 토큰은 Rust·OS 보안 저장소에만 있다.
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   loadPreviewOnline,
   loadSplash,
@@ -13,7 +13,8 @@ import { STR } from "../../shared/strings";
 import { applyTheme, readStoredTheme } from "../../shared/theme";
 import { finishSplash } from "../splash";
 import { MigrationCard } from "./MigrationCard";
-import { OnlineSpacesCard, OnlineWorkspaceShell, type OpenedSpace } from "./OnlineSpaces";
+import { OnlineSpacesCard, OnlineWorkspaceShell } from "./OnlineSpaces";
+import { lastOpened, openOnlineSpace, setAccount, useOnlineSpaces } from "./onlineSpaces";
 import own from "./PreviewApp.module.css";
 import appStyles from "../App.module.css";
 import topStyles from "../common/TopBar.module.css";
@@ -35,7 +36,9 @@ export function PreviewApp({ profile }: { profile: AppProfileInfo }) {
   const [email, setEmail] = useState("");
   const [sentTo, setSentTo] = useState<string | null>(null);
   const [code, setCode] = useState("");
-  const [opened, setOpened] = useState<OpenedSpace | null>(null);
+  const opened = useOnlineSpaces((s) => s.current);
+  const list = useOnlineSpaces((s) => s.list);
+  const autoTried = useRef(false);
   const [published, setPublished] = useState(0);
 
   useEffect(() => {
@@ -73,6 +76,20 @@ export function PreviewApp({ profile }: { profile: AppProfileInfo }) {
   }
 
   const signedIn = status?.state === "signedIn";
+  const accountId = signedIn ? (status.accountId ?? null) : null;
+  // 계정이 정해지거나 바뀌면 목록을 바로 그 계정 것으로(이전 계정 목록은 즉시 비움 — 94 실기 의견)
+  useEffect(() => {
+    setAccount(accountId, signedIn ? (status.email ?? null) : null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accountId, signedIn && status.email]);
+  // 마지막으로 연 온라인 공간이 목록에 있으면 바로 연다(U1 — [목록으로]로 나왔으면 열지 않음). 한 번만
+  useEffect(() => {
+    if (autoTried.current || !accountId || !list) return;
+    autoTried.current = true;
+    const last = lastOpened(accountId);
+    const w = last ? list.find((x) => x.workspaceId === last) : undefined;
+    if (w) void openOnlineSpace(w);
+  }, [accountId, list]);
   const onlineText = !status
     ? P.onlinePending
     : busy === "check" || busy === "verify"
@@ -84,7 +101,7 @@ export function PreviewApp({ profile }: { profile: AppProfileInfo }) {
         : P.onlineSignedOut;
 
   // 온라인 공간을 열면 지금 앱 화면 그대로(읽기 전용) — 닫으면 창을 새로 불러 이 화면으로
-  if (opened) return <OnlineWorkspaceShell space={opened} />;
+  if (opened) return <OnlineWorkspaceShell />;
 
   return (
     <div className={appStyles.shell}>
@@ -237,8 +254,7 @@ export function PreviewApp({ profile }: { profile: AppProfileInfo }) {
         <OnlineSpacesCard
           // 계정이 바뀌면 새로 만들어 이전 계정의 목록·오류가 남지 않게(94문서 실기)
           key={signedIn ? (status.accountId ?? "") : "signed-out"}
-          ownerId={signedIn ? status.accountId : null}
-          onOpened={setOpened}
+          ownerId={accountId}
           refreshKey={published}
         />
         <MigrationCard

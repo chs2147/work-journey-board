@@ -1,4 +1,5 @@
 import { SaveStatus } from "./SaveStatus";
+import { onlineSlots } from "./onlineSlots";
 import { DAY_LABELS, dayIndex, weekTitle } from "../../domain/week";
 import { STR } from "../../shared/strings";
 import {
@@ -219,14 +220,20 @@ export function TopBar() {
             {STR.export.button}
           </button>
         )}
-        {ready && journalReady && (
-          <SaveStatus
-            saving={saving > 0}
-            error={failed > 0 ? STR.save.failedTitle : undefined}
-            onRetry={() => void retryFailed()}
-            savedAt={savedAt}
-          />
-        )}
+        {ready &&
+          journalReady &&
+          (() => {
+            // 온라인 공간(Preview)이면 같은 자리에 동기화 알약(95 U2) — 그 밖에는 지금 그대로
+            const Status = onlineSlots()?.StatusPill ?? SaveStatus;
+            return (
+              <Status
+                saving={saving > 0}
+                error={failed > 0 ? STR.save.failedTitle : undefined}
+                onRetry={() => void retryFailed()}
+                savedAt={savedAt}
+              />
+            );
+          })()}
       </div>
     </header>
   );

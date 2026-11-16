@@ -1,147 +1,46 @@
-// 내 온라인 공간(Connected Preview, docs/v2-design/87·89) — 목록 → [열기] → 이 기기 캐시 채우기 →
-// (처음이면) 캐시에서 이 기기 일지 만들기 → 그 일지로 지금 앱 화면 그대로(편집 = 이 기기에 저장 + 보낼 목록).
-// 닫으면 저장을 마치고 일지를 닫은 뒤 창을 새로 불러 Preview 첫 화면으로(화면 저장소 상태가 남지 않게 — CLAUDE.md 4-7).
+// 내 온라인 공간(Connected Preview, docs/v2-design/87·89·95) — 첫 화면 목록 → [열기] → 이 기기 캐시·일지 준비 →
+// 그 일지로 지금 앱 화면 그대로(편집 = 이 기기에 저장 + 보낼 목록). 열린 뒤 상태·전환은 제품 화면 안(UX-3):
+// 레일 공간 메뉴(구름 표시)·상단 동기화 알약·패널 — onlineSlots로 끼운다(정식판·DEV는 그대로).
 import { lazy, useEffect, useState } from "react";
-import {
-  loadPreviewSpaces,
-  setPlatformOverride,
-  type OnlineSpaceInfo,
-  type PreviewSpaces,
-} from "../../platform";
-import { createOnlinePlatform, destroyChildWindows, within } from "../../platform/onlinePlatform";
-import { isTauri } from "@tauri-apps/api/core";
-import { ensureSpaceJournal, upgradeSyncTables, type CachedHeaderLike } from "../../preview/spaceJournal";
+import type { OnlineSpaceInfo } from "../../platform";
 import type { ConflictItem } from "../../preview/spaceSync";
 import { BOTH_TABLES } from "../../preview/spaceSync";
-import {
-  applyReceived,
-  closeConflicts,
-  markClosing,
-  loadConflicts,
-  resolveConflict,
-  schedulePush,
-  startOnlineSync,
-  stopOnlineSync,
-  syncNow,
-  useOnlineSync,
-} from "./onlineSync";
-import { loadSql } from "../../preview/migrationSession";
-import { closeOnlineSpace } from "../common/appController";
+import { closeConflicts, resolveConflict, useOnlineSync } from "./onlineSync";
 import { formatBytes, STR } from "../../shared/strings";
-import { readStoredTheme } from "../../shared/theme";
-import { useAppStore } from "../common/appStore";
+import { setOnlineSlots } from "../common/onlineSlots";
 import { WorkspaceMark } from "../common/workspaceIcons";
-import { parseMeta } from "../../domain/workspace";
+import { OnlineRailButton, OnlineStatusPill } from "./OnlineChrome";
+import {
+  metaOf,
+  openOnlineSpace,
+  openOnlineSpaceAt,
+  refreshSpaces,
+  useOnlineSpaces,
+  when,
+  type OpenedSpace,
+} from "./onlineSpaces";
 import styles from "../first-run/FirstRun.module.css";
 import own from "./MigrationCard.module.css";
 import shell from "./OnlineSpaces.module.css";
 
 const S = STR.onlineSpaces;
 const App = lazy(() => import("../App").then((m) => ({ default: m.App })));
-const errText = (e: unknown) => {
-  const code = e instanceof Error ? e.message : String(e);
-  return (
-    S.errors[code] ?? STR.connectedPreview.errors[code] ?? `${STR.connectedPreview.errors.UNKNOWN} (${code})`
-  );
-};
-const when = (iso: string | null) =>
-  iso
-    ? new Date(iso).toLocaleString("ko-KR", {
-        year: "numeric",
-        month: "numeric",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      })
-    : "";
-
-export interface OpenedSpace {
-  workspaceId: string;
-  label: string;
-  stale: boolean;
-}
+export type { OpenedSpace };
 
 export function OnlineSpacesCard({
   ownerId,
-  onOpened,
   refreshKey = 0,
 }: {
   ownerId: string | null;
-  onOpened: (s: OpenedSpace) => void;
   /** 바뀌면 목록을 다시 받는다(복제 완료 뒤) */
   refreshKey?: number;
 }) {
-  const [spaces, setSpaces] = useState<PreviewSpaces | null>(null);
-  const [list, setList] = useState<OnlineSpaceInfo[] | null>(null);
-  const [offline, setOffline] = useState(false);
-  const [busy, setBusy] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  const refresh = async (sp: PreviewSpaces) => {
-    setError(null);
-    try {
-      const r = await sp.list();
-      setList(r.workspaces);
-      setOffline(!!r.offline);
-    } catch (e) {
-      // 받지 못했으면 이전 목록을 남기지 않는다(다른 계정의 목록이 보이지 않게 — 94문서 실기)
-      setList(null);
-      setError(errText(e));
-    }
-  };
+  const { list, offline, busy, error } = useOnlineSpaces();
   useEffect(() => {
-    if (!ownerId) return;
-    void loadPreviewSpaces().then((sp) => {
-      setSpaces(sp);
-      void refresh(sp);
-    });
-  }, [ownerId]);
-  useEffect(() => {
-    if (spaces && refreshKey) void Promise.resolve(spaces).then(refresh);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [refreshKey]);
+    if (ownerId && refreshKey) void refreshSpaces();
+  }, [ownerId, refreshKey]);
 
   if (!ownerId) return null;
-
-  async function open(w: OnlineSpaceInfo) {
-    if (!spaces) return;
-    setBusy(w.workspaceId);
-    setError(null);
-    try {
-      const sync = await spaces.sync(w.workspaceId);
-      const SQL = await loadSql();
-      await ensureSpaceJournal(SQL, spaces, spaces.journal, w.workspaceId);
-      // E-1 때 만든 이 기기 일지면 E-3 동기화 표·트리거를 더한다(한 번, 같은 묶음)
-      const head = JSON.parse(
-        new TextDecoder().decode(await spaces.read(w.workspaceId, "header.json")),
-      ) as CachedHeaderLike;
-      const d = await spaces.journal.open(w.workspaceId);
-      try {
-        await upgradeSyncTables(d, head.assets, Number(head.header.sourceSchema));
-      } finally {
-        await d.close();
-      }
-      // 실앱: 업무노트·메모보드·파일 목록을 정식판과 같은 별도 OS 창으로(Tauri 창 다리)
-      const native = isTauri() ? (await import("../../platform/tauri")).tauriPlatform : null;
-      setPlatformOverride(
-        createOnlinePlatform({
-          windows: native
-            ? { cabi: native.cabi, folderWindows: native.folderWindows, cabinetWindow: native.cabinetWindow }
-            : undefined,
-          SQL,
-          openJournal: () => spaces.journal.open(w.workspaceId),
-          workspaceId: w.workspaceId,
-          theme: readStoredTheme(),
-          onWrite: schedulePush,
-        }),
-      );
-      startOnlineSync(w.workspaceId, spaces.transport);
-      onOpened({ workspaceId: w.workspaceId, label: when(w.createdAt), stale: sync.stale });
-    } catch (e) {
-      setError(errText(e));
-      setBusy(null);
-    }
-  }
 
   return (
     <section className={styles.card} data-testid="online-spaces">
@@ -166,7 +65,7 @@ export function OnlineSpacesCard({
                 type="button"
                 className={styles.primary}
                 disabled={busy !== null}
-                onClick={() => void open(w)}
+                onClick={() => void openOnlineSpace(w)}
                 data-testid="online-space-open"
               >
                 {busy === w.workspaceId ? S.opening : S.open}
@@ -179,8 +78,8 @@ export function OnlineSpacesCard({
         <button
           type="button"
           className={styles.secondary}
-          disabled={busy !== null || !spaces}
-          onClick={() => spaces && void refresh(spaces)}
+          disabled={busy !== null}
+          onClick={() => void refreshSpaces()}
         >
           {S.refresh}
         </button>
@@ -196,7 +95,7 @@ export function OnlineSpacesCard({
 
 /** 공간 이름표: 구름 표시 모노그램 + 이름(서버 목록 025, 없으면 기본 모양과 "온라인 워크스페이스") */
 function SpaceName({ w }: { w: OnlineSpaceInfo }) {
-  const m = parseMeta(w.workspace);
+  const m = metaOf(w);
   return (
     <span className={own.spaceName} data-testid="online-space-name">
       <WorkspaceMark icon={m?.icon ?? "folder"} color={m?.color ?? "c1"} size={26} online />
@@ -205,84 +104,20 @@ function SpaceName({ w }: { w: OnlineSpaceInfo }) {
   );
 }
 
-/** 목록으로: 입력 중인 글·별도 창(노트·메모보드) 저장 → 일지 닫기 → 남은 창 정리 → 창을 새로 불러 Preview 첫 화면으로 */
-async function closeSpace() {
-  markClosing("list");
-  stopOnlineSync();
-  await within(closeOnlineSpace(), 5000);
-  const p = useAppStore.getState().platform;
-  await Promise.allSettled([destroyChildWindows(), p?.cabi.closeAll()]);
-  location.reload();
-}
-
 const Y = S.sync;
-const clock = (t: number) => new Date(t).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" });
-function syncText(s: ReturnType<typeof useOnlineSync.getState>["status"]) {
-  if (s.phase === "syncing") return Y.syncing;
-  if (s.phase === "offline") return Y.offline(s.pending);
-  if (s.phase === "error") return Y.error(s.error ?? "UNKNOWN");
-  if (s.pending) return Y.pending(s.pending);
-  return s.lastSyncedAt ? Y.synced(clock(s.lastSyncedAt)) : Y.saved;
-}
+const onlineChrome = {
+  RailButton: OnlineRailButton,
+  StatusPill: OnlineStatusPill,
+  switchAt: openOnlineSpaceAt,
+};
 
-/** 열린 온라인 공간: 위 띠(동기화 상태·지금 동기화·충돌·목록으로) + 지금 앱 화면 */
-export function OnlineWorkspaceShell({ space }: { space: OpenedSpace }) {
-  const { status, received, conflicts, runs, refreshed } = useOnlineSync();
+/** 열린 온라인 공간: 지금 앱 화면 그대로 + 레일 공간 메뉴·상단 동기화 알약(onlineSlots, 위 띠 없음 — U2) */
+export function OnlineWorkspaceShell() {
+  const conflicts = useOnlineSync((s) => s.conflicts);
+  // 앱 화면이 그리기 전에 끼움 자리를 채운다(같은 값이라 여러 번 불러도 됨)
+  setOnlineSlots(onlineChrome);
   return (
     <div className={shell.frame} data-testid="online-workspace">
-      <div className={shell.band} role="note">
-        <span className={shell.label}>{S.bandLabel}</span>
-        <span className={shell.meta}>
-          {S.bandMeta(space.label)}
-          {space.stale ? ` · ${S.stale}` : ""}
-        </span>
-        <span
-          className={shell.status}
-          data-testid="online-sync-status"
-          data-phase={status.phase}
-          data-runs={runs}
-          data-refreshed={refreshed}
-        >
-          {syncText(status)}
-        </span>
-        {received > 0 && (
-          <button
-            type="button"
-            className={shell.back}
-            onClick={() => void applyReceived()}
-            data-testid="online-sync-reload"
-          >
-            {Y.received(received)} · {Y.reload}
-          </button>
-        )}
-        {status.conflicts > 0 && (
-          <button
-            type="button"
-            className={`${shell.back} ${shell.warn}`}
-            onClick={() => void loadConflicts()}
-            data-testid="online-sync-conflicts"
-          >
-            {Y.conflicts(status.conflicts)}
-          </button>
-        )}
-        <button
-          type="button"
-          className={shell.back}
-          disabled={status.phase === "syncing"}
-          onClick={() => void syncNow()}
-          data-testid="online-sync-now"
-        >
-          {Y.now}
-        </button>
-        <button
-          type="button"
-          className={shell.back}
-          onClick={() => void closeSpace()}
-          data-testid="online-workspace-close"
-        >
-          {S.close}
-        </button>
-      </div>
       <div className={shell.app}>
         <App />
       </div>

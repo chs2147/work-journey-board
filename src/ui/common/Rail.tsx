@@ -12,6 +12,7 @@ import { useAppStore } from "./appStore";
 import { closeKanban, openKanban, useKanban } from "../kanban/kanbanStore";
 import styles from "./Rail.module.css";
 import { WorkspaceRailButton } from "./WorkspaceSwitcher";
+import { onlineSlots } from "./onlineSlots";
 import { closeUniverse, openUniverse, usePack, useUniverse } from "../universe/universeStore";
 import { osText } from "../../shared/platformText";
 import { sameDir } from "../../domain/workspace";
@@ -137,7 +138,10 @@ export function Rail() {
       style={band ? ({ "--ws-band": `var(--cat-${band})` } as React.CSSProperties) : undefined}
       aria-label={STR.rail.label}
     >
-      <WorkspaceRailButton />
+      {(() => {
+        const Online = onlineSlots()?.RailButton;
+        return Online ? <Online /> : <WorkspaceRailButton />;
+      })()}
       <span className={styles.sep} aria-hidden="true" />
       <button
         type="button"

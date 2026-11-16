@@ -596,6 +596,27 @@ export async function closeOnlineSpace() {
   await closeCurrent();
 }
 
+/**
+ * Connected Preview 온라인 공간 → 다른 온라인 공간(docs/v2-design/95 U1). 공간 전환과 같은 한 길(CLAUDE.md 4-7):
+ * 별도 창 저장 후 닫기 → 지금 일지 닫기(flushPending → finishNote → detachAll → 드라이버 닫기) → 새 공간 플랫폼으로 열기.
+ * 앱 닫기 연결(onExit)은 처음 플랫폼에 한 번만 걸어 두었으므로 다시 걸지 않는다(그 처리기는 지금 일지 기준).
+ */
+export async function switchOnlineSpace(
+  next: Platform,
+  setOverride: (p: Platform) => void,
+): Promise<boolean> {
+  await closeOnlineSpace();
+  setOverride(next);
+  set({ platform: next, settingsOpen: false, switcherOpen: false });
+  closeInsights();
+  const config = await next.loadConfig();
+  if (!config) return false;
+  set({ workspaces: readEntries(config) });
+  const ok = await openAt(config.dataDir);
+  if (ok) focusStartCell();
+  return ok;
+}
+
 /** Connected Preview 동기화(docs/v2-design/91): 지금 열린 일지의 연결·차례 줄(앱 쓰기와 섞이지 않게). 없으면 null */
 export function onlineJournal(): { driver: SqlDriver; exclusive<T>(w: () => Promise<T>): Promise<T> } | null {
   const j = get().journal;

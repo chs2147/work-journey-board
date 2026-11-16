@@ -1,6 +1,6 @@
 # V2 설계·PoC 중단/재개 기록
 
-**현재 재개 정본:** [95. 온라인 UX 통합](95-online-ux-integration.md)(U1~U7 추천안 + U8 구름 표시 확정, UX-1·UX-2 완료 → UX-3 공간 메뉴·알약) — 로드맵: E+([93](93-e-plus-sync-hardening.md))·1.40.1·초대 전용 가입([94](94-invite-only-signup.md)) 완료 → **UX 통합** → G 운영 준비 → F 다국어([92](92-f-stage-i18n-design.md), 보류).
+**현재 재개 정본:** [95. 온라인 UX 통합](95-online-ux-integration.md)(U1~U7 추천안 + U8 구름 표시 확정, UX-1~UX-3 완료 → UX-4 설정 › 계정·로그아웃·충돌 화면) — 로드맵: E+([93](93-e-plus-sync-hardening.md))·1.40.1·초대 전용 가입([94](94-invite-only-signup.md)) 완료 → **UX 통합** → G 운영 준비 → F 다국어([92](92-f-stage-i18n-design.md), 보류).
 
 2026-11-09 UTC · V2 설계/PoC 중단 지점을 보존한 뒤 복귀했다. 사용자 요청으로 main 1.23.1 패치(`d11a0ca`)를 v2-design에 병합했다.
 
