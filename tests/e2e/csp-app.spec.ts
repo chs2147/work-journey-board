@@ -387,8 +387,13 @@ test("Preview CSP 그대로: 온라인 사본 — wasm을 받아 오지 않고 �
     if (/Content Security Policy|Refused/.test(m.text())) blocked.push(m.text());
   });
   await page.route("**/*", async (route) => {
-    const r = await route.fetch();
-    await route.fulfill({ response: r, headers: { ...r.headers(), "content-security-policy": csp } });
+    // 시험이 끝나 페이지가 닫히는 순간의 요청은 응답할 곳이 없다 — 그 오류만 무시
+    try {
+      const r = await route.fetch();
+      await route.fulfill({ response: r, headers: { ...r.headers(), "content-security-policy": csp } });
+    } catch (e) {
+      if (!/disposed|closed/i.test(String(e))) throw e;
+    }
   });
   await page.goto("/?profile=connected-preview");
   await page.getByTestId("preview-email-input").fill("virtual@example.invalid");

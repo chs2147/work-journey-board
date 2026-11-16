@@ -15,6 +15,19 @@ import type { AppConfig, CabinetWindowBridge, FolderWindows, Platform, SpaceDriv
 
 export const ONLINE_ROOT = "/online";
 
+/** 감싼 일지 드라이버 → 안쪽 드라이버. 동기화 엔진은 안쪽으로 써서 자기 쓰기가 "앱이 고침" 신호를 내지 않게 한다
+ * (E-3 실기: 엔진 쓰기 → 신호 → 1초 뒤 동기화 → 엔진 쓰기 … 고리로 매초 동기화) */
+const rawOf = new WeakMap<SqlDriver, SqlDriver>();
+export const rawJournalDriver = (d: SqlDriver): SqlDriver => rawOf.get(d) ?? d;
+
+/** 정해진 시간 안에 끝나지 않으면 기다리지 않고 넘어간다(종료가 멈추지 않게) */
+export function within<T>(work: Promise<T>, ms: number): Promise<T | undefined> {
+  return Promise.race([
+    work.catch(() => undefined),
+    new Promise<undefined>((r) => setTimeout(() => r(undefined), ms)),
+  ]);
+}
+
 export function createOnlinePlatform(opts: {
   SQL: SqlJsStatic;
   /** 이 기기 일지 열기(열 때마다 새 드라이버) */
@@ -35,7 +48,7 @@ export function createOnlinePlatform(opts: {
   /** 백업 사본(VACUUM INTO '<가짜 경로>')은 이 기기 일지의 바이트를 받아 가짜 폴더에 둔다 */
   const journalDriver = async (): Promise<SqlDriver> => {
     const d = await opts.openJournal();
-    return {
+    const wrapped: SqlDriver = {
       label: d.label,
       async execute(sql, params) {
         const m = /^VACUUM INTO '(.+)'$/s.exec(sql.trim());
@@ -59,6 +72,8 @@ export function createOnlinePlatform(opts: {
       },
       close: () => d.close(),
     };
+    rawOf.set(wrapped, d);
+    return wrapped;
   };
   let config: AppConfig = { dataDir, ...(opts.theme ? { theme: opts.theme } : {}) };
   const none = async () => undefined;
@@ -140,11 +155,19 @@ async function closeWithChildren(handler: () => Promise<void>) {
     if (closing) return;
     closing = true;
     event.preventDefault();
-    // 저장이 실패해도 창은 닫는다 — 이 기기 일지는 쓴 만큼 이미 파일에 있다(트랜잭션 단위)
-    await handler().catch(() => undefined);
+    // 무엇이 막혀도 끝난다: 동기화 멈춤 → 저장(시간 제한) → 일지 닫기(시간 제한) → 별도 창 정리 → 프로세스 종료.
+    // 이 기기 일지는 쓴 만큼 이미 파일에 있다(트랜잭션 단위) — 저장이 늦거나 실패해도 닫는다.
+    // Rust 쪽에도 닫기 요청 뒤 일정 시간이 지나면 강제로 끝내는 안전장치가 있다(lib.rs, Preview만)
+    const { stopOnlineSync } = await import("../ui/preview/onlineSync");
+    stopOnlineSync();
+    await within(handler(), 5000);
     const { closeOnlineSpace } = await import("../ui/common/appController");
-    await closeOnlineSpace().catch(() => undefined);
-    await destroyChildWindows();
-    await win.destroy();
+    await within(closeOnlineSpace(), 3000);
+    await within(destroyChildWindows(), 2000);
+    try {
+      await invoke("preview_exit");
+    } catch {
+      await win.destroy().catch(() => undefined);
+    }
   });
 }

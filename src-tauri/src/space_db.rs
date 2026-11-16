@@ -216,14 +216,35 @@ pub fn create(dir: &Path, bytes: &[u8]) -> Result<(), String> {
     fs::rename(&tmp, &path).map_err(|_| "STORE".to_string())
 }
 
+const CLOSE_LIMIT: std::time::Duration = std::time::Duration::from_secs(3);
+/// 시간 안에 못 닫아도 넘어간다 — DELETE 저장 방식이라 끝나지 않은 트랜잭션은 다음에 열 때 되돌려진다
+async fn close_within(p: SqlitePool) {
+    let (tx, rx) = std::sync::mpsc::channel();
+    tauri::async_runtime::spawn(async move {
+        p.close().await;
+        let _ = tx.send(());
+    });
+    let _ = tauri::async_runtime::spawn_blocking(move || rx.recv_timeout(CLOSE_LIMIT)).await;
+}
+
 /// 공간마다 열린 연결(키 = 공간 폴더 경로 — 계정이 바뀌면 다른 키)
 #[derive(Default)]
 pub struct SpaceDbState(tauri::async_runtime::Mutex<HashMap<PathBuf, SqlitePool>>);
 
 impl SpaceDbState {
+    /// 꺼낸 뒤 잠금을 먼저 놓고 닫는다(닫는 동안 다른 명령이 잠금에서 멈추지 않게), 닫기는 시간 제한
+    /// — E-3 실기: 닫기가 잠금을 쥔 채 연결을 기다려 앱이 끝나지 않던 문제
     pub async fn close(&self, dir: &Path) {
-        if let Some(p) = self.0.lock().await.remove(dir) {
-            p.close().await;
+        let pool = self.0.lock().await.remove(dir);
+        if let Some(p) = pool {
+            close_within(p).await;
+        }
+    }
+    /// 열린 공간 일지를 모두 닫는다(앱 종료)
+    pub async fn close_all(&self) {
+        let pools: Vec<SqlitePool> = self.0.lock().await.drain().map(|(_, p)| p).collect();
+        for p in pools {
+            close_within(p).await;
         }
     }
     async fn pool(&self, dir: &Path) -> Result<SqlitePool, String> {
@@ -286,6 +307,26 @@ pub async fn space_db_close(
     workspace_id: String,
 ) -> Result<(), String> {
     state.close(&dir_of(&app, &workspace_id)?).await;
+    Ok(())
+}
+/// 닫기 요청 뒤 이 시간 안에 끝나지 않으면 프로세스를 끝낸다(한 번만 건다)
+pub const EXIT_WATCHDOG: std::time::Duration = std::time::Duration::from_secs(15);
+static WATCHDOG: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+pub fn arm_exit_watchdog() {
+    if WATCHDOG.swap(true, std::sync::atomic::Ordering::SeqCst) {
+        return;
+    }
+    std::thread::spawn(|| {
+        std::thread::sleep(EXIT_WATCHDOG);
+        std::process::exit(0);
+    });
+}
+
+/// Preview 앱 종료(온라인 공간 창 닫기의 마지막 단계) — 열린 공간 일지를 닫고(시간 제한) 프로세스를 끝낸다
+#[tauri::command]
+pub async fn preview_exit(app: AppHandle, state: State<'_, SpaceDbState>) -> Result<(), String> {
+    state.close_all().await;
+    app.exit(0);
     Ok(())
 }
 #[tauri::command]
@@ -388,6 +429,28 @@ mod tests {
         create(&space, &bytes).unwrap();
         assert_eq!(create(&space, &bytes).unwrap_err(), "JOURNAL_EXISTS");
         open_pool(&space.join(JOURNAL)).await.unwrap()
+    }
+
+    #[test]
+    fn close_all_finishes_and_empties() {
+        tauri::async_runtime::block_on(async {
+            let d = tmp();
+            let pool = fresh_journal(&d).await;
+            let state = SpaceDbState::default();
+            state.0.lock().await.insert(d.join("space"), pool.clone());
+            // 연결을 쓰는 중이어도(트랜잭션 열린 채) 정해진 시간 안에 끝난다
+            let mut tx = pool.begin().await.unwrap();
+            sqlx::query("INSERT INTO t(id,a) VALUES(9,'x')")
+                .execute(&mut *tx)
+                .await
+                .unwrap();
+            let t0 = std::time::Instant::now();
+            state.close_all().await;
+            assert!(t0.elapsed() < CLOSE_LIMIT + std::time::Duration::from_secs(2));
+            assert!(state.0.lock().await.is_empty());
+            drop(tx);
+            fs::remove_dir_all(d).ok();
+        });
     }
 
     #[test]

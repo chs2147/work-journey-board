@@ -102,6 +102,11 @@ test("E-3·E-5: 고치면 약 1초 뒤 보내 '동기화됨', 다른 기기 변�
       ),
     )
     .toBe(0);
+  // 가만히 두면 동기화를 되풀이하지 않는다(E-3 실기: 엔진 자기 쓰기 → 보내기 예약 고리로 매초 동기화)
+  const runs = async () => Number(await syncStatus(page).getAttribute("data-runs"));
+  const before = await runs();
+  await page.waitForTimeout(5000);
+  expect((await runs()) - before).toBeLessThanOrEqual(1);
   // 다른 기기가 화면에 보이는 기록 하나를 고침 → 지금 동기화 → 화면에 보인다
   const shown = await page.locator("[data-item-id]").last().getAttribute("data-item-id");
   await page.evaluate(

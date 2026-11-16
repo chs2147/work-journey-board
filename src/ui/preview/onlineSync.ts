@@ -11,18 +11,22 @@ import {
   type SyncTransport,
 } from "../../preview/spaceSync";
 import { onlineJournal, reloadOnlineSpace } from "../common/appController";
+import { rawJournalDriver } from "../../platform/onlinePlatform";
 
 export const PUSH_DELAY_MS = 1000;
 export const PULL_EVERY_MS = 30_000;
 
 interface State {
   status: SyncStatus;
+  /** 동기화를 실제로 돌린 횟수(시험·진단용 — 화면 글에는 쓰지 않음) */
+  runs: number;
   /** 받아서 적용했지만 화면에 아직 반영하지 않은 기록 수 */
   received: number;
   conflicts: ConflictItem[] | null;
 }
 export const useOnlineSync = create<State>(() => ({
   status: { phase: "idle", pending: 0, conflicts: 0, lastSyncedAt: null, error: null },
+  runs: 0,
   received: 0,
   conflicts: null,
 }));
@@ -37,6 +41,7 @@ const editing = () => {
 
 async function run() {
   if (!engine || !onlineJournal()) return;
+  useOnlineSync.setState((s) => ({ runs: s.runs + 1 }));
   const got = await engine.syncNow();
   if (got > 0) {
     const received = useOnlineSync.getState().received + got;
@@ -51,14 +56,34 @@ export async function applyReceived() {
   await reloadOnlineSpace();
 }
 
+/** "동기화 중…"은 0.6초 넘게 걸릴 때만 보인다(짧은 동기화마다 띠가 깜박이지 않게 — E-3 실기) */
+const SYNCING_SHOW_MS = 600;
+let syncingTimer: ReturnType<typeof setTimeout> | null = null;
+function showStatus(status: SyncStatus) {
+  if (syncingTimer) clearTimeout(syncingTimer);
+  syncingTimer = null;
+  if (status.phase === "syncing") {
+    syncingTimer = setTimeout(() => {
+      syncingTimer = null;
+      useOnlineSync.setState({ status });
+    }, SYNCING_SHOW_MS);
+    return;
+  }
+  useOnlineSync.setState({ status });
+}
+
 export function startOnlineSync(workspaceId: string, transport: SyncTransport) {
   stopOnlineSync();
   engine = createSpaceSync({
     workspaceId,
     transport,
-    journal: onlineJournal,
+    // 엔진은 안쪽 드라이버로 쓴다 — 엔진 자신의 쓰기가 "앱이 고침" 신호(보내기 예약)를 내지 않게
+    journal: () => {
+      const j = onlineJournal();
+      return j && { driver: rawJournalDriver(j.driver), exclusive: j.exclusive };
+    },
     randomUUID: () => crypto.randomUUID(),
-    onStatus: (status) => useOnlineSync.setState({ status }),
+    onStatus: showStatus,
   });
   pullTimer = setInterval(() => {
     if (document.hasFocus()) void run();
@@ -72,6 +97,8 @@ export function stopOnlineSync() {
   if (pullTimer) clearInterval(pullTimer);
   pushTimer = pullTimer = null;
   globalThis.removeEventListener?.("focus", onFocus);
+  if (syncingTimer) clearTimeout(syncingTimer);
+  syncingTimer = null;
   engine = null;
 }
 /** 이 기기 일지에 쓰기가 있을 때 — 약 1초 묶어 보내기 */
