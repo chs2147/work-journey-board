@@ -24,6 +24,10 @@
   .btn.danger { color: var(--danger); border-color: transparent; background: none; }
   .btn.warn { color: var(--danger); border-color: var(--danger); }
   .mark { width: 30px; height: 30px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; color: #fff; flex: none; }
+  .mark.on { position: relative; }
+  .mark.on .cb { position: absolute; right: -3px; bottom: -3px; width: 15px; height: 15px; border-radius: 50%; background: #fff; display: grid; place-items: center; box-shadow: 0 0 0 1.5px var(--surface), 0 1px 2px rgb(0 0 0 / .25); }
+  .mark.big { width: 40px; height: 40px; border-radius: 11px; }
+  .mark.big.on .cb { width: 19px; height: 19px; }
   .type { display: inline-flex; align-items: center; gap: 4px; height: 20px; padding: 0 6px; border-radius: 4px; font-size: 11px; border: 1px solid var(--line); color: var(--text-2); background: var(--surface-sub); white-space: nowrap; }
   .type.online { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, transparent); background: color-mix(in srgb, var(--accent) 9%, transparent); }
   .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: none; }
@@ -100,16 +104,23 @@
       <div><div class="name">개인</div><div class="meta"><span class="type"><svg width="12" height="12"><use href="#disk"/></svg>오프라인 전용</span></div></div><span class="key">Ctrl+Alt+2</span></div>
     <hr />
     <div class="sec"><span>온라인 · virtual@example.com</span></div>
-    <div class="item"><span class="mark" style="background:#1f6fd1"><svg width="16" height="16"><use href="#brief"/></svg></span>
+    <div class="item"><span class="mark on" style="background:#1f6fd1"><svg width="16" height="16"><use href="#brief"/></svg><span class="cb" style="color:#1f6fd1"><svg width="11" height="11" viewBox="0 0 16 16"><path d="M4.6 12.2h7a2.6 2.6 0 0 0 .3-5.2 3.8 3.8 0 0 0-7.3-.8A3 3 0 0 0 4.6 12.2Z" fill="currentColor" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg></span></span>
       <div><div class="name">회사</div><div class="meta"><span class="type online"><svg width="12" height="12"><use href="#cloud"/></svg>온라인</span><span class="dot ok"></span>동기화됨 · 10:32</div></div><span class="key">Ctrl+Alt+3</span></div>
-    <div class="item"><span class="mark" style="background:#8c5bd1">프</span>
+    <div class="item"><span class="mark on" style="background:#8c5bd1">프<span class="cb" style="color:#8c5bd1"><svg width="11" height="11" viewBox="0 0 16 16"><path d="M4.6 12.2h7a2.6 2.6 0 0 0 .3-5.2 3.8 3.8 0 0 0-7.3-.8A3 3 0 0 0 4.6 12.2Z" fill="currentColor" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg></span></span>
       <div><div class="name">프로젝트 A</div><div class="meta"><span class="type online"><svg width="12" height="12"><use href="#cloud"/></svg>온라인</span><span class="dot wait"></span>전송 대기 3</div></div><span class="key">Ctrl+Alt+4</span></div>
-    <div class="item"><span class="mark" style="background:#c47a2c">팀</span>
+    <div class="item"><span class="mark on" style="background:#c47a2c">팀<span class="cb" style="color:#c47a2c"><svg width="11" height="11" viewBox="0 0 16 16"><path d="M4.6 12.2h7a2.6 2.6 0 0 0 .3-5.2 3.8 3.8 0 0 0-7.3-.8A3 3 0 0 0 4.6 12.2Z" fill="currentColor" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg></span></span>
       <div><div class="name">팀 회의록</div><div class="meta"><span class="type online"><svg width="12" height="12"><use href="#cloud"/></svg>온라인</span><span class="dot off"></span>이 기기에 없음</div></div></div>
     <hr />
     <div class="act accent">+ 새 워크스페이스…</div>
     <div class="act accent row" style="gap:6px"><svg width="14" height="14"><use href="#cloud"/></svg>온라인 워크스페이스 만들기…</div>
     <div class="act">워크스페이스 관리…</div>
+  </div>
+  <div class="abs card menu" style="left:460px;top:440px;width:300px">
+    <div class="sec"><span>레일 단추 — 같은 크기, 온라인은 구름</span></div>
+    <div class="row" style="gap:22px;padding:8px 10px 10px">
+      <div style="text-align:center"><span class="mark big" style="background:#1f6fd1"><svg width="22" height="22"><use href="#brief"/></svg></span><div class="small muted" style="margin-top:6px">오프라인 전용</div></div>
+      <div style="text-align:center"><span class="mark big on" style="background:#1f6fd1"><svg width="22" height="22"><use href="#brief"/></svg><span class="cb" style="color:#1f6fd1"><svg width="14" height="14" viewBox="0 0 16 16"><path d="M4.6 12.2h7a2.6 2.6 0 0 0 .3-5.2 3.8 3.8 0 0 0-7.3-.8A3 3 0 0 0 4.6 12.2Z" fill="currentColor" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg></span></span><div class="small muted" style="margin-top:6px">온라인</div></div>
+    </div>
   </div>
   <div class="abs card menu" style="left:460px;top:104px">
     <div class="sec"><span>로그인하지 않았을 때</span></div>
@@ -153,7 +164,7 @@
   <div class="abs cover" style="left:1300px;top:58px;width:136px;height:30px"></div>
   <span class="abs pill bad" style="right:16px;top:59px"><svg width="14" height="14"><use href="#warn"/></svg>충돌 1</span>
   <div class="abs card" style="right:16px;top:96px;width:340px;padding:16px">
-    <div class="row"><span class="mark" style="background:#1f6fd1;width:26px;height:26px"><svg width="14" height="14"><use href="#brief"/></svg></span>
+    <div class="row"><span class="mark on" style="background:#1f6fd1;width:26px;height:26px"><svg width="14" height="14"><use href="#brief"/></svg><span class="cb" style="color:#1f6fd1"><svg width="11" height="11" viewBox="0 0 16 16"><path d="M4.6 12.2h7a2.6 2.6 0 0 0 .3-5.2 3.8 3.8 0 0 0-7.3-.8A3 3 0 0 0 4.6 12.2Z" fill="currentColor" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg></span></span>
       <div><div class="b">회사</div><div class="small muted row" style="gap:5px"><span class="type online"><svg width="12" height="12"><use href="#cloud"/></svg>온라인</span>virtual@example.com</div></div></div>
     <div class="kv" style="margin-top:14px">
       <span class="muted">이 기기</span><span class="row" style="gap:6px"><span class="dot ok"></span>저장됨</span>
@@ -207,16 +218,16 @@
     <h1>워크스페이스</h1>
     <div class="scard">
       <h2>공간 목록</h2>
-      <div class="srow"><span class="mark" style="background:#1f6fd1"><svg width="16" height="16"><use href="#brief"/></svg></span>
+      <div class="srow"><span class="mark on" style="background:#1f6fd1"><svg width="16" height="16"><use href="#brief"/></svg><span class="cb" style="color:#1f6fd1"><svg width="11" height="11" viewBox="0 0 16 16"><path d="M4.6 12.2h7a2.6 2.6 0 0 0 .3-5.2 3.8 3.8 0 0 0-7.3-.8A3 3 0 0 0 4.6 12.2Z" fill="currentColor" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg></span></span>
         <div style="flex:1"><div class="row" style="gap:6px"><span class="b">회사</span><span class="type"><svg width="12" height="12"><use href="#disk"/></svg>오프라인 전용</span><span class="type online" style="border:0">지금 연 공간</span></div><div class="small muted">/demo/WorkJourney</div></div>
         <span class="btn">이름·색·아이콘</span><span class="btn">폴더 열기</span><span class="btn">온라인으로 복제…</span></div>
-      <div class="srow"><span class="mark" style="background:#1f6fd1"><svg width="16" height="16"><use href="#brief"/></svg></span>
+      <div class="srow"><span class="mark on" style="background:#1f6fd1"><svg width="16" height="16"><use href="#brief"/></svg><span class="cb" style="color:#1f6fd1"><svg width="11" height="11" viewBox="0 0 16 16"><path d="M4.6 12.2h7a2.6 2.6 0 0 0 .3-5.2 3.8 3.8 0 0 0-7.3-.8A3 3 0 0 0 4.6 12.2Z" fill="currentColor" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg></span></span>
         <div style="flex:1"><div class="row" style="gap:6px"><span class="b">회사</span><span class="type online"><svg width="12" height="12"><use href="#cloud"/></svg>온라인</span></div><div class="small muted row" style="gap:5px"><span class="dot ok"></span>동기화됨 · 10:32 · 2026-11-15 복제</div></div>
         <span class="btn">이름·색·아이콘</span><span class="btn danger">이 기기에서 지우기…</span></div>
-      <div class="srow"><span class="mark" style="background:#8c5bd1">프</span>
+      <div class="srow"><span class="mark on" style="background:#8c5bd1">프<span class="cb" style="color:#8c5bd1"><svg width="11" height="11" viewBox="0 0 16 16"><path d="M4.6 12.2h7a2.6 2.6 0 0 0 .3-5.2 3.8 3.8 0 0 0-7.3-.8A3 3 0 0 0 4.6 12.2Z" fill="currentColor" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg></span></span>
         <div style="flex:1"><div class="row" style="gap:6px"><span class="b">프로젝트 A</span><span class="type online"><svg width="12" height="12"><use href="#cloud"/></svg>온라인</span></div><div class="small muted row" style="gap:5px"><span class="dot wait"></span>전송 대기 3</div></div>
         <span class="btn">이름·색·아이콘</span><span class="btn danger">이 기기에서 지우기…</span></div>
-      <div class="srow"><span class="mark" style="background:#c47a2c">팀</span>
+      <div class="srow"><span class="mark on" style="background:#c47a2c">팀<span class="cb" style="color:#c47a2c"><svg width="11" height="11" viewBox="0 0 16 16"><path d="M4.6 12.2h7a2.6 2.6 0 0 0 .3-5.2 3.8 3.8 0 0 0-7.3-.8A3 3 0 0 0 4.6 12.2Z" fill="currentColor" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg></span></span>
         <div style="flex:1"><div class="row" style="gap:6px"><span class="b">팀 회의록</span><span class="type online"><svg width="12" height="12"><use href="#cloud"/></svg>온라인</span></div><div class="small muted row" style="gap:5px"><span class="dot off"></span>이 기기에 없음</div></div>
         <span class="btn">이 기기에 받기</span></div>
       <div class="srow" style="gap:8px"><span class="btn primary">+ 새 워크스페이스…</span><span class="btn"><svg width="14" height="14"><use href="#cloud"/></svg>온라인 워크스페이스 만들기…</span><span class="btn">기존 폴더를 워크스페이스로 추가…</span></div>

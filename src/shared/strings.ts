@@ -2310,6 +2310,7 @@ export const STR_BASE = {
   },
   workspace: {
     word: "워크스페이스",
+    onlineMark: "온라인 워크스페이스",
     rail: (name: string) => `워크스페이스: ${name} — 눌러서 전환 (Ctrl+Alt+0)`,
     menuLabel: "워크스페이스",
     current: "지금 연 공간",

@@ -4,6 +4,7 @@
 import type { ReactNode } from "react";
 import type { WorkspaceIcon } from "../../domain/workspace";
 import type { CategoryColorKey } from "../../shared/palette";
+import { STR } from "../../shared/strings";
 import styles from "./WorkspaceMark.module.css";
 
 /** 💼 📁 📅 📋 📝 ✏️ 📓 📚 💡 📈 📊 📌 📎 💻 ✉️ 📦 🏷 🔒 🔑 🔧 🔍 ⏰ ⌛ 🗂 ✂️ 📐 💰 💳 */
@@ -201,12 +202,16 @@ export function WorkspaceMark({
   color,
   size = 28,
   title,
+  online = false,
 }: {
   icon: WorkspaceIcon;
   color: CategoryColorKey;
   size?: number;
   title?: string;
+  /** 온라인 워크스페이스: 같은 크기 모노그램 오른쪽 아래에 구름 표시(docs/v2-design/95 U8) */
+  online?: boolean;
 }) {
+  const badge = Math.max(10, Math.round(size * 0.48));
   return (
     <span
       className={styles.mark}
@@ -216,8 +221,32 @@ export function WorkspaceMark({
       role={title ? "img" : undefined}
       aria-hidden={title ? undefined : true}
       data-icon={icon}
+      data-online={online ? "" : undefined}
     >
       <WorkspaceGlyph icon={icon} size={Math.round(size * 0.62)} />
+      {online && (
+        <span
+          className={styles.cloud}
+          style={{ width: badge, height: badge, color: `var(--cat-${color})` }}
+          data-testid="workspace-cloud"
+          title={title ? undefined : STR.workspace.onlineMark}
+        >
+          <svg
+            viewBox="0 0 16 16"
+            width={Math.round(badge * 0.78)}
+            height={Math.round(badge * 0.78)}
+            aria-hidden
+          >
+            <path
+              d="M4.6 12.2h7a2.6 2.6 0 0 0 .3-5.2 3.8 3.8 0 0 0-7.3-.8A3 3 0 0 0 4.6 12.2Z"
+              fill="currentColor"
+              stroke="currentColor"
+              strokeWidth="1.2"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </span>
+      )}
     </span>
   );
 }
