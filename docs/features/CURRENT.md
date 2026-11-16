@@ -1,10 +1,10 @@
-# 현재 Feature List — v1.40.0
+# 현재 Feature List — v1.40.1
 
-기준일 2026-11-13 · DB 구조 v20 · 활성 266개 · 제거/대체 3개 · 미제공/계획 3개
+기준일 2026-11-16 · DB 구조 v20 · 활성 267개 · 제거/대체 3개 · 미제공/계획 3개
 
 원본은 [catalog.json](catalog.json), 운영 규칙은 [README.md](README.md)입니다. 최초 제공 버전은 0.x 개발판을 포함한 비RC 출시 이력 기준이며 RC는 별도 필드입니다.
 
-[검토용 Excel](exports/work-journey-board/Work-Journey-Board-Feature-List-v1.40.0.xlsx) · [현재 스냅샷](releases/work-journey-board/v1.40.0.json)
+[검토용 Excel](exports/work-journey-board/Work-Journey-Board-Feature-List-v1.40.1.xlsx) · [현재 스냅샷](releases/work-journey-board/v1.40.1.json)
 
 ## 주간 보드·입력
 
@@ -355,6 +355,7 @@
 | WJB-DIST-010 | 두 플랫폼 동시 정식 릴리스 — Windows·macOS 빌드가 모두 성공하면 같은 버전으로 게시한다. | 1.6.0 | 1.6.0 | windows / macos |
 | WJB-DIST-011 | 정식 Latest·체크섬 배포 — 정식 버전은 Latest로 표시하고 설치 파일과 체크섬을 함께 제공한다. | 1.0.0 | 1.0.0 | windows / macos |
 | WJB-DIST-012 | 호환되지 않는 일지 차단 — 앱이 지원하는 구조보다 새 일지는 열지 않고(쓰기 0) 데이터 버전·앱 버전과 [업데이트]·[다른 워크스페이스]를 보인다. 열린 동안 바뀌면 창 활성화·주기 백업 직전에 멈추고, 호환되지 않는 공간으로의 전환은 거부한다. | 1.35.0 | 1.35.0 | windows / macos |
+| WJB-DIST-013 | 앱 닫기 안내·안전장치 — 앱을 닫으면 바로 "저장하고 종료하는 중…" 안내(클릭·입력 차단), 10초 넘으면 늦어짐 안내, 45초 넘으면 저장을 기다리지 않고 창 닫기, 화면이 멈춰도 60초 뒤 프로세스 종료. 저장 실패면 오류 창·창 유지(안전장치 해제). | 1.40.1 | 1.40.1 | windows / macos |
 
 ## Universe
 

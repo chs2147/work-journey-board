@@ -1422,6 +1422,11 @@ export const STR_BASE = {
     openBackups: "백업 폴더 열기",
     retry: "다시 시도",
   },
+  /** 앱 닫기 안내(1.40.1) */
+  closing: {
+    exit: "저장하고 종료하는 중…",
+    slow: "종료가 늦어지고 있습니다 — 잠시만 기다려 주세요…",
+  },
   /** 새 판 확인·설치(improve-1027v4-spec 1절 B안) */
   update: {
     section: "업데이트",

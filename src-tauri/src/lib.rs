@@ -3,6 +3,7 @@
 mod backup_name;
 mod cabinet;
 mod db_batch;
+mod exit_guard;
 mod files;
 #[cfg(target_os = "macos")]
 mod menu;
@@ -87,8 +88,18 @@ pub fn run() {
             cabinet::cabinet_reveal,
             cabinet::cabinet_drop_bridge,
             cabinet::cabinet_resolve_shortcut,
-            cabinet::cabinet_drag_paths
+            cabinet::cabinet_drag_paths,
+            exit_guard::exit_guard_cancel
         ])
+        // 닫기 안전장치(1.40.1): 메인 창 닫기 요청마다 60초 안전장치를 건다
+        // (화면이 저장 실패로 창을 남기면 exit_guard_cancel로 푼다)
+        .on_window_event(|w, e| {
+            if w.label() == "main" {
+                if let tauri::WindowEvent::CloseRequested { .. } = e {
+                    exit_guard::arm();
+                }
+            }
+        })
         .run(tauri::generate_context!())
         .expect("Work Journey Board 실행 중 오류");
 }

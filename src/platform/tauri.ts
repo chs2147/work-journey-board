@@ -7,6 +7,8 @@ import { getAllWebviewWindows, WebviewWindow } from "@tauri-apps/api/webviewWind
 import Database from "@tauri-apps/plugin-sql";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { open, save, message } from "@tauri-apps/plugin-dialog";
+import { STR } from "../shared/strings";
+import { hideClosingOverlay, setClosingText, showClosingOverlay } from "../ui/common/closingOverlay";
 import { quickCheck, readSchemaVersion, backupStructureMatches } from "../data/migrate";
 import type { BackupFs } from "../data/backup";
 import { openTauriSql } from "../data/drivers/tauriSql";
@@ -260,6 +262,10 @@ const backupFs: BackupFs = {
   },
 };
 
+/** 닫기가 이 시간을 넘으면 "늦어지고 있습니다", 이 시간을 넘으면 저장을 기다리지 않고 닫는다(1.40.1) */
+export const CLOSE_SLOW_MS = 10_000;
+export const CLOSE_LIMIT_MS = 45_000;
+
 export const tauriPlatform: Platform = {
   kind: "tauri",
   cabi: tauriCabiBridge(),
@@ -351,11 +357,22 @@ export const tauriPlatform: Platform = {
       if (closing) return;
       closing = true;
       event.preventDefault();
+      // 닫기 안내·안전장치(1.40.1): 즉시 덮개 → 10초 넘으면 "늦어지고 있습니다" →
+      // 45초 넘으면 저장을 기다리지 않고 창을 닫는다(일지는 DELETE 저장 방식이라 안전, 종료 백업만 생략될 수 있음).
+      // 화면이 아예 멈추면 Rust가 60초 뒤 끝낸다(exit_guard.rs). 저장 실패면 예전처럼 창을 남기고 안전장치도 푼다.
+      showClosingOverlay(STR.closing.exit);
+      const slow = setTimeout(() => setClosingText(STR.closing.slow), CLOSE_SLOW_MS);
+      const hard = setTimeout(() => void win.destroy().catch(() => undefined), CLOSE_LIMIT_MS);
       try {
         await handler();
+        clearTimeout(slow);
         await win.destroy();
       } catch (error) {
+        clearTimeout(slow);
+        clearTimeout(hard);
         closing = false;
+        hideClosingOverlay();
+        await invoke("exit_guard_cancel").catch(() => undefined);
         await message(error instanceof Error ? error.message : String(error), {
           title: "Cabi.NET",
           kind: "error",
