@@ -307,18 +307,35 @@ test("UX-4: 충돌은 설정과 같은 전체 화면 — 이 기기 / 서버 나
   await page.keyboard.press("Escape");
   await page.locator("body").click({ position: { x: 5, y: 5 } });
   await expect(syncStatus(page)).toContainText("동기화됨", { timeout: 15_000 });
-  const item = page.locator("[data-item-id]").last();
-  const id = await item.getAttribute("data-item-id");
-  // 다른 기기가 서버에서 먼저 고침 → 이 기기도 같은 기록을 고침(받기 전) → 보내면 충돌
-  await page.evaluate(
-    ([w, i]) =>
-      (
-        globalThis as unknown as {
-          __wjbFakeSync: { editEntryElsewhere(w: string, t: string, id?: string): Promise<string> };
-        }
-      ).__wjbFakeSync.editEntryElsewhere(w!, "다른 기기 쪽 가상 글", i!),
-    [ws, id],
+  // 방금 쓴 글이 든 줄(엔진마다 줄 순서·빈 줄 위치가 달라 "마지막 줄"로 찾지 않는다 — WebKit CI)
+  const id = await page.evaluate(
+    () =>
+      [...document.querySelectorAll<HTMLElement>("[data-item-id]")]
+        .find((e) => e.querySelector("textarea")?.value.includes("충돌 시험 가상 기록"))
+        ?.getAttribute("data-item-id") ?? null,
   );
+  expect(id).not.toBeNull();
+  const item = page.locator(`[data-item-id="${id}"]`);
+  // 다른 기기가 서버에서 먼저 고침 → 이 기기도 같은 기록을 고침(받기 전) → 보내면 충돌.
+  // 서버에 그 기록이 올라간 뒤에(NO_RECORD면 잠시 뒤 다시)
+  await expect
+    .poll(
+      () =>
+        page.evaluate(
+          ([w, i]) =>
+            (
+              globalThis as unknown as {
+                __wjbFakeSync: { editEntryElsewhere(w: string, t: string, id?: string): Promise<string> };
+              }
+            ).__wjbFakeSync
+              .editEntryElsewhere(w!, "다른 기기 쪽 가상 글", i!)
+              .then(() => "ok")
+              .catch((e: Error) => e.message),
+          [ws, id],
+        ),
+      { timeout: 15_000 },
+    )
+    .toBe("ok");
   await item.locator("textarea").click();
   await page.keyboard.press("End");
   await page.keyboard.type(" 이 기기 쪽");
