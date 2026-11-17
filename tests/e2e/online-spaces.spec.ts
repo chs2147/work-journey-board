@@ -441,7 +441,7 @@ test("G(96): 관리자 — 전체 사용량·초대·계정 한도 바꾸기·�
   await admin.getByTestId("limit-spaces").fill("1");
   await admin.getByTestId("limit-records").fill("");
   await admin.getByTestId("limit-save").click();
-  await expect(row).toContainText("공간 0 / 1개");
+  await expect(row).toContainText("공간 1 / 1개");
   await expect(row).toContainText("/ 50");
   await expect(other).toContainText("조정됨");
   // 무제한 ↔ 기본으로
@@ -466,4 +466,52 @@ test("G(96): 관리자 — 전체 사용량·초대·계정 한도 바꾸기·�
   await expect(
     admin.locator("[data-testid=admin-account]", { hasText: "new-person@example.invalid" }),
   ).toBeVisible();
+});
+
+test("G(96) C: 관리자가 한도를 지금 사용량보다 낮추면 한 번 확인 — [그래도 저장]으로만 저장", async ({
+  page,
+}) => {
+  await signIn(page, "&previewAdmin=1");
+  const admin = page.getByTestId("admin-card");
+  const other = admin.locator("[data-testid=admin-account]", { hasText: "invited@example.invalid" });
+  const row = other.locator("xpath=ancestor::*[contains(@class,'setRow')][1]");
+  await expect(row).toContainText("그림 5.0 MB / 100.0 MB");
+  await row.getByTestId("admin-edit").click();
+  // 사용 중 5MB보다 낮은 1MB
+  await admin.getByTestId("limit-images").fill("1");
+  await admin.getByTestId("limit-save").click();
+  await expect(admin.getByTestId("limit-below-warning")).toContainText("그림: 지금 사용량보다 낮습니다");
+  await expect(row).toContainText("/ 100.0 MB"); // 아직 저장 안 됨
+  await expect(admin.getByTestId("limit-save")).toHaveText("그래도 저장");
+  await admin.getByTestId("limit-save").click();
+  await expect(row).toContainText("그림 5.0 MB / 1.0 MB");
+  await expect(other.locator("xpath=ancestor::*[contains(@class,'setRow')][1]")).toBeVisible();
+  // 사용량을 넘은 계정은 한도 초과 배지(목록 요약)
+  await expect(admin.getByTestId("limit-below-warning")).toHaveCount(0);
+});
+
+test("G(96): 온라인 공간 그림은 글씨가 읽히는 크기로 — 세로로 긴 캡처 1200×4000이 폭 약 950(로컬 긴 변 1600이면 480)", async ({
+  page,
+}) => {
+  await signIn(page);
+  await openCopied(page);
+  const b64 = await page.evaluate(() => {
+    const cv = document.createElement("canvas");
+    [cv.width, cv.height] = [1200, 4000];
+    const ctx = cv.getContext("2d")!;
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, 1200, 4000);
+    ctx.fillStyle = "#222222";
+    ctx.font = "16px sans-serif";
+    for (let y = 30; y < 4000; y += 24) ctx.fillText("가상 업무 글씨 줄 — virtual text line", 20, y);
+    return cv.toDataURL("image/png").split(",")[1]!;
+  });
+  await page
+    .getByTestId("note-image-input")
+    .setInputFiles({ name: "virtual-tall.png", mimeType: "image/png", buffer: Buffer.from(b64, "base64") });
+  const img = page.getByTestId("note-image").last().locator("canvas");
+  await expect(img).toHaveAttribute("data-ready", "true", { timeout: 15_000 });
+  const w = Number(await img.getAttribute("data-width"));
+  expect(w).toBeGreaterThan(900);
+  expect(w).toBeLessThanOrEqual(1200);
 });

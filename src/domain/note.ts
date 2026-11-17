@@ -193,6 +193,25 @@ export function fitWithin(
   return { width: Math.max(1, Math.round(width * k)), height: Math.max(1, Math.round(height * k)) };
 }
 
+/**
+ * 온라인 공간 그림(docs/v2-design/96, 2026-11-17 사용자 지시): 그림 용량 한도 안에서 최대한 쓰도록 줄이되 **그림 속 글씨가 읽히게**.
+ * 긴 변이 아니라 폭과 전체 화소로 줄인다 — 넓은 화면 캡처는 지금처럼 폭 1600, 세로로 긴 전체 페이지 캡처는 폭을 지켜 글씨가 남는다
+ * (긴 변 1600이면 1200×4000이 480×1600 — 글씨가 뭉개짐). 캔버스 한계를 넘지 않게 긴 변은 8192까지.
+ */
+export const ONLINE_IMAGE_MAX_W = 1600;
+export const ONLINE_IMAGE_MAX_PIXELS = 3_000_000;
+export const ONLINE_IMAGE_MAX_SIDE = 8192;
+export function fitForText(width: number, height: number): { width: number; height: number } {
+  const k = Math.min(
+    1,
+    ONLINE_IMAGE_MAX_W / width,
+    Math.sqrt(ONLINE_IMAGE_MAX_PIXELS / (width * height)),
+    ONLINE_IMAGE_MAX_SIDE / Math.max(width, height),
+  );
+  if (k >= 1) return { width, height };
+  return { width: Math.max(1, Math.round(width * k)), height: Math.max(1, Math.round(height * k)) };
+}
+
 export const emptyDoc = (): NoteDoc => ({ v: 1, boxes: [] });
 
 // ── 관계선(note-relation-spec) ───────────────────────

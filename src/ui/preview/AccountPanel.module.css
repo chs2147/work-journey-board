@@ -79,3 +79,8 @@
 .limitFields .input {
   width: 110px;
 }
+.limitWarn {
+  flex: 1 0 100%;
+  font-size: var(--fs-sm);
+  color: var(--warn);
+}

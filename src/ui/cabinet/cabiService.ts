@@ -1,4 +1,5 @@
 import { V17 } from "../../shared/v17Strings";
+import { imageProfile } from "../note/imageProcess";
 import { create } from "zustand";
 import type { CabiRepository } from "../../data/cabiRepository";
 import type { JournalRepository } from "../../data/repository";
@@ -465,7 +466,15 @@ async function handle(name: string, args: unknown[], sender: string): Promise<un
       title = (await j.repo.listCategories()).categories.find((c) => c.id === id)?.name ?? "업무 보드";
     } else throw new Error("창 종류가 올바르지 않습니다.");
     assertCurrent();
-    await (await getBridge()).open({ kind, id, title, theme: resolveTheme(useAppStore.getState().theme) });
+    await (
+      await getBridge()
+    ).open({
+      kind,
+      id,
+      title,
+      theme: resolveTheme(useAppStore.getState().theme),
+      ...(imageProfile() === "online" ? { img: "online" } : {}),
+    });
     return null;
   }
   if (name === "reference" || name === "openReference") {

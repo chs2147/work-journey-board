@@ -1,10 +1,24 @@
 // 메모 이미지 줄이기·바꾸기(weekly-note-spec 4-4): 화면의 canvas로 긴 변 1600px 안으로 줄이고 WebP(품질 0.82)로 저장.
 // 라이브러리·네트워크 없음. 메모 판 표시는 <canvas>에 직접 그린다(optimize-1031-plan O2 — data: 주소 <img>는 주를 오갈수록
 // 메모리가 쌓였다). 실앱 CSP `img-src 'self' data:`는 그대로(blob: 주소 안 씀).
-import { fitWithin, IMAGE_MAX_SOURCE_BYTES, type ImageMime } from "../../domain/note";
+import { fitForText, fitWithin, IMAGE_MAX_SOURCE_BYTES, type ImageMime } from "../../domain/note";
 import { STR } from "../../shared/strings";
 
 export const WEBP_QUALITY = 0.82;
+
+/**
+ * 그림 줄이기 방식: 로컬 = 긴 변 1600(지금 그대로), 온라인 공간 = 글씨가 읽히는 폭·화소 기준(fitForText, 96).
+ * 온라인 공간의 메인 창이 정하고, 별도 창(노트·메모보드)은 열 때 주소의 img=online으로 받는다.
+ */
+export type ImageProfile = "local" | "online";
+let profile: ImageProfile =
+  typeof location !== "undefined" && new URLSearchParams(location.search).get("img") === "online"
+    ? "online"
+    : "local";
+export const setImageProfile = (p: ImageProfile) => {
+  profile = p;
+};
+export const imageProfile = () => profile;
 /** 넣을 수 있는 원본 형식(BMP는 WebP로 바꿔 저장) */
 export const ACCEPT_TYPES = ["image/png", "image/jpeg", "image/gif", "image/webp", "image/bmp"];
 
@@ -75,7 +89,8 @@ export async function prepareImage(file: Blob): Promise<PreparedImage> {
     throw new ImageInputError(STR.note.imageBroken);
   }
   try {
-    const size = fitWithin(bitmap.width, bitmap.height);
+    const size =
+      profile === "online" ? fitForText(bitmap.width, bitmap.height) : fitWithin(bitmap.width, bitmap.height);
     const resized = size.width !== bitmap.width;
     // 줄일 필요가 없는 GIF는 그대로(움직이는 그림 유지)
     if (!resized && file.type === "image/gif")

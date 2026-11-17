@@ -22,6 +22,8 @@ const isAdmin = (id: string) =>
   new URLSearchParams(location.search).get("previewAdmin") === "1";
 
 function used(id: string) {
+  // 초대한 가상 계정은 조금 쓰고 있다(한도를 사용량보다 낮출 때 확인 시험용)
+  if (id === OTHER) return { images: 5 * 1024 * 1024, spaces: 1, records: 1024 * 1024 };
   if (id !== ME) return { images: 0, spaces: 0, records: 0 };
   const spaces = fakePublishedSpaces();
   return {

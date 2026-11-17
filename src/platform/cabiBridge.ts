@@ -4,6 +4,8 @@ export interface CabiWindowSpec {
   id: string;
   title: string;
   theme: string;
+  /** 그림 줄이기 방식(온라인 공간 = "online", 96) */
+  img?: string;
 }
 export interface CabiMessage {
   type: string;
@@ -77,6 +79,7 @@ export function browserCabiBridge(): CabiBridge {
         return;
       }
       const q = new URLSearchParams({ win: "cabi", host: session, kind: s.kind, id: s.id, t: s.theme });
+      if (s.img) q.set("img", s.img);
       const w = window.open(`${location.pathname}?${q}`, key, "popup,width=1180,height=820");
       if (!w) throw new Error("별도 창이 차단되었습니다. 이 앱의 팝업을 허용해 주세요.");
       children.set(key, w);

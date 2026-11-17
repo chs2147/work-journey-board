@@ -8,6 +8,7 @@ import { BOTH_TABLES } from "../../preview/spaceSync";
 import { closeConflicts, resolveConflict, useOnlineSync } from "./onlineSync";
 import { formatBytes, STR } from "../../shared/strings";
 import { setOnlineSlots } from "../common/onlineSlots";
+import { setImageProfile } from "../note/imageProcess";
 import { WorkspaceMark } from "../common/workspaceIcons";
 import { Card } from "../settings/SettingsCard";
 import { OnlineRailButton, OnlineStatusPill, OnlineWorkspaceSettings } from "./OnlineChrome";
@@ -141,6 +142,8 @@ export function OnlineWorkspaceShell() {
   const conflicts = useOnlineSync((s) => s.conflicts);
   // 앱 화면이 그리기 전에 끼움 자리를 채운다(같은 값이라 여러 번 불러도 됨)
   setOnlineSlots(onlineChrome);
+  // 온라인 공간 그림은 글씨가 읽히는 크기로 줄여 저장(96)
+  setImageProfile("online");
   return (
     <div className={shell.frame} data-testid="online-workspace">
       <div className={shell.app}>

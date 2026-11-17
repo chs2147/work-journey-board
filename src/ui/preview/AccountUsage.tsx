@@ -236,12 +236,24 @@ function LimitEdit({ a, onDone }: { a: AdminAccount; onDone: () => void }) {
   const num = (v: string, scale: number) =>
     v.trim() === "" ? null : Math.max(0, Math.round(Number(v) * scale));
   const valid = [images, spaces, records].every((v) => v.trim() === "" || /^\d+$/.test(v.trim()));
+  // C(96): 지금 사용량보다 낮게 줄이면 한 번 확인 — 이미 있는 것은 그대로, 새로 늘리는 것만 막힌다
+  const below = [
+    [num(images, MB), a.used.images, A.images],
+    [num(spaces, 1), a.used.spaces, A.spaces],
+    [num(records, MB), a.used.records, A.records],
+  ].flatMap(([v, used, name]) => (v !== null && (v as number) < (used as number) ? [name as string] : []));
+  const [warn, setWarn] = useState(false);
+  const change = (f: (v: string) => void) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    f(e.target.value);
+    setWarn(false);
+  };
   return (
     <form
       className={own.confirm}
       data-testid="admin-limit-edit"
       onSubmit={(e) => {
         e.preventDefault();
+        if (below.length && !warn) return setWarn(true);
         void adminSet(a.userId, {
           unlimited: false,
           images: num(images, MB),
@@ -257,7 +269,7 @@ function LimitEdit({ a, onDone }: { a: AdminAccount; onDone: () => void }) {
             className={own.input}
             inputMode="numeric"
             value={images}
-            onChange={(e) => setImages(e.target.value)}
+            onChange={change(setImages)}
             data-testid="limit-images"
           />
         </label>
@@ -267,7 +279,7 @@ function LimitEdit({ a, onDone }: { a: AdminAccount; onDone: () => void }) {
             className={own.input}
             inputMode="numeric"
             value={spaces}
-            onChange={(e) => setSpaces(e.target.value)}
+            onChange={change(setSpaces)}
             data-testid="limit-spaces"
           />
         </label>
@@ -277,17 +289,22 @@ function LimitEdit({ a, onDone }: { a: AdminAccount; onDone: () => void }) {
             className={own.input}
             inputMode="numeric"
             value={records}
-            onChange={(e) => setRecords(e.target.value)}
+            onChange={change(setRecords)}
             data-testid="limit-records"
           />
         </label>
+        {warn && (
+          <span className={own.limitWarn} role="alert" data-testid="limit-below-warning">
+            {A.limitBelow(below.join(" · "))}
+          </span>
+        )}
       </span>
       <span className={own.confirmButtons}>
         <button type="button" onClick={onDone}>
           {A.cancel}
         </button>
         <button type="submit" className={settings.primary} disabled={!valid} data-testid="limit-save">
-          {A.save}
+          {warn ? A.saveAnyway : A.save}
         </button>
       </span>
     </form>

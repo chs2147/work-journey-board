@@ -1733,6 +1733,9 @@ export const STR_BASE = {
       limitImagesMb: "그림(MB)",
       limitSpaces: "공간(개)",
       limitRecordsMb: "기록(MB)",
+      saveAnyway: "그래도 저장",
+      limitBelow: (what: string) =>
+        `${what}: 지금 사용량보다 낮습니다. 이미 있는 것은 그대로 두고, 새로 늘리는 것만 막습니다.`,
       save: "저장",
       cancel: "취소",
       spaces: "온라인 공간",
