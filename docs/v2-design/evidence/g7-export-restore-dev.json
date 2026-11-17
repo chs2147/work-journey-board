@@ -1,0 +1,8 @@
+{
+  "ranAt": "2026-11-17",
+  "environment": "development",
+  "productionTouched": false,
+  "export": { "spaces": 3, "records": 93, "assets": 2, "assetHashesVerified": true, "serverReadOnly": true },
+  "restore": { "spaces": 3, "openedWithAppMigrations": 3, "integrityOk": 3 },
+  "contentStored": false
+}
