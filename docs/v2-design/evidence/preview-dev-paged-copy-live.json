@@ -1,5 +1,5 @@
 {
-  "startedAt": "2026-11-17T13:29:11.569Z",
+  "startedAt": "2026-11-17T13:40:07.491Z",
   "projectRef": "vsphftnmfzfoufasjttd",
   "productionTouched": false,
   "mailSent": false,
@@ -47,7 +47,7 @@
       "passed": true,
       "extra": {
         "assets": 1,
-        "firstBytes": 524288
+        "firstBytes": 5242880
       }
     },
     {
@@ -111,9 +111,9 @@
     }
   ],
   "timing": {
-    "recordsSeconds": 22.181,
-    "assetsSeconds": 7.969,
-    "readBackSeconds": 4.707
+    "recordsSeconds": 22.352,
+    "assetsSeconds": 11.399,
+    "readBackSeconds": 4.514
   },
   "cleanup": {
     "jobs": 0,
@@ -127,5 +127,5 @@
     "zero": true
   },
   "passed": true,
-  "finishedAt": "2026-11-17T13:30:57.843Z"
+  "finishedAt": "2026-11-17T13:41:53.868Z"
 }
