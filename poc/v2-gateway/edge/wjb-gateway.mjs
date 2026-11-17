@@ -79,7 +79,7 @@ async function setup() {
   const reader = createWorkspaceReadRPC({ projectRef, serviceRoleKey, fetchTransport });
   const syncer = createWorkspaceSyncRPC({ projectRef, serviceRoleKey, fetchTransport });
   const accounts = createAccountRPC({ projectRef, serviceRoleKey, fetchTransport });
-  return { gateway, verify, rest, rpc, reader, syncer };
+  return { gateway, verify, rest, rpc, reader, syncer, accounts };
 }
 
 export async function handle(request) {
@@ -88,7 +88,7 @@ export async function handle(request) {
       ready = null;
       throw e;
     });
-    const { gateway, verify, rest, rpc, reader, syncer } = await ready;
+    const { gateway, verify, rest, rpc, reader, syncer, accounts } = await ready;
     const url = new URL(request.url);
     const path = url.pathname.startsWith(prefix + "/") ? url.pathname.slice(prefix.length) : url.pathname;
     if (path === "/v2/me") {
