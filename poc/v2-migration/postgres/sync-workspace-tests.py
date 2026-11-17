@@ -646,3 +646,31 @@ def run(g):
         assert scalar("SELECT to_regnamespace('wjb_life') IS NULL AND to_regprocedure('public.wjb_v2_lifecycle(jsonb)') IS NULL;") == 't'
         sql((ROOT/'031-lifecycle.sql').read_text())
     test('033 rollback refuses once anything was deleted through 031, otherwise drops it; 031 re-applies', rollback031)
+
+    # ── 034 (G-6 측정: 하루 한 줄, 내용·이메일 없음, docs/v2-design/102) ──
+    def metrics():
+        sql((ROOT/'034-metrics.sql').read_text())
+        r = sql((ROOT/'034-metrics.sql').read_text(), check=False)
+        assert r.returncode and 'MIGRATION_034_ALREADY_APPLIED' in r.stderr
+        v = json.loads(scalar((ROOT/'035-metrics-verify.sql').read_text()))
+        assert v['table'] and v['function'] and v['searchPath'] and v['closed'], v
+        p = publish()
+        pull_all(p['ws'])
+        e = [x for x in p['m']['records'] if x['table'] == 'entry_item'][0]
+        push(p['ws'], [{'table': 'entry_item', 'key': e['key'], 'baseRev': 0, 'value': {**e['value'], 'text': '측정 가상'}}])
+        m1 = json.loads(scalar("SELECT to_jsonb(wjb_ops.snapshot_metrics());"))
+        assert m1['spaces'] >= 1 and m1['records'] > 0 and m1['changes_day'] >= 1 and m1['pushes_day'] >= 1 and m1['devices_day'] >= 1, m1
+        assert m1['db_bytes'] > 0 and m1['storage_objects'] is None  # 로컬 시험에는 storage가 없다
+        # 같은 날 다시 = 한 줄(값만 새로)
+        scalar("SELECT wjb_ops.snapshot_metrics();")
+        assert scalar("SELECT count(*) FROM wjb_ops.metric_day;") == '1'
+        # 내용·이메일 칸이 없다
+        cols = scalar("SELECT string_agg(column_name,',') FROM information_schema.columns WHERE table_schema='wjb_ops' AND table_name='metric_day';")
+        assert 'email' not in cols and 'value' not in cols and 'owner' not in cols, cols
+        for role in ['service_role', 'authenticated', 'anon']:
+            r = sql(f"SET ROLE {role};SELECT * FROM wjb_ops.metric_day;", check=False)
+            assert r.returncode and 'permission denied' in r.stderr
+        sql((ROOT/'036-metrics-rollback.sql').read_text())
+        assert scalar("SELECT to_regclass('wjb_ops.metric_day') IS NULL;") == 't'
+        sql((ROOT/'034-metrics.sql').read_text())
+    test('034 metrics: one row per day (re-run updates), counts changes/pushes/devices, no content/e-mail/owner columns, closed to API roles; 036 rollback', metrics)

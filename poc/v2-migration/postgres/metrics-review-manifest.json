@@ -1,0 +1,33 @@
+{
+  "module": "wjb-metrics-poc-1",
+  "profile": "development",
+  "projectRef": "vsphftnmfzfoufasjttd",
+  "autoApply": false,
+  "cloudApplied": false,
+  "userApproved": "G-6 측정(2026-11-17 G-D5 추천안: 적응형 주기 유지, 2주 측정 뒤 결정, docs/v2-design/102)",
+  "requires": ["031-lifecycle.sql (installed)"],
+  "changes": {
+    "newTables": [
+      "wjb_ops.metric_day (totals only: no content, e-mail or per-user rows) — no API role access"
+    ],
+    "newFunctions": ["wjb_ops.snapshot_metrics(date) — not executable by API roles"],
+    "replacedFunctions": [],
+    "schedule": "pg_cron wjb-ops-metrics 14:50 UTC daily"
+  },
+  "rollback": "036 drops the table and function (measurement only)",
+  "localEvidence": "docs/v2-design/evidence/migration-g6-metrics-pass.json",
+  "sources": [
+    {
+      "path": "poc/v2-migration/postgres/034-metrics.sql",
+      "sha256": "515f1bf3d3d30fe4f2e47062d4f88568ad13644ced6e4ced6c82bd9f246daddc"
+    },
+    {
+      "path": "poc/v2-migration/postgres/035-metrics-verify.sql",
+      "sha256": "ed253eadd46e4dd52032546ded8322364e94521e131c07013ac20c032055ab08"
+    },
+    {
+      "path": "poc/v2-migration/postgres/036-metrics-rollback.sql",
+      "sha256": "306294b9878f652472b6c91bb74fa8120c46b354a4a1f66f555266b15227b6ea"
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "startedAt": "2026-11-17T11:14:11.303Z",
+  "projectRef": "vsphftnmfzfoufasjttd",
+  "autoApply": false,
+  "userRequestedDevIntegration": true,
+  "productionTouched": false,
+  "sources": [
+    {
+      "path": "poc/v2-migration/postgres/034-metrics.sql",
+      "sha256": "515f1bf3d3d30fe4f2e47062d4f88568ad13644ced6e4ced6c82bd9f246daddc"
+    },
+    {
+      "path": "poc/v2-migration/postgres/035-metrics-verify.sql",
+      "sha256": "ed253eadd46e4dd52032546ded8322364e94521e131c07013ac20c032055ab08"
+    }
+  ],
+  "phases": [
+    {
+      "phase": "preflight",
+      "has031": true,
+      "has034": false
+    },
+    {
+      "phase": "apply",
+      "ok": true
+    },
+    {
+      "phase": "schedule",
+      "job": "wjb-ops-metrics",
+      "cron": "50 14 * * *"
+    },
+    {
+      "phase": "first-snapshot",
+      "ok": true
+    }
+  ],
+  "applied": true,
+  "executionRole": {
+    "role": "postgres",
+    "read_only": "off",
+    "rolsuper": false,
+    "rolbypassrls": true
+  },
+  "verify": {
+    "table": true,
+    "closed": true,
+    "function": true,
+    "searchPath": true,
+    "cloudApplied": false
+  },
+  "finishedAt": "2026-11-17T11:14:22.881Z"
+}
