@@ -11,9 +11,12 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 # 실행 프로필(V2 6-B, src/profile.rs). 기본 = Local Classic(예전과 같은 빌드).
 # connected-preview = 별도 앱 ID·설정 폴더·업데이트 꺼짐·일지 명령 없음 — `tauri.preview.conf.json`과 함께만 빌드한다
 [features]
-connected-preview = ["dep:wjb-native-isolation", "dep:uuid"]
-# DEV 검증판(비공식 로컬판, docs/release-channel-spec.md) — `tauri.dev.conf.json`과 함께만 빌드. 정식판 일지·설정을 건드리지 않음
-dev-channel = []
+# 온라인 공간 모듈(로그인·복제·열기·동기화) — Preview와 DEV 통합 앱(docs/v2-design/98)이 켠다. 정식판은 끔
+online = ["dep:wjb-native-isolation", "dep:uuid"]
+connected-preview = ["online"]
+# DEV 검증판(비공식 로컬판, docs/release-channel-spec.md) — `tauri.dev.conf.json`과 함께만 빌드. 정식판 일지·설정을 건드리지 않음.
+# G-1(98): 로컬 일지 + 온라인 공간 통합(설정 폴더·보안 저장소 이름은 DEV 앱 것)
+dev-channel = ["online"]
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }

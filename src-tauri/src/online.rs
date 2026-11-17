@@ -19,6 +19,14 @@ pub(crate) const ORIGIN: &str = "https://vsphftnmfzfoufasjttd.supabase.co";
 pub(crate) const PUBLISHABLE_KEY: &str = "sb_publishable_HgCrm5uiNX4v7Ppw0yowMQ_MREt7E5l";
 const GATEWAY_ME: &str = "/functions/v1/wjb-gateway/v2/me";
 
+/// 이 빌드의 프로필 — DEV 통합 앱이면 DEV 설정 폴더·보안 저장소 이름(Preview와 겹치지 않음, 98)
+fn app_profile() -> Profile {
+    if cfg!(feature = "dev-channel") {
+        Profile::LocalDev
+    } else {
+        Profile::ConnectedPreview
+    }
+}
 fn target() -> CloudTarget {
     CloudTarget::new(CloudEnv::Development, PROJECT_REF).expect("개발 프로젝트 고정값")
 }
@@ -266,13 +274,7 @@ fn vault<B: SecureVault>(
     let device = store.device_id()?;
     let scope =
         AccountScope::new(target(), owner, &device).map_err(|_| "INVALID_ACCOUNT".to_string())?;
-    SessionVault::new(
-        Profile::ConnectedPreview,
-        WorkspaceKind::Online,
-        scope,
-        factory,
-    )
-    .map_err(vault_err)
+    SessionVault::new(app_profile(), WorkspaceKind::Online, scope, factory).map_err(vault_err)
 }
 fn vault_err(e: VaultError) -> String {
     match e {
@@ -605,9 +607,8 @@ pub fn project_root(app: &AppHandle) -> Result<PathBuf, String> {
         .path()
         .local_data_dir()
         .map_err(|_| "STORE".to_string())?;
-    let layout =
-        wjb_native_isolation::policy::layout(Profile::ConnectedPreview, &base, Some(target()))
-            .map_err(|_| "STORE".to_string())?;
+    let layout = wjb_native_isolation::policy::layout(app_profile(), &base, Some(target()))
+        .map_err(|_| "STORE".to_string())?;
     layout.project_root.ok_or_else(|| "STORE".to_string())
 }
 

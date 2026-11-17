@@ -28,6 +28,7 @@ on:
         "improve-v18",
         "cabinet-v2",
         "v2-design",
+        "v2-g-stage",
       ]
     paths:
       - "src/**"

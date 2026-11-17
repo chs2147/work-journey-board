@@ -179,12 +179,15 @@ fn sign_in_keeps_refresh_token_only_in_vault_and_checks_gateway() {
         Some(json!({ "type": "email", "email": "virtual@example.invalid", "token": "12345678" }))
     );
     assert_eq!(seen[2].2.as_deref(), Some("A1"));
-    // 갱신 토큰은 보안 저장소에만, 열쇠 = Preview 서비스 + 개발 프로젝트·계정·기기
+    // 갱신 토큰은 보안 저장소에만, 열쇠 = 이 앱(Preview 또는 DEV 통합 앱, 98) 서비스 + 개발 프로젝트·계정·기기
     assert_eq!(vault.tokens(), ["R1"]);
     let key = &vault.keys()[0];
-    assert!(key.starts_with(
-        "com.chs2147.workjourneyboard.connected.preview.auth.v1|development:vsphftnmfzfoufasjttd:"
-    ));
+    let app = if cfg!(feature = "dev-channel") {
+        "com.chs2147.workjourneyboard.dev"
+    } else {
+        "com.chs2147.workjourneyboard.connected.preview"
+    };
+    assert!(key.starts_with(&format!("{app}.auth.v1|development:vsphftnmfzfoufasjttd:")));
     assert!(key.contains(USER));
     // 파일에는 토큰이 없다
     for name in ["account.json", "device.json"] {

@@ -196,13 +196,26 @@ describe("Rust 명령 경계(lib.rs)", () => {
     ]);
   });
 
-  it("DEV 명령 = Classic 명령 + DEV 일지 폴더 확인·준비·정식 일지 복제", () => {
+  it("DEV 명령 = Classic 명령 + DEV 일지 폴더 확인·준비·정식 일지 복제 + 온라인 공간(G-1 통합 앱, 98 — Preview 닫기 주도만 뺌)", () => {
+    const online = prev.filter(
+      (c) =>
+        ![
+          "splash::splash_finish",
+          "files::config_read",
+          "files::config_write",
+          "files::open_url",
+          "profile::app_profile",
+          "preview_close::preview_exit",
+        ].includes(c),
+    );
     expect(dev).toEqual([
       ...classic,
       "dev_guard::dev_folder_status",
       "dev_guard::dev_prepare_folder",
       "dev_guard::dev_copy_official",
+      ...online,
     ]);
+    expect(dev).not.toContain("preview_close::preview_exit");
   });
 
   it("Preview 명령: 일지·백업·복원·내보내기·Cabinet·업데이트 없음, 온라인 계정(B)·원본 사본(C-2)·이관 통신(C-3)·온라인 공간(D)·이 기기 공간 일지(E-1)만 더함", () => {
@@ -246,8 +259,12 @@ describe("Rust 명령 경계(lib.rs)", () => {
       "space_sync::space_asset_upload",
       "space_sync::space_asset_fetch",
     ]);
-    // 온라인 모듈은 Preview 빌드에만 컴파일된다
-    expect(lib).toMatch(/#\[cfg\(feature = "connected-preview"\)\]\nmod online;/);
+    // 온라인 모듈은 온라인 기능 빌드(Preview·DEV 통합 앱)에만 — 정식판(기능 없음)에는 컴파일되지 않는다
+    expect(lib).toMatch(/#\[cfg\(feature = "online"\)\]\nmod online;/);
+    const cargo = read("src-tauri/Cargo.toml");
+    expect(cargo).toMatch(/^connected-preview = \["online"\]$/m);
+    expect(cargo).toMatch(/^dev-channel = \["online"\]$/m);
+    expect(cargo).not.toMatch(/^default = .*online/m);
     expect(lib).toMatch(
       /#\[cfg\(not\(feature = "connected-preview"\)\)\]\n\s+let builder = builder\.plugin\(tauri_plugin_sql/,
     );

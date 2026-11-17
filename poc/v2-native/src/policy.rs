@@ -2,8 +2,12 @@ use crate::{Error, Result};
 use std::path::{Component, Path, PathBuf};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Profile { Classic, ConnectedPreview }
-impl Profile { pub fn key(self) -> &'static str { match self { Self::Classic => "local-classic", Self::ConnectedPreview => "connected-preview" } } }
+pub enum Profile { Classic, ConnectedPreview, LocalDev }
+impl Profile {
+    pub fn key(self) -> &'static str { match self { Self::Classic => "local-classic", Self::ConnectedPreview => "connected-preview", Self::LocalDev => "local-dev" } }
+    /// 온라인 공간을 쓸 수 있는 프로필(Preview·DEV 통합 앱, docs/v2-design/98) — 정식판(Classic)은 아님
+    pub fn online(self) -> bool { matches!(self, Self::ConnectedPreview | Self::LocalDev) }
+}
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum WorkspaceKind { OfflineOnly, Online }
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -64,6 +68,9 @@ pub fn layout(profile: Profile, base: &Path, target: Option<CloudTarget>) -> Res
     let project_root = match (profile, target) {
         (Profile::Classic, None) => None,
         (Profile::ConnectedPreview, Some(t)) => Some(config_root.join(t.env.key()).join(t.project)),
+        // DEV 통합 앱: 로컬만 쓸 때는 없음, 온라인을 쓸 때는 DEV 설정 폴더 아래(Preview·정식판과 겹치지 않음)
+        (Profile::LocalDev, None) => None,
+        (Profile::LocalDev, Some(t)) => Some(config_root.join(t.env.key()).join(t.project)),
         _ => return Err(Error::CloudTargetMismatch),
     };
     Ok(Layout { settings: config_root.join("config.json"), registry: project_root.as_ref().map(|p| p.join("workspaces.sqlite")), online_cache: project_root.as_ref().map(|p| p.join("online-cache")), diagnostics: native_root.join("diagnostics"), updates: id.release_repository.map(|_| native_root.join("updates")), instance_namespace: format!("{}:instance", id.app_id), config_root, native_root, project_root })

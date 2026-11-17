@@ -242,10 +242,12 @@ impl SpaceDbState {
     }
     /// 열린 공간 일지가 있는가(앱 닫기 때 저장할 것이 있는지)
     /// (창 이벤트 스레드에서 기다리지 않게 — 잠겨 있으면 열려 있다고 본다)
+    #[cfg_attr(not(feature = "connected-preview"), allow(dead_code))]
     pub fn any_open_now(&self) -> bool {
         self.0.try_lock().map(|m| !m.is_empty()).unwrap_or(true)
     }
     /// 열린 공간 일지를 모두 닫는다(앱 종료)
+    #[cfg_attr(not(feature = "connected-preview"), allow(dead_code))]
     pub async fn close_all(&self) {
         let pools: Vec<SqlitePool> = self.0.lock().await.drain().map(|(_, p)| p).collect();
         for p in pools {

@@ -40,7 +40,7 @@ pub trait SecureVault {
 pub struct SessionVault<B: SecureVault> { backend: B, key: CredentialKey }
 impl<B: SecureVault> SessionVault<B> {
     pub fn new(profile: Profile, kind: WorkspaceKind, scope: AccountScope, factory: impl FnOnce() -> Result<B>) -> Result<Self> {
-        if profile != Profile::ConnectedPreview || kind != WorkspaceKind::Online { return Err(Error::LocalModeHasNoVault); }
+        if !profile.online() || kind != WorkspaceKind::Online { return Err(Error::LocalModeHasNoVault); }
         let key = CredentialKey { service: format!("{}.auth.v1", identity(profile)?.app_id), account: format!("{}:{}:{}:{}", scope.target.env().key(), scope.target.project(), scope.owner, scope.device) };
         Ok(Self { backend: factory()?, key })
     }
