@@ -3,6 +3,7 @@ import { STR } from "../shared/strings";
 import { BoardView } from "./board/BoardView";
 import { setPanelOpen, useBoard } from "./board/boardStore";
 import { useShortcuts } from "./board/useShortcuts";
+import { onlineSlots } from "./common/onlineSlots";
 import { start } from "./common/appController";
 import { useAppStore, type JournalStatus } from "./common/appStore";
 import { Toasts } from "./common/Toasts";
@@ -91,6 +92,10 @@ export function App() {
       {importOpen && journal.state === "ready" && <ImportWizard />}
       {updateOpen && (journal.state === "ready" || journal.state === "newer") && <UpdateDialog />}
       {creatingWorkspace && journal.state === "ready" && <NewWorkspaceDialog />}
+      {(() => {
+        const Overlay = onlineSlots()?.Overlay;
+        return Overlay ? <Overlay /> : null;
+      })()}
       <Toasts />
     </div>
   );

@@ -33,6 +33,14 @@ export interface AppConfig {
   workspaces?: WorkspaceEntry[];
   /** 공간마다 Cabinet 창 상태(전환할 때 cabinet과 바꿔 낀다) — 키 = 공간 폴더 */
   cabinetBy?: Record<string, CabinetConfig>;
+  /** G-1 통합 앱(docs/v2-design/98): 마지막으로 쓴 공간이 온라인이면 그 공간·계정. 없으면(null) 로컬 dataDir로 시작 */
+  lastWorkspace?: LastOnlineWorkspace | null;
+}
+
+export interface LastOnlineWorkspace {
+  kind: "online";
+  workspaceId: string;
+  ownerId: string;
 }
 
 export interface CabinetConfig {
@@ -279,6 +287,8 @@ export const activeProfile = () => active;
 export function setActiveProfile(p: AppProfileInfo) {
   active = p;
 }
+/** 온라인 공간을 쓸 수 있는 판(DEV·Preview). 정식판은 false — 화면·흐름이 지금 그대로(docs/v2-design/98) */
+export const onlineCapable = (p: AppProfileInfo = active) => p.key !== "local-classic";
 
 /** DEV 일지 폴더 상태(Rust dev_guard): dev = DEV 표시 · official = 정식 일지 · empty = 일지 없음 · missing */
 export type DevFolderStatus = "dev" | "official" | "empty" | "missing";
@@ -499,6 +509,10 @@ export async function loadSplash(): Promise<SplashWindow | undefined> {
 
 export async function loadPlatform(): Promise<Platform> {
   if (platformOverride) return platformOverride;
+  return loadBasePlatform();
+}
+/** 이 PC 플랫폼(바꿔 낀 온라인 공간 플랫폼이 아닌 것) — G-1 통합 앱이 로컬 공간으로 돌아갈 때 */
+export async function loadBasePlatform(): Promise<Platform> {
   if (isTauri()) return (await import("./tauri")).tauriPlatform;
   return (await import("./browser")).browserPlatform;
 }
@@ -537,6 +551,16 @@ export function parseConfig(raw: string | null): AppConfig | null {
       );
     }
     if (typeof c.devSetupVersion === "string") out.devSetupVersion = c.devSetupVersion;
+    const lw = c.lastWorkspace;
+    if (
+      lw &&
+      lw.kind === "online" &&
+      typeof lw.workspaceId === "string" &&
+      lw.workspaceId &&
+      typeof lw.ownerId === "string" &&
+      lw.ownerId
+    )
+      out.lastWorkspace = { kind: "online", workspaceId: lw.workspaceId, ownerId: lw.ownerId };
     if (typeof c.universeAutoMotion === "boolean") out.universeAutoMotion = c.universeAutoMotion;
     if (typeof c.celebrate === "boolean") out.celebrate = c.celebrate;
     if (c.universeAutoStyle === "drift" || c.universeAutoStyle === "orbit")

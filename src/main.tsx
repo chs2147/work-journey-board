@@ -19,13 +19,18 @@ const win = new URLSearchParams(location.search).get("win");
  * 실행 프로필을 먼저 묻는다(V2 6-B). Connected Preview는 기존 앱(App·Cabinet·폴더 창)을 그리지 않고
  * Preview 시작 화면만 — 기존 일지 열기·첫 실행·새 판 확인 흐름에 들어가지 않는다.
  */
-function render(profile: AppProfileInfo) {
+async function render(profile: AppProfileInfo) {
   setActiveProfile(profile);
   // 비공식 판(Preview·DEV)은 화면 전체에 표시 — 타이틀 영역 색·DEV 배지(docs/release-channel-spec.md 5절)
   if (profile.unofficial) document.documentElement.dataset.channel = "dev";
   const preview = profile.key === "connected-preview";
   // 별도 창 화면(노트·메모보드 = cabi, 폴더, Cabi.NET 파일 목록) — Preview도 이것만 받고, 그 밖은 Preview 시작 화면
   const childWin = win === "cabi" || win === "folder" || win === "cabinet";
+  // G-1 통합 앱(A안, docs/v2-design/98): DEV 메인 창은 이 PC 공간 + 온라인 공간을 한 앱에서(정식판은 그대로)
+  if (profile.key === "local-dev" && !childWin) {
+    const { installUnified } = await import("./ui/preview/UnifiedChrome");
+    await installUnified();
+  }
   createRoot(document.getElementById("root")!).render(
     <StrictMode>
       <Suspense fallback={null}>

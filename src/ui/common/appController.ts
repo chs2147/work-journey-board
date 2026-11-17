@@ -33,7 +33,13 @@ import {
   restoreFromBackup,
 } from "../../data/session";
 import type { SqlDriver } from "../../data/driver";
-import { activeProfile, loadPlatform, OfficialJournalError, type Platform } from "../../platform";
+import {
+  activeProfile,
+  loadPlatform,
+  OfficialJournalError,
+  type AppConfig,
+  type Platform,
+} from "../../platform";
 import { STR } from "../../shared/strings";
 import { applyTheme, readStoredTheme, storeTheme, type ThemePref } from "../../shared/theme";
 import {
@@ -107,7 +113,21 @@ export async function start() {
   if (!config) return set({ journal: { state: "first-run" } });
   set({ workspaces: readEntries(config) });
   p.splash?.status(STR.splash.opening);
+  // G-1 통합 앱(DEV, docs/v2-design/98): 마지막 공간이 온라인이면 그 공간으로. 열지 못하면 로컬 마지막 공간
+  if (startHook && (await startHook(config).catch(() => false))) return;
   await openAt(config.dataDir);
+}
+
+type StartHook = (config: AppConfig) => Promise<boolean>;
+let startHook: StartHook | null = null;
+/** 온라인 가능 판만 건다(정식판은 걸지 않음 — 시작 흐름 그대로). true = 그 공간을 열었음 */
+export function setStartHook(h: StartHook | null) {
+  startHook = h;
+}
+const exitHooks: (() => Promise<void>)[] = [];
+/** 앱 닫기 처리 맨 앞(온라인 공간 보내기·동기화 멈춤) — 온라인 가능 판만 */
+export function onBeforeExit(f: () => Promise<void>) {
+  exitHooks.push(f);
 }
 
 /** 대기 중인 저장(보드 칸·메모 + 주간 요약 수정본)을 끝낸다 */
@@ -352,6 +372,7 @@ function onCorrupt(e: unknown) {
 
 /** 앱 종료 직전: 대기 중인 저장을 끝내고, 마지막 백업 뒤 바뀐 게 있으면 그날 일일 백업을 덮어쓴다(B3). 실패해도 창은 닫힌다. */
 async function onExit() {
+  for (const f of exitHooks) await f().catch(() => undefined);
   await closeCabiWindows();
   // Cabinet: 열린 창 상태를 이 PC 설정에 남기고 폴더 창(별도 OS 창)을 닫는다(F5)
   await shutdownCabinet().catch(() => undefined);
@@ -604,7 +625,18 @@ export async function closeOnlineSpace() {
 export async function switchOnlineSpace(
   next: Platform,
   setOverride: (p: Platform) => void,
+  opts: { leavingLocal?: boolean; dataDir?: string } = {},
 ): Promise<boolean> {
+  // G-1 통합 앱: 이 PC 공간을 떠날 때는 공간 전환과 같이 종료 백업·Cabinet 보관(그 일지·설정 기준)
+  const j = get().journal;
+  if (opts.leavingLocal && j.state === "ready") {
+    stopPeriodic();
+    await flushPending().catch(() => undefined);
+    await finishNote().catch(() => undefined);
+    if (j.repo.writeCount !== lastBackup.writes) await autoBackup("exit").catch(() => undefined);
+    const cab = await suspendCabinet().catch(() => null);
+    if (cab) await rememberCabinet({ dir: j.dataDir, cab }, "").catch(() => undefined);
+  }
   await closeOnlineSpace();
   setOverride(next);
   set({ platform: next, settingsOpen: false, switcherOpen: false });
@@ -612,7 +644,14 @@ export async function switchOnlineSpace(
   const config = await next.loadConfig();
   if (!config) return false;
   set({ workspaces: readEntries(config) });
-  const ok = await openAt(config.dataDir);
+  // 이 PC 공간으로 돌아갈 때: 고른 폴더를 지금 공간으로 기억하고 연다
+  const dir = opts.dataDir ?? config.dataDir;
+  if (opts.dataDir) {
+    // 그 공간의 Cabinet 창 상태를 다시 끼운다(공간 전환과 같이)
+    await rememberCabinet({ open: false, windows: [] }, dir).catch(() => undefined);
+    await next.saveConfig({ dataDir: dir });
+  }
+  const ok = await openAt(dir);
   if (ok) focusStartCell();
   return ok;
 }

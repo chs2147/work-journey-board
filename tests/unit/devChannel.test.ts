@@ -75,6 +75,18 @@ describe("DEV 프로필·설정", () => {
       parseConfig(JSON.stringify({ dataDir: "/d", devSetupVersion: "1.41.0-rc.1" }))?.devSetupVersion,
     ).toBe("1.41.0-rc.1");
   });
+  it("G-1 마지막 공간(lastWorkspace)은 온라인 공간·계정이 다 있을 때만 읽는다(98)", () => {
+    const lw = { kind: "online", workspaceId: "w1", ownerId: "o1" };
+    expect(parseConfig(JSON.stringify({ dataDir: "/d", lastWorkspace: lw }))?.lastWorkspace).toEqual(lw);
+    for (const bad of [
+      null,
+      { kind: "online", workspaceId: "w1" },
+      { kind: "local", workspaceId: "w1", ownerId: "o" },
+    ])
+      expect(
+        parseConfig(JSON.stringify({ dataDir: "/d", lastWorkspace: bad }))?.lastWorkspace,
+      ).toBeUndefined();
+  });
   it("tauri.dev.conf.json: 앱 ID·이름·실행 파일 이름·창 제목·설치 아이콘(icons-dev)만 다르고 권한·CSP는 정식판 그대로", () => {
     const base = json("src-tauri/tauri.conf.json");
     const dev = json("src-tauri/tauri.dev.conf.json");

@@ -128,14 +128,11 @@ export function SettingsView() {
     const s = await ready.repo.getSettings();
     setSettings(s);
     // 처음 열 때만: 마지막 본 분류, 새 판 점이 켜져 있으면 업데이트·정보(spec 1-2)
+    // 한 번만 쓰는 요청은 갱신 함수 밖에서 읽는다(StrictMode는 갱신 함수를 두 번 불러 두 번째에 요청이 비어 있음)
+    const wantAccount = !!onlineSlots()?.account && takeAccountRequest();
     setCat(
       (c) =>
-        c ??
-        (onlineSlots()?.account && takeAccountRequest()
-          ? "account"
-          : hasUpdate(useUpdate.getState())
-            ? "update"
-            : s.ui.settingsCategory),
+        c ?? (wantAccount ? "account" : hasUpdate(useUpdate.getState()) ? "update" : s.ui.settingsCategory),
     );
     setSize((await platform.stat(journalPath(platform, ready.dataDir))).size);
     setLast(await lastBackupOf(platform, ready.dataDir));

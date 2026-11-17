@@ -1644,6 +1644,8 @@ export const STR_BASE = {
       closingList: "저장하고 닫는 중…",
       closingSignOut: "보내고 저장한 뒤 로그아웃하는 중…",
       opening: "서버와 맞추는 중…",
+      /** G-1 통합 앱: 온라인 → 이 PC 공간 */
+      toLocal: "보내고 저장한 뒤 바꾸는 중…",
       quota: (n: number) => `용량 한도 · 대기 ${n.toLocaleString("ko-KR")}건`,
       panelTitle: "충돌 목록",
       panelEmpty: "충돌이 없습니다.",
@@ -1679,6 +1681,9 @@ export const STR_BASE = {
       opening: "여는 중…",
       create: "온라인 워크스페이스 만들기…",
       manage: "워크스페이스 관리…",
+      /** G-1 통합 앱(98): 이 PC 묶음 · 로그인 전 */
+      localGroup: "이 PC",
+      signIn: "온라인 로그인…",
       rail: (name: string) => `온라인 워크스페이스: ${name} — 눌러서 전환 (Ctrl+Alt+0)`,
     },
     /** UX-3 동기화 패널(S3) */

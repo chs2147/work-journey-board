@@ -14,9 +14,12 @@ import { WorkspaceEditRow } from "../settings/WorkspaceSettings";
 import settingsStyles from "../settings/Settings.module.css";
 import { sameDir } from "../../domain/workspace";
 import sw from "../common/WorkspaceSwitcher.module.css";
+import type { OnlineSpaceInfo } from "../../platform";
 import {
   closeToList,
+  isUnified,
   metaOf,
+  startCreate,
   openOnlineSpace,
   patchCurrentMeta,
   when,
@@ -33,7 +36,7 @@ const setApp = useAppStore.setState;
 const clock = (t: number) => new Date(t).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" });
 type Status = ReturnType<typeof useOnlineSync.getState>["status"];
 
-function syncText(s: Status) {
+export function syncText(s: Status) {
   if (s.phase === "syncing") return Y.syncing;
   if (s.phase === "offline") return Y.offline(s.pending);
   // 용량 한도·정지(96): 이 기기에는 저장, 서버 보내기만 대기
@@ -43,7 +46,7 @@ function syncText(s: Status) {
   return s.lastSyncedAt ? Y.synced(clock(s.lastSyncedAt)) : Y.saved;
 }
 /** 상태 점(색 + 글로 함께 — 색만으로 가르지 않음) */
-function tone(s: Status): "ok" | "wait" | "off" | "bad" {
+export function tone(s: Status): "ok" | "wait" | "off" | "bad" {
   if (s.phase === "error" || s.conflicts > 0) return "bad";
   if (s.phase === "offline") return "off";
   if (s.pending || s.phase === "syncing") return "wait";
@@ -52,7 +55,7 @@ function tone(s: Status): "ok" | "wait" | "off" | "bad" {
 
 const nameOf = (o: OpenedSpace | null) => o?.meta?.name ?? STR.workspace.onlineMark;
 
-function CloudIcon({ size = 14 }: { size?: number }) {
+export function CloudIcon({ size = 14 }: { size?: number }) {
   return (
     <svg viewBox="0 0 16 16" width={size} height={size} aria-hidden="true">
       <path
@@ -92,8 +95,7 @@ export function OnlineRailButton() {
 }
 
 function OnlineMenu() {
-  const { list, email, offline, busy, current } = useOnlineSpaces();
-  const status = useOnlineSync((s) => s.status);
+  const { list, email, offline, current } = useOnlineSpaces();
   const ref = useRef<HTMLDivElement>(null);
   const close = () => setApp({ switcherOpen: false });
   // 목록을 받지 못했어도 지금 연 공간은 보인다
@@ -147,59 +149,27 @@ function OnlineMenu() {
     >
       <div className={styles.group}>{email ? M.group(email) : M.groupPlain}</div>
       {offline && <div className={styles.note}>{M.offline}</div>}
-      {items.map((w, i) => {
-        const isCur = current?.workspaceId === w.workspaceId;
-        const m = metaOf(w);
-        return (
-          <button
-            key={w.workspaceId}
-            type="button"
-            role="menuitem"
-            className={`${sw.item} ${isCur ? sw.current : ""}`}
-            data-current={isCur || undefined}
-            data-testid="workspace-item"
-            data-online=""
-            aria-current={isCur || undefined}
-            disabled={!!busy && busy !== w.workspaceId}
-            onClick={() => {
-              close();
-              if (!isCur) void openOnlineSpace(w);
-            }}
-          >
-            <WorkspaceMark icon={m?.icon ?? "folder"} color={m?.color ?? "c1"} size={26} online />
-            <span className={sw.text}>
-              <span className={sw.name}>
-                {m?.name ?? STR.workspace.onlineMark}
-                {isCur && <span className={sw.check}> ✓</span>}
-              </span>
-              <span className={styles.meta}>
-                <span className={styles.type}>
-                  <CloudIcon size={11} />
-                  {M.type}
-                </span>
-                {busy === w.workspaceId ? (
-                  M.opening
-                ) : isCur ? (
-                  <>
-                    <span className={styles.dot} data-tone={tone(status)} aria-hidden="true" />
-                    {syncText(status)}
-                  </>
-                ) : (
-                  M.copied(when(w.createdAt))
-                )}
-              </span>
-            </span>
-            {i < MAX_SHORTCUT && <kbd className={sw.kbd}>{osText(STR.workspace.shortcut(i + 1))}</kbd>}
-          </button>
-        );
-      })}
+      {items.map((w, i) => (
+        <OnlineMenuItem
+          key={w.workspaceId}
+          w={w}
+          shortcut={i + 1}
+          onPick={() => {
+            close();
+            if (current?.workspaceId !== w.workspaceId) void openOnlineSpace(w);
+          }}
+        />
+      ))}
       <div className={sw.sep} />
       <button
         type="button"
         role="menuitem"
         className={`${sw.item} ${sw.action}`}
         data-testid="online-create"
-        onClick={() => void closeToList({ create: true })}
+        onClick={() => {
+          close();
+          startCreate();
+        }}
       >
         {M.create}
       </button>
@@ -216,6 +186,62 @@ function OnlineMenu() {
         {M.manage}
       </button>
     </div>
+  );
+}
+
+/** 공간 메뉴의 온라인 공간 한 줄(Preview 메뉴·G-1 통합 메뉴가 함께 쓴다) */
+export function OnlineMenuItem({
+  w,
+  shortcut,
+  onPick,
+}: {
+  w: OnlineSpaceInfo;
+  /** 메뉴 전체 순서(단축키) */
+  shortcut: number;
+  onPick: () => void;
+}) {
+  const busy = useOnlineSpaces((s) => s.busy);
+  const current = useOnlineSpaces((s) => s.current);
+  const status = useOnlineSync((s) => s.status);
+  const isCur = current?.workspaceId === w.workspaceId;
+  const m = metaOf(w);
+  return (
+    <button
+      type="button"
+      role="menuitem"
+      className={`${sw.item} ${isCur ? sw.current : ""}`}
+      data-current={isCur || undefined}
+      data-testid="workspace-item"
+      data-online=""
+      aria-current={isCur || undefined}
+      disabled={!!busy && busy !== w.workspaceId}
+      onClick={onPick}
+    >
+      <WorkspaceMark icon={m?.icon ?? "folder"} color={m?.color ?? "c1"} size={26} online />
+      <span className={sw.text}>
+        <span className={sw.name}>
+          {m?.name ?? STR.workspace.onlineMark}
+          {isCur && <span className={sw.check}> ✓</span>}
+        </span>
+        <span className={styles.meta}>
+          <span className={styles.type}>
+            <CloudIcon size={11} />
+            {M.type}
+          </span>
+          {busy === w.workspaceId ? (
+            M.opening
+          ) : isCur ? (
+            <>
+              <span className={styles.dot} data-tone={tone(status)} aria-hidden="true" />
+              {syncText(status)}
+            </>
+          ) : (
+            M.copied(when(w.createdAt))
+          )}
+        </span>
+      </span>
+      {shortcut <= MAX_SHORTCUT && <kbd className={sw.kbd}>{osText(STR.workspace.shortcut(shortcut))}</kbd>}
+    </button>
   );
 }
 
@@ -344,14 +370,16 @@ function SyncPanel({ saving, onDone }: { saving: boolean; onDone: () => void }) 
           {Y.now}
         </button>
       </div>
-      <button
-        type="button"
-        className={styles.link}
-        onClick={() => void closeToList()}
-        data-testid="online-workspace-close"
-      >
-        {P.toList}
-      </button>
+      {!isUnified() && (
+        <button
+          type="button"
+          className={styles.link}
+          onClick={() => void closeToList()}
+          data-testid="online-workspace-close"
+        >
+          {P.toList}
+        </button>
+      )}
     </div>
   );
 }
@@ -360,7 +388,17 @@ function SyncPanel({ saving, onDone }: { saving: boolean; onDone: () => void }) 
  * 설정 › 워크스페이스(온라인 공간을 연 동안): 이 계정의 온라인 공간 목록. 지금 공간 = 이름·색·아이콘(일지 설정 →
  * 동기화 → 서버 목록), 다른 공간 = [열기](한 길 전환). 이 PC 새 공간·기존 폴더 추가는 여기서 하지 않는다.
  */
-export function OnlineWorkspaceSettings() {
+export function OnlineWorkspaceSettings({
+  id = "ws-list",
+  title,
+  shortcutFrom = 1,
+}: {
+  id?: string;
+  /** G-1 통합 앱: "온라인 · 이메일" 묶음 제목 */
+  title?: string;
+  /** 단축키 첫 번호(통합 앱 = 이 PC 공간 수 + 1) */
+  shortcutFrom?: number;
+} = {}) {
   const { list, email, busy, current } = useOnlineSpaces();
   const entries = useAppStore((s) => s.workspaces);
   const dir = useAppStore((s) => (s.journal.state === "ready" ? s.journal.dataDir : null));
@@ -369,12 +407,12 @@ export function OnlineWorkspaceSettings() {
   const entry = entries.find((e) => dir && sameDir(e.dir, dir));
   return (
     <Card
-      id="ws-list"
-      title={STR.workspace.listTitle}
-      desc={email ? STR.onlineSpaces.settings.lead(email) : M.groupPlain}
-      testId="workspace-settings"
+      id={id}
+      title={title ?? STR.workspace.listTitle}
+      desc={title ? undefined : email ? STR.onlineSpaces.settings.lead(email) : M.groupPlain}
+      testId={title ? "online-workspace-settings" : "workspace-settings"}
     >
-      <ul className={settingsStyles.wsList} data-testid="workspace-list">
+      <ul className={settingsStyles.wsList} data-testid={title ? "online-workspace-list" : "workspace-list"}>
         {(list ?? []).map((w, i) => {
           const isCur = current?.workspaceId === w.workspaceId;
           const m = isCur && current?.meta ? current.meta : metaOf(w);
@@ -408,7 +446,7 @@ export function OnlineWorkspaceSettings() {
                   </span>
                 </span>
                 <span className={settingsStyles.wsMeta}>
-                  {i < MAX_SHORTCUT ? osText(STR.workspace.shortcut(i + 1)) : ""}
+                  {i + shortcutFrom <= MAX_SHORTCUT ? osText(STR.workspace.shortcut(i + shortcutFrom)) : ""}
                 </span>
                 <span className={settingsStyles.wsActions}>
                   {isCur && entry && (
@@ -446,7 +484,7 @@ export function OnlineWorkspaceSettings() {
           type="button"
           className={settingsStyles.primary}
           data-testid="online-create"
-          onClick={() => void closeToList({ create: true })}
+          onClick={startCreate}
         >
           {M.create}
         </button>

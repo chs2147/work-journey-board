@@ -212,11 +212,12 @@ export function AccountCard({ inSpace = false }: { inSpace?: boolean }) {
   );
 }
 
-/** 설정 › 계정(온라인 공간을 연 동안): 로그인 · 사용량 · 관리(관리자만) */
+/** 설정 › 계정: 로그인 · 사용량 · 관리(관리자만). 로그아웃은 온라인 공간을 연 동안이면 보내고 닫은 뒤(G-1 통합 앱은 이 PC 공간에서도 이 분류) */
 export function AccountSettingsCard() {
+  const inSpace = useOnlineSpaces((s) => s.current !== null);
   return (
     <>
-      <AccountCard inSpace />
+      <AccountCard inSpace={inSpace} />
       <UsageCard />
       <AdminCard />
     </>

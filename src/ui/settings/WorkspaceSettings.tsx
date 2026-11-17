@@ -19,7 +19,8 @@ import { WorkspaceMark } from "../common/workspaceIcons";
 import { Card } from "./SettingsCard";
 import styles from "./Settings.module.css";
 
-export function WorkspaceSettings() {
+/** title = G-1 통합 앱의 "이 PC" 묶음 제목(없으면 지금 그대로) */
+export function WorkspaceSettings({ title }: { title?: string } = {}) {
   const platform = useAppStore((s) => s.platform)!;
   const list = useAppStore((s) => s.workspaces);
   const dir = useAppStore((s) => (s.journal.state === "ready" ? s.journal.dataDir : null));
@@ -38,7 +39,7 @@ export function WorkspaceSettings() {
   return (
     <Card
       id="ws-list"
-      title={STR.workspace.listTitle}
+      title={title ?? STR.workspace.listTitle}
       desc={STR.workspace.listLead}
       testId="workspace-settings"
     >

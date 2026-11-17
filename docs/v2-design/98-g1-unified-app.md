@@ -28,3 +28,19 @@
 | G-1b | 화면: 실행 프로필에 "온라인 가능"(DEV·Preview) — 설정 › 계정, 공간 메뉴 온라인 묶음·[온라인 로그인…], 설정 › 워크스페이스 두 목록 |
 | G-1c | 전환·시작: appController에 로컬↔온라인 전환(한 길), 이 PC 설정 `config.json`에 마지막 공간(`lastWorkspace` — 로컬 폴더 또는 온라인 공간 ID·계정), 시작 흐름, 로그아웃 → 로컬로 |
 | G-1d | 시험: E2E(브라우저 DEV 모드에서 로컬·온라인 오가기 3번 + 행 수 그대로 — 4-7 전환 무결성), 정식판 무변경(appProfile·정식판 E2E), 실기표 |
+
+## 3. 구현 기록(2026-11-17)
+
+| 단계 | 커밋 내용 |
+|---|---|
+| G-1a | `24dedca` — Cargo `online` 기능, 격리 라이브러리 `LocalDev`(DEV 온라인 자료 = DEV 설정 폴더, 보안 저장소 이름 = DEV 앱 ID), DEV 명령 목록, 브랜치 빌드 |
+| G-1b·G-1c | 화면·전환(아래) |
+
+- **설치**: `main.tsx`가 DEV 메인 창에서만 `installUnified()`(`src/ui/preview/UnifiedChrome.tsx`)를 부른다. 정식판·Preview는 부르지 않는다 → 정식판 화면은 끼움 자리(onlineSlots)가 비어 지금 그대로.
+- **화면**: 레일 공간 단추·공간 메뉴(이 PC 묶음 → 온라인 · 이메일 묶음, 단축키는 메뉴 순서), 로그인 전 [온라인 로그인…](설정 › 계정), 상단 알약(온라인 공간일 때만 동기화 알약), 설정 › 워크스페이스(이 PC 목록 — 온라인을 연 동안은 [열기]만 + 온라인 목록), 만들기 대화상자는 앱 안(Preview의 [목록으로]·첫 화면 없음).
+- **전환(한 길)**: 이 PC → 온라인 = `openOnlineSpace` → `switchOnlineSpace(…, { leavingLocal })`(이 PC 일지 저장·종료 백업·Cabinet 보관 → 닫기 → 온라인 플랫폼으로 열기). 온라인 → 이 PC = `leaveToLocal`(보낼 변경 보내기·동기화 멈춤 → `switchOnlineSpace(base, …, { dataDir })`). 이 PC ↔ 이 PC = 지금 `switchWorkspace`. 온라인을 열지 못하고 공간 없이 남으면 이 PC 마지막 공간으로.
+- **마지막 공간**: 이 PC 설정 `config.json` `lastWorkspace`(`{kind:"online", workspaceId, ownerId}` 또는 null) — 온라인 공간을 열면 기록, 이 PC로 돌아가거나 로그아웃하면 지움. `appController.start`의 시작 고리(`setStartHook`, 온라인 가능 판만)가 같은 계정으로 로그인돼 있으면 목록(오프라인이면 받아 둔 목록) → 첫 동기화 → 열기, 아니면 지금처럼 `dataDir`.
+- **닫기**: 앱 닫기 처리 맨 앞 고리(`onBeforeExit`) — 온라인 공간이면 보낼 변경을 짧게(2초) 보내고 동기화를 멈춘 뒤 지금 닫기 흐름(1.40.1 안내·안전장치).
+- **그림**: 온라인 공간을 열면 `setImageProfile("online")`, 이 PC로 돌아오면 `"local"`(96).
+- **시험**: `tests/e2e/unified-app.spec.ts`(로그인 전 그대로 · 이 PC ↔ 온라인 3번 행 수 그대로 · 외부 요청 없음), `devChannel.test.ts`(lastWorkspace 읽기). 실기 = m1-check 7-53.
+- 고친 것: 설정을 "계정" 분류로 여는 한 번짜리 요청을 StrictMode 갱신 함수 안에서 읽어 두 번째 호출에 비던 문제(Preview에도 있던 잠재 문제).

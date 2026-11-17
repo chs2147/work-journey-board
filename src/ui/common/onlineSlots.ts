@@ -1,5 +1,5 @@
-// 온라인 화면 끼움 자리(docs/v2-design/95 UX-3) — Connected Preview가 온라인 공간을 열 때만 채운다.
-// 비어 있으면(정식판·DEV) 레일 공간 단추·상단 "저장됨" 알약·Ctrl+Alt+숫자는 지금 그대로다.
+// 온라인 화면 끼움 자리(docs/v2-design/95 UX-3) — Connected Preview가 온라인 공간을 열 때, G-1 통합 앱(DEV, 98)은 늘 채운다.
+// 비어 있으면(정식판) 레일 공간 단추·상단 "저장됨" 알약·Ctrl+Alt+숫자는 지금 그대로다.
 import type { ComponentType } from "react";
 
 export interface SaveStatusProps {
@@ -20,8 +20,10 @@ export interface OnlineSlots {
   workspaceIntro?: string;
   /** 설정 맨 앞 "계정" 분류(일지에 저장하는 분류 목록과 별개 — 보기 전용) */
   account?: { Component: ComponentType; name: string; desc: string; intro: string; icon: string };
-  /** Ctrl+Alt+n = n번째 온라인 공간 */
+  /** Ctrl+Alt+n = n번째 온라인 공간(통합 앱 = 메뉴 순서: 이 PC → 온라인) */
   switchAt(n: number): void;
+  /** 앱 화면 위 대화상자 자리(G-1 통합 앱: 온라인 워크스페이스 만들기) */
+  Overlay?: ComponentType;
 }
 
 let slots: OnlineSlots | null = null;

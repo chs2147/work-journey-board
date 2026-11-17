@@ -41,6 +41,8 @@ interface State {
   /** 여는 중인 공간 */
   busy: string | null;
   current: OpenedSpace | null;
+  /** G-1 통합 앱: 앱 안에서 만들기 대화상자(Preview는 첫 화면에서) */
+  creating: boolean;
 }
 export const useOnlineSpaces = create<State>(() => ({
   ownerId: null,
@@ -50,6 +52,7 @@ export const useOnlineSpaces = create<State>(() => ({
   error: null,
   busy: null,
   current: null,
+  creating: false,
 }));
 const get = useOnlineSpaces.getState;
 const set = useOnlineSpaces.setState;
@@ -201,16 +204,21 @@ async function prepare(w: OnlineSpaceInfo): Promise<{ platform: Platform; opened
 export async function openOnlineSpace(w: OnlineSpaceInfo): Promise<boolean> {
   const cur = get().current;
   if (cur?.workspaceId === w.workspaceId || get().busy) return true;
+  // 앱 화면이 이미 돌고 있으면(온라인 공간, 또는 G-1 통합 앱의 이 PC 공간) 한 길로 바꾼다
+  const running = useAppStore.getState().platform !== null;
   set({ busy: w.workspaceId, error: null });
   // 열고 첫 동기화가 끝날 때까지 화면을 막는다(받기 전에 고치면 충돌이 되므로)
   showClosingOverlay(STR.onlineSpaces.sync.opening);
   try {
     const { platform, opened } = await prepare(w);
     const sp = await api();
-    if (cur) {
-      await pushBeforeLeave();
-      stopOnlineSync();
-      if (!(await switchOnlineSpace(platform, setPlatformOverride))) throw new Error("JOURNAL_MISSING");
+    if (cur || running) {
+      if (cur) {
+        await pushBeforeLeave();
+        stopOnlineSync();
+      }
+      if (!(await switchOnlineSpace(platform, setPlatformOverride, { leavingLocal: !cur })))
+        throw new Error("JOURNAL_MISSING");
     } else {
       setPlatformOverride(platform);
     }
@@ -224,6 +232,47 @@ export async function openOnlineSpace(w: OnlineSpaceInfo): Promise<boolean> {
   } finally {
     hideClosingOverlay();
   }
+}
+
+/**
+ * G-1 통합 앱(docs/v2-design/98): 열린 온라인 공간 → 이 PC 공간(dir). 보낼 변경을 보내고(못 보내면 이 기기 사본에 남음)
+ * 동기화를 멈춘 뒤 한 길(appController.switchOnlineSpace)로 이 PC 플랫폼·그 폴더를 연다.
+ */
+export async function leaveToLocal(base: Platform, dir: string): Promise<boolean> {
+  if (get().busy) return false;
+  set({ busy: dir, error: null });
+  showClosingOverlay(STR.onlineSpaces.sync.toLocal);
+  try {
+    if (get().current) {
+      await pushBeforeLeave(2500);
+      stopOnlineSync();
+    }
+    set({ current: null });
+    const ok = await switchOnlineSpace(base, setPlatformOverride, { dataDir: dir });
+    return ok;
+  } finally {
+    set({ busy: null });
+    hideClosingOverlay();
+  }
+}
+
+let unified = false;
+/** G-1 통합 앱(DEV)이면 true — 만들기는 앱 안 대화상자, [목록으로]는 없음 */
+export function setUnified(v: boolean) {
+  unified = v;
+}
+export const isUnified = () => unified;
+/** [온라인 워크스페이스 만들기…] */
+export function startCreate() {
+  if (unified) set({ creating: true });
+  else void closeToList({ create: true });
+}
+export const endCreate = () => set({ creating: false });
+
+let leaveHook: (() => Promise<void>) | null = null;
+/** 로그아웃으로 창을 새로 부르기 직전(통합 앱: 마지막 공간 = 이 PC) */
+export function setLeaveHook(h: (() => Promise<void>) | null) {
+  leaveHook = h;
 }
 
 /** 지금 공간의 이름·색·아이콘을 고친 뒤(설정) — 레일·메뉴에 바로. 서버 목록은 보낸 뒤 다음 목록에서 같은 값 */
@@ -273,6 +322,7 @@ export async function signOutFromSpace(signOut: () => Promise<unknown>) {
   const p = useAppStore.getState().platform;
   await Promise.allSettled([destroyChildWindows(), p?.cabi.closeAll()]);
   await within(signOut(), 5000);
+  if (leaveHook) await within(leaveHook(), 2000);
   location.reload();
 }
 
@@ -298,5 +348,14 @@ export function takeCreateRequest(): boolean {
 /** 시험·진단용 */
 export function resetOnlineSpaces() {
   spaces = null;
-  set({ ownerId: null, email: null, list: null, offline: false, error: null, busy: null, current: null });
+  set({
+    ownerId: null,
+    email: null,
+    list: null,
+    offline: false,
+    error: null,
+    busy: null,
+    current: null,
+    creating: false,
+  });
 }
