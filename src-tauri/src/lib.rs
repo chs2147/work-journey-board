@@ -215,6 +215,7 @@ pub fn run() {
             space_db::space_db_export,
             preview_close::preview_exit,
             space_sync::space_sync_call,
+            space_sync::online_account_call,
             space_sync::space_asset_upload,
             space_sync::space_asset_fetch
         ]);

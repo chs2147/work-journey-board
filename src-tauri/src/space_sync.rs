@@ -57,6 +57,39 @@ pub async fn call<G: Gateway>(
     }
 }
 
+/// G 운영 준비(docs/v2-design/96): 계정 사용량·관리자 기능 — gateway `/v2/account/{action}`(서버 함수가 관리자 확인)
+pub const ACCOUNT_ACTIONS: [&str; 4] = ["usage", "admin_list", "admin_set", "admin_invite"];
+pub async fn account_call<G: Gateway>(
+    gw: &G,
+    access: &str,
+    device: &str,
+    action: &str,
+    params: Value,
+) -> Result<Value, String> {
+    if !ACCOUNT_ACTIONS.contains(&action) || !params.is_object() || !is_uuid(device) {
+        return Err("INVALID_REQUEST".into());
+    }
+    let body = serde_json::to_vec(&json!({ "deviceId": device, "params": params }))
+        .map_err(|_| "INVALID_REQUEST")?;
+    if body.len() > 4096 {
+        return Err("INVALID_REQUEST".into());
+    }
+    match gw
+        .send(
+            "POST",
+            &format!("{GATEWAY}/v2/account/{action}"),
+            access,
+            &[],
+            Body::Json(body),
+        )
+        .await?
+    {
+        (200, v) if v.is_object() => Ok(v),
+        (200, _) => Err("SERVER_RESPONSE".into()),
+        (s, v) => Err(error_code(s, &v)),
+    }
+}
+
 fn cache_ok(dir: &Path, sha: &str, bytes: usize) -> Option<Vec<u8>> {
     let b = fs::read(dir.join("assets").join(format!("{sha}.bin"))).ok()?;
     (b.len() == bytes && hex(&b) == sha).then_some(b)
@@ -182,6 +215,21 @@ pub async fn space_sync_call(
 ) -> Result<Value, String> {
     let (_, access, device) = session(&app, &state).await?;
     call(&gateway(&app)?, &access, &device, &action, params).await
+}
+#[tauri::command]
+pub async fn online_account_call(
+    app: AppHandle,
+    state: State<'_, OnlineState>,
+    action: String,
+    params: Value,
+) -> Result<Value, String> {
+    let (store, access, device) = session(&app, &state).await?;
+    let gw = gateway(&app)?;
+    // 이 계정 기기 ID가 서버에 없을 수 있다(첫 화면에서 바로 계정 화면) — 목록과 같이 먼저 맞춘다
+    let device = crate::migration::ensure_device(&gw, &store, &owner(&store)?, &access, &device)
+        .await
+        .unwrap_or(device);
+    account_call(&gw, &access, &device, &action, params).await
 }
 /// 본문 = 그림 바이트 그대로(IPC raw), 머리 x-wjb-workspace·x-wjb-object·x-wjb-sha256
 #[tauri::command]

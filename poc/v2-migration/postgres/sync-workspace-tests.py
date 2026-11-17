@@ -346,3 +346,125 @@ def run(g):
         assert r.returncode and 'MIGRATION_025_REQUIRED' in r.stderr
         sql((ROOT/'025-workspace-list-label.sql').read_text())
     test('027 restores the exact 016 read RPC and drops the helper; 025 re-applies', rollback025)
+
+    # ── 028 (G 운영 준비 Q-1: 계정 한도·관리자·안전선) ──
+    def apply028():
+        sql((ROOT/'028-account-quota.sql').read_text())
+        r = sql((ROOT/'028-account-quota.sql').read_text(), check=False)
+        assert r.returncode and 'MIGRATION_028_ALREADY_APPLIED' in r.stderr
+        v = json.loads(scalar((ROOT/'029-account-quota-verify.sql').read_text()))
+        assert v['schema'] and v['triggers'] and v['accountServiceOnly'] and v['accountSearchPath'] and v['opsClosed'], v
+        assert v['defaults'] == {'default_images': 104857600, 'default_spaces': 3, 'default_records': 31457280,
+                                 'project_images': 838860800, 'project_db': 419430400}, v
+        assert v['admins'] == 0
+    test('028 applies once over 019; 029 verify (7 limit triggers, defaults 100MB/3/30MB, safety 800MB/400MB, RPC server-only, ops closed)', apply028)
+    # 실제 Supabase auth.users에 있는 열(로컬 시험 표에만 없음)
+    sql("ALTER TABLE auth.users ADD COLUMN IF NOT EXISTS email text, ADD COLUMN IF NOT EXISTS created_at timestamptz DEFAULT now(), ADD COLUMN IF NOT EXISTS last_sign_in_at timestamptz;")
+
+    def acct(action, params, user=A, session=SA, device=DA, role='service_role'):
+        r = {'action': action, 'userId': user, 'sessionId': session, 'deviceId': device, 'params': params}
+        return sql(f"BEGIN;SET LOCAL ROLE {role};SELECT public.wjb_v2_account({literal(r)});COMMIT;", check=False)
+
+    def acct_ok(action, params, **kw):
+        r = acct(action, params, **kw)
+        assert r.returncode == 0, r.stderr[-400:]
+        return json.loads(r.stdout.strip())
+
+    def acct_no(action, params, code, **kw):
+        r = acct(action, params, **kw)
+        assert r.returncode and code in r.stderr, (code, r.stderr[-300:])
+
+    def start_fails(code):
+        m = emit()
+        m['workspaceId'] = str(uuid.uuid4())
+        f = {'job': str(uuid.uuid4()), 'ws': m['workspaceId']}
+        r = sql(g['query'](g['request']('start', f['job'], m)), check=False)
+        assert r.returncode and code in r.stderr, (code, r.stderr[-300:])
+
+    def spaces_and_admin():
+        # A는 앞 시험들로 공간이 3개를 넘는다 — 기본 한도(3)로 새 복제 거절
+        assert int(scalar(f"SELECT wjb_ops.used_spaces('{A}');")) >= 3
+        start_fails('QUOTA_ACCOUNT_SPACES')
+        u = acct_ok('usage', {})
+        assert u['limits'] == {'images': 104857600, 'spaces': 3, 'records': 31457280} and u['admin'] is False
+        assert 'project' not in u and u['used']['spaces'] >= 3
+        # 관리자가 아니면 관리 기능 거절
+        acct_no('admin_list', {}, 'ACCOUNT_NOT_ADMIN')
+        acct_no('admin_set', {'userId': B, 'unlimited': True}, 'ACCOUNT_NOT_ADMIN')
+        # B를 관리자로(적용 도구가 하는 일) — 관리자는 계정 한도 없음, 전체 사용량을 본다
+        sql(f"INSERT INTO wjb_ops.admin(user_id) VALUES('{B}');")
+        ub = acct_ok('usage', {}, user=B, session=SB, device=DB)
+        assert ub['admin'] is True and ub['unlimited'] is True and ub['limits'] == {'images': None, 'spaces': None, 'records': None}
+        assert ub['project']['imagesLimit'] == 838860800 and ub['project']['dbLimit'] == 419430400
+        lst = acct_ok('admin_list', {}, user=B, session=SB, device=DB)['accounts']
+        assert {a['userId'] for a in lst} >= {A, B}
+        # 관리자가 A를 무제한으로 → 복제 됨
+        r = acct_ok('admin_set', {'userId': A, 'unlimited': True}, user=B, session=SB, device=DB)
+        assert r['unlimited'] is True and r['limits']['spaces'] is None
+        publish()
+        # 관리자 자신은 바꿀 수 없다(늘 무제한)
+        acct_no('admin_set', {'userId': B, 'suspended': True}, 'ACCOUNT_ADMIN_FIXED', user=B, session=SB, device=DB)
+        acct_no('admin_set', {'userId': A, 'nope': 1}, 'ACCOUNT_INVALID_REQUEST', user=B, session=SB, device=DB)
+        # API 역할은 직접 부를 수 없다
+        acct_no('usage', {}, 'permission denied', role='authenticated')
+    test('028: default space limit refuses a new copy; admin-only list/set (checked in the RPC), admin unlimited and fixed; unlimited account copies again', spaces_and_admin)
+
+    def images_and_safety():
+        ws = scalar(f"SELECT id FROM wjb_gateway.workspace WHERE owner_id='{A}' ORDER BY id LIMIT 1;")
+        used = int(scalar(f"SELECT wjb_ops.used_images('{A}');"))
+        # 계정 그림 한도 = 지금 + 1000바이트 → 2000바이트 예약(사용량 증가) 거절, 500은 됨
+        acct_ok('admin_set', {'userId': A, 'unlimited': False, 'images': used + 1000}, user=B, session=SB, device=DB)
+        r = sql(f"UPDATE wjb_gateway.workspace SET quota_bytes=greatest(quota_bytes,used_bytes+100000) WHERE id='{ws}';UPDATE wjb_gateway.workspace SET used_bytes=used_bytes+2000 WHERE id='{ws}';", check=False)
+        assert r.returncode and 'QUOTA_ACCOUNT_IMAGES' in r.stderr, r.stderr[-300:]
+        sql(f"UPDATE wjb_gateway.workspace SET used_bytes=used_bytes+500 WHERE id='{ws}';")
+        # 줄이는 것(지우기)은 언제나 됨
+        sql(f"UPDATE wjb_gateway.workspace SET used_bytes=used_bytes-500 WHERE id='{ws}';")
+        # 안전선: 전체 그림이 선을 넘으면 무제한 계정도 거절
+        acct_ok('admin_set', {'userId': A, 'unlimited': True}, user=B, session=SB, device=DB)
+        total = int(scalar("SELECT wjb_ops.project_images();"))
+        sql(f"UPDATE wjb_ops.setting SET value={total + 1000} WHERE key='project_images';")
+        r = sql(f"UPDATE wjb_gateway.workspace SET used_bytes=used_bytes+2000 WHERE id='{ws}';", check=False)
+        assert r.returncode and 'QUOTA_PROJECT' in r.stderr, r.stderr[-300:]
+        # 안전선에 닿으면 새 공간(복제)도 거절
+        sql(f"UPDATE wjb_ops.setting SET value={total} WHERE key='project_images';")
+        start_fails('QUOTA_PROJECT')
+        sql("UPDATE wjb_ops.setting SET value=838860800 WHERE key='project_images';")
+    test('028: account image limit and the project image safety line refuse growth (even unlimited accounts); shrinking always works', images_and_safety)
+
+    def records_and_suspend():
+        p = publish()
+        e = [r for r in p['m']['records'] if r['table'] == 'entry_item'][0]
+        # 처음 받기(게시본 복사, rev 0)는 한도와 상관없이 된다
+        pull_all(p['ws'])
+        used = int(scalar(f"SELECT wjb_ops.used_records('{A}');"))
+        assert used > 0
+        acct_ok('admin_set', {'userId': A, 'unlimited': False, 'records': used + 50, 'spaces': None, 'images': None}, user=B, session=SB, device=DB)
+        # 글을 크게 늘리면 거절 — 서버에 아무것도 들어가지 않는다(이 기기 대기열에 남음)
+        big = {**e['value'], 'text': 'x' * 400}
+        r = rpc('push', {'workspaceId': p['ws'], 'opId': str(uuid.uuid4()), 'changes': [{'table': 'entry_item', 'key': e['key'], 'baseRev': 0, 'value': big}]})
+        assert r.returncode and 'QUOTA_ACCOUNT_RECORDS' in r.stderr, r.stderr[-300:]
+        assert scalar(f"SELECT rev FROM wjb_sync.record WHERE workspace_id='{p['ws']}' AND record_key='{e['key']}';") == '0'
+        # 줄이는 고치기는 된다
+        small = {**e['value'], 'text': '짧게'}
+        assert push(p['ws'], [{'table': 'entry_item', 'key': e['key'], 'baseRev': 0, 'value': small}])['applied'] is True
+        # 정지: 받기는 되고 보내기는 거절
+        acct_ok('admin_set', {'userId': A, 'suspended': True, 'records': None}, user=B, session=SB, device=DB)
+        pull_all(p['ws'])
+        r = rpc('push', {'workspaceId': p['ws'], 'opId': str(uuid.uuid4()), 'changes': [{'table': 'entry_item', 'key': e['key'], 'baseRev': 1, 'value': {**small, 'text': '짧게2'}}]})
+        assert r.returncode and 'ACCOUNT_SUSPENDED' in r.stderr, r.stderr[-300:]
+        assert acct_ok('usage', {})['suspended'] is True
+        # 원래대로(기본값 행 지우기)
+        acct_ok('admin_set', {'userId': A, 'reset': True}, user=B, session=SB, device=DB)
+        assert scalar(f"SELECT count(*) FROM wjb_ops.account WHERE user_id='{A}';") == '0'
+    test('028: record limit refuses only growing edits (initial copy and shrinking pass, nothing stored on refusal); suspended = read only; reset to defaults', records_and_suspend)
+
+    def rollback028():
+        sql((ROOT/'030-account-quota-rollback.sql').read_text())
+        assert scalar("SELECT to_regnamespace('wjb_ops') IS NULL AND to_regprocedure('public.wjb_v2_account(jsonb)') IS NULL;") == 't'
+        r = sql((ROOT/'030-account-quota-rollback.sql').read_text(), check=False)
+        assert r.returncode and 'MIGRATION_028_REQUIRED' in r.stderr
+        publish()  # 한도 없이 예전처럼
+        sql((ROOT/'028-account-quota.sql').read_text())
+        # 다시 적용하면 지금 자료로 사용량을 다시 채운다
+        assert int(scalar(f"SELECT wjb_ops.used_records('{A}');")) > 0
+    test('030 drops triggers, RPC and ops schema (copies work as before); 028 re-applies and backfills usage', rollback028)

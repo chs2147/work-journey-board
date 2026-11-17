@@ -178,6 +178,10 @@ export function createSupabaseRest({ projectRef, serviceRoleKey, fetchTransport,
             "STORAGE_NOT_CONFIRMED",
             "INTENT_LIMIT",
             "ASSET_LIMIT",
+            // G 운영 준비(96): 계정 그림 한도·안전선·정지
+            "QUOTA_ACCOUNT_IMAGES",
+            "QUOTA_PROJECT",
+            "ACCOUNT_SUSPENDED",
           ]);
           let code;
           try {

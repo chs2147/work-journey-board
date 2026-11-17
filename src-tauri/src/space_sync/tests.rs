@@ -202,3 +202,26 @@ fn fetch_uses_cache_then_server_and_checks_hash() {
     fs::remove_dir_all(d).ok();
     fs::remove_dir_all(d2).ok();
 }
+
+#[test]
+fn account_call_checks_action_and_device_before_sending() {
+    struct Never;
+    impl Gateway for Never {
+        async fn send(
+            &self,
+            _m: &'static str,
+            _p: &str,
+            _b: &str,
+            _h: &[(&'static str, String)],
+            _body: Body,
+        ) -> Result<(u16, Value), String> {
+            panic!("must not send")
+        }
+    }
+    let run = |a: &str, dev: &str, p: Value| {
+        tauri::async_runtime::block_on(account_call(&Never, "ACCESS", dev, a, p)).unwrap_err()
+    };
+    assert_eq!(run("drop_all", DEV, json!({})), "INVALID_REQUEST");
+    assert_eq!(run("usage", "x", json!({})), "INVALID_REQUEST");
+    assert_eq!(run("usage", DEV, json!([])), "INVALID_REQUEST");
+}

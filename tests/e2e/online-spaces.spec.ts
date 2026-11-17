@@ -393,3 +393,77 @@ test("연결이 느리면 첫 동기화를 10초까지만 기다리고 이 기�
   // 열린 뒤 쓸 수 있고, 뒤에서 이어지는 동기화가 끝나면 동기화됨
   await expect(syncStatus(page)).toContainText(/동기화됨/, { timeout: 60_000 });
 });
+
+test("G(96): 사용량 카드 — 기본 한도(그림 100MB · 공간 3 · 기록 30MB), 관리 카드는 관리자만", async ({
+  page,
+}) => {
+  await signIn(page);
+  const usage = page.getByTestId("usage-card");
+  await expect(usage).toBeVisible();
+  await expect(usage.getByTestId("usage-spaces")).toHaveText("0 / 3개");
+  await expect(usage.getByTestId("usage-images")).toContainText("/ 100");
+  await expect(page.getByTestId("admin-card")).toHaveCount(0);
+  await openCopied(page);
+  await page.getByTestId("rail-settings").click();
+  await page.getByRole("tab", { name: /계정/ }).click();
+  await expect(page.getByTestId("usage-card").getByTestId("usage-spaces")).toHaveText("1 / 3개");
+  await expect(page.getByTestId("admin-card")).toHaveCount(0);
+});
+
+test("G(96): 공간 수 한도 — 3개까지 만들고 4번째 복제는 서버가 거절(이유 그대로)", async ({ page }) => {
+  test.setTimeout(90_000);
+  await signIn(page);
+  for (let i = 0; i < 3; i++) await copyOnce(page);
+  await expect(page.getByTestId("usage-card").getByTestId("usage-spaces")).toHaveText("3 / 3개");
+  await expect(page.getByTestId("usage-card").getByTestId("usage-badge")).toHaveText("한도 임박");
+  await page.getByTestId("online-create-open").click();
+  await page.getByTestId("create-mode-local").click();
+  await page.getByTestId("create-next").click();
+  await page.getByTestId("copy-pick").click();
+  await page.getByTestId("copy-start").click({ timeout: 30_000 });
+  await expect(page.getByTestId("copy-paused")).toContainText("온라인 공간 수 한도", { timeout: 30_000 });
+});
+
+test("G(96): 관리자 — 전체 사용량·초대·계정 한도 바꾸기·무제한·정지(서버 함수가 관리자 확인)", async ({
+  page,
+}) => {
+  await signIn(page, "&previewAdmin=1");
+  const admin = page.getByTestId("admin-card");
+  await expect(admin).toBeVisible();
+  await expect(page.getByTestId("usage-card")).toContainText("무제한");
+  await expect(admin.getByTestId("admin-project-images")).toContainText("/ 800");
+  const other = admin.locator("[data-testid=admin-account]", { hasText: "invited@example.invalid" });
+  await expect(other).toBeVisible();
+  const row = other.locator("xpath=ancestor::*[contains(@class,'setRow')][1]");
+  // 한도 바꾸기: 그림 50MB · 공간 1 · 기록(빈 칸 = 기본)
+  await row.getByTestId("admin-edit").click();
+  await admin.getByTestId("limit-images").fill("50");
+  await admin.getByTestId("limit-spaces").fill("1");
+  await admin.getByTestId("limit-records").fill("");
+  await admin.getByTestId("limit-save").click();
+  await expect(row).toContainText("공간 0 / 1개");
+  await expect(row).toContainText("/ 50");
+  await expect(other).toContainText("조정됨");
+  // 무제한 ↔ 기본으로
+  await row.getByTestId("admin-unlimited").click();
+  await expect(other).toContainText("무제한");
+  await row.getByTestId("admin-unlimited").click();
+  await expect(row).toContainText("/ 3개");
+  // 정지 ↔ 풀기
+  await row.getByTestId("admin-suspend").click();
+  await expect(other).toContainText("읽기 전용");
+  await row.getByTestId("admin-suspend").click();
+  await expect(other).not.toContainText("읽기 전용");
+  // 관리자 자신은 바꾸는 단추가 없다
+  const me = admin.locator("[data-testid=admin-account]", { hasText: "virtual@example.invalid" });
+  await expect(me).toContainText("관리자");
+  await expect(
+    me.locator("xpath=ancestor::*[contains(@class,'setRow')][1]").getByTestId("admin-edit"),
+  ).toHaveCount(0);
+  // 초대
+  await admin.getByTestId("admin-invite-input").fill("new-person@example.invalid");
+  await admin.getByTestId("admin-invite").click();
+  await expect(
+    admin.locator("[data-testid=admin-account]", { hasText: "new-person@example.invalid" }),
+  ).toBeVisible();
+});

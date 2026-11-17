@@ -1,0 +1,40 @@
+{
+  "module": "wjb-account-quota-poc-1",
+  "profile": "development",
+  "projectRef": "vsphftnmfzfoufasjttd",
+  "autoApply": false,
+  "cloudApplied": false,
+  "userApproved": "G 운영 준비 계정 한도·관리자(2026-11-17 Q1~Q4 추천안, docs/v2-design/96)",
+  "requires": ["019-workspace-sync.sql (installed)"],
+  "changes": {
+    "newSchemas": [
+      "wjb_ops (settings, single admin, per-account overrides, per-space record bytes, db size cache) — no API role access"
+    ],
+    "newTriggers": [
+      "wjb_gateway.workspace: new space (space limit, project line), used_bytes growth (image limit, project line)",
+      "wjb_migration.workspace_record insert/delete: published bytes (record limit on growth)",
+      "wjb_sync.record insert/update/delete: synced bytes (record limit only for growing edits rev>0)"
+    ],
+    "newFunctions": [
+      "public.wjb_v2_account (usage / admin_list / admin_set, service role only, admin checked inside)"
+    ],
+    "replacedFunctions": []
+  },
+  "adminEmail": "never stored in the repository; admin-set.mjs resolves WJB_ADMIN_EMAIL to a user id on the server",
+  "rollback": "030 drops the triggers, the RPC and the wjb_ops schema",
+  "localEvidence": "docs/v2-design/evidence/migration-sync-workspace-pass.json",
+  "sources": [
+    {
+      "path": "poc/v2-migration/postgres/028-account-quota.sql",
+      "sha256": "0c9632d98ef2c5d37c45ef5834578ec58f32591fd7c9fd045a6b5259363f08d9"
+    },
+    {
+      "path": "poc/v2-migration/postgres/029-account-quota-verify.sql",
+      "sha256": "d388851cb465b8bdf97ad04f4801c50a6b966375e0b6a11068fa07e6621789f9"
+    },
+    {
+      "path": "poc/v2-migration/postgres/030-account-quota-rollback.sql",
+      "sha256": "15c85fe778244b2c1e56f8eb354a6e3acc52fc1331dadc52af7242a034b5fb6e"
+    }
+  ]
+}

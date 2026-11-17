@@ -10,6 +10,7 @@ import { createSessionVerifier } from "../../v2-auth/session-adapter.mjs";
 import { createMigrationRPC } from "../../v2-migration/server-rpc.mjs";
 import { createWorkspaceReadRPC, READ_ACTIONS } from "../../v2-migration/read-rpc.mjs";
 import { createWorkspaceSyncRPC, SYNC_ACTIONS, SYNC_BODY_LIMIT } from "../../v2-migration/sync-rpc.mjs";
+import { ACCOUNT_ACTIONS, ACCOUNT_BODY_LIMIT, createAccountRPC } from "../../v2-migration/account-rpc.mjs";
 import { GatewayError, readLimited, uuid } from "../io.mjs";
 
 /** 개발용 영구 비공개 버킷(C-1b, docs/v2-design/82) — 시험마다 만들고 지우는 POC 버킷과 다르다 */
@@ -77,6 +78,7 @@ async function setup() {
   });
   const reader = createWorkspaceReadRPC({ projectRef, serviceRoleKey, fetchTransport });
   const syncer = createWorkspaceSyncRPC({ projectRef, serviceRoleKey, fetchTransport });
+  const accounts = createAccountRPC({ projectRef, serviceRoleKey, fetchTransport });
   return { gateway, verify, rest, rpc, reader, syncer };
 }
 
@@ -121,6 +123,15 @@ export async function handle(request) {
         actions: SYNC_ACTIONS,
         limit: SYNC_BODY_LIMIT,
         call: (a, p, who, dev) => syncer.call(a, p, who, dev),
+      });
+    // G 운영 준비(96): 계정 사용량·관리자 기능 — 관리자 확인은 서버 함수 안에서
+    const accountRoute = path.match(/^\/v2\/account\/([a-z_]+)$/);
+    if (accountRoute)
+      return await serverCall(request, url, accountRoute[1], {
+        verify,
+        actions: ACCOUNT_ACTIONS,
+        limit: ACCOUNT_BODY_LIMIT,
+        call: (a, p, who, dev) => accounts.call(a, p, who, dev),
       });
     const inner = new URL(path, url.origin);
     return await gateway.handler(new Request(inner, request));

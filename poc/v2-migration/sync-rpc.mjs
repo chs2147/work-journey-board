@@ -14,6 +14,11 @@ const errors = new Set([
   "SYNC_ASSET_CONFLICT",
   "SYNC_CURSOR_AHEAD",
   "SYNC_LIMIT",
+  // G 운영 준비(96): 기록 한도·안전선·정지 — 보낸 것은 서버에 들어가지 않고 이 기기 대기열에 남는다
+  "QUOTA_ACCOUNT_RECORDS",
+  "QUOTA_ACCOUNT_IMAGES",
+  "QUOTA_PROJECT",
+  "ACCOUNT_SUSPENDED",
 ]);
 export const SYNC_ACTIONS = Object.freeze(["push", "pull", "asset_declare"]);
 /** 한 요청 본문 한도(서버 함수 1.1MB와 같음) */

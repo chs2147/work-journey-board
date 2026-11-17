@@ -16,8 +16,9 @@ import {
   takeCreateRequest,
   useOnlineSpaces,
 } from "./onlineSpaceStore";
-import { initAccount, useOnlineAccount } from "./onlineAccount";
+import { initAccount, loadUsage, useOnlineAccount } from "./onlineAccount";
 import { AccountCard } from "./AccountPanel";
+import { AdminCard, UsageCard } from "./AccountUsage";
 import { Card, Row } from "../settings/SettingsCard";
 import own from "./PreviewApp.module.css";
 import appStyles from "../App.module.css";
@@ -85,6 +86,8 @@ export function PreviewApp({ profile }: { profile: AppProfileInfo }) {
             <p>{P.lead}</p>
           </div>
           <AccountCard />
+          <UsageCard />
+          <AdminCard />
           <OnlineSpacesCard ownerId={accountId} refreshKey={published} onCreate={() => setCreating(true)} />
           <Card id="preview-about" title={P.about}>
             <Row label={P.profile} desc={P.profileValue} />
@@ -101,7 +104,10 @@ export function PreviewApp({ profile }: { profile: AppProfileInfo }) {
         <CreateOnlineDialog
           ownerId={accountId}
           email={email}
-          onPublished={() => setPublished((n) => n + 1)}
+          onPublished={() => {
+            setPublished((n) => n + 1);
+            void loadUsage(); // 공간 수·용량 바로
+          }}
           onOpen={(ws) => void openCreated(ws)}
           onClose={() => setCreating(false)}
         />

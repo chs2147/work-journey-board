@@ -38,4 +38,8 @@ export const browserPreviewOnline: PreviewOnline = {
     sentTo = null;
     return current;
   },
+  async account(action, params) {
+    if (current.state !== "signedIn") throw new Error("SIGNED_OUT");
+    return (await import("./browserPreviewAccount")).fakeAccount(action, params);
+  },
 };

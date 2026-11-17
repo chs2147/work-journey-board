@@ -36,6 +36,8 @@ type Status = ReturnType<typeof useOnlineSync.getState>["status"];
 function syncText(s: Status) {
   if (s.phase === "syncing") return Y.syncing;
   if (s.phase === "offline") return Y.offline(s.pending);
+  // 용량 한도·정지(96): 이 기기에는 저장, 서버 보내기만 대기
+  if (s.phase === "error" && /^(QUOTA_|ACCOUNT_SUSPENDED)/.test(s.error ?? "")) return Y.quota(s.pending);
   if (s.phase === "error") return Y.error(s.error ?? "UNKNOWN");
   if (s.pending) return Y.pending(s.pending);
   return s.lastSyncedAt ? Y.synced(clock(s.lastSyncedAt)) : Y.saved;

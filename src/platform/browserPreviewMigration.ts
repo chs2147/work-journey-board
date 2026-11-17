@@ -32,6 +32,10 @@ export function fakePublishedSpaces() {
       body: (objectId: string) => assetBodies.get(objectId),
     }));
 }
+/** 지금 살아 있는 공간 수(취소되지 않은 시작된 작업) — 가짜 계정 한도용 */
+export function fakeLiveSpaceCount() {
+  return [...jobs.values()].filter((j) => j.started && j.state !== "canceled").length;
+}
 const journals = new Map<string, MigrationJournal>();
 const MH = "c".repeat(64);
 
@@ -65,6 +69,8 @@ export const browserPreviewMigration: PreviewMigration = {
         j.records.set(params.index as number, params.records as unknown[]);
         return { stored: true };
       case "start_upload":
+        // 서버(028)처럼 새 공간을 만들 때 계정 한도 확인
+        if (!j.started) (await import("./browserPreviewAccount")).fakeSpaceGuard();
         j.started = true;
         j.state = "staging";
         return { state: "staging", manifestHash: MH };

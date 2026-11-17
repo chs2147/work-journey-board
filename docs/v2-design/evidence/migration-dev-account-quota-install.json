@@ -1,0 +1,53 @@
+{
+  "startedAt": "2026-11-17T00:47:38.141Z",
+  "projectRef": "vsphftnmfzfoufasjttd",
+  "autoApply": false,
+  "userRequestedDevIntegration": true,
+  "productionTouched": false,
+  "sources": [
+    {
+      "path": "poc/v2-migration/postgres/028-account-quota.sql",
+      "sha256": "0c9632d98ef2c5d37c45ef5834578ec58f32591fd7c9fd045a6b5259363f08d9"
+    },
+    {
+      "path": "poc/v2-migration/postgres/029-account-quota-verify.sql",
+      "sha256": "d388851cb465b8bdf97ad04f4801c50a6b966375e0b6a11068fa07e6621789f9"
+    }
+  ],
+  "phases": [
+    {
+      "phase": "preflight",
+      "has019": true,
+      "has028": false
+    },
+    {
+      "phase": "apply",
+      "ok": true
+    }
+  ],
+  "applied": true,
+  "executionRole": {
+    "role": "postgres",
+    "read_only": "off",
+    "rolsuper": false,
+    "rolbypassrls": true
+  },
+  "verify": {
+    "admins": 0,
+    "schema": true,
+    "defaults": {
+      "project_db": 419430400,
+      "default_images": 104857600,
+      "default_spaces": 3,
+      "project_images": 838860800,
+      "default_records": 31457280
+    },
+    "triggers": true,
+    "opsClosed": true,
+    "cloudApplied": false,
+    "accountSearchPath": true,
+    "accountServiceOnly": true,
+    "productActivationAllowed": false
+  },
+  "finishedAt": "2026-11-17T00:47:45.232Z"
+}

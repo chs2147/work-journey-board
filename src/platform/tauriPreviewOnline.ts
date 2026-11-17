@@ -17,4 +17,5 @@ export const tauriPreviewOnline: PreviewOnline = {
   verifyCode: (email, c) => call<OnlineStatus>("online_verify_code", { email, code: c }),
   check: () => call<OnlineStatus>("online_check"),
   signOut: () => call<OnlineStatus>("online_sign_out"),
+  account: (action, params) => call<unknown>("online_account_call", { action, params }),
 };

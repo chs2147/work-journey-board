@@ -19,6 +19,7 @@ import { openSettingsAt } from "../common/appController";
 import { Card, CardMessage, Row } from "../settings/SettingsCard";
 import settings from "../settings/Settings.module.css";
 import own from "./AccountPanel.module.css";
+import { AdminCard, UsageCard } from "./AccountUsage";
 
 const P = STR.connectedPreview;
 const A = STR.onlineSpaces.account;
@@ -211,7 +212,13 @@ export function AccountCard({ inSpace = false }: { inSpace?: boolean }) {
   );
 }
 
-/** 설정 › 계정(온라인 공간을 연 동안) */
+/** 설정 › 계정(온라인 공간을 연 동안): 로그인 · 사용량 · 관리(관리자만) */
 export function AccountSettingsCard() {
-  return <AccountCard inSpace />;
+  return (
+    <>
+      <AccountCard inSpace />
+      <UsageCard />
+      <AdminCard />
+    </>
+  );
 }

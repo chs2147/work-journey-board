@@ -53,3 +53,29 @@
     align-items: stretch;
   }
 }
+
+/* 한도 배지 색(글과 함께 — 색만으로 가르지 않음) */
+.badge[data-tone="near"] {
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+.badge[data-tone="over"] {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+/* 관리: 한도 바꾸기 칸 */
+.limitFields {
+  flex: 1 1 auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+}
+.limitFields label {
+  display: grid;
+  gap: var(--sp-1);
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+}
+.limitFields .input {
+  width: 110px;
+}

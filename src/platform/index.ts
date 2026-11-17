@@ -335,6 +335,30 @@ export interface PreviewOnline {
   verifyCode(email: string, code: string): Promise<OnlineStatus>;
   check(): Promise<OnlineStatus>;
   signOut(): Promise<OnlineStatus>;
+  /** G 운영 준비(docs/v2-design/96): 계정 사용량·관리자 기능(관리자 확인은 서버 함수) */
+  account(
+    action: "usage" | "admin_list" | "admin_set" | "admin_invite",
+    params: Record<string, unknown>,
+  ): Promise<unknown>;
+}
+
+/** 계정 한도(null = 없음)·사용량(바이트, 공간 수) — 서버 SQL 028 `wjb_ops.usage_json` */
+export interface AccountUsage {
+  limits: { images: number | null; spaces: number | null; records: number | null };
+  used: { images: number; spaces: number; records: number };
+  unlimited: boolean;
+  suspended: boolean;
+  admin: boolean;
+  /** 관리자만: 프로젝트 전체(안전선 대비) */
+  project?: { images: number; imagesLimit: number; db: number; dbLimit: number };
+}
+export interface AdminAccount extends AccountUsage {
+  userId: string;
+  email: string | null;
+  createdAt: string | null;
+  lastSignInAt: string | null;
+  /** 기본값이 아닌 조정이 있는지 */
+  custom: boolean;
 }
 
 /** C-2 원본 일지 읽기 전용 사본(Preview, Rust source_copy.rs) — 원본 폴더에는 아무것도 만들지 않는다 */
