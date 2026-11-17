@@ -32,6 +32,27 @@ export function fakePublishedSpaces() {
       body: (objectId: string) => assetBodies.get(objectId),
     }));
 }
+/** G-5(100) 가짜 서버: 공간을 서버에서 지움(목록·읽기에서 바로 사라짐). 없으면 LIFE_NOT_FOUND */
+export function fakeDeleteSpace(workspaceId: string) {
+  const j = [...jobs.values()].find(
+    (x) =>
+      x.state !== "canceled" &&
+      (x.header as { workspaceId?: string } | undefined)?.workspaceId === workspaceId,
+  );
+  if (!j) throw new Error("LIFE_NOT_FOUND");
+  j.state = "canceled";
+  return { workspaceId, state: "purging", images: (j.header?.assets as unknown[] | undefined)?.length ?? 0 };
+}
+/** G-5 가짜 서버: 내 계정의 공간을 모두 지움 */
+export function fakeDeleteAllSpaces() {
+  let n = 0;
+  for (const j of jobs.values())
+    if (j.state !== "canceled" && j.started) {
+      j.state = "canceled";
+      n++;
+    }
+  return n;
+}
 /** 지금 살아 있는 공간 수(취소되지 않은 시작된 작업) — 가짜 계정 한도용 */
 export function fakeLiveSpaceCount() {
   return [...jobs.values()].filter((j) => j.started && j.state !== "canceled").length;

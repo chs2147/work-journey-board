@@ -1506,7 +1506,11 @@ export const STR_BASE = {
       QUOTA_PROJECT: "서버 전체 용량이 거의 찼습니다. 관리자에게 알려 주세요. 이 기기에는 저장돼 있습니다.",
       ACCOUNT_SUSPENDED: "이 계정은 지금 읽기만 할 수 있습니다(관리자 설정).",
       ACCOUNT_NOT_ADMIN: "관리자만 할 수 있습니다.",
-      ACCOUNT_ADMIN_FIXED: "관리자 계정은 한도·정지를 바꿀 수 없습니다.",
+      ACCOUNT_ADMIN_FIXED: "관리자 계정은 한도·정지를 바꾸거나 삭제할 수 없습니다.",
+      LIFE_NOT_FOUND: "이 온라인 공간을 찾을 수 없습니다. 이미 지워졌을 수 있습니다.",
+      LIFE_ACCESS_DENIED: "이 기기에서 할 수 없습니다. 다시 로그인해 주세요.",
+      LIFE_INVALID_REQUEST: "요청이 올바르지 않습니다.",
+      LIFE_UNAVAILABLE: "서버에 연결하지 못했습니다. 잠시 뒤 다시 해 주세요.",
       ACCOUNT_NOT_FOUND: "그 계정을 찾을 수 없습니다.",
       UNKNOWN: "처리하지 못했습니다.",
     } as Record<string, string>,
@@ -1648,6 +1652,8 @@ export const STR_BASE = {
       opening: "서버와 맞추는 중…",
       /** G-1 통합 앱: 온라인 → 이 PC 공간 */
       toLocal: "보내고 저장한 뒤 바꾸는 중…",
+      /** G-5: 다른 기기에서 이 공간을 서버에서 지움 */
+      deletedOnServer: "서버에서 지워진 공간입니다 · 이 기기에 저장됨",
       quota: (n: number) => `용량 한도 · 대기 ${n.toLocaleString("ko-KR")}건`,
       panelTitle: "충돌 목록",
       panelEmpty: "충돌이 없습니다.",
@@ -1751,6 +1757,25 @@ export const STR_BASE = {
       signOutTitle: "로그아웃할까요?",
       signOutBody:
         "열린 온라인 공간의 보낼 변경을 보내고 저장한 뒤 닫습니다. 보내지 못한 변경은 이 기기에 남아 다음 로그인 때 이어서 보냅니다.",
+      /** G-5(100) 계정 삭제 */
+      deleteAccount: "계정 삭제…",
+      deleteAccountTitle: "계정을 삭제할까요?",
+      deleteAccountBody:
+        "이 계정의 온라인 공간과 그림을 서버에서 모두 지우고 로그아웃합니다. 되돌릴 수 없습니다. 이 PC 워크스페이스는 그대로입니다. 확인하려면 이메일을 입력하세요.",
+      adminDeleteTitle: (email: string) => `${email} 계정을 삭제할까요?`,
+      adminDeleteBody:
+        "그 계정의 온라인 공간과 그림을 서버에서 모두 지우고 로그인을 막습니다. 되돌릴 수 없습니다. 확인하려면 이메일을 입력하세요.",
+      deleteOk: "삭제",
+      confirmPlaceholder: "확인 입력",
+    },
+    /** G-5(100) 공간 서버에서 지우기 */
+    remove: {
+      button: "서버에서 지우기…",
+      title: (name: string) => `${name}을(를) 서버에서 지울까요?`,
+      body: "모든 기기에서 이 온라인 공간이 사라지고 그림도 서버에서 지워집니다. 되돌릴 수 없습니다. 이 기기 사본도 지웁니다. 확인하려면 공간 이름을 입력하세요.",
+      ok: "서버에서 지우기",
+      openNow: "지금 연 공간은 다른 공간으로 바꾼 뒤 지울 수 있습니다",
+      done: (name: string) => `${name}을(를) 서버에서 지웠습니다`,
     },
     /** UX-3 설정 › 워크스페이스(온라인 공간을 연 동안) */
     settings: {

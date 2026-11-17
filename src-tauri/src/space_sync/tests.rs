@@ -225,3 +225,45 @@ fn account_call_checks_action_and_device_before_sending() {
     assert_eq!(run("usage", "x", json!({})), "INVALID_REQUEST");
     assert_eq!(run("usage", DEV, json!([])), "INVALID_REQUEST");
 }
+
+#[test]
+fn lifecycle_actions_go_to_the_lifecycle_route_only() {
+    use std::sync::Mutex;
+    struct Rec(Mutex<Vec<String>>);
+    impl Gateway for Rec {
+        async fn send(
+            &self,
+            _m: &'static str,
+            p: &str,
+            _b: &str,
+            _h: &[(&'static str, String)],
+            _body: Body,
+        ) -> Result<(u16, Value), String> {
+            self.0.lock().unwrap().push(p.to_string());
+            Ok((200, json!({ "state": "purging" })))
+        }
+    }
+    let gw = Rec(Mutex::new(vec![]));
+    let ws = "11111111-2222-4333-8444-555555555555";
+    for (a, p) in [
+        ("delete_space", json!({ "workspaceId": ws })),
+        ("delete_account", json!({})),
+        ("usage", json!({})),
+    ] {
+        tauri::async_runtime::block_on(account_call(&gw, "ACCESS", DEV, a, p)).unwrap();
+    }
+    assert_eq!(
+        *gw.0.lock().unwrap(),
+        [
+            "/functions/v1/wjb-gateway/v2/lifecycle/delete_space",
+            "/functions/v1/wjb-gateway/v2/lifecycle/delete_account",
+            "/functions/v1/wjb-gateway/v2/account/usage",
+        ]
+    );
+    // 계정 경로에 지우기 이름을 붙여 보낼 수 없다(목록 밖 거절)
+    assert_eq!(
+        tauri::async_runtime::block_on(account_call(&gw, "ACCESS", DEV, "sweep", json!({})))
+            .unwrap_err(),
+        "INVALID_REQUEST"
+    );
+}

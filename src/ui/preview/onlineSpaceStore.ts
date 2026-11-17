@@ -4,6 +4,7 @@
 import { create } from "zustand";
 import { isTauri } from "@tauri-apps/api/core";
 import {
+  loadPreviewOnline,
   loadPreviewSpaces,
   setPlatformOverride,
   type OnlineSpaceInfo,
@@ -324,6 +325,46 @@ export async function signOutFromSpace(signOut: () => Promise<unknown>) {
   await within(signOut(), 5000);
   if (leaveHook) await within(leaveHook(), 2000);
   location.reload();
+}
+
+/**
+ * G-5(docs/v2-design/100): 공간을 서버에서 지운다(소유자). 지금 연 공간은 지우지 않는다(다른 공간으로 바꾼 뒤).
+ * 서버가 받으면 이 기기 사본도 지우고 목록을 새로 받는다. 실패하면 오류 글(아무것도 지우지 않음).
+ */
+export async function deleteSpaceOnServer(w: OnlineSpaceInfo): Promise<string | null> {
+  if (get().current?.workspaceId === w.workspaceId) return STR.onlineSpaces.remove.openNow;
+  try {
+    await (await loadPreviewOnline()).account("delete_space", { workspaceId: w.workspaceId });
+  } catch (e) {
+    return errText(e);
+  }
+  await (await api()).remove(w.workspaceId).catch(() => undefined);
+  if (lastOpened(get().ownerId ?? "") === w.workspaceId) forgetLastOpened();
+  await refreshSpaces();
+  return null;
+}
+
+/**
+ * G-5: 내 계정 삭제 — 서버가 받으면 이 기기의 온라인 공간 사본을 지우고 로그아웃(온라인 공간을 연 동안이면 보내고 닫은 뒤).
+ * 이 PC(로컬) 공간은 건드리지 않는다.
+ */
+export async function deleteAccountAndSignOut(inSpace: boolean): Promise<string | null> {
+  const online = await loadPreviewOnline();
+  try {
+    await online.account("delete_account", {});
+  } catch (e) {
+    return errText(e);
+  }
+  const sp = await api();
+  const keep = get().current?.workspaceId;
+  for (const w of get().list ?? [])
+    if (w.workspaceId !== keep) await sp.remove(w.workspaceId).catch(() => undefined);
+  if (inSpace) await signOutFromSpace(() => online.signOut());
+  else {
+    await online.signOut().catch(() => undefined);
+    location.reload();
+  }
+  return null;
 }
 
 /** 첫 화면에서 만들기 대화상자를 바로 열기(창을 새로 부르는 사이에 남기는 한 번짜리 표시 — 탭마다, 없어도 동작) */

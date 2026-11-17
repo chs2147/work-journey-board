@@ -14,7 +14,8 @@ import {
   useOnlineAccount,
   verifyCode,
 } from "./onlineAccount";
-import { signOutFromSpace, useOnlineSpaces } from "./onlineSpaceStore";
+import { deleteAccountAndSignOut, signOutFromSpace, useOnlineSpaces } from "./onlineSpaceStore";
+import { DeleteConfirm } from "./DeleteConfirm";
 import { openSettingsAt } from "../common/appController";
 import { Card, CardMessage, Row } from "../settings/SettingsCard";
 import settings from "../settings/Settings.module.css";
@@ -27,7 +28,8 @@ const clock = (sec: number) =>
   new Date(sec * 1000).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" });
 
 export function AccountCard({ inSpace = false }: { inSpace?: boolean }) {
-  const { status, busy, error, sentTo } = useOnlineAccount();
+  const { status, busy, error, sentTo, usage } = useOnlineAccount();
+  const [deleting, setDeleting] = useState(false);
   const spaces = useOnlineSpaces((s) => s.list);
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
@@ -196,7 +198,31 @@ export function AccountCard({ inSpace = false }: { inSpace?: boolean }) {
             <Row
               label={P.accountId}
               desc={<span title={status.accountId ?? undefined}>{status.accountId?.slice(0, 8)}</span>}
-            />
+            >
+              {/* G-5: 관리자 계정은 고정(서버도 거절) — 사용량을 받은 뒤 일반 계정만 */}
+              {usage && !usage.admin && !deleting && (
+                <button
+                  type="button"
+                  className={settings.danger}
+                  disabled={busy !== null}
+                  onClick={() => setDeleting(true)}
+                  data-testid="account-delete"
+                >
+                  {A.deleteAccount}
+                </button>
+              )}
+            </Row>
+            {deleting && (
+              <DeleteConfirm
+                title={A.deleteAccountTitle}
+                body={A.deleteAccountBody}
+                expect={status.email ?? ""}
+                okLabel={A.deleteOk}
+                testId="account-delete-confirm"
+                onCancel={() => setDeleting(false)}
+                onConfirm={() => deleteAccountAndSignOut(inSpace)}
+              />
+            )}
           </>
         )}
 

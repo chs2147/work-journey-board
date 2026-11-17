@@ -1,0 +1,35 @@
+{
+  "module": "wjb-lifecycle-poc-1",
+  "profile": "development",
+  "projectRef": "vsphftnmfzfoufasjttd",
+  "autoApply": false,
+  "cloudApplied": false,
+  "userApproved": "G-5 데이터 수명(2026-11-17 G-D4 추천안: 그림 정리·공간 지우기·계정 삭제 먼저, docs/v2-design/100)",
+  "requires": ["028-account-quota.sql (installed)"],
+  "changes": {
+    "newSchemas": ["wjb_life (purge, orphan, account_gone) — no API role access"],
+    "newFunctions": [
+      "public.wjb_v2_lifecycle (delete_space / delete_account, service role only, session·owner·admin checked inside)",
+      "public.wjb_v2_lifecycle_worker (next / confirm / sweep / auth_pending / auth_deleted, service role only, gateway worker)"
+    ],
+    "replacedFunctions": [],
+    "newTriggers": [],
+    "schedule": "pg_cron wjb-life-sweep 18:10 UTC daily — SQL only (marks unreferenced images, moves them to cleanup after 7 days)"
+  },
+  "rollback": "033 drops the RPCs and wjb_life only while nothing was deleted through it (MIGRATION_031_IN_USE otherwise)",
+  "localEvidence": "docs/v2-design/evidence/migration-g5-lifecycle-pass.json",
+  "sources": [
+    {
+      "path": "poc/v2-migration/postgres/031-lifecycle.sql",
+      "sha256": "ea2d0f253cf1fa635fee4790ee7ec4e84367f7a9b116c0fb0f03093e115001e0"
+    },
+    {
+      "path": "poc/v2-migration/postgres/032-lifecycle-verify.sql",
+      "sha256": "2296a1c2694dfa41f0146f9b31cb3bb7fc20f7823cd303535dfb618056e5a454"
+    },
+    {
+      "path": "poc/v2-migration/postgres/033-lifecycle-rollback.sql",
+      "sha256": "114dd09563b84f96b90a3b58c2fd390fee7a8ae24142b09d14d51ded5f7284b4"
+    }
+  ]
+}

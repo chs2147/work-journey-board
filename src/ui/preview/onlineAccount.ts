@@ -125,6 +125,18 @@ export async function adminSet(userId: string, patch: Record<string, unknown>) {
   }
   await loadAdmin();
 }
+/** 관리자: 다른 계정 삭제(관리자 계정은 서버가 거절) */
+export async function adminDeleteAccount(userId: string): Promise<boolean> {
+  try {
+    await (await online()).account("delete_account", { userId });
+    set({ adminError: null });
+    await loadAdmin();
+    return true;
+  } catch (e) {
+    set({ adminError: accountErrText(e) });
+    return false;
+  }
+}
 export async function adminInvite(email: string): Promise<boolean> {
   try {
     await (await online()).account("admin_invite", { email: email.trim() });

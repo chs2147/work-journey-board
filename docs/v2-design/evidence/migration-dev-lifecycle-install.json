@@ -1,0 +1,52 @@
+{
+  "startedAt": "2026-11-17T07:41:55.709Z",
+  "projectRef": "vsphftnmfzfoufasjttd",
+  "autoApply": false,
+  "userRequestedDevIntegration": true,
+  "productionTouched": false,
+  "sources": [
+    {
+      "path": "poc/v2-migration/postgres/031-lifecycle.sql",
+      "sha256": "ea2d0f253cf1fa635fee4790ee7ec4e84367f7a9b116c0fb0f03093e115001e0"
+    },
+    {
+      "path": "poc/v2-migration/postgres/032-lifecycle-verify.sql",
+      "sha256": "2296a1c2694dfa41f0146f9b31cb3bb7fc20f7823cd303535dfb618056e5a454"
+    }
+  ],
+  "phases": [
+    {
+      "phase": "preflight",
+      "has028": true,
+      "has031": false
+    },
+    {
+      "phase": "apply",
+      "ok": true
+    },
+    {
+      "phase": "schedule",
+      "job": "wjb-life-sweep",
+      "cron": "10 18 * * *"
+    }
+  ],
+  "applied": true,
+  "executionRole": {
+    "role": "postgres",
+    "read_only": "off",
+    "rolsuper": false,
+    "rolbypassrls": true
+  },
+  "verify": {
+    "grace": "7 days",
+    "schema": true,
+    "tables": true,
+    "lifeClosed": true,
+    "searchPath": true,
+    "cloudApplied": false,
+    "userServiceOnly": true,
+    "workerServiceOnly": true,
+    "productActivationAllowed": false
+  },
+  "finishedAt": "2026-11-17T07:42:05.894Z"
+}

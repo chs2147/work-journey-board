@@ -59,6 +59,8 @@ pub async fn call<G: Gateway>(
 
 /// G 운영 준비(docs/v2-design/96): 계정 사용량·관리자 기능 — gateway `/v2/account/{action}`(서버 함수가 관리자 확인)
 pub const ACCOUNT_ACTIONS: [&str; 4] = ["usage", "admin_list", "admin_set", "admin_invite"];
+/// G-5(docs/v2-design/100): 공간 서버에서 지우기·계정 삭제 — 같은 계정 명령으로, gateway 경로만 /v2/lifecycle/
+pub const LIFECYCLE_ACTIONS: [&str; 2] = ["delete_space", "delete_account"];
 pub async fn account_call<G: Gateway>(
     gw: &G,
     access: &str,
@@ -66,18 +68,20 @@ pub async fn account_call<G: Gateway>(
     action: &str,
     params: Value,
 ) -> Result<Value, String> {
-    if !ACCOUNT_ACTIONS.contains(&action) || !params.is_object() || !is_uuid(device) {
+    let life = LIFECYCLE_ACTIONS.contains(&action);
+    if !(ACCOUNT_ACTIONS.contains(&action) || life) || !params.is_object() || !is_uuid(device) {
         return Err("INVALID_REQUEST".into());
     }
     let body = serde_json::to_vec(&json!({ "deviceId": device, "params": params }))
         .map_err(|_| "INVALID_REQUEST")?;
-    if body.len() > 4096 {
+    if body.len() > if life { 2048 } else { 4096 } {
         return Err("INVALID_REQUEST".into());
     }
+    let route = if life { "lifecycle" } else { "account" };
     match gw
         .send(
             "POST",
-            &format!("{GATEWAY}/v2/account/{action}"),
+            &format!("{GATEWAY}/v2/{route}/{action}"),
             access,
             &[],
             Body::Json(body),

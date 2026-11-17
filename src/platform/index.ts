@@ -347,7 +347,7 @@ export interface PreviewOnline {
   signOut(): Promise<OnlineStatus>;
   /** G 운영 준비(docs/v2-design/96): 계정 사용량·관리자 기능(관리자 확인은 서버 함수) */
   account(
-    action: "usage" | "admin_list" | "admin_set" | "admin_invite",
+    action: "usage" | "admin_list" | "admin_set" | "admin_invite" | "delete_space" | "delete_account",
     params: Record<string, unknown>,
   ): Promise<unknown>;
 }

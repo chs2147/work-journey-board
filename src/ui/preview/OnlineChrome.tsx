@@ -9,7 +9,9 @@ import { openSettingsAt } from "../common/appController";
 import { SaveStatus } from "../common/SaveStatus";
 import type { SaveStatusProps } from "../common/onlineSlots";
 import { WorkspaceMark } from "../common/workspaceIcons";
-import { Card } from "../settings/SettingsCard";
+import { Card, CardMessage } from "../settings/SettingsCard";
+import { DeleteConfirm } from "./DeleteConfirm";
+import { loadUsage } from "./onlineAccount";
 import { WorkspaceEditRow } from "../settings/WorkspaceSettings";
 import settingsStyles from "../settings/Settings.module.css";
 import { sameDir } from "../../domain/workspace";
@@ -17,6 +19,7 @@ import sw from "../common/WorkspaceSwitcher.module.css";
 import type { OnlineSpaceInfo } from "../../platform";
 import {
   closeToList,
+  deleteSpaceOnServer,
   isUnified,
   metaOf,
   startCreate,
@@ -32,6 +35,7 @@ import styles from "./OnlineChrome.module.css";
 const Y = STR.onlineSpaces.sync;
 const M = STR.onlineSpaces.menu;
 const P = STR.onlineSpaces.panel;
+const R = STR.onlineSpaces.remove;
 const setApp = useAppStore.setState;
 const clock = (t: number) => new Date(t).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" });
 type Status = ReturnType<typeof useOnlineSync.getState>["status"];
@@ -41,6 +45,7 @@ export function syncText(s: Status) {
   if (s.phase === "offline") return Y.offline(s.pending);
   // 용량 한도·정지(96): 이 기기에는 저장, 서버 보내기만 대기
   if (s.phase === "error" && /^(QUOTA_|ACCOUNT_SUSPENDED)/.test(s.error ?? "")) return Y.quota(s.pending);
+  if (s.phase === "error" && s.error === "SYNC_NOT_FOUND") return Y.deletedOnServer;
   if (s.phase === "error") return Y.error(s.error ?? "UNKNOWN");
   if (s.pending) return Y.pending(s.pending);
   return s.lastSyncedAt ? Y.synced(clock(s.lastSyncedAt)) : Y.saved;
@@ -404,6 +409,8 @@ export function OnlineWorkspaceSettings({
   const dir = useAppStore((s) => (s.journal.state === "ready" ? s.journal.dataDir : null));
   const status = useOnlineSync((s) => s.status);
   const [editing, setEditing] = useState(false);
+  const [removing, setRemoving] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const entry = entries.find((e) => dir && sameDir(e.dir, dir));
   return (
     <Card
@@ -464,8 +471,36 @@ export function OnlineWorkspaceSettings({
                       {busy === w.workspaceId ? M.opening : STR.workspace.open}
                     </button>
                   )}
+                  <button
+                    type="button"
+                    className={settingsStyles.danger}
+                    data-testid="ws-delete-server"
+                    disabled={isCur || !!busy}
+                    title={isCur ? R.openNow : undefined}
+                    onClick={() => setRemoving(removing === w.workspaceId ? null : w.workspaceId)}
+                  >
+                    {R.button}
+                  </button>
                 </span>
               </div>
+              {removing === w.workspaceId && !isCur && (
+                <DeleteConfirm
+                  title={R.title(m?.name ?? STR.workspace.onlineMark)}
+                  body={R.body}
+                  expect={m?.name ?? STR.workspace.onlineMark}
+                  okLabel={R.ok}
+                  testId="ws-delete-confirm"
+                  onCancel={() => setRemoving(null)}
+                  onConfirm={async () => {
+                    const err = await deleteSpaceOnServer(w);
+                    if (err) return err;
+                    setRemoving(null);
+                    setNotice(R.done(m?.name ?? STR.workspace.onlineMark));
+                    void loadUsage();
+                    return null;
+                  }}
+                />
+              )}
               {isCur && editing && entry && (
                 <WorkspaceEditRow
                   entry={{ ...entry, ...(m ?? {}) } as typeof entry}
@@ -479,6 +514,13 @@ export function OnlineWorkspaceSettings({
           );
         })}
       </ul>
+      {notice && (
+        <CardMessage>
+          <span role="status" data-testid="ws-delete-done">
+            {notice}
+          </span>
+        </CardMessage>
+      )}
       <div className={settingsStyles.wsButtons}>
         <button
           type="button"

@@ -12,6 +12,12 @@ import { createMigrationRPC } from "../../v2-migration/server-rpc.mjs";
 import { createWorkspaceReadRPC, READ_ACTIONS } from "../../v2-migration/read-rpc.mjs";
 import { createWorkspaceSyncRPC, SYNC_ACTIONS, SYNC_BODY_LIMIT } from "../../v2-migration/sync-rpc.mjs";
 import { ACCOUNT_ACTIONS, ACCOUNT_BODY_LIMIT, createAccountRPC } from "../../v2-migration/account-rpc.mjs";
+import {
+  LIFECYCLE_ACTIONS,
+  LIFECYCLE_BODY_LIMIT,
+  createLifecycleRPC,
+  runPurge,
+} from "../../v2-migration/lifecycle-rpc.mjs";
 import { GatewayError, readLimited, uuid } from "../io.mjs";
 
 /** 개발용 영구 비공개 버킷(C-1b, docs/v2-design/82) — 시험마다 만들고 지우는 POC 버킷과 다르다 */
@@ -84,7 +90,8 @@ async function setup() {
   const reader = createWorkspaceReadRPC({ projectRef, serviceRoleKey, fetchTransport });
   const syncer = createWorkspaceSyncRPC({ projectRef, serviceRoleKey, fetchTransport });
   const accounts = createAccountRPC({ projectRef, serviceRoleKey, fetchTransport });
-  return { gateway, verify, rest, rpc, reader, syncer, accounts };
+  const lifecycle = createLifecycleRPC({ projectRef, serviceRoleKey, fetchTransport });
+  return { gateway, verify, rest, rpc, reader, syncer, accounts, lifecycle };
 }
 
 export async function handle(request) {
@@ -93,7 +100,13 @@ export async function handle(request) {
       ready = null;
       throw e;
     });
-    const { gateway, verify, rest, rpc, reader, syncer, accounts } = await ready;
+    const { gateway, verify, rest, rpc, reader, syncer, accounts, lifecycle } = await ready;
+    // G-5(100): 지울 그림·Auth 사용자 정리 — 응답을 막지 않게 뒤에서(Supabase EdgeRuntime.waitUntil), 실패는 다음 차례에
+    const purgeLater = (budgetMs) => {
+      const work = runPurge({ lifecycle, storage: rest.storage, budgetMs }).catch(() => undefined);
+      globalThis.EdgeRuntime?.waitUntil?.(work);
+      return work;
+    };
     const url = new URL(request.url);
     const path = url.pathname.startsWith(prefix + "/") ? url.pathname.slice(prefix.length) : url.pathname;
     if (path === "/v2/me") {
@@ -136,7 +149,24 @@ export async function handle(request) {
         verify,
         actions: ACCOUNT_ACTIONS,
         limit: ACCOUNT_BODY_LIMIT,
-        call: (a, p, who, dev) => accounts.call(a, p, who, dev),
+        call: async (a, p, who, dev) => {
+          const r = await accounts.call(a, p, who, dev);
+          if (a === "usage") void purgeLater(4000);
+          return r;
+        },
+      });
+    // G-5(100): 공간 지우기·계정 삭제 — 소유·관리자 확인은 서버 함수 안에서. 기록은 바로, 그림 실물은 뒤에서 지운다
+    const lifeRoute = path.match(/^\/v2\/lifecycle\/([a-z_]+)$/);
+    if (lifeRoute)
+      return await serverCall(request, url, lifeRoute[1], {
+        verify,
+        actions: LIFECYCLE_ACTIONS,
+        limit: LIFECYCLE_BODY_LIMIT,
+        call: async (a, p, who, dev) => {
+          const r = await lifecycle.call(a, p, who, dev);
+          void purgeLater(8000);
+          return r;
+        },
       });
     const inner = new URL(path, url.origin);
     return await gateway.handler(new Request(inner, request));

@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import type { AccountUsage, AdminAccount } from "../../platform";
 import { formatBytes, STR } from "../../shared/strings";
 import { Card, CardMessage, Row } from "../settings/SettingsCard";
-import { adminInvite, adminSet, loadUsage, useOnlineAccount } from "./onlineAccount";
+import { adminDeleteAccount, adminInvite, adminSet, loadUsage, useOnlineAccount } from "./onlineAccount";
+import { DeleteConfirm } from "./DeleteConfirm";
 import settings from "../settings/Settings.module.css";
 import own from "./AccountPanel.module.css";
 
@@ -178,6 +179,7 @@ function AccountRow({
   editing: boolean;
   onEdit: (on: boolean) => void;
 }) {
+  const [deleting, setDeleting] = useState(false);
   return (
     <>
       <Row
@@ -219,10 +221,33 @@ function AccountRow({
             >
               {a.suspended ? A.unsuspend : A.suspend}
             </button>
+            <button
+              type="button"
+              className={settings.danger}
+              onClick={() => setDeleting(!deleting)}
+              data-testid="admin-delete"
+            >
+              {A.deleteAccount}
+            </button>
           </>
         )}
       </Row>
       {editing && <LimitEdit a={a} onDone={() => onEdit(false)} />}
+      {deleting && !a.admin && (
+        <DeleteConfirm
+          title={A.adminDeleteTitle(a.email ?? a.userId.slice(0, 8))}
+          body={A.adminDeleteBody}
+          expect={a.email ?? a.userId}
+          okLabel={A.deleteOk}
+          testId="admin-delete-confirm"
+          onCancel={() => setDeleting(false)}
+          onConfirm={async () => {
+            if (!(await adminDeleteAccount(a.userId))) return useOnlineAccount.getState().adminError;
+            setDeleting(false);
+            return null;
+          }}
+        />
+      )}
     </>
   );
 }

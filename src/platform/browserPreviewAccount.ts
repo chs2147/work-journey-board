@@ -1,7 +1,12 @@
 // 브라우저 모드(개발·E2E)용 가짜 계정 한도·관리자(docs/v2-design/96, 서버 SQL 028과 같은 규칙) — 네트워크 없음, 메모리.
 // 지금 로그인한 가짜 계정 = 기본 한도(그림 100MB · 공간 3 · 기록 30MB). ?previewAdmin=1 이면 이 계정이 관리자(무제한·전체 사용량).
 // 관리자 목록에는 가상 계정 하나(invited@example.invalid)가 함께 있다.
-import { fakePublishedSpaces, fakeLiveSpaceCount } from "./browserPreviewMigration";
+import {
+  fakeDeleteAllSpaces,
+  fakeDeleteSpace,
+  fakeLiveSpaceCount,
+  fakePublishedSpaces,
+} from "./browserPreviewMigration";
 import type { AccountUsage, AdminAccount } from "./index";
 
 const ME = "6f1d2c3b-4a5e-4f60-8a7b-9c0d1e2f3a4b";
@@ -75,6 +80,18 @@ export async function fakeAccount(action: string, params: Record<string, unknown
           }
         : {}),
     };
+  // G-5(100): 공간 서버에서 지우기 · 계정 삭제(나 = {}, 관리자 = {userId}, 관리자 계정은 고정)
+  if (action === "delete_space") return fakeDeleteSpace(String(params.workspaceId));
+  if (action === "delete_account") {
+    const target = typeof params.userId === "string" ? params.userId : ME;
+    if (target !== ME && !isAdmin(ME)) throw new Error("ACCOUNT_NOT_ADMIN");
+    if (isAdmin(target)) throw new Error("ACCOUNT_ADMIN_FIXED");
+    if (target === ME) return { userId: ME, spaces: fakeDeleteAllSpaces(), state: "purging" };
+    if (!invited.has(target)) throw new Error("ACCOUNT_NOT_FOUND");
+    invited.delete(target);
+    overrides.delete(target);
+    return { userId: target, spaces: 0, state: "purging" };
+  }
   if (!isAdmin(ME)) throw new Error("ACCOUNT_NOT_ADMIN");
   if (action === "admin_list") {
     const list: AdminAccount[] = [
