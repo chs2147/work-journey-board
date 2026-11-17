@@ -56,8 +56,9 @@ export function scopeValid(scope) {
 }
 
 /**
- * G-4(docs/v2-design/97): 서버 전용 열쇠 종류. 새 비밀 키 `sb_secret_…`(apikey 머리에만) 또는 예전 service_role JWT(`eyJ…`,
- * 바꾸는 동안만 — apikey + Authorization). 관리 토큰(`sbp_`)·공개 키·그 밖은 null(서버 열쇠가 아님).
+ * G-4(docs/v2-design/99 4절): 서버 전용 열쇠 종류. 실서버는 새 비밀 키 `sb_secret_…`(apikey 머리에만)만 쓴다 — 개발은 예전
+ * anon·service_role 키를 껐고, 운영은 처음부터 새 키만. "legacy"(apikey + Authorization)는 로컬 시험의 가짜 열쇠 판정용으로만 남는다.
+ * 관리 토큰(`sbp_`)·공개 키·짧은 `sb_secret_`·빈 값은 null(서버 열쇠가 아님).
  */
 export function serverKeyKind(key) {
   if (typeof key !== "string" || !key || /[\s\r\n]/.test(key)) return null;

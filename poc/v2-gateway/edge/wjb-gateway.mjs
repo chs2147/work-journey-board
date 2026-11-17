@@ -75,8 +75,7 @@ async function setup() {
   const projectRef = runtimeProjectRef(globalThis.Deno?.env.get("SUPABASE_URL"));
   currentRef = projectRef;
   const bucket = ASSET_BUCKETS[environmentOf(projectRef)];
-  // 예약 SUPABASE_SERVICE_ROLE_KEY는 예전 형식이 아니어서, 사용자가 대시보드에 넣은 예전 형식(JWT) 비밀만 읽는다
-  // (예전 키는 2027년 초 은퇴 예정 — 운영 전 새 형식 키로 옮긴다, 79문서)
+  // G-4: 서버 열쇠 = Supabase가 넣는 SUPABASE_SECRET_KEYS의 새 secret 키 `wjb_gateway`만(runtimeServerKey, 99문서 4절)
   const { key: serviceRoleKey, kind: keyKind } = runtimeServerKey((name) => globalThis.Deno?.env.get(name));
   const r = await fetch(`https://${projectRef}.supabase.co/auth/v1/.well-known/jwks.json`, {
     redirect: "error",

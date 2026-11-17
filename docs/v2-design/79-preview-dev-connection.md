@@ -36,7 +36,7 @@ Preview 화면(PreviewApp) ──IPC──▶ Rust online.rs ──HTTPS──�
 - 시도 A: 이 세션 환경의 개발용 예전 형식 열쇠를 Edge Function 비밀 `WJB_GATEWAY_SERVICE_ROLE_JWT`로 넣기 → **권한 확인에서 거절**(서버 열쇠를 새 위치로 옮기는 동작). 실행되지 않았다.
 - 시도 B: 런타임 열쇠 형식만 단계 코드로 알려 주도록 다시 배포 → **권한 확인에서 거절**. 실행되지 않았다.
 - 해결(2026-11-14): 사용자가 대시보드 Edge Functions › Secrets에 `WJB_GATEWAY_SERVICE_ROLE_JWT`(개발 프로젝트 예전 형식 service_role)를 직접 넣었다. 함수는 그 값만 읽도록 고쳐 v4 배포 → 토큰 없음·가짜 토큰 401, Origin 403. 이 세션은 값을 다루지 않았다.
-- **예전 API 키는 2027년 초 은퇴 예정**(대시보드 안내). 운영 준비(G단계) 전에 gateway REST 어댑터를 새 형식 `sb_secret_` 키로 옮겨 검증하고 이 비밀을 지운다.
+- ~~예전 API 키는 2027년 초 은퇴 예정~~ → **완료(2026-11-17, G-4)**: 은퇴 시점은 2026년 말(정정). gateway·관리 도구를 새 `sb_secret_` 키로 옮기고 이 비밀을 지웠으며, 개발 프로젝트의 예전 anon·service_role 키도 껐다(99문서 4절).
 
 ## 3. 인증번호 메일 (완료, 2026-11-14)
 
