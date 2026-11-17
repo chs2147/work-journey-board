@@ -1616,6 +1616,8 @@ export const STR_BASE = {
   /** D-4 내 온라인 공간(Connected Preview, docs/v2-design/87) */
   onlineSpaces: {
     title: "내 온라인 공간",
+    /** G-1 통합 앱: 공간 메뉴에서 열지 못함 */
+    openFailed: (name: string, why: string) => `${name}을(를) 열지 못했습니다${why ? ` — ${why}` : ""}`,
     empty: "아직 온라인 공간이 없습니다. [온라인 워크스페이스 만들기…]로 만들 수 있습니다.",
     offline: "서버에 연결하지 못해 이 기기에 받아 둔 공간만 보입니다.",
     item: (when: string, records: number, assets: number, size: string, schema: number) =>

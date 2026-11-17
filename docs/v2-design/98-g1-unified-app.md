@@ -44,3 +44,10 @@
 - **그림**: 온라인 공간을 열면 `setImageProfile("online")`, 이 PC로 돌아오면 `"local"`(96).
 - **시험**: `tests/e2e/unified-app.spec.ts`(로그인 전 그대로 · 이 PC ↔ 온라인 3번 행 수 그대로 · 외부 요청 없음), `devChannel.test.ts`(lastWorkspace 읽기). 실기 = m1-check 7-53.
 - 고친 것: 설정을 "계정" 분류로 여는 한 번짜리 요청을 StrictMode 갱신 함수 안에서 읽어 두 번째 호출에 비던 문제(Preview에도 있던 잠재 문제).
+
+### 실기 1차(2026-11-17) — 이 PC → 온라인 전환 안 됨
+
+- 증상: 로그인하면 온라인 묶음은 붙지만 온라인 공간을 눌러도 바뀌지 않음(이 PC끼리는 잘 바뀜).
+- 원인: 온라인 공간 이 기기 사본은 sql.js(WASM)로 준비하는데, DEV 판은 정식판 CSP(`'wasm-unsafe-eval'` 없음)를 그대로 써서 WASM이 막힘. Connected Preview CSP에는 있었음. 브라우저 E2E는 CSP 없이 돌아 놓침. 오류도 공간 메뉴에 표시하지 않아 반응이 없어 보였음.
+- 수정: `tauri.dev.conf.json`에 Preview와 같은 CSP(정식판 CSP + `script-src 'self' 'wasm-unsafe-eval'`, 외부 주소 없음). 정식판 `tauri.conf.json`은 그대로. 열지 못하면 알림으로 이유 표시. 단위 시험이 DEV CSP = Preview CSP, 정식판 CSP에 wasm 없음을 고정.
+- **정식판에 A안을 넣을 때**: 정식판 CSP에 `'wasm-unsafe-eval'`을 더하거나(외부 도메인 아님, 그래도 CSP 변경이라 승인 항목), 온라인 사본을 Rust 쪽에서 준비하도록 바꾸는 것 중 하나를 그때 정한다.

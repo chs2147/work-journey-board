@@ -87,7 +87,7 @@ describe("DEV 프로필·설정", () => {
         parseConfig(JSON.stringify({ dataDir: "/d", lastWorkspace: bad }))?.lastWorkspace,
       ).toBeUndefined();
   });
-  it("tauri.dev.conf.json: 앱 ID·이름·실행 파일 이름·창 제목·설치 아이콘(icons-dev)만 다르고 권한·CSP는 정식판 그대로", () => {
+  it("tauri.dev.conf.json: 앱 ID·이름·실행 파일 이름·창 제목·설치 아이콘(icons-dev)·CSP(WASM만 더함)만 다르고 권한은 정식판 그대로", () => {
     const base = json("src-tauri/tauri.conf.json");
     const dev = json("src-tauri/tauri.dev.conf.json");
     expect(dev.identifier).toBe(DEV_PROFILE.appId);
@@ -101,7 +101,15 @@ describe("DEV 프로필·설정", () => {
       "mainBinaryName",
       "productName",
     ]);
-    expect(Object.keys(dev.app)).toEqual(["windows"]);
+    expect(Object.keys(dev.app)).toEqual(["windows", "security"]);
+    // G-1 통합 앱(98): 온라인 공간 이 기기 사본은 sql.js(WASM) — Preview와 같은 CSP. 정식판 CSP에 'wasm-unsafe-eval'만 더하고 그 밖은 같음
+    const preview = json("src-tauri/tauri.preview.conf.json");
+    expect(Object.keys(dev.app.security)).toEqual(["csp"]);
+    expect(dev.app.security.csp).toBe(preview.app.security.csp);
+    expect(dev.app.security.csp.replace("script-src 'self' 'wasm-unsafe-eval'; ", "")).toBe(
+      base.app.security.csp,
+    );
+    expect(base.app.security.csp).not.toContain("wasm");
     // 비공식 판 설치 아이콘(release-channel-spec 6절): 정식판 icons/와 같은 파일 구성, 폴더만 icons-dev/
     expect(dev.bundle).toEqual({
       icon: base.bundle.icon.map((p: string) => p.replace(/^icons\//, "icons-dev/")),

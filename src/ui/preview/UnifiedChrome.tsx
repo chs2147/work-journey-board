@@ -15,6 +15,7 @@ import { MAX_SHORTCUT, sameDir, type WorkspaceEntry } from "../../domain/workspa
 import { osText } from "../../shared/platformText";
 import { STR } from "../../shared/strings";
 import { useAppStore } from "../common/appStore";
+import { toast } from "../board/boardStore";
 import {
   onBeforeExit,
   openSettingsAt,
@@ -78,7 +79,11 @@ async function openLocal(dir: string) {
 async function openOnline(w: OnlineSpaceInfo) {
   setApp({ switcherOpen: false });
   const ok = await openOnlineSpace(w);
-  if (!ok && !useOnlineSpaces.getState().current && !onLocal() && base) {
+  if (ok) return;
+  // 열지 못한 이유를 알린다(공간 메뉴에는 오류 자리가 없음 — 98 실기: 눌러도 반응이 없어 보임)
+  const err = useOnlineSpaces.getState().error;
+  toast(STR.onlineSpaces.openFailed(w.workspace?.name ?? STR.workspace.onlineMark, err ?? ""));
+  if (!useOnlineSpaces.getState().current && !onLocal() && base) {
     const dir = useLocal.getState().dir;
     if (dir) await leaveToLocal(base, dir);
   }
