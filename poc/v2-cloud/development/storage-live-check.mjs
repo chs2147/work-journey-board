@@ -5,6 +5,7 @@ import { once } from "node:events";
 import { createDevelopmentGateway } from "../../v2-gateway/development-gateway.mjs";
 import { createNodeServer } from "../../v2-gateway/node-server.mjs";
 import { createVerifier } from "../../v2-auth/verifier.mjs";
+import { serverKeyHeaders } from "../../v2-gateway/io.mjs";
 
 const ref = "vsphftnmfzfoufasjttd",
   bucket = "wjb-v2-poc-private";
@@ -70,7 +71,8 @@ async function outbound(url, options = {}, cleanup = false) {
 }
 async function api(path, { method = "GET", data, access, serverKey = true, cleanup = false } = {}) {
   const headers = { apikey: key, "content-type": "application/json" };
-  if (access || serverKey) headers.authorization = `Bearer ${access || key}`;
+  if (access) headers.authorization = `Bearer ${access}`;
+  else if (serverKey) Object.assign(headers, serverKeyHeaders(key));
   const r = await outbound(
     origin + path,
     { method, headers, ...(data === undefined ? {} : { body: JSON.stringify(data) }) },

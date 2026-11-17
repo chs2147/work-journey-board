@@ -17,6 +17,7 @@ import { advanceWorkspaceSession } from "../workspace-session.mjs";
 import { createSupabaseRest } from "../../v2-gateway/supabase-rest.mjs";
 import { createSessionVerifier } from "../../v2-auth/session-adapter.mjs";
 import { createMigrationRPC } from "../server-rpc.mjs";
+import { serverKeyHeaders } from "../../v2-gateway/io.mjs";
 
 const ref = "vsphftnmfzfoufasjttd",
   origin = `https://${ref}.supabase.co`,
@@ -87,7 +88,11 @@ async function api(path, { method = "GET", data, access, cleanup = false } = {})
     origin + path,
     {
       method,
-      headers: { apikey: key, authorization: `Bearer ${access || key}`, "content-type": "application/json" },
+      // 사용자 토큰이면 Authorization에, 서버 열쇠만이면 열쇠 종류에 맞는 머리(새 비밀 키는 apikey만)
+      headers: {
+        ...(access ? { apikey: key, authorization: `Bearer ${access}` } : serverKeyHeaders(key)),
+        "content-type": "application/json",
+      },
       ...(data === undefined ? {} : { body: JSON.stringify(data) }),
     },
     cleanup,
