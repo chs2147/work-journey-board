@@ -1,5 +1,5 @@
 // D단계 서버 읽기 전송(서버 전용, docs/v2-design/87) — wjb_v2_workspace_read(list/header/records). 환경변수를 읽지 않는다.
-import { GatewayError, readLimited } from "../v2-gateway/io.mjs";
+import { GatewayError, readLimited, serverKeyHeaders, serverKeyKind } from "../v2-gateway/io.mjs";
 import { isAllowedProjectRef } from "../v2-cloud/cloud-environment.mjs";
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const sha = /^[0-9a-f]{64}$/;
@@ -35,11 +35,7 @@ export function checkReadParams(action, p) {
 export function createWorkspaceReadRPC({ projectRef, serviceRoleKey, fetchTransport }) {
   if (
     !isAllowedProjectRef(projectRef) ||
-    typeof serviceRoleKey !== "string" ||
-    !serviceRoleKey ||
-    /[\r\n]/.test(serviceRoleKey) ||
-    serviceRoleKey.startsWith("sbp_") ||
-    serviceRoleKey.startsWith("sb_secret_") ||
+    !serverKeyKind(serviceRoleKey) ||
     typeof fetchTransport !== "function"
   )
     throw Error("SERVER_TRANSPORT_REQUIRED");
@@ -63,8 +59,7 @@ export function createWorkspaceReadRPC({ projectRef, serviceRoleKey, fetchTransp
         response = await fetchTransport(url, {
           method: "POST",
           headers: {
-            apikey: serviceRoleKey,
-            authorization: `Bearer ${serviceRoleKey}`,
+            ...serverKeyHeaders(serviceRoleKey),
             "content-type": "application/json",
             "cache-control": "no-store",
           },

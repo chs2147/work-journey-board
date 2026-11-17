@@ -1,7 +1,8 @@
 // Supabase Edge Function 진입점(docs/v2-design/79-preview-dev-connection.md). G-3(97): 개발·운영 허용 목록 —
 // 돌고 있는 프로젝트를 SUPABASE_URL로 확인하고 그 프로젝트·버킷으로만 요청한다(배포는 개발만, 운영은 G-2 승인 뒤).
 // - 기존 gateway(자산 예약·업로드·취소)는 그대로 넘기고, 계정 확인 `GET /v2/me`만 더한다.
-// - 서버 전용 열쇠는 이 프로젝트의 Edge Function 비밀 WJB_GATEWAY_SERVICE_ROLE_JWT(사용자가 대시보드에서 넣음)만 읽는다.
+// - 서버 전용 열쇠(G-4): Supabase가 넣는 SUPABASE_SECRET_KEYS의 `wjb_gateway` 비밀 키(sb_secret_, 사용자가 대시보드에서 만듦).
+//   바꾸는 동안만 예전 비밀 WJB_GATEWAY_SERVICE_ROLE_JWT(service_role JWT)로 대신한다. 값은 어디에도 내보내지 않는다.
 //   앱·요청 본문에서 받지 않는다.
 // - JWKS는 같은 개발 프로젝트의 공개 주소에서만 읽는다(토큰이 가리키는 주소를 따라가지 않음).
 import { createDevelopmentGateway } from "../development-gateway.mjs";
@@ -18,7 +19,7 @@ import {
   createLifecycleRPC,
   runPurge,
 } from "../../v2-migration/lifecycle-rpc.mjs";
-import { GatewayError, readLimited, uuid } from "../io.mjs";
+import { GatewayError, readLimited, serverKeyKind, uuid } from "../io.mjs";
 
 /** 개발용 영구 비공개 버킷(C-1b, docs/v2-design/82) — 시험마다 만들고 지우는 POC 버킷과 다르다 */
 export const DEV_BUCKET = "wjb-v2-dev-assets";
@@ -54,14 +55,31 @@ const json = (value, status = 200) =>
   });
 
 let ready = null;
+let currentRef = null;
+const projectRefOf = () => currentRef;
+
+/** G-4: 서버 열쇠 고르기 — 새 비밀 키 `wjb_gateway` 먼저, 없으면(바꾸는 동안) 예전 service_role JWT */
+export function runtimeServerKey(env) {
+  let keys;
+  try {
+    keys = JSON.parse(env("SUPABASE_SECRET_KEYS") ?? "{}") ?? {};
+  } catch {
+    keys = {};
+  }
+  const fresh = typeof keys === "object" ? keys.wjb_gateway : undefined;
+  if (serverKeyKind(fresh) === "secret") return { key: fresh, kind: "secret" };
+  const legacy = env("WJB_GATEWAY_SERVICE_ROLE_JWT") ?? "";
+  if (legacy.startsWith("eyJ") && serverKeyKind(legacy) === "legacy") return { key: legacy, kind: "legacy" };
+  throw new Error("RUNTIME_KEY_UNAVAILABLE");
+}
 async function setup() {
   // G-3: 이 함수가 돌고 있는 프로젝트(Supabase가 넣는 SUPABASE_URL)를 허용 목록(개발·운영)으로 확인 — 그 프로젝트로만 요청
   const projectRef = runtimeProjectRef(globalThis.Deno?.env.get("SUPABASE_URL"));
+  currentRef = projectRef;
   const bucket = ASSET_BUCKETS[environmentOf(projectRef)];
   // 예약 SUPABASE_SERVICE_ROLE_KEY는 예전 형식이 아니어서, 사용자가 대시보드에 넣은 예전 형식(JWT) 비밀만 읽는다
   // (예전 키는 2027년 초 은퇴 예정 — 운영 전 새 형식 키로 옮긴다, 79문서)
-  const serviceRoleKey = globalThis.Deno?.env.get("WJB_GATEWAY_SERVICE_ROLE_JWT") ?? "";
-  if (!serviceRoleKey.startsWith("eyJ")) throw new Error("RUNTIME_KEY_UNAVAILABLE");
+  const { key: serviceRoleKey, kind: keyKind } = runtimeServerKey((name) => globalThis.Deno?.env.get(name));
   const r = await fetch(`https://${projectRef}.supabase.co/auth/v1/.well-known/jwks.json`, {
     redirect: "error",
     signal: AbortSignal.timeout(5000),
@@ -91,7 +109,7 @@ async function setup() {
   const syncer = createWorkspaceSyncRPC({ projectRef, serviceRoleKey, fetchTransport });
   const accounts = createAccountRPC({ projectRef, serviceRoleKey, fetchTransport });
   const lifecycle = createLifecycleRPC({ projectRef, serviceRoleKey, fetchTransport });
-  return { gateway, verify, rest, rpc, reader, syncer, accounts, lifecycle };
+  return { gateway, verify, rest, rpc, reader, syncer, accounts, lifecycle, keyKind };
 }
 
 export async function handle(request) {
@@ -100,7 +118,7 @@ export async function handle(request) {
       ready = null;
       throw e;
     });
-    const { gateway, verify, rest, rpc, reader, syncer, accounts, lifecycle } = await ready;
+    const { gateway, verify, rest, rpc, reader, syncer, accounts, lifecycle, keyKind } = await ready;
     // G-5(100): 지울 그림·Auth 사용자 정리 — 응답을 막지 않게 뒤에서(Supabase EdgeRuntime.waitUntil), 실패는 다음 차례에
     const purgeLater = (budgetMs) => {
       const work = runPurge({ lifecycle, storage: rest.storage, budgetMs }).catch(() => undefined);
@@ -116,7 +134,13 @@ export async function handle(request) {
       if (!/^Bearer [^\s,]+$/.test(auth)) return json({ error: "AUTH_REQUIRED" }, 401);
       try {
         const p = await verify(auth.slice(7));
-        return json({ accountId: p.userId, sessionActive: true, project: "development" });
+        // 열쇠 종류만(값 없음) — G-4 전환 확인용
+        return json({
+          accountId: p.userId,
+          sessionActive: true,
+          project: environmentOf(projectRefOf()),
+          serverKey: keyKind,
+        });
       } catch (e) {
         const code = ["AUTH_REQUIRED", "ACCESS_REVOKED", "AUTH_UNAVAILABLE"].includes(e?.code)
           ? e.code

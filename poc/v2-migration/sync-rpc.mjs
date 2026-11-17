@@ -1,5 +1,5 @@
 // E-2 서버 동기화 전송(서버 전용, docs/v2-design/90) — wjb_v2_workspace_sync(push/pull/asset_declare). 환경변수를 읽지 않는다.
-import { GatewayError, readLimited } from "../v2-gateway/io.mjs";
+import { GatewayError, readLimited, serverKeyHeaders, serverKeyKind } from "../v2-gateway/io.mjs";
 import { isAllowedProjectRef } from "../v2-cloud/cloud-environment.mjs";
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const sha = /^[0-9a-f]{64}$/;
@@ -69,11 +69,7 @@ export function checkSyncParams(action, p) {
 export function createWorkspaceSyncRPC({ projectRef, serviceRoleKey, fetchTransport }) {
   if (
     !isAllowedProjectRef(projectRef) ||
-    typeof serviceRoleKey !== "string" ||
-    !serviceRoleKey ||
-    /[\r\n]/.test(serviceRoleKey) ||
-    serviceRoleKey.startsWith("sbp_") ||
-    serviceRoleKey.startsWith("sb_secret_") ||
+    !serverKeyKind(serviceRoleKey) ||
     typeof fetchTransport !== "function"
   )
     throw Error("SERVER_TRANSPORT_REQUIRED");
@@ -97,8 +93,7 @@ export function createWorkspaceSyncRPC({ projectRef, serviceRoleKey, fetchTransp
         response = await fetchTransport(url, {
           method: "POST",
           headers: {
-            apikey: serviceRoleKey,
-            authorization: `Bearer ${serviceRoleKey}`,
+            ...serverKeyHeaders(serviceRoleKey),
             "content-type": "application/json",
             "cache-control": "no-store",
           },

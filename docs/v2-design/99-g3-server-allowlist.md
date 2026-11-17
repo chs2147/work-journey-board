@@ -33,3 +33,12 @@
 
 - G-4: 서버 전용 열쇠 새 형식(`sb_secret_`) — 지금 모듈은 예전 형식만 받는다.
 - G-2: 운영 공개 키를 앱 표에 넣고, 운영 판(정식판 온라인) → 운영 서버 줄을 `server_for`에 더한다(그때 시험이 함께 바뀜).
+
+## 4. G-4 새 API 키 형식(2026-11-17)
+
+- **은퇴 시점 정정**: Supabase 문서 기준 예전 `anon`·`service_role` 키는 **2026년 말까지** 동작(이전 문서의 "2027 초"는 틀림).
+- **키**: 사용자가 개발 프로젝트 Settings › API Keys › *Publishable and secret API keys*에서 gateway 전용 secret 키 **`wjb_gateway`** 를 만듦. 값은 사람 손을 거치지 않는다 — Supabase가 Edge Function에 넣는 `SUPABASE_SECRET_KEYS`(JSON, 이름별)에서 gateway가 `wjb_gateway`만 읽는다(`default`는 쓰지 않음 — 따로 바꾸거나 끌 수 있게).
+- **보내는 법**: 새 키는 `apikey` 머리에만(Authorization에 넣으면 JWT로 읽혀 거절). `poc/v2-gateway/io.mjs` `serverKeyKind`·`serverKeyHeaders` 한 곳에서 판단하고 REST·Storage·RPC 모듈 6개가 같이 쓴다. 관리 토큰(`sbp_`)·공개 키·짧은 `sb_secret_`는 서버 열쇠로 받지 않는다.
+- **바꾸는 동안**: `wjb_gateway`가 없으면 예전 비밀 `WJB_GATEWAY_SERVICE_ROLE_JWT`(`eyJ…`)로 대신한다. `/v2/me`가 열쇠 **종류만**(`serverKey: "secret"|"legacy"`, 값 없음) 알려 준다.
+- **개발 서버 v17 실서버 점검**(`edge/live-paged-copy.mjs`, 가상 계정·자료만 만들고 모두 정리, 사용자 자료는 세지도 건드리지도 않게 범위를 좁힘): `serverKey = secret` · 기기 등록 · 5,052행 페이지 업로드 · 512KB 그림 올리기·서버 확인 · 게시 · 다시 읽기 · 그림 내려받기 · **G-5 공간 지우기 → 그림 실물·용량 0** · 지운 그림 못 읽음 · 취소 정리 · **계정 삭제 → Auth 사용자 삭제** 모두 통과, 남은 것 0(`evidence/preview-dev-paged-copy-live.json`).
+- **남은 것**: 실기에서 앱 로그인·동기화·초대가 그대로인지 확인 → 개발 프로젝트 Edge Functions › Secrets의 `WJB_GATEWAY_SERVICE_ROLE_JWT` 삭제 → gateway의 예전 키 대신 코드 제거 → 관리 도구(이 작업 환경의 `WJB_SUPABASE_DEV_SERVICE_ROLE_KEY`)도 새 키로 → Settings › API Keys에서 예전 키 끄기(되살릴 수 있음). 운영 프로젝트는 G-2에서 처음부터 새 키만.

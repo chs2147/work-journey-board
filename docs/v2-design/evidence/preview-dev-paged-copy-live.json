@@ -1,5 +1,5 @@
 {
-  "startedAt": "2026-11-15T02:08:52.392Z",
+  "startedAt": "2026-11-17T09:19:14.666Z",
   "projectRef": "vsphftnmfzfoufasjttd",
   "productionTouched": false,
   "mailSent": false,
@@ -8,6 +8,14 @@
     {
       "name": "login_with_code",
       "passed": true
+    },
+    {
+      "name": "gateway_uses_new_secret_key",
+      "passed": true,
+      "extra": {
+        "serverKey": "secret",
+        "project": "development"
+      }
     },
     {
       "name": "device_registered",
@@ -73,14 +81,39 @@
       "passed": true
     },
     {
+      "name": "delete_space_accepted",
+      "passed": true,
+      "extra": {
+        "status": 200
+      }
+    },
+    {
+      "name": "delete_space_purges_objects_and_quota",
+      "passed": true
+    },
+    {
+      "name": "deleted_image_not_readable",
+      "passed": true,
+      "extra": {
+        "status": 409
+      }
+    },
+    {
       "name": "cancel_cleans_quota",
       "passed": true
+    },
+    {
+      "name": "delete_account_removes_auth_user",
+      "passed": true,
+      "extra": {
+        "status": 200
+      }
     }
   ],
   "timing": {
-    "recordsSeconds": 13.669,
-    "assetsSeconds": 7.278,
-    "readBackSeconds": 4.769
+    "recordsSeconds": 14.034,
+    "assetsSeconds": 7.125,
+    "readBackSeconds": 4.855
   },
   "cleanup": {
     "jobs": 0,
@@ -94,5 +127,5 @@
     "zero": true
   },
   "passed": true,
-  "finishedAt": "2026-11-15T02:09:51.210Z"
+  "finishedAt": "2026-11-17T09:20:46.310Z"
 }

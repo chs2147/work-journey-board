@@ -54,3 +54,21 @@ export function scopeValid(scope) {
     BigInt(scope.generation) <= 9223372036854775807n
   );
 }
+
+/**
+ * G-4(docs/v2-design/97): 서버 전용 열쇠 종류. 새 비밀 키 `sb_secret_…`(apikey 머리에만) 또는 예전 service_role JWT(`eyJ…`,
+ * 바꾸는 동안만 — apikey + Authorization). 관리 토큰(`sbp_`)·공개 키·그 밖은 null(서버 열쇠가 아님).
+ */
+export function serverKeyKind(key) {
+  if (typeof key !== "string" || !key || /[\s\r\n]/.test(key)) return null;
+  if (key.startsWith("sb_secret_")) return /^sb_secret_[A-Za-z0-9_-]{16,}$/.test(key) ? "secret" : null;
+  // 관리 토큰·공개 키는 서버 열쇠가 아니다
+  if (key.startsWith("sbp_") || key.startsWith("sb_publishable_")) return null;
+  return "legacy";
+}
+/** 서버 열쇠를 보내는 머리 — 새 비밀 키는 Authorization에 넣으면 JWT로 읽혀 거절되므로 apikey만 */
+export function serverKeyHeaders(key) {
+  const kind = serverKeyKind(key);
+  if (!kind) throw new TypeError("Server key required");
+  return kind === "secret" ? { apikey: key } : { apikey: key, authorization: `Bearer ${key}` };
+}

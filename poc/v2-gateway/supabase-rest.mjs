@@ -1,6 +1,6 @@
 import { CLOUD_TARGETS } from "../v2-cloud/cloud-environment.mjs";
 import { URL } from "node:url";
-import { GatewayError, MAX_ASSET_BYTES, readLimited, uuid } from "./io.mjs";
+import { GatewayError, MAX_ASSET_BYTES, readLimited, serverKeyHeaders, serverKeyKind, uuid } from "./io.mjs";
 const pocBucket = "wjb-v2-poc-private";
 export { MAX_ASSET_BYTES } from "./io.mjs";
 
@@ -8,9 +8,7 @@ export { MAX_ASSET_BYTES } from "./io.mjs";
 export function createSupabaseRest({ projectRef, serviceRoleKey, fetchTransport, bucket = pocBucket }) {
   if (
     !Object.values(CLOUD_TARGETS).some((target) => target.projectRef === projectRef) ||
-    typeof serviceRoleKey !== "string" ||
-    !serviceRoleKey ||
-    /[\r\n]/.test(serviceRoleKey) ||
+    !serverKeyKind(serviceRoleKey) ||
     typeof fetchTransport !== "function" ||
     !/^wjb-v2-[a-z0-9-]{3,40}$/.test(bucket)
   ) {
@@ -29,8 +27,7 @@ export function createSupabaseRest({ projectRef, serviceRoleKey, fetchTransport,
         redirect: "error",
         signal: globalThis.AbortSignal.timeout(timeoutMs),
         headers: {
-          apikey: serviceRoleKey,
-          authorization: `Bearer ${serviceRoleKey}`,
+          ...serverKeyHeaders(serviceRoleKey),
           "cache-control": "no-store",
           ...options.headers,
         },

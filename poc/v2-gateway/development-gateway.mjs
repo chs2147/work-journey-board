@@ -10,10 +10,7 @@ import { createRecoveryWorker } from "./recovery.mjs";
 export function createDevelopmentGateway({ projectRef, serviceRoleKey, jwks, fetchTransport, bucket }) {
   // G-3(97): 개발·운영 허용 목록 — 그 밖의 프로젝트는 거절
   if (!isAllowedProjectRef(projectRef)) throw new TypeError("Allowed project required");
-  if (typeof serviceRoleKey === "string" && serviceRoleKey.startsWith("sb_secret_"))
-    throw new TypeError(
-      "This adapter requires the legacy service_role JWT; modern secret-key transport is not verified",
-    );
+  // G-4(97): 새 비밀 키(sb_secret_, apikey 머리만) 또는 바꾸는 동안의 예전 service_role JWT — 종류 판단은 io.mjs 한 곳
   if (typeof serviceRoleKey === "string" && serviceRoleKey.startsWith("sbp_"))
     throw new TypeError("Management PAT is not a gateway runtime credential");
   const rest = createSupabaseRest({ projectRef, serviceRoleKey, fetchTransport, bucket });

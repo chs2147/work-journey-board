@@ -81,11 +81,10 @@ test("no implicit transport or credential", () => {
   assert.throws(() => createDevelopmentGateway({ ...config, fetchTransport: undefined }));
   assert.throws(() => createDevelopmentGateway({ ...config, serviceRoleKey: undefined }));
 });
-test("unverified modern secret-key mode fails explicitly", () =>
-  assert.throws(
-    () => createDevelopmentGateway({ ...config, serviceRoleKey: "sb_secret_fixture" }),
-    /legacy/,
-  ));
+test("G-4: well-formed new secret key accepted, malformed one rejected", () => {
+  assert.throws(() => createDevelopmentGateway({ ...config, serviceRoleKey: "sb_secret_fixture" }));
+  assert.ok(createDevelopmentGateway({ ...config, serviceRoleKey: "sb_secret_" + "a".repeat(32) }));
+});
 test("real loopback HTTP validates dev issuer then session and reserve RPC", async () => {
   calls = [];
   const r = await reserve(await token());

@@ -1,7 +1,7 @@
 // Server-only DEV migration control transport; no env reads or implicit requests.
 import { Buffer } from "node:buffer";
 import { createHash } from "node:crypto";
-import { GatewayError, readLimited } from "../v2-gateway/io.mjs";
+import { GatewayError, readLimited, serverKeyHeaders, serverKeyKind } from "../v2-gateway/io.mjs";
 import { isAllowedProjectRef } from "../v2-cloud/cloud-environment.mjs";
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const sha = /^[0-9a-f]{64}$/;
@@ -122,11 +122,7 @@ export function createMigrationRPC({
   if (
     typeof allowWorkspaceProfiles !== "boolean" ||
     !isAllowedProjectRef(projectRef) ||
-    typeof serviceRoleKey !== "string" ||
-    !serviceRoleKey ||
-    /[\r\n]/.test(serviceRoleKey) ||
-    serviceRoleKey.startsWith("sbp_") ||
-    serviceRoleKey.startsWith("sb_secret_") ||
+    !serverKeyKind(serviceRoleKey) ||
     typeof fetchTransport !== "function"
   )
     throw Error("SERVER_TRANSPORT_REQUIRED");
@@ -276,8 +272,7 @@ export function createMigrationRPC({
         response = await fetchTransport(url, {
           method: "POST",
           headers: {
-            apikey: serviceRoleKey,
-            authorization: `Bearer ${serviceRoleKey}`,
+            ...serverKeyHeaders(serviceRoleKey),
             "content-type": "application/json",
             "cache-control": "no-store",
           },

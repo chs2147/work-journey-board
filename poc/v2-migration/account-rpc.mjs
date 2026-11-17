@@ -1,7 +1,7 @@
 // G 운영 준비 계정 한도·관리자 전송(서버 전용, docs/v2-design/96 Q-2) — wjb_v2_account(usage/admin_list/admin_set) +
 // admin_invite(관리자 확인 뒤 Auth 관리 API로 계정 미리 만들기, 메일 안 보냄). 환경변수를 읽지 않는다.
 // 관리자인지는 화면이 아니라 서버 함수가 매번 확인한다(초대도 먼저 서버 함수로 관리자 확인).
-import { GatewayError, readLimited } from "../v2-gateway/io.mjs";
+import { GatewayError, readLimited, serverKeyHeaders, serverKeyKind } from "../v2-gateway/io.mjs";
 import { isAllowedProjectRef } from "../v2-cloud/cloud-environment.mjs";
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const email = /^[^\s@'"\\]{1,64}@[^\s@'"\\]{1,190}\.[^\s@'"\\]{2,}$/;
@@ -34,19 +34,14 @@ export function checkAccountParams(action, p) {
 export function createAccountRPC({ projectRef, serviceRoleKey, fetchTransport }) {
   if (
     !isAllowedProjectRef(projectRef) ||
-    typeof serviceRoleKey !== "string" ||
-    !serviceRoleKey ||
-    /[\r\n]/.test(serviceRoleKey) ||
-    serviceRoleKey.startsWith("sbp_") ||
-    serviceRoleKey.startsWith("sb_secret_") ||
+    !serverKeyKind(serviceRoleKey) ||
     typeof fetchTransport !== "function"
   )
     throw Error("SERVER_TRANSPORT_REQUIRED");
   const rpcUrl = new URL(`https://${projectRef}.supabase.co/rest/v1/rpc/wjb_v2_account`);
   const usersUrl = new URL(`https://${projectRef}.supabase.co/auth/v1/admin/users`);
   const headers = {
-    apikey: serviceRoleKey,
-    authorization: `Bearer ${serviceRoleKey}`,
+    ...serverKeyHeaders(serviceRoleKey),
     "content-type": "application/json",
     "cache-control": "no-store",
   };

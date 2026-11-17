@@ -19,7 +19,7 @@ if (!key || !mgmt) throw Error("DEV_CREDENTIALS_REQUIRED");
 const origin = `https://${ref}.supabase.co`,
   gw = `${origin}/functions/v1/wjb-gateway`,
   bucket = "wjb-v2-dev-assets";
-const publishable = /const PUBLISHABLE_KEY: &str = "([^"]+)"/.exec(
+const publishable = /publishable_key: Some\("([^"]+)"\)/.exec(
   readFileSync(new URL("../../../src-tauri/src/online.rs", import.meta.url), "utf8"),
 )[1];
 const sha = (b) => createHash("sha256").update(b).digest("hex");
@@ -105,7 +105,7 @@ function envelope() {
   return { m, blobs };
 }
 
-const created = { users: [], workspaces: [], jobs: [] };
+const created = { users: [], workspaces: [], jobs: [], devices: [] };
 const report = {
   startedAt: new Date().toISOString(),
   projectRef: ref,
@@ -130,6 +130,13 @@ try {
   });
   token = (await v.json()).access_token;
   check("login_with_code", v.status === 200 && !!token);
+  // G-4: gateway가 새 비밀 키(wjb_gateway)로 돌고 있다(값은 내보내지 않고 종류만)
+  const me = await fetch(`${gw}/v2/me`, { headers: { authorization: `Bearer ${token}` } });
+  const meBody = await me.json().catch(() => null);
+  check("gateway_uses_new_secret_key", me.status === 200 && meBody?.serverKey === "secret", {
+    serverKey: meBody?.serverKey ?? null,
+    project: meBody?.project ?? null,
+  });
   // 2) 기기 등록(같은 기기 다시 = 그대로)
   const d1 = await post("/v2/devices", { deviceId });
   const d2 = await post("/v2/devices", { deviceId });
@@ -219,6 +226,27 @@ try {
   const gotBytes = Buffer.from(await got.arrayBuffer());
   check("image_download_matches", got.status === 200 && sha(gotBytes) === m.assets[0].sha256);
 
+  // G-5: 게시한 공간을 서버에서 지우기 → 그림 실물 삭제(gateway 작업자) → 용량 반환
+  const del = await post("/v2/lifecycle/delete_space", { deviceId, params: { workspaceId: m.workspaceId } });
+  check("delete_space_accepted", del.status === 200 && del.value?.state === "purging", {
+    status: del.status,
+  });
+  let purged = null;
+  for (let i = 0; i < 12 && !purged; i++) {
+    await post("/v2/account/usage", { deviceId, params: {} }); // 뒤에서 정리를 한 번 더 돌린다
+    await new Promise((r) => setTimeout(r, 2500));
+    const q = await sql(
+      `SELECT (SELECT count(*) FROM wjb_gateway.asset WHERE workspace_id='${m.workspaceId}' AND state<>'canceled') live,(SELECT used_bytes FROM wjb_gateway.workspace WHERE id='${m.workspaceId}') used,(SELECT count(*) FROM storage.objects WHERE bucket_id='${bucket}' AND name LIKE '${m.workspaceId}/%') objects;`,
+    );
+    if (String(q[0]?.live) === "0" && String(q[0]?.used) === "0" && String(q[0]?.objects) === "0")
+      purged = q[0];
+  }
+  check("delete_space_purges_objects_and_quota", !!purged);
+  const gone = await fetch(`${gw}/v2/workspaces/${m.workspaceId}/assets/${m.assets[0].objectId}/content`, {
+    headers: { authorization: `Bearer ${token}`, "x-wjb-device-id": deviceId, "x-wjb-generation": "1" },
+  });
+  check("deleted_image_not_readable", gone.status !== 200, { status: gone.status });
+
   // 6) 두 번째 작업: 올리다 취소 → 그림 부재 확인 → 취소 완료
   const { m: m2 } = envelope();
   created.workspaces.push(m2.workspaceId);
@@ -239,6 +267,37 @@ try {
     "cancel_cleans_quota",
     c.publishBlocked === true && fin.state === "canceled" && String(used[0]?.used_bytes) === "0",
   );
+
+  // G-5 + G-4: 두 번째 가상 계정이 스스로 계정 삭제 → gateway가 새 키로 Auth 사용자를 지운다
+  const email2 = `wjb-copy-${randomUUID()}@example.invalid`;
+  const u2 = await admin("POST", "/auth/v1/admin/users", { email: email2, email_confirm: true });
+  created.users.push(u2.body.id);
+  const link2 = await admin("POST", "/auth/v1/admin/generate_link", { type: "magiclink", email: email2 });
+  const v2 = await fetch(`${origin}/auth/v1/verify`, {
+    method: "POST",
+    headers: { apikey: publishable, "content-type": "application/json" },
+    body: JSON.stringify({
+      type: "email",
+      email: email2,
+      token: link2.body?.email_otp ?? link2.body?.properties?.email_otp,
+    }),
+  });
+  const firstToken = token;
+  token = (await v2.json()).access_token;
+  const device2 = randomUUID();
+  created.devices.push(device2);
+  await post("/v2/devices", { deviceId: device2 });
+  const da = await post("/v2/lifecycle/delete_account", { deviceId: device2, params: {} });
+  token = firstToken;
+  let authGone = false;
+  for (let i = 0; i < 12 && !authGone; i++) {
+    await post("/v2/account/usage", { deviceId, params: {} });
+    await new Promise((r) => setTimeout(r, 2500));
+    authGone = (await admin("GET", `/auth/v1/admin/users/${u2.body.id}`)).status === 404;
+  }
+  check("delete_account_removes_auth_user", da.status === 200 && da.value?.state === "purging" && authGone, {
+    status: da.status,
+  });
 } catch (e) {
   report.failure = /^[A-Z0-9_]{1,120}$/.test(e.message) ? e.message : String(e.message).slice(0, 200);
   console.log("ERROR", report.failure);
@@ -257,18 +316,22 @@ try {
       await sql(
         `BEGIN;DELETE FROM wjb_migration.upload_page WHERE upload_id='${j}';DELETE FROM wjb_migration.upload WHERE id='${j}';DELETE FROM wjb_migration.workspace_record WHERE job_id='${j}';DELETE FROM wjb_migration.workspace_header WHERE job_id='${j}';DELETE FROM wjb_migration.document WHERE job_id='${j}';DELETE FROM wjb_migration.asset WHERE job_id='${j}';DELETE FROM wjb_migration.job WHERE id='${j}';` +
           (ws
-            ? `DELETE FROM wjb_gateway.recovery_audit WHERE workspace_id='${ws}';DELETE FROM wjb_gateway.io_intent WHERE workspace_id='${ws}';DELETE FROM wjb_gateway.asset WHERE workspace_id='${ws}';DELETE FROM wjb_gateway.workspace WHERE id='${ws}';`
+            ? `DELETE FROM wjb_life.orphan WHERE workspace_id='${ws}';DELETE FROM wjb_life.purge WHERE workspace_id='${ws}';DELETE FROM wjb_sync.record WHERE workspace_id='${ws}';DELETE FROM wjb_sync.applied WHERE workspace_id='${ws}';DELETE FROM wjb_sync.asset_declared WHERE workspace_id='${ws}';DELETE FROM wjb_sync.space WHERE workspace_id='${ws}';DELETE FROM wjb_ops.space_bytes WHERE workspace_id='${ws}';DELETE FROM wjb_gateway.recovery_audit WHERE workspace_id='${ws}';DELETE FROM wjb_gateway.io_intent WHERE workspace_id='${ws}';DELETE FROM wjb_gateway.asset WHERE workspace_id='${ws}';DELETE FROM wjb_gateway.workspace WHERE id='${ws}';`
             : "") +
           "COMMIT;",
       );
     }
     await sql(`DELETE FROM wjb_gateway.device WHERE id='${deviceId}';`);
+    for (const d of created.devices) await sql(`DELETE FROM wjb_gateway.device WHERE id='${d}';`);
+    for (const id of created.users) await sql(`DELETE FROM wjb_life.account_gone WHERE user_id='${id}';`);
     for (const id of created.users) {
       await sql(`DELETE FROM wjb_v2_cloud.blocked_session WHERE user_id='${id}';`);
       await admin("DELETE", `/auth/v1/admin/users/${id}`);
     }
+    // 이 시험이 만든 것만 센다(개발 서버의 다른 자료는 건드리지도 세지도 않음)
+    const ids = (a) => (a.length ? a.map((x) => `'${x}'`).join(",") : "NULL");
     const left = await sql(
-      `SELECT (SELECT count(*) FROM wjb_migration.job) jobs,(SELECT count(*) FROM wjb_migration.upload) uploads,(SELECT count(*) FROM wjb_migration.workspace_record) records,(SELECT count(*) FROM wjb_gateway.workspace) workspaces,(SELECT count(*) FROM wjb_gateway.asset) assets,(SELECT count(*) FROM wjb_gateway.device) devices,(SELECT count(*) FROM storage.objects WHERE bucket_id='${bucket}') objects,(SELECT count(*) FROM auth.users WHERE email LIKE 'wjb-copy-%') users;`,
+      `SELECT (SELECT count(*) FROM wjb_migration.job WHERE id IN (${ids(created.jobs)})) jobs,(SELECT count(*) FROM wjb_migration.upload WHERE id IN (${ids(created.jobs)})) uploads,(SELECT count(*) FROM wjb_migration.workspace_record WHERE job_id IN (${ids(created.jobs)})) records,(SELECT count(*) FROM wjb_gateway.workspace WHERE id IN (${ids(created.workspaces)})) workspaces,(SELECT count(*) FROM wjb_gateway.asset WHERE workspace_id IN (${ids(created.workspaces)})) assets,(SELECT count(*) FROM wjb_gateway.device WHERE id='${deviceId}') devices,(SELECT count(*) FROM storage.objects WHERE bucket_id='${bucket}' AND split_part(name,'/',1) IN (${ids(created.workspaces)})) objects,(SELECT count(*) FROM auth.users WHERE id IN (${ids(created.users)})) users;`,
     );
     Object.assign(cleanup, left[0]);
     cleanup.zero = Object.values(left[0]).every((n) => String(n) === "0");

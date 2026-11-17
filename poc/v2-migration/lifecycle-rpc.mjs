@@ -1,7 +1,7 @@
 // G-5 데이터 수명(서버 전용, docs/v2-design/100) — wjb_v2_lifecycle(delete_space/delete_account, 사용자 세션 확인) +
 // wjb_v2_lifecycle_worker(next/confirm/sweep/auth_pending/auth_deleted, 사용자 없음) + Auth 사용자 지우기.
 // 그림 실물은 storage.remove(지운 뒤 없는 것까지 확인)로만 지우고, 확인된 것만 서버에 confirm → 용량 반환. 환경변수를 읽지 않는다.
-import { GatewayError, readLimited } from "../v2-gateway/io.mjs";
+import { GatewayError, readLimited, serverKeyHeaders, serverKeyKind } from "../v2-gateway/io.mjs";
 import { isAllowedProjectRef } from "../v2-cloud/cloud-environment.mjs";
 
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -34,18 +34,13 @@ export function checkLifecycleParams(action, p) {
 export function createLifecycleRPC({ projectRef, serviceRoleKey, fetchTransport }) {
   if (
     !isAllowedProjectRef(projectRef) ||
-    typeof serviceRoleKey !== "string" ||
-    !serviceRoleKey ||
-    /[\r\n]/.test(serviceRoleKey) ||
-    serviceRoleKey.startsWith("sbp_") ||
-    serviceRoleKey.startsWith("sb_secret_") ||
+    !serverKeyKind(serviceRoleKey) ||
     typeof fetchTransport !== "function"
   )
     throw Error("SERVER_TRANSPORT_REQUIRED");
   const origin = `https://${projectRef}.supabase.co`;
   const headers = {
-    apikey: serviceRoleKey,
-    authorization: `Bearer ${serviceRoleKey}`,
+    ...serverKeyHeaders(serviceRoleKey),
     "content-type": "application/json",
     "cache-control": "no-store",
   };
