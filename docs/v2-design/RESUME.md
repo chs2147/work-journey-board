@@ -1,6 +1,6 @@
 # V2 설계·PoC 중단/재개 기록
 
-**현재 재개 정본:** 브랜치 **`v2-g-stage`** · [98. G-1 로컬·온라인 통합 앱(A안)](98-g1-unified-app.md) · [97. G 운영 준비 상세 계획](97-g-stage-plan.md)(G-D1 = A안, 나머지 대기) · [96. 계정 한도·관리자](96-g-ops-quota-admin.md)(Q-1~Q-4 구현 완료, 다음: 운영 프로젝트 절차서·내보내기) · 이전: [95. 온라인 UX 통합](95-online-ux-integration.md)(U1~U7 추천안 + U8 구름 표시 확정, UX-1~UX-5 구현 완료 → 실기 `m1-check.md` 7-50·7-51 → G 운영 준비) — 로드맵: E+([93](93-e-plus-sync-hardening.md))·1.40.1·초대 전용 가입([94](94-invite-only-signup.md)) 완료 → **UX 통합** → G 운영 준비 → F 다국어([92](92-f-stage-i18n-design.md), 보류).
+**현재 재개 정본:** 브랜치 **`v2-g-stage`** · [98. G-1 로컬·온라인 통합 앱(A안)](98-g1-unified-app.md)(DEV 실기 통과 2026-11-17) · [97. G 운영 준비 상세 계획](97-g-stage-plan.md)(G-D1 = A안, 나머지 대기) · [96. 계정 한도·관리자](96-g-ops-quota-admin.md)(Q-1~Q-4 구현 완료, 다음: 운영 프로젝트 절차서·내보내기) · 이전: [95. 온라인 UX 통합](95-online-ux-integration.md)(U1~U7 추천안 + U8 구름 표시 확정, UX-1~UX-5 구현 완료 → 실기 `m1-check.md` 7-50·7-51 → G 운영 준비) — 로드맵: E+([93](93-e-plus-sync-hardening.md))·1.40.1·초대 전용 가입([94](94-invite-only-signup.md)) 완료 → **UX 통합** → G 운영 준비 → F 다국어([92](92-f-stage-i18n-design.md), 보류).
 
 2026-11-09 UTC · V2 설계/PoC 중단 지점을 보존한 뒤 복귀했다. 사용자 요청으로 main 1.23.1 패치(`d11a0ca`)를 v2-design에 병합했다.
 

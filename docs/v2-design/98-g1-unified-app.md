@@ -51,3 +51,7 @@
 - 원인: 온라인 공간 이 기기 사본은 sql.js(WASM)로 준비하는데, DEV 판은 정식판 CSP(`'wasm-unsafe-eval'` 없음)를 그대로 써서 WASM이 막힘. Connected Preview CSP에는 있었음. 브라우저 E2E는 CSP 없이 돌아 놓침. 오류도 공간 메뉴에 표시하지 않아 반응이 없어 보였음.
 - 수정: `tauri.dev.conf.json`에 Preview와 같은 CSP(정식판 CSP + `script-src 'self' 'wasm-unsafe-eval'`, 외부 주소 없음). 정식판 `tauri.conf.json`은 그대로. 열지 못하면 알림으로 이유 표시. 단위 시험이 DEV CSP = Preview CSP, 정식판 CSP에 wasm 없음을 고정.
 - **정식판에 A안을 넣을 때**: 정식판 CSP에 `'wasm-unsafe-eval'`을 더하거나(외부 도메인 아님, 그래도 CSP 변경이라 승인 항목), 온라인 사본을 Rust 쪽에서 준비하도록 바꾸는 것 중 하나를 그때 정한다.
+
+### 실기 2차(2026-11-17) — 통과
+
+DEV 설치 파일 #119(`9114444`)로 m1-check 7-53 1~7 통과(사용자 확인). G-1(DEV) 완료. 정식판 반영은 CSP 처리 방식(정식판 CSP에 WASM 허용 vs 온라인 사본 준비를 Rust로)을 정한 뒤 다시 승인.
