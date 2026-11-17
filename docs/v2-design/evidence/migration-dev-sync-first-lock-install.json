@@ -1,0 +1,42 @@
+{
+  "startedAt": "2026-11-17T11:22:43.361Z",
+  "projectRef": "vsphftnmfzfoufasjttd",
+  "autoApply": false,
+  "userRequestedDevIntegration": true,
+  "productionTouched": false,
+  "sources": [
+    {
+      "path": "poc/v2-migration/postgres/037-sync-first-lock.sql",
+      "sha256": "4a8e627246fef2ab4a8d403c26dec4c63a0ac0c61fc25ea8b343538ea220ff65"
+    },
+    {
+      "path": "poc/v2-migration/postgres/038-sync-first-lock-verify.sql",
+      "sha256": "c1f296fc2ddef7c78339a93236182bcf254914410256573c96d04e4885c2ea8b"
+    }
+  ],
+  "phases": [
+    {
+      "phase": "preflight",
+      "has034": true,
+      "has037": false
+    },
+    {
+      "phase": "apply",
+      "ok": true
+    }
+  ],
+  "applied": true,
+  "executionRole": {
+    "role": "postgres",
+    "read_only": "off",
+    "rolsuper": false,
+    "rolbypassrls": true
+  },
+  "verify": {
+    "closed": true,
+    "locked": true,
+    "searchPath": true,
+    "cloudApplied": false
+  },
+  "finishedAt": "2026-11-17T11:22:50.091Z"
+}

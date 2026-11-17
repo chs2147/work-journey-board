@@ -674,3 +674,29 @@ def run(g):
         assert scalar("SELECT to_regclass('wjb_ops.metric_day') IS NULL;") == 't'
         sql((ROOT/'034-metrics.sql').read_text())
     test('034 metrics: one row per day (re-run updates), counts changes/pushes/devices, no content/e-mail/owner columns, closed to API roles; 036 rollback', metrics)
+
+    # ── 037 (처음 동기화 경합 고침, docs/v2-design/102 5절) ──
+    def first_sync_lock():
+        sql(f"INSERT INTO wjb_ops.account(user_id,unlimited) VALUES('{A}',true) ON CONFLICT (user_id) DO UPDATE SET unlimited=true;")
+        sql((ROOT/'037-sync-first-lock.sql').read_text())
+        r = sql((ROOT/'037-sync-first-lock.sql').read_text(), check=False)
+        assert r.returncode and 'MIGRATION_037_ALREADY_APPLIED' in r.stderr
+        v = json.loads(scalar((ROOT/'038-sync-first-lock-verify.sql').read_text()))
+        assert v['locked'] and v['searchPath'] and v['closed'], v
+        # 처음 동기화를 6개 기기가 같은 순간에 — 5번 반복해도 모두 성공, 하나만 적용, 게시본은 한 번만 복사
+        for _ in range(5):
+            p = publish()
+            e = [x for x in p['m']['records'] if x['table'] == 'entry_item'][0]
+            def one(i):
+                return rpc('push', {'workspaceId': p['ws'], 'opId': str(uuid.uuid4()), 'changes': [{'table': 'entry_item', 'key': e['key'], 'baseRev': 0, 'value': {**e['value'], 'text': f'동시 처음 {i}'}}]})
+            with concurrent.futures.ThreadPoolExecutor(6) as pool:
+                rs = list(pool.map(one, range(6)))
+            assert all(x.returncode == 0 for x in rs), [x.stderr[-300:] for x in rs]
+            out = [json.loads(x.stdout.strip()) for x in rs]
+            assert sum(o['applied'] for o in out) == 1
+            n = int(scalar(f"SELECT count(*) FROM wjb_sync.record WHERE workspace_id='{p['ws']}';"))
+            assert n == len(p['m']['records']), (n, len(p['m']['records']))
+        sql((ROOT/'039-sync-first-lock-rollback.sql').read_text())
+        assert json.loads(scalar((ROOT/'038-sync-first-lock-verify.sql').read_text()))['locked'] is False
+        sql((ROOT/'037-sync-first-lock.sql').read_text())
+    test('037: simultaneous first syncs from 6 devices (×5) all succeed, one applies, published copy once; 039 restores 019 exactly', first_sync_lock)

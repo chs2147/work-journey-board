@@ -1,0 +1,32 @@
+{
+  "module": "wjb-sync-first-lock-poc-1",
+  "profile": "development",
+  "projectRef": "vsphftnmfzfoufasjttd",
+  "autoApply": false,
+  "cloudApplied": false,
+  "userApproved": "G단계 순차 진행(2026-11-17) — 측정 중 발견한 019 처음 동기화 경합 고침(docs/v2-design/102 5절)",
+  "requires": ["034-metrics.sql (installed)"],
+  "changes": {
+    "replacedFunctions": [
+      "wjb_sync.ensure_space (first sync locks the job row before copying; same results)"
+    ],
+    "newFunctions": [],
+    "newTables": []
+  },
+  "rollback": "039 restores the exact 019 function",
+  "localEvidence": "docs/v2-design/evidence/migration-g6-metrics-pass.json",
+  "sources": [
+    {
+      "path": "poc/v2-migration/postgres/037-sync-first-lock.sql",
+      "sha256": "4a8e627246fef2ab4a8d403c26dec4c63a0ac0c61fc25ea8b343538ea220ff65"
+    },
+    {
+      "path": "poc/v2-migration/postgres/038-sync-first-lock-verify.sql",
+      "sha256": "c1f296fc2ddef7c78339a93236182bcf254914410256573c96d04e4885c2ea8b"
+    },
+    {
+      "path": "poc/v2-migration/postgres/039-sync-first-lock-rollback.sql",
+      "sha256": "1abd4e05a087827c71656fbadcae456723dd548ade35145891153663fd0517d3"
+    }
+  ]
+}
