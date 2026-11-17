@@ -94,7 +94,10 @@ fn me() -> Value {
 }
 fn store() -> (Store, tempdir::Dir) {
     let d = tempdir::Dir::new();
-    (Store::new(d.0.join("development").join(PROJECT_REF)), d)
+    (
+        Store::new(d.0.join("development").join(DEVELOPMENT.project_ref)),
+        d,
+    )
 }
 mod tempdir {
     pub struct Dir(pub std::path::PathBuf);
@@ -520,4 +523,53 @@ fn gateway_device_id_is_per_account_and_keeps_the_vault_device() {
         st.gateway_device_id("not-a-uuid"),
         Err("INVALID_ACCOUNT".into())
     );
+}
+
+// ── G-3 접속 서버: 허용 목록(개발·운영), 판마다 하나 ──
+#[test]
+fn verification_builds_use_development_server_only() {
+    for p in [Profile::ConnectedPreview, Profile::LocalDev] {
+        let s = server_for(p).unwrap();
+        assert_eq!(s, DEVELOPMENT);
+        assert_eq!(s.check().unwrap().env(), CloudEnv::Development);
+    }
+    assert_eq!(server_for(Profile::Classic), Err("NO_ONLINE_SERVER"));
+    let (s, _) = server().unwrap();
+    assert_eq!(s, DEVELOPMENT, "이 빌드(Preview·DEV)는 개발 서버");
+    assert_eq!(
+        endpoint().unwrap().0,
+        "https://vsphftnmfzfoufasjttd.supabase.co"
+    );
+}
+#[test]
+fn production_is_listed_but_not_ready_until_g2() {
+    assert_eq!(PRODUCTION.env, CloudEnv::Production);
+    assert_eq!(
+        PRODUCTION.origin,
+        format!("https://{}.supabase.co", PRODUCTION.project_ref)
+    );
+    assert_eq!(PRODUCTION.check(), Err("SERVER_NOT_READY"));
+}
+#[test]
+fn mixed_or_unknown_servers_are_refused() {
+    let mut s = DEVELOPMENT;
+    s.env = CloudEnv::Production; // 개발 ID + 운영 표시
+    assert_eq!(s.check(), Err("SERVER_NOT_ALLOWED"));
+    let mut s = DEVELOPMENT;
+    s.origin = "https://hutqsfftioxtredcjhsy.supabase.co"; // 개발 ID + 운영 주소
+    assert_eq!(s.check(), Err("SERVER_ORIGIN_MISMATCH"));
+    let mut s = PRODUCTION;
+    s.publishable_key = Some("eyJhbGciOi"); // 예전 키 형식·서버 키는 넣지 않음
+    assert_eq!(s.check(), Err("SERVER_KEY_INVALID"));
+    let s = Server {
+        env: CloudEnv::Development,
+        project_ref: "abcdefghijklmnopqrst",
+        origin: "https://abcdefghijklmnopqrst.supabase.co",
+        publishable_key: Some("sb_publishable_x"),
+    };
+    assert_eq!(s.check(), Err("SERVER_NOT_ALLOWED"));
+}
+#[test]
+fn user_agent_names_no_profile_or_account() {
+    assert_eq!(user_agent("1.2.3"), "WorkJourneyBoard/1.2.3");
 }

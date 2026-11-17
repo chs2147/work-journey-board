@@ -1,10 +1,11 @@
-// Supabase Edge Function 진입점(개발 프로젝트 전용, docs/v2-design/79-preview-dev-connection.md).
+// Supabase Edge Function 진입점(docs/v2-design/79-preview-dev-connection.md). G-3(97): 개발·운영 허용 목록 —
+// 돌고 있는 프로젝트를 SUPABASE_URL로 확인하고 그 프로젝트·버킷으로만 요청한다(배포는 개발만, 운영은 G-2 승인 뒤).
 // - 기존 gateway(자산 예약·업로드·취소)는 그대로 넘기고, 계정 확인 `GET /v2/me`만 더한다.
 // - 서버 전용 열쇠는 이 프로젝트의 Edge Function 비밀 WJB_GATEWAY_SERVICE_ROLE_JWT(사용자가 대시보드에서 넣음)만 읽는다.
 //   앱·요청 본문에서 받지 않는다.
 // - JWKS는 같은 개발 프로젝트의 공개 주소에서만 읽는다(토큰이 가리키는 주소를 따라가지 않음).
 import { createDevelopmentGateway } from "../development-gateway.mjs";
-import { CLOUD_TARGETS } from "../../v2-cloud/cloud-environment.mjs";
+import { environmentOf, runtimeProjectRef } from "../../v2-cloud/cloud-environment.mjs";
 import { createSupabaseRest } from "../supabase-rest.mjs";
 import { createSessionVerifier } from "../../v2-auth/session-adapter.mjs";
 import { createMigrationRPC } from "../../v2-migration/server-rpc.mjs";
@@ -15,6 +16,8 @@ import { GatewayError, readLimited, uuid } from "../io.mjs";
 
 /** 개발용 영구 비공개 버킷(C-1b, docs/v2-design/82) — 시험마다 만들고 지우는 POC 버킷과 다르다 */
 export const DEV_BUCKET = "wjb-v2-dev-assets";
+/** G-3(97): 환경마다 그림 버킷 하나(운영 버킷은 G-2에서 만든다) */
+export const ASSET_BUCKETS = Object.freeze({ development: DEV_BUCKET, production: "wjb-v2-assets" });
 // 앱이 직접 부를 수 있는 이관 명령(attest·confirm_absent는 서버가 바이트를 확인한 뒤에만 — 아래 전용 경로)
 const CLIENT_ACTIONS = new Set([
   "upload_begin",
@@ -33,7 +36,6 @@ const CLIENT_ACTIONS = new Set([
 ]);
 const sha = /^[0-9a-f]{64}$/;
 
-const projectRef = CLOUD_TARGETS.development.projectRef;
 const prefix = "/wjb-gateway";
 const json = (value, status = 200) =>
   new Response(JSON.stringify(value), {
@@ -47,6 +49,9 @@ const json = (value, status = 200) =>
 
 let ready = null;
 async function setup() {
+  // G-3: 이 함수가 돌고 있는 프로젝트(Supabase가 넣는 SUPABASE_URL)를 허용 목록(개발·운영)으로 확인 — 그 프로젝트로만 요청
+  const projectRef = runtimeProjectRef(globalThis.Deno?.env.get("SUPABASE_URL"));
+  const bucket = ASSET_BUCKETS[environmentOf(projectRef)];
   // 예약 SUPABASE_SERVICE_ROLE_KEY는 예전 형식이 아니어서, 사용자가 대시보드에 넣은 예전 형식(JWT) 비밀만 읽는다
   // (예전 키는 2027년 초 은퇴 예정 — 운영 전 새 형식 키로 옮긴다, 79문서)
   const serviceRoleKey = globalThis.Deno?.env.get("WJB_GATEWAY_SERVICE_ROLE_JWT") ?? "";
@@ -66,9 +71,9 @@ async function setup() {
     serviceRoleKey,
     jwks,
     fetchTransport,
-    bucket: DEV_BUCKET,
+    bucket,
   });
-  const rest = createSupabaseRest({ projectRef, serviceRoleKey, fetchTransport, bucket: DEV_BUCKET });
+  const rest = createSupabaseRest({ projectRef, serviceRoleKey, fetchTransport, bucket });
   const verify = createSessionVerifier({ projectRef, jwks, callServerRpc: rest.callServerRpc });
   const rpc = createMigrationRPC({
     projectRef,

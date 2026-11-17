@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
 import { createAccountRPC, checkAccountParams } from "./account-rpc.mjs";
 const principal = {
   userId: "22222222-2222-4222-8222-222222222222",
@@ -95,7 +96,23 @@ test("account invite: admin confirmed by the server function first; non-admin ne
   );
 });
 
-test("account rpc: only the development project with a legacy service key", () => {
+test("account rpc: only allowed projects (G-3: development·production) with a legacy service key", async () => {
+  // 운영 프로젝트면 그 프로젝트 주소로만 보낸다
+  const urls = [];
+  const prod = createAccountRPC({
+    projectRef: "hutqsfftioxtredcjhsy",
+    serviceRoleKey: "eyJtest",
+    fetchTransport: async (u) => {
+      urls.push(String(u));
+      return new Response(JSON.stringify({ usage: {} }), { status: 200 });
+    },
+  });
+  assert.ok(prod);
+  await prod
+    .call("usage", {}, { userId: randomUUID(), sessionId: randomUUID(), role: "authenticated" }, randomUUID())
+    .catch(() => {});
+  assert.ok(urls.length > 0);
+  assert.ok(urls.every((u) => u.startsWith("https://hutqsfftioxtredcjhsy.supabase.co/")));
   assert.throws(() =>
     createAccountRPC({ projectRef: "other", serviceRoleKey: "eyJ", fetchTransport: () => {} }),
   );

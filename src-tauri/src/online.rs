@@ -1,5 +1,5 @@
 //! Connected Preview 온라인 계정(V2 B단계, docs/v2-design/79-preview-dev-connection.md). **Preview 빌드에만 있다.**
-//! - 접속 대상은 개발 프로젝트 한 곳(`ORIGIN`)의 인증(`/auth/v1/`)과 gateway(`/functions/v1/wjb-gateway/`)뿐.
+//! - 접속 대상은 이 판의 서버 한 곳(`server()` — 검증판 = 개발 프로젝트, G-3)의 인증(`/auth/v1/`)과 gateway(`/functions/v1/wjb-gateway/`)뿐.
 //!   웹 화면은 네트워크를 쓰지 않는다(CSP 그대로) — 모든 요청은 여기 Rust에서.
 //! - 갱신 토큰은 OS 보안 저장소(Windows Credential Manager·macOS Keychain)에만. 파일·화면으로 보내지 않는다.
 //!   접근 토큰은 메모리에만. 화면에는 이메일·계정 ID·서버 확인 시각만 넘긴다.
@@ -13,11 +13,58 @@ use wjb_native_isolation::policy::{CloudEnv, CloudTarget, Profile, WorkspaceKind
 use wjb_native_isolation::vault::{AccountScope, Secret, SecureVault, SessionVault};
 use wjb_native_isolation::Error as VaultError;
 
-pub const PROJECT_REF: &str = "vsphftnmfzfoufasjttd";
-pub(crate) const ORIGIN: &str = "https://vsphftnmfzfoufasjttd.supabase.co";
-/// 공개 키(publishable) — 비밀 아님. 인증 서버가 어느 프로젝트의 요청인지 알아보는 용도
-pub(crate) const PUBLISHABLE_KEY: &str = "sb_publishable_HgCrm5uiNX4v7Ppw0yowMQ_MREt7E5l";
 const GATEWAY_ME: &str = "/functions/v1/wjb-gateway/v2/me";
+
+/// G-3(docs/v2-design/97): 접속 서버는 허용 목록(개발·운영) 중 하나이고, 판(프로필)마다 하나로 고정한다.
+/// 프로젝트 ID는 격리 라이브러리의 `CloudTarget`(개발·운영 두 개만)과 같아야 하고, 주소는 그 ID에서만 만든다.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Server {
+    pub env: CloudEnv,
+    pub project_ref: &'static str,
+    pub origin: &'static str,
+    /// 공개 키(publishable) — 비밀 아님. 없으면(운영 구축 G-2 전) 그 서버에는 접속하지 않는다
+    pub publishable_key: Option<&'static str>,
+}
+pub const DEVELOPMENT: Server = Server {
+    env: CloudEnv::Development,
+    project_ref: "vsphftnmfzfoufasjttd",
+    origin: "https://vsphftnmfzfoufasjttd.supabase.co",
+    publishable_key: Some("sb_publishable_HgCrm5uiNX4v7Ppw0yowMQ_MREt7E5l"),
+};
+/// 운영(G-D2) — G-2 승인·구축 뒤 공개 키를 넣는다. 그 전에는 어떤 판도 이 서버를 고르지 않는다
+pub const PRODUCTION: Server = Server {
+    env: CloudEnv::Production,
+    project_ref: "hutqsfftioxtredcjhsy",
+    origin: "https://hutqsfftioxtredcjhsy.supabase.co",
+    publishable_key: None,
+};
+impl Server {
+    /// 표의 값이 서로 맞는지(ID = 허용 목록, 주소 = 그 ID, 공개 키 형식)
+    pub fn check(&self) -> Result<CloudTarget, &'static str> {
+        let t = CloudTarget::new(self.env, self.project_ref).map_err(|_| "SERVER_NOT_ALLOWED")?;
+        if self.origin != format!("https://{}.supabase.co", self.project_ref) {
+            return Err("SERVER_ORIGIN_MISMATCH");
+        }
+        match self.publishable_key {
+            Some(k) if !k.starts_with("sb_publishable_") => Err("SERVER_KEY_INVALID"),
+            None => Err("SERVER_NOT_READY"),
+            _ => Ok(t),
+        }
+    }
+}
+/// 판 → 서버(하나). 검증판(Preview·DEV) = 개발. 정식판은 아직 온라인이 없다(G-9에서 운영으로)
+pub fn server_for(profile: Profile) -> Result<Server, &'static str> {
+    match profile {
+        Profile::ConnectedPreview | Profile::LocalDev => Ok(DEVELOPMENT),
+        Profile::Classic => Err("NO_ONLINE_SERVER"),
+    }
+}
+/// 이 빌드의 서버 — 표가 맞지 않으면 접속하지 않는다(시작할 때가 아니라 요청마다 확인, 패닉 없음)
+pub(crate) fn server() -> Result<(Server, CloudTarget), String> {
+    let s = server_for(app_profile()).map_err(str::to_string)?;
+    let t = s.check().map_err(str::to_string)?;
+    Ok((s, t))
+}
 
 /// 이 빌드의 프로필 — DEV 통합 앱이면 DEV 설정 폴더·보안 저장소 이름(Preview와 겹치지 않음, 98)
 fn app_profile() -> Profile {
@@ -27,8 +74,17 @@ fn app_profile() -> Profile {
         Profile::ConnectedPreview
     }
 }
-fn target() -> CloudTarget {
-    CloudTarget::new(CloudEnv::Development, PROJECT_REF).expect("개발 프로젝트 고정값")
+fn target() -> Result<CloudTarget, String> {
+    server().map(|(_, t)| t)
+}
+/// 접속 주소와 공개 키(요청마다)
+pub(crate) fn endpoint() -> Result<(&'static str, &'static str), String> {
+    let (s, _) = server()?;
+    Ok((s.origin, s.publishable_key.unwrap_or_default()))
+}
+/// 요청 표시(이름만, 판·계정 정보 없음)
+pub(crate) fn user_agent(version: &str) -> String {
+    format!("WorkJourneyBoard/{version}")
 }
 
 /// 화면에 넘기는 상태(토큰 없음)
@@ -76,7 +132,7 @@ pub struct Reqwest(reqwest::Client);
 impl Reqwest {
     pub fn new(version: &str) -> Result<Self, String> {
         reqwest::Client::builder()
-            .user_agent(format!("WorkJourneyBoardConnectedPreview/{version}"))
+            .user_agent(user_agent(version))
             .redirect(reqwest::redirect::Policy::none())
             .connect_timeout(std::time::Duration::from_secs(10))
             .timeout(std::time::Duration::from_secs(20))
@@ -96,12 +152,13 @@ impl Http for Reqwest {
         if !path_allowed(path) {
             return Err("DESTINATION_DENIED".into());
         }
-        let url = format!("{ORIGIN}{path}");
+        let (origin, key) = endpoint()?;
+        let url = format!("{origin}{path}");
         let mut req = match method {
             "GET" => self.0.get(&url),
             _ => self.0.post(&url),
         }
-        .header("apikey", PUBLISHABLE_KEY)
+        .header("apikey", key)
         .header("cache-control", "no-store");
         if let Some(b) = bearer {
             req = req.header("authorization", format!("Bearer {b}"));
@@ -273,7 +330,7 @@ fn vault<B: SecureVault>(
 ) -> Result<SessionVault<B>, String> {
     let device = store.device_id()?;
     let scope =
-        AccountScope::new(target(), owner, &device).map_err(|_| "INVALID_ACCOUNT".to_string())?;
+        AccountScope::new(target()?, owner, &device).map_err(|_| "INVALID_ACCOUNT".to_string())?;
     SessionVault::new(app_profile(), WorkspaceKind::Online, scope, factory).map_err(vault_err)
 }
 fn vault_err(e: VaultError) -> String {
@@ -607,7 +664,7 @@ pub fn project_root(app: &AppHandle) -> Result<PathBuf, String> {
         .path()
         .local_data_dir()
         .map_err(|_| "STORE".to_string())?;
-    let layout = wjb_native_isolation::policy::layout(app_profile(), &base, Some(target()))
+    let layout = wjb_native_isolation::policy::layout(app_profile(), &base, Some(target()?))
         .map_err(|_| "STORE".to_string())?;
     layout.project_root.ok_or_else(|| "STORE".to_string())
 }

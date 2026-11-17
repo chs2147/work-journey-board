@@ -70,8 +70,13 @@ async function reserve(bearer, headers = {}) {
     body: JSON.stringify({ deviceId: id(5), generation: "1", bytes: 8, sha256: "a".repeat(64) }),
   });
 }
-test("dev composition rejects production target", () =>
-  assert.throws(() => createDevelopmentGateway({ ...config, projectRef: prod }), /Development/));
+test("G-3: composition accepts only allowed projects (development·production)", () => {
+  assert.throws(
+    () => createDevelopmentGateway({ ...config, projectRef: "abcdefghijklmnopqrst" }),
+    /Allowed project/,
+  );
+  assert.ok(createDevelopmentGateway({ ...config, projectRef: prod }));
+});
 test("no implicit transport or credential", () => {
   assert.throws(() => createDevelopmentGateway({ ...config, fetchTransport: undefined }));
   assert.throws(() => createDevelopmentGateway({ ...config, serviceRoleKey: undefined }));

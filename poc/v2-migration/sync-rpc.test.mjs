@@ -107,7 +107,15 @@ test("sync sends verified principal (never from the body) and maps server codes"
     make(ok.t).call("push", { ...p, changes: [] }, principal, DEV),
     (e) => e.code === "INVALID_RPC",
   );
+  // G-3: 허용 목록(개발·운영) 밖은 거절, 운영은 받음
   assert.throws(() =>
+    createWorkspaceSyncRPC({
+      projectRef: "abcdefghijklmnopqrst",
+      serviceRoleKey: "eyJ",
+      fetchTransport: ok.t,
+    }),
+  );
+  assert.ok(
     createWorkspaceSyncRPC({
       projectRef: "hutqsfftioxtredcjhsy",
       serviceRoleKey: "eyJ",

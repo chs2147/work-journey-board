@@ -1,4 +1,4 @@
-import { CLOUD_TARGETS } from "../v2-cloud/cloud-environment.mjs";
+import { isAllowedProjectRef } from "../v2-cloud/cloud-environment.mjs";
 import { createSupabaseRest } from "./supabase-rest.mjs";
 import { createSessionVerifier } from "../v2-auth/session-adapter.mjs";
 import { createPostgresMetadata } from "./postgres-metadata.mjs";
@@ -8,8 +8,8 @@ import { createRecoveryWorker } from "./recovery.mjs";
 // Server-only composition. Does not read env, fetch JWKS, listen or deploy.
 // Management PATs must never be substituted for this explicit runtime credential.
 export function createDevelopmentGateway({ projectRef, serviceRoleKey, jwks, fetchTransport, bucket }) {
-  if (projectRef !== CLOUD_TARGETS.development.projectRef)
-    throw new TypeError("Development project required");
+  // G-3(97): 개발·운영 허용 목록 — 그 밖의 프로젝트는 거절
+  if (!isAllowedProjectRef(projectRef)) throw new TypeError("Allowed project required");
   if (typeof serviceRoleKey === "string" && serviceRoleKey.startsWith("sb_secret_"))
     throw new TypeError(
       "This adapter requires the legacy service_role JWT; modern secret-key transport is not verified",

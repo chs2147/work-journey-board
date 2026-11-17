@@ -66,3 +66,26 @@ test("invalid header content cannot reach a request", () =>
     () => resolveCloudEnvironment({ ...dev, WJB_SUPABASE_DEV_MANAGEMENT_TOKEN: "token\nextra" }),
     /SELECTED_TOKEN_REQUIRED/,
   ));
+
+// G-3(docs/v2-design/97): 서버 코드가 받는 프로젝트 = 개발·운영 둘뿐, Edge Function은 돌고 있는 프로젝트를 SUPABASE_URL로
+test("G-3 allowlist and runtime project", async () => {
+  const { isAllowedProjectRef, environmentOf, runtimeProjectRef } = await import("./cloud-environment.mjs");
+  assert.equal(isAllowedProjectRef("vsphftnmfzfoufasjttd"), true);
+  assert.equal(isAllowedProjectRef("hutqsfftioxtredcjhsy"), true);
+  assert.equal(isAllowedProjectRef("abcdefghijklmnopqrst"), false);
+  assert.equal(environmentOf("vsphftnmfzfoufasjttd"), "development");
+  assert.equal(environmentOf("hutqsfftioxtredcjhsy"), "production");
+  assert.equal(environmentOf("x"), null);
+  assert.equal(runtimeProjectRef("https://vsphftnmfzfoufasjttd.supabase.co"), "vsphftnmfzfoufasjttd");
+  assert.equal(runtimeProjectRef("https://hutqsfftioxtredcjhsy.supabase.co/"), "hutqsfftioxtredcjhsy");
+  for (const bad of [
+    undefined,
+    "",
+    "http://vsphftnmfzfoufasjttd.supabase.co",
+    "https://abcdefghijklmnopqrst.supabase.co",
+    "https://vsphftnmfzfoufasjttd.supabase.co.evil.example",
+    "https://vsphftnmfzfoufasjttd.supabase.co/rest",
+    "http://kong:8000",
+  ])
+    assert.throws(() => runtimeProjectRef(bad), /RUNTIME_PROJECT_NOT_ALLOWED/);
+});

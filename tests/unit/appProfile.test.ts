@@ -132,12 +132,20 @@ describe("Tauri 설정", () => {
 
 describe("Preview 온라인 모듈(online.rs) 접속 범위", () => {
   const online = read("src-tauri/src/online.rs");
-  it("개발 프로젝트 한 곳의 인증·gateway 경로만, 서버 열쇠 없음", () => {
-    expect(online).toContain('const ORIGIN: &str = "https://vsphftnmfzfoufasjttd.supabase.co";');
-    expect(
-      online.match(/https:\/\/[a-z0-9.-]+/g)?.every((u) => u === "https://vsphftnmfzfoufasjttd.supabase.co"),
-    ).toBe(true);
-    expect(online).toMatch(/const PUBLISHABLE_KEY: &str = "sb_publishable_[A-Za-z0-9_-]+";/);
+  it("G-3: 서버 표 = 개발·운영 두 곳의 인증·gateway 경로만, 운영은 공개 키 없음(G-2 전), 서버 열쇠 없음", () => {
+    const dev = "https://vsphftnmfzfoufasjttd.supabase.co";
+    const prod = "https://hutqsfftioxtredcjhsy.supabase.co";
+    expect(online.match(/https:\/\/[a-z0-9.-]+/g)?.every((u) => u === dev || u === prod)).toBe(true);
+    // 개발 줄 = 공개 키 있음, 운영 줄 = 없음(어떤 판도 고를 수 없음)
+    expect(online).toMatch(
+      /pub const DEVELOPMENT: Server = Server \{[^}]*origin: "https:\/\/vsphftnmfzfoufasjttd\.supabase\.co",\s*publishable_key: Some\("sb_publishable_[A-Za-z0-9_-]+"\),/,
+    );
+    expect(online).toMatch(
+      /pub const PRODUCTION: Server = Server \{[^}]*origin: "https:\/\/hutqsfftioxtredcjhsy\.supabase\.co",\s*publishable_key: None,/,
+    );
+    // 판 → 서버: 검증판은 개발만
+    expect(online).toContain("Profile::ConnectedPreview | Profile::LocalDev => Ok(DEVELOPMENT),");
+    expect(online).not.toMatch(/=> Ok\(PRODUCTION\)/);
     expect(online).not.toMatch(/sb_secret_|service_role|eyJ[A-Za-z0-9]{10}|sbp_/);
     expect(online).toContain("redirect(reqwest::redirect::Policy::none())");
   });

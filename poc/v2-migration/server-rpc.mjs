@@ -2,7 +2,7 @@
 import { Buffer } from "node:buffer";
 import { createHash } from "node:crypto";
 import { GatewayError, readLimited } from "../v2-gateway/io.mjs";
-const dev = "vsphftnmfzfoufasjttd";
+import { isAllowedProjectRef } from "../v2-cloud/cloud-environment.mjs";
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const sha = /^[0-9a-f]{64}$/;
 const shapes = {
@@ -121,7 +121,7 @@ export function createMigrationRPC({
 }) {
   if (
     typeof allowWorkspaceProfiles !== "boolean" ||
-    projectRef !== dev ||
+    !isAllowedProjectRef(projectRef) ||
     typeof serviceRoleKey !== "string" ||
     !serviceRoleKey ||
     /[\r\n]/.test(serviceRoleKey) ||
@@ -129,12 +129,12 @@ export function createMigrationRPC({
     serviceRoleKey.startsWith("sb_secret_") ||
     typeof fetchTransport !== "function"
   )
-    throw Error("DEV_SERVER_TRANSPORT_REQUIRED");
+    throw Error("SERVER_TRANSPORT_REQUIRED");
   const allowedProfiles = new Set([
     "migration-document-poc-1",
     ...(allowWorkspaceProfiles ? workspaceProfiles : []),
   ]);
-  const url = new URL(`https://${dev}.supabase.co/rest/v1/rpc/wjb_v2_migration_command`);
+  const url = new URL(`https://${projectRef}.supabase.co/rest/v1/rpc/wjb_v2_migration_command`);
   return Object.freeze({
     async call({ action, jobId, params }, principal, deviceId) {
       if (

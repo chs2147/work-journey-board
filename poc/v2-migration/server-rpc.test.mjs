@@ -127,14 +127,15 @@ test("wrong job/source binding is rejected", () => {
     /BINDING/,
   );
 });
-test("production ref, Management PAT, modern key and absent transport rejected", () => {
+test("G-3: unknown project, Management PAT, modern key and absent transport rejected; production allowed", () => {
   for (const change of [
-    { projectRef: "hutqsfftioxtredcjhsy" },
+    { projectRef: "abcdefghijklmnopqrst" },
     { serviceRoleKey: "sbp_fixture" },
     { serviceRoleKey: "sb_secret_fixture" },
     { fetchTransport: null },
   ])
-    assert.throws(() => createMigrationRPC({ ...base, ...change }), /DEV_SERVER_TRANSPORT_REQUIRED/);
+    assert.throws(() => createMigrationRPC({ ...base, ...change }), /SERVER_TRANSPORT_REQUIRED/);
+  assert.doesNotThrow(() => createMigrationRPC({ ...base, projectRef: "hutqsfftioxtredcjhsy" }));
 });
 test("full workspace maps cannot be flattened into minimal document RPC", async () => {
   const before = calls;

@@ -1,6 +1,6 @@
 // E-2 서버 동기화 전송(서버 전용, docs/v2-design/90) — wjb_v2_workspace_sync(push/pull/asset_declare). 환경변수를 읽지 않는다.
 import { GatewayError, readLimited } from "../v2-gateway/io.mjs";
-const dev = "vsphftnmfzfoufasjttd";
+import { isAllowedProjectRef } from "../v2-cloud/cloud-environment.mjs";
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const sha = /^[0-9a-f]{64}$/;
 const errors = new Set([
@@ -68,7 +68,7 @@ export function checkSyncParams(action, p) {
 
 export function createWorkspaceSyncRPC({ projectRef, serviceRoleKey, fetchTransport }) {
   if (
-    projectRef !== dev ||
+    !isAllowedProjectRef(projectRef) ||
     typeof serviceRoleKey !== "string" ||
     !serviceRoleKey ||
     /[\r\n]/.test(serviceRoleKey) ||
@@ -76,8 +76,8 @@ export function createWorkspaceSyncRPC({ projectRef, serviceRoleKey, fetchTransp
     serviceRoleKey.startsWith("sb_secret_") ||
     typeof fetchTransport !== "function"
   )
-    throw Error("DEV_SERVER_TRANSPORT_REQUIRED");
-  const url = new URL(`https://${dev}.supabase.co/rest/v1/rpc/wjb_v2_workspace_sync`);
+    throw Error("SERVER_TRANSPORT_REQUIRED");
+  const url = new URL(`https://${projectRef}.supabase.co/rest/v1/rpc/wjb_v2_workspace_sync`);
   return Object.freeze({
     async call(action, params, principal, deviceId) {
       if (

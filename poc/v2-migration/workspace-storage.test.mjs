@@ -102,7 +102,7 @@ test("another actor cannot record IO completion or read its receipts", (t) => {
   assert.throws(() => e.journal.storageIOs(e.id, other), /SCOPE_DENIED/);
   assert.throws(() => e.journal.storageIOCompleted(e.id, other, e.object, e.op, "confirmed"), /SCOPE_DENIED/);
 });
-test("Storage composition rejects production refs, PATs and absent verified principal before IO", () => {
+test("Storage composition rejects unknown projects (G-3 allowlist), PATs and absent verified principal before IO", () => {
   const principal = { userId: randomUUID(), sessionId: randomUUID(), role: "authenticated" };
   const base = {
     projectRef: "vsphftnmfzfoufasjttd",
@@ -114,7 +114,7 @@ test("Storage composition rejects production refs, PATs and absent verified prin
     },
   };
   for (const extra of [
-    { projectRef: "hutqsfftioxtredcjhsy" },
+    { projectRef: "abcdefghijklmnopqrst" },
     { serviceRoleKey: "sbp_fake" },
     { principal: null },
     { principal: { ...principal, role: "service_role" } },

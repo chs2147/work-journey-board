@@ -3,7 +3,7 @@
 //! - 사용자 토큰은 Rust 안에서만 쓴다(online.rs `access_for`). 화면·기록 파일에 남기지 않는다.
 //! - 그림 바이트는 보내기 전에 SHA-256·크기를 다시 확인한다(화면이 준 값을 믿지 않음).
 //! - 이어하기 기록 = ID·해시·크기·단계만(기록 내용·그림 없음). 모르는 칸이 있으면 거절한다.
-use crate::online::{self, is_uuid, OnlineState, Store, ORIGIN, PUBLISHABLE_KEY};
+use crate::online::{self, is_uuid, OnlineState, Store};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
@@ -42,7 +42,7 @@ pub enum Body {
 
 #[allow(async_fn_in_trait)]
 pub trait Gateway {
-    /// path = ORIGIN 아래 gateway 경로. 응답 = (상태, JSON)
+    /// path = 이 판 서버(online::endpoint) 아래 gateway 경로. 응답 = (상태, JSON)
     async fn send(
         &self,
         method: &'static str,
@@ -69,7 +69,7 @@ pub struct GatewayClient(reqwest::Client);
 impl GatewayClient {
     pub fn new(version: &str) -> Result<Self, String> {
         reqwest::Client::builder()
-            .user_agent(format!("WorkJourneyBoardConnectedPreview/{version}"))
+            .user_agent(online::user_agent(version))
             .redirect(reqwest::redirect::Policy::none())
             .connect_timeout(std::time::Duration::from_secs(10))
             // 10MB 그림을 느린 회선으로(gateway 본문 읽기 120초 + 여유)
@@ -91,12 +91,13 @@ impl Gateway for GatewayClient {
         if !online::path_allowed(path) || !path.starts_with(GATEWAY) {
             return Err("DESTINATION_DENIED".into());
         }
-        let url = format!("{ORIGIN}{path}");
+        let (origin, key) = online::endpoint()?;
+        let url = format!("{origin}{path}");
         let mut req = match method {
             "PUT" => self.0.put(&url),
             _ => self.0.post(&url),
         }
-        .header("apikey", PUBLISHABLE_KEY)
+        .header("apikey", key)
         .header("authorization", format!("Bearer {bearer}"))
         .header("cache-control", "no-store");
         for (k, v) in headers {
@@ -132,10 +133,11 @@ impl Download for GatewayClient {
         if !online::path_allowed(path) || !path.starts_with(GATEWAY) {
             return Err("DESTINATION_DENIED".into());
         }
+        let (origin, key) = online::endpoint()?;
         let mut req = self
             .0
-            .get(format!("{ORIGIN}{path}"))
-            .header("apikey", PUBLISHABLE_KEY)
+            .get(format!("{origin}{path}"))
+            .header("apikey", key)
             .header("authorization", format!("Bearer {bearer}"))
             .header("cache-control", "no-store");
         for (k, v) in headers {

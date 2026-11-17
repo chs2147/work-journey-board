@@ -63,7 +63,15 @@ test("read sends verified principal (never from the body) and maps server codes"
     make(ok.t).read("list", {}, { ...principal, role: "anon" }, DEV),
     (e) => e.code === "INVALID_RPC",
   );
+  // G-3: 허용 목록(개발·운영) 밖은 거절, 운영은 받음
   assert.throws(() =>
+    createWorkspaceReadRPC({
+      projectRef: "abcdefghijklmnopqrst",
+      serviceRoleKey: "eyJ",
+      fetchTransport: ok.t,
+    }),
+  );
+  assert.ok(
     createWorkspaceReadRPC({
       projectRef: "hutqsfftioxtredcjhsy",
       serviceRoleKey: "eyJ",
