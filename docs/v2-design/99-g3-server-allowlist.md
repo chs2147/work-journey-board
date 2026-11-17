@@ -42,4 +42,5 @@
 - **바꾸는 동안**: `wjb_gateway`가 없으면 예전 비밀 `WJB_GATEWAY_SERVICE_ROLE_JWT`(`eyJ…`)로 대신한다. `/v2/me`가 열쇠 **종류만**(`serverKey: "secret"|"legacy"`, 값 없음) 알려 준다.
 - **개발 서버 v17 실서버 점검**(`edge/live-paged-copy.mjs`, 가상 계정·자료만 만들고 모두 정리, 사용자 자료는 세지도 건드리지도 않게 범위를 좁힘): `serverKey = secret` · 기기 등록 · 5,052행 페이지 업로드 · 512KB 그림 올리기·서버 확인 · 게시 · 다시 읽기 · 그림 내려받기 · **G-5 공간 지우기 → 그림 실물·용량 0** · 지운 그림 못 읽음 · 취소 정리 · **계정 삭제 → Auth 사용자 삭제** 모두 통과, 남은 것 0(`evidence/preview-dev-paged-copy-live.json`).
 - **실기(2026-11-17 사용자)**: DEV #121로 로그인·동기화·그림·초대 그대로 확인.
-- **남은 것**: 개발 프로젝트 Edge Functions › Secrets의 `WJB_GATEWAY_SERVICE_ROLE_JWT` 삭제 → gateway의 예전 키 대신 코드 제거 → 관리 도구(이 작업 환경의 `WJB_SUPABASE_DEV_SERVICE_ROLE_KEY`)도 새 키로 → Settings › API Keys에서 예전 키 끄기(되살릴 수 있음). 운영 프로젝트는 G-2에서 처음부터 새 키만.
+- **예전 키 대신 코드 제거(2026-11-17)**: Edge는 `wjb_gateway`만 받음(예전 JWT·`default` 거절, 시험), 관리 도구 6개도 `serverKeyHeaders`로 — 이 작업 환경의 변수를 새 키로 바꿔도 그대로 동작. gateway 배포 19에서 실서버 점검 다시 통과.
+- **남은 것(사용자)**: 개발 Edge Functions › Secrets `WJB_GATEWAY_SERVICE_ROLE_JWT` 삭제(이제 쓰지 않음) · 이 작업 환경 변수 `WJB_SUPABASE_DEV_SERVICE_ROLE_KEY`를 새 secret 키로 · 그 뒤 Settings › API Keys 예전 키 끄기. 이전 메모: 개발 프로젝트 Edge Functions › Secrets의 `WJB_GATEWAY_SERVICE_ROLE_JWT` 삭제 → gateway의 예전 키 대신 코드 제거 → 관리 도구(이 작업 환경의 `WJB_SUPABASE_DEV_SERVICE_ROLE_KEY`)도 새 키로 → Settings › API Keys에서 예전 키 끄기(되살릴 수 있음). 운영 프로젝트는 G-2에서 처음부터 새 키만.

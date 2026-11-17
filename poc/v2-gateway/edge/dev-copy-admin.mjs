@@ -2,6 +2,7 @@
 // - 보고(--report-development): 계정(앞 8자리)별 작업·공간·기록·그림·저장소 객체 **개수만**. 기록 내용·그림은 읽지 않는다.
 // - 지우기(--purge-owner-development <계정 ID> --confirm): 그 계정의 이관 작업·업로드·기록·온라인 공간·그림 메타·저장소 객체.
 //   로그인 계정(auth)·기기 등록은 남긴다. 로컬 일지와 무관(서버 자료만).
+import { serverKeyHeaders } from "../io.mjs";
 const ref = "vsphftnmfzfoufasjttd",
   bucket = "wjb-v2-dev-assets";
 const args = process.argv.slice(2);
@@ -51,14 +52,14 @@ if (report) {
     for (;;) {
       const list = await fetch(`https://${ref}.supabase.co/storage/v1/object/list/${bucket}`, {
         method: "POST",
-        headers: { apikey: key, authorization: `Bearer ${key}`, "content-type": "application/json" },
+        headers: { ...serverKeyHeaders(key), "content-type": "application/json" },
         body: JSON.stringify({ prefix: w, limit: 1000 }),
       }).then((r) => r.json());
       const names = (list ?? []).map((o) => `${w}/${o.name}`);
       if (!names.length) break;
       await fetch(`https://${ref}.supabase.co/storage/v1/object/${bucket}`, {
         method: "DELETE",
-        headers: { apikey: key, authorization: `Bearer ${key}`, "content-type": "application/json" },
+        headers: { ...serverKeyHeaders(key), "content-type": "application/json" },
         body: JSON.stringify({ prefixes: names }),
       });
     }

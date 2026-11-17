@@ -345,7 +345,7 @@ export async function deleteSpaceOnServer(w: OnlineSpaceInfo): Promise<string | 
 }
 
 /**
- * G-5: 내 계정 삭제 — 서버가 받으면 이 기기의 온라인 공간 사본을 지우고 로그아웃(온라인 공간을 연 동안이면 보내고 닫은 뒤).
+ * G-5: 내 계정 삭제 — 서버가 받으면 이 기기의 온라인 공간 사본을 모두 지우고 로그아웃(연 공간은 보내고 닫은 뒤 그 사본까지).
  * 이 PC(로컬) 공간은 건드리지 않는다.
  */
 export async function deleteAccountAndSignOut(inSpace: boolean): Promise<string | null> {
@@ -359,7 +359,12 @@ export async function deleteAccountAndSignOut(inSpace: boolean): Promise<string 
   const keep = get().current?.workspaceId;
   for (const w of get().list ?? [])
     if (w.workspaceId !== keep) await sp.remove(w.workspaceId).catch(() => undefined);
-  if (inSpace) await signOutFromSpace(() => online.signOut());
+  // 연 공간은 보내고 닫은 뒤(일지를 닫은 다음) 그 사본도 지운다
+  if (inSpace)
+    await signOutFromSpace(async () => {
+      await online.signOut();
+      if (keep) await sp.remove(keep).catch(() => undefined);
+    });
   else {
     await online.signOut().catch(() => undefined);
     location.reload();

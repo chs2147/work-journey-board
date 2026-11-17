@@ -5,6 +5,7 @@
 import { execFileSync } from "node:child_process";
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { readFileSync, writeFileSync } from "node:fs";
+import { serverKeyHeaders } from "../io.mjs";
 
 const ref = "vsphftnmfzfoufasjttd";
 if (
@@ -31,7 +32,7 @@ const check = (name, ok, extra) => {
 const admin = async (method, path, body) => {
   const r = await fetch(origin + path, {
     method,
-    headers: { apikey: key, authorization: `Bearer ${key}`, "content-type": "application/json" },
+    headers: { ...serverKeyHeaders(key), "content-type": "application/json" },
     body: body ? JSON.stringify(body) : undefined,
     redirect: "error",
     signal: AbortSignal.timeout(30000),

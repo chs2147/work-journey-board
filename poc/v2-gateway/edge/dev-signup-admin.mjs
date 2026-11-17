@@ -7,6 +7,7 @@
 // - 스위치(--signup-development invite|open --confirm): 초대 전용 ↔ 아무나 가입.
 // 운영 프로젝트·다른 환경은 거절. 관리 토큰·서비스 키는 이 요청에만 쓰고 출력·파일에 남기지 않는다.
 // 계정 지우기는 하지 않는다(그 계정의 온라인 자료는 dev-copy-admin.mjs --purge-owner-development로 따로).
+import { serverKeyHeaders } from "../io.mjs";
 const ref = "vsphftnmfzfoufasjttd";
 const args = process.argv.slice(2);
 const email = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -43,7 +44,7 @@ const api = async (method, path, body) => {
 const admin = async (method, path, body) => {
   const r = await fetch(`https://${ref}.supabase.co/auth/v1/admin${path}`, {
     method,
-    headers: { apikey: key, authorization: `Bearer ${key}`, "content-type": "application/json" },
+    headers: { ...serverKeyHeaders(key), "content-type": "application/json" },
     body: body ? JSON.stringify(body) : undefined,
     redirect: "error",
     signal: AbortSignal.timeout(30000),

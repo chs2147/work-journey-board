@@ -40,7 +40,7 @@ test("storage/REST requests with the new key carry no Authorization header", asy
   assert.equal("authorization" in seen[0], false);
 });
 
-test("Edge picks SUPABASE_SECRET_KEYS.wjb_gateway first, legacy secret only while switching, never anything else", () => {
+test("Edge uses only SUPABASE_SECRET_KEYS.wjb_gateway — legacy JWT, default key and anything else refused", () => {
   const env = (vars) => (name) => vars[name];
   assert.deepEqual(
     runtimeServerKey(
@@ -51,18 +51,12 @@ test("Edge picks SUPABASE_SECRET_KEYS.wjb_gateway first, legacy secret only whil
     ),
     { key: SECRET, kind: "secret" },
   );
-  assert.deepEqual(runtimeServerKey(env({ WJB_GATEWAY_SERVICE_ROLE_JWT: LEGACY })), {
-    key: LEGACY,
-    kind: "legacy",
-  });
-  // default 키는 쓰지 않는다(gateway 전용 키만 — 따로 바꾸거나 끌 수 있게)
-  assert.throws(
-    () => runtimeServerKey(env({ SUPABASE_SECRET_KEYS: JSON.stringify({ default: SECRET }) })),
-    /RUNTIME_KEY_UNAVAILABLE/,
-  );
-  assert.throws(() => runtimeServerKey(env({ SUPABASE_SECRET_KEYS: "not json" })), /RUNTIME_KEY_UNAVAILABLE/);
-  assert.throws(
-    () => runtimeServerKey(env({ WJB_GATEWAY_SERVICE_ROLE_JWT: "sbp_x" })),
-    /RUNTIME_KEY_UNAVAILABLE/,
-  );
+  for (const vars of [
+    { WJB_GATEWAY_SERVICE_ROLE_JWT: LEGACY },
+    { SUPABASE_SECRET_KEYS: JSON.stringify({ default: SECRET }) },
+    { SUPABASE_SECRET_KEYS: JSON.stringify({ wjb_gateway: LEGACY }) },
+    { SUPABASE_SECRET_KEYS: "not json" },
+    {},
+  ])
+    assert.throws(() => runtimeServerKey(env(vars)), /RUNTIME_KEY_UNAVAILABLE/);
 });

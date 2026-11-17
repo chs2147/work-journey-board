@@ -1,6 +1,7 @@
 // 개발 프로젝트 전용: 영구 비공개 버킷 `wjb-v2-dev-assets` 1개를 만든다(C-1b, docs/v2-design/82). 이미 있으면 설정만 확인.
 // 명시 실행만, 운영 거절. 파일 10MB, application/octet-stream(gateway가 그 형식으로만 올림), 공개 아님.
 import { writeFileSync } from "node:fs";
+import { serverKeyHeaders } from "../io.mjs";
 const ref = "vsphftnmfzfoufasjttd",
   bucket = "wjb-v2-dev-assets";
 if (
@@ -14,7 +15,7 @@ if (!key) throw Error("DEV_CREDENTIALS_REQUIRED");
 const api = async (method, path, body) => {
   const r = await fetch(`https://${ref}.supabase.co/storage/v1${path}`, {
     method,
-    headers: { apikey: key, authorization: `Bearer ${key}`, "content-type": "application/json" },
+    headers: { ...serverKeyHeaders(key), "content-type": "application/json" },
     body: body ? JSON.stringify(body) : undefined,
     redirect: "error",
     signal: AbortSignal.timeout(15000),

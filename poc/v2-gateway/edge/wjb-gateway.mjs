@@ -1,8 +1,8 @@
 // Supabase Edge Function 진입점(docs/v2-design/79-preview-dev-connection.md). G-3(97): 개발·운영 허용 목록 —
 // 돌고 있는 프로젝트를 SUPABASE_URL로 확인하고 그 프로젝트·버킷으로만 요청한다(배포는 개발만, 운영은 G-2 승인 뒤).
 // - 기존 gateway(자산 예약·업로드·취소)는 그대로 넘기고, 계정 확인 `GET /v2/me`만 더한다.
-// - 서버 전용 열쇠(G-4): Supabase가 넣는 SUPABASE_SECRET_KEYS의 `wjb_gateway` 비밀 키(sb_secret_, 사용자가 대시보드에서 만듦).
-//   바꾸는 동안만 예전 비밀 WJB_GATEWAY_SERVICE_ROLE_JWT(service_role JWT)로 대신한다. 값은 어디에도 내보내지 않는다.
+// - 서버 전용 열쇠(G-4): Supabase가 넣는 SUPABASE_SECRET_KEYS의 `wjb_gateway` 비밀 키(sb_secret_, 사용자가 대시보드에서 만듦)만.
+//   예전 service_role JWT는 받지 않는다(2026-11-17 전환 완료). 값은 어디에도 내보내지 않는다.
 //   앱·요청 본문에서 받지 않는다.
 // - JWKS는 같은 개발 프로젝트의 공개 주소에서만 읽는다(토큰이 가리키는 주소를 따라가지 않음).
 import { createDevelopmentGateway } from "../development-gateway.mjs";
@@ -58,7 +58,7 @@ let ready = null;
 let currentRef = null;
 const projectRefOf = () => currentRef;
 
-/** G-4: 서버 열쇠 고르기 — 새 비밀 키 `wjb_gateway` 먼저, 없으면(바꾸는 동안) 예전 service_role JWT */
+/** G-4: 서버 열쇠 = 새 비밀 키 `wjb_gateway`만(default·예전 JWT는 쓰지 않음) */
 export function runtimeServerKey(env) {
   let keys;
   try {
@@ -68,8 +68,6 @@ export function runtimeServerKey(env) {
   }
   const fresh = typeof keys === "object" ? keys.wjb_gateway : undefined;
   if (serverKeyKind(fresh) === "secret") return { key: fresh, kind: "secret" };
-  const legacy = env("WJB_GATEWAY_SERVICE_ROLE_JWT") ?? "";
-  if (legacy.startsWith("eyJ") && serverKeyKind(legacy) === "legacy") return { key: legacy, kind: "legacy" };
   throw new Error("RUNTIME_KEY_UNAVAILABLE");
 }
 async function setup() {
