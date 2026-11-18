@@ -2,6 +2,7 @@
 // 로그인 전 = 지금 앱 그대로 + 설정 › 계정 · [온라인 로그인…]. 로그인 후 = 공간 메뉴 "이 PC" + "온라인 · 이메일".
 // 이 PC ↔ 온라인 오가기 3번 뒤에도 두 일지의 행 수가 그대로(CLAUDE.md 4-7 전환 무결성).
 import { expect, test, type Page } from "@playwright/test";
+import { requestCode } from "./online-helper";
 
 const EMAIL = "virtual@example.invalid";
 type Counts = Record<string, number>;
@@ -29,7 +30,7 @@ async function signIn(page: Page) {
   await (await menu(page)).getByTestId("online-sign-in").click();
   await expect(page.getByTestId("settings-cat-account")).toBeVisible();
   await page.getByTestId("preview-email-input").fill(EMAIL);
-  await page.getByRole("button", { name: "인증번호 받기" }).click();
+  await requestCode(page);
   await page.getByTestId("preview-code-input").fill("12345678");
   await page.getByRole("button", { name: "로그인" }).click();
   await expect(page.getByTestId("online-workspace-settings").or(page.getByText(EMAIL).first())).toBeVisible();

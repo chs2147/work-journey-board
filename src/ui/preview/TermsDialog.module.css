@@ -1,0 +1,100 @@
+/* G-8(104) 개인정보·이용 안내 대화상자 — 설정 카드와 같은 토큰(바탕·선·글자), 띠(선택 탭 밑줄)는 직각 */
+.dialog {
+  display: flex;
+  flex-direction: column;
+  width: min(640px, calc(100vw - 32px));
+  max-height: min(720px, calc(100vh - 48px));
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+  color: var(--text-1);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 0.2);
+}
+.dialog:not([open]) {
+  display: none;
+}
+.dialog::backdrop {
+  background: rgb(0 0 0 / 0.35);
+}
+.tabs {
+  display: flex;
+  gap: var(--sp-1);
+  padding: 0 var(--sp-5);
+  border-bottom: 1px solid var(--line);
+}
+.tab {
+  padding: var(--sp-4) var(--sp-3) calc(var(--sp-4) - 2px);
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: none;
+  color: var(--text-2);
+  font: inherit;
+  font-size: var(--fs-md);
+  cursor: pointer;
+}
+.tab[aria-selected="true"] {
+  border-bottom-color: var(--accent);
+  color: var(--text-1);
+  font-weight: var(--fw-bold, 600);
+}
+.tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--sp-5);
+  font-size: var(--fs-sm);
+  line-height: 1.75;
+  color: var(--text-1);
+}
+.body:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.body p {
+  margin: 0 0 var(--sp-3);
+}
+.body ul {
+  margin: 0 0 var(--sp-3);
+  padding-left: 1.3em;
+}
+.title {
+  margin: 0 0 var(--sp-4);
+  font-size: var(--fs-lg);
+}
+.section {
+  margin: var(--sp-4) 0 var(--sp-2);
+  font-size: var(--fs-md);
+}
+.footer {
+  color: var(--text-2);
+}
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--sp-4) var(--sp-5);
+  border-top: 1px solid var(--line);
+}
+.actions button {
+  height: 30px;
+  padding: 0 var(--sp-5);
+  border: 1px solid var(--primary-line);
+  border-radius: var(--radius-md);
+  background: var(--primary-bg);
+  color: var(--primary-fg);
+  font: inherit;
+  cursor: pointer;
+}
+@media (max-width: 640px) {
+  .tabs,
+  .body,
+  .actions {
+    padding-left: var(--sp-4);
+    padding-right: var(--sp-4);
+  }
+}

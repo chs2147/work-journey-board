@@ -84,3 +84,17 @@
   font-size: var(--fs-sm);
   color: var(--warn);
 }
+
+/* G-8(104) 첫 로그인 동의 — 체크 상자 + 글(행 이름 자리) */
+.agree {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  cursor: pointer;
+}
+.agree input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--accent);
+}

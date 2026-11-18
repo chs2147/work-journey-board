@@ -1,5 +1,6 @@
 // 온라인 워크스페이스 만들기 4단계(브라우저 모드 가짜 원본·가짜 서버, 외부 요청 없음) — docs/v2-design/85·95 S6
 import { expect, test, type Page } from "@playwright/test";
+import { requestCode } from "./online-helper";
 
 async function signIn(page: Page, query = "") {
   await page.goto(`/?profile=connected-preview${query}`);
@@ -8,7 +9,7 @@ async function signIn(page: Page, query = "") {
   await expect(page.getByTestId("online-create-open")).toHaveCount(0);
   await expect(page.getByTestId("invite-only-badge")).toHaveText("초대 전용");
   await page.getByTestId("preview-email-input").fill("virtual@example.invalid");
-  await page.getByRole("button", { name: "인증번호 받기" }).click();
+  await requestCode(page);
   await page.getByTestId("preview-code-input").fill("12345678");
   await page.getByRole("button", { name: "로그인" }).click();
   await expect(page.getByTestId("online-create-open")).toBeVisible();

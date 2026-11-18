@@ -4,6 +4,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import { checkPdfRendering } from "./pdf-render-helper";
 import { openSettings } from "./settings-helper";
+import { requestCode } from "./online-helper";
 
 test("Cabi.NET 블록 노트와 한글 PDF 내보내기 — 실제 CSP 아래에서 외부 요청·정책 위반 없음", async ({
   page,
@@ -397,7 +398,7 @@ test("Preview CSP 그대로: 온라인 사본 — wasm을 받아 오지 않고 �
   });
   await page.goto("/?profile=connected-preview");
   await page.getByTestId("preview-email-input").fill("virtual@example.invalid");
-  await page.getByRole("button", { name: "인증번호 받기" }).click();
+  await requestCode(page);
   await page.getByTestId("preview-code-input").fill("12345678");
   await page.getByRole("button", { name: "로그인" }).click();
   await page.getByTestId("online-create-open").click();

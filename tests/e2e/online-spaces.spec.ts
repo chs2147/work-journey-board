@@ -1,10 +1,11 @@
 // D-4 내 온라인 공간(브라우저 모드 가짜 서버·가짜 캐시, 외부 요청 없음) — docs/v2-design/87
 import { expect, test, type Page } from "@playwright/test";
+import { requestCode } from "./online-helper";
 
 async function signIn(page: Page, query = "") {
   await page.goto(`/?profile=connected-preview${query}`);
   await page.getByTestId("preview-email-input").fill("virtual@example.invalid");
-  await page.getByRole("button", { name: "인증번호 받기" }).click();
+  await requestCode(page);
   await page.getByTestId("preview-code-input").fill("12345678");
   await page.getByRole("button", { name: "로그인" }).click();
   await expect(page.getByTestId("online-spaces")).toBeVisible();
@@ -287,7 +288,8 @@ test("UX-4: 설정 › 계정(온라인 공간에서만) → 로그아웃… 확
   await expect(card.getByTestId("account-spaces")).toHaveText("1개");
   // 설정 공용 카드·행 모양(다른 설정과 같은 여백), 가입 제한은 배지만
   await expect(card.getByTestId("invite-only-badge")).toHaveText("초대 전용");
-  await expect(card.locator("[class*=setRow]")).toHaveCount(4);
+  // 행 = 이메일 · 서버 · 온라인 공간 · 계정 ID · 온라인 기능 안내(G-8)
+  await expect(card.locator("[class*=setRow]")).toHaveCount(5);
   // 로그아웃은 확인을 거친다
   await card.getByTestId("preview-sign-out").click();
   await expect(card.getByTestId("sign-out-confirm")).toContainText("보내지 못한 변경은 이 기기에 남아");

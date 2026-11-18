@@ -35,6 +35,8 @@ export interface AppConfig {
   cabinetBy?: Record<string, CabinetConfig>;
   /** G-1 통합 앱(docs/v2-design/98): 마지막으로 쓴 공간이 온라인이면 그 공간·계정. 없으면(null) 로컬 dataDir로 시작 */
   lastWorkspace?: LastOnlineWorkspace | null;
+  /** G-8(docs/v2-design/104): 이 기기에서 온라인 기능 개인정보·이용 안내에 동의한 판(바뀌면 다시 묻는다) */
+  onlineTerms?: { version: string; acceptedAt: string };
 }
 
 export interface LastOnlineWorkspace {
@@ -561,6 +563,9 @@ export function parseConfig(raw: string | null): AppConfig | null {
       lw.ownerId
     )
       out.lastWorkspace = { kind: "online", workspaceId: lw.workspaceId, ownerId: lw.ownerId };
+    const ot = c.onlineTerms;
+    if (ot && typeof ot.version === "string" && ot.version && typeof ot.acceptedAt === "string")
+      out.onlineTerms = { version: ot.version, acceptedAt: ot.acceptedAt };
     if (typeof c.universeAutoMotion === "boolean") out.universeAutoMotion = c.universeAutoMotion;
     if (typeof c.celebrate === "boolean") out.celebrate = c.celebrate;
     if (c.universeAutoStyle === "drift" || c.universeAutoStyle === "orbit")

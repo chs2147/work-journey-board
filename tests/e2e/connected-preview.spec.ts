@@ -1,6 +1,7 @@
 // V2 6-B: Connected Preview 프로필(브라우저 모드 ?profile=connected-preview)은 기존 앱 시작 흐름에 들어가지 않는다.
 // 실앱에서는 Rust가 같은 값을 `app_profile`로 알려 주고, 일지·업데이트 명령 자체를 등록하지 않는다(docs/v2-design/78).
 import { expect, test } from "@playwright/test";
+import { requestCode } from "./online-helper";
 
 test("Preview: 시작 화면만 — 일지(sql.js)·첫 실행·새 판 확인 없음, 외부 요청 없음", async ({ page }) => {
   const requests: string[] = [];
@@ -27,12 +28,12 @@ test("초대 전용 서버: 초대받지 않은 이메일은 '초대받은 이�
 }) => {
   await page.goto("/?profile=connected-preview&inviteOnly=1");
   await page.getByTestId("preview-email-input").fill("stranger@example.invalid");
-  await page.getByRole("button", { name: "인증번호 받기" }).click();
+  await requestCode(page);
   await expect(page.getByTestId("preview-error")).toHaveText(
     "초대받은 이메일만 가입할 수 있습니다. 초대받은 주소인지 확인해 주세요.",
   );
   await page.getByTestId("preview-email-input").fill("invited@example.invalid");
-  await page.getByRole("button", { name: "인증번호 받기" }).click();
+  await requestCode(page);
   await expect(page.getByText("invited@example.invalid(으)로 인증번호를 보냈습니다.")).toBeVisible();
   await page.getByTestId("preview-code-input").fill("12345678");
   await page.getByRole("button", { name: "로그인" }).click();
@@ -45,7 +46,7 @@ test("Preview 계정(브라우저 모드 가짜): 인증번호 로그인 → 서
   await page.goto("/?profile=connected-preview");
   await expect(page.getByTestId("preview-online")).toHaveText("로그인 필요");
   await page.getByTestId("preview-email-input").fill("virtual@example.invalid");
-  await page.getByRole("button", { name: "인증번호 받기" }).click();
+  await requestCode(page);
   await expect(page.getByText("virtual@example.invalid(으)로 인증번호를 보냈습니다.")).toBeVisible();
   // 숫자만 받는다
   await page.getByTestId("preview-code-input").fill("11a1111");

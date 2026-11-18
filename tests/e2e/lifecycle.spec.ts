@@ -1,6 +1,7 @@
 // G-5 데이터 수명(docs/v2-design/100) — 브라우저 모드 가짜 서버(외부 요청 없음).
 // 공간 서버에서 지우기(이름을 입력해야, 지금 연 공간은 못 지움) · 내 계정 삭제(이메일 입력, 관리자는 버튼 없음) · 관리자의 계정 삭제.
 import { expect, test, type Page } from "@playwright/test";
+import { requestCode } from "./online-helper";
 
 const EMAIL = "virtual@example.invalid";
 const external = (requests: string[]) =>
@@ -9,7 +10,7 @@ const external = (requests: string[]) =>
 async function signInPreview(page: Page, query = "") {
   await page.goto(`/?profile=connected-preview${query}`);
   await page.getByTestId("preview-email-input").fill(EMAIL);
-  await page.getByRole("button", { name: "인증번호 받기" }).click();
+  await requestCode(page);
   await page.getByTestId("preview-code-input").fill("12345678");
   await page.getByRole("button", { name: "로그인" }).click();
   await expect(page.getByTestId("online-spaces")).toBeVisible();
