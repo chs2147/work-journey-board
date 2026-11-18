@@ -1,6 +1,7 @@
 {
-  "startedAt": "2026-11-17T13:45:25.883Z",
+  "startedAt": "2026-11-18T04:03:17.155Z",
   "projectRef": "vsphftnmfzfoufasjttd",
+  "environment": "development",
   "productionTouched": false,
   "mailSent": false,
   "transport": "edge-gateway-http-only",
@@ -111,9 +112,9 @@
     }
   ],
   "timing": {
-    "recordsSeconds": 22.429,
-    "assetsSeconds": 11.372,
-    "readBackSeconds": 4.934
+    "recordsSeconds": 20.373,
+    "assetsSeconds": 9.555,
+    "readBackSeconds": 5.079
   },
   "cleanup": {
     "jobs": 0,
@@ -127,5 +128,5 @@
     "zero": true
   },
   "passed": true,
-  "finishedAt": "2026-11-17T13:47:10.149Z"
+  "finishedAt": "2026-11-18T04:04:57.062Z"
 }

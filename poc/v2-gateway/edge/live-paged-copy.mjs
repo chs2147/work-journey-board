@@ -1,4 +1,4 @@
-// 개발 프로젝트 전용 실서버 시험(C-1b, docs/v2-design/82): 앱처럼 **HTTP(Edge gateway)만** 써서
+// 실서버 시험(C-1b, docs/v2-design/82 — 개발, 103 6단계 — 운영): 앱처럼 **HTTP(Edge gateway)만** 써서
 // 로그인 → 기기 등록 → 5,000행 넘는 일지 페이지 업로드 → 5MB 그림 업로드·서버 확인 → 게시 → 다시 읽기,
 // 다른 작업은 취소 → 정리 확인. 끝나면 시험 계정·자료·객체를 모두 지우고 잔여 0을 확인한다.
 // 서버 열쇠·관리 토큰은 시험 준비(가상 계정·인증번호)와 정리에만 쓰고 gateway 요청에는 사용자 토큰만.
@@ -7,22 +7,29 @@ import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { readFileSync, writeFileSync } from "node:fs";
 import { serverKeyHeaders } from "../io.mjs";
 
-const ref = "vsphftnmfzfoufasjttd";
-if (
-  process.argv.slice(2).join(" ") !== "--run-development" ||
-  process.env.WJB_CLOUD_ENV !== "development" ||
-  process.env.WJB_SUPABASE_DEV_PROJECT_REF !== ref
-)
-  throw Error("EXPLICIT_DEV_RUN_REQUIRED");
-const key = process.env.WJB_SUPABASE_DEV_SERVICE_ROLE_KEY,
-  mgmt = process.env.WJB_SUPABASE_DEV_MANAGEMENT_TOKEN;
-if (!key || !mgmt) throw Error("DEV_CREDENTIALS_REQUIRED");
+import { opsTarget, evidenceName } from "../../v2-ops/target.mjs";
+
+// 운영 줄(103 6단계 — gateway 배포 직후): `--run-production --production-confirmed`(WJB_CLOUD_ENV=production).
+// 운영에도 가상 계정·자료만 만들고 끝나면 모두 지운다(사용자 자료는 세지도 건드리지도 않음). 대상 고르기는 target.mjs 한 곳.
+const t = opsTarget(process.argv.slice(2), process.env, {
+  action: "run",
+  write: true,
+  needs: ["management", "serverKey"],
+});
+const ref = t.ref;
+const key = t.serverKey,
+  mgmt = t.managementToken;
 const origin = `https://${ref}.supabase.co`,
   gw = `${origin}/functions/v1/wjb-gateway`,
-  bucket = "wjb-v2-dev-assets";
-const publishable = /publishable_key: Some\("([^"]+)"\)/.exec(
-  readFileSync(new URL("../../../src-tauri/src/online.rs", import.meta.url), "utf8"),
-)[1];
+  bucket = t.bucket;
+// 공개 키: 개발 = 앱 서버 표(online.rs)의 개발 줄. 운영 = 앱 표에 넣기(103 9단계) 전이라 WJB_SUPABASE_PROD_PUBLISHABLE_KEY에서
+const publishable =
+  t.environment === "production"
+    ? process.env.WJB_SUPABASE_PROD_PUBLISHABLE_KEY
+    : /publishable_key: Some\("([^"]+)"\)/.exec(
+        readFileSync(new URL("../../../src-tauri/src/online.rs", import.meta.url), "utf8"),
+      )[1];
+if (!/^sb_publishable_[A-Za-z0-9_-]{16,}$/.test(publishable ?? "")) throw Error("PUBLISHABLE_KEY_REQUIRED");
 const sha = (b) => createHash("sha256").update(b).digest("hex");
 const checks = [];
 const check = (name, ok, extra) => {
@@ -47,7 +54,7 @@ const sql = async (query) => {
     redirect: "error",
     signal: AbortSignal.timeout(30000),
   });
-  if (!r.ok) throw Error("DEV_SQL_" + r.status);
+  if (!r.ok) throw Error("SQL_" + r.status);
   return r.json();
 };
 let token = null;
@@ -110,7 +117,8 @@ const created = { users: [], workspaces: [], jobs: [], devices: [] };
 const report = {
   startedAt: new Date().toISOString(),
   projectRef: ref,
-  productionTouched: false,
+  environment: t.environment,
+  productionTouched: t.environment === "production",
   mailSent: false,
   transport: "edge-gateway-http-only",
   checks,
@@ -344,7 +352,13 @@ try {
     !report.failure && checks.length >= 10 && checks.every((c) => c.passed) && cleanup.zero === true;
   report.finishedAt = new Date().toISOString();
   writeFileSync(
-    new URL("../../../docs/v2-design/evidence/preview-dev-paged-copy-live.json", import.meta.url),
+    new URL(
+      "../../../" +
+        (t.environment === "production"
+          ? evidenceName(t, "paged-copy-live")
+          : "docs/v2-design/evidence/preview-dev-paged-copy-live.json"),
+      import.meta.url,
+    ),
     JSON.stringify(report, null, 2) + "\n",
   );
   console.log(JSON.stringify({ passed: report.passed, timing: report.timing, cleanup }));

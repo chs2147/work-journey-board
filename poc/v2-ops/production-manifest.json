@@ -1,0 +1,135 @@
+{
+  "purpose": "G-2 운영 세우기 도구가 실행할 수 있는 검토한 파일(docs/v2-design/103). 파일을 고치면 다시 검토하고 이 목록을 갱신한다.",
+  "projectRef": "hutqsfftioxtredcjhsy",
+  "autoApply": false,
+  "sources": [
+    {
+      "path": "poc/v2-cloud/session-guard.sql",
+      "sha256": "3be17e719a5a5c8cf91268c46b2ce99aeff3c6127b5b43bd8b8f250467a374c9"
+    },
+    {
+      "path": "poc/v2-gateway/postgres-metadata.sql",
+      "sha256": "b8d789769cf529456757092ef59ac484dda451686bf8ca2139895b79fabe9bda"
+    },
+    {
+      "path": "poc/v2-gateway/recovery.sql",
+      "sha256": "bf9e474bbda8a3af4eb4602f83b70cf6605d416befb3e6bf809d172a9f3aca54"
+    },
+    {
+      "path": "poc/v2-migration/postgres/000-preflight.sql",
+      "sha256": "526ab8667fa480ba4754c2354c0bc21c31fa2bb5831954a6e9ccdc06b82ff083"
+    },
+    {
+      "path": "poc/v2-migration/postgres/001-migration.sql",
+      "sha256": "6145666198a542a88e10e1b27699c18db7089aa1e843c057cf11eb90a60c63c0"
+    },
+    {
+      "path": "poc/v2-migration/postgres/002-verify.sql",
+      "sha256": "ca81610435a5aa1f4a4d724fd50982252a96f3985142ed8823ea94f47f0e0022"
+    },
+    {
+      "path": "poc/v2-migration/postgres/004-workspace.sql",
+      "sha256": "0053d56c7fa8596509a1c3a6c164c28aa910f80d9a9c0f5bbe174250d2903ddf"
+    },
+    {
+      "path": "poc/v2-migration/postgres/005-workspace-verify.sql",
+      "sha256": "86ec000cdd71da896ee3de4e62dd0804b45296bf52129056d68f7d5955fe2770"
+    },
+    {
+      "path": "poc/v2-migration/postgres/007-workspace-db20.sql",
+      "sha256": "3b071513394462f2657473907ba5ebb2d246d4b29a0a47ac36a3d59e95c62a8b"
+    },
+    {
+      "path": "poc/v2-migration/postgres/008-workspace-db20-verify.sql",
+      "sha256": "361ba73e34d874c88d8d5bc15a7a2d50d9b2fefddd97ec58618f1f83c2112fc7"
+    },
+    {
+      "path": "poc/v2-migration/postgres/010-workspace-paged-upload.sql",
+      "sha256": "7bd1f6651f65de491b2ae65d9a90175cfafe2d4799b46a9066d2d8ee635c955b"
+    },
+    {
+      "path": "poc/v2-migration/postgres/012-workspace-paged-upload-verify.sql",
+      "sha256": "618fe2734c0a6d19ab62a41c576ae1f43f0583c6e0e6c0a8868ef8e210c21791"
+    },
+    {
+      "path": "poc/v2-migration/postgres/013-workspace-upload-paging.sql",
+      "sha256": "d247de2f79492951aa1cd78164f8fb8554ba2f1666ec2a27f1c5bf213cd80b2f"
+    },
+    {
+      "path": "poc/v2-migration/postgres/014-workspace-upload-paging-verify.sql",
+      "sha256": "9b8af71741218d9302a37d285d1035357ef843273c6a5acafe0ef0afe5317197"
+    },
+    {
+      "path": "poc/v2-migration/postgres/016-workspace-read.sql",
+      "sha256": "053c74c32f53c1865b0afba0a772fc012cf69be49a8bd3ca7bf4f1c78c46f1a9"
+    },
+    {
+      "path": "poc/v2-migration/postgres/017-workspace-read-verify.sql",
+      "sha256": "61aef06e633e1e30a59c1db382c8e98cec300d6016ec41dcde325e8ec4acd7cf"
+    },
+    {
+      "path": "poc/v2-migration/postgres/019-workspace-sync.sql",
+      "sha256": "dcad9e8279efe8015fef96bba386eaea1199f1b37e8fa3eacbf00b659667489c"
+    },
+    {
+      "path": "poc/v2-migration/postgres/020-workspace-sync-verify.sql",
+      "sha256": "98cd7616501a17b04c0f40aafff500cb8c6c646a609fd0353317378d955964fb"
+    },
+    {
+      "path": "poc/v2-migration/postgres/022-workspace-sync-retention.sql",
+      "sha256": "bf77bab6dbc4552ec8ef207d33e29902c25c147bc3525b8748a9a6421843c05f"
+    },
+    {
+      "path": "poc/v2-migration/postgres/023-workspace-sync-retention-verify.sql",
+      "sha256": "e0e27d69156e68cd411441dfeecafa08c2e11681b85905610089255792a26eca"
+    },
+    {
+      "path": "poc/v2-migration/postgres/025-workspace-list-label.sql",
+      "sha256": "2c937a781eed66ab34caf959442fd400a559d219fa7100e3dd4cbef5284adecf"
+    },
+    {
+      "path": "poc/v2-migration/postgres/026-workspace-list-label-verify.sql",
+      "sha256": "95f5a6deaab601a7a991311349b5e95c38a98d5c71c30506f1754cecfaf1afa7"
+    },
+    {
+      "path": "poc/v2-migration/postgres/028-account-quota.sql",
+      "sha256": "0c9632d98ef2c5d37c45ef5834578ec58f32591fd7c9fd045a6b5259363f08d9"
+    },
+    {
+      "path": "poc/v2-migration/postgres/029-account-quota-verify.sql",
+      "sha256": "d388851cb465b8bdf97ad04f4801c50a6b966375e0b6a11068fa07e6621789f9"
+    },
+    {
+      "path": "poc/v2-migration/postgres/031-lifecycle.sql",
+      "sha256": "ea2d0f253cf1fa635fee4790ee7ec4e84367f7a9b116c0fb0f03093e115001e0"
+    },
+    {
+      "path": "poc/v2-migration/postgres/032-lifecycle-verify.sql",
+      "sha256": "2296a1c2694dfa41f0146f9b31cb3bb7fc20f7823cd303535dfb618056e5a454"
+    },
+    {
+      "path": "poc/v2-migration/postgres/034-metrics.sql",
+      "sha256": "515f1bf3d3d30fe4f2e47062d4f88568ad13644ced6e4ced6c82bd9f246daddc"
+    },
+    {
+      "path": "poc/v2-migration/postgres/035-metrics-verify.sql",
+      "sha256": "ed253eadd46e4dd52032546ded8322364e94521e131c07013ac20c032055ab08"
+    },
+    {
+      "path": "poc/v2-migration/postgres/037-sync-first-lock.sql",
+      "sha256": "4a8e627246fef2ab4a8d403c26dec4c63a0ac0c61fc25ea8b343538ea220ff65"
+    },
+    {
+      "path": "poc/v2-migration/postgres/038-sync-first-lock-verify.sql",
+      "sha256": "c1f296fc2ddef7c78339a93236182bcf254914410256573c96d04e4885c2ea8b"
+    },
+    {
+      "path": "poc/v2-cloud/development/keepalive.sql",
+      "sha256": "b74de496e3c4cc6c31db6b76b63c17f17bb7b4407415af5ff17b214b474aa993"
+    },
+    {
+      "path": "poc/v2-cloud/development/keepalive-verify.sql",
+      "sha256": "ab473a4b67ed6dd654db2d4ac172b4e5dc3f9a7c189717d454c19d60926eb123"
+    }
+  ]
+}

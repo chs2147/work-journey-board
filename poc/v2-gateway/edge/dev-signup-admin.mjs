@@ -5,30 +5,36 @@
 //   [인증번호 받기]로 바로 로그인. 이미 있으면 그대로 둔다.
 // - 목록(--list-development): 초대한 계정을 가린 이메일(앞 2자·도메인)·만든 날짜로.
 // - 스위치(--signup-development invite|open --confirm): 초대 전용 ↔ 아무나 가입.
-// 운영 프로젝트·다른 환경은 거절. 관리 토큰·서비스 키는 이 요청에만 쓰고 출력·파일에 남기지 않는다.
+// 같은 명령의 운영 줄: `--status-production`·`--list-production`(읽기만), `--invite-production <이메일> --production-confirmed`,
+// `--signup-production invite|open --confirm --production-confirmed`(WJB_CLOUD_ENV=production — 103 4·7단계).
+// 대상 고르기는 poc/v2-ops/target.mjs 한 곳(개발·운영 안 섞임). 관리 토큰·서버 열쇠는 이 요청에만 쓰고 출력·파일에 남기지 않는다.
 // 계정 지우기는 하지 않는다(그 계정의 온라인 자료는 dev-copy-admin.mjs --purge-owner-development로 따로).
 import { serverKeyHeaders } from "../io.mjs";
-const ref = "vsphftnmfzfoufasjttd";
+import { opsTarget } from "../../v2-ops/target.mjs";
 const args = process.argv.slice(2);
 const email = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const kind = /^--(status|list|invite|signup)-(?:development|production)$/.exec(args[0] ?? "")?.[1];
+// signup은 기존처럼 `--confirm`도 받아야 한다(가입 방식 바꾸기)
+const signupArgs = kind === "signup" ? args.filter((a) => a !== "--confirm") : args;
+if (!kind || (kind === "signup" && !args.includes("--confirm"))) throw Error("EXPLICIT_TARGET_REQUIRED");
+// 이메일·가입 방식은 열쇠를 보기 전에 먼저 확인(잘못된 입력이면 아무것도 읽지 않는다)
+const value = signupArgs.slice(1).find((x) => !x.startsWith("--"));
 const cmd =
-  args.join(" ") === "--status-development"
-    ? { kind: "status" }
-    : args.join(" ") === "--list-development"
-      ? { kind: "list" }
-      : args.length === 2 && args[0] === "--invite-development" && email.test(args[1])
-        ? { kind: "invite", email: args[1].trim().toLowerCase() }
-        : args.length === 3 &&
-            args[0] === "--signup-development" &&
-            ["invite", "open"].includes(args[1]) &&
-            args[2] === "--confirm"
-          ? { kind: "signup", mode: args[1] }
-          : null;
-if (!cmd || process.env.WJB_CLOUD_ENV !== "development" || process.env.WJB_SUPABASE_DEV_PROJECT_REF !== ref)
-  throw Error("EXPLICIT_DEV_RUN_REQUIRED");
-const mgmt = process.env.WJB_SUPABASE_DEV_MANAGEMENT_TOKEN,
-  key = process.env.WJB_SUPABASE_DEV_SERVICE_ROLE_KEY;
-if (!mgmt || !key) throw Error("DEV_CREDENTIALS_REQUIRED");
+  kind === "invite"
+    ? email.test(value ?? "") && { kind, email: value.trim().toLowerCase() }
+    : kind === "signup"
+      ? ["invite", "open"].includes(value) && { kind, mode: value }
+      : { kind };
+if (!cmd) throw Error("EXPLICIT_TARGET_REQUIRED");
+const t = opsTarget(signupArgs, process.env, {
+  action: kind,
+  write: kind === "invite" || kind === "signup",
+  args: kind === "invite" || kind === "signup" ? 1 : 0,
+  needs: ["management", "serverKey"],
+});
+const ref = t.ref;
+const mgmt = t.managementToken,
+  key = t.serverKey;
 
 const api = async (method, path, body) => {
   const r = await fetch(`https://api.supabase.com/v1/projects/${ref}${path}`, {
@@ -38,7 +44,7 @@ const api = async (method, path, body) => {
     redirect: "error",
     signal: AbortSignal.timeout(30000),
   });
-  if (!r.ok) throw Error("DEV_API_" + r.status);
+  if (!r.ok) throw Error("API_" + r.status);
   return r.json().catch(() => ({}));
 };
 const admin = async (method, path, body) => {
@@ -60,7 +66,7 @@ const users = async () => {
   const out = [];
   for (let page = 1; page <= 20; page++) {
     const r = await admin("GET", `/users?page=${page}&per_page=200`);
-    if (r.status !== 200) throw Error("DEV_ADMIN_" + r.status);
+    if (r.status !== 200) throw Error("ADMIN_" + r.status);
     const list = r.body?.users ?? [];
     out.push(...list);
     if (list.length < 200) break;
@@ -68,7 +74,11 @@ const users = async () => {
   return out;
 };
 
-const result = { projectRef: ref, productionTouched: false };
+const result = {
+  environment: t.environment,
+  projectRef: ref,
+  productionTouched: t.environment === "production" && cmd.kind !== "status" && cmd.kind !== "list",
+};
 if (cmd.kind === "status") {
   Object.assign(result, { signup: await mode(), accounts: (await users()).length });
 } else if (cmd.kind === "list") {
@@ -81,7 +91,7 @@ if (cmd.kind === "status") {
 } else if (cmd.kind === "invite") {
   const r = await admin("POST", "/users", { email: cmd.email, email_confirm: true });
   const exists = r.status === 422 || /already/i.test(JSON.stringify(r.body ?? ""));
-  if (r.status !== 200 && !exists) throw Error("DEV_INVITE_" + r.status);
+  if (r.status !== 200 && !exists) throw Error("INVITE_" + r.status);
   Object.assign(result, {
     invited: mask(cmd.email),
     created: r.status === 200,
@@ -93,8 +103,8 @@ if (cmd.kind === "status") {
     await api("PATCH", "/config/auth", { disable_signup: cmd.mode === "invite" });
   } catch (e) {
     // 관리 토큰에 인증 설정 쓰기 권한이 없으면 대시보드 스위치로(Authentication › Sign In / Providers ›
-    // "Allow new users to sign up") — 바꾼 뒤 --status-development로 확인
-    if (String(e.message) === "DEV_API_403")
+    // "Allow new users to sign up") — 바꾼 뒤 --status-<환경>으로 확인
+    if (String(e.message) === "API_403")
       throw Error("AUTH_CONFIG_WRITE_NOT_ALLOWED_USE_DASHBOARD", { cause: e });
     throw e;
   }

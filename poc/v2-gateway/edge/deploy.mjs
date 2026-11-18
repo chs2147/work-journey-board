@@ -1,20 +1,18 @@
-// 개발 프로젝트 전용: gateway를 묶어 Supabase Edge Function `wjb-gateway`로 배포한다(docs/v2-design/79).
-// 명시 실행만(`--deploy-development`), 운영 ref·다른 환경 거절. 관리 토큰은 배포 요청에만 쓰고 함수에 넣지 않는다.
+// gateway를 묶어 Supabase Edge Function `wjb-gateway`로 배포한다(docs/v2-design/79·103 6단계).
+//   개발: node poc/v2-gateway/edge/deploy.mjs --deploy-development
+//   운영: node poc/v2-gateway/edge/deploy.mjs --deploy-production --production-confirmed   (WJB_CLOUD_ENV=production)
+// 대상 고르기는 poc/v2-ops/target.mjs 한 곳(개발·운영 안 섞임, 운영 쓰기 두 번 확인). 관리 토큰은 배포 요청에만 쓰고 함수에 넣지 않는다.
+// 같은 묶음이 두 환경에 간다 — 어느 프로젝트에서 도는지는 함수가 SUPABASE_URL을 허용 목록으로 확인한다(G-3).
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { opsTarget, evidenceName } from "../../v2-ops/target.mjs";
 
-const ref = "vsphftnmfzfoufasjttd";
-if (
-  process.argv.slice(2).join(" ") !== "--deploy-development" ||
-  process.env.WJB_CLOUD_ENV !== "development" ||
-  process.env.WJB_SUPABASE_DEV_PROJECT_REF !== ref
-)
-  throw Error("EXPLICIT_DEV_DEPLOY_REQUIRED");
-const token = process.env.WJB_SUPABASE_DEV_MANAGEMENT_TOKEN;
-if (!token) throw Error("DEV_CREDENTIALS_REQUIRED");
+const t = opsTarget(process.argv.slice(2), process.env, { action: "deploy", write: true });
+const ref = t.ref;
+const token = t.managementToken;
 
 const root = new URL("../../../", import.meta.url).pathname;
 const out = join(mkdtempSync(join(tmpdir(), "wjb-edge-")), "index.js");
@@ -53,7 +51,8 @@ const body = await r.json().catch(() => null);
 const report = {
   deployedAt: new Date().toISOString(),
   projectRef: ref,
-  productionTouched: false,
+  environment: t.environment,
+  productionTouched: t.environment === "production",
   function: "wjb-gateway",
   verifyJwt: false,
   bundleSha256: sha256,
@@ -62,9 +61,11 @@ const report = {
   version: body?.version ?? null,
   functionStatus: body?.status ?? null,
 };
-writeFileSync(
-  new URL("../../../docs/v2-design/evidence/preview-dev-gateway-deploy.json", import.meta.url),
-  JSON.stringify(report, null, 2) + "\n",
-);
+// 개발은 예전 기록 이름 그대로(preview-dev-gateway-deploy.json), 운영은 prod-gateway-deploy.json
+const evidence =
+  t.environment === "production"
+    ? evidenceName(t, "gateway-deploy")
+    : "docs/v2-design/evidence/preview-dev-gateway-deploy.json";
+writeFileSync(new URL("../../../" + evidence, import.meta.url), JSON.stringify(report, null, 2) + "\n");
 console.log(JSON.stringify(report));
 if (!r.ok) process.exitCode = 1;

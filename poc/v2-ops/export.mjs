@@ -1,35 +1,28 @@
 // G-7(docs/v2-design/101) 관리자 내보내기 — 온라인 공간 전부를 앱의 이 기기 사본과 같은 형식으로 내려받는다(서버는 읽기만).
 //   <출력>/<공간>/header.json · records.json · <sha256>.bin  +  <출력>/export-manifest.json(공간·행·그림 수, 파일 SHA-256)
 // 이 형식은 앱의 되살리기(restoreFromCache)가 그대로 읽는다 → 서버 없이도 로컬 일지(.db)로 되살릴 수 있다(restore 시험).
-// 명시 실행만: `node poc/v2-ops/export.mjs --export-development <출력 폴더>`. 운영은 G-2 뒤 같은 도구에 운영 줄을 더한다.
+// 명시 실행만: `node poc/v2-ops/export.mjs --export-development <출력 폴더>` · 운영 `--export-production <출력 폴더>`
+// (WJB_CLOUD_ENV=production, 서버는 읽기만이라 --production-confirmed 없음 — 대상 고르기는 target.mjs 한 곳).
 // 관리 토큰은 읽기 전용 SQL에만, 서버 열쇠는 그림 내려받기에만 쓰고 어디에도 쓰지 않는다. 출력은 저장소 밖(.gitignore exports/).
 import { createHash } from "node:crypto";
 import { mkdirSync, writeFileSync, existsSync, readdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { serverKeyHeaders } from "../v2-gateway/io.mjs";
+import { opsTarget } from "./target.mjs";
 
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
-const ENVS = {
-  development: {
-    ref: "vsphftnmfzfoufasjttd",
-    prefix: "DEV",
-    bucket: "wjb-v2-dev-assets",
-    flag: "--export-development",
-  },
-};
-
 export function exportTarget(argv, env) {
-  const [flag, out] = argv;
-  const name = Object.keys(ENVS).find((k) => ENVS[k].flag === flag);
-  if (!name || !out || env.WJB_CLOUD_ENV !== name) throw Error("EXPLICIT_EXPORT_REQUIRED");
-  const t = ENVS[name];
-  if (env[`WJB_SUPABASE_${t.prefix}_PROJECT_REF`] !== t.ref) throw Error("PROJECT_REF_MISMATCH");
-  const mgmt = env[`WJB_SUPABASE_${t.prefix}_MANAGEMENT_TOKEN`];
-  const key = env[`WJB_SUPABASE_${t.prefix}_SERVICE_ROLE_KEY`];
-  if (!mgmt || !key) throw Error("CREDENTIALS_REQUIRED");
-  const dir = resolve(out);
+  const t = opsTarget(argv, env, { action: "export", args: 1, needs: ["management", "serverKey"] });
+  const dir = resolve(t.args[0]);
   if (existsSync(dir) && readdirSync(dir).length) throw Error("OUTPUT_NOT_EMPTY");
-  return { name, ...t, mgmt, key, dir };
+  return {
+    name: t.environment,
+    ref: t.ref,
+    bucket: t.bucket,
+    mgmt: t.managementToken,
+    key: t.serverKey,
+    dir,
+  };
 }
 
 /** 한 공간의 내보내기 묶음(순수 — 시험): 동기화한 공간은 지금 기록(지움 표시 뺌), 아니면 게시본. 그림 = 기록이 참조하는 것만 */
@@ -78,7 +71,7 @@ async function main() {
     exportedAt: new Date().toISOString(),
     environment: t.name,
     spaces: [],
-    productionTouched: false,
+    productionTouched: t.name === "production",
   };
   for (const j of jobs) {
     if (!uuid.test(j.workspace_id)) throw Error("BAD_ID");

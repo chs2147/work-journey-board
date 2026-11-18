@@ -1,15 +1,8 @@
 // G-2(docs/v2-design/103) 서버 점검 — 운영 절차서의 "끝난 상태"를 읽기만 해서 확인한다(쓰기 없음, 값·비밀 내보내지 않음).
 //   node poc/v2-ops/audit.mjs --audit-development
-// 운영은 G-2 승인 뒤 같은 도구에 운영 줄(--audit-production)을 더해 적용 직후·복구 리허설 뒤에 돌린다.
-// 비밀은 이름만 본다(Edge 비밀 값은 응답에서 버린다).
-const ENVS = {
-  development: {
-    ref: "vsphftnmfzfoufasjttd",
-    prefix: "DEV",
-    bucket: "wjb-v2-dev-assets",
-    flag: "--audit-development",
-  },
-};
+//   node poc/v2-ops/audit.mjs --audit-production      (WJB_CLOUD_ENV=production — 운영 적용 직후·복구 리허설 뒤)
+// 대상 고르기는 target.mjs 한 곳(개발·운영 안 섞임). 비밀은 이름만 본다(Edge 비밀 값은 응답에서 버린다).
+import { opsTarget } from "./target.mjs";
 
 /** 확인 항목(순수 — 시험): 상태 → [이름, 통과, 메모] */
 export function evaluate(s) {
@@ -34,13 +27,9 @@ export function evaluate(s) {
 }
 
 async function main() {
-  const [flag] = process.argv.slice(2);
-  const name = Object.keys(ENVS).find((k) => ENVS[k].flag === flag);
-  if (!name || process.env.WJB_CLOUD_ENV !== name) throw Error("EXPLICIT_AUDIT_REQUIRED");
-  const t = ENVS[name];
-  if (process.env[`WJB_SUPABASE_${t.prefix}_PROJECT_REF`] !== t.ref) throw Error("PROJECT_REF_MISMATCH");
-  const mgmt = process.env[`WJB_SUPABASE_${t.prefix}_MANAGEMENT_TOKEN`];
-  if (!mgmt) throw Error("CREDENTIALS_REQUIRED");
+  const t = opsTarget(process.argv.slice(2), process.env, { action: "audit" });
+  const name = t.environment;
+  const mgmt = t.managementToken;
   const api = async (path, init = {}) => {
     const r = await fetch(`https://api.supabase.com/v1/projects/${t.ref}${path}`, {
       ...init,
