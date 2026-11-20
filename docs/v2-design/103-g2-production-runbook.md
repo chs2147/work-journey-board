@@ -1,4 +1,4 @@
-# 103. G-2 운영 서버 구축 — 절차서(승인 전 초안)
+# 103. G-2 운영 서버 구축 — 절차서(2026-11-20 사용자 승인)
 
 2026-11-17 · 브랜치 `v2-g-stage` · 97문서 G-2 · 결정 G-D2(운영 = `hutqsfftioxtredcjhsy`, 도쿄 `ap-northeast-1`, 무료 플랜)
 
@@ -39,6 +39,15 @@
 | 8 | 예약: KeepAlive(50문서 SQL) · 안 쓰는 그림 정리 · 측정 — `setup.mjs --schedule-production --production-confirmed` | 저 | `audit` cron 3개 | `cron.unschedule` |
 | 9 | 앱 서버 표에 운영 공개 키(`online.rs` `PRODUCTION.publishable_key`) — 정식판 반영(G-1·G-9) 커밋에서 | 저 | Rust 시험(운영 준비 완료) | 키 빼기 |
 | 10 | 복구 리허설: 운영 내보내기 `export.mjs --export-production <폴더>` → 로컬 일지로 되살리기(101) · 끝 점검 `audit.mjs --audit-production` | 저 | 되살린 일지 열림 | — |
+
+### 2-1. 진행 기록
+
+| # | 날짜 | 결과 | 증거 |
+|---|---|---|---|
+| 1 | 2026-11-20 | `ap-northeast-1`·`ACTIVE_HEALTHY`, 빈 프로젝트 | (읽기만, 파일 없음) |
+| 2 | 2026-11-20 | 세션 보호·gateway 기반 2개·SQL 001…037 13개 = 16단계 적용, SQL 13개 확인 통과 → 다시 읽기: 16단계 모두 있음, 스키마 `wjb_gateway`·`wjb_life`·`wjb_migration`·`wjb_ops`·`wjb_sync`·`wjb_v2_cloud` | `evidence/prod-setup-apply-sql.json` |
+| 3 | 2026-11-20 | `wjb-v2-assets` 만듦, 설정 개발과 같음(`matches`) | `evidence/prod-setup-bucket.json` |
+| 4·5 | — | 사용자 대시보드 작업 대기 | — |
 
 ## 3. 끝난 기준
 

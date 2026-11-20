@@ -1,0 +1,92 @@
+{
+  "at": "2026-11-20T00:09:21.358Z",
+  "environment": "production",
+  "projectRef": "hutqsfftioxtredcjhsy",
+  "action": "apply-sql",
+  "autoApply": false,
+  "executionRole": "postgres",
+  "steps": [
+    {
+      "id": "session-guard",
+      "state": "applied",
+      "verified": null
+    },
+    {
+      "id": "gateway-metadata",
+      "state": "applied",
+      "verified": null
+    },
+    {
+      "id": "gateway-recovery",
+      "state": "applied",
+      "verified": null
+    },
+    {
+      "id": "001",
+      "state": "applied",
+      "verified": true
+    },
+    {
+      "id": "004",
+      "state": "applied",
+      "verified": true
+    },
+    {
+      "id": "007",
+      "state": "applied",
+      "verified": true
+    },
+    {
+      "id": "010",
+      "state": "applied",
+      "verified": true
+    },
+    {
+      "id": "013",
+      "state": "applied",
+      "verified": true
+    },
+    {
+      "id": "016",
+      "state": "applied",
+      "verified": true
+    },
+    {
+      "id": "019",
+      "state": "applied",
+      "verified": true
+    },
+    {
+      "id": "022",
+      "state": "applied",
+      "verified": true
+    },
+    {
+      "id": "025",
+      "state": "applied",
+      "verified": true
+    },
+    {
+      "id": "028",
+      "state": "applied",
+      "verified": true
+    },
+    {
+      "id": "031",
+      "state": "applied",
+      "verified": true
+    },
+    {
+      "id": "034",
+      "state": "applied",
+      "verified": true
+    },
+    {
+      "id": "037",
+      "state": "applied",
+      "verified": true
+    }
+  ],
+  "ok": true,
+  "finishedAt": "2026-11-20T00:10:29.406Z"
+}

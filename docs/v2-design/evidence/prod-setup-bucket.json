@@ -1,0 +1,15 @@
+{
+  "at": "2026-11-20T00:10:47.167Z",
+  "environment": "production",
+  "projectRef": "hutqsfftioxtredcjhsy",
+  "action": "bucket",
+  "autoApply": false,
+  "executionRole": "postgres",
+  "bucket": {
+    "id": "wjb-v2-assets",
+    "created": true,
+    "matches": true
+  },
+  "ok": true,
+  "finishedAt": "2026-11-20T00:10:52.761Z"
+}
