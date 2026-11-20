@@ -5,6 +5,8 @@ import {
   HUB_RECENT,
   buildGraph,
   connectionsOf,
+  projectUniverse,
+  compactUniverse,
   filterGraph,
   inRange,
   layoutFocus,
@@ -230,4 +232,39 @@ describe("시간 막대(년→월→주→일)", () => {
     expect(levelLabel("month", "2026-10-22")).toBe("2026년 10월");
     expect(levelLabel("week", "2026-10-22")).toBe("2026-W43");
   });
+});
+
+it("다른 날짜의 동명 본 항목을 업무별로 묶고 원본 세부와 메모 참조를 보존한다", () => {
+  const fixture = snap();
+  fixture.entries.push(
+    { ...fixture.entries[0]!, id: "new-root", date: "2026-10-23", text: "이관  스크립트 작성" },
+    { ...fixture.entries[1]!, id: "new-child", date: "2026-10-23" },
+    { ...fixture.entries[0]!, id: "different-category", categoryId: "c2" },
+  );
+  const raw = buildGraph(fixture);
+  const projection = projectUniverse(raw, DEFAULT_FILTER);
+  const current = nid("W", "entry", "new-root");
+  const old = nid("W", "entry", "e1");
+  const children = [nid("W", "entry", "e2"), nid("W", "entry", "new-child")];
+  expect(projection.aliases.get(old)).toBe(current);
+  expect(projection.members.get(current)?.map(({ id }) => id)).toEqual([current, old]);
+  expect(projection.graph.nodes.some(({ refId }) => refId === "different-category")).toBe(true);
+  expect(projection.graph.edges.some((edge) => edge.source === "note-ref" && edge.to === current)).toBe(true);
+  expect(projection.graph.edges.filter((edge) => children.includes(edge.from)).map(({ to }) => to)).toEqual([
+    current,
+    current,
+  ]);
+  expect(
+    compactUniverse(projection, current, current, new Set(), false).nodes.some(({ id }) =>
+      children.includes(id),
+    ),
+  ).toBe(false);
+  expect(
+    compactUniverse(projection, current, current, new Set([current]), false).nodes.filter(({ id }) =>
+      children.includes(id),
+    ),
+  ).toHaveLength(2);
+  const scoped = projectUniverse(raw, { ...DEFAULT_FILTER, range: { from: "2026-10-23", to: "2026-10-23" } });
+  expect(scoped.members.size).toBe(0);
+  expect(scoped.graph.nodes.some(({ id }) => id === old)).toBe(false);
 });

@@ -216,6 +216,21 @@ pub async fn sync<G: Gateway + Download>(
         &dir.join("records.json"),
         &serde_json::to_vec(&records).map_err(|_| "STORE")?,
     )?;
+    let label_path = dir.join("label.json");
+    if read_json(&label_path)
+        .and_then(|value| label_ok(&value))
+        .is_none()
+    {
+        let label = records
+            .iter()
+            .find(|record| record["table"] == "app_meta" && record["value"]["key"] == "settings")
+            .and_then(|record| record["value"]["value"].as_str())
+            .and_then(|text| serde_json::from_str::<Value>(text).ok())
+            .and_then(|settings| label_ok(&settings["workspace"]));
+        if let Some(label) = label {
+            let _ = write_atomic(&label_path, label.to_string().as_bytes());
+        }
+    }
     let done =
         json!({ "manifestHash": mh, "records": total, "assets": assets.len(), "syncedAt": now });
     write_atomic(
@@ -274,11 +289,38 @@ pub fn label_ok(v: &Value) -> Option<Value> {
     let color = v["color"]
         .as_str()
         .filter(|c| c.len() == 2 && c.starts_with('c') && matches!(c.as_bytes()[1], b'1'..=b'8'))?;
-    let icon = v["icon"].as_str().filter(|i| {
-        !i.is_empty()
-            && i.len() <= 24
-            && i.bytes()
-                .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-')
+    let icon = v["icon"].as_str().filter(|id| {
+        matches!(
+            *id,
+            "briefcase"
+                | "folder"
+                | "calendar"
+                | "clipboard"
+                | "memo"
+                | "pencil"
+                | "notebook"
+                | "books"
+                | "bulb"
+                | "chartUp"
+                | "chartBar"
+                | "pin"
+                | "paperclip"
+                | "laptop"
+                | "envelope"
+                | "package"
+                | "tag"
+                | "lock"
+                | "key"
+                | "wrench"
+                | "search"
+                | "alarm"
+                | "hourglass"
+                | "cardIndex"
+                | "scissors"
+                | "ruler"
+                | "moneyBag"
+                | "creditCard"
+        )
     })?;
     Some(json!({ "name": name, "color": color, "icon": icon }))
 }

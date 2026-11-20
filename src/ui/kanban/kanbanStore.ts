@@ -18,6 +18,10 @@ import {
   DONE,
   TODO,
   sortCards,
+  reorderVisibleCards,
+  type KanbanSectionViews,
+  type KanbanSectionView,
+  type SectionPeriod,
   type KanbanFilter,
   type KanbanSection,
   type SectionColor,
@@ -46,6 +50,7 @@ import { reload as reloadBoard } from "../board/boardStore";
 import { useAppStore } from "../common/appStore";
 
 export const DONE_PAGE = 50;
+const OPEN_PAGE = 40;
 
 export interface KanbanState {
   open: boolean;
@@ -54,6 +59,9 @@ export interface KanbanState {
   sections: KanbanSection[];
   /** TODO·사용자 섹션 카드(정렬 전) */
   openCards: KanbanCard[];
+  openLimits: Record<string, number>;
+  openMore: string[];
+  sectionViews: KanbanSectionViews;
   done: KanbanCard[];
   doneTotal: number;
   /** 펼친 DONE 카드 */
@@ -84,6 +92,9 @@ const initial: KanbanState = {
   filter: DEFAULT_KANBAN_FILTER,
   sections: [],
   openCards: [],
+  openLimits: {},
+  openMore: [],
+  sectionViews: {},
   done: [],
   doneTotal: 0,
   expanded: {},
@@ -163,7 +174,12 @@ export async function initKanban(r: JournalRepository) {
   repo = r;
   const s = await r.getSettings();
   if (repo !== r) return;
-  set({ filter: s.ui.kanban, layout: s.ui.kanbanLayout, columns: s.ui.kanbanColumns });
+  set({
+    filter: s.ui.kanban,
+    layout: s.ui.kanbanLayout,
+    columns: s.ui.kanbanColumns,
+    sectionViews: s.ui.kanbanSectionViews,
+  });
   // 중요 업무 목록의 섹션 칩이 칸반을 열기 전에도 보이게 섹션만 먼저 읽는다
   void r.kanban
     .listSections()
@@ -191,30 +207,50 @@ const today = () => useBoard.getState().today;
 export function cardsOf(key: SectionKey, s: KanbanState = get()): KanbanCard[] {
   if (key === DONE) return s.done;
   const list = s.openCards.filter((c) => (c.sectionId ?? TODO) === key);
-  return sortCards(list, s.filter.sort);
+  const sorted = sortCards(list, s.filter.sort);
+  const order = s.sectionViews[key]?.order;
+  if (!order?.length) return sorted;
+  const ranks = new Map(order.map((id, i) => [id, i]));
+  return sorted.sort(
+    (a, b) => (ranks.get(a.id) ?? Number.MAX_SAFE_INTEGER) - (ranks.get(b.id) ?? Number.MAX_SAFE_INTEGER),
+  );
 }
 
 export async function load(more = false) {
   const r = repo;
   if (!r) return;
   const seq = ++loadSeq;
-  const f = get().filter;
+  const { filter: f, sectionViews, openLimits } = get();
   if (!more) set({ loading: true });
   try {
     const [cats, sections, openCards, done] = await Promise.all([
       r.listCategories(),
       r.kanban.listSections(),
-      more ? Promise.resolve(get().openCards) : r.kanban.listOpen(f, today()),
+      more ? Promise.resolve(get().openCards) : r.kanban.listOpen(f, today(), sectionViews, openLimits),
       r.kanban.listDone(
         f,
         today(),
         more ? get().done.length + DONE_PAGE : Math.max(DONE_PAGE, get().done.length),
+        0,
+        sectionViews[DONE]?.order,
       ),
     ]);
     if (repo !== r || seq !== loadSeq) return;
     // 지워진 섹션에 남은 카드는 TODO로 보이게(섹션 목록과 맞춘다)
     const ids = new Set(sections.map((x) => x.id));
     const open = new Set(cats.periods.filter((p) => p.endDate === null).map((p) => p.categoryId));
+    const counts = new Map<string, number>();
+    const moreSections = new Set<string>();
+    const visibleOpen = more
+      ? openCards
+      : openCards.filter((card) => {
+          const key = card.sectionId && ids.has(card.sectionId) ? card.sectionId : TODO;
+          const count = (counts.get(key) ?? 0) + 1;
+          counts.set(key, count);
+          if (count <= (openLimits[key] ?? OPEN_PAGE)) return true;
+          moreSections.add(key);
+          return false;
+        });
     set({
       categories: cats.categories.map((c) => ({
         id: c.id,
@@ -223,7 +259,10 @@ export async function load(more = false) {
         ended: !open.has(c.id),
       })),
       sections,
-      openCards: openCards.map((c) => (c.sectionId && !ids.has(c.sectionId) ? { ...c, sectionId: null } : c)),
+      openMore: more ? get().openMore : [...moreSections],
+      openCards: visibleOpen.map((c) =>
+        c.sectionId && !ids.has(c.sectionId) ? { ...c, sectionId: null } : c,
+      ),
       done: done.cards,
       doneTotal: done.total,
       loading: false,
@@ -387,9 +426,76 @@ export async function setRect(key: SectionKey, rect: KanbanRect) {
 
 export function setFilter(patch: Partial<KanbanFilter>) {
   const filter = { ...get().filter, ...patch };
-  set({ filter, done: [] });
+  set({ filter, done: [], openLimits: {} });
   void repo?.updateSettings({ ui: { kanban: filter } }).catch(() => undefined);
   void load();
+}
+
+export async function loadMoreCards(key: SectionKey) {
+  if (key === DONE) return load(true);
+  set((s) => ({ openLimits: { ...s.openLimits, [key]: (s.openLimits[key] ?? OPEN_PAGE) + OPEN_PAGE } }));
+  await load();
+}
+
+async function saveSectionView(
+  key: SectionKey,
+  update: (previous: KanbanSectionView) => KanbanSectionView,
+  expectedRepo = repo,
+): Promise<boolean> {
+  const r = expectedRepo;
+  if (!r || repo !== r) return false;
+  try {
+    const views = await r.exclusiveWithSettings(async (save) => {
+      if (repo !== r) return null;
+      const saved = (await r.getSettings()).ui.kanbanSectionViews;
+      const next = { ...saved, [key]: update(saved[key] ?? {}) };
+      if (!next[key]!.order?.length && !next[key]!.period) delete next[key];
+      return (await save({ ui: { kanbanSectionViews: next } })).ui.kanbanSectionViews;
+    });
+    if (!views || repo !== r) return false;
+    set((s) => ({ sectionViews: views, openLimits: { ...s.openLimits, [key]: OPEN_PAGE } }));
+    await load();
+    return true;
+  } catch (e) {
+    reportError(e);
+    return false;
+  }
+}
+
+export function saveSectionPeriod(key: SectionKey, period: SectionPeriod | undefined) {
+  if (key === TODO || key === DONE) return Promise.resolve(false);
+  return saveSectionView(key, (previous) => ({ ...previous, period }));
+}
+
+export async function saveSectionOrder(key: SectionKey, order: string[] | undefined) {
+  const r = repo;
+  if (!r) return false;
+  try {
+    let previousOrder: string[] | undefined;
+    const current = order ? await r.kanban.sectionCardIds(key, get().filter.sort) : [];
+    const existing = new Set(current);
+    const visible = new Set(cardsOf(key).map((card) => card.id));
+    const requested = [...new Set(order)].filter((id) => existing.has(id) && visible.has(id));
+    const saved = await saveSectionView(
+      key,
+      (previous) => {
+        previousOrder = previous.order;
+        if (!order) return { ...previous, order: undefined };
+        const base = [...new Set([...(previous.order ?? []).filter((id) => existing.has(id)), ...current])];
+        return { ...previous, order: reorderVisibleCards(base, requested) };
+      },
+      r,
+    );
+    if (saved)
+      toast(order ? STR.kanban.orderSaved : STR.kanban.orderReset, {
+        label: STR.toast.undo,
+        run: () => void saveSectionView(key, (view) => ({ ...view, order: previousOrder }), r),
+      });
+    return saved;
+  } catch (e) {
+    reportError(e);
+    return false;
+  }
 }
 
 export function toggleExpanded(id: string) {

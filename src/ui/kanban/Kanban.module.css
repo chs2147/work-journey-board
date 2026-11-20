@@ -914,3 +914,40 @@
   color: var(--text-3);
   border: 1px dashed var(--btn-line);
 }
+
+.tagWarn {
+  background: #fff0cc;
+  color: #674707;
+}
+.tagToday {
+  background: #fde2d0;
+  color: #85360f;
+}
+.orderList {
+  max-height: min(54vh, 430px);
+  overflow: auto;
+  padding: 0 0 0 22px;
+}
+.orderList li {
+  padding-block: 5px;
+  border-bottom: 1px solid var(--line);
+}
+.orderList li > span {
+  display: inline-block;
+  margin-inline-end: 8px;
+  overflow-wrap: anywhere;
+}
+.orderList li small {
+  display: block;
+}
+.orderList button + button {
+  margin-inline-start: 4px;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}

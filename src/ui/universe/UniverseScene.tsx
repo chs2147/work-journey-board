@@ -11,10 +11,12 @@ let poseCache: { key: string; position: number[]; target: number[] } | null = nu
 /** Local WebGL only. No loaders, textures, URLs or network services. */
 export default function UniverseScene({
   graph,
+  aliases,
   onFailure,
   autoMotion,
 }: {
   graph: UGraph;
+  aliases: ReadonlyMap<string, string>;
   onFailure: () => void;
   autoMotion: { enabled: boolean; style: AutoMotionStyle };
 }) {
@@ -334,7 +336,9 @@ export default function UniverseScene({
       if (document.hidden) return;
       frame = requestAnimationFrame(render);
       const state = useUniverse.getState();
-      const seed = state.seed && index.has(state.seed) ? state.seed : null;
+      const seedTarget = state.seed ? (aliases.get(state.seed) ?? state.seed) : null;
+      const seed = seedTarget && index.has(seedTarget) ? seedTarget : null;
+      const selected = state.selected ? (aliases.get(state.selected) ?? state.selected) : null;
       if (previousMode !== state.mode || previousSeed !== seed) {
         if (state.mode === "focus" && seed) {
           if (previousMode !== "focus")
@@ -392,9 +396,9 @@ export default function UniverseScene({
       } else strength = 0;
       if (zoomIntent && now > gate && !flight) {
         const ratio = camera.position.distanceTo(controls.target) / fitDistance;
-        if (state.mode === "galaxy" && ratio < 0.42 && state.selected && index.has(state.selected)) {
+        if (state.mode === "galaxy" && ratio < 0.42 && selected && index.has(selected)) {
           zoomIntent = false;
-          focusOn(state.selected);
+          focusOn(selected);
           gate = now + 850;
         } else if (state.mode === "focus" && ratio > 0.65) {
           zoomIntent = false;
@@ -402,7 +406,7 @@ export default function UniverseScene({
           gate = now + 850;
         }
       }
-      const sel = state.selected ? index.get(state.selected) : undefined;
+      const sel = selected ? index.get(selected) : undefined;
       ring.visible = sel !== undefined;
       if (sel !== undefined) {
         ring.position.copy(vectors[sel]!);
@@ -410,11 +414,11 @@ export default function UniverseScene({
         ring.scale.setScalar(reduced.matches ? 1 : 1 + Math.sin(now / 1000) * 0.03);
         chosen.textContent = graph.nodes[sel]!.title;
       }
-      if (previousSelected !== state.selected || paintedMode !== state.mode) {
-        const near = new Set([state.selected]);
+      if (previousSelected !== selected || paintedMode !== state.mode) {
+        const near = new Set([selected]);
         graph.edges.forEach((e) => {
-          if (e.from === state.selected) near.add(e.to);
-          if (e.to === state.selected) near.add(e.from);
+          if (e.from === selected) near.add(e.to);
+          if (e.to === selected) near.add(e.from);
         });
         graph.nodes.forEach((n, i) =>
           mesh.setColorAt(
@@ -427,7 +431,7 @@ export default function UniverseScene({
         paintedMode = state.mode;
         const data: number[] = [];
         graph.edges.forEach((e) => {
-          if (e.from !== state.selected && e.to !== state.selected) return;
+          if (e.from !== selected && e.to !== selected) return;
           const a = index.get(e.from),
             b = index.get(e.to);
           if (a !== undefined && b !== undefined)
@@ -435,7 +439,7 @@ export default function UniverseScene({
         });
         highlightsGeo.setAttribute("position", new T.Float32BufferAttribute(data, 3));
         highlightsGeo.computeBoundingSphere();
-        previousSelected = state.selected;
+        previousSelected = selected;
       }
       const positionLabel = (label: HTMLSpanElement, i: number | undefined) => {
         if (i === undefined) {
@@ -493,7 +497,7 @@ export default function UniverseScene({
       cv.remove();
       labelLayer.remove();
     };
-  }, [graph, onFailure]);
+  }, [graph, aliases, onFailure]);
   return (
     <div className={styles.map} data-testid="universe-map">
       <div className={styles.mapInfo}>3D 연결 지도 · 드래그 회전 · Shift 드래그 이동 · 휠 확대/축소</div>

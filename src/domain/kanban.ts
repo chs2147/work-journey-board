@@ -25,6 +25,20 @@ export const KANBAN_PERIODS = ["today", "week", "2w", "4w", "12w", "all", "custo
 export type KanbanPeriod = (typeof KANBAN_PERIODS)[number];
 export const DEFAULT_KANBAN_PERIOD: KanbanPeriod = "week";
 
+export type SectionPeriod = Pick<KanbanFilter, "period" | "from" | "to">;
+export interface KanbanSectionView {
+  period?: SectionPeriod;
+  order?: string[];
+}
+export type KanbanSectionViews = Record<string, KanbanSectionView>;
+
+/** 보이는 카드의 자리만 교환하고, 필터로 숨은 카드의 자리는 보존한다. */
+export function reorderVisibleCards(base: string[], order: string[]): string[] {
+  const visible = new Set(order);
+  let index = 0;
+  return base.map((id) => (visible.has(id) ? order[index++]! : id));
+}
+
 export type KanbanSort = "new" | "old" | "due";
 
 export interface KanbanFilter {

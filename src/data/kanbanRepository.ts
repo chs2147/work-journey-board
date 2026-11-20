@@ -17,6 +17,7 @@ import {
   type KanbanSection,
   type SectionColor,
   type SectionKey,
+  type KanbanSectionViews,
 } from "../domain/kanban";
 import { utcTimestamp } from "../domain/localTime";
 import type { DateStr } from "../domain/week";
@@ -255,25 +256,84 @@ export class KanbanRepository {
     return { sql: parts.length ? " AND " + parts.join(" AND ") : "", params };
   }
 
-  /** 미완료 카드(TODO·사용자 섹션) — 기간은 기록일 기준 */
-  async listOpen(f: KanbanFilter, today: DateStr): Promise<KanbanCard[]> {
-    const range = periodRange(f, today);
+  /** 미완료 카드는 기록일과 각 섹션의 적용 기간으로 거른다. */
+  async listOpen(
+    f: KanbanFilter,
+    today: DateStr,
+    views: KanbanSectionViews = {},
+    limits?: Record<string, number>,
+  ): Promise<KanbanCard[]> {
     const scope = await this.scopeWhere(f);
-    const where: string[] = ["e.depth = 0", "NOT (e.flagged = 0 AND e.flag_done_at IS NOT NULL)"];
+    const overrides = Object.entries(views).filter(([id, view]) => id !== TODO && id !== DONE && view.period);
+    const sectionKey = "COALESCE(e.kanban_section_id,'todo')";
     const params: SqlParam[] = [];
-    if (range.from) {
-      where.push("e.date >= ?");
-      params.push(range.from);
+    const dateFilter = (period: Pick<KanbanFilter, "period" | "from" | "to">) => {
+      const { from, to } = periodRange(period, today);
+      const conditions: string[] = [];
+      if (from) {
+        conditions.push("e.date >= ?");
+        params.push(from);
+      }
+      if (to) {
+        conditions.push("e.date <= ?");
+        params.push(to);
+      }
+      return conditions.length ? " AND " + conditions.join(" AND ") : "";
+    };
+    const inherited = overrides.length ? sectionKey + " NOT IN (" + marks(overrides) + ")" : "1=1";
+    params.push(...overrides.map(([id]) => id));
+    const periods = ["(" + inherited + dateFilter(f) + ")"];
+    for (const [id, view] of overrides) {
+      params.push(id);
+      periods.push("(" + sectionKey + " = ?" + dateFilter(view.period!) + ")");
     }
-    if (range.to) {
-      where.push("e.date <= ?");
-      params.push(range.to);
-    }
+    const base = `FROM entry_item e JOIN category c ON c.id = e.category_id
+      WHERE e.depth = 0 AND NOT (e.flagged = 0 AND e.flag_done_at IS NOT NULL)
+        AND (${periods.join(" OR ")})${scope.sql}`;
+    if (!limits)
+      return this.cards(
+        await this.db.select<CardRow>(`SELECT ${COLS} ${base}`, [...params, ...scope.params]),
+      );
+    const orders = JSON.stringify(
+      Object.fromEntries(Object.entries(views).map(([id, v]) => [id, v.order ?? []])),
+    );
+    const automatic =
+      f.sort === "old"
+        ? "e.date ASC, c.sort_order ASC, e.seq ASC"
+        : (f.sort === "due" ? "e.due_date IS NULL, e.due_date ASC, " : "") +
+          "e.date DESC, c.sort_order DESC, e.seq DESC";
     const heads = await this.db.select<CardRow>(
-      `SELECT ${COLS} FROM entry_item e JOIN category c ON c.id = e.category_id WHERE ${where.join(" AND ")}${scope.sql}`,
-      [...params, ...scope.params],
+      `WITH ranks AS (SELECT section.key AS section, item.value AS id, item.key AS rank
+         FROM json_each(?) section, json_each(section.value) item),
+       pages AS (SELECT ${COLS}, ${sectionKey} AS page_section,
+         row_number() OVER (PARTITION BY ${sectionKey} ORDER BY
+           (SELECT rank FROM ranks WHERE section = ${sectionKey} AND id = e.id) NULLS LAST, ${automatic}, e.id) AS page_row
+         ${base})
+       SELECT * FROM pages WHERE page_row <= COALESCE((SELECT value FROM json_each(?) WHERE key = page_section), 40) + 1 ORDER BY page_section, page_row`,
+      [orders, ...params, ...scope.params, JSON.stringify(limits)],
     );
     return this.cards(heads);
+  }
+
+  /** 직접 정렬을 시작할 때 필터 밖의 기존 카드 위치도 읽는다. */
+  async sectionCardIds(key: SectionKey, sort: KanbanFilter["sort"]): Promise<string[]> {
+    const done = key === DONE;
+    const dateSort =
+      sort === "old"
+        ? "e.date ASC, c.sort_order ASC, e.seq ASC"
+        : (sort === "due" ? "e.due_date IS NULL, e.due_date ASC, " : "") +
+          "e.date DESC, c.sort_order DESC, e.seq DESC";
+    const rows = await this.db.select<{ id: string }>(
+      `SELECT e.id FROM entry_item e JOIN category c ON c.id=e.category_id WHERE e.depth=0 AND
+       ${
+         done
+           ? "e.flagged=0 AND e.flag_done_at IS NOT NULL"
+           : "NOT (e.flagged=0 AND e.flag_done_at IS NOT NULL) AND COALESCE(e.kanban_section_id,'todo')=?"
+       }
+       ORDER BY ${done ? "e.flag_done_at DESC" : dateSort}, e.id`,
+      done ? [] : [key],
+    );
+    return rows.map(({ id }) => id);
   }
 
   /** 완료 카드(DONE) — 기간은 완료일 기준, 최근 순, offset부터 limit개 + 전체 수 */
@@ -282,6 +342,7 @@ export class KanbanRepository {
     today: DateStr,
     limit: number,
     offset = 0,
+    order: string[] = [],
   ): Promise<{ cards: KanbanCard[]; total: number }> {
     const range = utcRange(periodRange(f, today));
     const scope = await this.scopeWhere(f);
@@ -299,8 +360,8 @@ export class KanbanRepository {
     const all = [...params, ...scope.params];
     const [cnt] = await this.db.select<{ n: number }>(`SELECT COUNT(*) AS n ${base}`, all);
     const heads = await this.db.select<CardRow>(
-      `SELECT ${COLS} ${base} ORDER BY e.flag_done_at DESC, e.id LIMIT ? OFFSET ?`,
-      [...all, limit, offset],
+      `SELECT ${COLS} ${base} ORDER BY (SELECT key FROM json_each(?) WHERE value=e.id) NULLS LAST, e.flag_done_at DESC, e.id LIMIT ? OFFSET ?`,
+      [...all, JSON.stringify(order), limit, offset],
     );
     return { cards: await this.cards(heads), total: Number(cnt?.n ?? 0) };
   }

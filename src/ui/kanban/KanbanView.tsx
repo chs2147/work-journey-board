@@ -19,7 +19,8 @@ import { shortDateLabel } from "../../domain/week";
 import { matchesTagFilter } from "../../domain/tags";
 import { STR } from "../../shared/strings";
 import { revealItem, useBoard } from "../board/boardStore";
-import { dueView } from "../board/dueView";
+import { daysLeft } from "../../domain/dueDate";
+import { SectionOrderDialog, SectionPeriodDialog } from "./SectionViewDialog";
 import { CAB_MIME } from "../cabinet/CabinetPanel";
 import { useModal } from "./kanbanUi";
 import { Celebration } from "./Celebration";
@@ -34,6 +35,7 @@ import {
   DONE_PAGE,
   linkCabinetItem,
   load,
+  loadMoreCards,
   moveCard,
   columnIcon,
   columnKeys,
@@ -244,6 +246,7 @@ function Column({
   const [secOver, setSecOver] = useState<"before" | "after" | null>(null);
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
   const [picker, setPicker] = useState<{ x: number; y: number } | null>(null);
+  const [sectionViewDialog, setSectionViewDialog] = useState<"period" | "order" | null>(null);
   const flashing = useKanban((k) => k.flashKey === sectionKey);
   // 상단 태그 거르기(주간 보드와 같은 것, improve-v22-spec 5절) — 고른 태그가 있는 업무의 카드만
   const tagFilter = useBoard((b) => b.tagFilter);
@@ -252,6 +255,8 @@ function Column({
     (c) => !tagFilter.length || matchesTagFilter(categoryTags[c.categoryId] ?? [], tagFilter),
   );
   const isDone = sectionKey === DONE;
+  const sectionView = s.sectionViews[sectionKey];
+  const more = isDone ? s.done.length < s.doneTotal : s.openMore.includes(sectionKey);
   const name = columnName(sectionKey, s);
   const icon = columnIcon(sectionKey, s);
   // 섹션 색은 무채색 두 가지만(업무 색과 혼동 방지): DONE만 진한 회색, TODO·사용자 섹션은 모두 같은 회색
@@ -364,6 +369,19 @@ function Column({
         <span className={styles.count} data-testid="kanban-col-count">
           {K.count(total)}
         </span>
+        {sectionView?.period && (
+          <span
+            className={styles.tag}
+            title={
+              sectionView.period.period === "custom"
+                ? [sectionView.period.from, sectionView.period.to].filter(Boolean).join(" ~ ")
+                : undefined
+            }
+          >
+            {sectionView.period.period === "all" ? K.wholePeriod : K.periods[sectionView.period.period]}
+          </span>
+        )}
+        {sectionView?.order && <span className={styles.tag}>{K.manualOrder}</span>}
         <span className={styles.spacer} />
         {sectionKey !== DONE && sectionKey === TODO && (
           <select
@@ -397,6 +415,26 @@ function Column({
         }
         {menu && (
           <Menu at={menu} onClose={() => setMenu(null)}>
+            {section && (
+              <button
+                type="button"
+                onClick={() => {
+                  setMenu(null);
+                  setSectionViewDialog("period");
+                }}
+              >
+                {K.sectionPeriod}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                setMenu(null);
+                setSectionViewDialog("order");
+              }}
+            >
+              {K.orderCards}
+            </button>
             {section && (
               <button type="button" onClick={() => (setMenu(null), onRename(section.id))}>
                 {K.rename}
@@ -499,7 +537,7 @@ function Column({
           const g = doneGroupOf(c.flagDoneAt!, today);
           const prev = i > 0 ? doneGroupOf(cards[i - 1]!.flagDoneAt!, today).key : "";
           const head =
-            g.key !== prev ? (
+            !sectionView?.order && g.key !== prev ? (
               <div key={`g-${g.key}`} className={styles.doneGroup} data-testid="kanban-done-group">
                 {g.key === "today" || g.key === "week" || g.key === "last"
                   ? K.doneGroups[g.key]
@@ -511,22 +549,39 @@ function Column({
               {s.expanded[c.id] ? (
                 <Card card={c} sectionKey={DONE} onEdit={onEdit} onCollapse={() => toggleExpanded(c.id)} />
               ) : (
-                <DoneRow card={c} />
+                <DoneRow card={c} showDate={!!sectionView?.order} />
               )}
             </FragmentWith>
           );
         })}
-        {isDone && s.done.length < s.doneTotal && (
+        {more && (
           <button
             type="button"
             className={styles.moreBtn}
-            data-testid="kanban-done-more"
-            onClick={() => void load(true)}
+            data-testid={isDone ? "kanban-done-more" : "kanban-card-more"}
+            onClick={() => void loadMoreCards(sectionKey)}
           >
-            {K.doneMore(Math.min(DONE_PAGE, s.doneTotal - s.done.length))}
+            {isDone ? K.doneMore(Math.min(DONE_PAGE, s.doneTotal - s.done.length)) : K.moreCards}
           </button>
         )}
       </div>
+      {sectionViewDialog === "period" && (
+        <SectionPeriodDialog
+          sectionKey={sectionKey}
+          name={name}
+          value={sectionView?.period}
+          close={() => setSectionViewDialog(null)}
+        />
+      )}
+      {sectionViewDialog === "order" && (
+        <SectionOrderDialog
+          sectionKey={sectionKey}
+          name={name}
+          cards={cards}
+          more={more}
+          close={() => setSectionViewDialog(null)}
+        />
+      )}
     </div>
   );
 }
@@ -584,14 +639,15 @@ function useCabinetDrop(card: KanbanCard) {
   };
 }
 
-function DoneRow({ card }: { card: KanbanCard }) {
+function DoneRow({ card, showDate = false }: { card: KanbanCard; showDate?: boolean }) {
   const today = useBoard((b) => b.today);
   const dragging = useKanban((s) => s.dragging === card.id);
   const highlight = useKanban((s) => s.highlight === card.id);
   const cab = useCabinetDrop(card);
   const at = card.flagDoneAt!;
   const d = localDate(new Date(at));
-  const when = d === today ? new Date(at).toTimeString().slice(0, 5) : md(at).replace(/\(.*\)$/, "");
+  const when =
+    !showDate && d === today ? new Date(at).toTimeString().slice(0, 5) : md(at).replace(/\(.*\)$/, "");
   return (
     <button
       type="button"
@@ -638,7 +694,15 @@ function Card({
   }, [highlight]);
   const kids = card.children;
   const shown = kids.length > 3 ? kids.slice(0, 3) : kids;
-  const due = card.dueDate ? dueView(today, card.dueDate) : null;
+  const remaining = card.dueDate ? daysLeft(today, card.dueDate) : Infinity;
+  const warning =
+    remaining < 0
+      ? K.deadlineLate(-remaining)
+      : remaining === 0
+        ? K.deadlineToday
+        : remaining <= 2
+          ? K.deadlineSoon(remaining)
+          : null;
   const [repeatOn, setRepeatOn] = useState(false);
   const openMenu = (x: number, y: number) => {
     setMenu({ x: Math.min(x, window.innerWidth - 240), y });
@@ -709,12 +773,14 @@ function Card({
         </ul>
       )}
       <div className={styles.tags}>
-        {due && sectionKey !== DONE && (
+        {card.dueDate && sectionKey !== DONE && (
           <span
-            className={`${styles.tag} ${due.kind === "late" ? styles.tagLate : due.kind === "soon" || due.kind === "today" ? styles.tagSoon : ""}`}
+            className={`${styles.tag} ${remaining < 0 ? styles.tagLate : remaining === 0 ? styles.tagToday : remaining <= 2 ? styles.tagWarn : ""}`}
+            title={card.dueDate ?? undefined}
+            aria-label={warning ? warning + " · " + card.dueDate : undefined}
             data-testid="kanban-due"
           >
-            {due.chip}
+            {warning ?? shortDateLabel(card.dueDate)}
           </span>
         )}
         {card.startTime && <span className={styles.tag}>⏰ {card.startTime}</span>}

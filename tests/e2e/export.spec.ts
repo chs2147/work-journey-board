@@ -182,3 +182,18 @@ test("입력 중인 기록도 저장한 뒤 내보낸다(자동 저장 0.5초를
   wb.getWorksheet("원장")!.eachRow((row) => texts.push(String(row.getCell(7).value)));
   expect(texts).toContain(`${FIRST} 완료`);
 });
+
+for (const view of ["주간뷰", "데일리뷰"]) {
+  test(`${view}에서 주간 요약 시트만 선택해서 엑셀로 저장한다`, async ({ page }) => {
+    if (view === "데일리뷰") await page.getByTestId("view-today").click();
+    await page.getByTestId("export-open").click();
+    await dialog(page).getByLabel("주간보고 시트").uncheck();
+    await dialog(page).getByLabel("원장 시트").uncheck();
+    await expect(dialog(page).getByRole("button", { name: "저장 위치 선택…" })).toBeDisabled();
+    await dialog(page).getByLabel("주간 요약 시트").check();
+    const { file } = await saveAs(page, (suggested) => suggested);
+    const wb = await readXlsx(file);
+    expect(wb.worksheets.map(({ name }) => name)).toEqual(["주간 요약"]);
+    expect(wb.worksheets[0]!.getCell("D2").value).toContain(FIRST);
+  });
+}

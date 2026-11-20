@@ -1,0 +1,51 @@
+.overlay[open] {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  margin: 0;
+  padding: 12px;
+  border: 0;
+  background: rgb(28 27 24 / 29%);
+  cursor: progress;
+}
+.overlay::backdrop {
+  background: transparent;
+}
+.card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md, 8px);
+  background: var(--surface-card);
+  color: var(--text-1);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 24%);
+  font-size: var(--fs-md, 14px);
+}
+.spinner {
+  flex: 0 0 17px;
+  height: 17px;
+  border: 2px solid var(--line);
+  border-top-color: currentColor;
+  border-right-color: currentColor;
+  border-radius: 50%;
+  animation: spin 0.85s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+  }
+}

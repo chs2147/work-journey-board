@@ -10,6 +10,7 @@ import {
   laterDoneDate,
   moveKind,
   periodRange,
+  reorderVisibleCards,
   recordDayDoneAt,
   sectionKeyOf,
   sectionNameProblem,
@@ -341,4 +342,24 @@ describe("마이그레이션 v19 → v20(칸반)", () => {
     ]);
     expect(await quickCheck(db)).toBe(true);
   });
+});
+
+it("섹션 기간은 TODO에 적용되지 않고 직접 순서가 조회 페이지에 적용된다", async () => {
+  const { repo, c } = await seed();
+  const park = await repo.kanban.createSection("모니터링", "gray");
+  await repo.saveCell("2026-09-10", c.id, [
+    { id: "archive-monitoring", depth: 0, text: "옛 모니터링", kanbanSectionId: park.id },
+    { id: "archive-todo", depth: 0, text: "옛 TODO" },
+  ]);
+  const setup = {
+    [park.id]: { period: { period: "all" as const, from: null, to: null }, order: ["archive-monitoring"] },
+  };
+  const { ui } = await repo.updateSettings({ ui: { kanbanSectionViews: setup } });
+  const cards = await repo.kanban.listOpen(DEFAULT_KANBAN_FILTER, TODAY, ui.kanbanSectionViews, {
+    [park.id]: 1,
+  });
+  expect(cards.some(({ id }) => id === "archive-todo")).toBe(false);
+  expect(cards.find(({ sectionId }) => sectionId === park.id)?.id).toBe("archive-monitoring");
+  expect(reorderVisibleCards(["a", "숨김", "b"], ["b", "a"])).toEqual(["b", "숨김", "a"]);
+  expect((await repo.getSettings()).ui.kanbanSectionViews).toEqual(setup);
 });

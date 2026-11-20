@@ -58,7 +58,7 @@ import { detachSummary, flushDraft, initSummary } from "../summary/summaryStore"
 import { detachNote, finishNote, flushNote, initNote, useNote } from "../note/noteStore";
 import { detachInsights, initInsights, useInsights } from "../insights/insightsStore";
 import { detachKanban, initKanban, openKanban } from "../kanban/kanbanStore";
-import { restoreCabinet, shutdownCabinet, suspendCabinet } from "../cabinet/cabinetStore";
+import { clearCabinetRoots, restoreCabinet, shutdownCabinet, suspendCabinet } from "../cabinet/cabinetStore";
 import { closeInsights } from "../insights/insightsStore";
 import { today as todayOf } from "../../domain/week";
 import {
@@ -612,8 +612,10 @@ async function closeCurrent() {
  * Connected Preview 온라인 공간 닫기(docs/v2-design/89 E-1) — 별도 창 저장 후 닫기 → 지금 일지를 한 길(closeCurrent)로 닫는다.
  * 그 뒤 화면은 창을 새로 불러 Preview 첫 화면으로 간다(화면 저장소가 남지 않게, CLAUDE.md 4-7).
  */
-export async function closeOnlineSpace() {
-  await closeCabiWindows().catch(() => undefined);
+export async function closeOnlineSpace(sameSpace = false) {
+  if (sameSpace) await closeCabiWindows().catch(() => undefined);
+  else await suspendCabinet().catch(() => undefined);
+  await clearCabinetRoots();
   await closeCurrent();
 }
 
@@ -667,7 +669,7 @@ export async function reloadOnlineSpace(): Promise<boolean> {
   const j = get().journal;
   if (j.state !== "ready") return false;
   const dir = j.dataDir;
-  await closeOnlineSpace();
+  await closeOnlineSpace(true);
   return openAt(dir);
 }
 

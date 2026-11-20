@@ -14,7 +14,8 @@ import {
   ALL_KINDS,
   ALL_SOURCES,
   connectionsOf,
-  filterGraph,
+  compactUniverse,
+  projectUniverse,
   inRange,
   layoutFocus,
   layoutGalaxy,
@@ -107,7 +108,38 @@ export function UniverseView() {
   const autoMotion = useAutoMotion();
   const all = useMemo(() => combined(s), [s.graphs, s.wsOn]); // eslint-disable-line react-hooks/exhaustive-deps
   const filter = useMemo(() => effectiveFilter(s), [s.filter, s.time]); // eslint-disable-line react-hooks/exhaustive-deps
-  const shown = useMemo(() => filterGraph(all, filter), [all, filter]);
+  const projection = useMemo(() => projectUniverse(all, filter), [all, filter]);
+  const alias = (id: string | null) => (id ? (projection.aliases.get(id) ?? id) : null);
+  const selectedId = alias(s.selected);
+  const seedId = alias(s.seed);
+  const [expanded, setExpanded] = useState<ReadonlySet<string>>(() => new Set());
+  const shown = useMemo(
+    () =>
+      compactUniverse(
+        projection,
+        s.mode === "focus" ? seedId : null,
+        selectedId,
+        expanded,
+        !!filter.query.trim(),
+      ),
+    [projection, s.mode, seedId, selectedId, expanded, filter.query],
+  );
+  const grouped = selectedId ? projection.members.get(selectedId) : undefined;
+  const canExpand =
+    !!selectedId &&
+    [...projection.parents].some(
+      ([child, parent]) =>
+        (projection.aliases.get(parent) ?? parent) === selectedId && projection.visible.has(child),
+    );
+  const toggleChildren = () => {
+    if (!selectedId) return;
+    setExpanded((previous) => {
+      const next = new Set(previous);
+      if (next.has(selectedId)) next.delete(selectedId);
+      else next.add(selectedId);
+      return next;
+    });
+  };
   const byId = useMemo(() => new Map(all.nodes.map((n) => [n.id, n])), [all]);
   const selected = s.selected ? (byId.get(s.selected) ?? null) : null;
   const activeFilters =
@@ -374,11 +406,12 @@ export function UniverseView() {
           {all.nodes.length <= 1 && !s.loading ? (
             <p className={styles.empty}>{STR.universe.empty}</p>
           ) : s.view === "list" ? (
-            <ListView graph={shown} selected={s.selected} />
+            <ListView graph={projection.graph} selected={selectedId} />
           ) : dynamic ? (
             <Suspense fallback={<p className={styles.empty}>3D 지도 준비 중…</p>}>
               <UniverseScene
                 graph={shown}
+                aliases={projection.aliases}
                 onFailure={failScene}
                 autoMotion={{
                   enabled:
@@ -393,9 +426,9 @@ export function UniverseView() {
               />
             </Suspense>
           ) : s.mode === "focus" ? (
-            <FocusMap all={all} shown={shown} />
+            <FocusMap all={all} shown={shown} seed={seedId} selected={selectedId} />
           ) : (
-            <GalaxyMap graph={shown} selected={s.selected} />
+            <GalaxyMap graph={shown} selected={selectedId} />
           )}
         </div>
         {detailOpen && (
@@ -410,7 +443,16 @@ export function UniverseView() {
             >
               ×
             </button>
-            <DetailPanel node={selected} all={all} />
+            <DetailPanel
+              key={selectedId ?? ""}
+              node={selected}
+              all={all}
+              members={grouped}
+              expanded={!!selectedId && expanded.has(selectedId)}
+              toggleChildren={canExpand ? toggleChildren : undefined}
+              childrenByParent={projection.parents}
+              visible={projection.visible}
+            />
           </ResizableUniversePanel>
         )}
       </div>
@@ -615,9 +657,17 @@ function useBoxSize(min = { w: 260, h: 220 }) {
 
 // ── 초점 지도(C안, SVG) ───────────────────────────────────────────────
 
-function FocusMap({ all, shown }: { all: UGraph; shown: UGraph }) {
-  const seed = useUniverse((s) => s.seed);
-  const selected = useUniverse((s) => s.selected);
+function FocusMap({
+  all,
+  shown,
+  seed,
+  selected,
+}: {
+  all: UGraph;
+  shown: UGraph;
+  seed: string | null;
+  selected: string | null;
+}) {
   const time = useUniverse((s) => s.time);
   const filter = effectiveFilter({ filter: useUniverse((s) => s.filter), time });
   // 씨앗은 필터에 걸려도 가운데에 둔다
@@ -1134,10 +1184,54 @@ function ListView({ graph, selected }: { graph: UGraph; selected: string | null 
 }
 
 // ── 상세(spec 4-3) ───────────────────────────────────────────────────
-function DetailPanel({ node, all }: { node: UNode | null; all: UGraph }) {
+function DetailPanel({
+  node: selection,
+  all,
+  members,
+  expanded,
+  toggleChildren,
+  childrenByParent,
+  visible,
+}: {
+  node: UNode | null;
+  all: UGraph;
+  members?: UNode[];
+  expanded: boolean;
+  toggleChildren?: () => void;
+  childrenByParent: ReadonlyMap<string, string>;
+  visible: ReadonlyMap<string, UNode>;
+}) {
   const cur = useAppStore((s) => (s.journal.state === "ready" ? s.journal.dataDir : null));
   const spaces = useAppStore((s) => s.workspaces);
-  const conns = useMemo(() => (node ? connectionsOf(all, node.id) : []), [all, node]);
+  const [chosenId, setChosenId] = useState<string | null>(null);
+  const [connectionLimit, setConnectionLimit] = useState(40);
+  const [recordLimit, setRecordLimit] = useState(40);
+  const chosen = members?.find((member) => member.id === chosenId);
+  const node = chosen ?? selection;
+  const specific = !members || !!chosen || selection?.id !== members[0]?.id;
+  const conns = useMemo(() => {
+    if (!node) return [];
+    if (specific || !members) return connectionsOf(all, node.id).map((conn) => ({ ...conn, origin: node }));
+    const originals = new Map(members.map((item) => [item.id, item]));
+    const byId = new Map(all.nodes.map((item) => [item.id, item]));
+    return all.edges.flatMap((edge) => {
+      const start = originals.get(edge.from);
+      const origin = start ?? originals.get(edge.to);
+      const other = byId.get(start ? edge.to : edge.from);
+      return origin && other ? [{ edge, origin, other, out: !!start }] : [];
+    });
+  }, [all, node, members, specific]);
+  const children = useMemo(() => {
+    const result = new Map<string, UNode[]>();
+    for (const [child, parent] of childrenByParent) {
+      const record = visible.get(child);
+      if (!record) continue;
+      const items = result.get(parent) ?? [];
+      items.push(record);
+      result.set(parent, items);
+    }
+    return result;
+  }, [childrenByParent, visible]);
   // 직접 연결을 맨 위에(사용자가 만든 의미 관계가 주인공, spec 10 R7)
   const sortedConns = useMemo(
     () => [...conns.filter((c) => c.edge.rel), ...conns.filter((c) => !c.edge.rel)],
@@ -1173,7 +1267,7 @@ function DetailPanel({ node, all }: { node: UNode | null; all: UGraph }) {
             <span className={styles.dot} style={{ background: `var(--cat-${cat.color})` }} /> {cat.title}
           </>
         )}
-        {node.date && ` · ${node.date}`}
+        {specific && node.date && ` · ${node.date}`}
         {node.weekId && node.kind === "note" && ` · ${node.weekId}`}
         {ws && spaces.length > 1 && ` · ${ws.name}`}
         {node.flagged && ` · ${STR.universe.flagged}`}
@@ -1181,6 +1275,45 @@ function DetailPanel({ node, all }: { node: UNode | null; all: UGraph }) {
         {node.ended && ` · ${STR.universe.ended}`}
       </div>
       {other && ws && <p className={styles.notice}>{STR.universe.otherSpace(ws.name)}</p>}
+      {toggleChildren && (
+        <button type="button" aria-expanded={expanded} onClick={toggleChildren}>
+          {expanded ? "세부 접기" : "세부 펼치기"}
+        </button>
+      )}
+      {members && (
+        <>
+          <div className={styles.label}>기록</div>
+          <ul className={styles.why} data-testid="u-group-records">
+            {members.slice(0, recordLimit).map((record) => (
+              <li key={record.id}>
+                <details open={record.id === node.id}>
+                  <summary>{record.date}</summary>
+                  <button
+                    type="button"
+                    aria-pressed={record.id === chosen?.id}
+                    onClick={() => setChosenId(record.id)}
+                  >
+                    선택
+                  </button>
+                  <button type="button" onClick={() => void revealNode(record)}>
+                    {STR.universe.open}
+                  </button>
+                  {(children.get(record.id) ?? []).map((child) => (
+                    <button key={child.id} type="button" onClick={() => select(child.id)}>
+                      {child.title}
+                    </button>
+                  ))}
+                </details>
+              </li>
+            ))}
+          </ul>
+          {members.length > recordLimit && (
+            <button type="button" onClick={() => setRecordLimit((n) => n + 40)}>
+              기록 더 보기
+            </button>
+          )}
+        </>
+      )}
       {(node.kind === "entry" || node.kind === "note") && (
         <>
           <div className={styles.orig} data-testid="u-original">
@@ -1191,7 +1324,7 @@ function DetailPanel({ node, all }: { node: UNode | null; all: UGraph }) {
       )}
       <div className={styles.label}>{STR.universe.why(conns.length)}</div>
       <ul className={styles.why} data-testid="u-connections">
-        {sortedConns.slice(0, 40).map(({ edge, other: o, out }) => (
+        {sortedConns.slice(0, connectionLimit).map(({ edge, other: o, out, origin }) => (
           <li key={edge.id} data-testid={edge.rel ? "u-rel-row" : undefined}>
             <button
               type="button"
@@ -1211,7 +1344,7 @@ function DetailPanel({ node, all }: { node: UNode | null; all: UGraph }) {
             {edge.rel && (
               <div className={styles.relRow}>
                 <span className={styles.relPhrase} data-testid="u-rel-phrase">
-                  {relPhrase(edge.rel.type, out ? node.title : o.title, out ? o.title : node.title)}
+                  {relPhrase(edge.rel.type, out ? origin.title : o.title, out ? o.title : origin.title)}
                   {edge.rel.note && ` — ${edge.rel.note}`}
                 </span>
                 {!other && (
@@ -1220,9 +1353,9 @@ function DetailPanel({ node, all }: { node: UNode | null; all: UGraph }) {
                       type="button"
                       data-testid="u-rel-edit"
                       onClick={() =>
-                        openLinkDialog(out ? node.id : o.id, {
+                        openLinkDialog(out ? origin.id : o.id, {
                           relId: edge.rel!.id,
-                          toId: out ? o.id : node.id,
+                          toId: out ? o.id : origin.id,
                           type: edge.rel!.type,
                           note: edge.rel!.note,
                         })
@@ -1244,8 +1377,13 @@ function DetailPanel({ node, all }: { node: UNode | null; all: UGraph }) {
           </li>
         ))}
       </ul>
+      {sortedConns.length > connectionLimit && (
+        <button type="button" onClick={() => setConnectionLimit((n) => n + 40)}>
+          연결 더 보기
+        </button>
+      )}
       <div className={styles.actions}>
-        {node.kind !== "workspace" && (
+        {specific && node.kind !== "workspace" && (
           <button
             type="button"
             className={styles.primary}
@@ -1258,7 +1396,7 @@ function DetailPanel({ node, all }: { node: UNode | null; all: UGraph }) {
         <button type="button" data-testid="u-focus" onClick={() => focusOn(node.id)}>
           {STR.universe.focusHere}
         </button>
-        {!other && node.kind !== "workspace" && (
+        {specific && !other && node.kind !== "workspace" && (
           <button
             type="button"
             data-testid="u-pack-add"
@@ -1268,7 +1406,7 @@ function DetailPanel({ node, all }: { node: UNode | null; all: UGraph }) {
             {STR.universe.pack.add}
           </button>
         )}
-        {!other && node.kind !== "workspace" && (
+        {specific && !other && node.kind !== "workspace" && (
           <button
             type="button"
             data-testid="u-make-card"
@@ -1278,7 +1416,7 @@ function DetailPanel({ node, all }: { node: UNode | null; all: UGraph }) {
             {STR.universe.card.make}
           </button>
         )}
-        {!other && node.kind !== "workspace" && (
+        {specific && !other && node.kind !== "workspace" && (
           <button
             type="button"
             data-testid="u-connect"

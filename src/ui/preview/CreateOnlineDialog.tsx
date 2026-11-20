@@ -49,6 +49,8 @@ const W = C.wizard;
  */
 const freshSnapshots = new Set<string>();
 const isFresh = (id: string) => freshSnapshots.has(id);
+import { rememberPublishedLook } from "./onlineSpaceStore";
+
 type Label = { name: string; color: CategoryColorKey; icon: WorkspaceIcon };
 
 type Phase =
@@ -302,7 +304,9 @@ export function CreateOnlineDialog({
       });
       if (!isFresh(snapshotId)) await source.remove(snapshotId).catch(() => {});
       prepared.current.delete(jobId);
-      setPhase({ kind: "done", workspaceId: copy.workspaceId, summary, label: toLabel(labelOf(copy)) });
+      const label = toLabel(labelOf(copy));
+      rememberPublishedLook(ownerId, copy.workspaceId, label);
+      setPhase({ kind: "done", workspaceId: copy.workspaceId, summary, label });
       onPublished?.();
     } catch (e) {
       setPhase({

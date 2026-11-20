@@ -700,3 +700,24 @@ def run(g):
         assert json.loads(scalar((ROOT/'038-sync-first-lock-verify.sql').read_text()))['locked'] is False
         sql((ROOT/'037-sync-first-lock.sql').read_text())
     test('037: simultaneous first syncs from 6 devices (×5) all succeed, one applies, published copy once; 039 restores 019 exactly', first_sync_lock)
+
+    def labels040():
+        p = publish()
+        st = next(r for r in p['m']['records'] if r['table'] == 'app_meta' and r['value']['key'] == 'settings')
+        settings = json.loads(st['value']['value'])
+        def set_label(label, rev):
+            value = {'key': 'settings', 'value': json.dumps({**settings, 'workspace': label}, ensure_ascii=False)}
+            assert push(p['ws'], [{'table': 'app_meta', 'key': st['key'], 'baseRev': rev, 'value': value}])['applied']
+        set_label({'name': '검증 공간', 'color': 'c7', 'icon': 'chartUp', 'updatedAt': 2}, 0)
+        assert listed(p['ws'])['workspace'] is None
+        sql((ROOT/'040-workspace-label-icons.sql').read_text())
+        checks = json.loads(scalar((ROOT/'041-workspace-label-icons-verify.sql').read_text()))
+        assert all(checks.values()), checks
+        assert listed(p['ws'])['workspace'] == {'name': '검증 공간', 'color': 'c7', 'icon': 'chartUp'}
+        set_label({'name': '', 'color': 'c7', 'icon': 'unknown', 'updatedAt': 3}, 1)
+        assert listed(p['ws'])['workspace'] == {'name': '개인', 'color': 'c1', 'icon': 'memo'}
+        assert listed(p['ws'], user=B, session=SB, device=DB) is None
+        sql((ROOT/'042-workspace-label-icons-rollback.sql').read_text())
+        assert listed(p['ws'])['workspace'] is None
+        sql((ROOT/'040-workspace-label-icons.sql').read_text())
+    test('040: valid camelCase icon and color survive listing; malformed synced settings fall back to published settings', labels040)

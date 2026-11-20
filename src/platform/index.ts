@@ -190,6 +190,8 @@ export interface Platform {
   pickFolders(title: string): Promise<string[] | null>;
   /** 등록한 폴더 목록(읽기·열기 허용 범위)을 알린다 */
   cabinetSetRoots(paths: string[]): Promise<void>;
+  pickCabinetFolder?(title: string): Promise<string | null>;
+  cabinetStat?(path: string): Promise<{ exists: boolean; isDir: boolean }>;
   /** 폴더 안 목록(이름·종류·크기·수정 시각만) */
   cabinetList(path: string): Promise<FsEntry[]>;
   /** 파일·폴더를 OS 기본 앱으로 열기 */

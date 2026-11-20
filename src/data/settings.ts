@@ -11,6 +11,9 @@ import {
   type KanbanFilter,
   type KanbanColumns,
   type KanbanLayout,
+  type KanbanSectionViews,
+  TODO,
+  DONE,
 } from "../domain/kanban";
 export interface Settings {
   /** 이 일지(워크스페이스)의 이름·색·아이콘(multi-board-spec 7절) — 없으면 이 PC 목록의 사본으로 채운다 */
@@ -78,6 +81,7 @@ export interface Settings {
     kanbanLayout: KanbanLayout;
     /** 칸반 열 순서(TODO·DONE 포함)·열 아이콘(improve-v23-spec 2·8절) — 공간마다 */
     kanbanColumns: KanbanColumns;
+    kanbanSectionViews: KanbanSectionViews;
   };
 }
 
@@ -163,6 +167,7 @@ export const DEFAULT_SETTINGS: Settings = {
     kanban: DEFAULT_KANBAN_FILTER,
     kanbanLayout: DEFAULT_KANBAN_LAYOUT,
     kanbanColumns: DEFAULT_KANBAN_COLUMNS,
+    kanbanSectionViews: {},
   },
 };
 
@@ -199,6 +204,8 @@ export function mergeSettings(base: Settings, patch: unknown): Settings {
   // 열 순서·아이콘도 키가 섹션 id라 통째로 바꾼다(improve-v23-spec 11절)
   if (isObject(patch) && isObject(patch.ui) && "kanbanColumns" in patch.ui)
     s.ui.kanbanColumns = validKanbanColumns(patch.ui.kanbanColumns);
+  if (isObject(patch) && isObject(patch.ui) && "kanbanSectionViews" in patch.ui)
+    s.ui.kanbanSectionViews = validKanbanSectionViews(patch.ui.kanbanSectionViews);
   // v0.2.2 이전 저장값(auto 없음): 기본 높이와 다르면 사용자가 끌어서 정한 높이 → 고정으로 둔다
   if (
     isObject(patch) &&
@@ -332,4 +339,32 @@ export function validKanbanColumns(v: unknown): KanbanColumns {
     for (const [k, id] of Object.entries(o.icons as Record<string, unknown>))
       if (typeof id === "string" && /^[a-z0-9-]{1,40}$/.test(id) && k.length <= 80) icons[k] = id;
   return { order, icons };
+}
+
+export function validKanbanSectionViews(value: unknown): KanbanSectionViews {
+  if (!isObject(value) || Array.isArray(value)) return {};
+  return Object.fromEntries(
+    Object.entries(value).flatMap(([key, view]) => {
+      if (!isObject(view) || !/^[a-zA-Z0-9-]{1,80}$/.test(key)) return [];
+      const out: KanbanSectionViews[string] = {};
+      if (
+        key !== TODO &&
+        key !== DONE &&
+        isObject(view.period) &&
+        (KANBAN_PERIODS as readonly unknown[]).includes(view.period.period)
+      ) {
+        const { period, from, to } = validKanbanFilter(view.period);
+        out.period = { period, from, to };
+      }
+      if (Array.isArray(view.order))
+        out.order = [
+          ...new Set(
+            view.order.filter(
+              (id): id is string => typeof id === "string" && id.length > 0 && id.length <= 80,
+            ),
+          ),
+        ];
+      return out.period || out.order?.length ? [[key, out]] : [];
+    }),
+  );
 }

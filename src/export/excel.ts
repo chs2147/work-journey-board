@@ -1,9 +1,23 @@
 // 엑셀 내보내기(output-spec 3절): ① 주간보고(사람이 읽는 용) ② 원장(분석용). 앱 안에서 만들고 외부로 보내지 않는다.
 // ExcelJS는 내보내기를 처음 열 때만 불러온다(앱 시작 속도에 영향 없게) — 호출하는 쪽이 모듈을 넘긴다.
-import { splitCategories, finalVersion, type SummaryInput, type SummaryItem } from "../domain/aggregate";
+import {
+  buildWeeklySummary,
+  splitCategories,
+  finalVersion,
+  type SummaryInput,
+  type SummaryItem,
+} from "../domain/aggregate";
 import { localDate } from "../domain/localTime";
 import { markText } from "../domain/dayMark";
-import { DAY_LABELS, dayIndex, weekDays, weekTitle, type DateStr, type WeekId } from "../domain/week";
+import {
+  DAY_LABELS,
+  dayIndex,
+  weekDays,
+  weekRange,
+  weekTitle,
+  type DateStr,
+  type WeekId,
+} from "../domain/week";
 import { CATEGORY_COLORS, type CategoryColorKey } from "../shared/palette";
 import { exportTitle } from "./filename";
 import { MIN_ROW_HEIGHT, rowHeight } from "./textWidth";
@@ -35,6 +49,7 @@ export interface ExportOptions {
   to: WeekId;
   weekly: boolean;
   ledger: boolean;
+  summary?: { includeMemo: boolean };
   /** 메모 보드 시트(최신 주가 위) + 메모가 없는 주. 없으면 시트를 만들지 않는다 */
   snapshots?: { images: ExportSnapshot[]; noMemo: WeekId[] };
   appVersion: string;
@@ -357,13 +372,73 @@ export function writeSnapshotSheet(
   }
 }
 
+/** 셀 너비 72에서 한글을 포함한 줄 높이를 보수적으로 계산한다. 원문 줄바꿈과 문자 순서를 유지한다. */
+function summaryChunks(text: string): { text: string; lines: number }[] {
+  const chunks: { text: string; lines: number }[] = [];
+  let part = "",
+    lines = 1,
+    width = 0;
+  for (const char of text) {
+    const newline = char === "\n";
+    const size = char === "\t" ? 4 : char.charCodeAt(0) > 127 ? 2 : 1;
+    if (newline || width + size > 66) {
+      if (lines >= 20) {
+        chunks.push({ text: part, lines });
+        part = "";
+        lines = 1;
+      } else lines++;
+      width = 0;
+    }
+    part += char;
+    width += newline ? 0 : size;
+  }
+  if (part) chunks.push({ text: part, lines });
+  return chunks;
+}
+
+function writeSummarySheet(ws: Worksheet, weeks: ExportWeek[], includeMemo: boolean) {
+  ws.views = [{ state: "frozen", ySplit: 1 }];
+  ws.columns = [{ width: 16 }, { width: 28 }, { width: 16 }, { width: 72 }];
+  const heading = ws.addRow(["주차", "기간", "요약 종류", "요약 내용"]);
+  heading.font = { name: FONT, size: FONT_SIZE, bold: true };
+  heading.eachCell(
+    (cell) => (cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: FILL_HEAD } }),
+  );
+  for (const w of [...weeks].sort((a, b) => a.input.weekId.localeCompare(b.input.weekId))) {
+    const version = finalVersion(w.summary);
+    const empty = !w.input.items.some((item) => item.text.trim()) && !(includeMemo && w.input.memo.trim());
+    const kind = version === "edited" ? "수정본" : version === "ai" ? "AI본" : empty ? "—" : "자동 집계";
+    const text =
+      version === "edited"
+        ? w.summary.editedText!
+        : version === "ai"
+          ? w.summary.aiText!
+          : empty
+            ? "—"
+            : buildWeeklySummary(w.input, { includeMemo });
+    summaryChunks(text || "—").forEach((part, index) => {
+      const { start, end } = weekRange(w.input.weekId);
+      const row = ws.addRow([
+        w.input.weekId,
+        start + " ~ " + end,
+        index ? kind + " (계속)" : kind,
+        part.text,
+      ]);
+      row.font = { name: FONT, size: FONT_SIZE };
+      row.alignment = { vertical: "top", wrapText: true };
+      row.height = Math.max(18, 15 * (part.lines + 1));
+    });
+  }
+}
+
 /** 내보내기 엑셀 파일 바이트 */
 export async function buildWorkbook(
   ExcelJS: ExcelJSModule,
   weeks: ExportWeek[],
   opt: ExportOptions,
 ): Promise<Uint8Array> {
-  if (!opt.weekly && !opt.ledger && !opt.snapshots) throw new Error("내보낼 시트를 하나 이상 고르세요");
+  if (!opt.weekly && !opt.ledger && !opt.summary && !opt.snapshots)
+    throw new Error("내보낼 시트를 하나 이상 고르세요");
   const wb = new ExcelJS.Workbook();
   wb.title = exportTitle(opt.from, opt.to);
   wb.creator = `Work Journey Board ${opt.appVersion}`;
@@ -386,6 +461,10 @@ export async function buildWorkbook(
   if (opt.ledger) {
     const ws = wb.addWorksheet("원장", { pageSetup: page, headerFooter: { oddFooter: footer } });
     writeLedgerSheet(ws, weeks);
+  }
+  if (opt.summary) {
+    const ws = wb.addWorksheet("주간 요약", { pageSetup: page, headerFooter: { oddFooter: footer } });
+    writeSummarySheet(ws, weeks, opt.summary.includeMemo);
   }
   if (opt.snapshots) {
     const ws = wb.addWorksheet(SNAPSHOT_SHEET, {

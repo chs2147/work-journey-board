@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { addWeeks, weekTitle, type WeekId } from "../../domain/week";
 import { weekList } from "../../data/repository";
 import { STR } from "../../shared/strings";
-import { focusStartCell } from "../board/boardStore";
+import { focusStartCell, useBoard } from "../board/boardStore";
 import { useAppStore } from "../common/appStore";
 import {
   defaultChoice,
@@ -37,7 +37,7 @@ export function ExportDialog() {
   const [stats, setStats] = useState<{ weeks: number; categories: number; items: number } | null>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const repo = journal.state === "ready" ? journal.repo : null;
-  const current = repo?.currentWeek() ?? choice.to;
+  const current = useBoard((s) => s.weekId);
 
   useEffect(() => {
     dialogRef.current?.querySelector<HTMLInputElement>('input[type="radio"]:checked')?.focus();
@@ -46,7 +46,8 @@ export function ExportDialog() {
     void repo?.getSettings().then((s) => setChoice((c) => ({ ...c, snapshots: s.ui.exportSnapshots })));
   }, [repo]);
 
-  const range = resolveRange(choice, current, first);
+  const latest = repo?.currentWeek() ?? current;
+  const range = resolveRange(choice, current, first, latest);
   useEffect(() => {
     let alive = true;
     void repo?.exportStats(range[0], range[1]).then((s) => alive && setStats(s));
@@ -58,14 +59,14 @@ export function ExportDialog() {
 
   // 기간 지정 선택지: 첫 기록 주(없으면 4주 전)부터 이번 주까지, 최근 주가 위
   const start = first && first < addWeeks(current, -3) ? first : addWeeks(current, -3);
-  const weekOptions = weekList(start, current).reverse();
+  const weekOptions = weekList(start, latest > current ? latest : current).reverse();
 
   const close = () => {
     setExportOpen(false);
     focusStartCell();
   };
   const set = (patch: Partial<ExportChoice>) => setChoice((c) => ({ ...c, ...patch }));
-  const noSheet = !choice.weekly && !choice.ledger && !choice.snapshots;
+  const noSheet = !choice.weekly && !choice.ledger && !choice.summary && !choice.snapshots;
 
   const save = async () => {
     const path = await runExport(choice);
@@ -165,6 +166,14 @@ export function ExportDialog() {
           <label className={styles.check}>
             <input
               type="checkbox"
+              checked={choice.summary}
+              onChange={(e) => set({ summary: e.target.checked })}
+            />
+            {STR.export.summary}
+          </label>
+          <label className={styles.check}>
+            <input
+              type="checkbox"
               checked={choice.snapshots}
               onChange={(e) => set({ snapshots: e.target.checked })}
               data-testid="export-snapshots"
@@ -183,7 +192,7 @@ export function ExportDialog() {
           )}
         </fieldset>
 
-        <p className={styles.note}>{STR.export.summaryNote}</p>
+        {choice.weekly && <p className={styles.note}>{STR.export.summaryNote}</p>}
         <p className={styles.stats} data-testid="export-stats">
           {stats ? STR.export.stats(stats.weeks, stats.categories, stats.items) : " "}
         </p>

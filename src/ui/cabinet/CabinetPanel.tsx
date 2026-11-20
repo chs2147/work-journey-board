@@ -10,6 +10,7 @@ import {
   firstAnchor,
   linkTitleFromUrl,
   shortUrl,
+  isFolderPathLike,
   UNLINKED,
   type CabinetItem,
   type CabinetLinkDraft,
@@ -316,6 +317,7 @@ function CabinetRow({ item, drag }: { item: CabinetItem; drag: RowDrag }) {
   const renaming = useCabinet((s) => s.renaming === item.id);
   const isOpen = useCabinet((s) => s.folders.some((f) => f.id === item.id));
   const missing = useCabinet((s) => s.missing.includes(item.id));
+  const unbound = item.kind === "folder" && !isFolderPathLike(item.target);
   const flash = useCabinet((s) => s.flash === item.id);
   const labels = useCabinet((s) => linkLabels(item.id, s).join(" · "));
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
@@ -324,7 +326,7 @@ function CabinetRow({ item, drag }: { item: CabinetItem; drag: RowDrag }) {
     if (flash) rowRef.current?.scrollIntoView({ block: "nearest" });
   }, [flash]);
   const sub = [
-    item.kind === "folder" ? item.target : shortUrl(item.target),
+    item.kind === "folder" ? (unbound ? STR.cabinet.unboundPath : item.target) : shortUrl(item.target),
     labels && STR.cabinet.linkedTo(labels),
   ]
     .filter(Boolean)
@@ -418,7 +420,22 @@ function CabinetRow({ item, drag }: { item: CabinetItem; drag: RowDrag }) {
         <div className={styles.rowSub}>{sub}</div>
       </div>
       <div className={styles.rowBtns}>
-        {item.kind === "folder" && !missing && (
+        {unbound && (
+          <button
+            type="button"
+            className={styles.iconBtn}
+            aria-label={STR.cabinet.bindPath}
+            title={STR.cabinet.bindPath}
+            data-testid="cabinet-row-bind"
+            onClick={(e) => {
+              e.stopPropagation();
+              void relocateItem(item.id);
+            }}
+          >
+            <ExplorerIcon />
+          </button>
+        )}
+        {item.kind === "folder" && !missing && !unbound && (
           <button
             type="button"
             className={styles.iconBtn}

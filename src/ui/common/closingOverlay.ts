@@ -1,41 +1,66 @@
-// 닫는 중 덮개(정식판·Preview 공용, docs/v2-design/91 5-3·5-4) — React를 거치지 않고 바로 DOM에 그린다.
-// 닫기를 누른 순간 "저장하고 종료하는 중…"이 보이고, 그동안 클릭·키 입력이 뒤 화면에 닿지 않는다.
-/**
- * 닫는 중 덮개 — React를 거치지 않고 바로 DOM에(신호를 받은 순간 그려지게). 클릭·입력을 막는다.
- * [목록으로]와 앱 닫기가 같은 덮개를 쓴다.
- */
+// 종료 신호에서도 React 렌더를 기다리지 않고 바로 띄우는 공통 작업 대기 화면.
+import styles from "./closingOverlay.module.css";
+
+let active: { dialog: HTMLDialogElement; label: HTMLElement; release: () => void } | null = null;
+
 export function showClosingOverlay(text: string) {
-  if (typeof document === "undefined" || document.getElementById("wjb-closing")) return;
-  const el = document.createElement("div");
-  el.id = "wjb-closing";
-  el.setAttribute("role", "alertdialog");
-  el.setAttribute("aria-busy", "true");
-  el.dataset.testid = "online-closing";
-  el.style.cssText =
-    "position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;" +
-    "background:rgb(0 0 0 / 28%);cursor:progress";
+  if (typeof document === "undefined" || active) return;
+  const previous = document.activeElement;
+  const dialog = document.createElement("dialog");
+  dialog.id = "wjb-closing";
+  dialog.dataset.testid = "online-closing";
+  dialog.className = styles.overlay!;
+  dialog.setAttribute("aria-modal", "true");
+  dialog.setAttribute("aria-labelledby", "wjb-closing-label");
+  dialog.tabIndex = -1;
+
   const box = document.createElement("div");
-  box.style.cssText =
-    "padding:16px 24px;background:var(--surface-card,#fff);color:var(--text-1,#222);" +
-    "border:1px solid var(--line,#ccc);border-radius:var(--radius-md,8px);font-size:var(--fs-md,14px)";
-  box.textContent = text;
-  el.appendChild(box);
-  const stop = (e: Event) => {
-    e.preventDefault();
-    e.stopPropagation();
+  box.className = styles.card!;
+  const spinner = document.createElement("span");
+  spinner.className = styles.spinner!;
+  spinner.setAttribute("aria-hidden", "true");
+  const label = document.createElement("span");
+  label.id = "wjb-closing-label";
+  label.setAttribute("role", "status");
+  label.textContent = text;
+  box.append(spinner, label);
+  dialog.append(box);
+
+  const block = (event: Event) => {
+    event.preventDefault();
+    event.stopImmediatePropagation();
   };
-  for (const t of ["keydown", "keyup", "keypress", "mousedown", "click", "wheel"])
-    el.addEventListener(t, stop, true);
-  document.body.appendChild(el);
-  (document.activeElement as HTMLElement | null)?.blur?.();
+  const keys = ["keydown", "keyup", "keypress"];
+  for (const key of keys) window.addEventListener(key, block, true);
+  for (const name of ["cancel", "pointerdown", "click"]) dialog.addEventListener(name, block, true);
+  dialog.addEventListener("wheel", block, { passive: false });
+  document.body.append(dialog);
+  const inert = Array.from(document.body.children).filter(
+    (el): el is HTMLElement => el instanceof HTMLElement && el !== dialog && !el.inert,
+  );
+  for (const el of inert) el.inert = true;
+  if (typeof dialog.showModal === "function") dialog.showModal();
+  else dialog.open = true;
+  dialog.focus({ preventScroll: true });
+  active = {
+    dialog,
+    label,
+    release() {
+      for (const key of keys) window.removeEventListener(key, block, true);
+      for (const el of inert) el.inert = false;
+      if (previous instanceof HTMLElement && previous.isConnected) previous.focus({ preventScroll: true });
+    },
+  };
 }
 
-/** 덮개 글 바꾸기(종료가 늦어질 때) */
 export function setClosingText(text: string) {
-  const box = document.getElementById("wjb-closing")?.firstElementChild;
-  if (box) box.textContent = text;
+  if (active) active.label.textContent = text;
 }
-/** 덮개 걷기(저장 실패로 창을 남길 때) */
+
 export function hideClosingOverlay() {
-  document.getElementById("wjb-closing")?.remove();
+  const current = active;
+  if (!current) return;
+  active = null;
+  current.dialog.remove();
+  current.release();
 }

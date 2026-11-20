@@ -1,6 +1,6 @@
 // @vitest-environment node
 // D-3: 캐시 → 일지 되살리기(앱 경로: sql.js + 순수 JS 해시) · E-1: 이 기기 일지·대기열·백업 사본 경로
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import initSqlJs from "sql.js";
 import { migrate } from "../../src/data/migrate";
 import { openSqlJs, SqlJsDriver } from "../../src/data/drivers/sqlJs";
@@ -200,3 +200,34 @@ function memJournal(SQL: SqlJsStatic): SpaceJournalStore {
     },
   };
 }
+
+it("온라인 Cabinet은 이 기기의 등록 경로만 조회하고 등록 해제 후에는 다시 조회하지 않는다", async () => {
+  const stat = vi.fn(async () => ({ exists: true, isDir: true, size: 0 }));
+  const roots = vi.fn(async (_paths: string[]) => undefined);
+  const platform = createOnlinePlatform({
+    SQL: await initSqlJs(),
+    workspaceId: "synthetic",
+    windows: { cabi: {} as never },
+    openJournal: async () => {
+      throw new Error("path-only check");
+    },
+    nativeCabinet: {
+      stat,
+      pickFolder: async () => "/virtual/reference",
+      pickFolders: async () => null,
+      cabinetSetRoots: roots,
+      cabinetList: async () => [],
+      cabinetOpen: async () => undefined,
+      cabinetReveal: async () => undefined,
+    },
+  });
+  expect(await platform.pickFolder("워크스페이스")).toBeNull();
+  expect(await platform.pickCabinetFolder!("등록 폴더")).toBe("/virtual/reference");
+  await platform.cabinetSetRoots(["/virtual/reference"]);
+  expect((await platform.cabinetStat!("/virtual/other")).exists).toBe(false);
+  expect((await platform.cabinetStat!("/virtual/reference")).exists).toBe(true);
+  await platform.cabinetSetRoots([]);
+  expect((await platform.cabinetStat!("/virtual/reference")).exists).toBe(false);
+  expect(stat.mock.calls).toHaveLength(1);
+  expect(roots.mock.calls).toEqual([[["/virtual/reference"]], [[]]]);
+});

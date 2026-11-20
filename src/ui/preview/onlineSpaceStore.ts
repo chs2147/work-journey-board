@@ -15,6 +15,7 @@ import { createOnlinePlatform, destroyChildWindows, within } from "../../platfor
 import { ensureSpaceJournal, upgradeSyncTables, type CachedHeaderLike } from "../../preview/spaceJournal";
 import { createSpaceSync } from "../../preview/spaceSync";
 import type { SqlDriver } from "../../data/driver";
+import { JournalRepository } from "../../data/repository";
 import { hideClosingOverlay, showClosingOverlay } from "../common/closingOverlay";
 import { loadSql } from "../../preview/migrationSession";
 import { parseMeta, type WorkspaceMeta } from "../../domain/workspace";
@@ -114,20 +115,43 @@ export function setAccount(ownerId: string | null, email: string | null) {
     if (get().email !== email) set({ email });
     return;
   }
+  publishedLooks.clear();
+  listRequest++;
   set({ ownerId, email, list: null, offline: false, error: null });
   if (ownerId) void refreshSpaces();
+}
+
+let listRequest = 0;
+const publishedLooks = new Map<string, Pick<WorkspaceMeta, "name" | "color" | "icon">>();
+
+export function rememberPublishedLook(
+  owner: string,
+  id: string,
+  look: Pick<WorkspaceMeta, "name" | "color" | "icon"> | null,
+) {
+  if (!look || get().ownerId !== owner) return;
+  publishedLooks.set(id, look);
 }
 
 export async function refreshSpaces() {
   const owner = get().ownerId;
   if (!owner) return;
+  const request = ++listRequest;
   set({ error: null });
   try {
     const r = await (await api()).list();
-    if (get().ownerId !== owner) return; // 그사이 계정이 바뀜 — 버린다
-    set({ list: r.workspaces, offline: !!r.offline });
+    if (get().ownerId !== owner || request !== listRequest) return;
+    const list = r.workspaces.map((space) => {
+      const pending = publishedLooks.get(space.workspaceId);
+      if (metaOf(space)) {
+        publishedLooks.delete(space.workspaceId);
+        return space;
+      }
+      return pending ? { ...space, workspace: pending } : space;
+    });
+    set({ list, offline: !!r.offline });
   } catch (e) {
-    if (get().ownerId !== owner) return;
+    if (get().ownerId !== owner || request !== listRequest) return;
     // 받지 못했으면 이전 목록을 남기지 않는다(다른 계정의 목록이 보이지 않게)
     set({ list: null, error: errText(e) });
   }
@@ -147,6 +171,7 @@ async function prepare(w: OnlineSpaceInfo): Promise<{ platform: Platform; opened
     new TextDecoder().decode(await sp.read(w.workspaceId, "header.json")),
   ) as CachedHeaderLike;
   const d = await sp.journal.open(w.workspaceId);
+  let meta = metaOf(w);
   try {
     await upgradeSyncTables(d, head.assets, Number(head.header.sourceSchema));
     // 첫 동기화(실기: 다른 기기에서 고친 것이 열 때 바로 보이지 않고, 이 기기에서 고친 뒤에야 충돌로 나타남):
@@ -177,12 +202,16 @@ async function prepare(w: OnlineSpaceInfo): Promise<{ platform: Platform; opened
       new Promise<false>((r) => setTimeout(() => r(false), FIRST_SYNC_MS)),
     ]);
     if (!done) abandoned = true;
+    const settings = await new JournalRepository(d, () => new Date()).getSettings().catch(() => null);
+    const local = settings?.workspace;
+    if (local) meta = { name: local.name, color: local.color, icon: local.icon };
   } finally {
     await d.close();
   }
   // 실앱: 업무노트·메모보드·파일 목록을 정식판과 같은 별도 OS 창으로(Tauri 창 다리)
   const native = isTauri() ? (await import("../../platform/tauri")).tauriPlatform : null;
   const platform = createOnlinePlatform({
+    nativeCabinet: native ?? undefined,
     windows: native
       ? { cabi: native.cabi, folderWindows: native.folderWindows, cabinetWindow: native.cabinetWindow }
       : undefined,
@@ -194,7 +223,7 @@ async function prepare(w: OnlineSpaceInfo): Promise<{ platform: Platform; opened
   });
   return {
     platform,
-    opened: { workspaceId: w.workspaceId, label: when(w.createdAt), stale: sync.stale, meta: metaOf(w) },
+    opened: { workspaceId: w.workspaceId, label: when(w.createdAt), stale: sync.stale, meta },
   };
 }
 
@@ -394,6 +423,8 @@ export function takeCreateRequest(): boolean {
 /** 시험·진단용 */
 export function resetOnlineSpaces() {
   spaces = null;
+  publishedLooks.clear();
+  listRequest++;
   set({
     ownerId: null,
     email: null,

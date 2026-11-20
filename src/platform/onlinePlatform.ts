@@ -1,7 +1,7 @@
 // 온라인 공간용 플랫폼(Connected Preview, docs/v2-design/87·89) — 제품 화면을 그대로 띄운다.
 // 일지 = 이 기기 일지(E-1: 실앱은 Rust가 정한 Preview 폴더 안 파일, 브라우저 모드는 메모리). 앱이 보는 경로는
 // 가짜 폴더 `/online/<공간>/work-journey.db`이고, 백업 사본(VACUUM INTO)은 그 가짜 폴더(메모리)에만 — 사용자 폴더·원본 일지·
-// 정식판 설정은 건드리지 않는다. 내보내기·폴더 고르기·Cabinet 폴더 열기·새 판 확인은 하지 않는다. 링크 열기만 OS 브라우저로(실앱).
+// 정식판 설정은 건드리지 않는다. 내보내기·새 판 확인은 하지 않는다. Cabinet 폴더는 이 기기 경로만 사용한다. 링크 열기만 OS 브라우저로(실앱).
 // 업무노트·업무 메모보드·Cabi.NET 파일 목록은 정식판처럼 별도 OS 창(실앱: Tauri 창 다리, 자식 창은 DB를 열지 않고 이 창이 읽어 줌).
 import type { SqlJsStatic } from "sql.js";
 import { SqlJsDriver } from "../data/drivers/sqlJs";
@@ -40,6 +40,16 @@ export function createOnlinePlatform(opts: {
   /** 일지에 실제로 바뀐 쓰기가 있을 때(동기화 보내기 예약) */
   onWrite?: () => void;
   /** 별도 창 다리(실앱 = Tauri 창). 없으면 브라우저 팝업 다리(브라우저 모드) */
+  nativeCabinet?: Pick<
+    Platform,
+    | "stat"
+    | "pickFolder"
+    | "pickFolders"
+    | "cabinetSetRoots"
+    | "cabinetList"
+    | "cabinetOpen"
+    | "cabinetReveal"
+  >;
   windows?: { cabi: CabiBridge; folderWindows?: FolderWindows; cabinetWindow?: CabinetWindowBridge };
 }): Platform {
   const fs = createFakeFs(async (bytes, label) => new SqlJsDriver(new opts.SQL.Database(bytes), label));
@@ -83,6 +93,8 @@ export function createOnlinePlatform(opts: {
   };
   let config: AppConfig = { dataDir, ...(opts.theme ? { theme: opts.theme } : {}) };
   const none = async () => undefined;
+  const cabinet = opts.nativeCabinet;
+  let cabinetRoots: string[] = [];
   return {
     kind: "browser",
     ephemeralBackups: true,
@@ -100,6 +112,7 @@ export function createOnlinePlatform(opts: {
     setWindowTheme: none,
     suggestedDataDir: async () => dataDir,
     pickFolder: async () => null,
+    pickCabinetFolder: cabinet?.pickFolder,
     isOneDrivePath: async () => false,
     stat: (p) => fs.stat(p),
     // 이 공간 폴더 밖에는 만들지 않는다 — 온라인 공간 안에서 이 PC 새 공간(가짜 폴더 = 메모리, 다시 켜면 사라짐)이
@@ -132,11 +145,17 @@ export function createOnlinePlatform(opts: {
     onExit(handler) {
       if (isTauri()) void listenClosing(handler);
     },
-    pickFolders: async () => null,
-    cabinetSetRoots: none,
-    cabinetList: async () => [],
-    cabinetOpen: none,
-    cabinetReveal: none,
+    pickFolders: cabinet?.pickFolders ?? (async () => null),
+    async cabinetSetRoots(roots) {
+      cabinetRoots = roots;
+      await cabinet?.cabinetSetRoots(roots);
+    },
+    async cabinetStat(path) {
+      return cabinet && cabinetRoots.includes(path) ? cabinet.stat(path) : { exists: false, isDir: false };
+    },
+    cabinetList: cabinet?.cabinetList ?? (async () => []),
+    cabinetOpen: cabinet?.cabinetOpen ?? none,
+    cabinetReveal: cabinet?.cabinetReveal ?? none,
     droppedPaths: async () => null,
     resolveShortcut: async () => null,
     updateCheck: async () => null,

@@ -289,3 +289,41 @@ describe("내보내기 경로 규칙(웹 앱 쪽 — Rust export_write와 같은
     expect(values(wb.getWorksheet("원장")!).flat().map(String).join("|")).not.toContain("연차");
   });
 });
+
+it("독립 주간 요약 시트는 수정본·AI본·자동 집계 순서와 긴 평문을 보존한다", async () => {
+  const [first, next] = await sampleWeeks();
+  const long = "=가상 기록\n" + "한글 요약을 이어 씁니다.\n".repeat(2000);
+  const wb = await readBack(
+    await buildWorkbook(
+      ExcelJS,
+      [{ ...first!, summary: { editedText: long, aiText: "AI본" } }, next!],
+      opt({ weekly: false, ledger: false, summary: { includeMemo: true } }),
+    ),
+  );
+  expect(wb.worksheets.map(({ name }) => name)).toEqual(["주간 요약"]);
+  const result = values(wb.worksheets[0]!);
+  expect(result[1]?.[2]).toBe("수정본");
+  expect(
+    result
+      .slice(1)
+      .filter(([week]) => week === "2026-W42")
+      .map((row) => row[3])
+      .join(""),
+  ).toBe(long);
+  expect(result.at(-1)?.[2]).toBe("AI본");
+  const automatic = await readBack(
+    await buildWorkbook(
+      ExcelJS,
+      [
+        {
+          ...first!,
+          input: { ...first!.input, memo: "가상 메모 고유 문장" },
+          summary: { editedText: null, aiText: null },
+        },
+      ],
+      opt({ weekly: false, ledger: false, summary: { includeMemo: false } }),
+    ),
+  );
+  expect(automatic.worksheets[0]!.getCell("C2").value).toBe("자동 집계");
+  expect(String(automatic.worksheets[0]!.getCell("D2").value)).not.toContain("가상 메모 고유 문장");
+});

@@ -201,3 +201,11 @@ fn list_labels_are_validated_and_kept_only_for_downloaded_spaces() {
     }
     fs::remove_dir_all(&root).ok();
 }
+
+#[test]
+fn camel_case_workspace_icons_can_be_cached() {
+    for icon in ["chartUp", "chartBar", "cardIndex", "moneyBag", "creditCard"] {
+        let label = json!({ "name": "가상 공간", "color": "c7", "icon": icon });
+        assert_eq!(label_ok(&label), Some(label));
+    }
+}

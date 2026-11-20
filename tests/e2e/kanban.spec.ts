@@ -243,3 +243,32 @@ test("Cabi.NET 줄을 카드에 끌어 놓으면 그 항목에 연결(카드에 
   await expect(page.getByRole("status").filter({ hasText: "이 항목에 연결했습니다" })).toBeVisible();
   await expect(c.getByTestId("kanban-cabinet-count")).toBeVisible();
 });
+
+test("섹션 기간을 고정하고 카드 목록에서 직접 정렬한다", async ({ page }) => {
+  await openKanban(page);
+  await page.getByTestId("kanban-add-section").click();
+  await page.getByTestId("kanban-section-dialog").getByRole("textbox").fill("모니터링");
+  await page.getByTestId("kanban-section-save").click();
+  const section = col(page, "section");
+  await expect(section.getByTestId("kanban-col-name")).toHaveText("모니터링");
+  await card(page, "A협력사 현장 점검").dragTo(section);
+  await card(page, "테스트 데이터 이관 스크립트 작성 착수").dragTo(section);
+  await expect(section.getByTestId("kanban-card")).toHaveCount(2);
+  await section.getByTestId("kanban-col-menu").click();
+  await page.getByRole("button", { name: "기간 설정…" }).click();
+  const period = page.getByRole("dialog", { name: "모니터링 · 기간 설정…" });
+  await period.getByRole("combobox").selectOption("all");
+  await period.getByRole("button", { name: "적용" }).click();
+  await expect(section).toContainText("전체 기간");
+  await page.getByTestId("kanban-period").getByRole("button", { name: "오늘", exact: true }).click();
+  await expect(section.getByTestId("kanban-card")).toHaveCount(2);
+  const titles = section.getByTestId("kanban-card-text");
+  const before = await titles.allTextContents();
+  await section.getByTestId("kanban-col-menu").click();
+  await page.getByRole("button", { name: "카드 목록·순서…" }).click();
+  const order = page.getByRole("dialog", { name: "모니터링 · 카드 목록·순서…" });
+  await order.getByRole("button", { name: /위로$/ }).last().click();
+  await order.getByRole("button", { name: "저장", exact: true }).click();
+  await expect(titles).toHaveText([...before].reverse());
+  await expect(section).toContainText("직접 순서");
+});

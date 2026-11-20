@@ -24,6 +24,7 @@ export interface ExportChoice {
   to: WeekId;
   weekly: boolean;
   ledger: boolean;
+  summary: boolean;
   /** 메모 보드 스냅샷 시트(improve-1027v3-spec 1-5) */
   snapshots: boolean;
 }
@@ -64,7 +65,12 @@ function ready() {
 }
 
 /** 고른 범위 → [시작 주, 끝 주]. 전체 = 첫 기록 주 ~ 이번 주(기록이 없으면 이번 주) */
-export function resolveRange(c: ExportChoice, current: WeekId, firstRecord: WeekId | null): [WeekId, WeekId] {
+export function resolveRange(
+  c: ExportChoice,
+  current: WeekId,
+  firstRecord: WeekId | null,
+  latest = current,
+): [WeekId, WeekId] {
   switch (c.kind) {
     case "thisWeek":
       return [current, current];
@@ -73,8 +79,9 @@ export function resolveRange(c: ExportChoice, current: WeekId, firstRecord: Week
     case "custom":
       return c.from <= c.to ? [c.from, c.to] : [c.to, c.from];
     case "all": {
-      const first = firstRecord && firstRecord < current ? firstRecord : current;
-      return [first, current];
+      const end = latest > current ? latest : current;
+      const first = firstRecord && firstRecord < end ? firstRecord : end;
+      return [first, end];
     }
   }
 }
@@ -89,8 +96,8 @@ export async function runExport(c: ExportChoice): Promise<string | null> {
     await flushAll();
     await flushDraft();
     await flushNote();
-    const current = repo.currentWeek();
-    const [from, to] = resolveRange(c, current, await repo.firstRecordWeek());
+    const current = useBoard.getState().weekId;
+    const [from, to] = resolveRange(c, current, await repo.firstRecordWeek(), repo.currentWeek());
 
     const settings = await repo.getSettings();
     let dir = settings.ui.lastExportDir;
@@ -142,6 +149,7 @@ export async function runExport(c: ExportChoice): Promise<string | null> {
       to,
       weekly: c.weekly,
       ledger: c.ledger,
+      summary: c.summary ? { includeMemo: settings.summary.includeMemo } : undefined,
       snapshots,
       appVersion: __APP_VERSION__,
       exportedAt: platform.now(),
@@ -172,6 +180,7 @@ export function defaultChoice(): ExportChoice {
     to: current,
     weekly: true,
     ledger: true,
+    summary: false,
     snapshots: false,
   };
 }

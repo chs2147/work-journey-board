@@ -1,3 +1,4 @@
+/* global document, ResizeObserver */
 "use strict";
 
 const colors = { teal: "#3d7968", amber: "#ac733f", plum: "#805479" };

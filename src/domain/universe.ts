@@ -762,3 +762,91 @@ export function levelLabel(level: TimeLevel, anchor: DateStr): string {
   if (level === "week") return weekIdOf(anchor);
   return anchor;
 }
+
+/** 화면의 본 항목만 묶는다. 지도 밖의 원본 ID·관계·회차는 그대로 사용한다. */
+export function projectUniverse(graph: UGraph, filter: UFilter) {
+  const shown = filterGraph(graph, filter);
+  const byId = new Map(graph.nodes.map((node) => [node.id, node]));
+  const visible = new Map(
+    shown.nodes.filter((node) => inRange(node, filter.range)).map((node) => [node.id, node]),
+  );
+  const parents = new Map<string, string>();
+  for (const edge of graph.edges) {
+    if (edge.source !== "membership" || byId.get(edge.from)?.depth !== 1) continue;
+    const parent = byId.get(edge.to);
+    if (parent?.kind !== "entry" || parent.depth !== 0) continue;
+    parents.set(edge.from, edge.to);
+    if (visible.has(edge.from) && filter.kinds.includes("entry") && inRange(parent, filter.range))
+      visible.set(parent.id, parent);
+  }
+  const lines = new Map<string, UNode[]>();
+  for (const node of visible.values()) {
+    if (node.kind !== "entry" || node.depth !== 0 || !node.categoryId) continue;
+    const key = JSON.stringify([
+      node.ws,
+      node.categoryId,
+      node.text.normalize("NFC").trim().replace(/\s+/g, " "),
+    ]);
+    const group = lines.get(key) ?? [];
+    group.push(node);
+    lines.set(key, group);
+  }
+  const aliases = new Map<string, string>();
+  const members = new Map<string, UNode[]>();
+  for (const group of lines.values()) {
+    if (group.length < 2) continue;
+    group.sort((a, b) => (b.date ?? "").localeCompare(a.date ?? "") || a.id.localeCompare(b.id));
+    const id = group[0]!.id;
+    members.set(id, group);
+    for (const node of group) aliases.set(node.id, id);
+  }
+  const mapped = (id: string) => aliases.get(id) ?? id;
+  const nodes = [...visible.values()].filter((node) => mapped(node.id) === node.id);
+  const edges = new Map<string, UEdge>();
+  for (const edge of graph.edges) {
+    if (!visible.has(edge.from) || !visible.has(edge.to) || !filter.sources.includes(edge.source)) continue;
+    const from = mapped(edge.from),
+      to = mapped(edge.to);
+    if (from === to) continue;
+    const pair = edge.rel && !isDirected(edge.rel.type) ? [from, to].sort() : [from, to];
+    const key = JSON.stringify([pair, edge.source, edge.rel?.type, edge.dir]);
+    if (!edges.has(key)) edges.set(key, { ...edge, from, to });
+  }
+  return { graph: { nodes, edges: [...edges.values()] }, aliases, members, parents, visible };
+}
+
+/** 전체 지도에는 본 항목을, 초점에는 바로 연결된 자료를 더한다. 검색으로 찾은 대상은 표시한다. */
+export function compactUniverse(
+  projection: ReturnType<typeof projectUniverse>,
+  focus: string | null,
+  selected: string | null,
+  expanded: ReadonlySet<string>,
+  searching: boolean,
+): UGraph {
+  const { graph, aliases, parents } = projection;
+  const direct = new Set<string>();
+  for (const edge of graph.edges) {
+    if (edge.from === focus) direct.add(edge.to);
+    if (edge.to === focus) direct.add(edge.from);
+    if (edge.rel && (edge.from === selected || edge.to === selected)) {
+      direct.add(edge.from);
+      direct.add(edge.to);
+    }
+  }
+  const nodes = graph.nodes.filter((node) => {
+    if (searching || node.id === selected || node.id === focus) return true;
+    if (node.kind === "entry" && node.depth === 1) {
+      const parent = parents.get(node.id);
+      return !!parent && expanded.has(aliases.get(parent) ?? parent);
+    }
+    return (
+      node.kind === "workspace" ||
+      node.kind === "category" ||
+      node.kind === "tag" ||
+      node.kind === "entry" ||
+      direct.has(node.id)
+    );
+  });
+  const keep = new Set(nodes.map((node) => node.id));
+  return { nodes, edges: graph.edges.filter((edge) => keep.has(edge.from) && keep.has(edge.to)) };
+}

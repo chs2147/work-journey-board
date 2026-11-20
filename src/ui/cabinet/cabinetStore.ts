@@ -174,16 +174,37 @@ export function applySnapshot(snap: unknown) {
   useCabinet.setState(snap as CabinetSnapshot);
 }
 
+let cabinetLoad = 0;
+let rootWrites = Promise.resolve();
+
+function setCabinetRoots(p: ReturnType<typeof app>["platform"], roots: string[]) {
+  rootWrites = rootWrites.then(() => p?.cabinetSetRoots(roots)).catch(() => undefined);
+  return rootWrites;
+}
+
+export function clearCabinetRoots() {
+  cabinetLoad++;
+  return setCabinetRoots(app().platform, []);
+}
+
 export async function loadCabinet() {
   if (remote) return applySnapshot(await remote.call("snapshot", []));
   const r = localRepo();
   if (!r) return;
+  const load = ++cabinetLoad;
+  const p = app().platform;
   const [{ items, links }, { categories, periods }, notes, boards] = await Promise.all([
     r.listCabinet(),
     r.listCategories(),
     r.cabi.listNotes(),
     r.cabi.listBoards(),
   ]);
+  if (load !== cabinetLoad || localRepo() !== r || app().platform !== p) return;
+  await setCabinetRoots(
+    p,
+    items.filter((i) => i.kind === "folder" && isFolderPathLike(i.target)).map((i) => i.target),
+  );
+  if (load !== cabinetLoad || localRepo() !== r || app().platform !== p) return;
   const sorted = [...categories].sort((a, b) => a.sortOrder - b.sortOrder);
   const activeIds = [...new Set(periods.filter((p) => p.endDate === null).map((p) => p.categoryId))];
   const cabiCounts: Record<string, number> = {};
@@ -196,9 +217,6 @@ export async function loadCabinet() {
     cabiCounts,
     cabiBoardIds: boards.map((b) => b.categoryId),
   });
-  await app()
-    .platform?.cabinetSetRoots(items.filter((i) => i.kind === "folder").map((i) => i.target))
-    .catch(() => undefined);
   // 지워진 항목의 폴더 창은 닫는다
   const ids = new Set(items.map((i) => i.id));
   const gone = useCabinet.getState().folders.filter((f) => !ids.has(f.id));
@@ -548,7 +566,9 @@ export async function copyTarget(id: string) {
 /** 탐색기에서 열기 = 그 폴더 안으로(상위 폴더에서 선택된 채가 아니라, improve-1102-spec C6) */
 export async function revealItem(id: string) {
   const it = useCabinet.getState().items.find((i) => i.id === id);
-  if (it?.kind === "folder") await app().platform?.cabinetOpen(it.target).catch(reportError);
+  if (it?.kind !== "folder") return;
+  if (!isFolderPathLike(it.target)) return relocateItem(id);
+  await app().platform?.cabinetOpen(it.target).catch(reportError);
 }
 
 /** 연결 표시 글(폴더 창 머리·목록) — 업무 이름, 항목이면 "10/21 설계안 팀 리뷰" */
@@ -578,7 +598,8 @@ export async function checkFolders(manual = false) {
   try {
     const res = await Promise.all(
       folders.map(async (f) => {
-        const st = await p.stat(f.target).catch(() => null);
+        if (!isFolderPathLike(f.target)) return f.id;
+        const st = await (p.cabinetStat ? p.cabinetStat(f.target) : p.stat(f.target)).catch(() => null);
         return st?.exists && st.isDir ? null : f.id;
       }),
     );
@@ -602,8 +623,8 @@ export async function relocateItem(id: string) {
   const r = repo();
   const it = useCabinet.getState().items.find((i) => i.id === id);
   if (!p || !r || it?.kind !== "folder") return;
-  const picked = await p.pickFolder(STR.cabinet.check.relocateTitle(it.title));
-  if (!picked) return;
+  const picked = await (p.pickCabinetFolder ?? p.pickFolder)(STR.cabinet.check.relocateTitle(it.title));
+  if (!picked || app().platform !== p || repo() !== r) return;
   try {
     await r.updateCabinetItem(id, { target: picked });
     await loadCabinet();
@@ -619,6 +640,7 @@ export async function relocateItem(id: string) {
 export async function openItem(id: string) {
   const it = useCabinet.getState().items.find((i) => i.id === id);
   if (!it) return;
+  if (it.kind === "folder" && !isFolderPathLike(it.target)) return relocateItem(id);
   if (it.kind === "folder" && useCabinet.getState().missing.includes(id))
     return toast(STR.cabinet.check.cannotOpen(it.title));
   if (it.kind === "link") return openLink(it.target);
