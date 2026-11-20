@@ -132,26 +132,27 @@ describe("Tauri 설정", () => {
 
 describe("Preview 온라인 모듈(online.rs) 접속 범위", () => {
   const online = read("src-tauri/src/online.rs");
-  it("G-3: 서버 표 = 개발·운영 두 곳의 인증·gateway 경로만, 운영은 공개 키 없음(G-2 전), 서버 열쇠 없음", () => {
+  it("G-3: 서버 표 = 개발·운영 두 곳의 인증·gateway 경로만, 두 줄 모두 공개 키(G-2 구축 뒤), 서버 열쇠 없음", () => {
     const dev = "https://vsphftnmfzfoufasjttd.supabase.co";
     const prod = "https://hutqsfftioxtredcjhsy.supabase.co";
     expect(online.match(/https:\/\/[a-z0-9.-]+/g)?.every((u) => u === dev || u === prod)).toBe(true);
-    // 개발 줄 = 공개 키 있음, 운영 줄 = 없음(어떤 판도 고를 수 없음)
+    // 개발·운영 줄 모두 공개 키(sb_publishable_)만 — 운영은 G-2(103) 구축 뒤 G-9에서 넣음
     expect(online).toMatch(
       /pub const DEVELOPMENT: Server = Server \{[^}]*origin: "https:\/\/vsphftnmfzfoufasjttd\.supabase\.co",\s*publishable_key: Some\("sb_publishable_[A-Za-z0-9_-]+"\),/,
     );
     expect(online).toMatch(
-      /pub const PRODUCTION: Server = Server \{[^}]*origin: "https:\/\/hutqsfftioxtredcjhsy\.supabase\.co",\s*publishable_key: None,/,
+      /pub const PRODUCTION: Server = Server \{[^}]*origin: "https:\/\/hutqsfftioxtredcjhsy\.supabase\.co",\s*publishable_key: Some\("sb_publishable_[A-Za-z0-9_-]+"\),/,
     );
-    // 판 → 서버: 검증판은 개발만
+    // 판 → 서버: 검증판은 개발만, 정식판만 운영(G-9)
     expect(online).toContain("Profile::ConnectedPreview | Profile::LocalDev => Ok(DEVELOPMENT),");
-    expect(online).not.toMatch(/=> Ok\(PRODUCTION\)/);
+    expect(online).toContain("Profile::Classic => Ok(PRODUCTION),");
+    expect(online.match(/=> Ok\(PRODUCTION\)/g)).toHaveLength(1);
     expect(online).not.toMatch(/sb_secret_|service_role|eyJ[A-Za-z0-9]{10}|sbp_/);
     expect(online).toContain("redirect(reqwest::redirect::Policy::none())");
   });
-  it("웹 화면 CSP는 그대로(네트워크는 Rust에서만)", () => {
+  it("웹 화면 CSP: 접속 범위는 그대로(네트워크는 Rust에서만), WASM 실행만 더함(G-D9 — 정식판 온라인 사본 sql.js)", () => {
     expect(base.app.security.csp).toBe(
-      "default-src 'self'; connect-src ipc: http://ipc.localhost; img-src 'self' data:; style-src 'self' 'unsafe-inline'",
+      "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; connect-src ipc: http://ipc.localhost; img-src 'self' data:; style-src 'self' 'unsafe-inline'",
     );
     // C-4: Preview만 원본 사본을 sql.js(WebAssembly)로 읽는다 — 스크립트 실행 허용만 더하고 접속 범위는 같다
     expect(preview.app.security.csp).toBe(
@@ -171,9 +172,25 @@ describe("Rust 명령 경계(lib.rs)", () => {
   const classic = handlers('not(any(feature = "connected-preview", feature = "dev-channel"))');
   const dev = handlers('feature = "dev-channel"');
   const prev = handlers('feature = "connected-preview"');
+  // Preview의 온라인 명령(설정·프로필·닫기 주도 같은 공통 명령을 뺀 것) — 정식판·DEV가 같은 목록을 쓴다
+  const online = prev.filter(
+    (c) =>
+      ![
+        "splash::splash_finish",
+        "files::config_read",
+        "files::config_write",
+        "files::open_url",
+        "profile::app_profile",
+        "preview_close::preview_exit",
+      ].includes(c),
+  );
+  const classicLocal = classic.slice(0, classic.length - online.length);
 
-  it("Classic 명령 = 예전 목록 + 프로필 묻기 + 닫기 안전장치 풀기(91문서 5-4)", () => {
-    expect(classic).toEqual([
+  it("Classic 명령 = 예전 목록 + 프로필 묻기 + 닫기 안전장치 풀기(91문서 5-4) + 온라인 공간(G-9)", () => {
+    expect(classic.slice(classicLocal.length)).toEqual(online);
+    expect(classic).not.toContain("preview_close::preview_exit");
+    expect(classic.some((c) => c.startsWith("dev_guard::"))).toBe(false);
+    expect(classicLocal).toEqual([
       "db_batch::db_batch",
       "splash::splash_finish",
       "files::config_read",
@@ -204,20 +221,9 @@ describe("Rust 명령 경계(lib.rs)", () => {
     ]);
   });
 
-  it("DEV 명령 = Classic 명령 + DEV 일지 폴더 확인·준비·정식 일지 복제 + 온라인 공간(G-1 통합 앱, 98 — Preview 닫기 주도만 뺌)", () => {
-    const online = prev.filter(
-      (c) =>
-        ![
-          "splash::splash_finish",
-          "files::config_read",
-          "files::config_write",
-          "files::open_url",
-          "profile::app_profile",
-          "preview_close::preview_exit",
-        ].includes(c),
-    );
+  it("DEV 명령 = Classic 로컬 명령 + DEV 일지 폴더 확인·준비·정식 일지 복제 + 온라인 공간(G-1 통합 앱, 98 — Preview 닫기 주도만 뺌)", () => {
     expect(dev).toEqual([
-      ...classic,
+      ...classicLocal,
       "dev_guard::dev_folder_status",
       "dev_guard::dev_prepare_folder",
       "dev_guard::dev_copy_official",
@@ -267,12 +273,12 @@ describe("Rust 명령 경계(lib.rs)", () => {
       "space_sync::space_asset_upload",
       "space_sync::space_asset_fetch",
     ]);
-    // 온라인 모듈은 온라인 기능 빌드(Preview·DEV 통합 앱)에만 — 정식판(기능 없음)에는 컴파일되지 않는다
+    // 온라인 모듈 = 기본 기능(G-9 — 정식판도 켬). Preview·DEV도 그대로 켠다
     expect(lib).toMatch(/#\[cfg\(feature = "online"\)\]\nmod online;/);
     const cargo = read("src-tauri/Cargo.toml");
     expect(cargo).toMatch(/^connected-preview = \["online"\]$/m);
     expect(cargo).toMatch(/^dev-channel = \["online"\]$/m);
-    expect(cargo).not.toMatch(/^default = .*online/m);
+    expect(cargo).toMatch(/^default = \["online"\]$/m);
     expect(lib).toMatch(
       /#\[cfg\(not\(feature = "connected-preview"\)\)\]\n\s+let builder = builder\.plugin\(tauri_plugin_sql/,
     );

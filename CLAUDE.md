@@ -118,9 +118,10 @@ fixtures/     sample-*.json — 가상 업무 기록만
 
 ### 4-1. 외부 통신 0 (제품의 존재 이유)
 - 앱 코드에서 외부 호스트로 가는 `fetch`·XHR·WebSocket·이미지/폰트 CDN 로드를 **넣지 않는다**. 본문 글꼴은 **Pretendard Variable**(SIL OFL 1.1) — npm `pretendard`(버전 고정)의 공식 woff2를 **수정 없이** 번들한다(`src/shared/fonts.css`, 라이선스 `public/licenses/`). OFL 예약 글꼴 이름 조항 때문에 글자 잘라내기 등 파일 수정 금지. 기본 글자 크기 14px(`--fs-md`). **시그니처 테마만** 고운돋움 Regular(SIL OFL 1.1, `src/shared/fonts/GowunDodum-Regular.woff2` 한글 전체 · 라이선스 `public/licenses/GowunDodum-OFL-1.1.txt`, 굵기 400 하나 → `--fw-bold: 400` + `font-synthesis: none`) — 라이트·다크는 Pretendard(design-renewal-v1 3절 A안, 2026-10-28 사용자 확정).
-- Tauri CSP: `default-src 'self'; connect-src ipc: http://ipc.localhost; img-src 'self' data:; style-src 'self' 'unsafe-inline'`. 외부 도메인을 CSP에 추가하는 변경은 **사용자 승인 필수**.
+- Tauri CSP: `default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; connect-src ipc: http://ipc.localhost; img-src 'self' data:; style-src 'self' 'unsafe-inline'`(`wasm-unsafe-eval` = 온라인 공간 이 기기 사본 sql.js, G-D9 2026-11-20 — 외부 주소 아님). 외부 도메인을 CSP에 추가하는 변경은 **사용자 승인 필수**.
 - 자동 업데이트 플러그인(tauri updater)·텔레메트리·오류 리포팅 SDK·분석 도구 금지.
 - **새 판 확인·설치 예외(v0.2.19, 2026-10-27 사용자 승인, improve-1027v4-spec 1절 B안)**: 인터넷에 나가는 곳은 Rust `src-tauri/src/update.rs` **하나** — GitHub Releases(이 저장소)의 판 목록·설치 파일·`SHA256SUMS.txt`만, **앱을 켤 때 1번 + 설정 [업데이트 확인]** 때만. 판 목록이 한도 초과(403/429)일 때만 같은 저장소 `https://github.com/chs2147/work-journey-board/releases/latest`의 이동 주소(Location)에서 판 번호만 읽는다(2026-11-09 사용자 승인, improve-v20-spec 6-2 D8 — 리디렉션 따라가지 않음, 설치는 SHA256 확인 그대로). 판 목록은 ETag 캐시(`updates/releases-cache.json`)로 묻는다. 받은 설치 파일은 SHA256 확인 → 일지 자동 백업(`_pre-update`) → 실행(맥은 DMG를 열어 앱 번들 교체 — 4-3 앱 번들 예외, 1.6.0). 웹 화면 CSP(`connect-src`)는 그대로, 기록·메모 등 사용자 데이터는 보내지 않는다. 주소·시점을 넓히려면 사용자 승인.
+- **온라인 기능 예외(G-9, 2026-11-20 사용자 승인, docs/v2-design/97·98·103·104)**: 정식판에 온라인 공간(선택 기능)이 들어간다. 나가는 곳은 Rust `online.rs`·`migration.rs`·`space_sync.rs`가 **운영 프로젝트(`hutqsfftioxtredcjhsy`) 인증·`wjb-gateway` 경로만**(서버 표 `online.rs` `server_for` — 정식판 = 운영, DEV·Preview = 개발, 섞이지 않음), **사용자가 로그인한 뒤에만**. 로그인하지 않으면 지금처럼 아무것도 보내지 않는다. 웹 화면 CSP `connect-src`는 그대로. 주소·시점을 넓히려면 사용자 승인.
 - **링크 열기(v0.2.8, 2026-10-26 사용자 확정, improve-1026-spec 9·13절)**: 기록·메모 속 http/https 주소는 `Ctrl+클릭`·↗로 **OS 기본 브라우저에 넘길 뿐** 앱은 접속하지 않는다 — `Platform.openUrl` → Rust `open_url`(files.rs, http/https만 재검사 + cargo test). 링크 카드는 사용자가 쓴 제목·메모만(사이트 미리보기 B안은 하지 않음). 이 규칙을 넓히려면 사용자 승인.
 - 새 의존성 추가 시 런타임 네트워크 호출 여부를 확인하고 PR/커밋 설명에 적는다.
 - **홍보 문구(2026-11-02 사용자 지시)**: README·소개 사이트·공유 미리보기 그림·릴리스 소개 등에서 기능·특징을 강조할 때 "외부 통신 0"을 **내세우지 않는다**(구현 규칙은 그대로 지킨다). 개인정보 안내에서 사실을 짧게 적는 것은 괜찮다.
@@ -192,7 +193,7 @@ fixtures/     sample-*.json — 가상 업무 기록만
 - **정식판 = `main` 빌드만.** 그 밖의 모든 빌드(작업 브랜치·RC·Preview)는 **비공식 판**이다 — 로컬판은 **DEV 검증판**(`--features dev-channel` + `src-tauri/tauri.dev.conf.json`, 앱 ID `com.chs2147.workjourneyboard.dev`·이름 "Work Journey Board DEV"·실행 파일 `work-journey-board-dev`·설정 폴더 `WorkJourneyBoardDev`), 온라인 검증은 Connected Preview(V2 78문서). `build-desktop.yml`이 `main` 밖에서는 자동으로 DEV로 빌드한다.
 - 비공식 판은 **정식판과 별도의 앱으로 설치·제거**되고, 정식판의 설정(`WorkJourneyBoard\config.json`)·일지를 **읽지도 쓰지도 않는다**. 업데이트 확인 꺼짐, 릴리스·기존 업데이트 피드에 올리지 않음(Actions 산출물만). 환경변수가 필요하면 `WJB_DEV_*`·`WJB_PREVIEW_*` 전용 이름만.
 - DEV는 **DEV 일지만**: DEV가 만든·복제한 폴더의 표시 파일 `.wjb-dev-journal`. 정식 일지(표시 없음)는 화면(`openJournalAt` 첫 단계)과 Rust(`dev_guard.rs` — `db_batch`·백업·복원·내보내기)에서 이중으로 거절한다. 설치(판)마다 일지를 묻는다 — 빈 일지(기본)·가상 샘플·정식 일지 복제(원본 읽기만).
-- 비공식 판은 상단 타이틀 줄 주황 띠 + **DEV** 배지(`html[data-channel="dev"]`), **설치·실행 아이콘도 정식판과 다르게**(주황 바탕 + DEV 띠, `src-tauri/icons-dev/`, 2026-11-15 사용자 지시 — 앱 안 그림은 그대로 가능). 정식판 화면·앱 ID·설정·명령 목록은 이 정책 전과 같아야 한다(`appProfile`·`devChannel` 단위 시험, Rust `profile.rs` 시험이 고정).
+- 비공식 판은 상단 타이틀 줄 주황 띠 + **DEV** 배지(`html[data-channel="dev"]`), **설치·실행 아이콘도 정식판과 다르게**(주황 바탕 + DEV 띠, `src-tauri/icons-dev/`, 2026-11-15 사용자 지시 — 앱 안 그림은 그대로 가능). 정식판 앱 ID·설정 폴더는 이 정책 전과 같아야 한다. 정식판 명령 목록 = 예전 로컬 명령 + 온라인 명령(G-9, 2026-11-20 — docs/v2-design/98 4절), 화면은 로그인 전 설정 › 계정·[온라인 로그인…]만 더해짐(`appProfile`·`devChannel` 단위 시험, Rust `profile.rs` 시험이 고정).
 - 이 정책을 바꾸거나 정식판 동작에 영향을 주는 변경은 사용자 승인. 새 비공식 판 종류를 만들 때도 같은 조건(별도 앱·설정·일지)을 먼저 갖춘다.
 
 ## 5. 명령

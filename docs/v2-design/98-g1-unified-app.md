@@ -55,3 +55,16 @@
 ### 실기 2차(2026-11-17) — 통과
 
 DEV 설치 파일 #119(`9114444`)로 m1-check 7-53 1~7 통과(사용자 확인). G-1(DEV) 완료. 정식판 반영은 CSP 처리 방식(정식판 CSP에 WASM 허용 vs 온라인 사본 준비를 Rust로)을 정한 뒤 다시 승인.
+
+## 4. 정식판 반영(G-9, 2026-11-20 사용자 승인)
+
+사용자 결정: 운영용 DEV 판은 만들지 않고 정식판으로(나중 혼동 방지), CSP는 G-D9 = 정식판 CSP에 `script-src 'self' 'wasm-unsafe-eval'` 한 줄.
+
+| 자리 | 바꾼 것 |
+|---|---|
+| Cargo | `default = ["online"]` — 정식판도 온라인 모듈을 컴파일 |
+| 격리 정책(`poc/v2-native`) | `Profile::Classic.online() = true`, 정식판 온라인 자료 = 정식판 설정 폴더 아래 `production/<프로젝트>`(**운영 대상만**, `config.json`·업데이트 폴더는 그대로), 보안 저장소 이름 = 정식판 앱 ID |
+| 서버 표(`online.rs`) | `server_for(Classic) = PRODUCTION`(운영 공개 키 — 103 9단계), Preview·DEV = 개발 그대로 |
+| 명령 목록(`lib.rs`) | 정식판 = 예전 로컬 명령 + DEV와 같은 온라인 명령(DEV 일지 표시 명령 없음, Preview 닫기 주도 없음) |
+| 화면(`main.tsx`) | Preview가 아닌 메인 창(정식판·DEV)에서 `installUnified()` — 로그인 전에는 설정 › 계정·[온라인 로그인…]만 더해짐 |
+| 시험 | `appProfile`·`devChannel`·`onlineTerms` 단위, Rust 세 판(정식판·DEV·Preview) 각 71 통과, 격리 라이브러리 34 통과 |

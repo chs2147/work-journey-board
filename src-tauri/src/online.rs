@@ -31,12 +31,12 @@ pub const DEVELOPMENT: Server = Server {
     origin: "https://vsphftnmfzfoufasjttd.supabase.co",
     publishable_key: Some("sb_publishable_HgCrm5uiNX4v7Ppw0yowMQ_MREt7E5l"),
 };
-/// 운영(G-D2) — G-2 승인·구축 뒤 공개 키를 넣는다. 그 전에는 어떤 판도 이 서버를 고르지 않는다
+/// 운영(G-D2) — G-2 구축 완료(103, 2026-11-20) 뒤 공개 키를 넣었다. 정식판만 이 서버를 고른다
 pub const PRODUCTION: Server = Server {
     env: CloudEnv::Production,
     project_ref: "hutqsfftioxtredcjhsy",
     origin: "https://hutqsfftioxtredcjhsy.supabase.co",
-    publishable_key: None,
+    publishable_key: Some("sb_publishable_OASPLXRLV8DZaCjrP-l9Qw_OUgR2WTp"),
 };
 impl Server {
     /// 표의 값이 서로 맞는지(ID = 허용 목록, 주소 = 그 ID, 공개 키 형식)
@@ -52,11 +52,11 @@ impl Server {
         }
     }
 }
-/// 판 → 서버(하나). 검증판(Preview·DEV) = 개발. 정식판은 아직 온라인이 없다(G-9에서 운영으로)
+/// 판 → 서버(하나). 검증판(Preview·DEV) = 개발, 정식판 = 운영(G-9) — 섞이지 않는다
 pub fn server_for(profile: Profile) -> Result<Server, &'static str> {
     match profile {
         Profile::ConnectedPreview | Profile::LocalDev => Ok(DEVELOPMENT),
-        Profile::Classic => Err("NO_ONLINE_SERVER"),
+        Profile::Classic => Ok(PRODUCTION),
     }
 }
 /// 이 빌드의 서버 — 표가 맞지 않으면 접속하지 않는다(시작할 때가 아니라 요청마다 확인, 패닉 없음)
@@ -66,12 +66,14 @@ pub(crate) fn server() -> Result<(Server, CloudTarget), String> {
     Ok((s, t))
 }
 
-/// 이 빌드의 프로필 — DEV 통합 앱이면 DEV 설정 폴더·보안 저장소 이름(Preview와 겹치지 않음, 98)
+/// 이 빌드의 프로필 — 설정 폴더·보안 저장소 이름·서버가 판마다 따로(Preview·DEV·정식판이 겹치지 않음, 98)
 fn app_profile() -> Profile {
     if cfg!(feature = "dev-channel") {
         Profile::LocalDev
-    } else {
+    } else if cfg!(feature = "connected-preview") {
         Profile::ConnectedPreview
+    } else {
+        Profile::Classic
     }
 }
 fn target() -> Result<CloudTarget, String> {

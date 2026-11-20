@@ -106,10 +106,8 @@ describe("DEV 프로필·설정", () => {
     const preview = json("src-tauri/tauri.preview.conf.json");
     expect(Object.keys(dev.app.security)).toEqual(["csp"]);
     expect(dev.app.security.csp).toBe(preview.app.security.csp);
-    expect(dev.app.security.csp.replace("script-src 'self' 'wasm-unsafe-eval'; ", "")).toBe(
-      base.app.security.csp,
-    );
-    expect(base.app.security.csp).not.toContain("wasm");
+    // G-9(G-D9): 정식판 CSP에도 같은 한 줄 — DEV·Preview·정식판 CSP가 같다
+    expect(dev.app.security.csp).toBe(base.app.security.csp);
     // 비공식 판 설치 아이콘(release-channel-spec 6절): 정식판 icons/와 같은 파일 구성, 폴더만 icons-dev/
     expect(dev.bundle).toEqual({
       icon: base.bundle.icon.map((p: string) => p.replace(/^icons\//, "icons-dev/")),

@@ -1,6 +1,7 @@
 // G-8(docs/v2-design/104) 개인정보 안내 · 이용 안내 — 첫 로그인 전 동의 한 번, 설정 › 계정에서 다시 보기.
 // 브라우저 모드 가짜 서버(외부 요청 없음). 동의는 이 기기 설정(config.json onlineTerms)에만.
 import { expect, test } from "@playwright/test";
+import { CONTACT } from "../../src/shared/onlineTerms";
 
 const EMAIL = "virtual@example.invalid";
 const external = (requests: string[]) =>
@@ -35,8 +36,9 @@ test("첫 로그인: 동의 전에는 [인증번호 받기] 잠김 → 안내 �
   await expect(
     dialog.getByText("그림 100MB · 온라인 워크스페이스 3개 · 기록 30MB", { exact: false }),
   ).toBeVisible();
-  // 문의 이메일은 출시 때 넣는다 — 그 전까지 자리 표시
-  await expect(dialog.getByText("[문의 이메일]")).toBeVisible();
+  // 문의 이메일(출시 판) — 자리 표시가 남지 않는다
+  await expect(dialog.getByText(CONTACT as string, { exact: true })).toBeVisible();
+  await expect(dialog.getByText("[문의 이메일]")).toHaveCount(0);
   await page.keyboard.press("Escape");
   await expect(dialog).toHaveCount(0);
   await expect(page.getByTestId("preview-email-input")).toHaveValue(EMAIL);

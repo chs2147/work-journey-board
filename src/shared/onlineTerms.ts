@@ -1,11 +1,11 @@
 // G-8(docs/v2-design/104) 온라인 기능 개인정보 안내 · 이용 안내 — 앱 안에서 보여 주는 글(외부 페이지 없음, 통신 없음).
 // 정본 = 104문서. 이 글을 고치면 104문서도 함께 고친다(tests/unit/onlineTerms.test.ts가 문단이 같은지 본다).
-// 문의 이메일은 저장소에 두지 않는다 — 출시 때 CONTACT에 넣는다(그 전까지 자리 표시).
+// 문의 이메일 = 운영자(관리자) 주소 — 2026-11-20 사용자 결정(G-9 출시).
 
 /** 바뀌면 다시 동의를 받는다(설정 config.json `onlineTerms.version`과 비교) */
-export const TERMS_VERSION = "2026-11-17-draft";
-/** 출시 때 채움 — 비어 있으면 자리 표시를 그대로 보여 준다 */
-export const CONTACT: string | null = null;
+export const TERMS_VERSION = "2026-11-20";
+/** 문의 주소 — 비어 있으면 자리 표시를 그대로 보여 준다 */
+export const CONTACT: string | null = "chs2147@gmail.com";
 export const CONTACT_PLACEHOLDER = "[문의 이메일]";
 
 export type TermsKind = "privacy" | "terms";
@@ -56,7 +56,7 @@ export const ONLINE_TERMS: Record<TermsKind, TermsDoc> = {
           "- 기록에서 빠진 그림은 7일 뒤 서버에서 지워집니다.",
           "- [계정 삭제] 를 하면 그 계정의 온라인 워크스페이스와 그림, 로그인 정보가 모두 지워집니다. 되돌릴 수 없습니다.",
           "- 내 PC의 일지와 이 기기 사본은 서버가 지우지 않습니다. 직접 관리합니다.",
-          "- 운영자는 장애 대비를 위해 한 달에 한 번 서버 내용을 내려받아 보관할 수 있고, 계정이나 공간을 지우면 다음 보관분부터 빠집니다. 보관분은 3개월이 지나면 지웁니다.",
+          "- 운영자는 장애 대비를 위해 필요할 때 서버 내용을 내려받아 보관할 수 있고, 계정이나 공간을 지우면 다음 보관분부터 빠집니다. 보관분은 3개월이 지나면 지웁니다.",
         ],
       },
       {
@@ -83,7 +83,7 @@ export const ONLINE_TERMS: Record<TermsKind, TermsDoc> = {
       {
         title: "3. 중단 가능성",
         lines: [
-          "무료 서버 사정이나 운영 사정으로 온라인 기능이 잠시 또는 완전히 멈출 수 있습니다. 완전히 멈추기 전에는 앱과 메일로 미리 알립니다. 멈춰도 내 PC의 일지와 이 기기 사본은 그대로 쓸 수 있습니다.",
+          "무료 서버 사정이나 운영 사정으로 온라인 기능이 잠시 또는 완전히 멈출 수 있습니다. 완전히 멈추기 전에는 메일로 미리 알립니다. 멈춰도 내 PC의 일지와 이 기기 사본은 그대로 쓸 수 있습니다.",
         ],
       },
       {
@@ -100,7 +100,7 @@ export const ONLINE_TERMS: Record<TermsKind, TermsDoc> = {
       },
       { title: "6. 문의", lines: ["{contact}"] },
     ],
-    footer: "시행일: (출시일)",
+    footer: "시행일: 2026-11-20",
   },
 };
 

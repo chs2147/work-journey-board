@@ -101,6 +101,11 @@ pub fn run() {
         }
     });
     // Local Classic 명령 목록 = 예전 그대로 + 프로필 묻기(읽기 전용) + 닫기 안전장치 풀기
+    // + G-9(2026-11-20): 온라인 공간 명령(DEV 통합 앱과 같음 — DEV 일지 표시 명령만 없음, 서버 = 운영)
+    #[cfg(not(any(feature = "connected-preview", feature = "dev-channel")))]
+    let builder = builder
+        .manage(online::OnlineState::default())
+        .manage(space_db::SpaceDbState::default());
     #[cfg(not(any(feature = "connected-preview", feature = "dev-channel")))]
     let builder = builder.invoke_handler(tauri::generate_handler![
         db_batch::db_batch,
@@ -129,7 +134,39 @@ pub fn run() {
         cabinet::cabinet_resolve_shortcut,
         cabinet::cabinet_drag_paths,
         profile::app_profile,
-        exit_guard::exit_guard_cancel
+        exit_guard::exit_guard_cancel,
+        online::online_status,
+        online::online_send_code,
+        online::online_verify_code,
+        online::online_check,
+        online::online_sign_out,
+        source_copy::source_snapshot,
+        source_copy::source_snapshot_read,
+        source_copy::source_candidates,
+        source_copy::source_snapshot_remove,
+        migration::migration_device,
+        migration::migration_command,
+        migration::migration_put_asset,
+        migration::migration_cancel_asset,
+        migration::migration_journal_list,
+        migration::migration_journal_write,
+        migration::migration_journal_remove,
+        online_space::space_list,
+        online_space::space_sync,
+        online_space::space_read,
+        online_space::space_remove,
+        space_db::space_db_exists,
+        space_db::space_db_create,
+        space_db::space_db_open,
+        space_db::space_db_close,
+        space_db::space_db_select,
+        space_db::space_db_execute,
+        space_db::space_db_batch,
+        space_db::space_db_export,
+        space_sync::space_sync_call,
+        space_sync::online_account_call,
+        space_sync::space_asset_upload,
+        space_sync::space_asset_fetch
     ]);
     // DEV 검증판 = Local Classic 명령 + 일지 폴더 DEV 표시 확인·준비·정식 일지 복제(docs/release-channel-spec.md)
     // G-1(98) DEV 통합 앱: 로컬 명령 + 온라인 공간 명령(Preview와 같음, 닫기 주도 preview_close만 제외 — DEV는 지금 닫기 흐름이 일지를 닫는다)

@@ -441,6 +441,16 @@ async function shots(base = "http://localhost:1420", only) {
         await p.locator("#settings-tab-data").click();
       },
     },
+    // 온라인 워크스페이스(G-9): 로그인 전 설정 › 계정 — 이메일·동의 체크·[인증번호 받기](가상 주소, 통신 없음)
+    "16-online": {
+      url: show,
+      run: async (p) => {
+        await p.getByTestId("rail-settings").click();
+        await p.locator("#settings-tab-account").click();
+        await p.getByTestId("preview-email-input").fill("someone@example.com");
+        await p.mouse.move(0, 0);
+      },
+    },
     "13-workspace": {
       url: `${show}&ws=2`,
       run: (p) => p.getByTestId("workspace-button").click(),

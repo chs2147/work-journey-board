@@ -1,4 +1,4 @@
-//! Isolated native reference. Not linked into the Classic Tauri application.
+//! Isolated native reference. Linked into every Tauri build with the `online` feature (Classic since G-9).
 pub mod policy;
 pub mod system_vault;
 pub mod vault;

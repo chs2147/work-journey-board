@@ -26,8 +26,9 @@ async function render(profile: AppProfileInfo) {
   const preview = profile.key === "connected-preview";
   // 별도 창 화면(노트·메모보드 = cabi, 폴더, Cabi.NET 파일 목록) — Preview도 이것만 받고, 그 밖은 Preview 시작 화면
   const childWin = win === "cabi" || win === "folder" || win === "cabinet";
-  // G-1 통합 앱(A안, docs/v2-design/98): DEV 메인 창은 이 PC 공간 + 온라인 공간을 한 앱에서(정식판은 그대로)
-  if (profile.key === "local-dev" && !childWin) {
+  // G-1 통합 앱(A안, docs/v2-design/98): 정식판·DEV 메인 창은 이 PC 공간 + 온라인 공간을 한 앱에서(G-9 2026-11-20 정식판 반영).
+  // 로그인하지 않으면 온라인 묶음이 비어 지금 정식판과 같은 흐름(로컬 영구 유지)
+  if (!preview && !childWin) {
     const { installUnified } = await import("./ui/preview/UnifiedChrome");
     await installUnified();
   }

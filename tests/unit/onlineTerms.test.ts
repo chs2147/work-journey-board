@@ -34,9 +34,10 @@ describe("온라인 기능 안내(G-8)", () => {
       if (d.footer) expect(doc).toContain(d.footer);
     }
   });
-  it("문의 이메일은 저장소에 없다 — 출시 전까지 자리 표시", () => {
-    expect(CONTACT).toBeNull();
-    expect(withContact("문의 {contact}")).toBe(`문의 ${CONTACT_PLACEHOLDER}`);
+  it("문의 이메일이 채워져 있다(출시 판) — 자리 표시가 남지 않는다", () => {
+    expect(CONTACT).toMatch(/^[^@\s]+@[^@\s]+\.[^@\s]+$/);
+    expect(withContact("문의 {contact}")).toBe(`문의 ${CONTACT}`);
+    expect(doc).not.toContain(CONTACT_PLACEHOLDER);
   });
   it("동의는 지금 판만 인정(판이 바뀌면 다시 묻는다)", () => {
     expect(termsAccepted({ version: TERMS_VERSION })).toBe(true);

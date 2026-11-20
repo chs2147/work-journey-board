@@ -5,8 +5,8 @@ use std::path::{Component, Path, PathBuf};
 pub enum Profile { Classic, ConnectedPreview, LocalDev }
 impl Profile {
     pub fn key(self) -> &'static str { match self { Self::Classic => "local-classic", Self::ConnectedPreview => "connected-preview", Self::LocalDev => "local-dev" } }
-    /// 온라인 공간을 쓸 수 있는 프로필(Preview·DEV 통합 앱, docs/v2-design/98) — 정식판(Classic)은 아님
-    pub fn online(self) -> bool { matches!(self, Self::ConnectedPreview | Self::LocalDev) }
+    /// 온라인 공간을 쓸 수 있는 프로필 — Preview·DEV 통합 앱(docs/v2-design/98), 정식판(Classic, G-9 2026-11-20)
+    pub fn online(self) -> bool { matches!(self, Self::Classic | Self::ConnectedPreview | Self::LocalDev) }
 }
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum WorkspaceKind { OfflineOnly, Online }
@@ -67,6 +67,8 @@ pub fn layout(profile: Profile, base: &Path, target: Option<CloudTarget>) -> Res
     let native_root = base.join(id.app_id);
     let project_root = match (profile, target) {
         (Profile::Classic, None) => None,
+        // 정식판 온라인(G-9): 정식판 설정 폴더 아래 환경·프로젝트 폴더 — config.json·일지 폴더는 그대로
+        (Profile::Classic, Some(t)) if t.env == CloudEnv::Production => Some(config_root.join(t.env.key()).join(t.project)),
         (Profile::ConnectedPreview, Some(t)) => Some(config_root.join(t.env.key()).join(t.project)),
         // DEV 통합 앱: 로컬만 쓸 때는 없음, 온라인을 쓸 때는 DEV 설정 폴더 아래(Preview·정식판과 겹치지 않음)
         (Profile::LocalDev, None) => None,

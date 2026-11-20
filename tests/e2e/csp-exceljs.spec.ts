@@ -34,7 +34,8 @@ window.run = async () => {
 
 test("실앱 CSP 아래에서 엑셀 쓰기·읽기 — CSP 위반·외부 요청 없음", async ({ page }) => {
   expect(CSP).toContain("default-src 'self'");
-  expect(CSP).not.toContain("unsafe-eval");
+  // 'wasm-unsafe-eval'(G-D9 — WebAssembly만)은 허용, 일반 'unsafe-eval'은 없다
+  expect(CSP).not.toMatch(/(^|\s)'unsafe-eval'/);
   await page.route("http://csp.test/**", (route) => {
     const path = new URL(route.request().url()).pathname;
     if (path === "/")

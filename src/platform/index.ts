@@ -289,8 +289,8 @@ export const activeProfile = () => active;
 export function setActiveProfile(p: AppProfileInfo) {
   active = p;
 }
-/** 온라인 공간을 쓸 수 있는 판(DEV·Preview). 정식판은 false — 화면·흐름이 지금 그대로(docs/v2-design/98) */
-export const onlineCapable = (p: AppProfileInfo = active) => p.key !== "local-classic";
+/** 온라인 공간을 쓸 수 있는 판 — G-9(2026-11-20)부터 정식판·DEV·Preview 모두(서버는 판마다 따로, online.rs) */
+export const onlineCapable = () => true;
 
 /** DEV 일지 폴더 상태(Rust dev_guard): dev = DEV 표시 · official = 정식 일지 · empty = 일지 없음 · missing */
 export type DevFolderStatus = "dev" | "official" | "empty" | "missing";

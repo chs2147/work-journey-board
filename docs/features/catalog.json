@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "product": "Work Journey Board",
-  "catalogVersion": "1.40.1",
-  "asOfDate": "2026-11-16",
-  "baseRelease": "1.40.1",
+  "catalogVersion": "1.50.0",
+  "asOfDate": "2026-11-20",
+  "baseRelease": "1.50.0",
   "sourceCommit": "6d769c4",
   "appSchemaVersion": 20,
   "versionDefinition": "최초 제공 = 비RC 출시 이력에서 기능 제공이 확인된 최초 버전(0.x 개발판 포함); RC는 preview로 별도 기록",
@@ -12712,6 +12712,252 @@
       "reviewStatus": "미검토",
       "reviewNote": "사용자 요청 main 직접 패치(1.40.1).",
       "lastChanged": "1.40.1",
+      "schemaRequirement": "DB v20"
+    },
+    {
+      "id": "WJB-ONLINE-001",
+      "area": "온라인",
+      "section": "온라인 워크스페이스",
+      "kind": "제품 기능",
+      "name": "온라인 로그인(초대 전용·이메일 인증번호)",
+      "description": "설정 › 계정 또는 [온라인 로그인…]에서 이메일 인증번호로 로그인. 운영자가 초대한 이메일만. 로그인 정보는 이 기기 보안 저장소에만, 로그아웃하면 이 PC 마지막 공간으로.",
+      "entry": "공간 메뉴 · 설정 › 계정",
+      "introduced": "1.50.0",
+      "preview": null,
+      "status": "active",
+      "platforms": [
+        "windows",
+        "macos"
+      ],
+      "platformSince": {
+        "windows": "1.50.0",
+        "macos": "1.50.0"
+      },
+      "history": [
+        {
+          "version": "1.50.0",
+          "type": "added",
+          "description": "설정 › 계정 또는 [온라인 로그인…]에서 이메일 인증번호로 로그인. 운영자가 초대한 이메일만. 로그인 정보는 이 기기 보안 저장소에만, 로그아웃하면 이 PC 마지막 공간으로.",
+          "source": "docs/release-notes/v1.50.0.md"
+        }
+      ],
+      "sources": [
+        "docs/release-notes/v1.50.0.md",
+        "docs/v2-design/94-invite-only-signup.md"
+      ],
+      "implementation": [
+        "src-tauri/src/online.rs",
+        "src/ui/preview/AccountPanel.tsx"
+      ],
+      "verification": "단위·E2E(브라우저 가상 서버)·Rust 시험. 운영 서버 실서버 점검 15/15(103). 정식 설치판 실기는 릴리스 노트 '설치 후 확인'.",
+      "reviewStatus": "미검토",
+      "reviewNote": "G-9 첫 온라인 정식판(1.50.0).",
+      "lastChanged": "1.50.0",
+      "schemaRequirement": "DB v20"
+    },
+    {
+      "id": "WJB-ONLINE-002",
+      "area": "온라인",
+      "section": "온라인 워크스페이스",
+      "kind": "제품 기능",
+      "name": "개인정보·이용 안내 동의",
+      "description": "첫 로그인 전에 개인정보 안내·온라인 기능 이용 안내를 읽고 동의(체크해야 인증번호 받기). 동의 기록은 이 기기 설정에만, 안내 판이 바뀌면 다시 묻는다. 설정 › 계정 맨 아래에서 다시 보기.",
+      "entry": "공간 메뉴 · 설정 › 계정",
+      "introduced": "1.50.0",
+      "preview": null,
+      "status": "active",
+      "platforms": [
+        "windows",
+        "macos"
+      ],
+      "platformSince": {
+        "windows": "1.50.0",
+        "macos": "1.50.0"
+      },
+      "history": [
+        {
+          "version": "1.50.0",
+          "type": "added",
+          "description": "첫 로그인 전에 개인정보 안내·온라인 기능 이용 안내를 읽고 동의(체크해야 인증번호 받기). 동의 기록은 이 기기 설정에만, 안내 판이 바뀌면 다시 묻는다. 설정 › 계정 맨 아래에서 다시 보기.",
+          "source": "docs/release-notes/v1.50.0.md"
+        }
+      ],
+      "sources": [
+        "docs/release-notes/v1.50.0.md",
+        "docs/v2-design/104-g8-privacy-terms-draft.md"
+      ],
+      "implementation": [
+        "src/shared/onlineTerms.ts",
+        "src/ui/preview/onlineTermsStore.ts"
+      ],
+      "verification": "단위·E2E(브라우저 가상 서버)·Rust 시험. 운영 서버 실서버 점검 15/15(103). 정식 설치판 실기는 릴리스 노트 '설치 후 확인'.",
+      "reviewStatus": "미검토",
+      "reviewNote": "G-9 첫 온라인 정식판(1.50.0).",
+      "lastChanged": "1.50.0",
+      "schemaRequirement": "DB v20"
+    },
+    {
+      "id": "WJB-ONLINE-003",
+      "area": "온라인",
+      "section": "온라인 워크스페이스",
+      "kind": "제품 기능",
+      "name": "온라인 워크스페이스 만들기",
+      "description": "[온라인 워크스페이스 만들기…] — 오프라인 기록으로 시작(이 PC 일지 복제, 원본은 그대로) 또는 새로 시작하기(빈 공간). 그림은 일지 밖 저장소로 올리고 확인 뒤 활성화.",
+      "entry": "공간 메뉴 · 설정 › 계정",
+      "introduced": "1.50.0",
+      "preview": null,
+      "status": "active",
+      "platforms": [
+        "windows",
+        "macos"
+      ],
+      "platformSince": {
+        "windows": "1.50.0",
+        "macos": "1.50.0"
+      },
+      "history": [
+        {
+          "version": "1.50.0",
+          "type": "added",
+          "description": "[온라인 워크스페이스 만들기…] — 오프라인 기록으로 시작(이 PC 일지 복제, 원본은 그대로) 또는 새로 시작하기(빈 공간). 그림은 일지 밖 저장소로 올리고 확인 뒤 활성화.",
+          "source": "docs/release-notes/v1.50.0.md"
+        }
+      ],
+      "sources": [
+        "docs/release-notes/v1.50.0.md",
+        "docs/v2-design/56-local-permanence-copy-migration.md"
+      ],
+      "implementation": [
+        "src-tauri/src/migration.rs",
+        "src-tauri/src/source_copy.rs"
+      ],
+      "verification": "단위·E2E(브라우저 가상 서버)·Rust 시험. 운영 서버 실서버 점검 15/15(103). 정식 설치판 실기는 릴리스 노트 '설치 후 확인'.",
+      "reviewStatus": "미검토",
+      "reviewNote": "G-9 첫 온라인 정식판(1.50.0).",
+      "lastChanged": "1.50.0",
+      "schemaRequirement": "DB v20"
+    },
+    {
+      "id": "WJB-ONLINE-004",
+      "area": "온라인",
+      "section": "온라인 워크스페이스",
+      "kind": "제품 기능",
+      "name": "이 PC ↔ 온라인 공간 전환·마지막 공간으로 시작",
+      "description": "공간 메뉴가 이 PC·온라인 두 묶음. 한 길로 저장 → 닫기 → 열기(전환 무결성), 앱을 다시 켜면 마지막으로 쓴 공간(온라인이면 첫 동기화 후).",
+      "entry": "공간 메뉴 · 설정 › 계정",
+      "introduced": "1.50.0",
+      "preview": null,
+      "status": "active",
+      "platforms": [
+        "windows",
+        "macos"
+      ],
+      "platformSince": {
+        "windows": "1.50.0",
+        "macos": "1.50.0"
+      },
+      "history": [
+        {
+          "version": "1.50.0",
+          "type": "added",
+          "description": "공간 메뉴가 이 PC·온라인 두 묶음. 한 길로 저장 → 닫기 → 열기(전환 무결성), 앱을 다시 켜면 마지막으로 쓴 공간(온라인이면 첫 동기화 후).",
+          "source": "docs/release-notes/v1.50.0.md"
+        }
+      ],
+      "sources": [
+        "docs/release-notes/v1.50.0.md",
+        "docs/v2-design/98-g1-unified-app.md"
+      ],
+      "implementation": [
+        "src/ui/preview/UnifiedChrome.tsx",
+        "src/ui/common/appController.ts"
+      ],
+      "verification": "단위·E2E(브라우저 가상 서버)·Rust 시험. 운영 서버 실서버 점검 15/15(103). 정식 설치판 실기는 릴리스 노트 '설치 후 확인'.",
+      "reviewStatus": "미검토",
+      "reviewNote": "G-9 첫 온라인 정식판(1.50.0).",
+      "lastChanged": "1.50.0",
+      "schemaRequirement": "DB v20"
+    },
+    {
+      "id": "WJB-ONLINE-005",
+      "area": "온라인",
+      "section": "온라인 워크스페이스",
+      "kind": "제품 기능",
+      "name": "동기화·오프라인 저장·충돌 해결",
+      "description": "온라인 공간은 이 기기 사본에 먼저 저장하고 서버와 동기화. 상단 알약(동기화됨·이 기기에 저장됨·오프라인·대기 N건), 같은 내용을 두 기기에서 고치면 충돌 목록에서 이 기기 것·서버 것·둘 다 보존.",
+      "entry": "공간 메뉴 · 설정 › 계정",
+      "introduced": "1.50.0",
+      "preview": null,
+      "status": "active",
+      "platforms": [
+        "windows",
+        "macos"
+      ],
+      "platformSince": {
+        "windows": "1.50.0",
+        "macos": "1.50.0"
+      },
+      "history": [
+        {
+          "version": "1.50.0",
+          "type": "added",
+          "description": "온라인 공간은 이 기기 사본에 먼저 저장하고 서버와 동기화. 상단 알약(동기화됨·이 기기에 저장됨·오프라인·대기 N건), 같은 내용을 두 기기에서 고치면 충돌 목록에서 이 기기 것·서버 것·둘 다 보존.",
+          "source": "docs/release-notes/v1.50.0.md"
+        }
+      ],
+      "sources": [
+        "docs/release-notes/v1.50.0.md",
+        "docs/v2-design/91-e3-client-sync.md"
+      ],
+      "implementation": [
+        "src-tauri/src/space_sync.rs",
+        "src-tauri/src/space_db.rs"
+      ],
+      "verification": "단위·E2E(브라우저 가상 서버)·Rust 시험. 운영 서버 실서버 점검 15/15(103). 정식 설치판 실기는 릴리스 노트 '설치 후 확인'.",
+      "reviewStatus": "미검토",
+      "reviewNote": "G-9 첫 온라인 정식판(1.50.0).",
+      "lastChanged": "1.50.0",
+      "schemaRequirement": "DB v20"
+    },
+    {
+      "id": "WJB-ONLINE-006",
+      "area": "온라인",
+      "section": "온라인 워크스페이스",
+      "kind": "제품 기능",
+      "name": "사용량·서버에서 지우기·계정 삭제",
+      "description": "계정별 사용량(그림 100MB·온라인 공간 3개·기록 30MB), 온라인 공간 [서버에서 지우기], [계정 삭제](온라인 공간·그림·로그인 정보 모두 삭제, 이 PC 일지는 그대로).",
+      "entry": "공간 메뉴 · 설정 › 계정",
+      "introduced": "1.50.0",
+      "preview": null,
+      "status": "active",
+      "platforms": [
+        "windows",
+        "macos"
+      ],
+      "platformSince": {
+        "windows": "1.50.0",
+        "macos": "1.50.0"
+      },
+      "history": [
+        {
+          "version": "1.50.0",
+          "type": "added",
+          "description": "계정별 사용량(그림 100MB·온라인 공간 3개·기록 30MB), 온라인 공간 [서버에서 지우기], [계정 삭제](온라인 공간·그림·로그인 정보 모두 삭제, 이 PC 일지는 그대로).",
+          "source": "docs/release-notes/v1.50.0.md"
+        }
+      ],
+      "sources": [
+        "docs/release-notes/v1.50.0.md",
+        "docs/v2-design/100-g5-data-lifecycle.md"
+      ],
+      "implementation": [
+        "src-tauri/src/online_space.rs",
+        "src/ui/preview/OnlineChrome.tsx"
+      ],
+      "verification": "단위·E2E(브라우저 가상 서버)·Rust 시험. 운영 서버 실서버 점검 15/15(103). 정식 설치판 실기는 릴리스 노트 '설치 후 확인'.",
+      "reviewStatus": "미검토",
+      "reviewNote": "G-9 첫 온라인 정식판(1.50.0).",
+      "lastChanged": "1.50.0",
       "schemaRequirement": "DB v20"
     }
   ],

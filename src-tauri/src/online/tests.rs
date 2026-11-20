@@ -182,15 +182,26 @@ fn sign_in_keeps_refresh_token_only_in_vault_and_checks_gateway() {
         Some(json!({ "type": "email", "email": "virtual@example.invalid", "token": "12345678" }))
     );
     assert_eq!(seen[2].2.as_deref(), Some("A1"));
-    // 갱신 토큰은 보안 저장소에만, 열쇠 = 이 앱(Preview 또는 DEV 통합 앱, 98) 서비스 + 개발 프로젝트·계정·기기
+    // 갱신 토큰은 보안 저장소에만, 열쇠 = 이 앱(정식판·Preview·DEV 통합 앱) 서비스 + 그 판의 프로젝트·계정·기기
     assert_eq!(vault.tokens(), ["R1"]);
     let key = &vault.keys()[0];
-    let app = if cfg!(feature = "dev-channel") {
-        "com.chs2147.workjourneyboard.dev"
+    let (app, project) = if cfg!(feature = "dev-channel") {
+        (
+            "com.chs2147.workjourneyboard.dev",
+            "development:vsphftnmfzfoufasjttd",
+        )
+    } else if cfg!(feature = "connected-preview") {
+        (
+            "com.chs2147.workjourneyboard.connected.preview",
+            "development:vsphftnmfzfoufasjttd",
+        )
     } else {
-        "com.chs2147.workjourneyboard.connected.preview"
+        (
+            "com.chs2147.workjourneyboard",
+            "production:hutqsfftioxtredcjhsy",
+        )
     };
-    assert!(key.starts_with(&format!("{app}.auth.v1|development:vsphftnmfzfoufasjttd:")));
+    assert!(key.starts_with(&format!("{app}.auth.v1|{project}:")));
     assert!(key.contains(USER));
     // 파일에는 토큰이 없다
     for name in ["account.json", "device.json"] {
@@ -533,22 +544,41 @@ fn verification_builds_use_development_server_only() {
         assert_eq!(s, DEVELOPMENT);
         assert_eq!(s.check().unwrap().env(), CloudEnv::Development);
     }
-    assert_eq!(server_for(Profile::Classic), Err("NO_ONLINE_SERVER"));
-    let (s, _) = server().unwrap();
-    assert_eq!(s, DEVELOPMENT, "이 빌드(Preview·DEV)는 개발 서버");
-    assert_eq!(
-        endpoint().unwrap().0,
-        "https://vsphftnmfzfoufasjttd.supabase.co"
-    );
 }
 #[test]
-fn production_is_listed_but_not_ready_until_g2() {
+fn classic_uses_production_server_only() {
+    let s = server_for(Profile::Classic).unwrap();
+    assert_eq!(s, PRODUCTION);
+    assert_eq!(s.check().unwrap().env(), CloudEnv::Production);
+}
+#[test]
+fn this_build_picks_its_own_server() {
+    let (s, _) = server().unwrap();
+    if cfg!(any(feature = "connected-preview", feature = "dev-channel")) {
+        assert_eq!(s, DEVELOPMENT, "검증판(Preview·DEV)은 개발 서버");
+        assert_eq!(
+            endpoint().unwrap().0,
+            "https://vsphftnmfzfoufasjttd.supabase.co"
+        );
+    } else {
+        assert_eq!(s, PRODUCTION, "정식판은 운영 서버");
+        assert_eq!(
+            endpoint().unwrap().0,
+            "https://hutqsfftioxtredcjhsy.supabase.co"
+        );
+    }
+}
+#[test]
+fn production_is_ready_after_g2() {
     assert_eq!(PRODUCTION.env, CloudEnv::Production);
     assert_eq!(
         PRODUCTION.origin,
         format!("https://{}.supabase.co", PRODUCTION.project_ref)
     );
-    assert_eq!(PRODUCTION.check(), Err("SERVER_NOT_READY"));
+    assert!(PRODUCTION.check().is_ok());
+    let mut s = PRODUCTION;
+    s.publishable_key = None; // 키가 없으면 접속하지 않는다
+    assert_eq!(s.check(), Err("SERVER_NOT_READY"));
 }
 #[test]
 fn mixed_or_unknown_servers_are_refused() {
