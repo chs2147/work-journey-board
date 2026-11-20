@@ -1,0 +1,132 @@
+{
+  "startedAt": "2026-11-20T00:30:07.994Z",
+  "projectRef": "hutqsfftioxtredcjhsy",
+  "environment": "production",
+  "productionTouched": true,
+  "mailSent": false,
+  "transport": "edge-gateway-http-only",
+  "checks": [
+    {
+      "name": "login_with_code",
+      "passed": true
+    },
+    {
+      "name": "gateway_uses_new_secret_key",
+      "passed": true,
+      "extra": {
+        "serverKey": "secret",
+        "project": "production"
+      }
+    },
+    {
+      "name": "device_registered",
+      "passed": true
+    },
+    {
+      "name": "resume_reports_missing_page",
+      "passed": true,
+      "extra": {
+        "received": [
+          0,
+          1,
+          2,
+          4,
+          5
+        ]
+      }
+    },
+    {
+      "name": "paged_upload_started",
+      "passed": true,
+      "extra": {
+        "records": 5052,
+        "pages": 6
+      }
+    },
+    {
+      "name": "large_image_uploaded_and_attested",
+      "passed": true,
+      "extra": {
+        "assets": 1,
+        "firstBytes": 5242880
+      }
+    },
+    {
+      "name": "asset_read_requires_token",
+      "passed": true
+    },
+    {
+      "name": "published_poc_receipt",
+      "passed": true,
+      "extra": {
+        "keys": [
+          "status",
+          "profile",
+          "generation",
+          "workspaceId",
+          "manifestHash",
+          "publicationId",
+          "sourceManifestHash"
+        ]
+      }
+    },
+    {
+      "name": "read_back_lossless",
+      "passed": true,
+      "extra": {
+        "records": 5052
+      }
+    },
+    {
+      "name": "image_download_matches",
+      "passed": true
+    },
+    {
+      "name": "delete_space_accepted",
+      "passed": true,
+      "extra": {
+        "status": 200
+      }
+    },
+    {
+      "name": "delete_space_purges_objects_and_quota",
+      "passed": true
+    },
+    {
+      "name": "deleted_image_not_readable",
+      "passed": true,
+      "extra": {
+        "status": 409
+      }
+    },
+    {
+      "name": "cancel_cleans_quota",
+      "passed": true
+    },
+    {
+      "name": "delete_account_removes_auth_user",
+      "passed": true,
+      "extra": {
+        "status": 200
+      }
+    }
+  ],
+  "timing": {
+    "recordsSeconds": 25.179,
+    "assetsSeconds": 10.48,
+    "readBackSeconds": 5.759
+  },
+  "cleanup": {
+    "jobs": 0,
+    "uploads": 0,
+    "records": 0,
+    "workspaces": 0,
+    "assets": 0,
+    "devices": 0,
+    "objects": 0,
+    "users": 0,
+    "zero": true
+  },
+  "passed": true,
+  "finishedAt": "2026-11-20T00:31:52.604Z"
+}

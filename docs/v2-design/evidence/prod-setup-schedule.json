@@ -1,0 +1,27 @@
+{
+  "at": "2026-11-20T00:32:30.305Z",
+  "environment": "production",
+  "projectRef": "hutqsfftioxtredcjhsy",
+  "action": "schedule",
+  "autoApply": false,
+  "executionRole": "postgres",
+  "schedules": [
+    {
+      "job": "keepalive_ping",
+      "state": "applied"
+    },
+    {
+      "job": "wjb-life-sweep",
+      "cron": "10 18 * * *",
+      "state": "applied"
+    },
+    {
+      "job": "wjb-ops-metrics",
+      "cron": "50 14 * * *",
+      "state": "applied"
+    }
+  ],
+  "firstSnapshot": true,
+  "ok": true,
+  "finishedAt": "2026-11-20T00:33:05.838Z"
+}

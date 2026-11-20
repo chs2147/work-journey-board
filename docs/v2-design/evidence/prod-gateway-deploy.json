@@ -1,0 +1,13 @@
+{
+  "deployedAt": "2026-11-20T00:29:44.815Z",
+  "projectRef": "hutqsfftioxtredcjhsy",
+  "environment": "production",
+  "productionTouched": true,
+  "function": "wjb-gateway",
+  "verifyJwt": false,
+  "bundleSha256": "fe610a338e85b3971e5dfafc85d519e361f361a2b67d9793517fd1ecf6a7327e",
+  "bundleBytes": 100181,
+  "status": 201,
+  "version": 1,
+  "functionStatus": "ACTIVE"
+}

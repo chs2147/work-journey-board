@@ -47,7 +47,12 @@
 | 1 | 2026-11-20 | `ap-northeast-1`·`ACTIVE_HEALTHY`, 빈 프로젝트 | (읽기만, 파일 없음) |
 | 2 | 2026-11-20 | 세션 보호·gateway 기반 2개·SQL 001…037 13개 = 16단계 적용, SQL 13개 확인 통과 → 다시 읽기: 16단계 모두 있음, 스키마 `wjb_gateway`·`wjb_life`·`wjb_migration`·`wjb_ops`·`wjb_sync`·`wjb_v2_cloud` | `evidence/prod-setup-apply-sql.json` |
 | 3 | 2026-11-20 | `wjb-v2-assets` 만듦, 설정 개발과 같음(`matches`) | `evidence/prod-setup-bucket.json` |
-| 4·5 | — | 사용자 대시보드 작업 대기 | — |
+| 4·5 | 2026-11-20 | 사용자 대시보드 설정 → 읽기 확인: 가입 끔·이메일 인증번호 양식(`{{ .Token }}`, 8자리·1시간)·SMTP `smtp.resend.com`:465 `resend`·보내는 주소 = 인증 도메인·시간당 30통 · API 키 secret `wjb_gateway`·`wjb_admin_tools`, 예전(legacy) 키 꺼짐 | (읽기만) |
+| 6 | 2026-11-20 | `wjb-gateway` v1 배포(ACTIVE, 로그인 없이 401) → 실서버 점검 **15/15 통과**(`serverKey = secret`·`production`), 정리 잔여 0 | `evidence/prod-gateway-deploy.json` · `evidence/prod-paged-copy-live.json` |
+| 7 | 2026-11-20 | `WJB_ADMIN_EMAIL` 계정 초대(만듦, 확인된 계정이라 로그인 양식으로 바로 로그인) → 관리자 1명 지정, 계정 1 | `evidence/prod-admin-set.json` |
+| 8 | 2026-11-20 | 예약 `keepalive_ping`·`wjb-life-sweep`(`10 18 * * *`)·`wjb-ops-metrics`(`50 14 * * *`), 첫 측정 | `evidence/prod-setup-schedule.json` |
+| 점검 | 2026-11-20 | `audit.mjs --audit-production` **12/12 통과** (8단계 전에는 `cron.job` 표가 없어 도구가 오류 응답을 처리하지 못하고 멈춤 — 도구 보완 필요) | (출력만) |
+| 9·10 | — | 9 = 정식판 반영 커밋에서, 10 = 복구 리허설 대기 | — |
 
 ## 3. 끝난 기준
 
