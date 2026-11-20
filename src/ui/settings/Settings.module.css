@@ -195,6 +195,11 @@
   gap: var(--sp-2);
 }
 
+.rowDetails {
+  flex: 1 0 100%;
+  min-width: 0;
+}
+
 .empty {
   margin: 0;
   padding: var(--sp-4) var(--sp-5);

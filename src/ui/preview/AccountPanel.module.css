@@ -106,35 +106,58 @@
 }
 .gauges {
   display: grid;
-  gap: var(--sp-3);
-  grid-template-columns: repeat(auto-fit, minmax(min(155px, 100%), 1fr));
+  container: account-usage / inline-size;
 }
 .gauge {
   display: grid;
-  gap: var(--sp-1);
-  min-width: 0;
-}
-.gaugeHeading {
-  display: flex;
-  flex-wrap: wrap;
+  grid-template-columns: minmax(8rem, 10rem) minmax(0, 1fr) minmax(9rem, 11rem);
+  grid-template-areas: "label track value";
   align-items: center;
-  justify-content: space-between;
-  column-gap: var(--sp-2);
+  column-gap: var(--sp-4);
+  min-width: 0;
+  padding-block: var(--sp-3);
+}
+.gauge + .gauge {
+  border-block-start: 1px solid var(--line);
+}
+.gauge:first-child {
+  padding-block-start: 0;
+}
+.gauge:last-child {
+  padding-block-end: 0;
+}
+.gaugeLabel {
+  grid-area: label;
   color: var(--text-2);
   font-size: var(--fs-sm);
 }
 .gaugeValue {
+  grid-area: value;
   font-variant-numeric: tabular-nums;
   color: var(--text-1);
-  white-space: nowrap;
+  font-size: var(--fs-sm);
+  text-align: end;
 }
 .gaugeTrack {
+  grid-area: track;
   display: block;
   height: 8px;
   overflow: hidden;
   border-radius: 999px;
   background: var(--surface-sub);
   box-shadow: inset 0 0 0 1px var(--line);
+}
+.gaugeTitle {
+  margin: 0 0 var(--sp-3);
+  font-weight: var(--fw-bold);
+  font-size: var(--fs-sm);
+}
+@container account-usage (max-width: 27rem) {
+  .gauge {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "label value" "track track";
+    row-gap: var(--sp-2);
+  }
 }
 .gaugeTrack[data-unlimited] {
   background: repeating-linear-gradient(
@@ -177,12 +200,14 @@
 }
 .adminRow {
   flex-wrap: wrap;
+  row-gap: var(--sp-4);
 }
 .adminRow > :first-child {
-  flex-basis: 280px;
+  flex-basis: 180px;
+  overflow-wrap: anywhere;
 }
-.adminRow .gauges {
-  margin-top: var(--sp-2);
+.adminRow > :nth-child(2) {
+  max-width: 100%;
 }
 .iconAction {
   display: inline-flex;

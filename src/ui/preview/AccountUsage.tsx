@@ -52,13 +52,8 @@ function UsageGauge({
     limit === null ? 0 : limit === 0 ? (used > 0 ? 100 : 0) : Math.min(100, (used / limit) * 100);
   return (
     <span className={own.gauge} data-tone={level(used, limit)}>
-      <span className={own.gaugeHeading}>
-        <span>
-          {label} <LevelBadge used={used} limit={limit} />
-        </span>
-        <span className={own.gaugeValue} data-testid={testId}>
-          {value}
-        </span>
+      <span className={own.gaugeLabel}>
+        {label} <LevelBadge used={used} limit={limit} />
       </span>
       {limit === null ? (
         <span className={own.gaugeTrack} data-unlimited aria-hidden="true" />
@@ -75,6 +70,9 @@ function UsageGauge({
           <span className={own.gaugeFill} style={{ width: percent + "%" }} />
         </span>
       )}
+      <span className={own.gaugeValue} data-testid={testId}>
+        {value}
+      </span>
     </span>
   );
 }
@@ -151,7 +149,10 @@ export function AdminCard() {
       testId="admin-card"
     >
       {p && (
-        <div className={own.gaugeSection}>
+        <section className={own.gaugeSection} aria-labelledby="online-project-usage">
+          <h4 className={own.gaugeTitle} id="online-project-usage">
+            {A.projectUsage}
+          </h4>
           <span className={own.gauges}>
             <UsageGauge
               label={A.projectImages}
@@ -161,7 +162,7 @@ export function AdminCard() {
             />
             <UsageGauge label={A.projectDb} used={p.db} limit={p.dbLimit} testId="admin-project-db" />
           </span>
-        </div>
+        </section>
       )}
       <form
         className={own.registration}
@@ -244,7 +245,7 @@ function AccountRow({
             {!a.admin && a.custom && !a.unlimited && <span className={own.badge}>{A.custom}</span>}
           </span>
         }
-        desc={<AccountGauges usage={a} />}
+        details={<AccountGauges usage={a} />}
       >
         {!a.admin && (
           <>

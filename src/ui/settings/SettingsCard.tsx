@@ -31,12 +31,14 @@ export function Row({
   desc,
   descTestId,
   className,
+  details,
   children,
 }: {
   label: ReactNode;
   desc?: ReactNode;
   descTestId?: string;
   className?: string;
+  details?: ReactNode;
   children?: ReactNode;
 }) {
   return (
@@ -50,6 +52,7 @@ export function Row({
         )}
       </div>
       {children && <div className={styles.rowCtl}>{children}</div>}
+      {details && <div className={styles.rowDetails}>{details}</div>}
     </div>
   );
 }

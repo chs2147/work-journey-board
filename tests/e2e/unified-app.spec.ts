@@ -105,17 +105,32 @@ test("G-1 로그인 후: 이 PC ↔ 온라인 오가기 3번 — 두 일지 행 
 });
 
 test("관리자는 별도 메뉴에서 서버와 사용자 게이지를 보고 이메일로 사용자를 등록한다", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 850 });
   await startDev(page, "&previewAdmin=1");
   await signIn(page);
   const account = page.getByTestId("settings-cat-account");
   await expect(account.getByTestId("usage-card")).toContainText("무제한");
+  const usageImages = (await account.getByTestId("usage-images").boundingBox())!;
+  const usageSpaces = (await account.getByTestId("usage-spaces").boundingBox())!;
+  expect(usageSpaces.y).toBeGreaterThan(usageImages.y + usageImages.height);
+  expect(usageSpaces.x + usageSpaces.width).toBe(usageImages.x + usageImages.width);
   await expect(account.getByTestId("admin-card")).toHaveCount(0);
   await page.locator("#settings-tab-admin").click();
   const admin = page.getByTestId("settings-cat-admin");
-  await expect(admin.getByRole("meter", { name: "전체 DB" })).toBeVisible();
+  const databaseMeter = admin.getByRole("meter", { name: "전체 DB" });
+  const databaseValue = admin.getByTestId("admin-project-db");
+  await expect(databaseMeter).toBeVisible();
+  const meter = (await databaseMeter.boundingBox())!;
+  const value = (await databaseValue.boundingBox())!;
+  expect(meter.x + meter.width).toBeLessThan(value.x);
+  expect(meter.y).toBeGreaterThanOrEqual(value.y);
+  expect(meter.y + meter.height).toBeLessThan(value.y + value.height);
   const member = admin.getByTestId("admin-account").filter({ hasText: "invited@example.invalid" });
   const row = member.locator("xpath=ancestor::*[contains(@class,'setRow')][1]");
   await expect(row.getByRole("meter", { name: "온라인 공간" })).toHaveAttribute("aria-valuetext", "1 / 3개");
+  const controls = (await row.getByTestId("admin-edit").boundingBox())!;
+  const memberImages = (await row.getByRole("meter", { name: "그림" }).boundingBox())!;
+  expect(memberImages.y).toBeGreaterThan(controls.y + controls.height);
   await expect(row.getByTestId("admin-suspend").locator("svg")).toBeVisible();
   await expect(row.getByTestId("admin-delete").locator("svg")).toBeVisible();
   const email = admin.getByRole("textbox", { name: "등록할 이메일" });
@@ -127,4 +142,10 @@ test("관리자는 별도 메뉴에서 서버와 사용자 게이지를 보고 �
   await expect(
     admin.getByTestId("admin-account").filter({ hasText: "registered@example.invalid" }),
   ).toBeVisible();
+
+  await page.setViewportSize({ width: 440, height: 900 });
+  const compactMeter = (await databaseMeter.boundingBox())!;
+  const compactValue = (await databaseValue.boundingBox())!;
+  expect(compactMeter.y).toBeGreaterThan(compactValue.y + compactValue.height);
+  expect(compactMeter.x + compactMeter.width).toBeLessThanOrEqual(440);
 });

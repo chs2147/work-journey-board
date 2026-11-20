@@ -1762,6 +1762,7 @@ export const STR_BASE = {
       },
       adminTitle: "사용자 관리",
       adminBadge: "관리자",
+      projectUsage: "서버 전체 사용량",
       projectImages: "전체 그림",
       projectDb: "전체 DB",
       register: "사용자 등록",
