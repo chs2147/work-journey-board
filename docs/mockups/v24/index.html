@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Work Journey Board · 개선 v24 시안</title>
+    <link rel="stylesheet" href="preview.css" />
+    <script src="preview.js" defer></script>
+  </head>
+  <body>
+    <header class="masthead">
+      <div class="page-width masthead-inner">
+        <div>
+          <span class="wordmark">Work Journey Board</span>
+          <h1>개선 v24 시안</h1>
+        </div>
+        <a href="../../improve-v24-spec.md">상세 설계</a>
+      </div>
+    </header>
+    <nav class="review-nav" aria-label="검토할 기능">
+      <div class="page-width">
+        <a href="#online">온라인 공간</a><a href="#loading">전체화면 로딩</a><a href="#kanban">칸반</a
+        ><a href="#universe">Universe</a><a href="#export">내보내기</a>
+      </div>
+    </nav>
+    <main class="page-width">
+      <section id="online" aria-labelledby="online-title">
+        <div class="section-heading"><h2 id="online-title">온라인 워크스페이스</h2></div>
+        <div class="two-up">
+          <article class="app">
+            <header class="app-title"><span>워크스페이스</span><span class="muted">설정</span></header>
+            <div class="app-content online-content">
+              <h3>새로 시작하기</h3>
+              <label class="field">이름<input value="리서치 랩" readonly /></label>
+              <div class="select-row">
+                <span>색상</span>
+                <div class="swatches" role="group" aria-label="공간 색상">
+                  <button type="button" data-color="teal" aria-label="청록" aria-pressed="true"></button>
+                  <button type="button" data-color="amber" aria-label="황색" aria-pressed="false"></button>
+                  <button type="button" data-color="plum" aria-label="자주" aria-pressed="false"></button>
+                </div>
+              </div>
+              <div class="select-row">
+                <span>아이콘</span>
+                <div class="icons" role="group" aria-label="공간 아이콘">
+                  <button type="button" data-icon="↗" aria-label="상승 차트" aria-pressed="true">↗</button>
+                  <button type="button" data-icon="▣" aria-label="자료함" aria-pressed="false">▣</button>
+                  <button type="button" data-icon="◉" aria-label="알람" aria-pressed="false">◉</button>
+                </div>
+              </div>
+              <div class="seam"></div>
+              <button type="button" id="publish-example" class="primary">게시 결과 보기</button>
+              <div class="published" aria-live="polite">
+                <span class="mark" data-workspace-mark aria-hidden="true">↗</span
+                ><span><b>리서치 랩</b><small>온라인 워크스페이스</small></span>
+              </div>
+            </div>
+          </article>
+          <article class="app">
+            <header class="app-title">
+              <span><span class="mark small" data-workspace-mark aria-hidden="true">↗</span> 리서치 랩</span
+              ><span class="chip">동기화됨</span>
+            </header>
+            <div class="app-content online-content">
+              <h3>Cabi.NET</h3>
+              <div class="cabinet-row">
+                <span class="file-mark" aria-hidden="true">▣</span>
+                <div><b>리서치 문서</b><small>이 기기에 등록됨</small></div>
+                <button type="button" data-cabinet="가상 폴더 리서치 문서를 탐색기에서 여는 상태입니다.">
+                  탐색기에서 열기
+                </button>
+              </div>
+              <div class="cabinet-row">
+                <span class="file-mark" aria-hidden="true">▣</span>
+                <div><b>정리 자료</b><small>이 기기에 경로 미지정</small></div>
+                <button type="button" data-cabinet="이 기기의 폴더 선택 창을 여는 상태입니다.">
+                  이 기기에서 경로 지정…
+                </button>
+              </div>
+              <p id="cabinet-result" class="caption" role="status"></p>
+            </div>
+          </article>
+        </div>
+      </section>
+      <section id="loading" aria-labelledby="loading-title">
+        <div class="section-heading">
+          <h2 id="loading-title">전체화면 로딩</h2>
+          <div class="loading-controls">
+            <label
+              >동작
+              <select id="loading-action">
+                <option>서버와 동기화 중…</option>
+                <option>이 PC 공간 여는 중…</option>
+                <option>저장하고 종료하는 중…</option>
+              </select></label
+            >
+            <label
+              >테마
+              <select id="loading-theme">
+                <option value="signature">시그니처</option>
+                <option value="light">라이트</option>
+                <option value="dark">다크</option>
+              </select></label
+            >
+          </div>
+        </div>
+        <div class="two-up loading-comparison" data-theme="signature">
+          <article>
+            <h3>A 중앙 카드형 <span class="recommend">추천</span></h3>
+            <div class="loading-frame">
+              <div class="board-preview" inert aria-hidden="true"></div>
+              <div class="scrim scrim-a">
+                <div class="wait-card">
+                  <span class="spinner" aria-hidden="true"></span
+                  ><strong class="loading-copy">서버와 동기화 중…</strong>
+                </div>
+              </div>
+            </div>
+            <p class="caption">작업 상태를 화면 가운데에 표시합니다.</p>
+          </article>
+          <article>
+            <h3>B 상단 상태형</h3>
+            <div class="loading-frame">
+              <div class="board-preview" inert aria-hidden="true"></div>
+              <div class="scrim scrim-b">
+                <div class="wait-top">
+                  <strong class="loading-copy">서버와 동기화 중…</strong
+                  ><span class="progress-line" aria-hidden="true"></span>
+                </div>
+              </div>
+            </div>
+            <p class="caption">앱 상단에 상태를 표시하고 보드 가운데를 비워 둡니다.</p>
+          </article>
+        </div>
+      </section>
+      <section id="kanban" aria-labelledby="kanban-title">
+        <div class="section-heading"><h2 id="kanban-title">칸반 보드</h2></div>
+        <div class="app">
+          <header class="app-title kanban-bar">
+            <span>칸반</span
+            ><label
+              >보드 기간
+              <select id="board-period">
+                <option value="week">이번 주</option>
+                <option value="today">오늘</option>
+                <option value="2w">최근 2주</option>
+                <option value="4w">최근 4주</option>
+                <option value="12w">최근 12주</option>
+                <option value="all">전체 기간</option>
+              </select></label
+            ><time datetime="2026-11-20">2026.11.20</time>
+          </header>
+          <div id="kanban-columns" class="kanban-columns" aria-label="칸반 섹션"></div>
+        </div>
+        <dialog id="section-period-dialog" aria-labelledby="section-period-title">
+          <form>
+            <h3 id="section-period-title">기간 설정</h3>
+            <label class="field"
+              >표시 기간<select id="section-period">
+                <option value="inherit">상단 기간 따르기</option>
+                <option value="today">오늘</option>
+                <option value="week">이번 주</option>
+                <option value="2w">최근 2주</option>
+                <option value="4w">최근 4주</option>
+                <option value="12w">최근 12주</option>
+                <option value="all">전체 기간</option>
+                <option value="custom">사용자 지정</option>
+              </select></label
+            >
+            <div id="custom-range" class="date-range" hidden>
+              <label class="field">시작일<input type="date" id="range-from" /></label
+              ><label class="field">종료일<input type="date" id="range-to" /></label>
+            </div>
+            <div class="dialog-actions">
+              <button type="button" data-close>취소</button
+              ><button class="primary" type="submit">적용</button>
+            </div>
+          </form>
+        </dialog>
+        <dialog id="section-order-dialog" aria-labelledby="section-order-title">
+          <form>
+            <h3 id="section-order-title">카드 목록·순서</h3>
+            <ol id="order-list" class="order-list"></ol>
+            <div class="dialog-actions">
+              <button type="button" id="reset-order">기본 정렬로</button
+              ><button type="button" data-close>취소</button
+              ><button type="submit" class="primary">저장</button>
+            </div>
+          </form>
+        </dialog>
+      </section>
+      <section id="universe" aria-labelledby="universe-title">
+        <div class="section-heading"><h2 id="universe-title">Universe</h2></div>
+        <article class="universe">
+          <header class="universe-header">
+            <strong>리서치 랩</strong>
+            <div class="universe-toggle" role="group" aria-label="지도 보기">
+              <button type="button" data-graph="overview" aria-pressed="true">전체 지도</button>
+              <button type="button" data-graph="focus" aria-pressed="false">초점 탐색</button>
+            </div>
+          </header>
+          <div class="universe-body">
+            <div class="graph" id="graph" aria-label="연결 지도">
+              <div id="graph-edges" aria-hidden="true"></div>
+              <span class="node workspace-node" data-node="workspace">리서치 랩</span>
+              <span class="node category-node" data-node="category">서비스 조사</span>
+              <button class="node group-node" type="button" data-node="group">고객 인터뷰 준비</button>
+              <span class="node neighbor-node" data-node="neighbor">질문지 검토</span>
+              <span class="node note-node" data-node="note">인터뷰 메모</span>
+              <span class="node child-node" data-node="child-one">질문 항목 정리</span>
+              <span class="node child-node" data-node="child-two">참여자 일정 확인</span>
+            </div>
+            <aside class="graph-details">
+              <p class="breadcrumb">서비스 조사</p>
+              <h3>고객 인터뷰 준비</h3>
+              <div class="graph-actions">
+                <button id="show-children" type="button" aria-pressed="false">세부 펼치기</button>
+              </div>
+              <h4>기록</h4>
+              <details open>
+                <summary>11월 20일</summary>
+                <p>질문 항목 정리</p>
+              </details>
+              <details>
+                <summary>11월 4일</summary>
+                <p>참여자 일정 확인</p>
+              </details>
+              <h4>연결</h4>
+              <ul>
+                <li>질문지 검토</li>
+                <li>인터뷰 메모</li>
+              </ul>
+            </aside>
+          </div>
+        </article>
+      </section>
+      <section id="export" aria-labelledby="export-title">
+        <div class="section-heading"><h2 id="export-title">주간·데일리 내보내기</h2></div>
+        <div class="export-grid">
+          <article class="app">
+            <header class="app-title"><span>엑셀로 내보내기</span></header>
+            <form id="export-choices" class="app-content export-choices">
+              <label class="field"
+                >기간<select>
+                  <option>이번 주 · 2026-W47</option>
+                  <option>최근 2주 · 2026-W46~W47</option>
+                </select></label
+              >
+              <fieldset>
+                <legend>포함</legend>
+                <label><input type="checkbox" checked value="주간보고" /> 주간보고 시트</label>
+                <label><input type="checkbox" checked value="원장" /> 원장 시트</label>
+                <label class="summary-option"
+                  ><input type="checkbox" value="주간 요약" id="summary-option" /> 주간 요약 시트</label
+                >
+                <label><input type="checkbox" value="메모 보드" /> 메모 보드</label>
+              </fieldset>
+              <button class="primary" type="submit">시트 미리보기</button>
+              <p id="export-result" class="caption" role="status"></p>
+            </form>
+          </article>
+          <article class="app">
+            <header class="app-title"><span>주간 요약 시트</span><span class="chip">Excel</span></header>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">주차</th>
+                    <th scope="col">기간</th>
+                    <th scope="col">요약 종류</th>
+                    <th scope="col">요약 내용</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>2026-W46</td>
+                    <td>11.09–11.15</td>
+                    <td>수정본</td>
+                    <td>서비스 조사<br />• 질문지 초안 정리</td>
+                  </tr>
+                  <tr>
+                    <td>2026-W47</td>
+                    <td>11.16–11.22</td>
+                    <td>자동 집계</td>
+                    <td>서비스 조사<br />• [금] 고객 인터뷰 준비<br />　– 질문 항목 정리</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+        </div>
+      </section>
+    </main>
+    <template id="board-template">
+      <div class="board-nav"><b>▦</b><span>◆</span><span>▤</span><span>◉</span><span>⚙</span></div>
+      <div class="board-body">
+        <div class="board-title"><b>리서치 랩</b><span>2026-W47</span></div>
+        <div class="board-table">
+          <div>업무</div>
+          <div>월 16</div>
+          <div>화 17</div>
+          <div>수 18</div>
+          <div>목 19</div>
+          <div>금 20</div>
+          <div>서비스 조사</div>
+          <div>자료 정리</div>
+          <div>가설 점검</div>
+          <div></div>
+          <div>질문지 수정</div>
+          <div>고객 인터뷰 준비</div>
+          <div>화면 개선</div>
+          <div></div>
+          <div>흐름 정리</div>
+          <div>시안 리뷰</div>
+          <div></div>
+          <div></div>
+          <div>운영</div>
+          <div>주간 현황</div>
+          <div></div>
+          <div></div>
+          <div>확인 사항 정리</div>
+          <div></div>
+        </div>
+      </div>
+    </template>
+  </body>
+</html>
