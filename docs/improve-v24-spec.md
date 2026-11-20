@@ -121,6 +121,6 @@
 
 2026-11-20 사용자 승인으로 D1~D4 추천안을 적용했습니다. 화면의 기간 고정 및 카드 순서는 공간의 기기별 설정으로 저장합니다. SQLite 구조는 v20입니다. 이용 가이드 장면 07·11·14·15·16과 [실기 확인표](m1-check.md#7-56-개선-v24-확인표)를 갱신했습니다.
 
-온라인 외형은 서버 읽기 함수와 Rust 오프라인 캐시에 같은 아이콘 목록을 적용했습니다. [SQL 040 적용](../poc/v2-migration/postgres/040-workspace-label-icons.sql), [041 확인](../poc/v2-migration/postgres/041-workspace-label-icons-verify.sql), [042 되돌리기](../poc/v2-migration/postgres/042-workspace-label-icons-rollback.sql)는 기존 SQL과 별개입니다. 격리된 PostgreSQL에서 먼저 검증했으며 서버 적용은 개발 환경부터 진행합니다. 실앱의 Windows 탐색기·macOS Finder와 다른 기기 목록은 확인표에서 점검합니다.
+온라인 외형은 서버 읽기 함수와 Rust 오프라인 캐시에 같은 아이콘 목록을 적용했습니다. [SQL 040 적용](../poc/v2-migration/postgres/040-workspace-label-icons.sql), [041 확인](../poc/v2-migration/postgres/041-workspace-label-icons-verify.sql), [042 되돌리기](../poc/v2-migration/postgres/042-workspace-label-icons-rollback.sql)는 기존 SQL과 별개입니다. 격리된 PostgreSQL에서 먼저 검증했으며 서버 적용은 개발 환경부터 진행합니다. 2026-11-20 개발(041 4/4) → 운영 적용(041 4/4, 끝 점검 12/12, 103 2-1절) 뒤 **1.51.0 Open Beta로 main 반영**(사용자 승인), 이전 main 1.50.0은 `release/v1.50.0` 보존. 실앱의 Windows 탐색기·macOS Finder와 다른 기기 목록은 확인표에서 점검합니다.
 
 Universe 가상 자료에서 한 업무 아래 본 항목 이름 50개를 날짜별로 반복하고 각 회차에 세부 항목 하나를 넣었습니다. 기록 1,000개와 5,000개 모두 전체 지도에 노드 52개와 선 51개를 표시했습니다. 한 묶음을 펼치면 각각 세부 10개와 50개가 연결됐습니다. Node.js에서 필터부터 2D 배치까지 반복 실행한 중앙값은 1,000개에서 1.05 → 1.73ms, 5,000개에서 5.98 → 7.66ms였습니다. 이 측정에는 브라우저 렌더링 시간이 포함되지 않습니다.

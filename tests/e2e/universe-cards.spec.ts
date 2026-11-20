@@ -177,6 +177,12 @@ test("근거 묶음: Universe·보드 메뉴에서 담기 → 레일 숫자 → 
   }
   await page.getByTestId("u-pack-add").click(); // 같은 항목 → 이미 담김
   await expect(page.getByRole("status").filter({ hasText: "이미 근거 묶음에 담겨 있습니다" })).toBeVisible();
+  // v24 U2: 지도에는 공간·업무·본 항목부터 — 업무에 붙은 자료는 그 업무를 초점으로 두면(두 번 누르기) 보인다
+  await page
+    .getByTestId("universe-map")
+    .locator('[data-testid="u-node"][data-kind="category"]')
+    .first()
+    .dblclick();
   await page
     .getByTestId("universe-map")
     .locator('[data-testid="u-node"][data-kind="cabinet"]')

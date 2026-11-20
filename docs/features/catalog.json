@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "product": "Work Journey Board",
-  "catalogVersion": "1.50.0",
+  "catalogVersion": "1.51.0",
   "asOfDate": "2026-11-20",
-  "baseRelease": "1.50.0",
+  "baseRelease": "1.51.0",
   "sourceCommit": "6d769c4",
   "appSchemaVersion": 20,
   "versionDefinition": "최초 제공 = 비RC 출시 이력에서 기능 제공이 확인된 최초 버전(0.x 개발판 포함); RC는 preview로 별도 기록",
@@ -7499,6 +7499,12 @@
           "type": "changed",
           "description": "Cabi.NET 정식 제공. RC 선행 이력은 유지한다.",
           "source": "docs/release-notes/v1.20.0.md"
+        },
+        {
+          "version": "1.51.0",
+          "type": "changed",
+          "description": "온라인 공간에서도 이 기기에 지정한 폴더를 탐색기·Finder로 열기, 미지정 줄은 [이 기기에서 경로 지정…].",
+          "source": "docs/release-notes/v1.51.0.md"
         }
       ],
       "sources": [
@@ -7506,7 +7512,9 @@
         "README.md",
         "docs/release-notes/v1.4.0.md",
         "docs/cabinet-v2-spec.md",
-        "docs/release-notes/v1.20.0.md"
+        "docs/release-notes/v1.20.0.md",
+        "docs/release-notes/v1.51.0.md",
+        "docs/improve-v24-spec.md"
       ],
       "implementation": [
         "src/ui/cabinet"
@@ -7515,7 +7523,7 @@
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "제품 기능",
-      "lastChanged": "1.20.0",
+      "lastChanged": "1.51.0",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v17"
     },
     {
@@ -8343,6 +8351,12 @@
           "type": "changed",
           "description": "사용자 승인으로 v19 구현을 정식 main에 반영. A/C 모션·PDF 실제 렌더링·보드 메뉴 검증 완료.",
           "source": "docs/release-notes/v1.23.0.md"
+        },
+        {
+          "version": "1.51.0",
+          "type": "changed",
+          "description": "은하·초점 보기에서 같은 공간·업무의 같은 이름 본 항목을 노드 하나로 묶고, 상세 [기록]에서 날짜별 원본·세부를 펼침. 지도는 본 항목부터, [세부 펼치기]로 하위 항목.",
+          "source": "docs/release-notes/v1.51.0.md"
         }
       ],
       "sources": [
@@ -8351,16 +8365,19 @@
         "docs/release-notes/v1.12.0.md",
         "docs/improve-v19-spec.md",
         "docs/release-notes/v1.23.0-rc.1.md",
-        "docs/release-notes/v1.23.0.md"
+        "docs/release-notes/v1.23.0.md",
+        "docs/release-notes/v1.51.0.md",
+        "docs/improve-v24-spec.md"
       ],
       "implementation": [
-        "src/ui/universe"
+        "src/ui/universe",
+        "src/ui/universe/UniverseView.tsx"
       ],
       "verification": "출시 이력·현행 명세 확인",
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "제품 기능",
-      "lastChanged": "1.23.0",
+      "lastChanged": "1.51.0",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
@@ -12821,20 +12838,29 @@
           "type": "added",
           "description": "[온라인 워크스페이스 만들기…] — 오프라인 기록으로 시작(이 PC 일지 복제, 원본은 그대로) 또는 새로 시작하기(빈 공간). 그림은 일지 밖 저장소로 올리고 확인 뒤 활성화.",
           "source": "docs/release-notes/v1.50.0.md"
+        },
+        {
+          "version": "1.51.0",
+          "type": "changed",
+          "description": "빈 온라인 공간을 만들 때 고른 아이콘·색이 게시 직후부터 목록·레일·다른 기기에 같은 값(대문자 섞인 아이콘 포함, 서버 SQL 040).",
+          "source": "docs/release-notes/v1.51.0.md"
         }
       ],
       "sources": [
         "docs/release-notes/v1.50.0.md",
-        "docs/v2-design/56-local-permanence-copy-migration.md"
+        "docs/v2-design/56-local-permanence-copy-migration.md",
+        "docs/release-notes/v1.51.0.md",
+        "docs/improve-v24-spec.md"
       ],
       "implementation": [
         "src-tauri/src/migration.rs",
-        "src-tauri/src/source_copy.rs"
+        "src-tauri/src/source_copy.rs",
+        "src/ui/preview/CreateOnlineDialog.tsx"
       ],
       "verification": "단위·E2E(브라우저 가상 서버)·Rust 시험. 운영 서버 실서버 점검 15/15(103). 정식 설치판 실기는 릴리스 노트 '설치 후 확인'.",
       "reviewStatus": "미검토",
       "reviewNote": "G-9 첫 온라인 정식판(1.50.0).",
-      "lastChanged": "1.50.0",
+      "lastChanged": "1.51.0",
       "schemaRequirement": "DB v20"
     },
     {
@@ -12862,20 +12888,29 @@
           "type": "added",
           "description": "공간 메뉴가 이 PC·온라인 두 묶음. 한 길로 저장 → 닫기 → 열기(전환 무결성), 앱을 다시 켜면 마지막으로 쓴 공간(온라인이면 첫 동기화 후).",
           "source": "docs/release-notes/v1.50.0.md"
+        },
+        {
+          "version": "1.51.0",
+          "type": "changed",
+          "description": "온라인 공간 첫 동기화 동안 `서버와 동기화 중…` 가운데 카드형 전체 화면 안내, 공간 열기·이 PC로 돌아가기·로그아웃·종료 때 입력 잠금·초점 복원.",
+          "source": "docs/release-notes/v1.51.0.md"
         }
       ],
       "sources": [
         "docs/release-notes/v1.50.0.md",
-        "docs/v2-design/98-g1-unified-app.md"
+        "docs/v2-design/98-g1-unified-app.md",
+        "docs/release-notes/v1.51.0.md",
+        "docs/improve-v24-spec.md"
       ],
       "implementation": [
         "src/ui/preview/UnifiedChrome.tsx",
-        "src/ui/common/appController.ts"
+        "src/ui/common/appController.ts",
+        "src/ui/common/closingOverlay.ts"
       ],
       "verification": "단위·E2E(브라우저 가상 서버)·Rust 시험. 운영 서버 실서버 점검 15/15(103). 정식 설치판 실기는 릴리스 노트 '설치 후 확인'.",
       "reviewStatus": "미검토",
       "reviewNote": "G-9 첫 온라인 정식판(1.50.0).",
-      "lastChanged": "1.50.0",
+      "lastChanged": "1.51.0",
       "schemaRequirement": "DB v20"
     },
     {
@@ -12944,20 +12979,189 @@
           "type": "added",
           "description": "계정별 사용량(그림 100MB·온라인 공간 3개·기록 30MB), 온라인 공간 [서버에서 지우기], [계정 삭제](온라인 공간·그림·로그인 정보 모두 삭제, 이 PC 일지는 그대로).",
           "source": "docs/release-notes/v1.50.0.md"
+        },
+        {
+          "version": "1.51.0",
+          "type": "changed",
+          "description": "계정·관리자 사용량을 항목별 행과 게이지로, 관리자 설정 정리.",
+          "source": "docs/release-notes/v1.51.0.md"
         }
       ],
       "sources": [
         "docs/release-notes/v1.50.0.md",
-        "docs/v2-design/100-g5-data-lifecycle.md"
+        "docs/v2-design/100-g5-data-lifecycle.md",
+        "docs/release-notes/v1.51.0.md",
+        "docs/improve-v24-spec.md"
       ],
       "implementation": [
         "src-tauri/src/online_space.rs",
-        "src/ui/preview/OnlineChrome.tsx"
+        "src/ui/preview/OnlineChrome.tsx",
+        "src/ui/preview/AccountUsage.tsx"
       ],
       "verification": "단위·E2E(브라우저 가상 서버)·Rust 시험. 운영 서버 실서버 점검 15/15(103). 정식 설치판 실기는 릴리스 노트 '설치 후 확인'.",
       "reviewStatus": "미검토",
       "reviewNote": "G-9 첫 온라인 정식판(1.50.0).",
-      "lastChanged": "1.50.0",
+      "lastChanged": "1.51.0",
+      "schemaRequirement": "DB v20"
+    },
+    {
+      "id": "WJB-KANBAN-016",
+      "area": "칸반 보드",
+      "section": "섹션",
+      "kind": "제품 기능",
+      "name": "섹션별 기간 고정",
+      "description": "사용자 섹션 ⋯ › [기간 설정…]에서 상단 기간 따르기·전체 기간·다른 기간으로 고정, 고정한 섹션에 기간 칩. TODO·DONE은 상단 기간. 공간별·이 기기별 저장.",
+      "entry": "칸반 보드",
+      "introduced": "1.51.0",
+      "preview": null,
+      "status": "active",
+      "platforms": [
+        "windows",
+        "macos"
+      ],
+      "platformSince": {
+        "windows": "1.51.0",
+        "macos": "1.51.0"
+      },
+      "history": [
+        {
+          "version": "1.51.0",
+          "type": "added",
+          "description": "사용자 섹션 ⋯ › [기간 설정…]에서 상단 기간 따르기·전체 기간·다른 기간으로 고정, 고정한 섹션에 기간 칩. TODO·DONE은 상단 기간. 공간별·이 기기별 저장.",
+          "source": "docs/release-notes/v1.51.0.md"
+        }
+      ],
+      "sources": [
+        "docs/release-notes/v1.51.0.md",
+        "docs/improve-v24-spec.md"
+      ],
+      "implementation": [
+        "src/ui/kanban/KanbanView.tsx"
+      ],
+      "verification": "단위·E2E(브라우저). 정식 설치판 실기는 릴리스 노트 '설치 후 확인'·m1-check 7-56.",
+      "reviewStatus": "미검토",
+      "reviewNote": "개선 v24(1.51.0 Open Beta).",
+      "lastChanged": "1.51.0",
+      "schemaRequirement": "DB v20"
+    },
+    {
+      "id": "WJB-KANBAN-017",
+      "area": "칸반 보드",
+      "section": "카드",
+      "kind": "제품 기능",
+      "name": "같은 열 카드 직접 순서",
+      "description": "같은 열 안 카드·DONE 행을 끌어 가로 표시선 자리에 놓거나 Alt+Shift+↑/↓로 옮기면 그 열만 직접 순서, [직접 순서 ↺]·[기본 정렬로]로 되돌림. 숨은 카드 순서 보존, 공간별·이 기기별 저장.",
+      "entry": "칸반 보드",
+      "introduced": "1.51.0",
+      "preview": null,
+      "status": "active",
+      "platforms": [
+        "windows",
+        "macos"
+      ],
+      "platformSince": {
+        "windows": "1.51.0",
+        "macos": "1.51.0"
+      },
+      "history": [
+        {
+          "version": "1.51.0",
+          "type": "added",
+          "description": "같은 열 안 카드·DONE 행을 끌어 가로 표시선 자리에 놓거나 Alt+Shift+↑/↓로 옮기면 그 열만 직접 순서, [직접 순서 ↺]·[기본 정렬로]로 되돌림. 숨은 카드 순서 보존, 공간별·이 기기별 저장.",
+          "source": "docs/release-notes/v1.51.0.md"
+        }
+      ],
+      "sources": [
+        "docs/release-notes/v1.51.0.md",
+        "docs/improve-v24-spec.md"
+      ],
+      "implementation": [
+        "src/ui/kanban/KanbanView.tsx"
+      ],
+      "verification": "단위·E2E(브라우저). 정식 설치판 실기는 릴리스 노트 '설치 후 확인'·m1-check 7-56.",
+      "reviewStatus": "미검토",
+      "reviewNote": "개선 v24(1.51.0 Open Beta).",
+      "lastChanged": "1.51.0",
+      "schemaRequirement": "DB v20"
+    },
+    {
+      "id": "WJB-KANBAN-018",
+      "area": "칸반 보드",
+      "section": "카드",
+      "kind": "제품 기능",
+      "name": "마감 경고 배지",
+      "description": "미완료 카드에 마감 D-2·D-1(황색), 오늘 마감(주황), 마감 초과 N일(적색). DONE은 완료 표기 유지.",
+      "entry": "칸반 보드",
+      "introduced": "1.51.0",
+      "preview": null,
+      "status": "active",
+      "platforms": [
+        "windows",
+        "macos"
+      ],
+      "platformSince": {
+        "windows": "1.51.0",
+        "macos": "1.51.0"
+      },
+      "history": [
+        {
+          "version": "1.51.0",
+          "type": "added",
+          "description": "미완료 카드에 마감 D-2·D-1(황색), 오늘 마감(주황), 마감 초과 N일(적색). DONE은 완료 표기 유지.",
+          "source": "docs/release-notes/v1.51.0.md"
+        }
+      ],
+      "sources": [
+        "docs/release-notes/v1.51.0.md",
+        "docs/improve-v24-spec.md"
+      ],
+      "implementation": [
+        "src/ui/kanban/KanbanView.tsx"
+      ],
+      "verification": "단위·E2E(브라우저). 정식 설치판 실기는 릴리스 노트 '설치 후 확인'·m1-check 7-56.",
+      "reviewStatus": "미검토",
+      "reviewNote": "개선 v24(1.51.0 Open Beta).",
+      "lastChanged": "1.51.0",
+      "schemaRequirement": "DB v20"
+    },
+    {
+      "id": "WJB-EXPORT-008",
+      "area": "엑셀 내보내기",
+      "section": "시트",
+      "kind": "제품 기능",
+      "name": "주간 요약 시트",
+      "description": "주간·데일리 [내보내기] 창에서 주간 요약 시트를 따로 선택(기본 꺼짐). 주차마다 수정본 → AI본 → 자동 집계 순으로 한 행, 긴 요약은 이어지는 행으로 나눔.",
+      "entry": "엑셀 내보내기",
+      "introduced": "1.51.0",
+      "preview": null,
+      "status": "active",
+      "platforms": [
+        "windows",
+        "macos"
+      ],
+      "platformSince": {
+        "windows": "1.51.0",
+        "macos": "1.51.0"
+      },
+      "history": [
+        {
+          "version": "1.51.0",
+          "type": "added",
+          "description": "주간·데일리 [내보내기] 창에서 주간 요약 시트를 따로 선택(기본 꺼짐). 주차마다 수정본 → AI본 → 자동 집계 순으로 한 행, 긴 요약은 이어지는 행으로 나눔.",
+          "source": "docs/release-notes/v1.51.0.md"
+        }
+      ],
+      "sources": [
+        "docs/release-notes/v1.51.0.md",
+        "docs/improve-v24-spec.md"
+      ],
+      "implementation": [
+        "src/export/excel.ts"
+      ],
+      "verification": "단위·E2E(브라우저). 정식 설치판 실기는 릴리스 노트 '설치 후 확인'·m1-check 7-56.",
+      "reviewStatus": "미검토",
+      "reviewNote": "개선 v24(1.51.0 Open Beta).",
+      "lastChanged": "1.51.0",
       "schemaRequirement": "DB v20"
     }
   ],
