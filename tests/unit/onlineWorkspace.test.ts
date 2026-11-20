@@ -203,7 +203,7 @@ function memJournal(SQL: SqlJsStatic): SpaceJournalStore {
 
 it("온라인 Cabinet은 이 기기의 등록 경로만 조회하고 등록 해제 후에는 다시 조회하지 않는다", async () => {
   const stat = vi.fn(async () => ({ exists: true, isDir: true, size: 0 }));
-  const roots = vi.fn(async (_paths: string[]) => undefined);
+  const roots = vi.fn<(paths: string[]) => Promise<void>>().mockResolvedValue(undefined);
   const platform = createOnlinePlatform({
     SQL: await initSqlJs(),
     workspaceId: "synthetic",
