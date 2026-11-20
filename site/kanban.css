@@ -1,6 +1,5 @@
 /* 칸반 보드 소개 섹션(1.35) — 실제 화면 + 동작 설명 모션. 모션은 OS "동작 줄이기"·사이트 모션 끄기를 따른다. */
 .showcase-kanban {
-  font-family: SiteSans, system-ui, sans-serif;
   padding: 100px 0 84px;
   background: #f6ede3;
   color: #3c2f26;

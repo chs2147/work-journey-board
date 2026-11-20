@@ -255,6 +255,7 @@ footer{padding:32px 0 48px;color:#9c8f81;font-size:12px}
 <div class="hero">
 <h1>빠른 이용 가이드</h1>
 <p>자주 쓰는 장면별로 — 언제 쓰나요 → 순서 → 화면 → 팁.</p>
+<p><a href="#s16">온라인 워크스페이스</a>를 만들어 여러 기기에서 이어 쓰고, 이 PC 공간과 오가는 방법을 확인하세요.</p>
 <p class="meta">v${esc(version)} 기준 · 갱신 ${esc(updated)} · 화면은 가상 샘플입니다</p>
 <a class="dl" href="./work-journey-board-guide.pdf">PDF로 내려받기</a>
 </div>
@@ -448,6 +449,32 @@ async function shots(base = "http://localhost:1420", only) {
         await p.getByTestId("rail-settings").click();
         await p.locator("#settings-tab-account").click();
         await p.getByTestId("preview-email-input").fill("someone@example.com");
+        await p.mouse.move(0, 0);
+      },
+    },
+    "16-online-switch": {
+      url: show,
+      run: async (p) => {
+        await p.getByTestId("rail-settings").click();
+        await p.locator("#settings-tab-account").click();
+        await p.getByTestId("preview-email-input").fill("virtual@example.invalid");
+        await p.getByTestId("terms-agree").check();
+        await p.getByRole("button", { name: "인증번호 받기" }).click();
+        await p.getByTestId("preview-code-input").fill("12345678");
+        await p.getByRole("button", { name: "로그인", exact: true }).click();
+        await p.getByTestId("usage-card").waitFor();
+        await p.keyboard.press("Escape");
+        await p.getByTestId("workspace-button").click();
+        await p.getByTestId("online-create").click();
+        await p.getByTestId("create-mode-fresh").click();
+        await p.getByTestId("create-next").click();
+        await p.getByTestId("create-online-dim").getByRole("textbox").fill("프로젝트 운영");
+        await p.getByTestId("create-fresh-next").click();
+        await p.getByTestId("copy-start").click();
+        await p.getByTestId("copy-done").waitFor();
+        await p.getByTestId("create-online-close").click();
+        await p.getByTestId("workspace-button").click();
+        await p.getByTestId("workspace-menu").getByText("프로젝트 운영", { exact: true }).waitFor();
         await p.mouse.move(0, 0);
       },
     },

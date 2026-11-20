@@ -11,9 +11,9 @@ Work Journey Board 소개를 위한 정적 사이트입니다.
 - `kanban.css`, `kanban.js`: 칸반 보드 소개 섹션 — 7장면 설명 모션(손 커서로 카드 잡기 → 끌기 → DONE 축하 → 날짜별 한 줄 → 섹션 순서 바꾸기·아이콘 → 자유 배치 → 카드 추가 창 세 줄 = 카드 세 장), 장면 고르기(OS 모션 줄이기·사이트 모션 끄기 따름)
 - `board-motion.css`, `board-motion.js`: 첫 화면 주간 보드 모션(오늘 칸에 한 줄 입력 → 세부 → ★ → ⏳ 마감일 → 메모 연결, 키캡 표시, 화면 밖에서는 멈춤) · 모바일 머리 [이용 가이드] 단추(improve-v23-spec 10절)
 - `icon.svg`, `wordmark.svg`: 앱에서 사용하는 아이콘과 워드마크
-- `gowun-dodum.woff2`: 사이트에서 사용하는 고운돋움 서체
+- `gowun-dodum.woff2`: 칸반·Universe·Cabi.NET을 포함한 사이트 본문의 공통 서체
 - `font-license.txt`: 고운돋움의 SIL Open Font License 1.1 전문
-- `pretendard-regular.woff2`, `pretendard-license.txt`: 신규 소개 섹션의 Pretendard Regular 공식 글꼴과 SIL OFL 1.1 전문
+- `pretendard-regular.woff2`, `pretendard-license.txt`: 이전 소개에 사용한 Pretendard Regular 파일과 SIL OFL 1.1 전문
 - `shots/*.webp`: 실제 앱(1.35)의 가상 데이터 화면 — `npm run dev`를 띄운 채 `node scripts/site/shots.mjs`로 다시 찍는다(README용 `docs/screenshots/*-signature.png`도 함께). 링크 미리보기 `og-image.png`는 `node scripts/site/og.mjs`
 
 ## 다른 프로젝트에 배포하기
@@ -49,3 +49,8 @@ Work Journey Board 소개를 위한 정적 사이트입니다.
 
 - 첫 화면 바로가기·상단 메뉴·페이지 안 이동에 칸반 보드를 더하고, 01 기록 다음 02 섹션으로 소개합니다(이후 섹션 번호 03~08).
 - 설명 모션(TODO → 검토 중 → DONE 축하 → 날짜별 한 줄) · 기능 다섯 가지 · 실제 화면 3장(칸반 보드·자유 배치·카드 추가 창).
+
+## 온라인 워크스페이스 소개
+
+- 첫 화면·상단 메뉴·페이지 안 이동에서 08 온라인 워크스페이스로 이동합니다.
+- 이 PC와 온라인 공간을 전환하는 실제 앱 화면은 가상 기록으로 촬영한 `guide/shots/16-online-switch.png`입니다. 만들기·동기화·데이터 관리 방법은 이용 가이드 16장에 연결합니다.

@@ -1,16 +1,7 @@
 /* Universe · Cabi.NET 소개 섹션 (승인 시안 A) */
-@font-face {
-  font-family: SiteSans;
-  src: url("./pretendard-regular.woff2") format("woff2");
-  font-display: swap;
-}
-.showcase-universe,
-.showcase-cabi,
-.showcase-jump {
-  font-family: SiteSans, system-ui, sans-serif;
-}
 .showcase-jump {
   display: flex;
+  flex-wrap: wrap;
   gap: 16px;
   margin: 26px 0 0;
 }
@@ -24,6 +15,53 @@
 .showcase-jump span {
   color: #78877d;
   margin-left: 8px;
+}
+.online-spotlight-body {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  align-items: center;
+  gap: clamp(24px, 5vw, 64px);
+  margin-bottom: 24px;
+}
+.online-spotlight-list {
+  display: grid;
+  gap: 18px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.online-spotlight-list li + li {
+  border-top: 1px solid var(--line);
+  padding-top: 18px;
+}
+.online-spotlight-list strong {
+  display: block;
+  font-size: 20px;
+  color: var(--clay-dark);
+  margin-bottom: 4px;
+}
+.online-spotlight-list p,
+.online-spotlight-shot figcaption {
+  color: var(--soft-ink);
+}
+.online-spotlight-shot {
+  margin: 0;
+  min-width: 0;
+}
+.online-spotlight-shot img {
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+}
+.online-spotlight-shot figcaption {
+  margin-top: 8px;
+  font-size: 13px;
+}
+@media (max-width: 760px) {
+  .online-spotlight-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 .showcase-universe {
   position: relative;

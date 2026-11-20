@@ -11,7 +11,9 @@
 
 **오늘 한 일을, 한 줄씩.** 주간 보고부터 업무별 작업 공간, 기록을 잇는 Universe까지.
 
-[최신 판 내려받기](https://github.com/chs2147/work-journey-board/releases/latest) · [소개 사이트](https://chs2147.github.io/work-journey-board/) · [Version History](#version-history)
+온라인 워크스페이스를 열면 Windows와 macOS에서 같은 업무 기록을 이어서 쓸 수 있습니다.
+
+[최신 판 내려받기](https://github.com/chs2147/work-journey-board/releases/latest) · [소개 사이트](https://chs2147.github.io/work-journey-board/) · [온라인 워크스페이스 이용 가이드](https://chs2147.github.io/work-journey-board/guide/#s16) · [Version History](#version-history)
 
 </div>
 
@@ -22,6 +24,7 @@
 <p align="center"><sub>주간 보드 · 이번 주 메모(업무 연결 메모·이미지·링크 카드·관계선) · 시그니처 테마 · 1.35 화면 · 화면 속 기록은 모두 가상 예시</sub></p>
 
 ## 핵심 기능
+- **온라인 워크스페이스로 여러 기기에서** — 운영자가 등록한 이메일로 로그인해 빈 온라인 공간을 만들거나 이 PC 일지를 복제할 수 있습니다. 한 목록에서 이 PC와 온라인 공간을 오가고, 연결이 끊겼을 때도 이 기기에 작업을 저장한 뒤 다시 연결되면 동기화합니다. 1.51.0 Open Beta에서는 새 공간의 아이콘·색, 동기화 안내, Cabinet 폴더 열기와 항목별 사용량 표시를 개선했습니다. [기능 소개](https://chs2147.github.io/work-journey-board/#online-workspace)
 - **매일 2분, 키보드만으로** — 주간·데일리 뷰에서 개조식 기록, 업무·태그 간편 추가, 마감일 컬러칩·중요 표시·완료/완료 취소·매주 반복. 날짜 지정 복제와 이전 기록 가져오기에서도 메모·자료 연결을 함께 유지
 - **쓰기만 하면 주간 보고** — 업무별·요일별 자동 집계, 수정본, 사내 AI 도구용 다듬기 지시문, 여러 주 엑셀 2시트 · 메모 보드 그림 내보내기
 - **칸반 보드로 상태 한눈에** (NEW) — 주간 보드에 적은 업무 항목이 그대로 TODO / 사용자 섹션 / DONE 카드가 됩니다. 카드를 끌어 상태 변경·DONE이면 세부까지 함께 완료(완료 축하 모션), 완료는 주간 보드·중요 업무 목록에 바로 반영. TODO·DONE까지 섹션 머리 끌기로 순서·섹션마다 색 아이콘, 균등/자유 배치, 업무 전체·하나·여러 개와 기간 아이콘으로 거르기, 업무 띠·시작 시간·마감일을 함께 정하는 카드 추가, 상태 이력·일괄 완료, 카드 ⋯로 매주 반복 (`Alt+6`, **1.40.0**)
@@ -30,12 +33,13 @@
 - **Universe — 기록이 살아 있는 연결 지도로** — 독립된 다크 우주에서 3D 회전·이동·확대/축소, 줌에 따라 이어지는 은하↔초점 탐색, 정적 2D·목록 보기. 접고 폭을 조절하는 필터·상세 패널, 시간 탐색·주를 넘는 직접 연결, 지식 카드·외부 AI에 붙여 넣을 근거 묶음 (`Alt+5`)
 - **Cabi.NET — 업무별 자료·노트·메모보드** — 기존 Cabinet의 폴더·링크 관리를 확장한 업무 작업 공간. **1.20.0**부터 업무별 복수 블록 노트와 업무당 하나의 자유 보드를 별도 모달리스 창으로 제공. 누적 주간 메모 연결, 주간↔업무 보드 객체·이미지 복제, 목록·카드·보드 보기, Markdown 가져오기와 Markdown·한글 PDF 내보내기. 블록 이끌이로 순서를 옮기고, 선택한 글 가까이에서 서식·링크·글자색 편집 ([실제 화면](docs/mockups/cabinet-v2/implemented/README.md))
 - **Live Widget — 업무의 현재 상태** — Cabi.NET 업무 보드에 시작일/마지막 기록일 기준 경과일, 업무 타임라인, 미완료 중요 업무를 배치. 타임라인은 기록 목록·가로 마일스톤·주차 요약으로 전환하고, 위젯에서 완료한 항목은 메인 업무에도 반영
-- **온라인 워크스페이스로 여러 기기에서** (NEW) — 초대받은 이메일로 로그인하면 회사 PC·집 맥에서 같은 공간을 씁니다. 이 PC 일지를 복제해 만들고(원본은 그대로), 이 PC·온라인 공간을 한 목록에서 오가며, 오프라인에서도 이 기기에 저장 후 다시 연결되면 동기화. 로그인하지 않으면 지금처럼 이 PC 일지만 (**1.50.0**)
 - **워크스페이스로 회사·개인 따로** — 공간마다 독립 일지 파일, 레일의 공간 아이콘과 `Ctrl+Alt+1~9`로 전환. 업무·메모·자료·지식의 맥락을 공간별로 보관
 - **찾고 맞추기** — 업무·메모·자료 통합 검색(`Ctrl+Shift+F`), Cabi.NET 노트·업무 보드 검색, 대한민국 공휴일·회사 휴일·기타 휴가, 업무·요일 열 폭 조절
 - **빠른 이용 가이드** — 장면별 사용법을 [소개 사이트](https://chs2147.github.io/work-journey-board/guide/)에서 보거나 PDF로 내려받기. 최신 정식판은 Releases에서 확인
 
 ### 주요 기능 화면
+
+![이 PC와 온라인 워크스페이스를 한 메뉴에서 전환하는 화면 — 가상 예시](site/guide/shots/16-online-switch.png)
 
 | 칸반 보드 — 업무 항목을 상태로 한눈에 (**NEW 1.40**) | 칸반 자유 배치 — 섹션 위치·크기를 내 마음대로 |
 |---|---|
@@ -70,7 +74,7 @@
 - 새 판이 나오면 앱이 켤 때 알려 주고, 설정 › 업데이트에서 내려받아 설치합니다(SHA256 확인 · 설치 전 일지 자동 백업).
 
 ## 기록과 개인정보
-- 기록은 **사용자가 고른 폴더의 SQLite 파일 1개**에만 저장하고, 기록·메모는 어디에도 보내지 않습니다(인터넷은 새 판 확인·내려받기에만 — 이 저장소의 GitHub Releases).
+- **이 PC 워크스페이스**의 기록과 메모는 사용자가 고른 폴더의 SQLite 일지에 저장됩니다. **온라인 워크스페이스**는 로그인 후 선택해 사용하는 기능으로, 해당 공간의 기록·메모를 서버와 동기화하고 이 기기에도 사본을 저장합니다. [온라인 기능과 데이터 관리 안내](https://chs2147.github.io/work-journey-board/guide/#s16)
 - 자동 백업: 매일·매월 · 켜 둔 동안 2시간마다 · 보조 백업 위치(선택). 백업 당시 앱·DB 구조 버전을 이력에 남기고, 보관 일수·용량 규칙으로 백업 파일을 정리합니다. 문제가 생기면 **앱 안에서 백업으로 복원**(지금 파일은 `_before-restore`로 보관, 되돌리기 가능) — 앱을 열 수 없을 때의 수동 절차는 [docs/restore-guide.md](docs/restore-guide.md).
 
 ## 문서
@@ -110,7 +114,7 @@ npm run tauri dev    # 실앱 모드(윈도우·맥 / 리눅스는 webkit2gtk-4.
 - 브라우저 모드 주소 옵션(E2E·시연): `?today=YYYY-MM-DD` 오늘 고정 · `?empty=1` 빈 일지 · `?fresh=1` 첫 실행 화면 · `?existing=/경로` 그 폴더에 샘플 일지 준비 · `?config=/경로` 설정 폴더 지정 · `?sample=year`(`year-img`) 가상 1년치 일지 · `?sample=showcase` README·소개 사이트 화면용 메모 보드 예시 · `?corrupt=1` 파손 일지
 - 설치 파일: `main`에 반영되면 *Build desktop installers*가 윈도우(NSIS)·맥(유니버설 DMG)을 나란히 만들고, **둘 다 성공해야** [Releases](https://github.com/chs2147/work-journey-board/releases)에 `v<버전>`으로 함께 올린다 — 0.x·`-rc`는 사전 릴리스, 1.0.0 이상 정식 판은 정식 릴리스. 윈도우 오프라인 설치판은 요청할 때만 Actions → *Build desktop installers* → Run workflow(main) → `offline`으로 그 판 릴리스에 더한다. 하나의 원본으로 두 플랫폼을 같은 판으로 운영한다([docs/macos-spec.md](docs/macos-spec.md)).
 
-현재 상세 기능과 도입 버전: [Feature List 운영 문서](docs/features/README.md) · [현재 목록](docs/features/CURRENT.md) · [검토용 Excel](docs/features/exports/work-journey-board/Work-Journey-Board-Feature-List-v1.30.0.xlsx)
+현재 상세 기능과 도입 버전: [Feature List 운영 문서](docs/features/README.md) · [현재 목록](docs/features/CURRENT.md) · [검토용 Excel](docs/features/exports/work-journey-board/Work-Journey-Board-Feature-List-v1.51.0.xlsx)
 
 ## Version History
 

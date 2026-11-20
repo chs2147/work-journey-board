@@ -1,5 +1,7 @@
 # Work Journey Board (업무 일지 보드) — 주간 보드 기반 일일 업무 기록 · 자동 요약 · 진행 경과 시각화
 
+> **현재 사용 안내** — 이 PC 일지는 로컬에 저장됩니다. 여러 기기에서 같은 기록을 보려면 선택 기능인 온라인 워크스페이스를 사용합니다. [온라인 워크스페이스 이용 가이드](https://chs2147.github.io/work-journey-board/guide/#s16)
+
 > **이관 안내**: 이 문서는 2026-10-22 설계 저장소 [my-discussions](https://github.com/chs2147/my-discussions)의 `topics/10 work-journal-board/`에서 옮겨왔다. **이후 정본은 이 저장소의 `docs/`** 이며 my-discussions 쪽은 더 이상 갱신하지 않는다.
 
 > 설계 개요 문서 · 최초 작성: 2026-10-22 · **프로젝트명 확정: Work Journey Board** (2026-10-22)

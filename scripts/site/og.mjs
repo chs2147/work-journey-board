@@ -29,7 +29,7 @@ p{margin-top:24px;font-size:22px;line-height:1.7;color:#6c655b}
 <div class="copy">
   <div class="brand"><img class="icon" src="${u("icon.svg")}"><img class="word" src="${u("wordmark.svg")}"></div>
   <h1>기록은 가볍게,<br><em>흐름은 선명하게.</em></h1>
-  <p>매일 2분의 짧은 기록이 한 주의 요약과<br>업무의 흐름이 되는 개인 업무 일지</p>
+  <p>한 줄의 기록을 주간 보고로.<br>온라인 워크스페이스로 여러 기기에서 이어서.</p>
 </div>
 <div class="chips"><span>주간 보드</span><span>칸반 보드</span><span>주간 요약·엑셀</span><span>Universe</span><span>Cabi.NET</span></div>
 <div class="shot"><img src="${u("shots/board.webp")}"></div>
