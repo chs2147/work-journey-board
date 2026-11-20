@@ -10,12 +10,12 @@
 
 | 채널 | 언제 | 앱 ID · 이름 | 설정 폴더 | 업데이트 | 일지 |
 |---|---|---|---|---|---|
-| **정식판** | `main` 빌드(릴리스) | `com.chs2147.workjourneyboard` · Work Journey Board | `WorkJourneyBoard` | GitHub Releases(지금 그대로) | 지금 쓰는 정식 일지·설정 그대로 |
-| **DEV 검증판** | `main` 밖 모든 빌드(작업 브랜치·RC) | `com.chs2147.workjourneyboard.dev` · Work Journey Board DEV · 실행 파일 `work-journey-board-dev` | `WorkJourneyBoardDev` | 꺼짐 | DEV 일지만(3절) |
-| **Connected Preview** | `v2-design` 온라인 검증 | `…connected.preview` · Work Journey Board Connected Preview | `WorkJourneyBoardConnectedPreview` | 꺼짐 | 로컬 일지 없음(온라인 계정만) |
+| **정식판** | `main` 빌드(릴리스) | `com.chs2147.workjourneyboard` · Work Journey Board | `WorkJourneyBoard` | GitHub Releases | 정식 로컬 일지·운영 서버의 온라인 공간 |
+| **DEV 검증판** | `main` 밖의 `build-desktop.yml` 빌드(작업 브랜치·RC) | `com.chs2147.workjourneyboard.dev` · Work Journey Board DEV · 실행 파일 `work-journey-board-dev` | `WorkJourneyBoardDev` | 꺼짐 | DEV 로컬 일지(3절)·개발 서버의 온라인 공간 |
 
-- 판정은 빌드 때 한 번: `build-desktop.yml` `plan` 단계 — `refs/heads/main`이면 정식판, 아니면 DEV(`--features dev-channel` + `src-tauri/tauri.dev.conf.json`). Preview는 `build-preview.yml`.
-- 정식판 빌드는 이 정책 전과 **같은 앱 ID·설정 폴더·업데이트·명령 목록**이다(단위·Rust 시험이 고정). 정식판을 새로 설치하거나 업데이트해도 기존 정식 일지·설정을 그대로 쓴다.
+- `build-desktop.yml`의 `plan` 단계에서 `refs/heads/main`은 정식판으로, 그 외 브랜치는 DEV(`--features dev-channel` + `src-tauri/tauri.dev.conf.json`)로 정한다.
+- 1.50.0 Open Beta부터 기본 앱에 온라인 기능이 포함된다. 로컬과 온라인 실기 검증에 같은 DEV 설치 파일을 사용한다. 정식판에는 기존 앱 ID·설정 폴더·업데이트 경로와 온라인 명령이 포함된다.
+- 별도 Connected Preview의 사양과 검증은 [V2 개발 기록](v2-design/78-preview-native-bootstrap.md)에 있다.
 - 비공식 판 설치 파일은 **릴리스·기존 업데이트 피드에 올리지 않는다**(Actions 산출물만, `WorkJourneyBoardDEV_<판>_setup.exe`·`_mac.dmg`).
 - 앱 ID와 실행 파일 이름이 달라 **별도의 앱으로 설치·제거**된다(윈도우 설치 폴더·시작 메뉴·프로그램 제거 항목, 맥 응용 프로그램 폴더의 별도 앱). 윈도우 설치 프로그램이 실행 중인 정식판을 같은 이름으로 보고 닫으려 하지 않는다.
 - 빌드 프로필과 설정 앱 ID가 맞지 않으면(예: DEV 빌드를 정식 설정으로) 창·설정 파일보다 먼저 멈춘다(`profile::check_identifier`).
