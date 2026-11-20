@@ -1851,7 +1851,8 @@ export const STR_BASE = {
     retry: "다시 시도",
     cancel: "닫기",
     browserOnly: "브라우저 모드에서는 설치하지 않습니다(실앱에서만)",
-    network: "업데이트 확인·내려받기만 GitHub에 연결합니다. 기록·메모는 보내지 않습니다.",
+    network:
+      "업데이트 확인·내려받기는 GitHub에 연결합니다. 기록·메모는 보내지 않습니다(온라인 공간은 로그인했을 때만 서버와 동기화).",
   },
   settings: {
     title: "설정",
@@ -1979,7 +1980,7 @@ export const STR_BASE = {
     repeatDeleteConfirm: (t: string) => `"${t}" 반복을 삭제할까요? 이미 들어온 기록은 그대로 남습니다.`,
     about: "정보",
     version: (v: string) => `버전 ${v}`,
-    aboutTagline: "오늘 한 일을, 한 줄씩. — 기록은 이 PC의 고른 폴더에만 저장됩니다.",
+    aboutTagline: "오늘 한 일을, 한 줄씩. — 기록은 이 PC의 고른 폴더에 저장됩니다.",
     siteLink: "소개 사이트",
     siteUrl: "https://chs2147.github.io/work-journey-board/",
     /** 빠른 이용 가이드(features-1102-spec F6) — OS 브라우저로 */

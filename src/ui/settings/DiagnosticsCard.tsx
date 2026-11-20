@@ -32,7 +32,7 @@ export function DiagnosticsCard() {
     ]);
     const heap = jsHeapMb();
     setRows([
-      [D.version, `${__APP_VERSION__} · SQLite ${journal.sqliteVersion}`],
+      [D.version, `${__APP_VERSION_LABEL__} · SQLite ${journal.sqliteVersion}`],
       // macos-spec 4-3: 어느 OS의 판인지(문제를 알릴 때 윈도우·맥 구분)
       [
         D.os,

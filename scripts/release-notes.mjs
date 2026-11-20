@@ -52,9 +52,19 @@ function problems(v) {
 /** 정식 판 = 1.0.0 이상이고 -rc 같은 꼬리표가 없는 판(release-phase2-spec 4절) — 워크플로도 같은 규칙 */
 const isFormal = (v) => /^\d+\.\d+\.\d+$/.test(v) && Number(v.split(".")[0]) >= 1;
 
+/** 판 꼬리표(package.json `releaseLabel`, 예: "Open Beta") — 지금 package.json 판일 때만 붙인다 */
+function releaseLabel(v) {
+  const pkg = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
+  return pkg.version === v && typeof pkg.releaseLabel === "string" ? pkg.releaseLabel.trim() : "";
+}
+
 function body(v) {
   const formal = isFormal(v);
-  const head = [`**Work Journey Board v${v}**${formal ? "" : " (개발 중 사전 릴리스)"}`, ""];
+  const label = releaseLabel(v);
+  const head = [
+    `**Work Journey Board v${v}${label ? ` ${label}` : ""}**${formal ? "" : " (개발 중 사전 릴리스)"}`,
+    "",
+  ];
   if (existsSync(notesPath(v))) {
     const text = readFileSync(notesPath(v), "utf8").replace(/\r\n/g, "\n").trim();
     const [first, ...rest] = text.split("\n");
@@ -112,10 +122,13 @@ if (cmd === "check") {
   const md = body(version);
   if (out) writeFileSync(out, md, "utf8");
   else process.stdout.write(md);
+} else if (cmd === "label") {
+  // 워크플로용: 릴리스 제목에 붙일 판 꼬리표(없으면 빈 문자열)
+  process.stdout.write(releaseLabel(version));
 } else if (cmd === "formal") {
   // 워크플로용: 정식 판이면 true(GitHub 릴리스를 정식으로 + 오프라인판 함께)
   process.stdout.write(isFormal(version) ? "true" : "false");
 } else {
-  console.error("사용법: release-notes.mjs check | body <버전> --out <파일> | formal [버전]");
+  console.error("사용법: release-notes.mjs check | body <버전> --out <파일> | formal [버전] | label [버전]");
   process.exit(2);
 }

@@ -72,6 +72,7 @@ jobs:
       mac: ${{ steps.p.outputs.mac }}
       version: ${{ steps.p.outputs.version }}
       channel: ${{ steps.p.outputs.channel }}
+      label: ${{ steps.p.outputs.label }}
     steps:
       - uses: actions/checkout@v4
       - id: p
@@ -81,12 +82,14 @@ jobs:
           variant="${{ inputs.webview }}"; [ -z "$variant" ] && variant=embed
           mac=true; [ "$variant" = "offline" ] && mac=false
           version=$(node -p "require('./package.json').version")
+          # 판 꼬리표(package.json releaseLabel — 1.50.0 = Open Beta). 판 번호·설치 파일 이름에는 넣지 않는다(예전 판 새 판 확인 호환)
+          label=$(node scripts/release-notes.mjs label)
           # 정식판 = main 빌드만. 그 밖(작업 브랜치·RC)은 DEV 검증판(docs/release-channel-spec.md 2절)
           channel=dev; [ "${{ github.ref }}" = "refs/heads/main" ] && channel=official
           {
-            echo "formal=$formal"; echo "variant=$variant"; echo "mac=$mac"; echo "version=$version"; echo "channel=$channel"
+            echo "formal=$formal"; echo "variant=$variant"; echo "mac=$mac"; echo "version=$version"; echo "channel=$channel"; echo "label=$label"
           } >> "$GITHUB_OUTPUT"
-          echo "판 $version · 정식 판: $formal · 윈도우 설치판: $variant · 맥: $mac · 채널: $channel"
+          echo "판 $version ${label} · 정식 판: $formal · 윈도우 설치판: $variant · 맥: $mac · 채널: $channel"
 
   windows:
     needs: plan
@@ -272,7 +275,7 @@ jobs:
         with:
           tag_name: v${{ needs.plan.outputs.version }}
           target_commitish: ${{ github.sha }}
-          name: "Work Journey Board v${{ needs.plan.outputs.version }}"
+          name: "Work Journey Board v${{ needs.plan.outputs.version }}${{ needs.plan.outputs.label != '' && format(' {0}', needs.plan.outputs.label) || '' }}"
           prerelease: ${{ needs.plan.outputs.formal != 'true' }}
           make_latest: ${{ needs.plan.outputs.formal == 'true' }}
           overwrite_files: true

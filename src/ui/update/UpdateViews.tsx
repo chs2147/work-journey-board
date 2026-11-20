@@ -33,7 +33,7 @@ export function UpdateSettings() {
       <h3 id="s-update">{STR.update.section}</h3>
       <p className={styles.line}>
         <span className={styles.label}>{STR.update.current}</span>
-        <b>{__APP_VERSION__}</b>
+        <b>{__APP_VERSION_LABEL__}</b>
       </p>
       <div className={styles.actions}>
         <button
@@ -122,7 +122,7 @@ export function UpdateBanner() {
         </svg>
       </span>
       <b>{STR.update.banner(s.info.version)}</b>
-      <span className={styles.bannerSub}>{STR.update.bannerSub(__APP_VERSION__)}</span>
+      <span className={styles.bannerSub}>{STR.update.bannerSub(__APP_VERSION_LABEL__)}</span>
       <span className={styles.grow} />
       <button type="button" className={styles.primary} onClick={openUpdateDialog}>
         {STR.update.details}
@@ -167,7 +167,7 @@ export function UpdateDialog() {
           {STR.update.dialogTitle(s.info.version)}
         </h2>
         <p className={styles.meta}>
-          {STR.update.from(__APP_VERSION__, s.info.version)}
+          {STR.update.from(__APP_VERSION_LABEL__, s.info.version)}
           {s.info.size > 0 && ` · ${STR.update.size((s.info.size / 1_000_000).toFixed(1))}`}
         </p>
         {!s.info.notes.trim() && (

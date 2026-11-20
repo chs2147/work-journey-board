@@ -31,15 +31,27 @@ const sqlWasmBase64 = {
   },
 };
 
+// 판 꼬리표(2026-11-20 사용자 결정 — 1.50.0 = Open Beta, 2.0에서 뗀다). 정본 = package.json `releaseLabel`.
+// semver(`version`)에는 넣지 않는다 — 예전 판의 새 판 확인(update.rs parse_version)이 숫자 세 개만 읽기 때문
+const RELEASE_LABEL: string = typeof pkg.releaseLabel === "string" ? pkg.releaseLabel.trim() : "";
+const APP_VERSION_LABEL = RELEASE_LABEL ? `${pkg.version} ${RELEASE_LABEL}` : pkg.version;
+
 // Tauri 개발 서버 규약: 고정 포트, 실패 시 다른 포트로 넘어가지 않음.
 export default defineConfig({
   plugins: [
     react(),
     sqlWasmBase64,
-    // 스플래시 창(splash.html)의 버전 표시
-    { name: "app-version-html", transformIndexHtml: (html) => html.replaceAll("%APP_VERSION%", pkg.version) },
+    // 스플래시 창(splash.html)의 버전 표시 — 판 꼬리표(Open Beta 등)가 있으면 함께
+    {
+      name: "app-version-html",
+      transformIndexHtml: (html) => html.replaceAll("%APP_VERSION%", APP_VERSION_LABEL),
+    },
   ],
-  define: { __APP_VERSION__: JSON.stringify(pkg.version) },
+  define: {
+    __APP_VERSION__: JSON.stringify(pkg.version),
+    __APP_RELEASE_LABEL__: JSON.stringify(RELEASE_LABEL),
+    __APP_VERSION_LABEL__: JSON.stringify(APP_VERSION_LABEL),
+  },
   clearScreen: false,
   server: { port: 1420, strictPort: true },
   preview: { port: 4173, strictPort: true, headers: { "Content-Security-Policy": PREVIEW_CSP } },

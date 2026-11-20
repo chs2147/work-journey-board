@@ -208,6 +208,7 @@ npm run lint && npm run typecheck
 ```
 
 ## 6. 버전·Git
+- **판 꼬리표(2026-11-20 사용자 결정)**: `package.json` `releaseLabel`(예: `"Open Beta"`)이 있으면 앱 판 표시(`__APP_VERSION_LABEL__` — 스플래시·설정 정보·진단·업데이트 화면)와 릴리스 제목·본문에 `1.50.0 Open Beta`처럼 붙는다. `version`·태그·설치 파일 이름에는 넣지 않는다(예전 판 새 판 확인이 숫자 세 개만 읽음). 1.50.x = Open Beta, 충분히 운영·개선한 뒤 2.0.0에서 뗀다.
 - 버전 정본 = `package.json` `version`, **semver**(`1.0.0`) — Tauri·NSIS가 semver를 요구하므로 공통 규칙의 소수 4자리 관례 대신 semver를 쓴다. `tauri.conf.json`은 `"version": "../package.json"`으로 참조.
 - 판올림은 `main` 병합 시점에 사용자에게 묻는다(현재 버전 + 추천 버전 제시). 확정 시 같은 커밋에서 README **Version History** 기록 + **릴리스 노트 `docs/release-notes/v<버전>.md`**(공통 규칙 3-6, 틀·검사는 improve-1027v3-spec 5절 — CI `release-notes.mjs check`가 누락을 막고, main 빌드가 이 파일로 릴리스 본문을 만든다).
 - **이용 가이드 동반 갱신(features-1102-spec F6)**: 화면·동작이 바뀌는 작업은 같은 작업 안에서 `docs/guide/map.md` 대응표로 해당 장면 글을 고치고, 화면이 바뀌면 `npm run dev`를 띄운 채 `node scripts/guide/guide.mjs shots` → `build` → `pdf`로 `site/guide/`를 다시 만들어 함께 커밋한다(기준 판·갱신일은 `map.md`). 판올림 릴리스 노트에는 **`## 가이드`** 절(바뀐 장면 또는 "변경 없음") — 1.3.0부터 `release-notes.mjs check`가 막고, CI `guide.mjs check`가 대응표·그림·HTML·PDF가 원본과 맞는지 본다.

@@ -122,7 +122,7 @@ export function UpdateRequired({ dataDir, fileVersion }: { dataDir: string; file
             {I.dataVersionValue(fileVersion, LATEST_SCHEMA_VERSION)}
           </dd>
           <dt>{I.appVersion}</dt>
-          <dd>{__APP_VERSION__}</dd>
+          <dd>{__APP_VERSION_LABEL__}</dd>
         </dl>
         <div className={styles.row}>
           <button

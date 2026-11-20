@@ -91,7 +91,7 @@ export function PreviewApp({ profile }: { profile: AppProfileInfo }) {
           <OnlineSpacesCard ownerId={accountId} refreshKey={published} onCreate={() => setCreating(true)} />
           <Card id="preview-about" title={P.about}>
             <Row label={P.profile} desc={P.profileValue} />
-            <Row label={P.appVersion} desc={__APP_VERSION__} />
+            <Row label={P.appVersion} desc={__APP_VERSION_LABEL__} />
             <Row label={P.updates} desc={<span data-testid="preview-updates">{P.updatesOff}</span>} />
             <Row
               label={P.localJournal}

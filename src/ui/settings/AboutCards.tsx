@@ -49,7 +49,7 @@ export function AboutCard() {
       <div className={styles.aboutHero}>
         <BrandLockup size="hero" />
         <div className={styles.aboutMeta}>
-          <span className={styles.aboutVer}>{STR.settings.version(__APP_VERSION__)}</span>
+          <span className={styles.aboutVer}>{STR.settings.version(__APP_VERSION_LABEL__)}</span>
           <span className={styles.rowDesc}>{STR.settings.aboutTagline}</span>
         </div>
         <div className={styles.rowCtl}>
