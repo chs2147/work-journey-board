@@ -32,6 +32,7 @@ import { WorkspaceSettings } from "../settings/WorkspaceSettings";
 import settingsStyles from "../settings/Settings.module.css";
 import sw from "../common/WorkspaceSwitcher.module.css";
 import { AccountSettingsCard } from "./AccountPanel";
+import { AdminCard } from "./AccountUsage";
 import { CreateOnlineDialog } from "./CreateOnlineDialog";
 import { OnlineMenuItem, OnlineStatusPill, OnlineWorkspaceSettings } from "./OnlineChrome";
 import { initAccount, loadUsage, useOnlineAccount } from "./onlineAccount";
@@ -428,6 +429,7 @@ export async function installUnified() {
       ...STR.onlineSpaces.account.cat,
       icon: "M9 8.2a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM3.2 15.8a5.8 5.8 0 0 1 11.6 0",
     },
+    admin: { Component: AdminCard, ...STR.onlineSpaces.account.adminCat },
     switchAt: openAt,
     Overlay: UnifiedOverlay,
   });

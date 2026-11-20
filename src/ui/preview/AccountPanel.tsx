@@ -21,7 +21,7 @@ import { openSettingsAt } from "../common/appController";
 import { Card, CardMessage, Row } from "../settings/SettingsCard";
 import settings from "../settings/Settings.module.css";
 import own from "./AccountPanel.module.css";
-import { AdminCard, UsageCard } from "./AccountUsage";
+import { UsageCard } from "./AccountUsage";
 import { TermsDialog } from "./TermsDialog";
 import { acceptTerms, loadTermsConsent, openTerms, useOnlineTerms } from "./onlineTermsStore";
 
@@ -303,14 +303,13 @@ export function AccountCard({ inSpace = false }: { inSpace?: boolean }) {
   );
 }
 
-/** 설정 › 계정: 로그인 · 사용량 · 관리(관리자만). 로그아웃은 온라인 공간을 연 동안이면 보내고 닫은 뒤(G-1 통합 앱은 이 PC 공간에서도 이 분류) */
+/** 설정 › 계정: 로그인 · 사용량. 로그아웃은 온라인 공간을 연 동안이면 보내고 닫은 뒤(G-1 통합 앱은 이 PC 공간에서도 이 분류) */
 export function AccountSettingsCard() {
   const inSpace = useOnlineSpaces((s) => s.current !== null);
   return (
     <>
       <AccountCard inSpace={inSpace} />
       <UsageCard />
-      <AdminCard />
     </>
   );
 }

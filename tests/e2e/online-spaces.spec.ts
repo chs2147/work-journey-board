@@ -460,7 +460,7 @@ test("G(96): 관리자 — 전체 사용량·초대·계정 한도 바꾸기·�
   await admin.getByTestId("limit-spaces").fill("1");
   await admin.getByTestId("limit-records").fill("");
   await admin.getByTestId("limit-save").click();
-  await expect(row).toContainText("공간 1 / 1개");
+  await expect(row.getByRole("meter", { name: "온라인 공간" })).toHaveAttribute("aria-valuetext", "1 / 1개");
   await expect(row).toContainText("/ 50");
   await expect(other).toContainText("조정됨");
   // 무제한 ↔ 기본으로
@@ -494,7 +494,10 @@ test("G(96) C: 관리자가 한도를 지금 사용량보다 낮추면 한 번 �
   const admin = page.getByTestId("admin-card");
   const other = admin.locator("[data-testid=admin-account]", { hasText: "invited@example.invalid" });
   const row = other.locator("xpath=ancestor::*[contains(@class,'setRow')][1]");
-  await expect(row).toContainText("그림 5.0 MB / 100.0 MB");
+  await expect(row.getByRole("meter", { name: "그림" })).toHaveAttribute(
+    "aria-valuetext",
+    "5.0 MB / 100.0 MB",
+  );
   await row.getByTestId("admin-edit").click();
   // 사용 중 5MB보다 낮은 1MB
   await admin.getByTestId("limit-images").fill("1");
@@ -503,7 +506,7 @@ test("G(96) C: 관리자가 한도를 지금 사용량보다 낮추면 한 번 �
   await expect(row).toContainText("/ 100.0 MB"); // 아직 저장 안 됨
   await expect(admin.getByTestId("limit-save")).toHaveText("그래도 저장");
   await admin.getByTestId("limit-save").click();
-  await expect(row).toContainText("그림 5.0 MB / 1.0 MB");
+  await expect(row.getByRole("meter", { name: "그림" })).toHaveAttribute("aria-valuetext", "5.0 MB / 1.0 MB");
   await expect(other.locator("xpath=ancestor::*[contains(@class,'setRow')][1]")).toBeVisible();
   // 사용량을 넘은 계정은 한도 초과 배지(목록 요약)
   await expect(admin.getByTestId("limit-below-warning")).toHaveCount(0);

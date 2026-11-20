@@ -1,5 +1,6 @@
 // 설정 화면(improve-1027v5-spec 1절): 보드 자리를 덮는 전체 화면 — 왼쪽 분류 5개, 오른쪽 고른 분류의 카드.
 // 기능·문구는 예전 설정 패널(overview 10-9·10-10) 그대로, 자리와 모양만 옮겼다.
+import { useOnlineAccount } from "../preview/onlineAccount";
 import { onlineSlots, takeAccountRequest } from "../common/onlineSlots";
 import {
   useCallback,
@@ -63,7 +64,7 @@ type Pending =
   | { kind: "done"; message: string; oldDir: string }
   | { kind: "failed"; message: string };
 
-type ViewCat = SettingsCategory | "account";
+type ViewCat = SettingsCategory | "account" | "admin";
 
 const NUDGE_OPTIONS = [0, 2, 3, 4, 5, 6, 7, 8];
 
@@ -94,11 +95,20 @@ export function SettingsView() {
   const ready = journal.state === "ready" ? journal : null;
   const updateDot = useUpdate(hasUpdate);
   const [settings, setSettings] = useState<Settings | null>(null);
-  // "account" = 온라인 계정(Preview에서 온라인 공간을 연 동안만, 일지에 저장하지 않는 보기 분류)
-  const account = onlineSlots()?.account;
-  const allCats: ViewCat[] = account ? ["account", ...SETTINGS_CATEGORIES] : [...SETTINGS_CATEGORIES];
-  const catInfo = (c: ViewCat) => (c === "account" ? account! : STR.settings.cats[c]);
-  const [cat, setCat] = useState<ViewCat | null>(null);
+  // 계정과 관리자 탭은 기기의 일지 설정에 저장하지 않는다.
+  const slots = onlineSlots();
+  const account = slots?.account;
+  const isAdmin = useOnlineAccount((s) => s.status?.state === "signedIn" && s.usage?.admin === true);
+  const admin = isAdmin ? slots?.admin : undefined;
+  const allCats: ViewCat[] = [
+    ...(account ? ["account" as const] : []),
+    ...(admin ? ["admin" as const] : []),
+    ...SETTINGS_CATEGORIES,
+  ];
+  const onlineTab = (c: ViewCat) => (c === "account" ? account : c === "admin" ? admin : undefined);
+  const catInfo = (c: ViewCat) => (c === "account" || c === "admin" ? onlineTab(c)! : STR.settings.cats[c]);
+  const [selectedCat, setCat] = useState<ViewCat | null>(null);
+  const cat = selectedCat === "admin" && !admin ? (account ? "account" : "screen") : selectedCat;
   const [size, setSize] = useState<number | null>(null);
   const [last, setLast] = useState<BackupInfo | null>(null);
   const [imageUse, setImageUse] = useState<{ count: number; bytes: number } | null>(null);
@@ -195,7 +205,7 @@ export function SettingsView() {
   const choose = (c: ViewCat, focus = false) => {
     setCat(c);
     if (focus) tabRefs.current[c]?.focus();
-    if (c !== "account")
+    if (c !== "account" && c !== "admin")
       void ready.repo.updateSettings({ ui: { settingsCategory: c } }).catch(() => undefined);
   };
 
@@ -732,6 +742,7 @@ export function SettingsView() {
 
   const content: Record<ViewCat, ReactNode> = {
     account: account ? <account.Component /> : null,
+    admin: admin ? <admin.Component /> : null,
     workspace: (() => {
       const Online = onlineSlots()?.WorkspaceSettings;
       return Online ? <Online /> : <WorkspaceSettings />;
@@ -782,7 +793,7 @@ export function SettingsView() {
                   strokeLinejoin="round"
                   aria-hidden="true"
                 >
-                  <path d={c === "account" ? account!.icon : CAT_ICON[c]} />
+                  <path d={c === "account" || c === "admin" ? onlineTab(c)?.icon : CAT_ICON[c]} />
                 </svg>
                 <span className={styles.catText}>
                   <span className={styles.catName}>{catInfo(c).name}</span>

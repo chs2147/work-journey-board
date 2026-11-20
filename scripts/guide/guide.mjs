@@ -451,6 +451,21 @@ async function shots(base = "http://localhost:1420", only) {
         await p.mouse.move(0, 0);
       },
     },
+    "16-online-admin": {
+      url: `${show}&previewAdmin=1`,
+      run: async (p) => {
+        await p.getByTestId("rail-settings").click();
+        await p.locator("#settings-tab-account").click();
+        await p.getByTestId("preview-email-input").fill("virtual@example.invalid");
+        await p.getByTestId("terms-agree").check();
+        await p.getByRole("button", { name: "인증번호 받기" }).click();
+        await p.getByTestId("preview-code-input").fill("12345678");
+        await p.getByRole("button", { name: "로그인", exact: true }).click();
+        await p.locator("#settings-tab-admin").click();
+        await p.getByTestId("admin-account").filter({ hasText: "invited@example.invalid" }).waitFor();
+        await p.mouse.move(0, 0);
+      },
+    },
     "13-workspace": {
       url: `${show}&ws=2`,
       run: (p) => p.getByTestId("workspace-button").click(),
@@ -475,6 +490,9 @@ async function shots(base = "http://localhost:1420", only) {
           .filter({ hasText: "개발계 1차 배포 일정 확정" })
           .first()
           .dragTo(p.getByTestId("kanban-col-section"));
+        const cards = p.getByTestId("kanban-col-section").getByTestId("kanban-card");
+        await cards.last().dragTo(cards.first(), { targetPosition: { x: 15, y: 4 } });
+        await p.getByRole("button", { name: "기본 정렬로" }).waitFor();
         await p.mouse.move(0, 0);
         await p.waitForTimeout(4500); // 알림이 사라진 뒤
       },

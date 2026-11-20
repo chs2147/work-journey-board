@@ -13,6 +13,7 @@ export function DeleteConfirm({
   onCancel,
   onConfirm,
   testId,
+  className,
 }: {
   title: string;
   body: string;
@@ -23,13 +24,19 @@ export function DeleteConfirm({
   /** 오류 글이면 그 글을 보이고 그대로 둔다 */
   onConfirm: () => Promise<string | null | void>;
   testId: string;
+  className?: string;
 }) {
   const [typed, setTyped] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const match = typed.trim() === expect.trim() && expect.trim() !== "";
   return (
-    <div className={own.confirm} role="alertdialog" aria-label={title} data-testid={testId}>
+    <div
+      className={`${own.confirm} ${className ?? ""}`}
+      role="alertdialog"
+      aria-label={title}
+      data-testid={testId}
+    >
       <span className={settings.rowText}>
         <span className={settings.rowLabel}>{title}</span>
         <span className={settings.rowDesc}>{body}</span>

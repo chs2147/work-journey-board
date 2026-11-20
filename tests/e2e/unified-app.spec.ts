@@ -15,8 +15,8 @@ const counts = (page: Page) =>
 const external = (requests: string[]) =>
   requests.filter((u) => !/^https?:\/\/(localhost|127\.0\.0\.1)[:/]/.test(u) && !u.startsWith("data:"));
 
-async function startDev(page: Page) {
-  await page.goto("/?profile=local-dev&fresh=1");
+async function startDev(page: Page, query = "") {
+  await page.goto(`/?profile=local-dev&fresh=1${query}`);
   await page.getByTestId("dev-opt-sample").check();
   await page.getByTestId("dev-start").click();
   await expect(page.getByTestId("rail-settings")).toBeEnabled();
@@ -57,6 +57,7 @@ test("G-1 로그인 전: 지금 앱 그대로 + 설정 › 계정 · 공간 메�
   await page.keyboard.press("Escape");
   await page.getByTestId("rail-settings").click();
   await expect(page.locator("#settings-tab-account")).toBeVisible();
+  await expect(page.locator("#settings-tab-admin")).toHaveCount(0);
 });
 
 test("G-1 로그인 후: 이 PC ↔ 온라인 오가기 3번 — 두 일지 행 수 그대로, 외부 요청 없음", async ({ page }) => {
@@ -101,4 +102,29 @@ test("G-1 로그인 후: 이 PC ↔ 온라인 오가기 3번 — 두 일지 행 
   await expect(page.getByTestId("workspace-settings")).toBeVisible();
   await expect(page.getByTestId("online-workspace-settings")).toBeVisible();
   expect(external(requests)).toEqual([]);
+});
+
+test("관리자는 별도 메뉴에서 서버와 사용자 게이지를 보고 이메일로 사용자를 등록한다", async ({ page }) => {
+  await startDev(page, "&previewAdmin=1");
+  await signIn(page);
+  const account = page.getByTestId("settings-cat-account");
+  await expect(account.getByTestId("usage-card")).toContainText("무제한");
+  await expect(account.getByTestId("admin-card")).toHaveCount(0);
+  await page.locator("#settings-tab-admin").click();
+  const admin = page.getByTestId("settings-cat-admin");
+  await expect(admin.getByRole("meter", { name: "전체 DB" })).toBeVisible();
+  const member = admin.getByTestId("admin-account").filter({ hasText: "invited@example.invalid" });
+  const row = member.locator("xpath=ancestor::*[contains(@class,'setRow')][1]");
+  await expect(row.getByRole("meter", { name: "온라인 공간" })).toHaveAttribute("aria-valuetext", "1 / 3개");
+  await expect(row.getByTestId("admin-suspend").locator("svg")).toBeVisible();
+  await expect(row.getByTestId("admin-delete").locator("svg")).toBeVisible();
+  const email = admin.getByRole("textbox", { name: "등록할 이메일" });
+  const register = admin.getByRole("button", { name: "사용자 등록" });
+  await email.fill("registered@example.invalid");
+  expect((await email.boundingBox())?.y).toBe((await register.boundingBox())?.y);
+  await register.click();
+  await expect(admin.getByRole("status")).toHaveText("사용자를 등록했습니다");
+  await expect(
+    admin.getByTestId("admin-account").filter({ hasText: "registered@example.invalid" }),
+  ).toBeVisible();
 });

@@ -244,7 +244,7 @@ test("Cabi.NET 줄을 카드에 끌어 놓으면 그 항목에 연결(카드에 
   await expect(c.getByTestId("kanban-cabinet-count")).toBeVisible();
 });
 
-test("섹션 기간을 고정하고 카드 목록에서 직접 정렬한다", async ({ page }) => {
+test("섹션 기간을 고정하고 보드에서 카드를 끌어 직접 정렬한다", async ({ page }) => {
   await openKanban(page);
   await page.getByTestId("kanban-add-section").click();
   await page.getByTestId("kanban-section-dialog").getByRole("textbox").fill("모니터링");
@@ -265,10 +265,15 @@ test("섹션 기간을 고정하고 카드 목록에서 직접 정렬한다", as
   const titles = section.getByTestId("kanban-card-text");
   const before = await titles.allTextContents();
   await section.getByTestId("kanban-col-menu").click();
-  await page.getByRole("button", { name: "카드 목록·순서…" }).click();
-  const order = page.getByRole("dialog", { name: "모니터링 · 카드 목록·순서…" });
-  await order.getByRole("button", { name: /위로$/ }).last().click();
-  await order.getByRole("button", { name: "저장", exact: true }).click();
+  await expect(page.getByRole("button", { name: "카드 목록·순서…" })).toHaveCount(0);
+  await page.keyboard.press("Escape");
+  const rows = section.getByTestId("kanban-card");
+  await rows.last().dragTo(rows.first(), { targetPosition: { x: 15, y: 4 } });
   await expect(titles).toHaveText([...before].reverse());
   await expect(section).toContainText("직접 순서");
+  await rows.first().focus();
+  await page.keyboard.press("Alt+Shift+ArrowDown");
+  await expect(titles).toHaveText(before);
+  await section.getByRole("button", { name: "기본 정렬로" }).click();
+  await expect(section.getByRole("button", { name: "기본 정렬로" })).toHaveCount(0);
 });

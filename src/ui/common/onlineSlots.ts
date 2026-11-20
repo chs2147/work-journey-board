@@ -9,6 +9,14 @@ export interface SaveStatusProps {
   savedAt?: string | null;
 }
 
+type OnlineSettingsTab = {
+  Component: ComponentType;
+  name: string;
+  desc: string;
+  intro: string;
+  icon: string;
+};
+
 export interface OnlineSlots {
   /** 레일 맨 위 공간 단추(+ 공간 메뉴) */
   RailButton: ComponentType;
@@ -19,7 +27,8 @@ export interface OnlineSlots {
   /** 설정 › 워크스페이스 소개 글(온라인 공간용) */
   workspaceIntro?: string;
   /** 설정 맨 앞 "계정" 분류(일지에 저장하는 분류 목록과 별개 — 보기 전용) */
-  account?: { Component: ComponentType; name: string; desc: string; intro: string; icon: string };
+  account?: OnlineSettingsTab;
+  admin?: OnlineSettingsTab;
   /** Ctrl+Alt+n = n번째 온라인 공간(통합 앱 = 메뉴 순서: 이 PC → 온라인) */
   switchAt(n: number): void;
   /** 앱 화면 위 대화상자 자리(G-1 통합 앱: 온라인 워크스페이스 만들기) */

@@ -1,5 +1,5 @@
 // 칸반 보드 화면(docs/improve-v21-spec.md 2·3·4절, 시안 docs/mockups/v21 ①②⑤).
-// 카드 전체가 끌기 대상(HTML5 DnD) — 열에 놓으면 상태 변경, Cabinet 줄을 카드에 놓으면 그 항목에 연결.
+// 카드를 같은 열에서 끌면 순서 변경, 다른 열에 놓으면 상태 변경. Cabinet 줄을 놓으면 그 항목에 연결.
 import { useEffect, useLayoutEffect, useRef, useState, type DragEvent, type KeyboardEvent } from "react";
 import {
   suggestIcon,
@@ -20,7 +20,7 @@ import { matchesTagFilter } from "../../domain/tags";
 import { STR } from "../../shared/strings";
 import { revealItem, useBoard } from "../board/boardStore";
 import { daysLeft } from "../../domain/dueDate";
-import { SectionOrderDialog, SectionPeriodDialog } from "./SectionViewDialog";
+import { SectionPeriodDialog } from "./SectionViewDialog";
 import { CAB_MIME } from "../cabinet/CabinetPanel";
 import { useModal } from "./kanbanUi";
 import { Celebration } from "./Celebration";
@@ -50,6 +50,7 @@ import {
   neighborKey,
   patchCard,
   setDragging,
+  saveSectionOrder,
   setFilter,
   statusLog,
   toggleExpanded,
@@ -66,6 +67,11 @@ const K = STR.kanban;
 export const CARD_MIME = "application/x-wjb-kanban-card";
 /** 끄는 중인 카드(dragover 중엔 자료를 읽을 수 없음) */
 let dragCard: { id: string; from: SectionKey; children: number } | null = null;
+
+function finishCardDrag() {
+  dragCard = null;
+  setDragging(null);
+}
 
 function md(at: string) {
   return shortDateLabel(localDate(new Date(at))).replace(" ", "");
@@ -214,6 +220,9 @@ export function KanbanView() {
 /** 섹션 머리 끌기 — TODO·DONE 포함 모든 열(improve-v23-spec 2절) */
 const SECTION_MIME = "application/x-wjb-kanban-section";
 let dragSection: string | null = null;
+function finishSectionDrag() {
+  dragSection = null;
+}
 
 function Column({
   freeMove,
@@ -246,7 +255,8 @@ function Column({
   const [secOver, setSecOver] = useState<"before" | "after" | null>(null);
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
   const [picker, setPicker] = useState<{ x: number; y: number } | null>(null);
-  const [sectionViewDialog, setSectionViewDialog] = useState<"period" | "order" | null>(null);
+  const [periodOpen, setPeriodOpen] = useState(false);
+  const [insert, setInsert] = useState<{ id: string; side: "before" | "after" } | null>(null);
   const flashing = useKanban((k) => k.flashKey === sectionKey);
   // 상단 태그 거르기(주간 보드와 같은 것, improve-v22-spec 5절) — 고른 태그가 있는 업무의 카드만
   const tagFilter = useBoard((b) => b.tagFilter);
@@ -262,7 +272,31 @@ function Column({
   // 섹션 색은 무채색 두 가지만(업무 색과 혼동 방지): DONE만 진한 회색, TODO·사용자 섹션은 모두 같은 회색
   const color = isDone ? "var(--kanban-done)" : "var(--kanban-section)";
   const total = isDone && !tagFilter.length ? s.doneTotal : cards.length;
-  const canDrop = () => !!dragCard && dragCard.from !== sectionKey;
+  const insertionAt = (e: DragEvent) => {
+    const target = (e.target as HTMLElement).closest<HTMLElement>("[data-card]");
+    const id = target?.dataset.card;
+    if (!target || !id || id === dragCard?.id) return null;
+    const r = target.getBoundingClientRect();
+    const side = e.clientY < r.top + r.height / 2 ? "before" : "after";
+    return { id, side } as const;
+  };
+  const reorder = (id: string, target: string, side: "before" | "after") => {
+    const before = cards.map((card) => card.id);
+    if (id === target || !before.includes(id) || !before.includes(target)) return;
+    const next = before.filter((card) => card !== id);
+    next.splice(next.indexOf(target) + (side === "after" ? 1 : 0), 0, id);
+    if (next.some((card, i) => card !== before[i])) void saveSectionOrder(sectionKey, next);
+  };
+  const onCardOrderKey = (e: KeyboardEvent) => {
+    if (!e.altKey || !e.shiftKey || (e.key !== "ArrowUp" && e.key !== "ArrowDown")) return;
+    const id = (e.target as HTMLElement).dataset.card;
+    if (!id) return;
+    const i = cards.findIndex((card) => card.id === id);
+    const up = e.key === "ArrowUp";
+    const adjacent = i < 0 ? undefined : cards[i + (up ? -1 : 1)];
+    e.preventDefault();
+    if (adjacent) reorder(id, adjacent.id, up ? "before" : "after");
+  };
 
   const onDragOver = (e: DragEvent) => {
     if ([...e.dataTransfer.types].includes(SECTION_MIME)) {
@@ -274,10 +308,15 @@ function Column({
       if (secOver !== side) setSecOver(side);
       return;
     }
-    if (![...e.dataTransfer.types].includes(CARD_MIME) || !canDrop()) return;
+    if (![...e.dataTransfer.types].includes(CARD_MIME) || !dragCard) return;
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
-    if (!over) setOver(true);
+    if (dragCard.from === sectionKey) {
+      const next = insertionAt(e);
+      if (next?.id !== insert?.id || next?.side !== insert?.side) setInsert(next);
+    } else if (!over) {
+      setOver(true);
+    }
   };
   const onDrop = (e: DragEvent) => {
     if ([...e.dataTransfer.types].includes(SECTION_MIME)) {
@@ -285,7 +324,7 @@ function Column({
       const id = dragSection;
       const side = secOver;
       setSecOver(null);
-      dragSection = null;
+      finishSectionDrag();
       if (!id || !side || id === sectionKey) return;
       void placeColumn(id, side === "before" ? index : index + 1);
       return;
@@ -294,11 +333,14 @@ function Column({
     e.preventDefault();
     setOver(false);
     const id = e.dataTransfer.getData(CARD_MIME) || dragCard?.id;
-    const ok = !!id && canDrop();
+    const from = dragCard?.from;
+    const target = from === sectionKey ? insertionAt(e) : null;
+    setInsert(null);
     // 옮긴 카드는 다른 열에서 새로 그려져 원래 요소의 dragend가 React에 닿지 않는다 — 놓을 때 끌기 상태를 지운다
-    dragCard = null;
-    setDragging(null);
-    if (ok) void moveCard(id, sectionKey, { x: e.clientX, y: e.clientY });
+    finishCardDrag();
+    if (!id || !from) return;
+    if (target) reorder(id, target.id, target.side);
+    if (from !== sectionKey) void moveCard(id, sectionKey, { x: e.clientX, y: e.clientY });
   };
 
   return (
@@ -311,8 +353,10 @@ function Column({
         if (!e.currentTarget.contains(e.relatedTarget as Node)) {
           setOver(false);
           setSecOver(null);
+          setInsert(null);
         }
       }}
+      onKeyDown={onCardOrderKey}
       onDrop={onDrop}
     >
       <div
@@ -332,9 +376,7 @@ function Column({
                 e.dataTransfer.setData(SECTION_MIME, sectionKey);
                 e.dataTransfer.effectAllowed = "move";
               },
-              onDragEnd: () => {
-                dragSection = null;
-              },
+              onDragEnd: finishSectionDrag,
               onKeyDown: (e: KeyboardEvent) => {
                 if (!e.altKey || !e.shiftKey || (e.key !== "ArrowLeft" && e.key !== "ArrowRight")) return;
                 if (e.target !== e.currentTarget) return;
@@ -381,7 +423,17 @@ function Column({
             {sectionView.period.period === "all" ? K.wholePeriod : K.periods[sectionView.period.period]}
           </span>
         )}
-        {sectionView?.order && <span className={styles.tag}>{K.manualOrder}</span>}
+        {sectionView?.order && (
+          <button
+            type="button"
+            className={styles.orderReset}
+            aria-label={K.resetOrder}
+            title={K.resetOrder}
+            onClick={() => void saveSectionOrder(sectionKey, undefined)}
+          >
+            {K.manualOrder} ↺
+          </button>
+        )}
         <span className={styles.spacer} />
         {sectionKey !== DONE && sectionKey === TODO && (
           <select
@@ -420,21 +472,12 @@ function Column({
                 type="button"
                 onClick={() => {
                   setMenu(null);
-                  setSectionViewDialog("period");
+                  setPeriodOpen(true);
                 }}
               >
                 {K.sectionPeriod}
               </button>
             )}
-            <button
-              type="button"
-              onClick={() => {
-                setMenu(null);
-                setSectionViewDialog("order");
-              }}
-            >
-              {K.orderCards}
-            </button>
             {section && (
               <button type="button" onClick={() => (setMenu(null), onRename(section.id))}>
                 {K.rename}
@@ -532,7 +575,9 @@ function Column({
         )}
         {cards.length === 0 && !over && <p className={styles.empty}>{K.empty}</p>}
         {cards.map((c, i) => {
-          if (!isDone) return <Card key={c.id} card={c} sectionKey={sectionKey} onEdit={onEdit} />;
+          const dropSide = s.dragging && insert?.id === c.id ? insert.side : undefined;
+          if (!isDone)
+            return <Card key={c.id} card={c} sectionKey={sectionKey} onEdit={onEdit} dropSide={dropSide} />;
           const today = useBoard.getState().today;
           const g = doneGroupOf(c.flagDoneAt!, today);
           const prev = i > 0 ? doneGroupOf(cards[i - 1]!.flagDoneAt!, today).key : "";
@@ -547,9 +592,15 @@ function Column({
           return (
             <FragmentWith key={c.id} head={head}>
               {s.expanded[c.id] ? (
-                <Card card={c} sectionKey={DONE} onEdit={onEdit} onCollapse={() => toggleExpanded(c.id)} />
+                <Card
+                  card={c}
+                  sectionKey={DONE}
+                  onEdit={onEdit}
+                  dropSide={dropSide}
+                  onCollapse={() => toggleExpanded(c.id)}
+                />
               ) : (
-                <DoneRow card={c} showDate={!!sectionView?.order} />
+                <DoneRow card={c} showDate={!!sectionView?.order} dropSide={dropSide} />
               )}
             </FragmentWith>
           );
@@ -565,21 +616,12 @@ function Column({
           </button>
         )}
       </div>
-      {sectionViewDialog === "period" && (
+      {periodOpen && (
         <SectionPeriodDialog
           sectionKey={sectionKey}
           name={name}
           value={sectionView?.period}
-          close={() => setSectionViewDialog(null)}
-        />
-      )}
-      {sectionViewDialog === "order" && (
-        <SectionOrderDialog
-          sectionKey={sectionKey}
-          name={name}
-          cards={cards}
-          more={more}
-          close={() => setSectionViewDialog(null)}
+          close={() => setPeriodOpen(false)}
         />
       )}
     </div>
@@ -603,12 +645,11 @@ function dragProps(card: KanbanCard, from: SectionKey) {
       e.dataTransfer.setData("text/plain", card.text);
       e.dataTransfer.effectAllowed = "copyMove";
       dragCard = { id: card.id, from, children: card.children.filter((x) => !x.done).length };
-      setTimeout(() => setDragging(card.id), 0);
+      setTimeout(() => {
+        if (dragCard?.id === card.id) setDragging(card.id);
+      }, 0);
     },
-    onDragEnd: () => {
-      dragCard = null;
-      setDragging(null);
-    },
+    onDragEnd: finishCardDrag,
   };
 }
 
@@ -639,7 +680,17 @@ function useCabinetDrop(card: KanbanCard) {
   };
 }
 
-function DoneRow({ card, showDate = false }: { card: KanbanCard; showDate?: boolean }) {
+type DropSide = "before" | "after";
+
+function DoneRow({
+  card,
+  showDate = false,
+  dropSide,
+}: {
+  card: KanbanCard;
+  showDate?: boolean;
+  dropSide?: DropSide;
+}) {
   const today = useBoard((b) => b.today);
   const dragging = useKanban((s) => s.dragging === card.id);
   const highlight = useKanban((s) => s.highlight === card.id);
@@ -655,6 +706,7 @@ function DoneRow({ card, showDate = false }: { card: KanbanCard; showDate?: bool
       style={{ borderLeftColor: `var(--cat-${card.categoryColor})` }}
       data-testid="kanban-done-row"
       data-card={card.id}
+      data-drop-side={dropSide}
       aria-label={K.cardAria(card.categoryName, card.text)}
       aria-expanded={false}
       onClick={() => toggleExpanded(card.id)}
@@ -675,11 +727,13 @@ function Card({
   sectionKey,
   onEdit,
   onCollapse,
+  dropSide,
 }: {
   card: KanbanCard;
   sectionKey: SectionKey;
   onEdit(card: KanbanCard): void;
   onCollapse?(): void;
+  dropSide?: DropSide;
 }) {
   const today = useBoard((b) => b.today);
   const dragging = useKanban((s) => s.dragging === card.id);
@@ -741,6 +795,7 @@ function Card({
       aria-label={K.cardAria(card.categoryName, card.text)}
       data-testid="kanban-card"
       data-card={card.id}
+      data-drop-side={dropSide}
       onDoubleClick={() => onEdit(card)}
       onClick={() => onCollapse?.()}
       onContextMenu={(e) => {

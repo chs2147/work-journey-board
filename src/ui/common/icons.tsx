@@ -140,6 +140,13 @@ export const IconTrash = () => (
   </Svg>
 );
 
+export const IconSuspend = () => (
+  <Svg>
+    <circle cx="8" cy="8" r="5.5" />
+    <path d="M4.1 11.9l7.8-7.8" />
+  </Svg>
+);
+
 /** 주간 뷰: 달력 + 요일 칸(improve-1026v2-spec 9절) */
 export const IconWeekView = () => (
   <Svg>

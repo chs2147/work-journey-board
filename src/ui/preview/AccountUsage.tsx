@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import type { AccountUsage, AdminAccount } from "../../platform";
 import { formatBytes, STR } from "../../shared/strings";
+import { IconLock, IconSuspend, IconTrash } from "../common/icons";
 import { Card, CardMessage, Row } from "../settings/SettingsCard";
-import { adminDeleteAccount, adminInvite, adminSet, loadUsage, useOnlineAccount } from "./onlineAccount";
+import { adminDeleteAccount, adminRegister, adminSet, loadUsage, useOnlineAccount } from "./onlineAccount";
 import { DeleteConfirm } from "./DeleteConfirm";
 import settings from "../settings/Settings.module.css";
 import own from "./AccountPanel.module.css";
@@ -29,12 +30,81 @@ function LevelBadge({ used, limit }: { used: number; limit: number | null }) {
 }
 const bytes = (used: number, limit: number | null) =>
   limit === null ? `${formatBytes(used)} · ${A.unlimited}` : A.ofLimit(formatBytes(used), formatBytes(limit));
-const summary = (u: AccountUsage) =>
-  [
-    `${A.images} ${bytes(u.used.images, u.limits.images)}`,
-    `${STR.onlineSpaces.account.spaces} ${A.countOf(u.used.spaces, u.limits.spaces)}`,
-    `${A.records} ${bytes(u.used.records, u.limits.records)}`,
-  ].join(" · ");
+function UsageGauge({
+  label,
+  used,
+  limit,
+  count = false,
+  testId,
+}: {
+  label: string;
+  used: number;
+  limit: number | null;
+  count?: boolean;
+  testId?: string;
+}) {
+  const value = count
+    ? limit === null
+      ? A.countOf(used, limit) + " · " + A.unlimited
+      : A.countOf(used, limit)
+    : bytes(used, limit);
+  const percent =
+    limit === null ? 0 : limit === 0 ? (used > 0 ? 100 : 0) : Math.min(100, (used / limit) * 100);
+  return (
+    <span className={own.gauge} data-tone={level(used, limit)}>
+      <span className={own.gaugeHeading}>
+        <span>
+          {label} <LevelBadge used={used} limit={limit} />
+        </span>
+        <span className={own.gaugeValue} data-testid={testId}>
+          {value}
+        </span>
+      </span>
+      {limit === null ? (
+        <span className={own.gaugeTrack} data-unlimited aria-hidden="true" />
+      ) : (
+        <span
+          className={own.gaugeTrack}
+          role="meter"
+          aria-label={label}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={percent}
+          aria-valuetext={value}
+        >
+          <span className={own.gaugeFill} style={{ width: percent + "%" }} />
+        </span>
+      )}
+    </span>
+  );
+}
+
+function AccountGauges({ usage, testPrefix }: { usage: AccountUsage; testPrefix?: string }) {
+  const { used, limits } = usage;
+  return (
+    <span className={own.gauges}>
+      <UsageGauge
+        label={A.images}
+        used={used.images}
+        limit={limits.images}
+        testId={testPrefix && testPrefix + "-images"}
+      />
+      <UsageGauge
+        label={A.spaces}
+        used={used.spaces}
+        limit={limits.spaces}
+        count
+        testId={testPrefix && testPrefix + "-spaces"}
+      />
+      <UsageGauge
+        label={A.records}
+        used={used.records}
+        limit={limits.records}
+        testId={testPrefix && testPrefix + "-records"}
+      />
+    </span>
+  );
+}
 
 export function UsageCard() {
   const usage = useOnlineAccount((s) => s.usage);
@@ -43,7 +113,6 @@ export function UsageCard() {
     if (signedIn) void loadUsage();
   }, [signedIn]);
   if (!usage) return null;
-  const { used, limits } = usage;
   return (
     <Card
       id="online-usage"
@@ -59,30 +128,9 @@ export function UsageCard() {
       }
       testId="usage-card"
     >
-      <Row
-        label={
-          <>
-            {A.images} <LevelBadge used={used.images} limit={limits.images} />
-          </>
-        }
-        desc={<span data-testid="usage-images">{bytes(used.images, limits.images)}</span>}
-      />
-      <Row
-        label={
-          <>
-            {A.spaces} <LevelBadge used={used.spaces} limit={limits.spaces} />
-          </>
-        }
-        desc={<span data-testid="usage-spaces">{A.countOf(used.spaces, limits.spaces)}</span>}
-      />
-      <Row
-        label={
-          <>
-            {A.records} <LevelBadge used={used.records} limit={limits.records} />
-          </>
-        }
-        desc={<span data-testid="usage-records">{bytes(used.records, limits.records)}</span>}
-      />
+      <div className={own.gaugeSection}>
+        <AccountGauges usage={usage} testPrefix="usage" />
+      </div>
     </Card>
   );
 }
@@ -91,7 +139,8 @@ export function AdminCard() {
   const { usage, admin, adminError } = useOnlineAccount();
   const [email, setEmail] = useState("");
   const [editing, setEditing] = useState<string | null>(null);
-  const [invited, setInvited] = useState(false);
+  const [registered, setRegistered] = useState(false);
+  const [registering, setRegistering] = useState(false);
   if (!usage?.admin) return null;
   const p = usage.project;
   return (
@@ -102,54 +151,53 @@ export function AdminCard() {
       testId="admin-card"
     >
       {p && (
-        <>
-          <Row
-            label={
-              <>
-                {A.projectImages} <LevelBadge used={p.images} limit={p.imagesLimit} />
-              </>
-            }
-            desc={<span data-testid="admin-project-images">{bytes(p.images, p.imagesLimit)}</span>}
-          />
-          <Row
-            label={
-              <>
-                {A.projectDb} <LevelBadge used={p.db} limit={p.dbLimit} />
-              </>
-            }
-            desc={bytes(p.db, p.dbLimit)}
-          />
-        </>
+        <div className={own.gaugeSection}>
+          <span className={own.gauges}>
+            <UsageGauge
+              label={A.projectImages}
+              used={p.images}
+              limit={p.imagesLimit}
+              testId="admin-project-images"
+            />
+            <UsageGauge label={A.projectDb} used={p.db} limit={p.dbLimit} testId="admin-project-db" />
+          </span>
+        </div>
       )}
       <form
+        className={own.registration}
         onSubmit={(e) => {
           e.preventDefault();
-          void adminInvite(email).then((ok) => {
-            setInvited(ok);
-            if (ok) setEmail("");
-          });
+          if (registering || !email.trim()) return;
+          setRegistering(true);
+          void adminRegister(email)
+            .then((ok) => {
+              setRegistered(ok);
+              if (ok) setEmail("");
+            })
+            .finally(() => setRegistering(false));
         }}
       >
-        <Row
-          label={<label htmlFor="admin-invite-input">{A.invite}</label>}
-          desc={invited ? A.inviteDone : undefined}
-        >
+        <label htmlFor="admin-invite-input">{A.registerEmail}</label>
+        <div className={own.registerControls}>
           <input
             id="admin-invite-input"
             className={own.input}
             type="email"
-            placeholder={A.invitePlaceholder}
+            required
+            placeholder={A.registerPlaceholder}
+            disabled={registering}
             value={email}
             onChange={(e) => {
               setEmail(e.target.value);
-              setInvited(false);
+              setRegistered(false);
             }}
             data-testid="admin-invite-input"
           />
-          <button type="submit" disabled={!email.trim()} data-testid="admin-invite">
-            {A.invite}
+          <button type="submit" disabled={!email.trim() || registering} data-testid="admin-invite">
+            {A.register}
           </button>
-        </Row>
+        </div>
+        {registered && <span role="status">{A.registerDone}</span>}
       </form>
       {(admin ?? []).map((a) => (
         <AccountRow
@@ -183,6 +231,7 @@ function AccountRow({
   return (
     <>
       <Row
+        className={own.adminRow}
         label={
           <span data-testid="admin-account" data-user={a.userId}>
             {a.email ?? a.userId.slice(0, 8)} {a.admin && <span className={own.badge}>{A.adminBadge}</span>}
@@ -195,7 +244,7 @@ function AccountRow({
             {!a.admin && a.custom && !a.unlimited && <span className={own.badge}>{A.custom}</span>}
           </span>
         }
-        desc={summary(a)}
+        desc={<AccountGauges usage={a} />}
       >
         {!a.admin && (
           <>
@@ -215,18 +264,20 @@ function AccountRow({
             </button>
             <button
               type="button"
-              className={a.suspended ? undefined : settings.danger}
+              className={`${own.iconAction} ${a.suspended ? "" : own.dangerAction}`}
               onClick={() => void adminSet(a.userId, { suspended: !a.suspended })}
               data-testid="admin-suspend"
             >
+              {a.suspended ? <IconLock open /> : <IconSuspend />}
               {a.suspended ? A.unsuspend : A.suspend}
             </button>
             <button
               type="button"
-              className={settings.danger}
+              className={`${own.iconAction} ${own.dangerAction}`}
               onClick={() => setDeleting(!deleting)}
               data-testid="admin-delete"
             >
+              <IconTrash />
               {A.deleteAccount}
             </button>
           </>

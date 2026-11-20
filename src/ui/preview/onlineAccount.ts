@@ -137,7 +137,7 @@ export async function adminDeleteAccount(userId: string): Promise<boolean> {
     return false;
   }
 }
-export async function adminInvite(email: string): Promise<boolean> {
+export async function adminRegister(email: string): Promise<boolean> {
   try {
     await (await online()).account("admin_invite", { email: email.trim() });
     set({ adminError: null });

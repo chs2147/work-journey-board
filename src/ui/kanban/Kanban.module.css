@@ -923,25 +923,37 @@
   background: #fde2d0;
   color: #85360f;
 }
-.orderList {
-  max-height: min(54vh, 430px);
-  overflow: auto;
-  padding: 0 0 0 22px;
+.orderReset {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 1px 6px;
+  background: var(--surface-sub);
+  color: var(--text-2);
+  font: inherit;
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+  cursor: pointer;
 }
-.orderList li {
-  padding-block: 5px;
-  border-bottom: 1px solid var(--line);
+.card[data-drop-side],
+.doneRow[data-drop-side] {
+  position: relative;
 }
-.orderList li > span {
-  display: inline-block;
-  margin-inline-end: 8px;
-  overflow-wrap: anywhere;
+.card[data-drop-side]::before,
+.doneRow[data-drop-side]::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inset-inline: -4px 0;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--accent);
+  pointer-events: none;
 }
-.orderList li small {
-  display: block;
+[data-drop-side="before"]::before {
+  top: -4px;
 }
-.orderList button + button {
-  margin-inline-start: 4px;
+[data-drop-side="after"]::before {
+  bottom: -4px;
 }
 
 .actions {

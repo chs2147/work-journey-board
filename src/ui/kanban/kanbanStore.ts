@@ -453,7 +453,7 @@ async function saveSectionView(
       return (await save({ ui: { kanbanSectionViews: next } })).ui.kanbanSectionViews;
     });
     if (!views || repo !== r) return false;
-    set((s) => ({ sectionViews: views, openLimits: { ...s.openLimits, [key]: OPEN_PAGE } }));
+    set({ sectionViews: views });
     await load();
     return true;
   } catch (e) {

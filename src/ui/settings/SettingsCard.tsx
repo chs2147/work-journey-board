@@ -30,15 +30,17 @@ export function Row({
   label,
   desc,
   descTestId,
+  className,
   children,
 }: {
   label: ReactNode;
   desc?: ReactNode;
   descTestId?: string;
+  className?: string;
   children?: ReactNode;
 }) {
   return (
-    <div className={styles.setRow}>
+    <div className={`${styles.setRow} ${className ?? ""}`}>
       <div className={styles.rowText}>
         <span className={styles.rowLabel}>{label}</span>
         {desc && (

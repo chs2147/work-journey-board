@@ -13,6 +13,7 @@ import { WorkspaceMark } from "../common/workspaceIcons";
 import { Card } from "../settings/SettingsCard";
 import { OnlineRailButton, OnlineStatusPill, OnlineWorkspaceSettings } from "./OnlineChrome";
 import { AccountSettingsCard } from "./AccountPanel";
+import { AdminCard } from "./AccountUsage";
 import {
   metaOf,
   openOnlineSpace,
@@ -134,6 +135,7 @@ const onlineChrome = {
     ...STR.onlineSpaces.account.cat,
     icon: "M9 8.2a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM3.2 15.8a5.8 5.8 0 0 1 11.6 0",
   },
+  admin: { Component: AdminCard, ...STR.onlineSpaces.account.adminCat },
   switchAt: openOnlineSpaceAt,
 };
 

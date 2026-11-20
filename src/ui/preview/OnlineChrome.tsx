@@ -8,6 +8,7 @@ import { useAppStore } from "../common/appStore";
 import { openSettingsAt } from "../common/appController";
 import { SaveStatus } from "../common/SaveStatus";
 import type { SaveStatusProps } from "../common/onlineSlots";
+import { IconTrash } from "../common/icons";
 import { WorkspaceMark } from "../common/workspaceIcons";
 import { Card, CardMessage } from "../settings/SettingsCard";
 import { DeleteConfirm } from "./DeleteConfirm";
@@ -31,6 +32,7 @@ import {
 } from "./onlineSpaceStore";
 import { applyReceived, loadConflicts, syncNow, useOnlineSync } from "./onlineSync";
 import styles from "./OnlineChrome.module.css";
+import accountStyles from "./AccountPanel.module.css";
 
 const Y = STR.onlineSpaces.sync;
 const M = STR.onlineSpaces.menu;
@@ -473,12 +475,13 @@ export function OnlineWorkspaceSettings({
                   )}
                   <button
                     type="button"
-                    className={settingsStyles.danger}
+                    className={`${accountStyles.iconAction} ${accountStyles.dangerAction}`}
                     data-testid="ws-delete-server"
                     disabled={isCur || !!busy}
                     title={isCur ? R.openNow : undefined}
                     onClick={() => setRemoving(removing === w.workspaceId ? null : w.workspaceId)}
                   >
+                    <IconTrash />
                     {R.button}
                   </button>
                 </span>
@@ -490,6 +493,7 @@ export function OnlineWorkspaceSettings({
                   expect={m?.name ?? STR.workspace.onlineMark}
                   okLabel={R.ok}
                   testId="ws-delete-confirm"
+                  className={accountStyles.spacedConfirm}
                   onCancel={() => setRemoving(null)}
                   onConfirm={async () => {
                     const err = await deleteSpaceOnServer(w);
