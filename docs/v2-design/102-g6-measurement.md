@@ -27,7 +27,7 @@
 node poc/v2-ops/metrics-report.mjs --report-development 14
 ```
 
-하루 평균 변경·보내기·기기, DB·그림 하루 증가, 안전선까지 남은 날, 지움 표시·기록 행 수를 계산한다(읽기만).
+하루 평균 변경·보내기·기기, DB·그림 하루 증가, 안전선까지 남은 날, 지움 표시·기록 행 수를 계산한다(읽기만). 운영은 `WJB_CLOUD_ENV=production node poc/v2-ops/metrics-report.mjs --report-production [일수]`(2026-11-22 추가 — 대상 고르기 target.mjs, 결과에 105 관문 D 판정 `gateD`).
 
 | 기간 | 하루 변경 | 하루 보내기 | 기기 | DB 하루 증가 | 그림 하루 증가 | 안전선까지(DB/그림) | 지움 표시 | Egress | Edge 호출 |
 |---|---|---|---|---|---|---|---|---|---|

@@ -37,3 +37,15 @@ test("G-6 요약: 늘지 않으면 남은 날 없음, 줄이 없으면 days 0", 
   assert.equal(s.daysToImagesLine, null);
   assert.deepEqual(summarize([]), { days: 0 });
 });
+
+test("105 관문 D: 14일 이상 측정 + 안전선까지 180일 이상(증가 없음 = 통과)", async () => {
+  const { gateD } = await import("./metrics-report.mjs");
+  assert.deepEqual(gateD({ days: 14, daysToDbLine: 400, daysToImagesLine: null }), {
+    enoughDays: true,
+    toLines: true,
+    pass: true,
+  });
+  assert.equal(gateD({ days: 7, daysToDbLine: null, daysToImagesLine: null }).pass, false);
+  assert.equal(gateD({ days: 20, daysToDbLine: 179, daysToImagesLine: 900 }).toLines, false);
+  assert.equal(gateD({ days: 0 }).enoughDays, false);
+});
