@@ -47,27 +47,36 @@ async function main() {
       })
     ).body;
   const s = {};
+  // 빈 프로젝트·적용 도중에도 멈추지 않게: 없는 표·함수·스키마는 먼저 있는지 보고 읽는다(응답이 배열이 아니면 SQL 오류)
+  const rows = async (q) => {
+    const body = await sql(q);
+    return Array.isArray(body) ? body : null;
+  };
   const [row] =
-    (await sql(`SELECT
+    (await rows(`SELECT
       to_regnamespace('wjb_migration') IS NOT NULL m001, to_regprocedure('public.wjb_v2_workspace_read(jsonb)') IS NOT NULL m016,
       to_regnamespace('wjb_sync') IS NOT NULL m019, to_regnamespace('wjb_ops') IS NOT NULL m028, to_regnamespace('wjb_life') IS NOT NULL m031,
       to_regclass('wjb_ops.metric_day') IS NOT NULL m034,
-      position('037:' IN pg_get_functiondef('wjb_sync.ensure_space(uuid,uuid)'::regprocedure))>0 m037,
-      (SELECT count(*) FROM wjb_ops.admin) admins,
-      NOT has_schema_privilege('authenticated','wjb_ops','USAGE') AND NOT has_schema_privilege('authenticated','wjb_life','USAGE')
-        AND NOT has_schema_privilege('authenticated','wjb_sync','USAGE') AND NOT has_schema_privilege('anon','wjb_migration','USAGE') closed,
-      (SELECT array_agg(jobname) FROM cron.job) cron;`)) ?? [];
+      coalesce(position('037:' IN pg_get_functiondef(to_regprocedure('wjb_sync.ensure_space(uuid,uuid)')))>0, false) m037,
+      to_regclass('wjb_ops.admin') IS NOT NULL has_admin, to_regclass('cron.job') IS NOT NULL has_cron,
+      (to_regnamespace('wjb_ops') IS NULL OR NOT has_schema_privilege('authenticated','wjb_ops','USAGE'))
+        AND (to_regnamespace('wjb_life') IS NULL OR NOT has_schema_privilege('authenticated','wjb_life','USAGE'))
+        AND (to_regnamespace('wjb_sync') IS NULL OR NOT has_schema_privilege('authenticated','wjb_sync','USAGE'))
+        AND (to_regnamespace('wjb_migration') IS NULL OR NOT has_schema_privilege('anon','wjb_migration','USAGE')) closed;`)) ??
+    [];
   if (row) {
     const missing = ["m001", "m016", "m019", "m028", "m031", "m034", "m037"].filter((k) => row[k] !== true);
+    const [a] = row.has_admin ? ((await rows("SELECT count(*) admins FROM wjb_ops.admin;")) ?? []) : [];
+    const [c] = row.has_cron ? ((await rows("SELECT array_agg(jobname) cron FROM cron.job;")) ?? []) : [];
     s.sql = {
       all: missing.length === 0,
       missing,
-      admins: Number(row.admins),
+      admins: Number(a?.admins ?? 0),
       closed: row.closed === true,
-      cron: (row.cron ?? []).join(","),
+      cron: (c?.cron ?? []).join(","),
     };
-  }
-  const b = (await sql(`SELECT public FROM storage.buckets WHERE id='${t.bucket}';`)) ?? [];
+  } else s.sql = { all: false, missing: ["SQL_READ_FAILED"], admins: 0, closed: false, cron: "" };
+  const b = (await rows(`SELECT public FROM storage.buckets WHERE id='${t.bucket}';`)) ?? [];
   s.bucket = { exists: b.length === 1, public: b[0]?.public };
   const f = await api("/functions");
   s.functions = Array.isArray(f.body) ? f.body.map((x) => x.slug) : [];
