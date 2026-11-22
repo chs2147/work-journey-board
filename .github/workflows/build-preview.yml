@@ -2,23 +2,10 @@
 # - Windows NSIS(현재 사용자) + macOS 유니버설 DMG를 Actions 산출물로만 올린다.
 # - **릴리스·태그를 만들지 않는다**(권한 contents: read). 기존 Classic 업데이트 피드(GitHub Releases)에 올리지 않는다(CLAUDE.md 4절).
 # - 빌드 = `--features connected-preview` + `tauri.preview.conf.json`. 설치 파일·DMG 안 앱 ID가 Preview인지 검사한다.
-# - v2-design 푸시(앱·Tauri·프로필 정본이 바뀔 때)와 수동 실행.
+# - 수동 실행만(2026-11-21 사용자 지시 — v2-design 푸시 자동 빌드 중단, V2 이력 보존용).
 name: Build Connected Preview (verification)
 
 on:
-  push:
-    branches: [v2-design]
-    paths:
-      - "src/**"
-      - "src-tauri/**"
-      - "poc/v2-native/**"
-      - "index.html"
-      - "splash.html"
-      - "public/**"
-      - "package.json"
-      - "package-lock.json"
-      - "vite.config.ts"
-      - ".github/workflows/build-preview.yml"
   workflow_dispatch:
 
 permissions:

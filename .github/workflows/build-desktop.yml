@@ -1,7 +1,8 @@
 # Work Journey Board 데스크톱 설치 파일 빌드 — 하나의 원본, 두 플랫폼(macos-spec 4-1, 2026-11-02 사용자 승인)
 # - 윈도우: NSIS 설치 파일(현재 사용자 전용) WorkJourneyBoard_<v>_setup.exe
 # - 맥: 유니버설(인텔·애플 실리콘) DMG WorkJourneyBoard_<v>_mac.dmg — 애드혹 서명(D1 A안)
-# - 작업 브랜치(claude/**, design-renewal-v2, universe-renewal-v2, improve-v12, improve-v13, improve-v14, improve-v16, improve-v17, cabinet-v2, v2-design) 푸시: 두 빌드만 하고 Actions 산출물로 업로드(검증용)
+# - 작업 브랜치(claude/**, improve-v*, hotfix-*, 예전 작업 브랜치) 푸시: 두 빌드만 하고 Actions 산출물로 업로드(검증용)
+#   · 2026-11-21 사용자 지시: v2-design·v2-g-stage는 빌드하지 않는다(기록 보존용) — 개선은 최신 main에서 새 브랜치(CLAUDE.md 6절)
 #   · 정식판·DEV 운영 정책(docs/release-channel-spec.md, 2026-11-14 확정): main 밖 빌드는 모두 **DEV 검증판**
 #     (`--features dev-channel` + `tauri.dev.conf.json` — 별도 앱 ID·설치·설정 폴더, 업데이트 꺼짐, 정식 일지 보호).
 #     main 빌드만 정식판(지금과 같은 앱 ID·설정·일지)이며 릴리스도 main에서만 만든다
@@ -26,9 +27,9 @@ on:
         "improve-v16",
         "improve-v17",
         "improve-v18",
+        "improve-v*",
+        "hotfix-*",
         "cabinet-v2",
-        "v2-design",
-        "v2-g-stage",
       ]
     paths:
       - "src/**"

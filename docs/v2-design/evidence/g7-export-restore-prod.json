@@ -1,0 +1,14 @@
+{
+  "ranAt": "2026-11-22",
+  "environment": "production",
+  "productionTouched": false,
+  "export": { "spaces": 1, "records": 30, "assets": 0, "assetHashesVerified": true, "serverReadOnly": true },
+  "restore": {
+    "spaces": 1,
+    "openedWithAppMigrations": 1,
+    "integrityOk": 1,
+    "tableCounts": { "category": 6, "entry_item": 5, "week_note": 1, "note_asset": 0, "cabi_note": 2, "cabi_asset": 0 }
+  },
+  "auditAfter": "12/12",
+  "contentStored": false
+}
