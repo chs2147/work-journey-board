@@ -1,0 +1,33 @@
+# 의존성 점검(2026-11-22 보안 점검) — 주 1회, 종류마다 PR 하나로 묶는다.
+# 보안 업데이트(Dependabot security updates)는 저장소 설정으로 따로 켜져 있어 이 일정과 무관하게 바로 온다.
+# PR은 CI 통과·릴리스 노트 확인 뒤 사람이 병합한다(자동 병합 없음). 새 런타임 의존성의 네트워크 동작은 CLAUDE.md 4-1대로 확인.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Asia/Seoul
+    open-pull-requests-limit: 3
+    groups:
+      npm-minor-patch:
+        update-types: ["minor", "patch"]
+  - package-ecosystem: cargo
+    directories: ["/src-tauri", "/poc/v2-native"]
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Asia/Seoul
+    open-pull-requests-limit: 3
+    groups:
+      cargo-minor-patch:
+        update-types: ["minor", "patch"]
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: monthly
+      timezone: Asia/Seoul
+    groups:
+      actions:
+        patterns: ["*"]

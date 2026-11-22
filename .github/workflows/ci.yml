@@ -7,6 +7,10 @@ on:
     paths-ignore: ["docs/**", "**/*.md", "m0/**"]
   pull_request:
 
+# 보안 점검(2026-11-22): CI는 저장소 읽기만(GITHUB_TOKEN 최소 권한)
+permissions:
+  contents: read
+
 concurrency:
   group: ci-${{ github.ref }}
   # 검증 브랜치는 진행 중 검사를 보존하고 최신 후속 실행을 대기시킨다.
