@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "product": "Work Journey Board",
-  "catalogVersion": "1.51.0",
-  "asOfDate": "2026-11-20",
-  "baseRelease": "1.51.0",
-  "sourceCommit": "6d769c4",
+  "catalogVersion": "1.52.0",
+  "asOfDate": "2026-11-23",
+  "baseRelease": "1.52.0",
+  "sourceCommit": "b5fb4fd",
   "appSchemaVersion": 20,
   "versionDefinition": "최초 제공 = 비RC 출시 이력에서 기능 제공이 확인된 최초 버전(0.x 개발판 포함); RC는 preview로 별도 기록",
   "verificationScope": "문서·출시 이력·현행 소스 위치 대조. 기능별 실기 전수 검증을 뜻하지 않음.",
@@ -11763,6 +11763,12 @@
           "type": "changed",
           "description": "들여쓴 목록에서도 블록 이끌이·블록 메뉴를 문장 맨 앞 고정 자리(최상위 블록 왼쪽)에 표시해 불렛을 덮지 않음.",
           "source": "docs/release-notes/v1.24.1.md"
+        },
+        {
+          "version": "1.52.0",
+          "type": "changed",
+          "description": "\"/\" 블록 메뉴는 빈 줄 맨 앞에서만(표 칸·코드·문장 중간은 글자 그대로), 이끌이·\"/\" 메뉴는 메뉴 밖 클릭·이어 쓰기로 닫힘, 메뉴를 창 안에 배치하고 [닫기]를 늘 보이게.",
+          "source": "docs/release-notes/v1.52.0.md"
         }
       ],
       "sources": [
@@ -11778,7 +11784,9 @@
         "docs/improve-v20-spec.md",
         "docs/release-notes/v1.24.0-rc.1.md",
         "docs/release-notes/v1.24.0.md",
-        "docs/release-notes/v1.24.1.md"
+        "docs/release-notes/v1.24.1.md",
+        "docs/improve-v25-spec.md",
+        "docs/release-notes/v1.52.0.md"
       ],
       "implementation": [
         "src/ui/cabinet",
@@ -11788,7 +11796,7 @@
       "verification": "브라우저/저장소 자동 검사 대상. Windows/macOS 실제 설치·WebView 간 드래그는 실기 확인 필요.",
       "reviewStatus": "미검토",
       "reviewNote": "사용자 승인으로 1.20.0 정식 도입 버전 확정. 실기 전수 검토와 구분.",
-      "lastChanged": "1.24.1",
+      "lastChanged": "1.52.0",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v17"
     },
     {
@@ -11953,7 +11961,7 @@
       "section": "자료 연결",
       "kind": "제품 기능",
       "name": "폴더·링크·노트 원본 참조 카드",
-      "description": "기존 자료와 노트를 보드로 끌어 연결 카드로 배치한다. 카드 삭제는 원본을 삭제하지 않는다.",
+      "description": "기존 자료와 노트를 보드로 끌어 연결 카드로 배치한다. 업무노트는 제목만 보이는 바로가기로 놓는다. 카드 삭제는 원본을 삭제하지 않는다.",
       "entry": "Cabi.NET",
       "introduced": "1.20.0",
       "preview": "1.20.0-rc.1",
@@ -12002,6 +12010,12 @@
           "type": "changed",
           "description": "승인된 1.24.0-rc.1 기능을 정식 main에 반영. CI·두 플랫폼 빌드 확인 후 승인.",
           "source": "docs/release-notes/v1.24.0.md"
+        },
+        {
+          "version": "1.52.0",
+          "type": "changed",
+          "description": "메모보드(주간·업무 보드)에 붙인 업무노트 카드를 본문·그림 없이 제목만 보이는 노트 바로가기(노트 아이콘·제목·업무노트 · 업무 이름·↗, 높이 고정·너비만 조절, 선택 시 항목 연결·카드만 삭제)로 변경. 주간 메모 원본 카드는 유지, 저장 형식 그대로.",
+          "source": "docs/release-notes/v1.52.0.md"
         }
       ],
       "sources": [
@@ -12012,7 +12026,9 @@
         "docs/release-notes/v1.21.0.md",
         "docs/improve-v20-spec.md",
         "docs/release-notes/v1.24.0-rc.1.md",
-        "docs/release-notes/v1.24.0.md"
+        "docs/release-notes/v1.24.0.md",
+        "docs/improve-v25-spec.md",
+        "docs/release-notes/v1.52.0.md"
       ],
       "implementation": [
         "src/ui/cabinet",
@@ -12022,7 +12038,7 @@
       "verification": "브라우저/저장소 자동 검사 대상. Windows/macOS 실제 설치·WebView 간 드래그는 실기 확인 필요.",
       "reviewStatus": "미검토",
       "reviewNote": "사용자 승인으로 1.20.0 정식 도입 버전 확정. 실기 전수 검토와 구분.",
-      "lastChanged": "1.24.0",
+      "lastChanged": "1.52.0",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v17"
     },
     {

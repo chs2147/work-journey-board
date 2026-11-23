@@ -1,6 +1,6 @@
 # 개선 v25 상세 설계
 
-2026-11-22 · `improve-v25` · 기준 `v1.51.0 Open Beta` (`d670439`) · 최신 main에서 새 작업 브랜치(CLAUDE.md 6절)
+2026-11-22 · `improve-v25` · 기준 `v1.51.0 Open Beta` (`d670439`) · 최신 main에서 새 작업 브랜치(CLAUDE.md 6절) · **2026-11-23 사용자 승인으로 `v1.52.0 Open Beta` main 반영**(CI·DEV 빌드 `b5fb4fd` 통과, 이전 main 1.51.0은 `release/v1.51.0` 보존)
 
 | 항목 | 내용 | 상태 |
 |---|---|---|
