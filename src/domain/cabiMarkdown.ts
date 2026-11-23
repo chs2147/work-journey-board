@@ -78,9 +78,7 @@ export function importCabiMarkdown(
         return [
           {
             type: "text",
-            text:
-              (n.value ?? "").replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "").replace(/<[^>]*>/g, "") ||
-              " ",
+            text: htmlToPlainText(n.value ?? "") || " ",
           },
         ];
       case "definition":
@@ -162,6 +160,27 @@ export function importCabiMarkdown(
   return { content, title: first ? cabiText(first).trim() : "", excluded };
 }
 const esc = (s: string) => s.replace(/([\\`*_[\]<>|])/g, "\\$1");
+/**
+ * Markdown HTML 덩어리 → 글자만(노트에는 글자 노드로 들어가 HTML로 그려지지 않는다).
+ * 태그를 지운 결과가 다시 태그가 되는 경우(`<scr<script>ipt>`)까지 없어질 때까지 반복하고, 남은 꺾쇠는 지운다.
+ */
+export function htmlToPlainText(html: string): string {
+  let s = html;
+  for (let prev = ""; s !== prev;) {
+    prev = s;
+    s = s.replace(/<script\b[^>]*>[\s\S]*?<\/script[^>]*>/gi, "").replace(/<[^>]*>/g, "");
+  }
+  return s.replace(/[<>]/g, "");
+}
+
+/** CommonMark 코드 조각: 글 안의 가장 긴 ` 묶음보다 하나 긴 울타리(역슬래시 이스케이프는 코드 안에서 먹히지 않는다) */
+export function codeSpan(text: string): string {
+  const longest = Math.max(0, ...(text.match(/`+/g) ?? []).map((r) => r.length));
+  const fence = "`".repeat(longest + 1);
+  const pad = text.startsWith("`") || text.endsWith("`") ? " " : "";
+  return `${fence}${pad}${text}${pad}${fence}`;
+}
+
 export function exportCabiMarkdown(
   title: string,
   content: PMNode,
@@ -175,7 +194,7 @@ export function exportCabiMarkdown(
       if (m.type === "bold") t = `**${t}**`;
       if (m.type === "italic") t = `*${t}*`;
       if (m.type === "strike") t = `~~${t}~~`;
-      if (m.type === "code") t = `\`${(n.text ?? "").replace(/`/g, "\\`")}\``;
+      if (m.type === "code") t = codeSpan(n.text ?? "");
       if (m.type === "link") t = `[${t}](${String(m.attrs?.href).replace(/\)/g, "%29")})`;
     }
     return t;

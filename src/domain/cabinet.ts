@@ -126,9 +126,17 @@ export function shortUrl(url: string): string {
   return url.replace(/^https?:\/\//i, "").replace(/\/$/, "");
 }
 
+/** 태그를 지운 결과가 다시 태그가 되는 경우까지 없어질 때까지 반복(그 뒤 엔티티를 풀므로 &lt;로 쓴 글자는 남는다) */
+const stripTags = (s: string) => {
+  let out = s;
+  for (let prev = ""; out !== prev;) {
+    prev = out;
+    out = out.replace(/<[^>]*>/g, "");
+  }
+  return out.replace(/[<>]/g, "");
+};
 const decodeEntities = (s: string) =>
-  s
-    .replace(/<[^>]*>/g, "")
+  stripTags(s)
     .replace(/&nbsp;/g, " ")
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")

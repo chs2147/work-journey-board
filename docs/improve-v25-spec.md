@@ -6,6 +6,7 @@
 |---|---|---|
 | S1 의존성 보안 | `exceljs` 안의 `uuid@8.3.2` 알림(GHSA-w5hq-g745-h8pq, 보통) 정리 | 구현 |
 | S2 Dependabot 4건 | `minimatch`·`url` 올림, `libsqlite3-sys`·`rsa`는 판단 기록 | 구현·기록 |
+| S3 GitHub 보안 탭 결과 | Dependabot 4건·Code scanning(CodeQL) 10건 항목별 조치·닫기 사유 | 구현·기록 |
 
 ## S1. `exceljs`의 `uuid`
 
@@ -28,3 +29,27 @@
 
 - 검증: `npm audit`(개발 도구 포함) 0건, `cargo audit`은 위 두 건(`libsqlite3-sys`·`rsa`)만 남음. Rust 시험 72, 단위 634, 타입 검사 통과.
 - `cargo audit` 경고(관리 중단·불안정·철회된 판 9건 — `chrono`·`glib`·`zbus` 계열 등)는 Tauri·GTK 하위 의존성이라 Tauri 판올림 때 함께 본다.
+
+## S3. GitHub 보안 탭 결과 (2026-11-23 사용자 전달)
+
+### Dependabot
+
+| # | 알림 | 조치 |
+|---|---|---|
+| 2 | `uuid`(npm) | S1에서 고침 — main 반영 뒤 자동으로 닫힘 |
+| 3 | `minimatch`(npm, 개발 도구) | S2에서 고침 — main 반영 뒤 자동으로 닫힘 |
+| 4 | `glib` 0.18 `VariantStrIter` 불안정(Rust, `src-tauri`) | **닫기 — 쓰지 않음**: `glib`·`gtk`는 리눅스 화면 묶음(WebKitGTK)에서만 컴파일되고 배포하는 Windows·macOS 판에는 들어가지 않는다. 고친 `glib` 0.20은 Tauri(wry)가 아직 쓰지 않아 올릴 수 없음 |
+| 1 | 같은 `glib`(`m0/src-tauri` — I-M0 설치 검증용 옛 껍데기) | **닫기 — 쓰지 않음**(위와 같음). `m0/`는 수동 워크플로 `m0-windows-build.yml`만 쓰는 기록용이라 정리 대상 후보 |
+
+### Code scanning (CodeQL)
+
+| # | 규칙 | 위치 | 판단 | 조치 |
+|---|---|---|---|---|
+| 1·2·3 | 워크플로 권한 미지정 | `ci.yml` 17·55·68 | 맞음 | **고침(main `d670439`)** — `permissions: contents: read`. 다음 분석에서 닫힘 |
+| 5·7·8 | 나쁜 HTML 걸러내기 정규식·여러 글자 정리 불완전 | `cabiMarkdown.ts` 82 | 실제 위험 낮음 — 결과가 노트의 **글자 노드**(HTML로 그리지 않음) | **고침** — `htmlToPlainText`: 태그 지우기를 더 바뀌지 않을 때까지 반복(`<scr<script>ipt>` 같은 경우), `</script >`도 지움, 남은 꺾쇠 삭제 |
+| 9 | 여러 글자 정리 불완전 | `cabinet.ts` 130(끌어 놓은 링크 제목) | 실제 위험 낮음 — 제목은 React 글자로 그려짐 | **고침** — 태그 지우기 반복 후 엔티티 풀기(엔티티로 쓴 `&lt;`는 글자로 남음) |
+| 6 | 문자열 이스케이프 불완전 | `cabiMarkdown.ts` 178(노트 → Markdown 코드 조각) | 맞음(내보낸 Markdown이 깨질 수 있음, 보안 영향은 없음) | **고침** — `codeSpan`: 역슬래시 대신 글 안의 가장 긴 `` ` `` 묶음보다 긴 울타리(CommonMark 방식) |
+| 4 | 클라이언트 XSS | `docs/v2-design/mockups/step6/index.html` 1715 | 거의 오탐 — 시안 파일, 주소의 장면 값은 이미 허용 목록 확인, 배포 사이트(`site/`)에 없음 | **보강** — `show()` 첫 줄에서도 허용 목록 확인 |
+| 10 | 잘못된 포인터 접근 | `poc/v2-native/src/system_vault.rs` 45(윈도우 자격 증명 읽기) | **오탐** — `CredReadW` 성공·null 확인 뒤에만 읽고, 길이 상한·blob null 확인 후 복사, `CredFree`로 해제(윈도우 API 사용법 그대로) | **닫기 — 오탐(False positive)**. 보안 저장소 코드라 윈도우 실기 없이 고치지 않음 |
+
+- 시험: `tests/unit/securityScan.test.ts`(겹친 태그·스크립트·꺾쇠, 코드 울타리, 링크 제목) 추가 — 단위 637 통과, lint·타입·Cabinet/Markdown E2E 12 통과.

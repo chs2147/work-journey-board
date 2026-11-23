@@ -1708,6 +1708,7 @@
           };
       }
       function show(s) {
+        if (!Object.hasOwn(scenes, s)) return; // 장면 이름은 허용 목록만(주소·선택 값을 HTML에 넣지 않음)
         scene = s;
         document.querySelector("#scene").value = s;
         const v = sceneBody(s);
