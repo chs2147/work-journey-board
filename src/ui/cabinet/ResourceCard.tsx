@@ -10,17 +10,16 @@ import { deleteBox, selectBox, useNote, openLinkPicker } from "../note/noteStore
 import { reportError } from "../board/boardStore";
 import { openCabiReference, resolveCabiReference, useCabiChange } from "./cabiService";
 import styles from "./Cabi.module.css";
-export function ResourceCard({ box, selected }: { box: TextBox; selected: boolean }) {
-  const ref = useRef<HTMLDivElement>(null),
-    version = useCabiChange((s) => s.version),
-    multi = useNote((s) => s.multi.includes(box.id));
-  const [value, setValue] = useState<{
-    title: string;
-    text: string;
-    missing: boolean;
-    image?: { mime: string; data: string };
-  } | null>(null);
-  useBoxFrame(ref, box.id, selected);
+type Resolved = {
+  title: string;
+  text: string;
+  missing: boolean;
+  owner?: string;
+  image?: { mime: string; data: string };
+};
+function useResolved(box: TextBox) {
+  const version = useCabiChange((s) => s.version);
+  const [value, setValue] = useState<Resolved | null>(null);
   useEffect(() => {
     let active = true;
     if (box.resource)
@@ -35,6 +34,96 @@ export function ResourceCard({ box, selected }: { box: TextBox; selected: boolea
       active = false;
     };
   }, [box.resource, version]);
+  return value;
+}
+export function ResourceCard({ box, selected }: { box: TextBox; selected: boolean }) {
+  return box.resource?.kind === "note" ? (
+    <NoteShortcut box={box} selected={selected} />
+  ) : (
+    <SourceCard box={box} selected={selected} />
+  );
+}
+/** 메모보드에 붙인 업무노트 = 제목만 보이는 바로가기(본문·그림 없음, improve-v25 S4 A안) */
+function NoteShortcut({ box, selected }: { box: TextBox; selected: boolean }) {
+  const ref = useRef<HTMLDivElement>(null),
+    multi = useNote((s) => s.multi.includes(box.id)),
+    value = useResolved(box);
+  useBoxFrame(ref, box.id, selected, true);
+  const open = () => box.resource && void openCabiReference(box.resource).catch(reportError);
+  const title = value?.title || (value ? CABI.untitled : CABI.loading);
+  return (
+    <div
+      ref={ref}
+      data-cabi-card="true"
+      data-cabi-shortcut="note"
+      data-missing={value?.missing || undefined}
+      className={`${styles.shortcut} ${selected || multi ? styles.selected : ""}`}
+      style={{ left: box.x, top: box.y, width: box.w, zIndex: box.z }}
+      tabIndex={0}
+      title={title}
+      data-box-id={box.id}
+      data-testid="note-box"
+      onKeyDown={(e) => onSelectedBoxKey(e, box.id, open)}
+      onPointerDown={(e) => {
+        if ((e.target as Element).closest("button")) return;
+        selectBox(box.id);
+        startBoxDrag(e, box, "move");
+      }}
+      onDoubleClick={open}
+    >
+      {box.refs?.length ? <LinkStrip boxId={box.id} refs={box.refs} /> : null}
+      <div className={styles.shortcutMain}>
+        <span className={styles.shortcutTile} aria-hidden="true">
+          <IconNote />
+        </span>
+        <span className={styles.shortcutText}>
+          <span className={styles.shortcutTitle} data-testid="note-shortcut-title">
+            {title}
+          </span>
+          <span className={styles.shortcutMeta}>
+            {value?.missing ? CABI.missing : [CABI.taskNote, value?.owner].filter(Boolean).join(" · ")}
+          </span>
+        </span>
+        {!value?.missing && (
+          <button
+            className={styles.shortcutOpen}
+            title={CABI.openNote}
+            aria-label={CABI.openNote}
+            onClick={open}
+          >
+            ↗
+          </button>
+        )}
+      </div>
+      {selected && (
+        <div className={styles.shortcutTools}>
+          <button
+            className={styles.icon}
+            title={STR.linked.pick}
+            aria-label={STR.linked.pick}
+            onClick={() => openLinkPicker(box.id)}
+          >
+            <IconLink />
+          </button>
+          <button
+            className={`${styles.icon} ${styles.shortcutRemove}`}
+            title={CABI.removeCard}
+            aria-label={CABI.removeCard}
+            onClick={() => deleteBox(box.id)}
+          >
+            <IconTrash />
+          </button>
+        </div>
+      )}
+      <EdgeKnobs boxId={box.id} exposed={selected} />
+    </div>
+  );
+}
+function SourceCard({ box, selected }: { box: TextBox; selected: boolean }) {
+  const ref = useRef<HTMLDivElement>(null),
+    multi = useNote((s) => s.multi.includes(box.id)),
+    value = useResolved(box);
+  useBoxFrame(ref, box.id, selected);
   return (
     <div
       ref={ref}

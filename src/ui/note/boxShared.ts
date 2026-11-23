@@ -277,7 +277,13 @@ export function onSelectedBoxKey(e: KeyboardEvent<HTMLDivElement>, id: string, o
 }
 
 /** 선택되면 상자에 포커스(키를 받게), 높이는 재서 문서에 반영(새 상자 자리·판 높이) */
-export function useBoxFrame(ref: RefObject<HTMLDivElement | null>, id: string, selected: boolean) {
+export function useBoxFrame(
+  ref: RefObject<HTMLDivElement | null>,
+  id: string,
+  selected: boolean,
+  /** 높이는 내용에 맞추고 너비만 조절(노트 바로가기 — improve-v25 S4) */
+  widthOnly = false,
+) {
   useEffect(() => {
     if (selected) ref.current?.focus();
   }, [selected, ref]);
@@ -286,7 +292,7 @@ export function useBoxFrame(ref: RefObject<HTMLDivElement | null>, id: string, s
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
-    if (frameH) {
+    if (frameH && !widthOnly) {
       el.style.height = frameH + "px";
       el.style.overflow = "visible";
       el.dataset.fixedFrame = "true";
@@ -297,13 +303,13 @@ export function useBoxFrame(ref: RefObject<HTMLDivElement | null>, id: string, s
       el.style.removeProperty("overflow");
       delete el.dataset.fixedFrame;
     }
-  }, [frameH, ref, id]);
+  }, [frameH, ref, id, widthOnly]);
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     const cleanups: (() => void)[] = [];
     const cancels = new Set<() => void>();
-    for (const side of ["nw", "n", "ne", "e", "se", "s", "sw", "w"]) {
+    for (const side of widthOnly ? ["e", "w"] : ["nw", "n", "ne", "e", "se", "s", "sw", "w"]) {
       const grip = document.createElement("button");
       grip.type = "button";
       grip.className = "note-frame-grip note-frame-" + side;
@@ -406,7 +412,7 @@ export function useBoxFrame(ref: RefObject<HTMLDivElement | null>, id: string, s
       for (const cancel of cancels) cancel();
       cleanups.forEach((f) => f());
     };
-  }, [id, ref]);
+  }, [id, ref, widthOnly]);
 
   // 보드 배지로 찾아옴(improve-1026v2-spec 6-2) — 이미 선택돼 있어도 포커스·화면 안으로
   const reveal = useNote((s) => (s.revealRequest?.id === id ? s.revealRequest.n : 0));

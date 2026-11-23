@@ -271,3 +271,61 @@ test("창 간 복제는 토큰으로 양방향 전달하고 원본 객체·이�
   await expect(page.getByText("그림을 찾을 수 없습니다", { exact: true })).toHaveCount(0);
   await expect(board.getByText("그림을 찾을 수 없습니다", { exact: true })).toHaveCount(0);
 });
+
+test("보드에 붙인 업무노트는 제목만 보이는 바로가기 — 본문 없음·높이 고정·↗로 노트 열기(improve-v25 S4)", async ({
+  page,
+}) => {
+  await hub(page);
+  const task = await page
+    .getByLabel("업무를 선택해 주세요", { exact: true })
+    .evaluate((s: HTMLSelectElement) => s.selectedOptions[0]!.textContent!.trim());
+  const n = await openNote(page);
+  await n.getByLabel("노트 제목", { exact: true }).fill("가상 바로가기 노트");
+  const editor = n.locator("[contenteditable=true]");
+  await editor.fill("가상 본문 첫 줄");
+  const id = new URL(n.url()).searchParams.get("id")!;
+  await n.evaluate(async () => {
+    const { flushCabiDocument } = (await import(
+      "../../src/ui/cabinet/cabiService" + ".ts"
+    )) as typeof import("../../src/ui/cabinet/cabiService");
+    await flushCabiDocument();
+  });
+  await n.close();
+  const b = await openBoard(page);
+  await b.evaluate(async (id) => {
+    const { referenceBox } = (await import(
+      "../../src/domain/cabi" + ".ts"
+    )) as typeof import("../../src/domain/cabi");
+    const { importBoardObjects } = (await import(
+      "../../src/ui/note/noteStore" + ".ts"
+    )) as typeof import("../../src/ui/note/noteStore");
+    importBoardObjects({
+      v: 1,
+      boxes: [
+        // 예전에 높이를 늘려 둔 카드도 바로가기 높이로
+        { ...referenceBox("s4-card", { kind: "note", id }, "가상 바로가기 노트", 40, 60, 1), frameH: 300 },
+        referenceBox("s4-gone", { kind: "note", id: "없는-노트" }, "가상 지난 노트", 40, 260, 2),
+      ],
+    });
+  }, id);
+  const card = b.locator('[data-box-id="s4-card"]');
+  await expect(card.getByTestId("note-shortcut-title")).toHaveText("가상 바로가기 노트");
+  await expect(card).toContainText(`업무노트 · ${task}`);
+  await expect(card).not.toContainText("가상 본문 첫 줄");
+  expect((await card.boundingBox())!.height).toBeLessThan(100);
+  const gone = b.locator('[data-box-id="s4-gone"]');
+  await expect(gone).toHaveAttribute("data-missing", "true");
+  await expect(gone).toContainText("원본 없음");
+  await expect(gone.getByRole("button", { name: "노트 열기", exact: true })).toHaveCount(0);
+  // 선택하면 [항목 연결]·[카드만 삭제]
+  await b.mouse.click(900, 700);
+  await card.getByTestId("note-shortcut-title").click();
+  await expect(card.getByRole("button", { name: "카드만 삭제", exact: true })).toBeVisible();
+  const popup = b.context().waitForEvent("page");
+  await card.getByRole("button", { name: "노트 열기", exact: true }).click();
+  const opened = await popup;
+  await expect(opened.getByLabel("노트 제목", { exact: true })).toHaveValue("가상 바로가기 노트");
+  await opened.close();
+  await card.getByRole("button", { name: "카드만 삭제", exact: true }).click();
+  await expect(card).toHaveCount(0);
+});

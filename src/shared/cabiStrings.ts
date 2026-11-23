@@ -55,6 +55,8 @@ export const CABI = localizeTree({
   missing: "원본 없음",
   removeCard: "카드만 삭제",
   openSource: "원본 열기",
+  taskNote: "업무노트",
+  openNote: "노트 열기",
   dragCopy: "다른 보드로 끌어 복제",
   dragResource: "보드로 끌어 원본 연결",
   dragHelp: "선택한 객체의 끌기 손잡이(⠿⁺)를 다른 보드 창으로 끌어 놓으세요.",

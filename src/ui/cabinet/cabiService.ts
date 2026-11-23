@@ -287,7 +287,7 @@ export async function receiveCabiDrag(
 }
 export async function resolveCabiReference(
   reference: CabiReference,
-): Promise<{ title: string; text: string; missing: boolean }> {
+): Promise<{ title: string; text: string; missing: boolean; owner?: string }> {
   return cabiCall("reference", reference);
 }
 export async function openCabiReference(reference: CabiReference) {
@@ -483,8 +483,10 @@ async function handle(name: string, args: unknown[], sender: string): Promise<un
       try {
         const n = await r.note(ref.id);
         if (name === "openReference") return handle("open", [epoch, "note", n.id], sender);
-        const { cabiText } = await import("../../domain/cabi");
-        return { title: n.title, text: cabiText(n.content).slice(0, 300), missing: false };
+        // 노트는 바로가기 — 본문은 보내지 않고 제목·업무 이름만(improve-v25 S4)
+        const owner =
+          (await j.repo.listCategories()).categories.find((c) => c.id === n.categoryId)?.name ?? "";
+        return { title: n.title, text: "", owner, missing: false };
       } catch {
         return { title: "삭제된 노트", text: "원본을 찾을 수 없습니다.", missing: true };
       }
