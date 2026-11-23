@@ -28,3 +28,13 @@ describe("끌어 놓은 링크 제목(cabinet)", () => {
     expect(a?.title).toBe("가상 b제목 <초안>");
   });
 });
+
+describe("HTML → 글자 한 글자씩 읽기(CodeQL #11)", () => {
+  it("꺾쇠·스크립트·스타일 안의 글은 버리고 글자만 남긴다", () => {
+    expect(htmlToPlainText("<style>p{}</style><p>가상</p>")).toBe("가상");
+    expect(htmlToPlainText("<SCRIPT type=x>a()</SCRIPT>뒤")).toBe("뒤");
+    expect(htmlToPlainText("a > b")).toBe("a  b");
+    expect(htmlToPlainText("앞 <b 닫히지 않음")).toBe("앞 ");
+    expect(htmlToPlainText("&lt;그대로&gt;")).toBe("&lt;그대로&gt;");
+  });
+});

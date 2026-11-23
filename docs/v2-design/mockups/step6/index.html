@@ -1707,8 +1707,10 @@
             foot: controls("", '<button class="primary" data-close>확인</button>'),
           };
       }
-      function show(s) {
-        if (!Object.hasOwn(scenes, s)) return; // 장면 이름은 허용 목록만(주소·선택 값을 HTML에 넣지 않음)
+      function show(requested) {
+        // 장면 이름은 허용 목록에서 꺼낸 값만 쓴다(주소·선택 값 자체를 HTML에 넣지 않음)
+        const s = Object.keys(scenes).find((k) => k === requested);
+        if (!s) return;
         scene = s;
         document.querySelector("#scene").value = s;
         const v = sceneBody(s);

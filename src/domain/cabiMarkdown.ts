@@ -162,15 +162,36 @@ export function importCabiMarkdown(
 const esc = (s: string) => s.replace(/([\\`*_[\]<>|])/g, "\\$1");
 /**
  * Markdown HTML 덩어리 → 글자만(노트에는 글자 노드로 들어가 HTML로 그려지지 않는다).
- * 태그를 지운 결과가 다시 태그가 되는 경우(`<scr<script>ipt>`)까지 없어질 때까지 반복하고, 남은 꺾쇠는 지운다.
+ * 정규식으로 태그를 지우지 않고 한 글자씩 읽는다 — 꺾쇠 안은 버리고, `<script>`·`<style>` 안의 글도 버리며,
+ * 결과에는 `<`·`>`가 하나도 남지 않는다(겹친 태그 `<scr<script>ipt>`도 다시 태그가 될 수 없음).
  */
 export function htmlToPlainText(html: string): string {
-  let s = html;
-  for (let prev = ""; s !== prev;) {
-    prev = s;
-    s = s.replace(/<script\b[^>]*>[\s\S]*?<\/script[^>]*>/gi, "").replace(/<[^>]*>/g, "");
+  const lower = html.toLowerCase();
+  let out = "",
+    i = 0;
+  while (i < html.length) {
+    const ch = html[i]!;
+    if (ch === ">") {
+      i++;
+      continue;
+    }
+    if (ch !== "<") {
+      out += ch;
+      i++;
+      continue;
+    }
+    const end = html.indexOf(">", i + 1);
+    if (end < 0) break; // 닫히지 않은 태그 — 뒤는 버림
+    const name = /^<\s*([a-z0-9-]+)/.exec(lower.slice(i, end))?.[1];
+    i = end + 1;
+    if (name === "script" || name === "style") {
+      const close = lower.indexOf("</" + name, i);
+      if (close < 0) break;
+      const closeEnd = html.indexOf(">", close);
+      i = closeEnd < 0 ? html.length : closeEnd + 1;
+    }
   }
-  return s.replace(/[<>]/g, "");
+  return out;
 }
 
 /** CommonMark 코드 조각: 글 안의 가장 긴 ` 묶음보다 하나 긴 울타리(역슬래시 이스케이프는 코드 안에서 먹히지 않는다) */
