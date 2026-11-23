@@ -66,7 +66,7 @@ test("표 열 너비 조절·행열 이끌이 이동·바깥 클릭 닫기·저�
 });
 test("블록 메뉴 내부 스크롤이 메뉴를 닫지 않는다", async ({ page }) => {
   const c = await note(page);
-  await c.setViewportSize({ width: 1100, height: 650 });
+  await c.setViewportSize({ width: 1100, height: 420 });
   const editor = c.locator("[contenteditable=true]");
   await editor.fill("메뉴 스크롤 검증");
   await editor.press("Shift+F10");
@@ -86,4 +86,47 @@ test("목록 노트와 자료의 본문 시작선이 같다", async ({ page }) =
   const noteText = await row.locator("button").first().boundingBox();
   const resourceText = await page.getByTestId("cabinet-row-title").first().boundingBox();
   expect(Math.abs(noteText!.x - resourceText!.x)).toBeLessThanOrEqual(1);
+});
+test('표 칸의 "/"는 글자 그대로·블록 메뉴는 바깥 클릭·이어 쓰기로 닫힘·[닫기] 보임(improve-v25 S5)', async ({
+  page,
+}) => {
+  const c = await note(page);
+  await c.setViewportSize({ width: 1000, height: 600 });
+  await c.getByTestId("cabi-import-input").setInputFiles({
+    name: "table.md",
+    mimeType: "text/markdown",
+    buffer: Buffer.from("| A | B |\n|---|---|\n| a1 | b1 |"),
+  });
+  await c.getByRole("dialog").getByRole("button", { name: "현재 위치에 삽입", exact: true }).click();
+  const table = c.locator("[contenteditable=true] table");
+  const menu = c.getByRole("menu", { name: "블록 종류", exact: true });
+  const cell = table.locator("tr").nth(1).locator("td").nth(1);
+  await cell.click();
+  await c.keyboard.type("x/y");
+  await expect(cell).toHaveText("b1x/y");
+  await expect(menu).toHaveCount(0);
+  // 빈 문단 맨 앞의 "/"만 메뉴 — [닫기]가 창 안에 보임
+  // 칸 안 빈 문단의 "/"도 글자 그대로
+  await c.keyboard.press("Enter");
+  await c.keyboard.type("/");
+  await expect(menu).toHaveCount(0);
+  await c.keyboard.press("ArrowDown");
+  await c.keyboard.type("/");
+  await expect(menu).toBeVisible();
+  const close = (await menu.getByRole("menuitem", { name: "닫기", exact: true }).boundingBox())!;
+  expect(close.y + close.height).toBeLessThanOrEqual(600);
+  await c.keyboard.type("a");
+  await expect(menu).toHaveCount(0);
+  await c.keyboard.press("Backspace");
+  await c.keyboard.press("Backspace");
+  await c.keyboard.type("/");
+  await expect(menu).toBeVisible();
+  await c.getByLabel("노트 제목", { exact: true }).click();
+  await expect(menu).toHaveCount(0);
+  // 이끌이로 연 메뉴도 바깥 클릭이면 닫힘
+  await cell.hover();
+  await c.getByTestId("cabi-block-grip").click();
+  await expect(menu).toBeVisible();
+  await c.getByLabel("노트 제목", { exact: true }).click();
+  await expect(menu).toHaveCount(0);
 });

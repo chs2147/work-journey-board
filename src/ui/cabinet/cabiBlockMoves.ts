@@ -1,5 +1,5 @@
 import type { Editor } from "@tiptap/react";
-import { NodeSelection } from "@tiptap/pm/state";
+import { NodeSelection, type EditorState } from "@tiptap/pm/state";
 import { Fragment, Slice, type Node as PMNode } from "@tiptap/pm/model";
 // gutter = 최상위 블록(목록이면 목록 전체)의 왼쪽 — 들여쓴 목록 항목도 이끌이는 문장 맨 앞 같은 자리에(불렛을 가리지 않게)
 export type Block = { pos: number; node: PMNode; rect: DOMRect; gutter: number };
@@ -9,6 +9,16 @@ function gutterOf(editor: Editor, pos: number, rect: DOMRect) {
   const top = r.depth >= 1 ? r.before(1) : pos,
     dom = editor.view.nodeDOM(top);
   return dom instanceof Element ? Math.min(rect.left, dom.getBoundingClientRect().left) : rect.left;
+}
+// "/" 블록 메뉴를 열어도 되는 자리 = 빈 문단 맨 앞, 표 칸·코드 블록 밖(improve-v25 S5)
+const NO_SLASH = ["tableCell", "tableHeader", "table", "codeBlock"];
+export function slashAllowed(state: EditorState) {
+  const sel = state.selection;
+  if (!sel.empty) return false;
+  const $from = sel.$from;
+  if ($from.parent.type.name !== "paragraph" || $from.parent.content.size > 0) return false;
+  for (let d = $from.depth; d >= 1; d--) if (NO_SLASH.includes($from.node(d).type.name)) return false;
+  return true;
 }
 export function blockAt(editor: Editor, pos: number): Block | null {
   const sel = editor.state.doc.resolve(Math.max(0, Math.min(pos, editor.state.doc.content.size)));

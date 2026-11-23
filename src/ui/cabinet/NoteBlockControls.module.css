@@ -33,7 +33,7 @@
 }
 .menu {
   width: 220px;
-  max-height: min(460px, calc(100vh - 16px));
+  max-height: min(520px, calc(100vh - 16px));
   overscroll-behavior: contain;
   overflow: auto;
   padding: 7px;
@@ -51,6 +51,13 @@
 }
 .menu button:hover {
   background: var(--surface-sub);
+}
+/* 메뉴가 창보다 길어 스크롤돼도 [닫기]는 늘 아래에 보이게(improve-v25 S5) */
+.menu .menuClose {
+  position: sticky;
+  bottom: -7px;
+  background: var(--surface-card);
+  border-top: 1px solid var(--line);
 }
 .menu hr {
   border: 0;

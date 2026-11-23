@@ -22,6 +22,7 @@ import { reportError, toast } from "../board/boardStore";
 import { prepareImage, type PreparedImage } from "../note/imageProcess";
 import { cabiClient, cabiContext, registerCabiFlush, useCabiChange } from "./cabiService";
 import { cabiEditorExtensions } from "./cabiEditorExtensions";
+import { slashAllowed } from "./cabiBlockMoves";
 import { writeCabiDocument } from "./cabiExport";
 import styles from "./Cabi.module.css";
 
@@ -118,11 +119,17 @@ export function TaskNoteWindow({ noteId }: { noteId: string }) {
       injectCSS: false,
       editorProps: {
         attributes: { class: styles.prose!, "aria-label": CABI.note },
-        handleKeyDown: (_view, event) => {
+        handleKeyDown: (view, event) => {
           if (event.isComposing) return false;
-          if (event.key === "/" && !event.ctrlKey && !event.metaKey) {
+          // 빈 문단 맨 앞에서만 "/" 블록 메뉴 — 표 칸·코드·문장 중간의 "/"는 글자 그대로(improve-v25 S5)
+          if (
+            event.key === "/" &&
+            !event.ctrlKey &&
+            !event.metaKey &&
+            !event.altKey &&
+            slashAllowed(view.state)
+          )
             setTimeout(() => setBlockMenu(true), 0);
-          }
           return false;
         },
         handleDrop: (_view, event) => {

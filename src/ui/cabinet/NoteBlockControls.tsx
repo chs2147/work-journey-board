@@ -11,6 +11,7 @@ import { STR } from "../../shared/strings";
 import { V17 } from "../../shared/v17Strings";
 import { useCabiChange } from "./cabiService";
 import styles from "./NoteBlockControls.module.css";
+const MENU_MAX_H = 520; // NoteBlockControls.module.css .menu max-height와 같게
 export function NoteBlockControls({
   editor,
   slashOpen,
@@ -36,6 +37,11 @@ export function NoteBlockControls({
   useEffect(() => {
     const refresh = () => {
       const selection = editor.state.selection;
+      // "/"를 지우거나 다른 글자를 이어 쓰거나 커서가 옮겨 가면 "/" 메뉴를 닫는다(improve-v25 S5)
+      if (slashOpen) {
+        const at = selection.from;
+        if (!selection.empty || at < 1 || editor.state.doc.textBetween(at - 1, at) !== "/") onCloseSlash();
+      }
       if (selection instanceof TextSelection && !selection.empty) {
         const a = editor.view.coordsAtPos(selection.from),
           b = editor.view.coordsAtPos(selection.to);
@@ -106,6 +112,14 @@ export function NoteBlockControls({
         }
       }
     };
+    // 이끌이로 연 메뉴·"/" 메뉴는 메뉴 밖을 누르면 닫는다(이끌이 자신은 onClick이 열고 닫음 — improve-v25 S5)
+    const outside = (e: PointerEvent) => {
+      if (!menu && !slashOpen) return;
+      if (e.target instanceof Element && e.target.closest("[data-cabi-block-menu],[data-cabi-block-grip]"))
+        return;
+      setMenu(false);
+      onCloseSlash();
+    };
     const scroll = (e: Event) => {
       if (e.target instanceof Element && e.target.closest(`[data-cabi-block-menu]`)) return;
       setMenu(false);
@@ -121,6 +135,7 @@ export function NoteBlockControls({
     editor.view.dom.addEventListener("drop", dropped, true);
     editor.view.dom.addEventListener("keydown", key);
     window.addEventListener("dragend", finish);
+    window.addEventListener("pointerdown", outside, true);
     window.addEventListener("scroll", scroll, true);
     window.addEventListener("resize", scroll);
     return () => {
@@ -133,21 +148,27 @@ export function NoteBlockControls({
       editor.view.dom.removeEventListener("drop", dropped, true);
       editor.view.dom.removeEventListener("keydown", key);
       window.removeEventListener("dragend", finish);
+      window.removeEventListener("pointerdown", outside, true);
       window.removeEventListener("scroll", scroll, true);
       window.removeEventListener("resize", scroll);
     };
-  }, [editor, menu, disabled, onCloseSlash]);
+  }, [editor, menu, slashOpen, disabled, onCloseSlash]);
   const active = hover ?? (slashOpen ? selectedBlock(editor) : null);
   if (disabled) return null;
   const close = () => {
     setMenu(false);
     onCloseSlash();
   };
+  // 메뉴 전체(최대 높이)가 창 안에 들어오게 — 아래가 모자라면 블록 위쪽으로(improve-v25 S5)
+  const menuH = Math.min(MENU_MAX_H, window.innerHeight - 16);
+  const menuTop = (rect: DOMRect) => {
+    const below = rect.top + 25;
+    if (below + menuH <= window.innerHeight - 8) return below;
+    if (rect.top - menuH - 4 >= 8) return rect.top - menuH - 4;
+    return Math.max(8, window.innerHeight - 8 - menuH);
+  };
   const menuPos = active
-    ? {
-        left: Math.max(8, Math.min(window.innerWidth - 230, active.gutter - 30)),
-        top: Math.max(8, Math.min(window.innerHeight - 470, active.rect.top + 25)),
-      }
+    ? { left: Math.max(8, Math.min(window.innerWidth - 230, active.gutter - 30)), top: menuTop(active.rect) }
     : undefined;
   return createPortal(
     <>
@@ -157,6 +178,7 @@ export function NoteBlockControls({
           aria-label={V17.grip}
           title={V17.grip}
           data-testid="cabi-block-grip"
+          data-cabi-block-grip
           data-block={hover.node.type.name}
           style={{ left: Math.max(3, hover.gutter - 29), top: hover.rect.top }}
           draggable
@@ -231,7 +253,7 @@ export function NoteBlockControls({
               {[CABI.moveUp, CABI.moveDown, CABI.duplicateBlock, CABI.deleteBlock][i]}
             </button>
           ))}
-          <button role="menuitem" onClick={close}>
+          <button role="menuitem" className={styles.menuClose} onClick={close}>
             {V17.close}
           </button>
         </div>

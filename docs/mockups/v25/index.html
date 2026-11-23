@@ -1,0 +1,656 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>개선 v25 시안</title>
+    <style>
+      :root {
+        --fs-xs: 12px;
+        --fs-sm: 13px;
+        --fs-md: 14px;
+        --radius-sm: 4px;
+        --radius-lg: 10px;
+        --page: #f7f6f2;
+        --surface-card: #ffffff;
+        --surface-sub: #f1efe8;
+        --line: #d3d1c7;
+        --line-strong: #b4b2a9;
+        --text-1: #2c2c2a;
+        --text-2: #5f5e5a;
+        --text-3: #8a8983;
+        --accent: #185fa5;
+        --accent-soft: #e6f1fb;
+        --danger: #b42318;
+        --dot: #d9d6cc;
+      }
+      body[data-theme="dark"] {
+        --page: #1a1a19;
+        --surface-card: #232322;
+        --surface-sub: #2c2c2a;
+        --line: #3d3d3a;
+        --line-strong: #55554f;
+        --text-1: #f0efec;
+        --text-2: #c3c2b7;
+        --text-3: #8f8e86;
+        --accent: #6da7ec;
+        --accent-soft: #1d2a38;
+        --danger: #f2877d;
+        --dot: #34342f;
+      }
+      body[data-theme="signature"] {
+        --page: #f6f1e8;
+        --surface-card: #fcf9f3;
+        --surface-sub: #f3ede3;
+        --line: #e9e1d5;
+        --line-strong: #d6c3aa;
+        --text-1: #423c34;
+        --text-2: #6b6054;
+        --text-3: #786f63;
+        --accent: #856748;
+        --accent-soft: #f0e5d5;
+        --danger: #a8402f;
+        --dot: #e2d8c8;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--page);
+        color: var(--text-1);
+        font:
+          14px/1.6 "Pretendard Variable",
+          "Malgun Gothic",
+          "Apple SD Gothic Neo",
+          system-ui,
+          sans-serif;
+      }
+      .wrap {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 28px 16px 60px;
+      }
+      h1 {
+        font-size: 22px;
+        margin: 0 0 4px;
+      }
+      h2 {
+        font-size: 17px;
+        margin: 40px 0 6px;
+      }
+      h3 {
+        font-size: 14px;
+        margin: 0 0 10px;
+      }
+      p.lead,
+      .muted {
+        color: var(--text-2);
+        margin: 0 0 14px;
+      }
+      .themes {
+        display: flex;
+        gap: 6px;
+        margin: 14px 0 0;
+      }
+      .themes button,
+      .pick button {
+        font: inherit;
+        font-size: var(--fs-sm);
+        padding: 5px 12px;
+        border: 1px solid var(--line-strong);
+        background: var(--surface-card);
+        color: var(--text-1);
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+      }
+      .themes button[aria-pressed="true"],
+      .pick button[aria-pressed="true"] {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #fff;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+        gap: 16px;
+      }
+      .opt {
+        background: var(--surface-card);
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+      }
+      .opt > header {
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 8px;
+      }
+      .opt > header b {
+        font-size: 15px;
+      }
+      .tag {
+        font-size: var(--fs-xs);
+        color: var(--accent);
+        border: 1px solid var(--accent);
+        padding: 0 6px;
+        border-radius: var(--radius-sm);
+        white-space: nowrap;
+      }
+      .board {
+        position: relative;
+        min-height: 300px;
+        padding: 20px 16px;
+        background-color: var(--page);
+        background-image: radial-gradient(var(--dot) 1px, transparent 1px);
+        background-size: 14px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        align-items: flex-start;
+      }
+      .opt footer {
+        padding: 12px 16px;
+        border-top: 1px solid var(--line);
+        font-size: var(--fs-sm);
+        color: var(--text-2);
+      }
+      .opt footer ul {
+        margin: 0;
+        padding-left: 18px;
+      }
+      .cap {
+        font-size: 11px;
+        color: var(--text-3);
+        margin: -12px 0 0 2px;
+      }
+      svg.i {
+        width: 16px;
+        height: 16px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.6;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        flex: none;
+      }
+      .ibtn {
+        width: 28px;
+        height: 28px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--line-strong);
+        background: var(--surface-card);
+        color: var(--text-2);
+        border-radius: var(--radius-sm);
+      }
+      .ibtn.danger {
+        color: var(--danger);
+      }
+      .sel {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      .tools {
+        position: absolute;
+        right: 0;
+        top: -36px;
+        display: flex;
+        gap: 4px;
+      }
+
+      /* A: 링크 카드형 */
+      .a {
+        position: relative;
+        width: 300px;
+        background: var(--surface-card);
+        border: 1px solid var(--line-strong);
+        border-radius: var(--radius-lg);
+        box-shadow: 0 2px 6px #0001;
+        display: flex;
+        gap: 10px;
+        padding: 12px 12px;
+        align-items: center;
+        cursor: grab;
+      }
+      .a .tile {
+        width: 40px;
+        height: 40px;
+        border-radius: 9px;
+        background: var(--accent-soft);
+        color: var(--accent);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .a .tile svg.i {
+        width: 20px;
+        height: 20px;
+      }
+      .a .txt {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      .a .t {
+        font-weight: 700;
+        overflow-wrap: anywhere;
+      }
+      .a .m {
+        font-size: var(--fs-xs);
+        color: var(--text-2);
+      }
+      .open {
+        color: var(--accent);
+        padding: 2px 4px;
+        border-radius: var(--radius-sm);
+      }
+      .a.gone .tile {
+        background: var(--surface-sub);
+        color: var(--text-3);
+      }
+      .a.gone .t {
+        color: var(--text-3);
+        text-decoration: line-through;
+      }
+
+      /* B: 한 줄 칩 */
+      .b {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        max-width: 320px;
+        height: 36px;
+        padding: 0 8px 0 10px;
+        background: var(--surface-card);
+        border: 1px solid var(--line-strong);
+        border-radius: 18px;
+        box-shadow: 0 1px 4px #0001;
+        cursor: grab;
+      }
+      .b svg.i {
+        color: var(--accent);
+      }
+      .b .t {
+        font-weight: 700;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .b.gone .t {
+        color: var(--text-3);
+        text-decoration: line-through;
+      }
+      .b.gone svg.i {
+        color: var(--text-3);
+      }
+
+      /* C: 지금 카드에서 본문만 뺌 */
+      .c {
+        position: relative;
+        width: 300px;
+        background: var(--surface-card);
+        border: 1px solid var(--line-strong);
+        border-left: 3px solid var(--accent);
+        box-shadow: 0 2px 6px #0001;
+        padding: 12px 15px;
+        cursor: grab;
+      }
+      .c header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--line);
+        font-size: var(--fs-xs);
+        color: var(--text-3);
+      }
+      .c .t {
+        font-weight: 700;
+        margin: 10px 0 10px;
+        overflow-wrap: anywhere;
+      }
+      .c .row {
+        display: flex;
+        gap: 6px;
+      }
+      .c.gone {
+        border-left-color: var(--line-strong);
+      }
+      .c.gone .t {
+        color: var(--text-3);
+        text-decoration: line-through;
+      }
+
+      /* 지금 */
+      .now {
+        width: 300px;
+        background: var(--surface-card);
+        border: 1px solid var(--line-strong);
+        border-left: 3px solid var(--accent);
+        padding: 12px 15px;
+        box-shadow: 0 2px 6px #0001;
+      }
+      .now header {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        font-size: var(--fs-xs);
+        color: var(--text-3);
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--line);
+      }
+      .now .t {
+        font-weight: 700;
+        margin: 10px 0 6px;
+      }
+      .now p {
+        margin: 0;
+        font-size: var(--fs-sm);
+        color: var(--text-2);
+        white-space: pre-line;
+      }
+      .now .row {
+        display: flex;
+        gap: 6px;
+        margin-top: 10px;
+      }
+      .compare {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 16px;
+        align-items: start;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--surface-card);
+        border: 1px solid var(--line);
+        font-size: var(--fs-sm);
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 9px 12px;
+        border-bottom: 1px solid var(--line);
+        vertical-align: top;
+      }
+      th {
+        background: var(--surface-sub);
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .rec {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .table-wrap {
+        overflow-x: auto;
+      }
+      /* (b) 이끌이 메뉴 비교 */
+      .menu {
+        width: 180px;
+        background: var(--surface-card);
+        border: 1px solid var(--line-strong);
+        border-radius: 5px;
+        box-shadow: 0 6px 25px #0002;
+        padding: 5px;
+        font-size: var(--fs-sm);
+      }
+      .menu div {
+        padding: 4px 10px;
+      }
+      .menu .close {
+        border-top: 1px solid var(--line);
+        margin-top: 4px;
+      }
+      .menu .cut {
+        color: var(--text-3);
+        text-align: center;
+      }
+      .cell {
+        display: inline-block;
+        border: 1px solid var(--line-strong);
+        padding: 4px 10px;
+        background: var(--surface-card);
+        font-size: var(--fs-sm);
+      }
+      .cell.th {
+        background: var(--surface-sub);
+        font-weight: 700;
+      }
+      .scene {
+        background: var(--surface-card);
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        padding: 14px 16px;
+      }
+      .scene h3 {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .bad {
+        color: var(--danger);
+      }
+      .ok {
+        color: #1a7f37;
+      }
+      body[data-theme="dark"] .ok {
+        color: #6fd38a;
+      }
+    </style>
+  </head>
+  <body data-theme="light">
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <symbol id="note" viewBox="0 0 24 24">
+        <rect x="5" y="3.5" width="14" height="17" rx="1.5" />
+        <path d="M8.5 8h7M8.5 11.5h7M8.5 15h4" />
+      </symbol>
+      <symbol id="go" viewBox="0 0 24 24"><path d="M9 6h9v9M18 6 7 17" /></symbol>
+      <symbol id="trash" viewBox="0 0 24 24">
+        <path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12" />
+      </symbol>
+      <symbol id="link" viewBox="0 0 24 24">
+        <path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" />
+      </symbol>
+    </svg>
+    <div class="wrap">
+      <h1>개선 v25 시안 — 업무노트 바로가기·업무노트 이끌이 메뉴</h1>
+      <p class="lead">
+        모든 그림은 가상 데이터입니다. 위 단추로 라이트·다크·시그니처 테마를 바꿔 볼 수 있습니다.
+      </p>
+      <div class="themes" role="group" aria-label="테마">
+        <button type="button" data-t="light" aria-pressed="true">라이트</button>
+        <button type="button" data-t="dark" aria-pressed="false">다크</button>
+        <button type="button" data-t="signature" aria-pressed="false">시그니처</button>
+      </div>
+
+      <h2>S4. 메모보드에 붙인 업무노트 → 노트 바로가기</h2>
+      <p class="muted">
+        주간 메모보드와 Cabi.NET 업무 메모보드에 같은 부품이 쓰입니다. 노트 내용(본문·첫 그림)은 보이지 않고,
+        제목과 노트 아이콘만 보입니다. 더블클릭·Enter·↗ 단추로 노트 창이 열리는 동작은 지금과 같습니다. 보드
+        그림·Markdown 내보내기는 지금도 카드 제목만 담으므로 바뀌지 않습니다.
+      </p>
+
+      <div class="compare" style="margin-bottom: 18px">
+        <div>
+          <h3>지금 (본문까지 보임)</h3>
+          <div class="now">
+            <header><svg class="i"><use href="#note" /></svg>원본 연결</header>
+            <div class="t">가상 주간 회의 정리</div>
+            <p>참석자: 가상 A, 가상 B
+일정 재검토 — 다음 주까지 초안
+2. 예산 항목 확인 필요</p>
+            <div class="row">
+              <span class="ibtn"><svg class="i"><use href="#go" /></svg></span
+              ><span class="ibtn"><svg class="i"><use href="#trash" /></svg></span
+              ><span class="ibtn"><svg class="i"><use href="#link" /></svg></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid">
+        <article class="opt">
+          <header><b>A. 링크 카드형</b><span class="tag">추천</span></header>
+          <div class="board">
+            <div class="a">
+              <span class="tile"><svg class="i"><use href="#note" /></svg></span>
+              <span class="txt"
+                ><span class="t">가상 주간 회의 정리</span
+                ><span class="m">업무노트 · 가상 정산 시스템 구축</span></span
+              >
+              <span class="open" title="노트 열기"><svg class="i"><use href="#go" /></svg></span>
+            </div>
+            <div class="a sel" style="margin-top: 30px">
+              <div class="tools">
+                <span class="ibtn" title="업무 항목 연결"><svg class="i"><use href="#link" /></svg></span
+                ><span class="ibtn danger" title="카드 지우기"><svg class="i"><use href="#trash" /></svg></span>
+              </div>
+              <span class="tile"><svg class="i"><use href="#note" /></svg></span>
+              <span class="txt"
+                ><span class="t">긴 제목 예시 — 분기 결산 준비 사항과 협업 부서 요청 정리</span
+                ><span class="m">업무노트 · 가상 정산 시스템 구축</span></span
+              >
+              <span class="open"><svg class="i"><use href="#go" /></svg></span>
+            </div>
+            <p class="cap">선택하면 위에 [항목 연결]·[지우기]</p>
+            <div class="a gone">
+              <span class="tile"><svg class="i"><use href="#note" /></svg></span>
+              <span class="txt"><span class="t">가상 지난 노트</span><span class="m">원본 없음</span></span>
+            </div>
+          </div>
+          <footer>
+            <ul>
+              <li>메모보드의 <b>링크 카드</b>와 같은 생김새(아이콘 칸 + 제목 + 작은 글씨 한 줄 + ↗)</li>
+              <li>아래 줄에 어느 업무의 노트인지 표시 — 주간 메모보드에서 특히 도움</li>
+              <li>높이 고정(약 64px), 너비만 조절</li>
+            </ul>
+          </footer>
+        </article>
+
+        <article class="opt">
+          <header><b>B. 한 줄 칩</b></header>
+          <div class="board">
+            <span class="b"
+              ><svg class="i"><use href="#note" /></svg><span class="t">가상 주간 회의 정리</span
+              ><span class="open"><svg class="i"><use href="#go" /></svg></span
+            ></span>
+            <span class="b sel" style="margin-top: 30px"
+              ><span class="tools"
+                ><span class="ibtn"><svg class="i"><use href="#link" /></svg></span
+                ><span class="ibtn danger"><svg class="i"><use href="#trash" /></svg></span></span
+              ><svg class="i"><use href="#note" /></svg
+              ><span class="t">긴 제목 예시 — 분기 결산 준비 사항과 협업 부서 요청 정리</span
+              ><span class="open"><svg class="i"><use href="#go" /></svg></span
+            ></span>
+            <p class="cap">긴 제목은 … 으로 줄임(전체 제목은 툴팁)</p>
+            <span class="b gone"><svg class="i"><use href="#note" /></svg><span class="t">가상 지난 노트</span></span>
+          </div>
+          <footer>
+            <ul>
+              <li>가장 작게 — 보드에 많이 붙여도 자리를 덜 차지함</li>
+              <li>업무 이름은 보이지 않음(툴팁으로)</li>
+              <li>너비는 제목 길이에 맞춤(최대 320px)</li>
+            </ul>
+          </footer>
+        </article>
+
+        <article class="opt">
+          <header><b>C. 지금 카드에서 본문만 뺌</b></header>
+          <div class="board">
+            <div class="c">
+              <header><svg class="i"><use href="#note" /></svg>원본 연결</header>
+              <div class="t">가상 주간 회의 정리</div>
+              <div class="row">
+                <span class="ibtn"><svg class="i"><use href="#go" /></svg></span
+                ><span class="ibtn"><svg class="i"><use href="#trash" /></svg></span
+                ><span class="ibtn"><svg class="i"><use href="#link" /></svg></span>
+              </div>
+            </div>
+            <div class="c gone">
+              <header><svg class="i"><use href="#note" /></svg>원본 없음</header>
+              <div class="t">가상 지난 노트</div>
+            </div>
+          </div>
+          <footer>
+            <ul>
+              <li>지금 모양을 거의 그대로 — 익숙함</li>
+              <li>단추 3개가 늘 보여 카드가 큼(약 120px)</li>
+            </ul>
+          </footer>
+        </article>
+      </div>
+
+      <h3 style="margin-top: 22px">정할 것</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>#</th><th>항목</th><th>추천</th><th>다른 안</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>D1</td><td>모양</td><td class="rec">A 링크 카드형</td><td>B 한 줄 칩 · C 지금 카드에서 본문만 뺌</td>
+            </tr>
+            <tr>
+              <td>D2</td><td>범위</td><td class="rec">업무노트 카드만</td
+              ><td>주간 메모를 업무 보드에 원본 연결한 카드도 바로가기로(지금은 메모 글 미리보기)</td>
+            </tr>
+            <tr>
+              <td>D3</td><td>작은 글씨 줄</td><td class="rec">업무노트 · 업무 이름</td><td>표시 안 함(제목만)</td>
+            </tr>
+            <tr>
+              <td>D4</td><td>이미 붙여 둔 카드</td
+              ><td class="rec">그대로 바로가기 모양으로 보임(저장 형식 바뀌지 않음 · 예전 판에서 열면 예전 모양)</td
+              ><td>새로 붙인 카드만</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>S5. 업무노트 이끌이·"/" 메뉴 (수정 완료 — 확인용)</h2>
+      <p class="muted">
+        시안 없이 고쳤습니다. 원인은 표 칸에서 <code>/</code>를 쓰면 블록 메뉴가 열리고, 그 메뉴가 바깥을 눌러도
+        닫히지 않으며, 메뉴가 창보다 길어 [닫기]가 아래로 잘린 것이었습니다.
+      </p>
+      <div class="compare">
+        <div class="scene">
+          <h3><span class="bad">●</span> 전</h3>
+          <div><span class="cell th">A</span><span class="cell th">B</span></div>
+          <div><span class="cell">a1</span><span class="cell">b1 x/</span></div>
+          <div class="menu" style="margin-top: 6px">
+            <div>본문</div><div>제목 1</div><div>…</div><div>블록 삭제</div><div class="cut">(아래 [닫기] 잘림)</div>
+          </div>
+          <p class="muted" style="margin-top: 8px">표 칸에서 "/" → 메뉴가 표를 가리고, 바깥을 눌러도 남음</p>
+        </div>
+        <div class="scene">
+          <h3><span class="ok">●</span> 후</h3>
+          <div><span class="cell th">A</span><span class="cell th">B</span></div>
+          <div><span class="cell">a1</span><span class="cell">b1 x/y</span></div>
+          <ul class="muted" style="margin-top: 10px; padding-left: 18px">
+            <li>"/" 메뉴는 <b>빈 문단 맨 앞</b>에서만 — 표 칸·코드·문장 중간의 "/"는 글자 그대로</li>
+            <li>이끌이·"/"로 연 메뉴는 <b>메뉴 밖을 누르면 닫힘</b>, "/" 뒤에 글자를 이어 쓰거나 지워도 닫힘</li>
+            <li>메뉴는 창 안에 다 들어오게 놓이고(아래가 모자라면 위로), [닫기]는 늘 맨 아래에 보임</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <script>
+      document.querySelectorAll(".themes button").forEach((b) =>
+        b.addEventListener("click", () => {
+          document.body.dataset.theme = b.dataset.t;
+          document
+            .querySelectorAll(".themes button")
+            .forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+        }),
+      );
+    </script>
+  </body>
+</html>
