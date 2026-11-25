@@ -1,10 +1,10 @@
-# 현재 Feature List — v1.53.2
+# 현재 Feature List — v1.53.3
 
 기준일 2026-11-26 · DB 구조 v20 · 활성 283개 · 제거/대체 3개 · 미제공/계획 3개
 
 원본은 [catalog.json](catalog.json), 운영 규칙은 [README.md](README.md)입니다. 최초 제공 버전은 0.x 개발판을 포함한 비RC 출시 이력 기준이며 RC는 별도 필드입니다.
 
-[검토용 Excel](exports/work-journey-board/Work-Journey-Board-Feature-List-v1.53.2.xlsx) · [현재 스냅샷](releases/work-journey-board/v1.53.2.json)
+[검토용 Excel](exports/work-journey-board/Work-Journey-Board-Feature-List-v1.53.3.xlsx) · [현재 스냅샷](releases/work-journey-board/v1.53.3.json)
 
 ## 주간 보드·입력
 
