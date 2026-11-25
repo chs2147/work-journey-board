@@ -533,6 +533,386 @@
       .tablewrap {
         overflow-x: auto;
       }
+
+      /* ── 새 기능 카드 시안(2026-11-25) ── */
+      .nf {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        color: #2c2c2a;
+        font-size: 13px;
+      }
+      .nf b.t {
+        display: block;
+        font-size: 19px;
+        line-height: 1.35;
+        margin: 2px 0 6px;
+        letter-spacing: -0.2px;
+      }
+      .nf p.d {
+        margin: 0 0 14px;
+        color: #5f5e5a;
+        line-height: 1.6;
+      }
+      .nf .cta {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        width: 100%;
+        font: inherit;
+        font-size: 14px;
+        font-weight: 700;
+        color: #fff;
+        background: #185fa5;
+        border: 0;
+        border-radius: 8px;
+        padding: 11px 14px;
+        cursor: pointer;
+        box-shadow: 0 6px 16px rgba(24, 95, 165, 0.35);
+      }
+      .nf .subs {
+        display: flex;
+        justify-content: center;
+        gap: 18px;
+        margin-top: 10px;
+        font-size: 12.5px;
+      }
+      .nf .subs a {
+        color: #5f5e5a;
+        text-decoration: none;
+      }
+      .nf .subs a:first-child {
+        color: #185fa5;
+        font-weight: 600;
+      }
+      .nfNew {
+        display: inline-block;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.6px;
+        color: #7a4a00;
+        background: #ffd98a;
+        border-radius: 4px;
+        padding: 1px 7px;
+      }
+      /* V1 히어로 일러스트 */
+      .v1 {
+        width: 400px;
+        background: #fff;
+        border-radius: 14px;
+        overflow: hidden;
+        box-shadow: 0 22px 50px rgba(0, 0, 0, 0.45);
+      }
+      .v1 .hero {
+        position: relative;
+        height: 150px;
+        background: linear-gradient(135deg, #185fa5, #3d8be0 60%, #6aa8ef);
+        overflow: hidden;
+      }
+      .v1 .hero .nfNew {
+        position: absolute;
+        left: 16px;
+        top: 14px;
+      }
+      .v1 .body {
+        padding: 16px 22px 18px;
+      }
+      .v1 .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        margin: 0 0 16px;
+      }
+      .v1 .chips span {
+        font-size: 11.5px;
+        border: 1px solid #d3d1c7;
+        border-radius: 12px;
+        padding: 1px 9px;
+        color: #5f5e5a;
+        background: #faf9f5;
+      }
+      .v1 .chips span i {
+        display: inline-block;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        margin-right: 5px;
+        vertical-align: 1px;
+      }
+      .heroRing {
+        transform-origin: 236px 74px;
+        animation: heroPulse 1.6s ease-in-out infinite;
+      }
+      @keyframes heroPulse {
+        50% {
+          transform: scale(1.12);
+          opacity: 0.55;
+        }
+      }
+      .heroHand {
+        animation: heroTap 1s ease-in-out infinite;
+      }
+      @keyframes heroTap {
+        50% {
+          transform: translate(-3px, -5px);
+        }
+      }
+      /* V2 카드 부채꼴 */
+      .v2 {
+        width: 420px;
+        background: #fff;
+        border-radius: 14px;
+        box-shadow: 0 22px 50px rgba(0, 0, 0, 0.45);
+        padding: 0 22px 18px;
+        text-align: center;
+      }
+      .v2 .fan {
+        position: relative;
+        height: 150px;
+        margin: 0 -22px 6px;
+        background: radial-gradient(circle at 50% 110%, #fdecd2, #fff 70%);
+        border-radius: 14px 14px 0 0;
+      }
+      .v2 .mc {
+        position: absolute;
+        left: 50%;
+        top: 26px;
+        width: 108px;
+        height: 112px;
+        margin-left: -54px;
+        background: #fff;
+        border: 1px solid #d3d1c7;
+        border-radius: 10px;
+        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.14);
+        padding: 8px;
+        text-align: left;
+        font-size: 11px;
+        font-weight: 700;
+        transition: transform 0.7s cubic-bezier(0.2, 1.4, 0.4, 1);
+      }
+      .v2 .mc svg {
+        display: block;
+        margin-top: 6px;
+      }
+      .v2.play .mc.a {
+        transform: translateX(-118px) rotate(-12deg);
+      }
+      .v2.play .mc.b {
+        transform: translateX(-40px) rotate(-4deg);
+      }
+      .v2.play .mc.c {
+        transform: translateX(40px) rotate(4deg);
+      }
+      .v2.play .mc.d {
+        transform: translateX(118px) rotate(12deg);
+      }
+      .v2 .seg9 {
+        display: flex;
+        gap: 3px;
+        margin: 0 auto 6px;
+        width: 220px;
+      }
+      .v2 .seg9 i {
+        flex: 1;
+        height: 6px;
+        background: #ebe8df;
+      }
+      .v2 .seg9 i:first-child {
+        background: #e8a33a;
+      }
+      .v2 .cnt {
+        font-size: 11.5px;
+        color: #8a8983;
+        margin-bottom: 14px;
+      }
+      /* V3 스포트라이트로 ? 단추 소개 */
+      .v3bubble {
+        position: absolute;
+        left: 6.6%;
+        top: 63%;
+        width: 340px;
+        background: #fff;
+        color: #2c2c2a;
+        border-radius: 12px;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+        padding: 16px 18px 14px;
+        font-size: 13px;
+      }
+      .v3bubble::before {
+        content: "";
+        position: absolute;
+        left: -7px;
+        top: 66%;
+        width: 14px;
+        height: 14px;
+        background: #fff;
+        transform: rotate(45deg);
+      }
+      .v3bubble b.t {
+        display: block;
+        font-size: 18px;
+        margin: 6px 0 4px;
+      }
+      .v3bubble p {
+        margin: 0 0 12px;
+        color: #5f5e5a;
+        line-height: 1.6;
+      }
+      .v3bubble .row {
+        display: flex;
+        gap: 8px;
+      }
+      .v3bubble .row button {
+        font: inherit;
+        font-size: 13px;
+        border-radius: 7px;
+        padding: 8px 12px;
+        border: 1px solid #b4b2a9;
+        background: #fff;
+        cursor: pointer;
+      }
+      .v3bubble .row button.p {
+        flex: 1;
+        background: #185fa5;
+        color: #fff;
+        border-color: #185fa5;
+        font-weight: 700;
+      }
+      .spark {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        pointer-events: none;
+        animation: sparkle 1.4s ease-in-out infinite;
+      }
+      .spark::before,
+      .spark::after {
+        content: "";
+        position: absolute;
+        left: 4px;
+        top: 0;
+        width: 2px;
+        height: 10px;
+        background: #ffd98a;
+        border-radius: 1px;
+      }
+      .spark::after {
+        transform: rotate(90deg);
+      }
+      @keyframes sparkle {
+        0%,
+        100% {
+          transform: scale(0.4);
+          opacity: 0;
+        }
+        50% {
+          transform: scale(1.2) rotate(45deg);
+          opacity: 1;
+        }
+      }
+      .bigRing {
+        position: absolute;
+        border: 3px solid #e8a33a;
+        border-radius: 12px;
+        animation: bigPulse 1.4s ease-in-out infinite;
+      }
+      @keyframes bigPulse {
+        0%,
+        100% {
+          box-shadow:
+            0 0 0 0 rgba(232, 163, 58, 0.55),
+            0 0 18px rgba(232, 163, 58, 0.6);
+        }
+        50% {
+          box-shadow:
+            0 0 0 12px rgba(232, 163, 58, 0),
+            0 0 26px rgba(232, 163, 58, 0.8);
+        }
+      }
+      /* V4 선물 상자 */
+      .v4 {
+        width: 380px;
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 22px 50px rgba(0, 0, 0, 0.45);
+        padding: 26px 24px 18px;
+        text-align: center;
+        overflow: visible;
+      }
+      .v4 .gift {
+        width: 86px;
+        height: 86px;
+        margin: -60px auto 6px;
+        border-radius: 50%;
+        background: radial-gradient(circle at 35% 30%, #fff6dc, #ffd98a);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 8px 20px rgba(232, 163, 58, 0.5);
+      }
+      .v4.play .gift {
+        animation: giftBounce 0.9s cubic-bezier(0.3, 1.6, 0.5, 1) 1;
+      }
+      @keyframes giftBounce {
+        0% {
+          transform: scale(0.3) translateY(30px);
+        }
+        100% {
+          transform: none;
+        }
+      }
+      .conf {
+        position: absolute;
+        width: 7px;
+        height: 11px;
+        top: 0;
+        left: 50%;
+        opacity: 0;
+      }
+      .v4.play .conf {
+        animation: confetti 1.3s ease-out forwards;
+      }
+      @keyframes confetti {
+        0% {
+          opacity: 1;
+          transform: translate(0, 0) rotate(0);
+        }
+        100% {
+          opacity: 0;
+          transform: translate(var(--x), var(--y)) rotate(var(--r));
+        }
+      }
+      .v4 .tl {
+        font-size: 12px;
+        color: #8a8983;
+        margin-bottom: 14px;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .heroRing,
+        .heroHand,
+        .spark,
+        .bigRing,
+        .v4.play .gift,
+        .v4.play .conf {
+          animation: none !important;
+        }
+        .v2 .mc {
+          transition: none;
+        }
+      }
+      .replay {
+        font: inherit;
+        font-size: 12px;
+        border: 1px solid var(--line-strong);
+        background: var(--card);
+        color: var(--t1);
+        border-radius: 5px;
+        padding: 3px 10px;
+        margin-left: 8px;
+        cursor: pointer;
+      }
     </style>
   </head>
   <body>
@@ -654,6 +1034,325 @@
         </div>
       </div>
 
+      <h2>2-1. 새 기능 카드 — 눈길 끄는 시안 <button class="replay" id="nfReplay">↻ 다시 재생</button></h2>
+      <p class="lead">
+        이미 쓰던 사용자에게 업데이트 뒤 딱 1번 띄우는 카드입니다(처음 사용자 환영 카드도 같은 모양에 문구만
+        바꿔 씀). 움직임은 짧게 한 번 + 은은한 반복이며, 시스템의 "동작 줄이기" 설정이면 멈춘 그림으로
+        보입니다.
+      </p>
+      <div class="grid2">
+        <div>
+          <div class="stage">
+            <img class="shot" src="shots/board.png" alt="주간 보드" />
+            <svg class="mask" viewBox="0 0 1280 800">
+              <rect width="1280" height="800" fill="rgba(10,14,20,.6)" />
+            </svg>
+            <div class="nf v1">
+              <div class="hero">
+                <svg width="400" height="150" viewBox="0 0 400 150" style="position: absolute; inset: 0">
+                  <g opacity=".95">
+                    <rect x="70" y="28" width="260" height="110" rx="8" fill="#fff" />
+                    <rect x="70" y="28" width="260" height="18" rx="8" fill="#eef3fa" />
+                    <rect x="70" y="40" width="260" height="6" fill="#eef3fa" />
+                    <g fill="#e3e8f0">
+                      <rect x="80" y="56" width="50" height="8" rx="2" />
+                      <rect x="80" y="76" width="50" height="8" rx="2" />
+                      <rect x="80" y="96" width="50" height="8" rx="2" />
+                      <rect x="80" y="116" width="50" height="8" rx="2" />
+                    </g>
+                    <g fill="#dbe7f6">
+                      <rect x="142" y="56" width="38" height="6" rx="2" />
+                      <rect x="142" y="66" width="28" height="6" rx="2" />
+                      <rect x="262" y="56" width="40" height="6" rx="2" />
+                      <rect x="262" y="96" width="34" height="6" rx="2" />
+                      <rect x="142" y="96" width="30" height="6" rx="2" />
+                    </g>
+                  </g>
+                  <rect x="0" y="0" width="400" height="150" fill="rgba(8,20,40,.42)" mask="url(#heroHole)" />
+                  <defs>
+                    <mask id="heroHole">
+                      <rect width="400" height="150" fill="#fff" />
+                      <rect x="200" y="50" width="72" height="48" rx="8" fill="#000" />
+                    </mask>
+                  </defs>
+                  <rect x="200" y="50" width="72" height="48" rx="8" fill="#fff" />
+                  <rect x="208" y="60" width="44" height="6" rx="2" fill="#185fa5" />
+                  <rect x="208" y="72" width="32" height="6" rx="2" fill="#9cc1ea" />
+                  <rect x="208" y="84" width="38" height="6" rx="2" fill="#9cc1ea" />
+                  <rect
+                    class="heroRing"
+                    x="196"
+                    y="46"
+                    width="80"
+                    height="56"
+                    rx="10"
+                    fill="none"
+                    stroke="#ffd98a"
+                    stroke-width="3"
+                  />
+                  <g class="heroHand">
+                    <path
+                      d="M262 92 v-14 a4 4 0 0 1 8 0 v10 m0-3 a4 4 0 0 1 8 0 v4 m0-2 a4 4 0 0 1 8 0 v9 c0 9-6 15-15 15 c-7 0-11-3-14-8 l-7-11 a3.5 3.5 0 0 1 6-4 l6 7"
+                      fill="#fff"
+                      stroke="#1f2a44"
+                      stroke-width="2"
+                      stroke-linejoin="round"
+                    />
+                  </g>
+                  <g fill="#ffd98a">
+                    <circle cx="330" cy="30" r="3" />
+                    <circle cx="350" cy="58" r="2" />
+                    <circle cx="58" cy="44" r="2.5" />
+                    <circle cx="40" cy="112" r="2" />
+                  </g></svg
+                ><span class="nfNew">NEW</span>
+              </div>
+              <div class="body">
+                <b class="t">어디에 뭐가 있는지,<br />콕콕 짚어 드릴게요</b>
+                <p class="d">
+                  새로 생긴 <b>기능 둘러보기</b>로 예시 화면 위에서 주요 기능을 1분 만에 익혀 보세요. 내
+                  기록은 그대로예요.
+                </p>
+                <div class="chips">
+                  <span><i style="background: #185fa5"></i>주간 보드</span
+                  ><span><i style="background: #e8a33a"></i>메모 보드</span
+                  ><span><i style="background: #2e9e6b"></i>칸반</span
+                  ><span><i style="background: #7a5cc7"></i>인사이트</span
+                  ><span><i style="background: #1f2a44"></i>Universe</span
+                  ><span><i style="background: #d69a00"></i>중요 업무</span
+                  ><span><i style="background: #8a6a48"></i>Cabi.NET</span>
+                </div>
+                <button class="cta">1분 둘러보기 시작 ▶</button>
+                <div class="subs"><a href="#">골라서 보기</a><a href="#">다음에</a></div>
+              </div>
+            </div>
+          </div>
+          <p class="caption">
+            <b>V1 히어로 그림</b> — 위쪽 그림에서 실제 코칭처럼 칸 하나가 밝아지고 손가락이 톡톡. 아래에
+            둘러볼 수 있는 화면 7가지 칩.
+          </p>
+        </div>
+        <div>
+          <div class="stage">
+            <img class="shot" src="shots/board.png" alt="주간 보드" />
+            <svg class="mask" viewBox="0 0 1280 800">
+              <rect width="1280" height="800" fill="rgba(10,14,20,.6)" />
+            </svg>
+            <div class="nf v2" id="nfV2">
+              <div class="fan">
+                <div class="mc a">
+                  주간 보드<svg width="90" height="70" viewBox="0 0 90 70">
+                    <rect width="90" height="70" rx="4" fill="#eef3fa" />
+                    <g fill="#185fa5">
+                      <rect x="6" y="8" width="20" height="5" />
+                      <rect x="6" y="22" width="20" height="5" />
+                      <rect x="6" y="36" width="20" height="5" />
+                    </g>
+                    <g fill="#9cc1ea">
+                      <rect x="32" y="8" width="16" height="4" />
+                      <rect x="54" y="22" width="22" height="4" />
+                      <rect x="32" y="36" width="26" height="4" />
+                    </g>
+                  </svg>
+                </div>
+                <div class="mc b">
+                  메모 보드<svg width="90" height="70" viewBox="0 0 90 70">
+                    <rect width="90" height="70" rx="4" fill="#fdf3e1" />
+                    <rect x="6" y="8" width="34" height="24" rx="3" fill="#fff3c4" stroke="#e8a33a" />
+                    <rect x="50" y="30" width="34" height="30" rx="3" fill="#fff" stroke="#b4b2a9" />
+                    <path d="M40 20 C 48 20, 48 40, 50 44" stroke="#e8a33a" fill="none" />
+                  </svg>
+                </div>
+                <div class="mc c">
+                  칸반<svg width="90" height="70" viewBox="0 0 90 70">
+                    <rect width="90" height="70" rx="4" fill="#eaf6ef" />
+                    <g fill="#fff" stroke="#2e9e6b">
+                      <rect x="6" y="8" width="24" height="14" rx="2" />
+                      <rect x="34" y="8" width="24" height="14" rx="2" />
+                      <rect x="6" y="26" width="24" height="14" rx="2" />
+                      <rect x="62" y="8" width="22" height="14" rx="2" />
+                    </g>
+                  </svg>
+                </div>
+                <div class="mc d">
+                  Universe<svg width="90" height="70" viewBox="0 0 90 70">
+                    <rect width="90" height="70" rx="4" fill="#1f2a44" />
+                    <g stroke="#6fd0e6" stroke-width="1">
+                      <line x1="45" y1="35" x2="15" y2="15" />
+                      <line x1="45" y1="35" x2="75" y2="18" />
+                      <line x1="45" y1="35" x2="22" y2="58" />
+                      <line x1="45" y1="35" x2="70" y2="56" />
+                    </g>
+                    <g fill="#6fd0e6">
+                      <circle cx="45" cy="35" r="6" />
+                      <circle cx="15" cy="15" r="3" />
+                      <circle cx="75" cy="18" r="3" />
+                      <circle cx="22" cy="58" r="3" />
+                      <circle cx="70" cy="56" r="3" />
+                    </g>
+                  </svg>
+                </div>
+              </div>
+              <span class="nfNew">NEW</span>
+              <b class="t">둘러보기 9가지가 준비됐어요</b>
+              <p class="d">주간 보드부터 Universe까지, 예시 화면으로 하나씩 짚어 드려요.</p>
+              <div class="seg9"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+              <div class="cnt">첫 둘러보기 1분 · 나머지는 ? 메뉴에서 언제든</div>
+              <button class="cta">첫 둘러보기 시작 ▶</button>
+              <div class="subs"><a href="#">목록 보기</a><a href="#">다음에</a></div>
+            </div>
+          </div>
+          <p class="caption">
+            <b>V2 카드 부채꼴</b> — 화면 미리보기 카드 4장이 촤르륵 펼쳐짐. 진행 막대 9칸(직각)으로 "모으는
+            재미".
+          </p>
+        </div>
+        <div>
+          <div class="stage">
+            <img class="shot" src="shots/board.png" alt="주간 보드" />
+            <svg class="mask" viewBox="0 0 1280 800" preserveAspectRatio="none">
+              <defs>
+                <mask id="v3m">
+                  <rect width="1280" height="800" fill="#fff" />
+                  <rect x="0" y="674" width="52" height="52" rx="10" fill="#000" />
+                </mask>
+              </defs>
+              <rect width="1280" height="800" fill="rgba(8,12,24,.74)" mask="url(#v3m)" />
+            </svg>
+            <div class="helpBtn" style="left: 0.47%; top: 85%; width: 3.1%; height: 5%">?</div>
+            <div class="bigRing" style="left: 0.1%; top: 84.2%; width: 3.9%; height: 6.6%"></div>
+            <i class="spark" style="left: 4.4%; top: 82%"></i
+            ><i class="spark" style="left: 3.6%; top: 91%; animation-delay: 0.4s"></i
+            ><i class="spark" style="left: 0.6%; top: 81%; animation-delay: 0.8s"></i>
+            <div class="v3bubble">
+              <span class="nfNew">NEW</span>
+              <b class="t"
+                >짜잔, 새로 생긴
+                <span style="border: 1px solid #b4b2a9; border-radius: 5px; padding: 0 6px">?</span>
+                단추예요</b
+              >
+              <p>여기서 <b>기능 둘러보기</b>를 언제든 열 수 있어요(F1). 예시 화면으로 1분만 둘러볼까요?</p>
+              <div class="row">
+                <button class="p">1분 둘러보기 ▶</button><button>목록 보기</button><button>다음에</button>
+              </div>
+            </div>
+          </div>
+          <p class="caption">
+            <b>V3 스포트라이트 소개</b> — 카드 대신 코칭 그 자체로: 화면을 가리고 새 ? 단추만 반짝이며 말풍선.
+            들어가는 곳까지 한 번에 알려 줌.
+          </p>
+        </div>
+        <div>
+          <div class="stage">
+            <img class="shot" src="shots/board.png" alt="주간 보드" />
+            <svg class="mask" viewBox="0 0 1280 800">
+              <rect width="1280" height="800" fill="rgba(10,14,20,.6)" />
+            </svg>
+            <div class="nf v4" id="nfV4">
+              <i
+                class="conf"
+                style="background: #e8a33a; --x: -150px; --y: -70px; --r: 200deg; animation-delay: 0s"
+              ></i
+              ><i
+                class="conf"
+                style="background: #185fa5; --x: 140px; --y: -90px; --r: -160deg; animation-delay: 0.05s"
+              ></i
+              ><i
+                class="conf"
+                style="background: #2e9e6b; --x: -110px; --y: 40px; --r: 120deg; animation-delay: 0.1s"
+              ></i
+              ><i
+                class="conf"
+                style="background: #d64545; --x: 120px; --y: 30px; --r: 240deg; animation-delay: 0.08s"
+              ></i
+              ><i
+                class="conf"
+                style="background: #ffd98a; --x: -60px; --y: -120px; --r: 90deg; animation-delay: 0.02s"
+              ></i
+              ><i
+                class="conf"
+                style="background: #7a5cc7; --x: 70px; --y: -130px; --r: -90deg; animation-delay: 0.12s"
+              ></i
+              ><i
+                class="conf"
+                style="background: #185fa5; --x: -170px; --y: 10px; --r: 300deg; animation-delay: 0.15s"
+              ></i
+              ><i
+                class="conf"
+                style="background: #e8a33a; --x: 170px; --y: -20px; --r: -220deg; animation-delay: 0.06s"
+              ></i>
+              <div class="gift">
+                <svg
+                  width="46"
+                  height="46"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#9a5b00"
+                  stroke-width="1.6"
+                  stroke-linejoin="round"
+                >
+                  <rect x="3.5" y="9" width="17" height="11.5" rx="1.5" fill="#fff" />
+                  <rect x="2.5" y="6.5" width="19" height="4" rx="1" fill="#ffe7b0" />
+                  <path
+                    d="M12 6.5v14M12 6.5c-1.5-3-5-3.5-5-1.2C7 7 10 6.5 12 6.5zm0 0c1.5-3 5-3.5 5-1.2C17 7 14 6.5 12 6.5z"
+                  />
+                </svg>
+              </div>
+              <span class="nfNew">업데이트 선물</span>
+              <b class="t">새 기능, 기능 둘러보기가 도착했어요</b>
+              <p class="d">
+                예시 화면 위에서 하나씩 콕콕 짚어 드려요.<br />어려웠던 기능도 1분이면 손에 익어요.
+              </p>
+              <div class="tl">시작하기 1분 · 화면별 30초~1분</div>
+              <button class="cta">선물 열어 보기 ▶</button>
+              <div class="subs"><a href="#">목록 보기</a><a href="#">다음에</a></div>
+            </div>
+          </div>
+          <p class="caption">
+            <b>V4 선물 상자</b> — 업데이트 "선물" 연출: 상자가 통 튀어 오르고 색종이가 흩어짐. 가장 놀이 같은
+            안.
+          </p>
+        </div>
+        <div class="tablewrap">
+          <table>
+            <tr>
+              <th>안</th>
+              <th>느낌</th>
+              <th>장점</th>
+              <th>주의</th>
+            </tr>
+            <tr>
+              <td><b>V1 히어로 그림</b></td>
+              <td>밝고 정돈된 앱 소개</td>
+              <td>코칭이 어떤 건지 그림으로 바로 보임, 둘러볼 화면 목록 한눈에</td>
+              <td>정적인 편(손가락·맥박만)</td>
+            </tr>
+            <tr>
+              <td><b>V2 카드 부채꼴</b></td>
+              <td>"모으기" 게임 느낌</td>
+              <td>9가지를 다 보고 싶게 만듦, 진행 막대와 코칭 메뉴 상태가 이어짐</td>
+              <td>카드 그림이 작음</td>
+            </tr>
+            <tr>
+              <td class="rec">V3 스포트라이트 소개</td>
+              <td>코칭 그 자체</td>
+              <td>가장 눈에 띄고, 새 ? 단추 위치까지 한 번에 알려 줌. 실제 화면 위라 "새 기능"이 실감남</td>
+              <td>문구가 짧아야 함</td>
+            </tr>
+            <tr>
+              <td><b>V4 선물 상자</b></td>
+              <td>축하·선물 연출</td>
+              <td>업데이트를 반기는 느낌, 가장 재미있음</td>
+              <td>업무 앱에서 과하다고 느낄 수 있음</td>
+            </tr>
+          </table>
+          <p class="caption">
+            추천: <b>기존 사용자 = V3</b>(어디서 다시 여는지까지 알려 줌, 들어가기 전 짧게 색종이 한 번은
+            선택) · <b>처음 사용자 환영 카드 = V1</b>(앱을 처음 본 사람에게 무엇을 할지 그림으로). 조합은
+            자유롭게 바꿀 수 있습니다.
+          </p>
+        </div>
+      </div>
       <h2>3. 코칭 메뉴(다시 보기) — 레일 ? · F1</h2>
       <div class="grid2">
         <div>
@@ -1376,6 +2075,18 @@
             )
             .join(""),
       ).join("");
+
+      // 새 기능 카드 시안 — 움직임 다시 재생
+      function nfPlay() {
+        for (const id of ["nfV2", "nfV4"]) {
+          const el = document.getElementById(id);
+          el.classList.remove("play");
+          void el.offsetWidth;
+          el.classList.add("play");
+        }
+      }
+      document.getElementById("nfReplay").onclick = nfPlay;
+      setTimeout(nfPlay, 400);
       render();
     </script>
   </body>
