@@ -13,7 +13,12 @@ export async function openSqlJsMemory(wasmUrl?: string): Promise<SqlDriver> {
 
 /** sql.js DB를 연다. bytes를 주면 그 내용(다른 DB 파일의 사본)으로 시작한다. */
 export async function openSqlJs(wasmUrl?: string, bytes?: Uint8Array, label?: string): Promise<SqlJsDriver> {
-  sqlJs ??= initSqlJs(wasmUrl ? { locateFile: () => wasmUrl } : undefined);
+  // useOldExtensionFunctions: sql.js 1.17 기본값(true)을 그대로 적어 지금과 같은 동작 유지(@types/sql.js 1.16부터 필수 항목)
+  sqlJs ??= initSqlJs(
+    wasmUrl
+      ? { locateFile: () => wasmUrl, useOldExtensionFunctions: true }
+      : { useOldExtensionFunctions: true },
+  );
   const SQL = await sqlJs;
   return new SqlJsDriver(new SQL.Database(bytes), label);
 }

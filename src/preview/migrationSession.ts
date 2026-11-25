@@ -48,7 +48,8 @@ export async function loadSql() {
     const bin = atob(w.default);
     const wasmBinary = new Uint8Array(bin.length);
     for (let i = 0; i < bin.length; i++) wasmBinary[i] = bin.charCodeAt(i);
-    return m.default({ wasmBinary: wasmBinary.buffer });
+    // useOldExtensionFunctions: sql.js 1.17 기본값(true) 그대로 — @types/sql.js 1.16부터 필수 항목
+    return m.default({ wasmBinary: wasmBinary.buffer, useOldExtensionFunctions: true });
   });
   return sql;
 }
