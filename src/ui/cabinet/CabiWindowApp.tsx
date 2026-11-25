@@ -1,5 +1,5 @@
 import { finishNote } from "../note/noteStore";
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { loadPlatform } from "../../platform";
 import { useAppStore } from "../common/appStore";
 import { Toasts } from "../common/Toasts";
@@ -9,13 +9,16 @@ import { cabiContext, flushCabiDocument, listenCabi, useCabiChange } from "./cab
 import { TaskNoteWindow } from "./TaskNoteWindow";
 import { TaskBoardWindow } from "./TaskBoardWindow";
 import styles from "./Cabi.module.css";
+/** 코칭 예시 화면에서 연 창만 — 코칭 코드는 그때만 불러온다(coaching-spec 13절) */
+const CoachChild = lazy(() => import("../coaching/CoachChild"));
 export function CabiWindowApp() {
   const locked = useCabiChange((s) => s.locked);
   const [ready, setReady] = useState(false),
     [error, setError] = useState("");
   const q = new URLSearchParams(location.search),
     kind = q.get("kind"),
-    id = q.get("id") ?? "";
+    id = q.get("id") ?? "",
+    coach = q.get("coach");
   useEffect(() => {
     let active = true;
     const cleanups: (() => void)[] = [];
@@ -69,6 +72,11 @@ export function CabiWindowApp() {
     >
       {kind === "note" ? <TaskNoteWindow noteId={id} /> : <TaskBoardWindow categoryId={id} />}
       <Toasts />
+      {coach && (
+        <Suspense fallback={null}>
+          <CoachChild spec={coach} />
+        </Suspense>
+      )}
     </div>
   );
 }

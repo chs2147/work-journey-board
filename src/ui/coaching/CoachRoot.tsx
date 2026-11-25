@@ -17,8 +17,9 @@ export function CoachRoot() {
       e.preventDefault();
       if (useCoaching.getState().phase === "idle") toggleMenu();
     };
-    window.addEventListener("keydown", key);
-    return () => window.removeEventListener("keydown", key);
+    // 입력 칸·편집기가 키를 먼저 가져가도 F1은 받는다(capture) — 브라우저 도움말도 막는다
+    window.addEventListener("keydown", key, true);
+    return () => window.removeEventListener("keydown", key, true);
   }, []);
   return (
     <>

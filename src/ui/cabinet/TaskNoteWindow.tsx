@@ -435,39 +435,44 @@ export function TaskNoteWindow({ noteId }: { noteId: string }) {
           >
             <IconLock open={!note.deleteLocked} /> {note.deleteLocked ? V20.lockOn : V20.lockOff}
           </button>
-          <button
-            className={styles.button}
-            aria-label={CABI.image}
-            title={CABI.image}
-            onClick={() => imageRef.current?.click()}
-          >
-            <V18Icon kind="image" /> {V18.image}
-          </button>
-          <button className={styles.button} title={V18.importHint} onClick={() => fileRef.current?.click()}>
-            <V18Icon kind="import" />
-            {CABI.import}
-          </button>
-          <button className={styles.button} onClick={() => setMenu((v) => !v)}>
+          {/* 코칭 대상 묶음(coaching-spec 13절) — 배치는 그대로(display: contents) */}
+          <span style={{ display: "contents" }} data-coach="note-insert">
+            <button
+              className={styles.button}
+              aria-label={CABI.image}
+              title={CABI.image}
+              onClick={() => imageRef.current?.click()}
+            >
+              <V18Icon kind="image" /> {V18.image}
+            </button>
+            <button className={styles.button} title={V18.importHint} onClick={() => fileRef.current?.click()}>
+              <V18Icon kind="import" />
+              {CABI.import}
+            </button>
+          </span>
+          <button className={styles.button} data-coach="note-export" onClick={() => setMenu((v) => !v)}>
             <IconExportFile />
             {CABI.export}
           </button>
-          <button
-            className={styles.icon}
-            aria-label={CABI.toc}
-            aria-expanded={toc}
-            title={CABI.toc}
-            onClick={() => setToc((v) => !v)}
-          >
-            <V18Icon kind="toc" />
-          </button>
-          <button
-            className={styles.icon}
-            aria-label={CABI.wide}
-            title={CABI.wide}
-            onClick={() => setWide((v) => !v)}
-          >
-            <IconNote />
-          </button>
+          <span style={{ display: "contents" }} data-coach="note-view">
+            <button
+              className={styles.icon}
+              aria-label={CABI.toc}
+              aria-expanded={toc}
+              title={CABI.toc}
+              onClick={() => setToc((v) => !v)}
+            >
+              <V18Icon kind="toc" />
+            </button>
+            <button
+              className={styles.icon}
+              aria-label={CABI.wide}
+              title={CABI.wide}
+              onClick={() => setWide((v) => !v)}
+            >
+              <IconNote />
+            </button>
+          </span>
         </div>
       </header>
       {(error || disconnected) && (
@@ -606,6 +611,7 @@ export function TaskNoteWindow({ noteId }: { noteId: string }) {
           <div className={styles.page}>
             <input
               ref={titleRef}
+              data-coach="note-title"
               className={styles.title}
               value={title}
               aria-label={CABI.noteTitle}

@@ -10,10 +10,12 @@ import { openInsights, useInsights } from "../insights/insightsStore";
 import { openUniverse, useUniverse } from "../universe/universeStore";
 import { useCabinet } from "../cabinet/cabinetStore";
 import { setExpanded, useNote } from "../note/noteStore";
-import { makeCoachingSample } from "./coachingSample";
+import { makeCoachingSample, prepareCoachDocument } from "./coachingSample";
+import { cabiCall, onCabiCoach, openCabiCoach } from "../cabinet/cabiService";
 import { TOURS, tourById, type CoachScreen } from "./tours";
 
-type Phase = "idle" | "entering" | "running" | "leaving";
+/** away = 메인 창이 예시 일지를 연 채, 업무노트·업무 메모보드 창 안 투어를 기다린다(coaching-spec 13절) */
+type Phase = "idle" | "entering" | "running" | "away" | "leaving";
 export type Intro = "welcome" | "feature" | "afterStart";
 type Screen = "board" | "kanban" | "insights" | "universe";
 
@@ -43,6 +45,8 @@ export const useCoaching = create<CoachingState>(() => ({
 const get = useCoaching.getState;
 const set = useCoaching.setState;
 const platform = () => useAppStore.getState().platform;
+/** 이 창이 Cabi.NET 별도 창(업무노트·업무 메모보드)인가 — 그 안 투어는 끝나면 메인 창에 알리고 창을 닫는다 */
+const CHILD = typeof location !== "undefined" && new URLSearchParams(location.search).get("win") === "cabi";
 
 const EMPTY: CoachingFlags = { existingUser: false, done: {}, seenScreens: [], suggest: true };
 
@@ -145,6 +149,17 @@ export async function startTour(id: TourId, at = 0) {
   try {
     const ok = await enterCoachingSample(() => makeCoachingSample(platform()?.now() ?? new Date()));
     if (!ok) throw new Error("일지가 열려 있지 않습니다");
+    const win = tourById(id).win;
+    if (win) {
+      // 업무노트·업무 메모보드: 예시 일지에 가상 문서를 만들고 그 창을 열어 창 안에서 투어(13절)
+      const j = useAppStore.getState().journal;
+      if (j.state !== "ready" || !j.sample) throw new Error("예시 화면이 열려 있지 않습니다");
+      const docId = await prepareCoachDocument(j.repo, win);
+      set({ phase: "away", step: at });
+      await openCabiCoach(win, docId, at ? `${id}@${at}` : id);
+      watchAway();
+      return;
+    }
     set({ phase: "running" });
     await goStep(at);
   } catch (e) {
@@ -176,10 +191,57 @@ export function prevStep() {
 }
 
 /** 투어를 끝낸다(done = 끝까지 봄 · false = 건너뛰기) → 내 일지·시작 전 화면으로(D9) */
+/** 창 안 투어를 기다리는 동안 그 창이 닫혔는지 본다(사용자가 창 X로 닫은 경우 = 건너뛰기) */
+let awayTimer: ReturnType<typeof setInterval> | null = null;
+function watchAway() {
+  if (awayTimer) clearInterval(awayTimer);
+  const started = Date.now();
+  awayTimer = setInterval(() => {
+    if (get().phase !== "away") {
+      if (awayTimer) clearInterval(awayTimer);
+      awayTimer = null;
+      return;
+    }
+    if (Date.now() - started < 3000) return;
+    void platform()
+      ?.cabi.opened()
+      .then((open) => {
+        if (!open.length && get().phase === "away") void endTour(false);
+      })
+      .catch(() => undefined);
+  }, 1000);
+}
+
+/** Cabi.NET 창 안에서 투어 시작(그 창의 CoachChild가 부른다) — `T9` 또는 `T9@3`(이어서) */
+export function startChildTour(spec: string) {
+  const m = /^(T\d{1,2})(?:@(\d{1,2}))?$/.exec(spec);
+  if (!m || !TOURS.some((t) => t.id === m[1])) return;
+  const id = m[1] as TourId,
+    at = Math.min(Number(m[2] ?? 0), tourById(id).steps.length - 1);
+  set({ phase: "running", tour: id, step: at });
+  void goStep(at);
+}
+
 export async function endTour(done: boolean) {
   const { tour, step, phase } = get();
   if (!tour || phase === "leaving" || phase === "idle") return;
   set({ phase: "leaving" });
+  if (CHILD) {
+    // 창 안 투어: 메인 창에 결과만 알리고(플래그 저장·내 일지 복귀는 메인 창이) 이 창을 닫는다
+    await cabiCall("coach", { tour, done, step }).catch(() => undefined);
+    set({ phase: "idle", tour: null, step: 0 });
+    await platform()
+      ?.cabi.closeSelf()
+      .catch(() => undefined);
+    return;
+  }
+  if (awayTimer) clearInterval(awayTimer);
+  awayTimer = null;
+  // 업무노트·업무 메모보드 투어: 예시 문서 창은 저장할 것이 없다 — 저장 확인을 기다리지 않고 먼저 닫는다(13절)
+  if (tourById(tour).win)
+    await platform()
+      ?.cabi.closeAll()
+      .catch(() => undefined);
   const f = get().flags ?? EMPTY;
   if (done) await saveFlags({ done: { ...f.done, [tour]: tourById(tour).v }, progress: null });
   else await saveFlags({ progress: { tour, step } });
@@ -319,4 +381,10 @@ export function wireCoaching() {
   useInsights.subscribe((a, b) => watch(a.open, b.open, "insights"));
   useUniverse.subscribe((a, b) => watch(a.open, b.open, "universe"));
   useCabinet.subscribe((a, b) => watch(a.open, b.open, "cabinet"));
+  // 업무노트·업무 메모보드 창 안 투어가 끝났다(13절) — 그 단계를 기억하고 메인 창에서 마무리
+  onCabiCoach((r) => {
+    if (get().phase !== "away" || get().tour !== r.tour) return;
+    set({ step: Math.min(r.step, tourById(r.tour as TourId).steps.length - 1) });
+    void endTour(r.done);
+  });
 }

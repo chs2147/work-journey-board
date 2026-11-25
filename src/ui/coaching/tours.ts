@@ -32,6 +32,8 @@ export interface TourDef {
   v: number;
   group: TourGroup;
   screen?: CoachScreen;
+  /** 이 투어는 Cabi.NET 별도 창(업무노트·업무 메모보드) 안에서 돈다 — 메인 창은 예시 일지를 열고 기다린다(coaching-spec 13절) */
+  win?: "note" | "board";
   steps: StepDef[];
 }
 
@@ -48,6 +50,8 @@ export function toBoard() {
   setSummaryOpen(false);
   if (useBoard.getState().viewMode !== "week") setViewMode("week");
 }
+
+const EDITOR = '[data-testid="cabi-note-editor"] .ProseMirror';
 
 const S = (target: Target, more: Omit<StepDef, "target"> = {}): StepDef => ({ target, ...more });
 
@@ -206,7 +210,52 @@ export const TOURS: TourDef[] = [
       S(tid("cabi-open-board")),
     ],
   },
+  {
+    id: "T9",
+    v: 1,
+    group: "side",
+    win: "note",
+    steps: [
+      S(null),
+      S(coach("note-title")),
+      S(EDITOR, { fallback: tid("cabi-note-editor") }),
+      S(tid("cabi-block-grip"), { before: () => hoverBlock(`${EDITOR} > p`), fallback: `${EDITOR} > p` }),
+      S(`${EDITOR} table`, { fallback: EDITOR }),
+      S(coach("note-insert")),
+      S(tid("note-delete-lock")),
+      S(coach("note-export")),
+      S(coach("note-view")),
+      S(null),
+    ],
+  },
+  {
+    id: "T10",
+    v: 1,
+    group: "side",
+    win: "board",
+    steps: [
+      S(null),
+      S(tid("note-canvas"), { fallback: tid("cabi-task-board") }),
+      S(coach("note-palette")),
+      S('[aria-label="Live Widget"]'),
+      S(tid("live-widget"), { fallback: tid("note-canvas") }),
+      S(coach("board-library")),
+      S(coach("board-weekly"), { tap: true }),
+      S(tid("cabi-weekly-panel"), { fallback: coach("board-weekly") }),
+      S(coach("board-export")),
+    ],
+  },
 ];
+
+/** 블록 이끌이는 마우스가 문단 위에 있을 때만 보인다 — 첫 문단 위로 움직인 것처럼 알린다(편집 내용은 그대로) */
+function hoverBlock(sel: string) {
+  const el = document.querySelector(sel);
+  const r = el?.getBoundingClientRect();
+  if (!el || !r) return;
+  el.dispatchEvent(
+    new MouseEvent("mousemove", { bubbles: true, clientX: r.left + 12, clientY: r.top + r.height / 2 }),
+  );
+}
 
 export const tourById = (id: TourId) => TOURS.find((t) => t.id === id)!;
 export const stepText = (id: TourId, i: number) => COACH.tours[id].steps[i]!;

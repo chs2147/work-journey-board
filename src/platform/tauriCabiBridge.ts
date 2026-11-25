@@ -18,6 +18,7 @@ export function tauriCabiBridge(): CabiBridge {
       }
       const query = new URLSearchParams({ win: "cabi", kind: s.kind, id: s.id, t: s.theme });
       if (s.img) query.set("img", s.img);
+      if (s.coach) query.set("coach", s.coach);
       const w = new WebviewWindow(label, {
         url: `index.html?${query}`,
         title: `${s.title} — Cabi.NET`,

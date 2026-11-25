@@ -126,6 +126,7 @@ export function CoachOverlay() {
     const key = (e: KeyboardEvent) => {
       const st = useCoaching.getState();
       if (st.phase !== "running") {
+        if (st.phase === "away" && e.key === "Escape") void endTour(false);
         e.preventDefault();
         e.stopPropagation();
         return;
@@ -188,6 +189,19 @@ export function CoachOverlay() {
       {busy && (
         <div className={styles.wait} role="status">
           {phase === "entering" ? COACH.preparing : COACH.returning}
+        </div>
+      )}
+      {phase === "away" && tour && (
+        <div className={styles.away} role="status" data-testid="coach-away">
+          <span>{tourById(tour).win === "board" ? COACH.away.board : COACH.away.note}</span>
+          <button
+            type="button"
+            className={styles.btn}
+            data-testid="coach-away-stop"
+            onClick={() => void endTour(false)}
+          >
+            {COACH.away.stop}
+          </button>
         </div>
       )}
       {hole && (

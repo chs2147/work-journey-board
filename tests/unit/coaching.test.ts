@@ -53,7 +53,19 @@ describe("투어 정의", () => {
   const ids = Object.keys(COACH.tours) as TourId[];
 
   it("T0~T8이 한 번씩, 정의와 글의 단계 수가 같다", () => {
-    expect(TOURS.map((t) => t.id)).toEqual(["T0", "T1", "T2", "T3", "T4", "T5", "T6", "T7", "T8"]);
+    expect(TOURS.map((t) => t.id)).toEqual([
+      "T0",
+      "T1",
+      "T2",
+      "T3",
+      "T4",
+      "T5",
+      "T6",
+      "T7",
+      "T8",
+      "T9",
+      "T10",
+    ]);
     expect(ids.sort()).toEqual(TOURS.map((t) => t.id).sort());
     for (const t of TOURS) {
       expect(COACH.tours[t.id].steps.length, t.id).toBe(t.steps.length);
@@ -79,6 +91,15 @@ describe("투어 정의", () => {
     expect(tourById("T5").screen).toBe("insights");
     expect(tourById("T6").screen).toBe("universe");
     expect(tourById("T8").screen).toBe("cabinet");
+  });
+
+  it("업무노트·업무 메모보드 투어는 그 별도 창 안에서(coaching-spec 13절)", () => {
+    expect(tourById("T9").win).toBe("note");
+    expect(tourById("T10").win).toBe("board");
+    expect(TOURS.filter((t) => t.win).map((t) => t.id)).toEqual(["T9", "T10"]);
+    // 창 안 투어는 메인 창 화면을 바꾸지 않는다(before 없이 시작)
+    expect(tourById("T9").steps[0]!.before).toBeUndefined();
+    expect(tourById("T10").steps[0]!.before).toBeUndefined();
   });
 });
 

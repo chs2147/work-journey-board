@@ -179,6 +179,23 @@
   font-size: var(--fs-sm);
 }
 
+/* 업무노트·업무 메모보드 창 안 투어를 기다리는 동안(메인 창) */
+.away {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--surface-card);
+  color: var(--text-1);
+  border-radius: 10px;
+  padding: 14px 16px 14px 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  font-size: var(--fs-sm);
+}
+
 /* ── 처음 1회 카드 ── */
 .dim {
   position: fixed;

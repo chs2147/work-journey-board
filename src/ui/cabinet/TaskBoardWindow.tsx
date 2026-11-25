@@ -178,6 +178,7 @@ export function TaskBoardWindow({ categoryId }: { categoryId: string }) {
           />
           <button
             className={`${styles.button} ${library ? styles.active : ""}`}
+            data-coach="board-library"
             onClick={() => setLibrary((v) => !v)}
           >
             <IconNote />
@@ -185,17 +186,20 @@ export function TaskBoardWindow({ categoryId }: { categoryId: string }) {
           </button>
           <button
             className={`${styles.button} ${weekly ? styles.active : ""}`}
+            data-coach="board-weekly"
             onClick={() => setWeekly((v) => !v)}
           >
             <IconClock />
             {CABI.weekly}
           </button>
-          <CabiExportMenu
-            items={[
-              { label: CABI.markdown, run: exportTaskBoard },
-              { label: V17.png, run: saveSnapshot },
-            ]}
-          />
+          <span style={{ display: "contents" }} data-coach="board-export">
+            <CabiExportMenu
+              items={[
+                { label: CABI.markdown, run: exportTaskBoard },
+                { label: V17.png, run: saveSnapshot },
+              ]}
+            />
+          </span>
           <button
             className={styles.icon}
             title={CABI.deleteBoard}

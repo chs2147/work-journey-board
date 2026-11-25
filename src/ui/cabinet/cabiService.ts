@@ -254,6 +254,16 @@ export async function closeCabiWindows() {
 export async function openCabi(kind: CabiWindowSpec["kind"], id: string) {
   await cabiCall("open", kind, id);
 }
+/** 코칭 예시 화면: 노트·업무 메모보드 창을 열고 그 창 안에서 투어를 돌린다(coaching-spec 13절) */
+export async function openCabiCoach(kind: CabiWindowSpec["kind"], id: string, tour: string) {
+  await cabiCall("open", kind, id, tour);
+}
+/** 창 안 투어가 끝났다는 알림을 받을 곳(메인 창 코칭 저장소가 등록) — 가져오기 고리 없이 */
+type CoachReport = { tour: string; done: boolean; step: number };
+let coachReport: ((r: CoachReport) => void) | null = null;
+export function onCabiCoach(fn: ((r: CoachReport) => void) | null) {
+  coachReport = fn;
+}
 export async function createCabiNote(categoryId: string) {
   const note = await cabiClient().createNote(categoryId);
   await openCabi("note", note.id);
@@ -455,9 +465,17 @@ async function handle(name: string, args: unknown[], sender: string): Promise<un
     const { snapshot } = await import("./cabinetStore");
     return snapshot();
   }
+  if (name === "coach") {
+    // 창 안 코칭 투어 끝 알림(투어 번호·끝까지 봄·멈춘 단계만 — 일지에는 쓰지 않는다)
+    const r = a[0] as Partial<CoachReport> | undefined;
+    if (r && typeof r.tour === "string" && /^T\d{1,2}$/.test(r.tour))
+      coachReport?.({ tour: r.tour, done: r.done === true, step: Math.max(0, Number(r.step) || 0) });
+    return null;
+  }
   if (name === "open") {
     const kind = a[0] as "note" | "board",
-      id = String(a[1]);
+      id = String(a[1]),
+      coach = typeof a[2] === "string" && /^T\d{1,2}(@\d{1,2})?$/.test(a[2]) ? a[2] : undefined;
     let title: string;
     if (kind === "note") title = (await r.note(id)).title;
     else if (kind === "board") {
@@ -474,6 +492,7 @@ async function handle(name: string, args: unknown[], sender: string): Promise<un
       title,
       theme: resolveTheme(useAppStore.getState().theme),
       ...(imageProfile() === "online" ? { img: "online" } : {}),
+      ...(coach ? { coach } : {}),
     });
     return null;
   }

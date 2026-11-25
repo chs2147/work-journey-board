@@ -198,6 +198,62 @@ test.describe("코칭 메뉴", () => {
     await expect(page.getByTestId("week-title")).toContainText("2026-W43");
   });
 
+  test("업무노트(T9)·업무 메모보드(T10): 예시 문서 창 안에서 투어 → 끝나면 창이 닫히고 내 일지로, 내 일지에 노트·보드 없음", async ({
+    page,
+  }) => {
+    test.setTimeout(120_000);
+    const before = await counts(page);
+    for (const [id, n, kind] of [
+      ["T9", 10, "note"],
+      ["T10", 9, "board"],
+    ] as const) {
+      await openMenu(page);
+      const popup = page.waitForEvent("popup");
+      await page.getByTestId(`coach-tour-${id}`).click();
+      const win = await popup;
+      // 메인 창은 예시 일지를 연 채 기다린다
+      await expect(page.getByTestId("coach-away")).toBeVisible();
+      await expect(status(page)).toContainText("coaching-sample");
+      await expect(win.getByTestId(kind === "note" ? "cabi-note-editor" : "cabi-task-board")).toBeVisible();
+      await expect(win.locator("body")).toContainText("가상 예시");
+      for (let i = 1; i <= n; i++) {
+        await expect(win.getByTestId("coach-count")).toHaveText(`${i} / ${n}`);
+        await expect(win.getByTestId("coach-bubble")).toBeVisible();
+        await win.getByTestId("coach-next").click();
+      }
+      await expect.poll(() => win.isClosed()).toBe(true);
+      await expect(page.getByTestId("coach-overlay")).toHaveCount(0);
+      await expect(status(page)).not.toContainText("coaching-sample");
+      expect((await config(page))!.coaching!.done[id]).toBe(1);
+    }
+    // 예시 노트·보드는 메모리 예시 일지에만 — 내 일지는 그대로
+    expect(await counts(page)).toEqual(before);
+  });
+
+  test("업무노트 투어 중 창을 닫거나 메인 창 [그만 보기]면 건너뛰기로 끝나고 내 일지로", async ({ page }) => {
+    await openMenu(page);
+    let popup = page.waitForEvent("popup");
+    await page.getByTestId("coach-tour-T9").click();
+    let win = await popup;
+    await expect(win.getByTestId("coach-count")).toHaveText("1 / 10");
+    await win.getByTestId("coach-next").click();
+    await expect(win.getByTestId("coach-count")).toHaveText("2 / 10");
+    await win.close();
+    await expect(page.getByTestId("coach-overlay")).toHaveCount(0, { timeout: 15_000 });
+    await expect(status(page)).not.toContainText("coaching-sample");
+    expect((await config(page))!.coaching!.done.T9).toBeUndefined();
+
+    await openMenu(page);
+    popup = page.waitForEvent("popup");
+    await page.getByTestId("coach-tour-T9").click();
+    win = await popup;
+    await expect(win.getByTestId("coach-count")).toBeVisible();
+    await page.getByTestId("coach-away-stop").click();
+    await expect(page.getByTestId("coach-overlay")).toHaveCount(0);
+    await expect.poll(() => win.isClosed()).toBe(true);
+    await expect(status(page)).not.toContainText("coaching-sample");
+  });
+
   test("칸반에서 시작한 투어는 끝나면 칸반으로 돌아온다", async ({ page }) => {
     await page.getByTestId("rail-kanban").click();
     await expect(page.getByTestId("kanban-board")).toBeVisible();
