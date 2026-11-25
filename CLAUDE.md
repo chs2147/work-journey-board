@@ -20,6 +20,7 @@
   | `release-channel-spec.md` | **정식판·DEV 검증판 운영 정책**(2026-11-14 확정) — main 밖 빌드 = DEV(별도 앱 ID·설치·설정 폴더, 업데이트 꺼짐), DEV 일지만(표시 파일·화면/Rust 이중 가드), 설치마다 일지 선택(빈·샘플·정식 복제), DEV 배지·타이틀 띠 · CLAUDE.md 4-8 |
   | `security-audit-1126.md` | 보안 점검(2026-11-25, Cloudflare security-audit 스킬 standard, 기준 `4353022`) — 확정 2건(업무 보드 Markdown 내보내기 이미지 이름 경로 이탈·동기화 받기 행 규칙 누락, 둘 다 낮음)·실기 확인 3건(Cabinet 실행 파일 열기·UNC 자동 조회·`lastExportDir` UNC)·보강 권고, 앱 코드 변경 없음 |
   | `private-repo-plan.md` | 저장소 비공개 전환 점검(2026-11-13, 검토용) — 새 판 확인·내려받기·Pages·Actions 사용 시간 영향, 추천 A안 = 공개 배포 저장소 분리 + 다리 판, 결정 항목 P1~P8 |
+  | `release-notes/v1.53.2.md` | main 패치 — 보안 점검 확정 2건(Markdown 내보내기 이미지 이름 `..` 경로 이탈 차단·동기화 받기에서 Cabinet 폴더 경로·백업·AI 설정 덮지 않음), 구조 v20 유지, 이전 main 1.53.1은 `release/v1.53.1` 보존 |
   | `release-notes/v1.53.1.md` | main 패치 — 라이브러리 22종(Tiptap 3.35·Three.js 0.187·sql.js 1.17 등)·액션 8종 판올림(Node 20 경고 해소)·소개 사이트 배포 만들기/배포 분리, 구조 v20 유지, 이전 main 1.53.0은 `release/v1.53.0` 보존 |
   | `release-notes/v1.53.0.md` | 기능 둘러보기(앱 안 코칭) Open Beta — 투어 T0~T10·예시 화면·처음 1회 안내·`## 코칭` 절 첫 판, 구조 v20 유지, 이전 main 1.52.1은 `release/v1.52.1` 보존 |
   | `release-notes/v1.52.1.md` | main 직접 패치 — 1.52.0 배포 뒤 CodeQL 2건(Markdown 가져오기 HTML → 글자 한 글자씩 읽기 #11·V2 시안 장면 허용 목록 #4), 구조 v20 유지, 이전 main 1.52.0은 `release/v1.52.0` 보존 |
