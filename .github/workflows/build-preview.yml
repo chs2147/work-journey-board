@@ -26,7 +26,7 @@ jobs:
       tag: ${{ steps.p.outputs.tag }}
       version: ${{ steps.p.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - id: p
         shell: bash
         run: |
@@ -45,9 +45,9 @@ jobs:
     needs: plan
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -84,7 +84,7 @@ jobs:
           Get-FileHash out/*.exe -Algorithm SHA256 | ForEach-Object { "$($_.Hash.ToLower())  $(Split-Path $_.Path -Leaf)" } | Out-File -Encoding ascii out/SHA256SUMS-windows.txt
           Get-ChildItem out
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: connected-preview-windows-${{ needs.plan.outputs.tag }}
           path: out/*
@@ -94,9 +94,9 @@ jobs:
     needs: plan
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -155,7 +155,7 @@ jobs:
           for b in "$app"/Contents/MacOS/*; do echo "$b: $(lipo -archs "$b")"; lipo -archs "$b" | grep -q "x86_64 arm64\|arm64 x86_64"; done
           codesign --verify --deep --strict "$app" && codesign -dv "$app" 2>&1 | grep -E "Signature|Identifier"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: connected-preview-macos-${{ needs.plan.outputs.tag }}
           path: out/*
