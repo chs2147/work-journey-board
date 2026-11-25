@@ -9,7 +9,7 @@ import {
 import { COACH, type TourId } from "../../src/shared/coachingStrings";
 import { TOURS, tourById } from "../../src/ui/coaching/tours";
 import { railDot, tourStatus } from "../../src/ui/coaching/coachingStore";
-import type { CoachingFlags } from "../../src/platform";
+import { parseConfig, type CoachingFlags } from "../../src/platform";
 
 const at = (s: string) => new Date(`${s}T09:00:00`);
 const dow = (d: string) => new Date(`${d}T00:00:00`).getDay();
@@ -123,5 +123,33 @@ describe("메뉴 상태·레일 점", () => {
     expect(railDot({ ...base, menuOpened: true })).toBe(false);
     expect(railDot({ ...base, done: { T0: tourById("T0").v } })).toBe(false);
     expect(railDot({ ...base, menuOpened: true, done: { T0: 0 } })).toBe(true);
+  });
+});
+
+describe("코칭 플래그 저장(config.json) — 다시 켜도 처음 1회 카드가 다시 뜨지 않는다", () => {
+  it("parseConfig가 coaching을 그대로 돌려준다(모르는 값은 버림)", () => {
+    const coaching = {
+      existingUser: true,
+      introShown: true,
+      done: { T0: 1, T4: 2, bad: 3 },
+      progress: { tour: "T2", step: 3 },
+      seenScreens: ["board", 7],
+      suggest: false,
+      menuOpened: true,
+      extra: "x",
+    };
+    expect(parseConfig(JSON.stringify({ dataDir: "/d", coaching }))?.coaching).toEqual({
+      existingUser: true,
+      introShown: true,
+      done: { T0: 1, T4: 2 },
+      progress: { tour: "T2", step: 3 },
+      seenScreens: ["board"],
+      suggest: false,
+      menuOpened: true,
+    });
+  });
+  it("형식이 틀리면 버린다", () => {
+    expect(parseConfig(JSON.stringify({ dataDir: "/d", coaching: { done: {} } }))?.coaching).toBeUndefined();
+    expect(parseConfig(JSON.stringify({ dataDir: "/d", coaching: [1] }))?.coaching).toBeUndefined();
   });
 });

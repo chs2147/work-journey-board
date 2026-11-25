@@ -609,6 +609,9 @@ export function parseConfig(raw: string | null): AppConfig | null {
     if (typeof c.backupMirror === "string" && c.backupMirror) out.backupMirror = c.backupMirror;
     const cab = parseCabinetConfig(c.cabinet);
     if (cab) out.cabinet = cab;
+    // 코칭 플래그 — 버리면 실행할 때마다 처음 1회 카드가 다시 뜬다(1.53.x 버그)
+    const coach = parseCoachingFlags(c.coaching);
+    if (coach) out.coaching = coach;
     // 워크스페이스 목록(multi-board-spec 7절) — 버리면 다음 실행에 지금 연 공간 하나만 남는다(1.8.0-rc.1 버그).
     // 줄마다의 검사는 readEntries가 한다
     if (Array.isArray(c.workspaces)) out.workspaces = c.workspaces;
@@ -701,6 +704,36 @@ export function isOneDriveLike(path: string, roots: string[]): boolean {
     // 맥: ~/Library/CloudStorage/(OneDrive-…·GoogleDrive-…·Dropbox…) · ~/Library/Mobile Documents/(iCloud Drive) · ~/Dropbox
     /^\\users\\[^\\]+\\(library\\cloudstorage|library\\mobile documents|dropbox)(\\|$)/.test(p)
   );
+}
+
+/** config.json `coaching` 읽기(coaching-spec 3-4) — 모르는 값은 버린다 */
+export function parseCoachingFlags(v: unknown): CoachingFlags | null {
+  if (!v || typeof v !== "object" || Array.isArray(v)) return null;
+  const o = v as Record<string, unknown>;
+  if (typeof o.existingUser !== "boolean") return null;
+  const done: Record<string, number> = {};
+  if (o.done && typeof o.done === "object" && !Array.isArray(o.done))
+    for (const [k, n] of Object.entries(o.done as Record<string, unknown>))
+      if (/^T\d{1,2}$/.test(k) && Number.isInteger(n) && (n as number) >= 0) done[k] = n as number;
+  const out: CoachingFlags = {
+    existingUser: o.existingUser,
+    done,
+    seenScreens: Array.isArray(o.seenScreens)
+      ? o.seenScreens.filter((s): s is string => typeof s === "string").slice(0, 50)
+      : [],
+    suggest: typeof o.suggest === "boolean" ? o.suggest : true,
+  };
+  for (const k of ["introShown", "menuOpened", "skipHinted"] as const) if (o[k] === true) out[k] = true;
+  const p = o.progress as { tour?: unknown; step?: unknown } | null | undefined;
+  if (
+    p &&
+    typeof p.tour === "string" &&
+    /^T\d{1,2}$/.test(p.tour) &&
+    Number.isInteger(p.step) &&
+    (p.step as number) >= 0
+  )
+    out.progress = { tour: p.tour, step: p.step as number };
+  return out;
 }
 
 /** config.json `cabinet` 읽기 — 모르는 값은 버린다 */

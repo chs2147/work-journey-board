@@ -116,6 +116,16 @@ function scheduleIntro() {
   }, 1200);
 }
 
+/** 처음 1회 카드가 다른 길(투어 시작·메뉴 열기)로 사라져도 본 것으로 친다 */
+function dropIntro() {
+  if (introTimer) {
+    clearTimeout(introTimer);
+    introTimer = null;
+  }
+  const f = get().flags;
+  if (f && !f.introShown) void saveFlags({ introShown: true });
+}
+
 /** 처음 1회 카드를 닫는다 — 어떤 선택이든 다시 띄우지 않는다(D12) */
 export function closeIntro(then?: "start" | "menu" | "later") {
   const kind = get().intro;
@@ -144,6 +154,7 @@ function currentScreen(): Screen {
 
 export async function startTour(id: TourId, at = 0) {
   if (get().phase !== "idle" || !readyReal()) return;
+  dropIntro();
   set({ phase: "entering", menuOpen: false, intro: null, suggest: null, tour: id, step: at });
   returnTo = { screen: currentScreen(), noteExpanded: useNote.getState().expanded };
   try {
@@ -267,6 +278,7 @@ export async function endTour(done: boolean) {
 // ── 코칭 메뉴 ─────────────────────────────────────────────────────────────
 export function openMenu() {
   if (get().phase !== "idle" || !readyReal()) return;
+  dropIntro();
   set({ menuOpen: true, intro: null, suggest: null });
   if (!(get().flags ?? EMPTY).menuOpened) void saveFlags({ menuOpened: true });
 }
