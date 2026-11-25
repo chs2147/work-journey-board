@@ -48,6 +48,7 @@ import styles from "./Settings.module.css";
 import { Card, Row } from "./SettingsCard";
 import { setCelebrateOn, useKanban } from "../kanban/kanbanStore";
 import { AboutCard, LicensesCard } from "./AboutCards";
+import { CoachingCard } from "./CoachingCard";
 import { CalendarSettings } from "./CalendarSettings";
 import { DiagnosticsCard } from "./DiagnosticsCard";
 import { TagSettings } from "./TagSettings";
@@ -735,6 +736,7 @@ export function SettingsView() {
     <>
       <UpdateSettings />
       <AboutCard />
+      <CoachingCard />
       <LicensesCard />
       <DiagnosticsCard />
     </>

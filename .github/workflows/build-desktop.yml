@@ -30,6 +30,7 @@ on:
         "improve-v*",
         "hotfix-*",
         "cabinet-v2",
+        "coaching-feature",
       ]
     paths:
       - "src/**"

@@ -37,6 +37,28 @@ export interface AppConfig {
   lastWorkspace?: LastOnlineWorkspace | null;
   /** G-8(docs/v2-design/104): 이 기기에서 온라인 기능 개인정보·이용 안내에 동의한 판(바뀌면 다시 묻는다) */
   onlineTerms?: { version: string; acceptedAt: string };
+  /** 앱 안 코칭 진행 표시(coaching-spec 3-4) — 기기 단위, 공간·온라인 계정과 무관 */
+  coaching?: CoachingFlags;
+}
+
+/** 코칭 플래그(coaching-spec 3-4) */
+export interface CoachingFlags {
+  /** 코칭 판 이전부터 쓰던 기기 */
+  existingUser: boolean;
+  /** 처음 1회 카드(새 사용자 환영·기존 사용자 새 기능)를 띄웠다 */
+  introShown?: boolean;
+  /** 투어별 끝까지 본 콘텐츠 판 */
+  done: Record<string, number>;
+  /** 보다가 멈춘 곳 */
+  progress?: { tour: string; step: number } | null;
+  /** 제안 칩을 띄운 화면 */
+  seenScreens: string[];
+  /** 화면별 제안 칩 켜기 */
+  suggest: boolean;
+  /** 코칭 메뉴를 연 적 있음(레일 ? 점 끄기) */
+  menuOpened?: boolean;
+  /** 건너뛴 뒤 ? 위치 안내를 했다 */
+  skipHinted?: boolean;
 }
 
 export interface LastOnlineWorkspace {

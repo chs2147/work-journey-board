@@ -357,6 +357,7 @@ export function NoteDock({ variant = "dock" }: Props) {
         <aside
           className={`${styles.palette} ${paletteFolded ? styles.paletteFolded : ""}`}
           aria-label="객체 도구 팔레트"
+          data-coach="note-palette"
           style={{ top: viewHeight + 2 }}
         >
           <button

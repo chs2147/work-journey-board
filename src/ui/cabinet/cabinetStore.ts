@@ -29,7 +29,7 @@ import type { JournalRepository } from "../../data/repository";
 import { resolveTheme } from "../../shared/theme";
 import { STR } from "../../shared/strings";
 import { reportError, toast, useBoard } from "../board/boardStore";
-import { useAppStore } from "../common/appStore";
+import { isSampleJournal, useAppStore } from "../common/appStore";
 import { openLink } from "../common/openLink";
 
 export interface LinkDialogState {
@@ -139,7 +139,8 @@ let saveTimer: ReturnType<typeof setTimeout> | null = null;
 let exiting = false;
 let listening = false;
 function persist() {
-  if (exiting || remote) return;
+  // 코칭 예시 일지 중에는 이 PC 설정(Cabinet 창 상태)을 바꾸지 않는다(coaching-spec 4-5)
+  if (exiting || remote || isSampleJournal()) return;
   if (saveTimer) clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
     saveTimer = null;
@@ -260,7 +261,8 @@ export function applyFocus(opts: CabinetFocus) {
 
 export async function openCabinet(opts: CabinetFocus = {}) {
   if (remote) return applyFocus(opts);
-  const bridge = app().platform?.cabinetWindow;
+  // 코칭 예시 일지 중에는 별도 창 대신 메인 창 안에 띄운다(코칭 오버레이가 덮을 수 있게)
+  const bridge = isSampleJournal() ? null : app().platform?.cabinetWindow;
   useCabinet.setState({ open: true });
   persist();
   if (bridge) {
@@ -591,6 +593,7 @@ export function linkLabels(
  * manual = [폴더 확인] 단추(결과를 알림), 아니면 열 때·창으로 돌아올 때 조용히
  */
 export async function checkFolders(manual = false) {
+  if (isSampleJournal()) return; // 예시 일지의 폴더는 가상 경로 — 확인하지 않는다
   const p = app().platform;
   if (!p || useCabinet.getState().checking) return;
   const folders = useCabinet.getState().items.filter((i) => i.kind === "folder");

@@ -109,35 +109,37 @@ export function TopBar() {
         )}
         {ready && journalReady && week && (
           <nav className={styles.nav}>
-            <button
-              type="button"
-              className={styles.iconButton}
-              aria-label={todayView ? STR.today.prevDay : STR.topBar.prevWeek}
-              title={todayView ? STR.today.prevDay : STR.topBar.prevWeek}
-              onClick={() => void (todayView ? goDay(-1) : goWeek(-1))}
-            >
-              ◀
-            </button>
-            <span className={styles.week} data-testid="week-title">
-              {todayView ? `${dayLabel} · ${weekId}` : weekTitle(weekId)}
+            <span className={styles.coachGroup} data-coach="week-nav">
+              <button
+                type="button"
+                className={styles.iconButton}
+                aria-label={todayView ? STR.today.prevDay : STR.topBar.prevWeek}
+                title={todayView ? STR.today.prevDay : STR.topBar.prevWeek}
+                onClick={() => void (todayView ? goDay(-1) : goWeek(-1))}
+              >
+                ◀
+              </button>
+              <span className={styles.week} data-testid="week-title">
+                {todayView ? `${dayLabel} · ${weekId}` : weekTitle(weekId)}
+              </span>
+              <button
+                type="button"
+                className={styles.iconButton}
+                aria-label={todayView ? STR.today.nextDay : STR.topBar.nextWeek}
+                title={todayView ? STR.today.nextDay : STR.topBar.nextWeek}
+                onClick={() => void (todayView ? goDay(1) : goWeek(1))}
+              >
+                ▶
+              </button>
+              <button
+                type="button"
+                className={styles.textButton}
+                title={STR.topBar.todayTitle}
+                onClick={() => void goToday()}
+              >
+                {STR.topBar.today}
+              </button>
             </span>
-            <button
-              type="button"
-              className={styles.iconButton}
-              aria-label={todayView ? STR.today.nextDay : STR.topBar.nextWeek}
-              title={todayView ? STR.today.nextDay : STR.topBar.nextWeek}
-              onClick={() => void (todayView ? goDay(1) : goWeek(1))}
-            >
-              ▶
-            </button>
-            <button
-              type="button"
-              className={styles.textButton}
-              title={STR.topBar.todayTitle}
-              onClick={() => void goToday()}
-            >
-              {STR.topBar.today}
-            </button>
             <div className={styles.yearWrap}>
               <button
                 type="button"
@@ -145,6 +147,7 @@ export function TopBar() {
                 title={STR.topBar.yearTitle}
                 aria-expanded={yearOpen}
                 data-year-toggle
+                data-coach="year"
                 onClick={() => setYearOpen(!yearOpen)}
               >
                 {STR.topBar.year}
@@ -152,7 +155,12 @@ export function TopBar() {
               {yearOpen && <YearMinimap />}
             </div>
             {/* [주간 | 오늘] 보기 — 아이콘 두 개(improve-1026v2-spec 9·10절), 이름·단축키는 aria-label·title */}
-            <div className={styles.segment} role="group" aria-label={STR.today.viewGroup}>
+            <div
+              className={styles.segment}
+              role="group"
+              aria-label={STR.today.viewGroup}
+              data-coach="view-seg"
+            >
               <button
                 type="button"
                 aria-pressed={!todayView}

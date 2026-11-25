@@ -38,6 +38,17 @@ describe("release-notes check", () => {
     const ok = run(repo("1.3.0", { notes: `${NOTES}\n## 가이드\n- 변경 없음\n`, readme }), "check");
     expect(ok.status).toBe(0);
   });
+  it("1.53.0부터는 '## 코칭' 절(바뀐 투어 또는 변경 없음)도 있어야 통과(coaching-spec D10)", () => {
+    const readme = "## Version History\n### v1.53.0 (2026-11-26) — 가상\n- 가상\n";
+    const guide = `${NOTES}\n## 가이드\n- 변경 없음\n`;
+    const no = run(repo("1.53.0", { notes: guide, readme }), "check");
+    expect(no.status).toBe(1);
+    expect(no.stderr).toContain("'## 코칭' 절이 없습니다");
+    const ok = run(repo("1.53.0", { notes: `${guide}\n## 코칭\n- 변경 없음\n`, readme }), "check");
+    expect(ok.status).toBe(0);
+    const old = run(repo("1.52.1", { notes: guide, readme: readme.replace("1.53.0", "1.52.1") }), "check");
+    expect(old.status).toBe(0);
+  });
   it("노트 없음 · 주의 절 없음 · README 제목 없음 = 실패", () => {
     const a = run(repo("0.2.16", { readme: README }), "check");
     expect(a.status).toBe(1);

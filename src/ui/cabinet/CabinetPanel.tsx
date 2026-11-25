@@ -187,7 +187,12 @@ export function CabinetPanel({ standalone = false }: { standalone?: boolean }) {
         </div>
       )}
       <div className={styles.body}>
-        <nav className={styles.side} style={{ flexBasis: sideW }} aria-label={STR.cabinet.groups}>
+        <nav
+          className={styles.side}
+          style={{ flexBasis: sideW }}
+          aria-label={STR.cabinet.groups}
+          data-coach="cabi-groups"
+        >
           <div className={styles.sideLabel}>{STR.cabinet.groups}</div>
           {groups.map((g) => (
             <button

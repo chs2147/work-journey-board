@@ -11,7 +11,15 @@ export type JournalStatus =
   | { state: "first-run" }
   | { state: "missing"; dataDir: string }
   | { state: "integrity"; dataDir: string; path: string }
-  | { state: "ready"; driver: SqlDriver; repo: JournalRepository; dataDir: string; sqliteVersion: string }
+  | {
+      state: "ready";
+      driver: SqlDriver;
+      repo: JournalRepository;
+      dataDir: string;
+      sqliteVersion: string;
+      /** 코칭 예시 일지(coaching-spec 4-5) — 메모리에만 있고 파일·백업·설정을 만들지 않는다 */
+      sample?: true;
+    }
   | { state: "error"; message: string }
   /** 일지 데이터(DB 버전)가 이 앱보다 새로움 — 열지 않았다(improve-v22-spec 2절) */
   | { state: "newer"; dataDir: string; fileVersion: number }
@@ -46,3 +54,9 @@ export const useAppStore = create<AppState>(() => ({
   switcherOpen: false,
   creatingWorkspace: false,
 }));
+
+/** 지금 열린 일지가 코칭 예시 일지인가(coaching-spec 4-5) — 백업·설정 저장·동기화를 쉬는 곳에서 본다 */
+export function isSampleJournal(): boolean {
+  const j = useAppStore.getState().journal;
+  return j.state === "ready" && j.sample === true;
+}

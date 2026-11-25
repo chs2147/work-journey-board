@@ -1,6 +1,7 @@
 // 왼쪽 메뉴 레일(important-repeat-spec 1절, M1): 위쪽 = 보기, 구분선 아래 = 패널, 맨 아래 = 앱 설정(improve-1027v5-spec 1-1).
 // 만들지 않은 기능은 넣지 않는다.
 import { importantBadge } from "../../domain/important";
+import { CoachRailButton } from "../coaching/CoachRailButton";
 import { STR } from "../../shared/strings";
 import { focusStartCell, setPanelOpen, useBoard } from "../board/boardStore";
 import { closeInsights, openInsights, useInsights } from "../insights/insightsStore";
@@ -137,6 +138,7 @@ export function Rail() {
       className={`${styles.rail} ${band ? styles.band : ""}`}
       style={band ? ({ "--ws-band": `var(--cat-${band})` } as React.CSSProperties) : undefined}
       aria-label={STR.rail.label}
+      data-coach="rail"
     >
       {(() => {
         const Online = onlineSlots()?.RailButton;
@@ -250,6 +252,7 @@ export function Rail() {
       </button>
       <span className={styles.fill} aria-hidden="true" />
       <span className={styles.sep} aria-hidden="true" />
+      <CoachRailButton className={styles.btn ?? ""} onClass={styles.on ?? ""} />
       <button
         type="button"
         className={`${styles.btn} ${settingsOpen ? styles.on : ""}`}

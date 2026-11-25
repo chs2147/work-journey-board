@@ -544,6 +544,27 @@ async function shots(base = "http://localhost:1420", only) {
         await p.waitForTimeout(4500); // 알림이 사라진 뒤
       },
     },
+    // 기능 둘러보기(coaching-spec): T0 4단계(오늘 칸) 말풍선 · 칸반에서 연 메뉴(이 화면 투어가 맨 위)
+    "17-coaching": {
+      url: show,
+      run: async (p) => {
+        await p.keyboard.press("F1");
+        await p.getByTestId("coach-tour-T0").click();
+        await p.getByTestId("coach-count").waitFor();
+        for (let i = 0; i < 3; i++) await p.keyboard.press("ArrowRight");
+        await p.getByTestId("coach-count").filter({ hasText: "4 / 10" }).waitFor();
+        await p.waitForTimeout(800);
+      },
+    },
+    "17-coaching-menu": {
+      url: show,
+      run: async (p) => {
+        await p.keyboard.press("Alt+Digit6");
+        await p.getByTestId("kanban-view").waitFor();
+        await p.keyboard.press("F1");
+        await p.getByTestId("coach-menu").waitFor();
+      },
+    },
     "14-universe": {
       url: show,
       run: async (p) => {

@@ -342,6 +342,7 @@ export function UniverseView() {
           className={`${styles.seg} ${styles.iconSeg} ${styles.motionControls}`}
           role="group"
           aria-label={V19.motion}
+          data-coach="u-motion"
         >
           {(["drift", "orbit"] as const).map((style) => (
             <button

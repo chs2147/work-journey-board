@@ -350,3 +350,8 @@
   letter-spacing: 0.12em;
   line-height: 1.5;
 }
+
+/* 코칭 대상 묶음(◀ 주차 ▶ 오늘) — 배치는 그대로(coaching-spec 7절) */
+.coachGroup {
+  display: contents;
+}

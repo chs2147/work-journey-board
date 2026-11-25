@@ -131,6 +131,7 @@ export function BoardView() {
                     ].join(" ")}
                     data-testid={`cell-${vc.category.name}-${day}`}
                     data-cell-key={key}
+                    data-coach={day === today ? "today-cell" : undefined}
                     onMouseDown={(e) => {
                       if (narrow && e.target === e.currentTarget) {
                         e.preventDefault();

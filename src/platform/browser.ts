@@ -341,6 +341,8 @@ Object.assign(globalThis, {
   __wjb: {
     exit: () => exitHandler?.(),
     files: () => fs.listAll(),
+    /** 이 PC 설정(config.json) 사본 — 읽기만(코칭 플래그·dataDir 확인) */
+    config: () => (config ? JSON.parse(JSON.stringify(config)) : null),
     /** 브라우저 가상 파일만 복사/검사 준비. 실제 플랫폼에는 이 훅이 없다. */
     copyFile: (from: string, to: string) => fs.copyNew(from, to),
     async backupSchema(path: string, version: number) {

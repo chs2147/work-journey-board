@@ -1,0 +1,682 @@
+/* 앱 안 코칭(coaching-spec 4절) — 마스크·말풍선·메뉴·카드. 띠(진행 막대·예시 띠)는 직각(CLAUDE.md 띠 규칙) */
+
+.layer {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+}
+
+.mask {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.ring {
+  position: fixed;
+  border: 2px solid var(--coach-ring, #e8a33a);
+  border-radius: 8px;
+  box-shadow: 0 0 0 4px rgba(232, 163, 58, 0.25);
+  pointer-events: none;
+  transition:
+    left 0.25s ease,
+    top 0.25s ease,
+    width 0.25s ease,
+    height 0.25s ease;
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+.ring.tap {
+  pointer-events: auto;
+  cursor: pointer;
+  background: transparent;
+}
+
+@keyframes pulse {
+  50% {
+    box-shadow: 0 0 0 9px rgba(232, 163, 58, 0.08);
+  }
+}
+
+.hand {
+  position: fixed;
+  width: 34px;
+  height: 34px;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.4));
+  animation: tap 1s ease-in-out infinite;
+}
+
+@keyframes tap {
+  50% {
+    transform: translate(-4px, -6px) scale(0.92);
+  }
+}
+
+.bubble {
+  position: fixed;
+  width: 340px;
+  max-width: calc(100vw - 24px);
+  background: var(--surface-card);
+  color: var(--text-1);
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  padding: 14px 16px 12px;
+  font-size: var(--fs-sm);
+}
+
+.bubble h2 {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: var(--fw-bold);
+}
+
+.bubble p {
+  margin: 0 0 8px;
+  color: var(--text-2);
+  line-height: 1.6;
+}
+
+.keys {
+  display: inline-block;
+  font-size: 11px;
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  padding: 0 6px;
+  color: var(--text-2);
+  margin-bottom: 8px;
+}
+
+.tapHint {
+  font-size: 12px;
+  color: #b06d00;
+  margin: 0 0 6px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.count {
+  font-size: 12px;
+  color: var(--text-3);
+  margin-right: auto;
+}
+
+.btn,
+.primary {
+  font: inherit;
+  font-size: 12.5px;
+  border: 1px solid var(--line-strong);
+  background: var(--surface-card);
+  color: var(--text-1);
+  border-radius: 5px;
+  padding: 5px 12px;
+  cursor: pointer;
+}
+
+.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.btn:focus-visible,
+.primary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.tip {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: var(--surface-card);
+  transform: rotate(45deg);
+}
+
+.skip {
+  position: fixed;
+  right: 18px;
+  top: 14px;
+  font: inherit;
+  font-size: 12.5px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 16px;
+  padding: 4px 13px;
+  cursor: pointer;
+}
+
+.ribbon {
+  position: fixed;
+  left: 50%;
+  top: 12px;
+  transform: translateX(-50%);
+  background: #e8a33a;
+  color: #2c2c2a;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 12px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.wait {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--surface-card);
+  color: var(--text-1);
+  border-radius: 10px;
+  padding: 14px 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  font-size: var(--fs-sm);
+}
+
+/* ── 처음 1회 카드 ── */
+.dim {
+  position: fixed;
+  inset: 0;
+  z-index: 9990;
+  background: rgba(10, 14, 20, 0.55);
+}
+
+.new {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  color: #7a4a00;
+  background: #ffd98a;
+  border-radius: 4px;
+  padding: 1px 7px;
+}
+
+.card {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 9991;
+  width: 400px;
+  max-width: calc(100vw - 32px);
+  background: #fff;
+  color: #2c2c2a;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 22px 50px rgba(0, 0, 0, 0.45);
+  font-size: 13px;
+}
+
+.hero {
+  position: relative;
+  height: 150px;
+  background: linear-gradient(135deg, #185fa5, #3d8be0 60%, #6aa8ef);
+  overflow: hidden;
+}
+
+.hero .new {
+  position: absolute;
+  left: 16px;
+  top: 14px;
+}
+
+.heroRing {
+  transform-origin: 236px 74px;
+  animation: heroPulse 1.6s ease-in-out infinite;
+}
+
+@keyframes heroPulse {
+  50% {
+    transform: scale(1.12);
+    opacity: 0.55;
+  }
+}
+
+.heroHand {
+  animation: heroTap 1s ease-in-out infinite;
+}
+
+@keyframes heroTap {
+  50% {
+    transform: translate(-3px, -5px);
+  }
+}
+
+.cardBody {
+  padding: 16px 22px 18px;
+}
+
+.cardTitle {
+  display: block;
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.35;
+  margin: 2px 0 6px;
+  white-space: pre-line;
+}
+
+.cardText {
+  margin: 0 0 14px;
+  color: #5f5e5a;
+  line-height: 1.6;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 0 0 16px;
+}
+
+.chips span {
+  font-size: 11.5px;
+  border: 1px solid #d3d1c7;
+  border-radius: 12px;
+  padding: 1px 9px;
+  color: #5f5e5a;
+  background: #faf9f5;
+}
+
+.chips i {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  margin-right: 5px;
+  vertical-align: 1px;
+}
+
+.cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  background: #185fa5;
+  border: 0;
+  border-radius: 8px;
+  padding: 11px 14px;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(24, 95, 165, 0.35);
+}
+
+.subs {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  margin-top: 10px;
+}
+
+.link {
+  font: inherit;
+  font-size: 12.5px;
+  border: 0;
+  background: none;
+  color: #5f5e5a;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+
+.link.strong {
+  color: #185fa5;
+  font-weight: 600;
+}
+
+.after {
+  composes: card;
+  padding: 20px 22px 16px;
+  text-align: center;
+}
+
+.afterList {
+  display: grid;
+  gap: 6px;
+  margin: 8px 0 14px;
+}
+
+/* V3 — 새 ? 단추 스포트라이트 */
+.spotRing {
+  position: fixed;
+  z-index: 9991;
+  border: 3px solid #e8a33a;
+  border-radius: 12px;
+  pointer-events: none;
+  animation: bigPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes bigPulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 0 rgba(232, 163, 58, 0.55),
+      0 0 18px rgba(232, 163, 58, 0.6);
+  }
+  50% {
+    box-shadow:
+      0 0 0 12px rgba(232, 163, 58, 0),
+      0 0 26px rgba(232, 163, 58, 0.8);
+  }
+}
+
+.spark {
+  position: fixed;
+  z-index: 9991;
+  width: 10px;
+  height: 10px;
+  pointer-events: none;
+  animation: sparkle 1.4s ease-in-out infinite;
+}
+
+.spark::before,
+.spark::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 0;
+  width: 2px;
+  height: 10px;
+  background: #ffd98a;
+  border-radius: 1px;
+}
+
+.spark::after {
+  transform: rotate(90deg);
+}
+
+@keyframes sparkle {
+  0%,
+  100% {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2) rotate(45deg);
+    opacity: 1;
+  }
+}
+
+.spotBubble {
+  position: fixed;
+  z-index: 9991;
+  width: 340px;
+  max-width: calc(100vw - 80px);
+  background: #fff;
+  color: #2c2c2a;
+  border-radius: 12px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  padding: 16px 18px 14px;
+  font-size: 13px;
+}
+
+.spotBubble .cardTitle {
+  font-size: 18px;
+  margin: 6px 0 4px;
+}
+
+.qbox {
+  border: 1px solid #b4b2a9;
+  border-radius: 5px;
+  padding: 0 6px;
+}
+
+.spotRow {
+  display: flex;
+  gap: 8px;
+}
+
+.spotRow button {
+  font: inherit;
+  font-size: 13px;
+  border-radius: 7px;
+  padding: 8px 12px;
+  border: 1px solid #b4b2a9;
+  background: #fff;
+  color: #2c2c2a;
+  cursor: pointer;
+}
+
+.spotRow button.go {
+  flex: 1;
+  background: #185fa5;
+  color: #fff;
+  border-color: #185fa5;
+  font-weight: 700;
+}
+
+/* 제안 칩 */
+.chip {
+  position: fixed;
+  right: 20px;
+  bottom: 34px;
+  z-index: 900;
+  background: var(--surface-card);
+  color: var(--text-1);
+  border: 1px solid var(--line-strong);
+  border-radius: 22px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 6px 6px 14px;
+  font-size: var(--fs-sm);
+}
+
+.chip button {
+  font: inherit;
+  font-size: 12.5px;
+  border-radius: 16px;
+  padding: 4px 10px;
+  border: 1px solid var(--line-strong);
+  background: var(--surface-card);
+  color: var(--text-1);
+  cursor: pointer;
+}
+
+.chip button.go {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+/* 코칭 메뉴 */
+.menu {
+  position: fixed;
+  left: 52px;
+  top: var(--coach-menu-top, 97px);
+  bottom: 22px;
+  z-index: 950;
+  width: 360px;
+  max-width: calc(100vw - 64px);
+  background: var(--surface-card);
+  color: var(--text-1);
+  border: 1px solid var(--line-strong);
+  box-shadow: 8px 0 24px rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+  font-size: var(--fs-sm);
+}
+
+.menuHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px 8px;
+  border-bottom: 1px solid var(--line);
+}
+
+.menuHead h2 {
+  margin: 0 auto 0 0;
+  font-size: 15px;
+}
+
+.menuKey {
+  color: var(--text-3);
+  font-size: 12px;
+}
+
+.menuList {
+  flex: 1;
+  overflow: auto;
+  padding: 6px 0;
+}
+
+.menuGroup {
+  font-size: 11px;
+  color: var(--text-3);
+  padding: 8px 14px 2px;
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  border: 0;
+  background: none;
+  color: inherit;
+  padding: 7px 14px;
+  cursor: pointer;
+}
+
+.menuItem:hover,
+.menuItem:focus-visible {
+  background: var(--surface-sub);
+  outline: none;
+}
+
+.menuItem.here {
+  background: var(--accent-soft);
+}
+
+.menuItem .nm {
+  flex: 1;
+}
+
+.badge {
+  font-size: 11px;
+  border-radius: 10px;
+  padding: 0 7px;
+  white-space: nowrap;
+}
+
+.bDone {
+  background: #e5f4ea;
+  color: #1a7f37;
+}
+
+.bProg {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.bNew {
+  background: #fdecd2;
+  color: #9a5b00;
+}
+
+.bNone {
+  color: var(--text-3);
+}
+
+.restart {
+  font: inherit;
+  font-size: 11.5px;
+  border: 0;
+  background: none;
+  color: var(--text-3);
+  cursor: pointer;
+  padding: 2px 4px;
+}
+
+.menuFoot {
+  border-top: 1px solid var(--line);
+  padding: 10px 14px;
+  display: grid;
+  gap: 6px;
+  font-size: 12.5px;
+}
+
+.menuFoot label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.menuFootRow {
+  display: flex;
+  justify-content: space-between;
+}
+
+.menuFoot button {
+  font: inherit;
+  font-size: 12.5px;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  padding: 0;
+  color: var(--accent);
+}
+
+.menuFoot button.quiet {
+  color: var(--text-3);
+}
+
+.menuNote {
+  font-size: 11.5px;
+  color: var(--text-3);
+  padding: 0 14px 8px;
+}
+
+/* 레일 ? 단추 */
+.railBtn {
+  position: relative;
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.railDot {
+  position: absolute;
+  right: 7px;
+  top: 7px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #d64545;
+}
+
+.railBlink {
+  animation: railBlink 0.6s ease-in-out 5;
+}
+
+@keyframes railBlink {
+  50% {
+    box-shadow: 0 0 0 4px rgba(232, 163, 58, 0.7);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ring,
+  .hand,
+  .heroRing,
+  .heroHand,
+  .spotRing,
+  .spark,
+  .railBlink {
+    animation: none;
+  }
+  .ring {
+    transition: none;
+  }
+}

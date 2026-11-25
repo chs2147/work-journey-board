@@ -1,3 +1,4 @@
+import { CoachRoot } from "./coaching/CoachRoot";
 import { useEffect } from "react";
 import { STR } from "../shared/strings";
 import { BoardView } from "./board/BoardView";
@@ -96,6 +97,7 @@ export function App() {
         const Overlay = onlineSlots()?.Overlay;
         return Overlay ? <Overlay /> : null;
       })()}
+      <CoachRoot />
       <Toasts />
     </div>
   );
@@ -140,7 +142,10 @@ function Workspace() {
   const noteExpanded = useNote((s) => s.expanded);
   // 실앱은 Cabinet이 별도 OS 창이라 여기서 그리지 않는다(improve-1102-spec C1)
   const cabinetOpen = useCabinet((s) => s.open);
-  const cabinetOsWindow = useAppStore((s) => !!s.platform?.cabinetWindow);
+  // 코칭 예시 일지 중에는 Cabi.NET도 메인 창 안에(coaching-spec 4-5)
+  const cabinetOsWindow = useAppStore(
+    (s) => !!s.platform?.cabinetWindow && !(s.journal.state === "ready" && s.journal.sample),
+  );
   const cabinetInApp = cabinetOpen && !cabinetOsWindow;
   // 인사이트(m3-s1-spec 1-2): 보드는 숨겨 둔 채 그대로 — 보던 주·뷰·커서·메모가 남는다
   const insightsOpen0 = useInsights((s) => s.open);

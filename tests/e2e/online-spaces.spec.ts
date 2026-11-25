@@ -537,3 +537,31 @@ test("G(96): 온라인 공간 그림은 글씨가 읽히는 크기로 — 세로
   expect(w).toBeGreaterThan(900);
   expect(w).toBeLessThanOrEqual(1200);
 });
+
+test("코칭: 온라인 공간에서 기능 둘러보기를 시작·건너뛰기·끝내도 같은 온라인 공간으로 돌아오고 보낼 목록은 그대로(coaching-spec 11절)", async ({
+  page,
+}) => {
+  await signIn(page);
+  await copyOnce(page);
+  await page.getByTestId("online-space-row").getByTestId("online-space-open").click();
+  await expect(page.getByTestId("online-workspace")).toBeVisible({ timeout: 30_000 });
+  const outbox = () =>
+    page.evaluate(() =>
+      (globalThis as unknown as { __wjbApp: { syncOutbox(): Promise<number | null> } }).__wjbApp.syncOutbox(),
+    );
+  await expect.poll(outbox, { timeout: 10_000 }).toBe(0);
+  const headers = await page.getByTestId("category-header").allTextContents();
+
+  for (const how of ["skip", "finish", "skip"] as const) {
+    await page.keyboard.press("F1");
+    await page.getByTestId("coach-tour-T1").click();
+    await expect(page.getByTestId("coach-count")).toHaveText("1 / 9");
+    if (how === "skip") await page.keyboard.press("Escape");
+    else for (let i = 0; i < 9; i++) await page.getByTestId("coach-next").click();
+    await expect(page.getByTestId("coach-overlay")).toHaveCount(0);
+    await expect(page.getByTestId("online-workspace")).toBeVisible();
+    await expect(page.getByTestId("workspace-button").getByTestId("workspace-cloud")).toBeVisible();
+    await expect(page.getByTestId("category-header")).toHaveText(headers);
+    expect(await outbox()).toBe(0);
+  }
+});

@@ -41,6 +41,7 @@ import {
   type Platform,
 } from "../../platform";
 import { STR } from "../../shared/strings";
+import { COACH } from "../../shared/coachingStrings";
 import { applyTheme, readStoredTheme, storeTheme, type ThemePref } from "../../shared/theme";
 import {
   addCategory,
@@ -57,7 +58,7 @@ import {
 import { detachSummary, flushDraft, initSummary } from "../summary/summaryStore";
 import { detachNote, finishNote, flushNote, initNote, useNote } from "../note/noteStore";
 import { detachInsights, initInsights, useInsights } from "../insights/insightsStore";
-import { detachKanban, initKanban, openKanban } from "../kanban/kanbanStore";
+import { closeKanban, detachKanban, initKanban, openKanban } from "../kanban/kanbanStore";
 import { clearCabinetRoots, restoreCabinet, shutdownCabinet, suspendCabinet } from "../cabinet/cabinetStore";
 import { closeInsights } from "../insights/insightsStore";
 import { today as todayOf } from "../../domain/week";
@@ -82,7 +83,8 @@ import {
 import type { CategoryColorKey } from "../../shared/palette";
 import type { SettingsCategory } from "../../data/settings";
 import { classifyFolder } from "../../data/session";
-import { useAppStore, type JournalStatus } from "./appStore";
+import { isSampleJournal, useAppStore, type JournalStatus } from "./appStore";
+import { useUniverse } from "../universe/universeStore";
 
 const set = useAppStore.setState;
 const get = useAppStore.getState;
@@ -234,7 +236,7 @@ export async function applyRetention(policy: BackupPolicy, expected: CleanupPlan
 }
 export async function manualBackupNow() {
   const j = get().journal;
-  if (j.state !== "ready") throw new Error(STR.restore.notOpen);
+  if (j.state !== "ready" || j.sample) throw new Error(STR.restore.notOpen);
   return backupTask(() =>
     j.repo.exclusive(() => manualBackup(platform(), j.driver, j.dataDir, platform().now())),
   );
@@ -246,6 +248,7 @@ async function autoBackup(kind: BackupKind): Promise<void> {
 async function autoBackupWork(kind: BackupKind): Promise<void> {
   const j = get().journal;
   if (j.state !== "ready" || backupRunning || j.driver === closingJournal) return;
+  if (j.sample) return; // 코칭 예시 일지는 메모리뿐 — 백업하지 않는다(coaching-spec 4-5)
   // Preview 온라인 공간: 사본이 메모리에만 남아 꺼지면 사라진다 — 일지 전체 복사·검사로 시작·종료만 늦어져 하지 않는다
   // (E-3 실기: X 뒤 종료가 몇 초 늦던 원인). 온라인 공간의 보관은 이 기기 일지 파일 + 서버
   if (platform().ephemeralBackups) return;
@@ -556,7 +559,7 @@ export function goFirstRun() {
 /** 설정 화면(improve-1027v5-spec 1-2) — 보드 자리를 덮는다. 닫을 때 보드를 다시 읽는다(다시 시작한 업무·반복 수정 반영) */
 export function setSettingsOpen(open: boolean) {
   const was = get().settingsOpen;
-  if (open && get().journal.state !== "ready") return;
+  if (open && (get().journal.state !== "ready" || isSampleJournal())) return;
   set({ settingsOpen: open });
   if (was && !open) void reload();
 }
@@ -661,17 +664,91 @@ export async function switchOnlineSpace(
 /** Connected Preview 동기화(docs/v2-design/91): 지금 열린 일지의 연결·차례 줄(앱 쓰기와 섞이지 않게). 없으면 null */
 export function onlineJournal(): { driver: SqlDriver; exclusive<T>(w: () => Promise<T>): Promise<T> } | null {
   const j = get().journal;
-  if (j.state !== "ready" || j.driver === closingJournal) return null;
+  if (j.state !== "ready" || j.sample || j.driver === closingJournal) return null;
   return { driver: j.driver, exclusive: (w) => j.repo.exclusive(w) };
 }
 /** 다른 기기 변경을 받아 이 기기 일지에 적용한 뒤 화면을 새로(한 길: 저장 → 닫기 → 같은 일지 다시 열기, CLAUDE.md 4-7) */
 export async function reloadOnlineSpace(): Promise<boolean> {
   const j = get().journal;
-  if (j.state !== "ready") return false;
+  // 코칭 예시 화면 중에는 다시 열지 않는다 — 투어가 끝나면 내 일지를 다시 열며 받은 변경이 보인다
+  if (j.state !== "ready" || j.sample) return false;
   const dir = j.dataDir;
   await closeOnlineSpace(true);
   return openAt(dir);
 }
+
+// ── 코칭 예시 일지(coaching-spec 4-5, D11) ─────────────────────────────
+/** 예시 일지로 들어가기 전에 열려 있던 내 일지(공간 폴더) — 돌아올 곳 */
+let coachingHome: { dataDir: string } | null = null;
+/** 예시 일지의 자리 표시(파일이 아님 — 설정·백업에 쓰지 않는다) */
+export const COACHING_SAMPLE_DIR = "coaching-sample";
+
+/**
+ * 코칭 예시 일지로 잠시 바꾼다 — 일지를 바꾸는 한 길(CLAUDE.md 4-7) 그대로:
+ * 예시 일지를 먼저 만들어 보고 → Cabi.NET 창 저장·닫기 → 대기 저장 끝내기 → detachAll → 내 일지 닫기 → 예시 일지 띄우기.
+ * 종료 백업은 하지 않고(곧 다시 엶), config.json(dataDir·lastWorkspace·공간 목록·Cabinet 창 상태)은 바꾸지 않는다.
+ */
+export async function enterCoachingSample(makeDriver: () => Promise<SqlDriver>): Promise<boolean> {
+  const j = get().journal;
+  if (j.state !== "ready" || j.sample || coachingHome) return false;
+  const sample = await makeDriver();
+  stopPeriodic();
+  await suspendCabinet().catch(() => undefined);
+  await flushPending().catch(() => undefined);
+  await finishNote().catch(() => undefined);
+  closingJournal = j.driver;
+  detachAll();
+  await backupTasks.catch(() => undefined);
+  await j.repo.exclusive(() => j.driver.close()).catch(() => undefined);
+  coachingHome = { dataDir: j.dataDir };
+  set({ settingsOpen: false, switcherOpen: false });
+  closeInsights();
+  closeKanban();
+  useUniverse.setState({ open: false });
+  const p = platform();
+  const repo = new JournalRepository(sample, () => p.now());
+  await initBoard(repo);
+  await initSummary(repo);
+  await initNote(repo);
+  await initInsights(repo);
+  await initKanban(repo);
+  set({
+    journal: {
+      state: "ready",
+      driver: sample,
+      repo,
+      dataDir: COACHING_SAMPLE_DIR,
+      sqliteVersion: "",
+      sample: true,
+    },
+  });
+  closingJournal = null;
+  return true;
+}
+
+/** 예시 일지를 버리고 내 일지를 다시 연다(같은 openAt 길) — 투어 끝·건너뛰기·오류 모두 여기로 */
+export async function exitCoachingSample(): Promise<boolean> {
+  const home = coachingHome;
+  if (!home) return false;
+  coachingHome = null;
+  const j = get().journal;
+  if (j.state === "ready" && j.sample) {
+    await suspendCabinet().catch(() => undefined);
+    await flushPending().catch(() => undefined);
+    await finishNote().catch(() => undefined);
+    closingJournal = j.driver;
+    detachAll();
+    await j.driver.close().catch(() => undefined);
+  }
+  set({ settingsOpen: false, switcherOpen: false });
+  closeInsights();
+  closeKanban();
+  useUniverse.setState({ open: false });
+  return openAt(home.dataDir);
+}
+
+/** 지금 예시 일지를 보는 중인가(돌아갈 내 일지가 있다) */
+export const coachingSampleActive = () => coachingHome !== null;
 
 /** 설정 > 저장 위치: 다른 폴더의 기존 일지로 전환(지금 일지는 그대로). 새 일지를 먼저 열어 보고 성공해야 바꾼다. */
 export async function switchTo(dataDir: string): Promise<string | null> {
@@ -802,6 +879,7 @@ type CabinetCfg = { open: boolean; windows: { id: string; sub: string }[] };
  */
 export async function switchWorkspace(dir: string, opts: { quiet?: boolean } = {}): Promise<string | null> {
   const j = get().journal;
+  if (j.state === "ready" && j.sample) return COACH.blocked; // 코칭 예시 화면 중에는 공간을 바꾸지 않는다
   const target = get().workspaces.find((e) => sameDir(e.dir, dir));
   set({ switcherOpen: false });
   if (j.state === "ready" && sameDir(j.dataDir, dir)) return null;

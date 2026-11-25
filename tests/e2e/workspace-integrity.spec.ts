@@ -861,3 +861,67 @@ test("v23 칸반 열 순서(TODO·DONE 포함)·섹션 아이콘은 공간마다
     expect(await journalCounts(page)).toEqual(company);
   }
 });
+
+test("코칭 예시 화면을 3번 넘게 오가도 내 일지(두 공간)의 기록·이미지·설정이 그대로(coaching-spec 11절, CLAUDE.md 4-7)", async ({
+  page,
+}) => {
+  const counts = () =>
+    page.evaluate(() =>
+      (
+        globalThis as unknown as { __wjbApp: { journalCounts(): Promise<Record<string, number>> } }
+      ).__wjbApp.journalCounts(),
+    );
+  const config = () =>
+    page.evaluate(() =>
+      (globalThis as unknown as { __wjb: { config(): { dataDir: string } } }).__wjb.config(),
+    );
+  const status = page.getByTestId("journal-status");
+
+  // 메모 문서 저장은 예약(잠시 뒤)이라 일지에 들어간 뒤 기준을 잡는다
+  const settled = () => expect.poll(async () => (await counts())?.week_note ?? 0).toBeGreaterThan(0);
+  await addImage(page, "#2a78d6", "회사-그림");
+  await settled();
+  const company = { counts: await counts(), assets: await storedAssets(page) };
+  await switchTo(page, 2, "개인");
+  await addImage(page, "#e55", "개인-그림");
+  await settled();
+  const personal = {
+    counts: await counts(),
+    assets: await storedAssets(page),
+    images: await images(page).count(),
+  };
+  const dir = (await config()).dataDir;
+
+  // 메모 보드 투어(T3 — 예시 일지의 메모 이미지)·Cabi.NET 투어(T8)를 시작·건너뛰기·끝까지
+  const runs: [string, "skip" | "finish"][] = [
+    ["T3", "skip"],
+    ["T8", "finish"],
+    ["T3", "finish"],
+    ["T8", "skip"],
+  ];
+  for (const [tour, how] of runs) {
+    await page.keyboard.press("F1");
+    await page.getByTestId(`coach-tour-${tour}`).click();
+    await expect(status).toContainText("coaching-sample");
+    await expect(page.getByTestId("coach-bubble")).toBeVisible();
+    if (how === "skip") await page.keyboard.press("Escape");
+    else
+      for (let i = 0; i < 8 && (await page.getByTestId("coach-overlay").count()); i++) {
+        await page.getByTestId("coach-next").click();
+        await page.waitForTimeout(150);
+      }
+    await expect(page.getByTestId("coach-overlay")).toHaveCount(0);
+    await expect(status).not.toContainText("coaching-sample");
+    await expect(page).toHaveTitle("Work Journey Board — 개인");
+    await expect(images(page)).toHaveCount(personal.images);
+    await expect(missing(page)).toHaveCount(0);
+    expect(await counts()).toEqual(personal.counts);
+    expect(await storedAssets(page)).toBe(personal.assets);
+    expect((await config()).dataDir).toBe(dir);
+  }
+
+  await switchTo(page, 1, "회사");
+  expect(await counts()).toEqual(company.counts);
+  expect(await storedAssets(page)).toBe(company.assets);
+  await expect(missing(page)).toHaveCount(0);
+});

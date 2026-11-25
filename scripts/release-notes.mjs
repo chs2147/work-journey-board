@@ -9,6 +9,8 @@ import { join } from "node:path";
 const FIRST = "0.2.16";
 /** 이 판부터 노트에 '## 가이드' 절(바뀐 이용 가이드 장면 또는 "변경 없음")이 있어야 한다(features-1102-spec F6) */
 const FIRST_GUIDE = "1.3.0";
+/** 이 판부터 노트에 '## 코칭' 절(바뀐 기능 둘러보기 투어 또는 "변경 없음")이 있어야 한다(coaching-spec D10) */
+const FIRST_COACH = "1.53.0";
 /** 이 판부터 macOS 설치 파일을 같은 릴리스에 함께 올린다(macos-spec 4-2) */
 const FIRST_MAC = "1.6.0";
 
@@ -43,6 +45,10 @@ function problems(v) {
     if (cmp(v, FIRST_GUIDE) >= 0 && !/^## 가이드\s*\n+\s*\S/m.test(text))
       out.push(
         "노트에 '## 가이드' 절이 없습니다(바뀐 이용 가이드 장면 또는 '변경 없음' — docs/guide/map.md)",
+      );
+    if (cmp(v, FIRST_COACH) >= 0 && !/^## 코칭\s*\n+\s*\S/m.test(text))
+      out.push(
+        "노트에 '## 코칭' 절이 없습니다(바뀐 기능 둘러보기 투어 또는 '변경 없음' — docs/coaching-spec.md 8절)",
       );
   }
   if (!readmeHeading(v)) out.push(`README Version History에 '### v${v} (날짜) — 요약' 제목이 없습니다`);
