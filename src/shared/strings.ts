@@ -285,6 +285,7 @@ export const STR_BASE = {
     saved: (name: string, n: number) =>
       n ? `${name}과 이미지 ${n}장을 저장했습니다` : `${name}을(를) 저장했습니다`,
     onlyMd: "마크다운(.md) 파일로만 저장할 수 있습니다",
+    badPath: "상위 폴더(..)가 들어간 경로에는 저장할 수 없습니다",
     badRange: "기간을 확인하세요(시작 ≤ 끝, 최대 1년)",
   },
   /** 설정 › 달력·휴일(features-1102-spec F2·F3) */

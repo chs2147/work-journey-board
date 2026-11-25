@@ -159,7 +159,9 @@ export function notesToMarkdown(
       } else if (b.kind === "image") {
         title = `이미지 — ${b.caption.trim() || "설명 없음"}`;
         if (opts.images === "files") {
-          const file = `${b.id}.${extOf(w.assetMime?.(b.asset))}`;
+          // 상자 ID가 안전한 이름일 때만 그대로 쓰고, 아니면 번호 이름(보안 점검 1126 — 폴더 밖 쓰기 방지)
+          const stem = /^[\w-]{1,200}$/.test(b.id) ? b.id : `image-${images.length + 1}`;
+          const file = `${stem}.${extOf(w.assetMime?.(b.asset))}`;
           if (!images.some((x) => x.file === file)) images.push({ assetId: b.asset, file });
           body = [
             `![${esc(b.caption.trim() || "이미지")}](${`${opts.imageDir}/${file}`.replace(/ /g, "%20")})`,

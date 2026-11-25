@@ -662,9 +662,19 @@ export function baseName(path: string): string {
 }
 
 /** 내보내기 경로 검사(Rust `export_write`와 같은 규칙 — 웹 앱에서도 먼저 막는다) */
+/** 경로 조각 중 `.`·`..`이 있는지(윈도우·맥 구분자 모두) */
+export function hasDotSegment(path: string): boolean {
+  return path.split(/[\\/]/).some((c) => c === "." || c === "..");
+}
+
+/** 내보내기 이미지 파일 이름으로 쓸 수 있는 ID(글자·숫자·`_`·`-`만) — 아니면 번호 이름을 붙인다 */
+export const SAFE_EXPORT_ID = /^[\w-]{1,200}$/;
+
 export function exportPathProblem(path: string, dataDir: string, kind: ExportKind = "xlsx"): string | null {
   const norm = (p: string) => p.replace(/\//g, "\\").replace(/\\+$/, "").toLowerCase();
   const name = baseName(path).toLowerCase();
+  // 상위·현재 폴더 조각(`..`·`.`)이 섞인 경로는 고른 폴더 밖으로 나갈 수 있어 거부한다(보안 점검 1126)
+  if (hasDotSegment(path)) return STR.mdExport.badPath;
   if (!EXPORT_EXTS[kind].some((ext) => name.endsWith(ext) && name.length > ext.length))
     return kind === "pdf"
       ? CABI.onlyPdf

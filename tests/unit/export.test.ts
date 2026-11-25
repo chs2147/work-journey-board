@@ -266,6 +266,18 @@ describe("내보내기 경로 규칙(웹 앱 쪽 — Rust export_write와 같은
     expect(exportPathProblem(`${dir}/backups/a.xlsx`, dir)).toBe(STR.export.notBackups);
   });
 
+  it("보안 점검 1126: `..`·`.` 조각이 든 경로는 종류와 상관없이 거부", () => {
+    for (const [no, kind] of [
+      [`${dir}\\exports\\B_images\\..\\..\\..\\Documents\\r.png`, "markdownImage"],
+      [`${dir}\\exports\\B_images\\..\\..\\backups\\x.png`, "markdownImage"],
+      ["/Users/u/x/a_images/../../y_images/z.png", "markdownImage"],
+      [`${dir}\\..\\a.xlsx`, "xlsx"],
+      [`${dir}\\.\\a.md`, "markdown"],
+    ] as const)
+      expect(exportPathProblem(no, dir, kind)).toBe(STR.mdExport.badPath);
+    expect(exportPathProblem(`${dir}\\exports\\보고서..v2.md`, dir, "markdown")).toBeNull();
+  });
+
   it("연차·반차 날은 주간보고 요일 머리 끝에 `(연차)`, 원장에는 넣지 않는다(improve-1026-spec 1-3)", async () => {
     const weeks = (await sampleWeeks()).map((w) =>
       w.input.weekId === "2026-W43"

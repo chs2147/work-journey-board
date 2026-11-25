@@ -107,6 +107,15 @@ describe("notesToMarkdown", () => {
       OPTS,
     );
     expect(images).toEqual([{ assetId: "a-showcase-flow", file: "box-flow.png" }]);
+    // 보안 점검 1126: 상자 ID에 경로 조각이 있으면 번호 이름으로(고른 폴더 밖 쓰기 방지)
+    const evil = structuredClone(doc);
+    const img = evil.boxes.find((b) => b.kind === "image")!;
+    img.id = "..\\..\\x_images\\evil";
+    const bad = notesToMarkdown(
+      [{ weekId: "2026-W43", doc: evil, itemLabel: () => null, assetMime: () => "image/png" }],
+      OPTS,
+    );
+    expect(bad.images.map((x) => x.file)).toEqual(["image-1.png"]);
     expect(markdown.split("\n").slice(0, 10)).toEqual([
       "# 2026-W43 이번 주 메모 (10/19~10/25)",
       "",

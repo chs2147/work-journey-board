@@ -208,9 +208,13 @@ export function createSpaceSync(deps: {
     if (table === "app_meta" && row.key === "settings" && local) {
       // 서버 = 공간 공용 설정만. 이 기기 설정(백업·AI·화면)은 그대로, 칸반 열 순서·아이콘만 공용
       const mine = JSON.parse(String(local.value ?? "{}")) as Row;
-      const theirs = JSON.parse(String(row.value)) as Row;
+      // 서버 값이 보내기 규칙(projectSettings)을 어겨도 이 기기 설정은 덮지 않는다(보안 점검 1126)
+      const { backup: _b, ai: _a, ui: theirUi, ...theirs } = JSON.parse(String(row.value)) as Row;
+      void _b;
+      void _a;
       const ui = { ...((mine.ui as Row) ?? {}) };
-      if (theirs.ui && typeof theirs.ui === "object") Object.assign(ui, theirs.ui as Row);
+      if (theirUi && typeof theirUi === "object" && "kanbanColumns" in (theirUi as Row))
+        ui.kanbanColumns = (theirUi as Row).kanbanColumns;
       row.value = JSON.stringify({ ...mine, ...theirs, ...(Object.keys(ui).length ? { ui } : {}) });
     }
     if (table === "cabinet_item" && row.target === UNBOUND_FOLDER && local && local.target !== UNBOUND_FOLDER)

@@ -16,8 +16,10 @@ export function createWorkspaceRestorer({ hash, bytesToBase64 }) {
     const out = {};
     for (const r of records) {
       const row = structuredClone(r.value);
-      if (r.table === "cabinet_item" && "targetState" in row) {
-        if (row.targetState !== "device-local-unbound" || row.target !== null) throw Error("RESTORE_FORMAT");
+      if (r.table === "cabinet_item" && ("targetState" in row || row.kind === "folder")) {
+        // 폴더 경로는 서버에서 받지 않는다 — targetState 없이 온 폴더 행(변조 기기 등)의 경로도 버린다(보안 점검 1126)
+        if ("targetState" in row && (row.targetState !== "device-local-unbound" || row.target !== null))
+          throw Error("RESTORE_FORMAT");
         delete row.targetState;
         // 폴더 경로는 기기마다 달라 온라인에 보내지 않았다 — 로컬 칸은 비울 수 없어 자리표시(절대 경로가 아니라
         // Cabinet Rust 검사가 열기를 거절한다 → 앱에서는 없는 폴더 = "경로 다시 지정")

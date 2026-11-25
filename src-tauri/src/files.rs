@@ -446,6 +446,10 @@ fn has_ext(name: &str, exts: &[&str]) -> bool {
 }
 
 fn export_path_allowed(path: &str, data_dir: Option<&str>) -> Result<(), String> {
+    // 상위·현재 폴더 조각(`..`·`.`)은 고른 폴더 밖으로 나갈 수 있어 거부(보안 점검 1126)
+    if path.split(['\\', '/']).any(|c| c == "." || c == "..") {
+        return Err("상위 폴더(..)가 들어간 경로에는 저장할 수 없습니다".into());
+    }
     let p = norm(path);
     let (parent, name) = p.rsplit_once('\\').unwrap_or(("", p.as_str()));
     let in_md_images = parent
@@ -570,6 +574,28 @@ mod tests {
             "https://a.example/{}",
             "x".repeat(2100)
         )));
+    }
+
+    #[test]
+    fn export_rejects_dot_segments() {
+        // 보안 점검 1126: 일지가 준 이미지 이름으로 고른 폴더 밖·backups에 쓰지 못한다
+        let dir = "C:\\Users\\u\\Journal";
+        for no in [
+            "C:\\Users\\u\\Journal\\exports\\Board_images\\..\\..\\..\\Documents\\report.png",
+            "C:\\Users\\u\\Journal\\exports\\Board_images\\..\\..\\backups\\x.png",
+            "/Users/u/Journal/exports/Board_images/../../x.webp",
+            "C:\\Users\\u\\Journal\\exports\\.\\a.md",
+        ] {
+            assert!(export_path_allowed(no, Some(dir)).is_err(), "{no}");
+        }
+        assert!(export_path_allowed(
+            "C:\\Users\\u\\Journal\\exports\\Board_images\\img-1.png",
+            Some(dir)
+        )
+        .is_ok());
+        assert!(
+            export_path_allowed("C:\\Users\\u\\Journal\\exports\\보고서..v2.md", Some(dir)).is_ok()
+        );
     }
 
     #[test]

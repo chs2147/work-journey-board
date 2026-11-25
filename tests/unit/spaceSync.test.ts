@@ -367,6 +367,62 @@ describe("E-3 동기화 엔진(두 기기 + 가짜 서버)", () => {
     expect(server.head(p.workspaceId)).toBe(n);
   });
 
+  it("보안 점검 1126: 다른 기기가 규칙을 어긴 원본 행을 올려도 폴더 경로·이 기기 설정(백업)은 받지 않는다", async () => {
+    const { device, server, p } = await setup();
+    const A = await device("A");
+    const before = JSON.parse(
+      String(
+        (await A.driver.select<{ value: string }>("SELECT value FROM app_meta WHERE key = 'settings'"))[0]
+          ?.value ?? "{}",
+      ),
+    ) as { backup?: unknown };
+    const B = server.transport("B");
+    const id = "sec1126-folder";
+    const r = await B.call("push", {
+      workspaceId: p.workspaceId,
+      opId: randomUUID(),
+      changes: [
+        {
+          table: "cabinet_item",
+          key: hash(["cabinet_item", [id]]),
+          baseRev: null,
+          value: {
+            id,
+            kind: "folder",
+            title: "가상",
+            target: "\\\\dummy-host\\share",
+            sort_order: 99,
+            created_at: "2026-01-01T00:00:00.000Z",
+            updated_at: "2026-01-01T00:00:00.000Z",
+          },
+        },
+        {
+          table: "app_meta",
+          key: hash(["app_meta", ["settings"]]),
+          baseRev: 0,
+          value: {
+            key: "settings",
+            value: JSON.stringify({ backup: { dailyKeep: 1, monthlyKeep: 0 }, nudgeWeeks: 3 }),
+          },
+        },
+      ],
+    });
+    expect(r.applied).toBeTruthy();
+    await A.sync.syncNow();
+    const row = (
+      await A.driver.select<{ target: string }>("SELECT target FROM cabinet_item WHERE id = ?", [id])
+    )[0];
+    expect(row?.target).toBe("wjb-online:device-local-unbound");
+    const after = JSON.parse(
+      String(
+        (await A.driver.select<{ value: string }>("SELECT value FROM app_meta WHERE key = 'settings'"))[0]
+          ?.value,
+      ),
+    ) as { backup?: unknown; nudgeWeeks?: unknown };
+    expect(after.backup).toEqual(before.backup);
+    expect(after.nudgeWeeks).toBe(3);
+  });
+
   it("merge3: 기준이 없으면 합치지 않는다", () => {
     expect(merge3(null, { a: 1 }, { a: 2 })).toBeNull();
     expect(merge3({ a: 1, b: 1 }, { a: 2, b: 1 }, { a: 1, b: 3 })).toEqual({ a: 2, b: 3 });

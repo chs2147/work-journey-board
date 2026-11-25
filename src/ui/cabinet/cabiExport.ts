@@ -4,12 +4,18 @@ import { exportCabiMarkdown } from "../../domain/cabiMarkdown";
 import { cabiText } from "../../domain/cabi";
 import { readingOrder, type PMNode } from "../../domain/note";
 import type { NoteAsset } from "../../data/repository";
-import { baseName, dirOf, exportPathProblem } from "../../platform";
+import { baseName, dirOf, exportPathProblem, SAFE_EXPORT_ID } from "../../platform";
 import { useAppStore } from "../common/appStore";
 import { flushNote, noteExportContext, useNote } from "../note/noteStore";
 import { toast } from "../board/boardStore";
 import { exportImageBytes } from "../note/imageProcess";
 
+const MIME_EXT: Record<string, string> = {
+  "image/png": "png",
+  "image/webp": "webp",
+  "image/jpeg": "jpg",
+  "image/gif": "gif",
+};
 const bytes = (base64: string) => Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
 const fileName = (title: string) =>
   [...title]
@@ -46,13 +52,20 @@ export async function writeCabiDocument(
       node.content?.forEach(collect);
     };
     collect(content);
+    let n = 0;
     for (const id of images.keys()) {
       const a = await asset(id);
       if (!a) throw new Error(CABI.assetMissing);
-      const ext = a.mime === "image/jpeg" ? "jpg" : a.mime.split("/")[1],
-        name = `${id}.${ext}`;
+      // 확장자는 정해진 목록에서만, 파일 이름은 안전한 ID일 때만 그대로(보안 점검 1126 — 고른 폴더 밖 쓰기 방지)
+      const ext = MIME_EXT[a.mime];
+      if (!ext) throw new Error(CABI.assetMissing);
+      n++;
+      const name = `${SAFE_EXPORT_ID.test(id) ? id : `image-${n}`}.${ext}`,
+        target = p.join(dirOf(path), folder, name);
+      const bad = exportPathProblem(target, dataDir, "markdownImage");
+      if (bad) throw new Error(bad);
       images.set(id, folder + "/" + name);
-      await p.writeExport(p.join(dirOf(path), folder, name), bytes(a.data));
+      await p.writeExport(target, bytes(a.data));
     }
     await p.writeExport(
       path,
