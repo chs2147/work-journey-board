@@ -270,6 +270,7 @@ export function CoachOverlay() {
           {pos?.side && (
             <i
               className={styles.tip}
+              data-side={pos.side}
               style={
                 pos.side === "l"
                   ? { left: -6, top: clampTip(pos.tip, 14, 200) }
