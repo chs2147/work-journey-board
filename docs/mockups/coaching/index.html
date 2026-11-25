@@ -1,0 +1,1076 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>코칭 시안</title>
+    <style>
+      :root {
+        --page: #f7f6f2;
+        --card: #ffffff;
+        --sub: #f1efe8;
+        --line: #d3d1c7;
+        --line-strong: #b4b2a9;
+        --t1: #2c2c2a;
+        --t2: #5f5e5a;
+        --t3: #8a8983;
+        --accent: #185fa5;
+        --accent-soft: #e6f1fb;
+        --warm: #e8a33a;
+      }
+      :root:not([data-theme="light"]) {
+        color-scheme: light;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+          --page: #1a1a19;
+          --card: #232322;
+          --sub: #2c2c2a;
+          --line: #3d3d3a;
+          --line-strong: #55554f;
+          --t1: #f0efec;
+          --t2: #c3c2b7;
+          --t3: #8f8e86;
+          --accent: #6da7ec;
+          --accent-soft: #1d2a38;
+        }
+      }
+      :root[data-theme="dark"] {
+        --page: #1a1a19;
+        --card: #232322;
+        --sub: #2c2c2a;
+        --line: #3d3d3a;
+        --line-strong: #55554f;
+        --t1: #f0efec;
+        --t2: #c3c2b7;
+        --t3: #8f8e86;
+        --accent: #6da7ec;
+        --accent-soft: #1d2a38;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--page);
+        color: var(--t1);
+        font:
+          14px/1.6 "Pretendard Variable",
+          "Malgun Gothic",
+          "Apple SD Gothic Neo",
+          system-ui,
+          sans-serif;
+      }
+      .wrap {
+        max-width: 1240px;
+        margin: 0 auto;
+        padding: 24px 16px 60px;
+      }
+      h1 {
+        font-size: 22px;
+        margin: 0 0 4px;
+      }
+      h2 {
+        font-size: 17px;
+        margin: 34px 0 8px;
+      }
+      p.lead {
+        color: var(--t2);
+        margin: 0 0 14px;
+      }
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 18px;
+        align-items: center;
+        margin: 12px 0;
+      }
+      .seg {
+        display: inline-flex;
+        border: 1px solid var(--line-strong);
+        border-radius: 6px;
+        overflow: hidden;
+      }
+      .seg button {
+        font: inherit;
+        font-size: 13px;
+        border: 0;
+        background: var(--card);
+        color: var(--t1);
+        padding: 6px 12px;
+        cursor: pointer;
+        border-right: 1px solid var(--line);
+      }
+      .seg button:last-child {
+        border-right: 0;
+      }
+      .seg button[aria-pressed="true"] {
+        background: var(--accent);
+        color: #fff;
+      }
+      .label {
+        font-size: 12px;
+        color: var(--t3);
+        margin-right: 6px;
+      }
+      .stage {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 1280 / 800;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        overflow: hidden;
+        background: #fff;
+        user-select: none;
+      }
+      .stage img.shot {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      .helpBtn {
+        position: absolute;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        background: #fff;
+        color: #2c2c2a;
+        font-weight: 700;
+        font-size: clamp(9px, 1.3vw, 16px);
+        border: 1px solid #d3d1c7;
+      }
+      .helpBtn .dot {
+        position: absolute;
+        right: 8%;
+        top: 8%;
+        width: 22%;
+        height: 22%;
+        border-radius: 50%;
+        background: #d64545;
+      }
+      svg.mask {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        transition: opacity 0.2s;
+      }
+      .ring {
+        position: absolute;
+        border: 2px solid var(--warm);
+        border-radius: 8px;
+        box-shadow: 0 0 0 4px rgba(232, 163, 58, 0.25);
+        pointer-events: none;
+        transition: all 0.35s ease;
+        animation: pulse 1.6s ease-in-out infinite;
+      }
+      .ring.clickable {
+        pointer-events: auto;
+        cursor: pointer;
+      }
+      @keyframes pulse {
+        50% {
+          box-shadow: 0 0 0 9px rgba(232, 163, 58, 0.08);
+        }
+      }
+      .hand {
+        position: absolute;
+        width: 34px;
+        height: 34px;
+        pointer-events: none;
+        animation: tap 1s ease-in-out infinite;
+        filter: drop-shadow(0 2px 3px #0006);
+      }
+      @keyframes tap {
+        50% {
+          transform: translate(-4px, -6px) scale(0.92);
+        }
+      }
+      .bubble {
+        position: absolute;
+        width: min(330px, 44%);
+        background: var(--card);
+        color: var(--t1);
+        border-radius: 10px;
+        box-shadow: 0 10px 30px #0005;
+        padding: 14px 16px 12px;
+        font-size: 13px;
+        transition:
+          left 0.3s,
+          top 0.3s;
+      }
+      .bubble h3 {
+        margin: 0 0 4px;
+        font-size: 15px;
+      }
+      .bubble p {
+        margin: 0 0 8px;
+        color: var(--t2);
+        line-height: 1.55;
+      }
+      .bubble .key {
+        display: inline-block;
+        font-size: 11px;
+        border: 1px solid var(--line-strong);
+        border-radius: 4px;
+        padding: 0 6px;
+        color: var(--t2);
+        margin-bottom: 8px;
+      }
+      .bubble .row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .bubble .count {
+        font-size: 12px;
+        color: var(--t3);
+        margin-right: auto;
+      }
+      .bubble button {
+        font: inherit;
+        font-size: 12px;
+        border: 1px solid var(--line-strong);
+        background: var(--card);
+        color: var(--t1);
+        border-radius: 5px;
+        padding: 5px 11px;
+        cursor: pointer;
+      }
+      .bubble button.primary {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #fff;
+      }
+      .bubble .bar {
+        height: 3px;
+        background: var(--sub);
+        margin: 0 -16px 10px;
+        position: relative;
+      }
+      .bubble .bar i {
+        position: absolute;
+        inset: 0 auto 0 0;
+        background: var(--warm);
+      }
+      .bubble .mascot {
+        float: left;
+        width: 40px;
+        height: 40px;
+        margin: 0 10px 4px 0;
+        border-radius: 10px;
+        background: #1b6fd1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .bubble .mini {
+        display: block;
+        width: 100%;
+        height: auto;
+        margin: 2px 0 10px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--sub);
+      }
+      .tip {
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        background: var(--card);
+        transform: rotate(45deg);
+      }
+      .skip {
+        position: absolute;
+        right: 1.4%;
+        top: 2%;
+        font: inherit;
+        font-size: 12px;
+        color: #fff;
+        background: rgba(255, 255, 255, 0.14);
+        border: 1px solid rgba(255, 255, 255, 0.45);
+        border-radius: 16px;
+        padding: 4px 12px;
+        cursor: pointer;
+      }
+      .tourStart {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 10px 0;
+      }
+      .tourStart button {
+        font: inherit;
+        font-size: 13px;
+        border: 1px solid var(--line-strong);
+        background: var(--card);
+        color: var(--t1);
+        border-radius: 6px;
+        padding: 6px 12px;
+        cursor: pointer;
+      }
+      .tourStart button.on {
+        border-color: var(--accent);
+        box-shadow: inset 0 0 0 1px var(--accent);
+      }
+      .note {
+        font-size: 12px;
+        color: var(--t3);
+        margin: 6px 0 0;
+      }
+      /* 코칭 메뉴 */
+      .menu {
+        position: absolute;
+        left: 4.1%;
+        top: 12.1%;
+        bottom: 2.8%;
+        width: 29%;
+        background: var(--card);
+        color: var(--t1);
+        border: 1px solid var(--line-strong);
+        box-shadow: 8px 0 24px #0003;
+        display: flex;
+        flex-direction: column;
+        font-size: 12.5px;
+      }
+      .menu header {
+        padding: 12px 14px 8px;
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .menu header b {
+        font-size: 15px;
+        margin-right: auto;
+      }
+      .menu .list {
+        overflow: auto;
+        padding: 6px 0;
+        flex: 1;
+      }
+      .menu .grp {
+        font-size: 11px;
+        color: var(--t3);
+        padding: 8px 14px 2px;
+      }
+      .menu .item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 14px;
+        cursor: pointer;
+      }
+      .menu .item:hover {
+        background: var(--sub);
+      }
+      .menu .item .nm {
+        flex: 1;
+      }
+      .menu .item small {
+        color: var(--t3);
+      }
+      .badge {
+        font-size: 11px;
+        border-radius: 10px;
+        padding: 0 7px;
+        white-space: nowrap;
+      }
+      .b-done {
+        background: #e5f4ea;
+        color: #1a7f37;
+      }
+      .b-prog {
+        background: var(--accent-soft);
+        color: var(--accent);
+      }
+      .b-new {
+        background: #fdecd2;
+        color: #9a5b00;
+      }
+      .b-none {
+        color: var(--t3);
+      }
+      .menu footer {
+        border-top: 1px solid var(--line);
+        padding: 10px 14px;
+        display: grid;
+        gap: 6px;
+      }
+      .menu footer label {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .menu footer a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      .here {
+        background: var(--accent-soft);
+      }
+      /* 환영 카드·제안 칩 */
+      .welcome {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: min(380px, 70%);
+        background: var(--card);
+        color: var(--t1);
+        border-radius: 12px;
+        box-shadow: 0 16px 40px #0006;
+        padding: 20px 22px 16px;
+        text-align: center;
+      }
+      .welcome h3 {
+        margin: 8px 0 4px;
+        font-size: 17px;
+      }
+      .welcome p {
+        color: var(--t2);
+        margin: 0 0 14px;
+        font-size: 13px;
+      }
+      .welcome .btns {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+      }
+      .welcome button,
+      .chip button {
+        font: inherit;
+        font-size: 13px;
+        border-radius: 6px;
+        padding: 7px 14px;
+        border: 1px solid var(--line-strong);
+        background: var(--card);
+        color: var(--t1);
+        cursor: pointer;
+      }
+      .welcome button.primary,
+      .chip button.primary {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+      }
+      .chip {
+        position: absolute;
+        right: 1.6%;
+        bottom: 3%;
+        background: var(--card);
+        color: var(--t1);
+        border: 1px solid var(--line-strong);
+        border-radius: 22px;
+        box-shadow: 0 6px 18px #0003;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 6px 6px 14px;
+        font-size: 13px;
+      }
+      .chip button {
+        padding: 4px 10px;
+        border-radius: 16px;
+      }
+      .toast {
+        position: absolute;
+        left: 5%;
+        bottom: 9%;
+        background: #2c2c2a;
+        color: #fff;
+        border-radius: 6px;
+        padding: 7px 12px;
+        font-size: 13px;
+      }
+      .grid2 {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 22px;
+      }
+      .caption {
+        font-size: 12px;
+        color: var(--t2);
+        margin: 6px 2px 0;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--card);
+        border: 1px solid var(--line);
+        font-size: 13px;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 8px 10px;
+        border-bottom: 1px solid var(--line);
+        vertical-align: top;
+      }
+      th {
+        background: var(--sub);
+        white-space: nowrap;
+      }
+      .rec {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .tablewrap {
+        overflow-x: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>앱 안 코칭(기능 둘러보기) 시안</h1>
+      <p class="lead">
+        실제 앱 화면(가상 샘플) 위에서 투어를 넘겨 볼 수 있습니다. 방식 A·B·C를 바꿔 보고, 키보드 →·Enter(다음), ←(이전),
+        Esc(건너뛰기)도 됩니다. 상세 설계는 <code>docs/coaching-spec.md</code>입니다.
+      </p>
+
+      <h2>1. 투어 체험</h2>
+      <div class="controls">
+        <span
+          ><span class="label">방식</span
+          ><span class="seg" id="styleSeg"
+            ><button data-v="A" aria-pressed="true">A 스포트라이트(추천 기본)</button
+            ><button data-v="B" aria-pressed="false">B 게임식 손가락</button
+            ><button data-v="C" aria-pressed="false">C 따라 하기</button></span
+          ></span
+        >
+        <span
+          ><span class="label">테마</span
+          ><span class="seg" id="themeSeg"
+            ><button data-v="light" aria-pressed="true">라이트</button
+            ><button data-v="dark" aria-pressed="false">다크</button></span
+          ></span
+        >
+      </div>
+      <div class="tourStart" id="tourList"></div>
+      <div class="stage" id="stage" tabindex="0" aria-label="투어 체험 화면"></div>
+      <p class="note" id="styleNote"></p>
+
+      <h2>2. 처음 설치한 사용자 — 노출 흐름</h2>
+      <div class="grid2">
+        <div>
+          <div class="stage">
+            <img class="shot" src="shots/board.png" alt="주간 보드" />
+            <svg class="mask" viewBox="0 0 1280 800"><rect width="1280" height="800" fill="rgba(10,14,20,.55)" /></svg>
+            <div class="welcome">
+              <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#1b6fd1" stroke-width="1.6">
+                <rect x="5" y="3.5" width="14" height="17" rx="2" />
+                <path d="M8.5 8h7M8.5 11.5h7M8.5 15h4" />
+              </svg>
+              <h3>Work Journey Board에 오신 걸 환영해요</h3>
+              <p>요일 칸에 적기만 하면 요약·경과·엑셀이 만들어집니다.<br />1분 둘러보기를 시작할까요?</p>
+              <div class="btns"><button class="primary">둘러보기 시작</button><button>나중에</button></div>
+            </div>
+          </div>
+          <p class="caption">① 첫 실행(업무 이름)을 마치고 주간 보드가 처음 뜬 직후 — 자동 시작 대신 묻는다.</p>
+        </div>
+        <div>
+          <div class="stage">
+            <img class="shot" src="shots/board.png" alt="주간 보드" />
+            <div class="helpBtn" style="left: 0.47%; top: 85%; width: 3.1%; height: 5%">?<span class="dot"></span></div>
+            <div class="ring" style="left: 0.2%; top: 84.5%; width: 3.6%; height: 6%"></div>
+            <div class="toast">여기(?·F1)서 언제든 다시 볼 수 있어요</div>
+          </div>
+          <p class="caption">② [나중에]·[건너뛰기] 뒤 — 레일 ? 단추가 잠시 깜박이고 안내 한 번.</p>
+        </div>
+        <div>
+          <div class="stage">
+            <img class="shot" src="shots/kanban.png" alt="칸반" />
+            <div class="chip">
+              칸반 보드 30초 둘러보기 <button class="primary">▶ 보기</button><button aria-label="닫기">✕</button>
+            </div>
+          </div>
+          <p class="caption">③ 칸반·인사이트·Universe·Cabi.NET을 처음 열 때 — 오른쪽 아래 제안 칩(자동 시작 안 함).</p>
+        </div>
+        <div>
+          <div class="stage">
+            <img class="shot" src="shots/board.png" alt="주간 보드" />
+            <svg class="mask" viewBox="0 0 1280 800"><rect width="1280" height="800" fill="rgba(10,14,20,.55)" /></svg>
+            <div class="welcome">
+              <h3>1분 둘러보기 끝!</h3>
+              <p>다음에 볼 만한 것</p>
+              <div style="display: grid; gap: 6px; margin-bottom: 12px">
+                <button>✍ 주간 보드 기록 익히기 · 1분</button><button>🗒 주간 메모 보드 · 50초</button>
+              </div>
+              <div class="btns"><button class="primary">닫기</button></div>
+            </div>
+          </div>
+          <p class="caption">④ T0이 끝나면 — 이어서 볼 투어를 고르거나 닫기.</p>
+        </div>
+      </div>
+
+      <h2>3. 코칭 메뉴(다시 보기) — 레일 ? · F1</h2>
+      <div class="grid2">
+        <div>
+          <div class="stage" id="menuStage">
+            <img class="shot" src="shots/kanban.png" alt="칸반" />
+            <div class="helpBtn" style="left: 0.47%; top: 85%; width: 3.1%; height: 5%; outline: 2px solid #185fa5">?</div>
+            <div class="menu">
+              <header><b>기능 둘러보기</b><span style="color: var(--t3)">F1</span><span>✕</span></header>
+              <div class="list" id="menuList"></div>
+              <footer>
+                <label>화면별 둘러보기 제안 <input type="checkbox" checked /></label>
+                <span style="display: flex; justify-content: space-between"
+                  ><a href="#">이용 가이드 열기 ↗</a><a href="#" style="color: var(--t3)">진행 기록 지우기</a></span
+                >
+              </footer>
+            </div>
+          </div>
+          <p class="caption">
+            칸반을 보고 있을 때 연 모습 — "이 화면" 투어가 맨 위. 줄을 누르면 시작(진행 중이면 이어서), ⋯ 처음부터.
+          </p>
+        </div>
+        <div>
+          <div class="tablewrap">
+            <table>
+              <tr>
+                <th>상태 표시</th>
+                <th>뜻</th>
+              </tr>
+              <tr>
+                <td><span class="badge b-done">✓ 완료</span></td>
+                <td>끝까지 봄</td>
+              </tr>
+              <tr>
+                <td><span class="badge b-prog">4 / 7</span></td>
+                <td>보다가 멈춤 — 누르면 이어서</td>
+              </tr>
+              <tr>
+                <td><span class="badge b-new">새 단계 2</span></td>
+                <td>본 뒤 신기능 단계가 더해짐(레일 ?에 점)</td>
+              </tr>
+              <tr>
+                <td><span class="badge b-none">40초</span></td>
+                <td>아직 안 봄 — 걸리는 시간</td>
+              </tr>
+            </table>
+          </div>
+          <p class="caption">설정 › 정보에도 [기능 둘러보기 열기]·[처음 설치처럼 다시 보기]·[화면별 둘러보기 제안] 스위치.</p>
+        </div>
+      </div>
+
+      <h2>4. 대상이 없을 때(빈 일지)</h2>
+      <div class="grid2">
+        <div>
+          <div class="stage">
+            <img class="shot" src="shots/kanban.png" alt="칸반" />
+            <svg class="mask" viewBox="0 0 1280 800"><rect width="1280" height="800" fill="rgba(10,14,20,.68)" /></svg>
+            <div class="bubble" style="left: 33%; top: 24%; width: 34%">
+              <h3>항목이 카드가 됩니다</h3>
+              <svg class="mini" viewBox="0 0 300 110">
+                <rect x="10" y="10" width="86" height="90" rx="4" fill="#fff" stroke="#b4b2a9" />
+                <rect x="107" y="10" width="86" height="90" rx="4" fill="#fff" stroke="#b4b2a9" />
+                <rect x="204" y="10" width="86" height="90" rx="4" fill="#fff" stroke="#b4b2a9" />
+                <text x="18" y="27" font-size="10" fill="#5f5e5a">TODO</text>
+                <text x="115" y="27" font-size="10" fill="#5f5e5a">진행</text>
+                <text x="212" y="27" font-size="10" fill="#5f5e5a">DONE</text>
+                <rect x="18" y="36" width="70" height="20" rx="3" fill="#e6f1fb" stroke="#185fa5" />
+                <rect x="115" y="36" width="70" height="20" rx="3" fill="#fdecd2" stroke="#e8a33a" />
+                <path d="M88 46 C 100 46, 102 46, 113 46" stroke="#e8a33a" stroke-width="2" marker-end="url(#a)" fill="none" />
+                <defs>
+                  <marker id="a" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                    <path d="M0 0 L6 3 L0 6z" fill="#e8a33a" />
+                  </marker>
+                </defs>
+              </svg>
+              <p>주간 보드에 적은 항목이 여기 카드로 나타납니다. 카드를 끌어 상태를 바꿔요.</p>
+              <div class="row"><span class="count">2 / 7</span><button>이전</button><button class="primary">다음</button></div>
+            </div>
+          </div>
+          <p class="caption">기록이 없으면 대상 대신 작은 그림으로 설명(단계는 건너뛰지 않음).</p>
+        </div>
+        <div>
+          <div class="tablewrap">
+            <table>
+              <tr>
+                <th>#</th>
+                <th>정할 것</th>
+                <th>추천</th>
+              </tr>
+              <tr>
+                <td>D1</td>
+                <td>화면 방식</td>
+                <td class="rec">A 기본 + 직접 눌러 보기 단계만 손가락·클릭 진행</td>
+              </tr>
+              <tr>
+                <td>D2</td>
+                <td>첫 실행 노출</td>
+                <td class="rec">환영 카드로 묻고 시작, T0 10단계만</td>
+              </tr>
+              <tr>
+                <td>D3</td>
+                <td>화면별 투어</td>
+                <td class="rec">처음 열 때 제안 칩(자동 시작 안 함)</td>
+              </tr>
+              <tr>
+                <td>D4</td>
+                <td>다시 보기 입구</td>
+                <td class="rec">레일 ?(설정 위) + F1 + 설정 › 정보</td>
+              </tr>
+              <tr>
+                <td>D5</td>
+                <td>기존 사용자</td>
+                <td class="rec">자동 투어 없음, ? 점·토스트 한 번</td>
+              </tr>
+              <tr>
+                <td>D6</td>
+                <td>건너뛰기</td>
+                <td class="rec">확인 없이 바로 끝 + ? 위치 안내</td>
+              </tr>
+              <tr>
+                <td>D7</td>
+                <td>빈 일지</td>
+                <td class="rec">대체 대상·작은 그림(단계 유지)</td>
+              </tr>
+              <tr>
+                <td>D8</td>
+                <td>저장 위치</td>
+                <td class="rec">이 PC 설정(config.json)</td>
+              </tr>
+              <tr>
+                <td>D9</td>
+                <td>투어 끝난 뒤</td>
+                <td class="rec">시작 전 화면으로 복귀</td>
+              </tr>
+              <tr>
+                <td>D10</td>
+                <td>신기능 코칭 기록</td>
+                <td class="rec">릴리스 노트 <code>## 코칭</code> 절 + CI 검사</td>
+              </tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const BOX = {"board":{"rail":[0,97,52,680],"railWs":[6,103,40,40],"railBoard":[6,160,40,40],"railKanban":[6,204,40,40],"railInsights":[6,248,40,40],"railUniverse":[6,292,40,40],"railImportant":[6,349,40,40],"railCabinet":[6,393,40,40],"railSettings":[6,729,40,40],"weekNav":[54,64,208,19],"viewSeg":[446,58,78,30],"year":[362,58,78,30],"add":[867,58,101,30],"summary":[976,58,101,30],"export":[1085,58,97,30],"grid":[316,97,964,1064],"catHead":[316,137,184,412],"dock":[316,617,964,160],"topbar":[0,0,1280,97]},"memo":{"dock":[316,97,964,680],"palette":[316,140,58,637],"viewBar":[316,97,964,41],"zoom":[1001,104,63,26],"snapshot":[1174,103,28,28],"canvas":[384,138,1136,639],"box":[408,162,296,133],"strip":[409,163,294,25],"knob":[550,137,12,12],"edge":[702,223,60,12]},"kanban":{"board":[316,97,964,680],"colHead":[329,106,502,44],"card":[335,189,490,54],"addCard":[335,156,490,27],"addSection":[1081,58,101,30],"filter":[16,59,79,28],"layout":[886,58,78,30],"period":[101,58,230,30]},"insights":{"root":[316,97,964,680],"period":[687,106,89,30],"pick":[548,105,99,32],"search":[639,259,214,17],"timeline":[588,493,692,284],"list":[316,184,272,593],"copy":[870,251,94,32],"tabs":[332,105,191,32]},"universe":{"toolbar":[52,97,1228,44],"filter":[64,111,58,24],"detail":[130,111,58,24],"motion3d":[195,105,74,36],"modes":[277,105,74,36],"views":[359,105,74,36],"timebar":[64,663,1204,106],"autoMotion":[1158,105,110,36],"pack":[441,109,86,28]},"important":{"panel":[52,97,264,680],"due":[56,209,259,30],"row":[88,215,219,18],"weekDone":[52,727,263,50],"railImportant":[6,349,40,40]},"cabinet":{"hub":[261,95,968,684],"taskSelect":[795,120,170,36],"addFolder":[273,741,70,30],"addLink":[349,741,70,30],"newNote":[973,121,90,35],"openBoard":[1071,121,142,35],"list":[261,241,968,491]}};
+      const HELP = [6, 680, 40, 40];
+      const TODAY = [815, 137, 210, 411];
+      const ITEM = [862, 141, 162, 52];
+      const S = (scene, box, title, body, key, tap) => ({ scene, box, title, body, key, tap });
+      const TOURS = {
+        T0: {
+          name: "T0 시작하기",
+          steps: [
+            S("board", null, "반가워요!", "요일 칸에 업무를 적어 두면 주간 요약·경과·엑셀이 저절로 만들어집니다. 1분만 둘러볼게요."),
+            S("board", "rail", "화면 이동", "주간 보드·칸반·인사이트·Universe, 중요 업무·Cabi.NET을 여기서 오갑니다."),
+            S("board", "catHead", "업무 = 한 줄", "처음에 적은 업무가 한 줄씩. ⋯ 에서 이름·색·종료를 바꿉니다."),
+            S("board", TODAY, "오늘 칸에 적기", "칸을 누르고 쓰면 끝. Enter 새 항목, Tab 세부 항목. 자동 저장됩니다.", "Enter · Tab"),
+            S("board", "add", "업무 늘리기", "새 업무를 행으로 더합니다."),
+            S("board", "viewSeg", "보기 바꾸기", "한 주 전체 또는 하루만 크게.", "Alt+V", true),
+            S("board", "year", "한 해 훑기", "기록이 있는 주를 달력으로 보고 바로 이동.", "Alt+Y"),
+            S("board", "summary", "보고서 초안", "이번 주 기록이 업무별로 정리됩니다. 고쳐 쓰거나 AI 지시문과 함께 복사.", "Alt+S"),
+            S("board", "export", "엑셀로", "여러 주를 엑셀 파일로 저장합니다.", "Alt+E"),
+            S("board", HELP, "언제든 다시", "칸반·인사이트·Universe 같은 다른 화면 둘러보기는 여기서 고릅니다.", "F1"),
+          ],
+        },
+        T1: {
+          name: "T1 왼쪽 메뉴",
+          steps: [
+            S("board", "railWs", "공간", "회사·개인처럼 공간을 나눠 씁니다.", "Ctrl+Alt+1~9"),
+            S("board", "railBoard", "주간 보드", "매일 기록하는 기본 화면.", "Alt+1"),
+            S("board", "railKanban", "칸반", "항목을 카드로 — 상태별로.", "Alt+6", true),
+            S("board", "railInsights", "인사이트", "업무가 어떻게 흘러왔는지.", "Alt+3"),
+            S("board", "railUniverse", "Universe", "기록과 지식의 연결 지도.", "Alt+5"),
+            S("board", "railImportant", "중요 업무", "배지 = 미완료 수, 빨간 점 = 마감 지남.", "Alt+2"),
+            S("board", "railCabinet", "Cabi.NET", "업무별 자료·노트·메모보드.", "Alt+4"),
+            S("board", "railSettings", "설정", "테마·백업·워크스페이스·계정.", "Ctrl+,"),
+            S("board", HELP, "기능 둘러보기", "이 투어들을 다시 보는 곳.", "F1"),
+          ],
+        },
+        T3: {
+          name: "T3 주간 메모 보드",
+          steps: [
+            S("memo", "canvas", "이번 주 메모", "주마다 자유 보드 하나. 빈 곳을 누르면 글 상자.", "Alt+M"),
+            S("memo", "palette", "도구 팔레트", "글 상자·링크 카드·이미지, 객체 복사·붙여넣기.", "Ctrl+Alt+C / V"),
+            S("memo", "strip", "업무 항목과 연결", "상자를 주간 보드 칸의 항목에 끌어 놓으면 타이틀 띠로 이어집니다."),
+            S("memo", "edge", "관계선", "상자의 연결점을 끌어 다른 상자에 놓으면 관계선."),
+            S("memo", "zoom", "보기", "줌·맞춤·관계선 보기."),
+            S("memo", "snapshot", "그림으로 저장", "보드를 PNG로 저장하거나 복사, Markdown 내보내기."),
+          ],
+        },
+        T4: {
+          name: "T4 칸반",
+          steps: [
+            S("kanban", "board", "칸반 보드", "주간 보드에 적은 항목이 카드가 됩니다. TODO · 사용자 섹션 · DONE."),
+            S("kanban", "card", "끌어서 상태 바꾸기", "카드를 다른 열로 끌면 상태가 바뀝니다. DONE이면 세부까지 완료."),
+            S("kanban", "addCard", "카드 추가", "업무·시작/마감을 정해 바로 추가."),
+            S("kanban", "addSection", "섹션 추가", "진행·검토 같은 나만의 단계를 만듭니다."),
+            S("kanban", "period", "기간", "이번 주·2주·4주·12주·전체."),
+            S("kanban", "filter", "업무 거르기", "전체·하나·여러 업무만."),
+            S("kanban", "layout", "배치", "균등 / 자유 배치."),
+          ],
+        },
+        T5: {
+          name: "T5 인사이트",
+          steps: [
+            S("insights", "tabs", "두 가지 보기", "업무 타임라인 / 활동(히트맵)."),
+            S("insights", "list", "업무 고르기", "왼쪽에서 업무를 고르면 오른쪽에 그 흐름."),
+            S("insights", "period", "기간", "최근 4주·12주·올해·전체·직접 지정."),
+            S("insights", "timeline", "업무 타임라인", "년월 → 주 → 요일, 다른 날 완료한 항목은 실제 완료일."),
+            S("insights", "copy", "경과 복사", "보고서에 붙일 글로 복사."),
+          ],
+        },
+        T6: {
+          name: "T6 Universe",
+          steps: [
+            S("universe", null, "기록이 이어진 지도", "업무·항목·메모·자료·지식 카드가 별, 연결이 선입니다. 흩어진 기록의 관계를 한눈에 봐요."),
+            S("universe", "motion3d", "3D / 2D", "다이나믹 3D는 끌어서 회전·확대, 정적 2D는 가볍고 또렷하게."),
+            S("universe", "modes", "초점 / 은하", "한 별 주변만 보거나, 전체 은하를 봅니다. 확대·축소로도 넘어가요."),
+            S("universe", "views", "지도 / 목록", "같은 연결을 목록으로."),
+            S("universe", "filter", "필터·상세", "종류·업무·태그로 좁히고, 고른 별의 상세·연결을 봅니다."),
+            S("universe", "timebar", "시간 막대", "년·월·주·일로 기간을 좁힙니다."),
+            S("universe", "autoMotion", "자동 움직임", "떠다니기·궤도 회전·멈춤."),
+            S("universe", "pack", "근거 묶음", "고른 근거를 외부 AI에 붙여 넣을 글로 모읍니다."),
+          ],
+        },
+        T7: {
+          name: "T7 중요 업무",
+          steps: [
+            S("important", "railImportant", "중요 업무 열기", "모든 주의 중요 항목을 모아 봅니다.", "Alt+2"),
+            S("important", "due", "마감일이 있는 업무", "마감 임박순. 지난 것은 빨강."),
+            S("important", "row", "항목 줄", "체크 = 완료, 누르면 그 칸으로 이동."),
+            S("important", "weekDone", "이 주 완료", "이번 주에 처리한 중요 업무."),
+            S("board", ITEM, "중요 업무에 넣기", "항목의 ☆ 또는 Alt+I. 마감일(Alt+U)을 정하면 위 묶음에.", "Alt+I · Alt+U"),
+          ],
+        },
+        T8: {
+          name: "T8 Cabi.NET",
+          steps: [
+            S("cabinet", "hub", "업무별 작업 공간", "폴더·링크·노트·업무 보드를 업무마다 모읍니다.", "Alt+4"),
+            S("cabinet", "addFolder", "폴더·링크 등록", "[+ 폴더…]·[+ 링크…] 또는 탐색기·브라우저에서 끌어 놓기."),
+            S("cabinet", "list", "자료 목록", "두 번 누르면 폴더 창·링크 열기. 왼쪽 업무에 끌면 그 업무에도 연결."),
+            S("cabinet", "taskSelect", "업무 고르기", "새로 만들 노트·보드가 들어갈 업무."),
+            S("cabinet", "newNote", "새 노트", "블록 노트 — / 메뉴·이끌이로 정리, Markdown·PDF 내보내기."),
+            S("cabinet", "openBoard", "업무 보드", "업무당 하나의 자유 보드, Live Widget으로 경과·타임라인."),
+          ],
+        },
+      };
+      const NOTES = {
+        A: "A — 대상만 밝히고 말풍선으로 설명. [다음]으로 넘어갑니다. 업무 앱에 차분하게 어울립니다.",
+        B: "B — A에 손가락 포인터·캐릭터·진행 막대를 더한 게임식. 추천안은 '직접 눌러 보기' 단계(T0 6단계·T1 3단계)에만 손가락을 씁니다.",
+        C: "C — 밝힌 곳을 실제로 눌러야 넘어갑니다(시안에선 테두리 안을 클릭). 추천안은 화면 이동처럼 기록을 바꾸지 않는 단계에만 씁니다.",
+      };
+      let style = "A",
+        tour = "T0",
+        step = 0,
+        running = true;
+      const stage = document.getElementById("stage");
+      const list = document.getElementById("tourList");
+      for (const [id, t] of Object.entries(TOURS)) {
+        const b = document.createElement("button");
+        b.textContent = `${t.name} · ${t.steps.length}`;
+        b.dataset.id = id;
+        b.onclick = () => {
+          tour = id;
+          step = 0;
+          running = true;
+          render();
+          stage.focus();
+        };
+        list.append(b);
+      }
+      const pct = (v, total) => (v / total) * 100 + "%";
+      function boxOf(s) {
+        if (!s.box) return null;
+        if (Array.isArray(s.box)) return s.box;
+        return (BOX[s.scene] || {})[s.box] || null;
+      }
+      function render() {
+        list.querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.id === tour));
+        document.getElementById("styleNote").textContent = NOTES[style];
+        const t = TOURS[tour],
+          s = t.steps[step];
+        stage.innerHTML = "";
+        const img = document.createElement("img");
+        img.className = "shot";
+        img.src = `shots/${s.scene}.png`;
+        img.alt = "";
+        stage.append(img);
+        if (s.scene === "board" || s.scene === "important") {
+          const h = document.createElement("div");
+          h.className = "helpBtn";
+          Object.assign(h.style, { left: pct(HELP[0], 1280), top: pct(HELP[1], 800), width: pct(HELP[2], 1280), height: pct(HELP[3], 800) });
+          h.textContent = "?";
+          stage.append(h);
+        }
+        if (!running) {
+          const r = document.createElement("div");
+          r.className = "welcome";
+          r.innerHTML = `<h3>투어를 마쳤어요</h3><p>레일 ? 단추(F1)에서 언제든 다시 볼 수 있습니다.</p><div class="btns"><button class="primary">다시 보기</button></div>`;
+          r.querySelector("button").onclick = () => {
+            step = 0;
+            running = true;
+            render();
+          };
+          stage.append(r);
+          return;
+        }
+        const b = boxOf(s),
+          pad = 6;
+        const ns = "http://www.w3.org/2000/svg";
+        const svg = document.createElementNS(ns, "svg");
+        svg.setAttribute("class", "mask");
+        svg.setAttribute("viewBox", "0 0 1280 800");
+        svg.setAttribute("preserveAspectRatio", "none");
+        const dim = style === "B" ? "rgba(8,12,28,.74)" : "rgba(10,14,20,.68)";
+        svg.innerHTML = `<defs><mask id="m"><rect width="1280" height="800" fill="#fff"/>${
+          b ? `<rect x="${b[0] - pad}" y="${b[1] - pad}" width="${b[2] + pad * 2}" height="${b[3] + pad * 2}" rx="8" fill="#000"/>` : ""
+        }</mask></defs><rect width="1280" height="800" fill="${dim}" mask="url(#m)"/>`;
+        stage.append(svg);
+        const needClick = style === "C" && b;
+        if (b) {
+          const ring = document.createElement("div");
+          ring.className = "ring" + (needClick ? " clickable" : "");
+          Object.assign(ring.style, {
+            left: pct(b[0] - pad, 1280),
+            top: pct(b[1] - pad, 800),
+            width: pct(b[2] + pad * 2, 1280),
+            height: pct(b[3] + pad * 2, 800),
+          });
+          if (needClick) ring.onclick = next;
+          stage.append(ring);
+          if (style === "B" || (style === "C" && needClick) || (style === "A" && s.tap)) {
+            const hand = document.createElementNS(ns, "svg");
+            hand.setAttribute("class", "hand");
+            hand.setAttribute("viewBox", "0 0 24 24");
+            hand.innerHTML =
+              '<path d="M9 11V4.5a1.5 1.5 0 0 1 3 0V10m0-1.5a1.5 1.5 0 0 1 3 0V11m0-1a1.5 1.5 0 0 1 3 0v4.5c0 3.6-2.4 6.5-6 6.5-2.6 0-4.1-1.2-5.3-3.2L4.3 14a1.4 1.4 0 0 1 2.3-1.6L9 15" fill="#fff" stroke="#2c2c2a" stroke-width="1.4" stroke-linejoin="round"/>';
+            Object.assign(hand.style, { left: `calc(${pct(b[0] + b[2] * 0.6, 1280)})`, top: `calc(${pct(b[1] + b[3] * 0.55, 800)})` });
+            stage.append(hand);
+          }
+        }
+        const bub = document.createElement("div");
+        bub.className = "bubble";
+        bub.setAttribute("role", "dialog");
+        const total = t.steps.length,
+          last = step === total - 1;
+        bub.innerHTML = `${style === "B" ? `<div class="bar"><i style="width:${((step + 1) / total) * 100}%"></i></div><div class="mascot"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M8.5 8h7M8.5 11.5h7M8.5 15h4"/></svg></div>` : ""}<h3>${s.title}</h3><p>${s.body}</p>${
+          s.key ? `<span class="key">${s.key}</span>` : ""
+        }${needClick ? `<p style="font-size:12px;color:var(--warm);margin:0 0 6px">밝은 곳을 눌러 보세요</p>` : ""}<div class="row"><span class="count">${step + 1} / ${total}</span>${
+          step > 0 ? '<button data-a="prev">이전</button>' : ""
+        }${needClick ? "" : `<button class="primary" data-a="next">${last ? "마치기" : "다음"}</button>`}</div>`;
+        bub.querySelectorAll("button").forEach((x) => (x.onclick = x.dataset.a === "prev" ? prev : next));
+        stage.append(bub);
+        const skip = document.createElement("button");
+        skip.className = "skip";
+        skip.textContent = "건너뛰기 ✕";
+        skip.onclick = finish;
+        stage.append(skip);
+        // 말풍선 자리: 오른쪽 → 왼쪽 → 아래 → 위 → 가운데
+        requestAnimationFrame(() => {
+          const W = stage.clientWidth,
+            H = stage.clientHeight,
+            k = W / 1280,
+            bw = bub.offsetWidth,
+            bh = bub.offsetHeight,
+            gap = 14;
+          let x, y, side;
+          if (!b) {
+            x = (W - bw) / 2;
+            y = (H - bh) / 2;
+          } else {
+            const L = (b[0] - pad) * k,
+              T = (b[1] - pad) * k,
+              R = (b[0] + b[2] + pad) * k,
+              B = (b[1] + b[3] + pad) * k;
+            if (R + gap + bw < W) {
+              x = R + gap;
+              y = Math.min(Math.max(8, (T + B) / 2 - bh / 2), H - bh - 8);
+              side = "l";
+            } else if (L - gap - bw > 0) {
+              x = L - gap - bw;
+              y = Math.min(Math.max(8, (T + B) / 2 - bh / 2), H - bh - 8);
+              side = "r";
+            } else if (B + gap + bh < H) {
+              y = B + gap;
+              x = Math.min(Math.max(8, (L + R) / 2 - bw / 2), W - bw - 8);
+              side = "t";
+            } else if (T - gap - bh > 0) {
+              y = T - gap - bh;
+              x = Math.min(Math.max(8, (L + R) / 2 - bw / 2), W - bw - 8);
+              side = "b";
+            } else {
+              x = (W - bw) / 2;
+              y = (H - bh) / 2;
+            }
+            if (side) {
+              const tip = document.createElement("i");
+              tip.className = "tip";
+              const cy = Math.min(Math.max(14, (T + B) / 2 - y - 6), bh - 20),
+                cx = Math.min(Math.max(14, (L + R) / 2 - x - 6), bw - 20);
+              Object.assign(
+                tip.style,
+                side === "l" ? { left: "-6px", top: cy + "px" } : side === "r" ? { right: "-6px", top: cy + "px" } : side === "t" ? { top: "-6px", left: cx + "px" } : { bottom: "-6px", left: cx + "px" },
+              );
+              bub.append(tip);
+            }
+          }
+          bub.style.left = x + "px";
+          bub.style.top = y + "px";
+        });
+      }
+      function next() {
+        const t = TOURS[tour];
+        if (step < t.steps.length - 1) step++;
+        else running = false;
+        render();
+      }
+      function prev() {
+        if (step > 0) step--;
+        render();
+      }
+      function finish() {
+        running = false;
+        render();
+      }
+      stage.addEventListener("keydown", (e) => {
+        if (!running) return;
+        if (e.key === "ArrowRight" || e.key === "Enter") {
+          if (!(style === "C" && boxOf(TOURS[tour].steps[step]))) next();
+        } else if (e.key === "ArrowLeft") prev();
+        else if (e.key === "Escape") finish();
+        else return;
+        e.preventDefault();
+      });
+      document.querySelectorAll("#styleSeg button").forEach(
+        (b) =>
+          (b.onclick = () => {
+            style = b.dataset.v;
+            document.querySelectorAll("#styleSeg button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+            render();
+          }),
+      );
+      document.querySelectorAll("#themeSeg button").forEach(
+        (b) =>
+          (b.onclick = () => {
+            document.documentElement.dataset.theme = b.dataset.v;
+            document.querySelectorAll("#themeSeg button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+          }),
+      );
+      window.addEventListener("resize", render);
+      // 코칭 메뉴 목록
+      const MENU = [
+        ["이 화면", [["T4 칸반 보드", "b-prog", "4 / 7"]]],
+        ["시작", [["T0 시작하기 — 1분 둘러보기", "b-done", "✓ 완료"], ["T1 화면 구성과 왼쪽 메뉴", "b-none", "40초"]]],
+        ["주간 보드", [["T2 기록·보기·요약·내보내기", "b-none", "1분"], ["T3 주간 메모 보드", "b-new", "새 단계 1"]]],
+        ["인사이트·Universe", [["T5 인사이트", "b-none", "40초"], ["T6 Universe — 개념과 보기 모드", "b-none", "1분"]]],
+        ["중요 업무·Cabi.NET", [["T7 중요 업무", "b-done", "✓ 완료"], ["T8 Cabi.NET — 자료·노트·업무 보드", "b-none", "50초"]]],
+      ];
+      document.getElementById("menuList").innerHTML = MENU.map(
+        ([g, items], gi) =>
+          `<div class="grp">${g}</div>` +
+          items.map(([n, c, v]) => `<div class="item ${gi === 0 ? "here" : ""}"><span class="nm">${n}</span><span class="badge ${c}">${v}</span><small>⋯</small></div>`).join(""),
+      ).join("");
+      render();
+    </script>
+  </body>
+</html>
