@@ -24,9 +24,9 @@ jobs:
       run:
         working-directory: m0
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -56,7 +56,7 @@ jobs:
           $sums | Out-File out/SHA256SUMS.txt -Encoding ascii
           Get-Content out/SHA256SUMS.txt
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: wjb-m0-probe-windows
           path: m0/out/*
@@ -71,7 +71,7 @@ jobs:
 
       - name: Publish pre-release (main only)
         if: github.ref == 'refs/heads/main'
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.ver.outputs.tag }}
           target_commitish: ${{ github.sha }}
