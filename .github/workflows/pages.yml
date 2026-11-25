@@ -18,11 +18,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  deploy:
+  # 만들기·배포를 두 작업으로 나눈다(GitHub 공식 예시 구조). 한 작업에서 올린 직후 바로 배포하면
+  # 묶음 목록 반영이 늦을 때 "No artifacts named github-pages" 로 실패한다(2026-11-25 1.53.0 배포 때 2번 연속).
+  build:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
       - name: Remove Cabi.NET preview labels for main publication
@@ -34,5 +33,12 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - id: deployment
         uses: actions/deploy-pages@v4
