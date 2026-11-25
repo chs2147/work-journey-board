@@ -46,7 +46,11 @@ async function runTour(page: Page, id: string, total: number) {
   for (let i = 1; i <= total; i++) {
     await expect(count(page)).toHaveText(`${i} / ${total}`);
     await expect(bubble(page)).toBeVisible();
-    const box = await bubble(page).boundingBox();
+    // 말풍선은 대상 위치를 따라 다시 그려진다 — 잰 순간 사라졌다 다시 생기면 null이라 잡힐 때까지 기다린다(WebKit CI)
+    let box: { x: number; y: number; width: number; height: number } | null = null;
+    await expect
+      .poll(async () => (box = await bubble(page).boundingBox()) !== null, { timeout: 5000 })
+      .toBe(true);
     const vp = page.viewportSize()!;
     expect(box!.x).toBeGreaterThanOrEqual(0);
     expect(box!.y).toBeGreaterThanOrEqual(0);
