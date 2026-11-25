@@ -46,6 +46,8 @@ export function createFakeFs(open: OpenSqlJs): FakeFs {
   const dirs = new Set<string>(["/"]);
   const files = new Map<string, Uint8Array>();
   const live = new Map<string, SqlJsDriver>();
+  /** 열 때의 원래 바이트 — 깨진 파일을 닫을 때 내보내기가 실패하면 그대로 되돌린다 */
+  const opened = new Map<string, Uint8Array>();
   const mtimes = new Map<string, number>();
 
   const ensureDirSync = (dir: string) => {
@@ -80,9 +82,16 @@ export function createFakeFs(open: OpenSqlJs): FakeFs {
     select: (sql, params) => d.select(sql, params),
     batch: (s) => d.batch(s),
     async close() {
-      files.set(norm(path), d.exportBytes());
+      try {
+        files.set(norm(path), d.exportBytes());
+      } catch {
+        // 깨진 파일: sql.js 1.17은 여는 것은 받아 주고 내보낼 때 실패한다 — 연 바이트를 그대로 둔다(실제 파일처럼)
+        const was = opened.get(norm(path));
+        if (was) files.set(norm(path), was);
+      }
+      opened.delete(norm(path));
       live.delete(norm(path));
-      await d.close();
+      await d.close().catch(() => undefined);
     },
   });
 
@@ -150,8 +159,10 @@ export function createFakeFs(open: OpenSqlJs): FakeFs {
       if (!dirs.has(parentOf(p))) throw new Error(`unable to open database file: ${p}`);
       let d = live.get(p);
       if (!d) {
-        d = await open(files.get(p), p);
+        const bytes = files.get(p);
+        d = await open(bytes, p);
         live.set(p, d);
+        if (bytes) opened.set(p, bytes);
         files.delete(p);
       }
       return wrap(p, d);
