@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "product": "Work Journey Board",
-  "catalogVersion": "1.52.1",
-  "asOfDate": "2026-11-23",
-  "baseRelease": "1.52.1",
-  "sourceCommit": "312a73b",
+  "catalogVersion": "1.53.0",
+  "asOfDate": "2026-11-25",
+  "baseRelease": "1.53.0",
+  "sourceCommit": "edb9917",
   "appSchemaVersion": 20,
   "versionDefinition": "최초 제공 = 비RC 출시 이력에서 기능 제공이 확인된 최초 버전(0.x 개발판 포함); RC는 preview로 별도 기록",
   "verificationScope": "문서·출시 이력·현행 소스 위치 대조. 기능별 실기 전수 검증을 뜻하지 않음.",
@@ -13187,6 +13187,256 @@
       "reviewNote": "개선 v24(1.51.0 Open Beta).",
       "lastChanged": "1.51.0",
       "schemaRequirement": "DB v20"
+    },
+    {
+      "id": "WJB-COACH-001",
+      "area": "기능 둘러보기",
+      "section": "메뉴",
+      "name": "기능 둘러보기 메뉴",
+      "description": "왼쪽 레일 ? 단추·F1·설정 › 업데이트·정보 › 기능 둘러보기에서 연다. 투어 목록·걸리는 시간·완료/이어서/새 단계 표시·처음부터·화면별 제안 켜기·진행 기록 지우기·이용 가이드 열기, 지금 화면의 투어를 맨 위에.",
+      "entry": "레일 ? · F1 · 설정",
+      "introduced": "1.53.0",
+      "preview": null,
+      "status": "active",
+      "platforms": [
+        "windows",
+        "macos"
+      ],
+      "platformSince": {
+        "windows": "1.53.0",
+        "macos": "1.53.0"
+      },
+      "history": [
+        {
+          "version": "1.53.0",
+          "type": "added",
+          "description": "왼쪽 레일 ? 단추·F1·설정 › 업데이트·정보 › 기능 둘러보기에서 연다. 투어 목록·걸리는 시간·완료/이어서/새 단계 표시·처음부터·화면별 제안 켜기·진행 기록 지우기·이용 가이드 열기, 지금 화면의 투어를 맨 위에.",
+          "source": "docs/release-notes/v1.53.0.md"
+        }
+      ],
+      "sources": [
+        "docs/release-notes/v1.53.0.md",
+        "docs/coaching-spec.md"
+      ],
+      "implementation": [
+        "src/ui/coaching/CoachMenu.tsx",
+        "src/ui/coaching/CoachRailButton.tsx",
+        "src/ui/settings/CoachingCard.tsx"
+      ],
+      "verification": "단위·E2E(브라우저, coaching.spec·workspace-integrity·online-spaces). 정식 설치판 실기는 릴리스 노트 '설치 후 확인'·m1-check 7-57.",
+      "reviewStatus": "미검토",
+      "reviewNote": "기능 둘러보기(1.53.0 Open Beta, coaching-spec).",
+      "kind": "제품 기능",
+      "lastChanged": "1.53.0",
+      "schemaRequirement": "DB v20(일지 변경 없음, 이 PC 설정 coaching)"
+    },
+    {
+      "id": "WJB-COACH-002",
+      "area": "기능 둘러보기",
+      "section": "투어",
+      "name": "단계별 스포트라이트 투어",
+      "description": "화면을 어둡게 가리고 대상만 밝혀 말풍선으로 설명한다. 투어 T0~T10(시작하기·화면 구성·주간 보드·주간 메모 보드·칸반·인사이트·Universe·중요 업무·Cabi.NET·업무노트·업무 메모보드), →·Enter·←·Esc, 직접 눌러 보기 단계, 이어서 보기. 말풍선은 모든 테마에서 밝은 바탕+주황 테두리.",
+      "entry": "기능 둘러보기 메뉴",
+      "introduced": "1.53.0",
+      "preview": null,
+      "status": "active",
+      "platforms": [
+        "windows",
+        "macos"
+      ],
+      "platformSince": {
+        "windows": "1.53.0",
+        "macos": "1.53.0"
+      },
+      "history": [
+        {
+          "version": "1.53.0",
+          "type": "added",
+          "description": "화면을 어둡게 가리고 대상만 밝혀 말풍선으로 설명한다. 투어 T0~T10(시작하기·화면 구성·주간 보드·주간 메모 보드·칸반·인사이트·Universe·중요 업무·Cabi.NET·업무노트·업무 메모보드), →·Enter·←·Esc, 직접 눌러 보기 단계, 이어서 보기. 말풍선은 모든 테마에서 밝은 바탕+주황 테두리.",
+          "source": "docs/release-notes/v1.53.0.md"
+        }
+      ],
+      "sources": [
+        "docs/release-notes/v1.53.0.md",
+        "docs/coaching-spec.md"
+      ],
+      "implementation": [
+        "src/ui/coaching/CoachOverlay.tsx",
+        "src/ui/coaching/tours.ts",
+        "src/shared/coachingStrings.ts"
+      ],
+      "verification": "단위·E2E(브라우저, coaching.spec·workspace-integrity·online-spaces). 정식 설치판 실기는 릴리스 노트 '설치 후 확인'·m1-check 7-57.",
+      "reviewStatus": "미검토",
+      "reviewNote": "기능 둘러보기(1.53.0 Open Beta, coaching-spec).",
+      "kind": "제품 기능",
+      "lastChanged": "1.53.0",
+      "schemaRequirement": "DB v20(일지 변경 없음, 이 PC 설정 coaching)"
+    },
+    {
+      "id": "WJB-COACH-003",
+      "area": "기능 둘러보기",
+      "section": "예시 화면",
+      "name": "가상 예시 화면",
+      "description": "투어는 메모리 예시 일지(가상 샘플, 이번 주로 날짜 이동) 위에서만 진행하고 끝나면 내 일지·보던 화면으로 돌아온다. 예시 중 백업·설정·공간 전환·온라인 동기화를 하지 않으며 내 일지·설정에 쓰지 않는다.",
+      "entry": "투어 시작",
+      "introduced": "1.53.0",
+      "preview": null,
+      "status": "active",
+      "platforms": [
+        "windows",
+        "macos"
+      ],
+      "platformSince": {
+        "windows": "1.53.0",
+        "macos": "1.53.0"
+      },
+      "history": [
+        {
+          "version": "1.53.0",
+          "type": "added",
+          "description": "투어는 메모리 예시 일지(가상 샘플, 이번 주로 날짜 이동) 위에서만 진행하고 끝나면 내 일지·보던 화면으로 돌아온다. 예시 중 백업·설정·공간 전환·온라인 동기화를 하지 않으며 내 일지·설정에 쓰지 않는다.",
+          "source": "docs/release-notes/v1.53.0.md"
+        }
+      ],
+      "sources": [
+        "docs/release-notes/v1.53.0.md",
+        "docs/coaching-spec.md"
+      ],
+      "implementation": [
+        "src/ui/common/appController.ts",
+        "src/ui/coaching/coachingSample.ts",
+        "src/domain/coachingSample.ts"
+      ],
+      "verification": "단위·E2E(브라우저, coaching.spec·workspace-integrity·online-spaces). 정식 설치판 실기는 릴리스 노트 '설치 후 확인'·m1-check 7-57.",
+      "reviewStatus": "미검토",
+      "reviewNote": "기능 둘러보기(1.53.0 Open Beta, coaching-spec).",
+      "kind": "제품 기능",
+      "lastChanged": "1.53.0",
+      "schemaRequirement": "DB v20(일지 변경 없음, 이 PC 설정 coaching)"
+    },
+    {
+      "id": "WJB-COACH-004",
+      "area": "기능 둘러보기",
+      "section": "안내",
+      "name": "처음 한 번 안내",
+      "description": "새로 설치하면 첫 보드 뒤 환영 카드, 쓰던 일지로 업데이트한 사용자가 둘러보기를 본 적 없으면 ? 단추 소개를 각각 한 번 띄운다. 진행 기록은 이 PC config.json coaching(기기별).",
+      "entry": "첫 실행 · 업데이트 뒤 첫 실행",
+      "introduced": "1.53.0",
+      "preview": null,
+      "status": "active",
+      "platforms": [
+        "windows",
+        "macos"
+      ],
+      "platformSince": {
+        "windows": "1.53.0",
+        "macos": "1.53.0"
+      },
+      "history": [
+        {
+          "version": "1.53.0",
+          "type": "added",
+          "description": "새로 설치하면 첫 보드 뒤 환영 카드, 쓰던 일지로 업데이트한 사용자가 둘러보기를 본 적 없으면 ? 단추 소개를 각각 한 번 띄운다. 진행 기록은 이 PC config.json coaching(기기별).",
+          "source": "docs/release-notes/v1.53.0.md"
+        }
+      ],
+      "sources": [
+        "docs/release-notes/v1.53.0.md",
+        "docs/coaching-spec.md"
+      ],
+      "implementation": [
+        "src/ui/coaching/coachingStore.ts",
+        "src/ui/coaching/CoachCards.tsx"
+      ],
+      "verification": "단위·E2E(브라우저, coaching.spec·workspace-integrity·online-spaces). 정식 설치판 실기는 릴리스 노트 '설치 후 확인'·m1-check 7-57.",
+      "reviewStatus": "미검토",
+      "reviewNote": "기능 둘러보기(1.53.0 Open Beta, coaching-spec).",
+      "kind": "제품 기능",
+      "lastChanged": "1.53.0",
+      "schemaRequirement": "DB v20(일지 변경 없음, 이 PC 설정 coaching)"
+    },
+    {
+      "id": "WJB-COACH-005",
+      "area": "기능 둘러보기",
+      "section": "안내",
+      "name": "화면별 둘러보기 제안",
+      "description": "칸반·인사이트·Universe·Cabi.NET을 처음 열 때 그 화면 투어 제안을 한 번 띄운다(메뉴·설정에서 끄기).",
+      "entry": "칸반·인사이트·Universe·Cabi.NET",
+      "introduced": "1.53.0",
+      "preview": null,
+      "status": "active",
+      "platforms": [
+        "windows",
+        "macos"
+      ],
+      "platformSince": {
+        "windows": "1.53.0",
+        "macos": "1.53.0"
+      },
+      "history": [
+        {
+          "version": "1.53.0",
+          "type": "added",
+          "description": "칸반·인사이트·Universe·Cabi.NET을 처음 열 때 그 화면 투어 제안을 한 번 띄운다(메뉴·설정에서 끄기).",
+          "source": "docs/release-notes/v1.53.0.md"
+        }
+      ],
+      "sources": [
+        "docs/release-notes/v1.53.0.md",
+        "docs/coaching-spec.md"
+      ],
+      "implementation": [
+        "src/ui/coaching/CoachCards.tsx",
+        "src/ui/coaching/coachingStore.ts"
+      ],
+      "verification": "단위·E2E(브라우저, coaching.spec·workspace-integrity·online-spaces). 정식 설치판 실기는 릴리스 노트 '설치 후 확인'·m1-check 7-57.",
+      "reviewStatus": "미검토",
+      "reviewNote": "기능 둘러보기(1.53.0 Open Beta, coaching-spec).",
+      "kind": "제품 기능",
+      "lastChanged": "1.53.0",
+      "schemaRequirement": "DB v20(일지 변경 없음, 이 PC 설정 coaching)"
+    },
+    {
+      "id": "WJB-COACH-006",
+      "area": "기능 둘러보기",
+      "section": "투어",
+      "name": "업무노트·업무 메모보드 창 안 둘러보기",
+      "description": "예시 일지에만 가상 노트·업무 보드를 만들고 그 별도 창 안에서 투어를 돌린다. 메인 창은 기다림 카드([그만 보기]), 끝·창 닫기·그만이면 예시 창을 닫고 내 일지로.",
+      "entry": "기능 둘러보기 메뉴 › 업무노트·업무 메모보드",
+      "introduced": "1.53.0",
+      "preview": null,
+      "status": "active",
+      "platforms": [
+        "windows",
+        "macos"
+      ],
+      "platformSince": {
+        "windows": "1.53.0",
+        "macos": "1.53.0"
+      },
+      "history": [
+        {
+          "version": "1.53.0",
+          "type": "added",
+          "description": "예시 일지에만 가상 노트·업무 보드를 만들고 그 별도 창 안에서 투어를 돌린다. 메인 창은 기다림 카드([그만 보기]), 끝·창 닫기·그만이면 예시 창을 닫고 내 일지로.",
+          "source": "docs/release-notes/v1.53.0.md"
+        }
+      ],
+      "sources": [
+        "docs/release-notes/v1.53.0.md",
+        "docs/coaching-spec.md"
+      ],
+      "implementation": [
+        "src/ui/coaching/CoachChild.tsx",
+        "src/ui/cabinet/cabiService.ts",
+        "src/ui/cabinet/CabiWindowApp.tsx"
+      ],
+      "verification": "단위·E2E(브라우저, coaching.spec·workspace-integrity·online-spaces). 정식 설치판 실기는 릴리스 노트 '설치 후 확인'·m1-check 7-57.",
+      "reviewStatus": "미검토",
+      "reviewNote": "기능 둘러보기(1.53.0 Open Beta, coaching-spec).",
+      "kind": "제품 기능",
+      "lastChanged": "1.53.0",
+      "schemaRequirement": "DB v20(일지 변경 없음, 이 PC 설정 coaching)"
     }
   ],
   "productId": "work-journey-board",
