@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<title>v26 Cabi.NET 줄 단추 통일 시안</title>
+<style>
+  :root {
+    --surface-page: #faf9f5; --surface-card: #fff; --surface-sub: #f1efe8; --surface-focus: #f4f9fe;
+    --text-1: #2c2c2a; --text-2: #5f5e5a; --text-3: #8a8983; --line: #e7e4dc; --line-strong: #d3cfc4;
+    --accent: #1f5fae; --danger: #b3261e; --danger-soft: #fbe4e6; --radius-sm: 4px; --radius-md: 6px;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--surface-page); color: var(--text-1);
+    font: 14px/1.45 "Pretendard Variable", Pretendard, -apple-system, "Segoe UI", "Malgun Gothic", sans-serif; }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .lead { color: var(--text-2); margin: 0 0 20px; }
+  .rule { background: var(--surface-card); border: 1px solid var(--line); border-radius: var(--radius-md);
+    padding: 12px 16px; margin-bottom: 24px; color: var(--text-2); font-size: 13px; }
+  .rule b { color: var(--text-1); }
+  section { margin-bottom: 28px; }
+  h2 { font-size: 16px; margin: 0 0 4px; }
+  h2 small { font-weight: 400; color: var(--text-2); margin-left: 6px; }
+  .desc { margin: 0 0 10px; color: var(--text-2); font-size: 13px; }
+  .panel { background: var(--surface-card); border: 1px solid var(--line-strong); border-radius: var(--radius-md); overflow: hidden; }
+  .row { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 8px 16px; border-bottom: 1px solid var(--line); }
+  .row:last-child { border-bottom: 0; }
+  .row.hover { background: #f8f6f0; }
+  .kind { width: 32px; height: 32px; display: grid; place-items: center; border-radius: var(--radius-sm); background: var(--surface-sub); color: var(--text-2); flex: none; }
+  .kind.folder { color: #c9902a; }
+  .kind.link { color: var(--accent); }
+  .text { flex: 1; min-width: 0; }
+  .title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sub { font-size: 12px; color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tag { font-size: 11px; padding: 2px 7px; background: var(--surface-sub); color: var(--text-2); border: 1px solid var(--line); border-radius: 3px; white-space: nowrap; }
+  .date { font-size: 12px; color: var(--text-3); width: 78px; text-align: right; white-space: nowrap; }
+  .btns { display: grid; grid-auto-flow: column; align-items: center; flex: none; }
+  .slot { display: block; }
+  svg { width: 16px; height: 16px; flex: none; }
+  button { font: inherit; color: inherit; }
+
+  /* A — 테두리 단추(지금 업무노트 방식) */
+  .A .btns { grid-template-columns: repeat(5, 34px); gap: 6px; }
+  .A .btn { width: 34px; height: 34px; display: grid; place-items: center; border: 1px solid var(--line-strong);
+    border-radius: var(--radius-sm); background: var(--surface-card); color: var(--text-1); cursor: pointer; }
+  .A .btn.is-hover { background: var(--surface-focus); }
+  .A .btn.empty, .B .btn.empty { border: 0; background: none; cursor: default; }
+  .A .btn.del.is-hover { color: var(--danger); border-color: var(--danger); background: var(--danger-soft); }
+
+  /* B — 조용한 아이콘(테두리 없음, 줄에 올리면 진하게) */
+  .B .btns { grid-template-columns: repeat(5, 30px); gap: 2px; }
+  .B .btn { width: 30px; height: 30px; display: grid; place-items: center; border: 0; border-radius: var(--radius-sm);
+    background: transparent; color: var(--text-3); cursor: pointer; }
+  .B .row.hover .btn { color: var(--text-1); }
+  .B .btn.is-hover { background: var(--surface-focus); }
+  .B .btn.del.is-hover { background: var(--danger-soft); color: var(--danger); }
+
+  /* C — 단추 묶음(한 테두리 안에 붙이고 삭제만 따로) */
+  .C .btns { gap: 8px; grid-template-columns: auto 30px; }
+  .C .group { display: grid; grid-template-columns: repeat(4, 30px); border: 1px solid var(--line-strong);
+    border-radius: var(--radius-sm); overflow: hidden; background: var(--surface-card); }
+  .C .group .btn { border-left: 1px solid var(--line); }
+  .C .group .btn:first-child { border-left: 0; }
+  .C .btn { width: 30px; height: 30px; display: grid; place-items: center; border: 0; background: transparent; color: var(--text-2); cursor: pointer; }
+  .C .btn.empty { background: repeating-linear-gradient(135deg, transparent 0 4px, #f5f3ee 4px 5px); cursor: default; }
+  .C .btn.is-hover { background: var(--surface-focus); color: var(--text-1); }
+  .C .del { border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--surface-card); }
+  .C .del.is-hover { color: var(--danger); border-color: var(--danger); background: var(--danger-soft); }
+  .note-lock { color: var(--text-3); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Cabi.NET 줄 단추 통일 — 시안 3개</h1>
+  <p class="lead">업무노트·폴더·링크 줄이 같은 단추 모양·크기·순서를 쓰도록. 세 시안 모두 아래 공통 규칙은 같고, 단추 모양만 다릅니다.</p>
+  <div class="rule">
+    <b>공통 규칙</b> — 줄 끝 단추를 같은 칸 순서로 맞춰 줄마다 세로로 줄이 맞습니다:
+    <b>① 끌기 ⠿</b> · <b>② 종류별 단추</b>(노트 = 복제, 폴더 = 탐색기에서 열기, 링크 = 빈칸) · <b>③ 열기 ⤢</b> · <b>④ ⋯ 메뉴</b> · <b>⑤ 삭제 🗑</b>(맨 끝 고정, 잠긴 노트는 🔒).
+    종류 꼬리표(노트·폴더·링크)와 날짜 자리도 세 종류 모두 같게 둡니다. 폴더·링크는 지금처럼 줄 전체를 끌어도 되고 ⠿ 손잡이도 생깁니다. 노트에도 ⋯(업무 옮기기·복제·열기)가 생깁니다.
+  </div>
+
+  <template id="icons">
+    <svg id="i-grip" viewBox="0 0 10 16"><g fill="currentColor"><circle cx="2.5" cy="3" r="1.6"/><circle cx="2.5" cy="8" r="1.6"/><circle cx="2.5" cy="13" r="1.6"/><circle cx="7.5" cy="3" r="1.6"/><circle cx="7.5" cy="8" r="1.6"/><circle cx="7.5" cy="13" r="1.6"/></g></svg>
+  </template>
+
+  <section class="A">
+    <h2>A안 — 테두리 단추 <small>지금 업무노트 줄 방식을 폴더·링크에도</small></h2>
+    <p class="desc">34px 테두리 네모 단추. 가장 눈에 잘 띄고 누르기 쉬움. 줄이 많으면 단추가 무겁게 보일 수 있음.</p>
+    <div class="panel" data-variant="A"></div>
+  </section>
+
+  <section class="B">
+    <h2>B안 — 조용한 아이콘 <small>테두리 없이, 줄에 마우스를 올리면 진하게</small></h2>
+    <p class="desc">30px 아이콘 단추. 목록이 가볍고 글 제목이 잘 보임. 평소엔 흐려서 처음엔 단추가 덜 보일 수 있음(마우스를 올린 줄 = 두 번째 줄).</p>
+    <div class="panel" data-variant="B"></div>
+  </section>
+
+  <section class="C">
+    <h2>C안 — 단추 묶음 <small>한 테두리 안에 붙이고 삭제만 따로</small></h2>
+    <p class="desc">30px 단추 4개를 한 덩어리로, 삭제는 오른쪽에 떼어 둠. 칸이 정확히 맞고 삭제를 잘못 누르기 어려움. 빈칸(링크의 ②)이 빗금으로 보임.</p>
+    <div class="panel" data-variant="C"></div>
+  </section>
+</div>
+<script>
+  const I = {
+    note: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2.5" y="2.5" width="11" height="11" rx="1.5"/><path d="M5 6h6M5 8.5h4"/></svg>',
+    folder: '<svg viewBox="0 0 16 16" fill="currentColor"><path d="M1.5 4a1 1 0 0 1 1-1h3.6l1.4 1.5h6a1 1 0 0 1 1 1V12a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1z"/></svg>',
+    link: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6.8 9.2l2.4-2.4M5.2 7.3l-1.4 1.4a2.5 2.5 0 0 0 3.5 3.5l1.4-1.4M10.8 8.7l1.4-1.4a2.5 2.5 0 0 0-3.5-3.5L7.3 5.2"/></svg>',
+    grip: '<svg viewBox="0 0 10 16" style="width:10px"><g fill="currentColor"><circle cx="2.5" cy="3" r="1.6"/><circle cx="2.5" cy="8" r="1.6"/><circle cx="2.5" cy="13" r="1.6"/><circle cx="7.5" cy="3" r="1.6"/><circle cx="7.5" cy="8" r="1.6"/><circle cx="7.5" cy="13" r="1.6"/></g></svg>',
+    copy: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 10H2V2h8v2"/><rect x="6" y="6" width="8" height="8"/></svg>',
+    explorer: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1.5 4.5h4l1.2 1.3h7.8v7.7h-13z"/><path d="M8 11.5l3-3M8.5 8.5H11V11"/></svg>',
+    open: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9.5 2.5h4v4M13.5 2.5L9 7M6.5 13.5h-4v-4M2.5 13.5L7 9"/></svg>',
+    more: '<svg viewBox="0 0 16 16" fill="currentColor"><circle cx="3.5" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="12.5" cy="8" r="1.3"/></svg>',
+    trash: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.6 8.5h5.8l.6-8.5"/></svg>',
+  };
+  const rows = [
+    { kind: "note", title: "배치 장애 대응 메모", sub: "차세대 정산 시스템 구축 · 가상 본문", tag: "노트", date: "2026-10-22", second: ["copy", "복제"] },
+    { kind: "folder", title: "설계 문서", sub: "/demo/업무/정산/설계 · 연결: 차세대 정산 시스템 구축", tag: "폴더", date: "", second: ["explorer", "탐색기에서 열기"], hover: true, hoverBtn: "trash" },
+    { kind: "link", title: "정산 배치 설계서 v2 (사내 위키)", sub: "wiki.example.com/settlement/batch-design", tag: "링크", date: "", second: null },
+  ];
+  const btn = (name, label, extra = "", hoverOn = false) =>
+    `<button class="btn ${extra}${hoverOn ? " is-hover" : ""}" title="${label}" aria-label="${label}">${I[name]}</button>`;
+  for (const panel of document.querySelectorAll(".panel")) {
+    const v = panel.dataset.variant;
+    panel.innerHTML = rows.map((r) => {
+      const h = (n) => r.hover && r.hoverBtn === n;
+      const second = r.second ? btn(r.second[0], r.second[1], "", h(r.second[0])) : `<span class="btn empty slot" aria-hidden="true"></span>`;
+      const four = [btn("grip", "끌어서 옮기기·보드에 연결", "", h("grip")), second, btn("open", "열기", "", h("open")), btn("more", "더 보기", "", h("more"))].join("");
+      const del = btn("trash", r.kind === "note" ? "노트 삭제" : "Cabi.NET에서 삭제", "del", h("trash"));
+      const btns = v === "C" ? `<div class="group">${four}</div>${del}` : four + del;
+      return `<div class="row${r.hover ? " hover" : ""}">
+        <span class="kind ${r.kind}">${I[r.kind]}</span>
+        <div class="text"><div class="title">${r.title}</div><div class="sub">${r.sub}</div></div>
+        <span class="tag">${r.tag}</span><span class="date">${r.date}</span>
+        <div class="btns">${btns}</div></div>`;
+    }).join("");
+  }
+</script>
+</body>
+</html>
