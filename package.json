@@ -1,7 +1,7 @@
 {
   "name": "work-journey-board",
   "private": true,
-  "version": "1.53.3",
+  "version": "1.54.0",
   "releaseLabel": "Open Beta",
   "type": "module",
   "scripts": {
