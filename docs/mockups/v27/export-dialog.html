@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<title>v27 업무일지 내보내기 시안</title>
+<style>
+  :root {
+    --surface-page: #faf9f5; --surface-card: #fff; --surface-sub: #f1efe8; --surface-focus: #f4f9fe;
+    --text-1: #2c2c2a; --text-2: #5f5e5a; --text-3: #8a8983; --line: #e7e4dc; --line-strong: #d3cfc4;
+    --accent: #1f5fae; --accent-soft: #e3edf8; --radius-sm: 4px; --radius-md: 6px;
+    --c1: #2f6fd0; --c2: #d0782f; --c3: #2f9a6a; --c4: #9a4fc0; --note-yellow: #fbf3d5;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--surface-page); color: var(--text-1);
+    font: 14px/1.45 "Pretendard Variable", Pretendard, -apple-system, "Segoe UI", "Malgun Gothic", sans-serif; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .lead { color: var(--text-2); margin: 0 0 20px; }
+  section { margin-bottom: 36px; }
+  h2 { font-size: 16px; margin: 0 0 4px; }
+  h2 small { font-weight: 400; color: var(--text-2); margin-left: 6px; }
+  .desc { margin: 0 0 12px; color: var(--text-2); font-size: 13px; }
+  .grid { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start; }
+  .cap { font-size: 12px; color: var(--text-3); margin: 6px 2px 0; max-width: 420px; }
+  .rec { display: inline-block; font-size: 11px; padding: 1px 6px; border-radius: 3px; background: var(--accent); color: #fff; margin-left: 6px; vertical-align: 2px; }
+
+  /* 대화상자 */
+  .dlg { width: 440px; background: var(--surface-card); border: 1px solid var(--line-strong); border-radius: 8px;
+    box-shadow: 0 10px 30px rgb(0 0 0 / .12); position: relative; }
+  .sec { padding: 14px 20px; }
+  .sec + .sec { border-top: 1px solid var(--line); }
+  .head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 20px 14px; }
+  .head h3 { margin: 0; font-size: 16px; }
+  .lbl { font-size: 12px; font-weight: 600; color: var(--text-2); margin: 0 0 8px; }
+  .seg { display: inline-flex; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); overflow: hidden; }
+  .seg span { padding: 4px 10px; font-size: 13px; color: var(--text-2); background: var(--surface-card); white-space: nowrap; }
+  .seg span + span { border-left: 1px solid var(--line-strong); }
+  .seg .on { background: var(--accent); color: #fff; }
+  .opt { display: grid; grid-template-columns: 96px 1fr; align-items: center; min-height: 30px; gap: 8px; }
+  .radio { display: flex; align-items: center; gap: 7px; }
+  .r { width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid var(--line-strong); flex: none; }
+  .r.on { border: 4px solid var(--accent); }
+  .val { color: var(--text-2); font-size: 13px; }
+  .sel { display: inline-flex; align-items: center; gap: 6px; padding: 3px 8px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); font-size: 13px; background: #fff; }
+  .row2 { display: grid; grid-template-columns: 96px 1fr; align-items: center; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line); }
+  .cb { display: flex; align-items: center; gap: 7px; min-height: 26px; }
+  .c { width: 14px; height: 14px; border-radius: 3px; border: 1.5px solid var(--line-strong); flex: none; display: grid; place-items: center; font-size: 10px; color: #fff; }
+  .c.on { background: var(--accent); border-color: var(--accent); }
+  .info { color: var(--text-3); font-size: 12px; }
+  .stats { font-size: 13px; }
+  .stats b { font-weight: 600; }
+  .note { font-size: 12px; color: var(--text-3); margin: 4px 0 0; }
+  .acts { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+  .btn { padding: 6px 12px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: #fff; font-size: 13px; }
+  .btn.p { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: none; }
+  .pop { position: absolute; left: 124px; top: 318px; width: 260px; background: #fff; border: 1px solid var(--line-strong);
+    border-radius: var(--radius-md); box-shadow: 0 8px 22px rgb(0 0 0 / .16); padding: 6px 0; z-index: 2; font-size: 13px; }
+  .pop div { display: flex; align-items: center; gap: 8px; padding: 5px 12px; }
+  .pop .pick { background: var(--surface-focus); }
+  .pop hr { border: 0; border-top: 1px solid var(--line); margin: 4px 0; }
+  .pop .h { font-size: 11px; color: var(--text-3); }
+  .old .sec + .sec { border-top: 0; }
+
+  pre { background: #fff; border: 1px solid var(--line); border-radius: var(--radius-md); padding: 14px 16px; font-size: 12.5px; line-height: 1.6;
+    white-space: pre-wrap; margin: 0; width: 520px; font-family: ui-monospace, "D2Coding", Consolas, monospace; }
+
+  /* 텍스트 객체 */
+  .board { width: 520px; height: 230px; position: relative; border: 1px solid var(--line); border-radius: var(--radius-md);
+    background: radial-gradient(#e4e0d6 1px, transparent 1px) 0 0/16px 16px, #fcfbf8; }
+  .box { position: absolute; width: 220px; padding: 8px 12px; border: 1px solid var(--line); border-radius: var(--radius-md); background: #fff; box-shadow: 0 1px 3px rgb(0 0 0/.06); line-height: 1.65; }
+  .box.y { background: var(--note-yellow); }
+  .strip { margin: -8px -12px 6px; padding: 3px 10px; font-size: 12px; border-bottom: 1px solid var(--line); background: #f5f1e6; border-radius: 6px 6px 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gap { position: absolute; left: -1px; right: -1px; bottom: -1px; background: repeating-linear-gradient(45deg, rgb(210 60 60 / .14) 0 6px, transparent 6px 12px); border-top: 1px dashed #d05050; }
+  .gapnum { position: absolute; right: 6px; bottom: 2px; font-size: 11px; color: #b03a3a; }
+  ul { margin: 0; padding-left: 1.3em; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>개선 v27 — 업무일지 내보내기 · 메모보드 텍스트 객체 아래 여백</h1>
+  <p class="lead">가상 샘플 화면입니다. 색·글꼴은 라이트 테마 기준이며, 실제 구현은 기존 디자인 토큰을 그대로 씁니다.</p>
+
+  <section>
+    <h2>1. 내보내기 창 — 엑셀 <small>지금 vs 시안 A·B</small></h2>
+    <p class="desc">타이틀 · 범위 · 포함 · 미리 계산을 구분선으로 나눕니다. 범위에 <b>연도</b>와 <b>업무</b>(전체·1개·여러 개)를 더하고, 파일 형식(엑셀·마크다운)을 고릅니다.</p>
+    <div class="grid">
+      <div>
+        <div class="dlg old">
+          <div class="head"><h3>엑셀로 내보내기</h3></div>
+          <div class="sec" style="padding-top:0">
+            <p class="lbl">범위</p>
+            <div class="opt"><span class="radio"><i class="r on"></i>이번 주</span><span class="val">2026-W43</span></div>
+            <div class="opt"><span class="radio"><i class="r"></i>최근 4주</span><span class="val">2026-W40 ~ 2026-W43</span></div>
+            <div class="opt"><span class="radio"><i class="r"></i>기간 지정</span><span class="val"><span class="sel">2026-W40 ▾</span> ~ <span class="sel">2026-W43 ▾</span></span></div>
+            <div class="opt"><span class="radio"><i class="r"></i>전체</span><span class="val">2026-W38 ~ 2026-W43</span></div>
+          </div>
+          <div class="sec" style="padding-top:0">
+            <p class="lbl">포함</p>
+            <div class="cb"><i class="c on">✓</i>주간보고 시트</div>
+            <div class="cb"><i class="c on">✓</i>원장 시트</div>
+            <div class="cb"><i class="c"></i>주간 요약 시트</div>
+            <div class="cb"><i class="c"></i>메모 보드 스냅샷 <span class="info">(메모 있는 주 1개 · 시트 1개 추가)</span></div>
+            <p class="note">주간보고 시트의 요약 행에는 수정본 또는 AI본을 넣습니다.</p>
+            <p class="stats" style="margin:6px 0 0">미리 계산: 1주 · 업무 3개 · 항목 15개</p>
+            <div class="acts"><span class="btn">취소</span><span class="btn p">저장 위치 선택…</span></div>
+          </div>
+        </div>
+        <p class="cap">지금 — 구역 사이 구분이 없고 업무를 고를 수 없음</p>
+      </div>
+
+      <div>
+        <div class="dlg">
+          <div class="head"><h3>업무일지 내보내기</h3><span class="seg"><span class="on">엑셀</span><span>마크다운</span></span></div>
+          <div class="sec">
+            <p class="lbl">범위</p>
+            <div class="opt"><span class="radio"><i class="r"></i>이번 주</span><span class="val">2026-W43</span></div>
+            <div class="opt"><span class="radio"><i class="r"></i>최근 4주</span><span class="val">2026-W40 ~ 2026-W43</span></div>
+            <div class="opt"><span class="radio"><i class="r"></i>기간 지정</span><span class="val"><span class="sel">2026-W40 ▾</span> ~ <span class="sel">2026-W43 ▾</span></span></div>
+            <div class="opt"><span class="radio"><i class="r on"></i>연도</span><span class="val"><span class="sel">2026년 ▾</span> &nbsp;2026-W38 ~ 2026-W43</span></div>
+            <div class="opt"><span class="radio"><i class="r"></i>전체</span><span class="val">2026-W38 ~ 2026-W43</span></div>
+            <div class="row2"><span>업무</span><span><span class="sel">전체 ▾</span></span></div>
+          </div>
+          <div class="sec">
+            <p class="lbl">포함</p>
+            <div class="cb"><i class="c on">✓</i>주간보고 시트</div>
+            <div class="cb"><i class="c on">✓</i>원장 시트</div>
+            <div class="cb"><i class="c"></i>주간 요약 시트</div>
+            <div class="cb"><i class="c"></i>메모 보드 스냅샷 <span class="info">(메모 있는 주 1개 · 시트 1개 추가)</span></div>
+          </div>
+          <div class="sec">
+            <p class="lbl">미리 계산</p>
+            <div class="stats"><b>6주</b> · 업무 <b>3개</b> · 항목 <b>58개</b></div>
+            <p class="note">주간보고 시트의 요약 행에는 수정본 또는 AI본을 넣습니다.</p>
+            <div class="acts"><span class="btn">취소</span><span class="btn p">저장 위치 선택…</span></div>
+          </div>
+        </div>
+        <p class="cap"><b>A안</b><span class="rec">추천</span> — 파일 형식을 타이틀 오른쪽 토글로. 말씀하신 4구역(타이틀·범위·포함·미리 계산) 그대로</p>
+      </div>
+
+      <div>
+        <div class="dlg">
+          <div class="head"><h3>업무일지 내보내기</h3></div>
+          <div class="sec">
+            <p class="lbl">파일 형식</p>
+            <div class="cb"><i class="r on"></i>엑셀 (.xlsx) <span class="info">— 시트로 정리</span></div>
+            <div class="cb"><i class="r"></i>마크다운 (.md) <span class="info">— 글로 정리</span></div>
+          </div>
+          <div class="sec">
+            <p class="lbl">범위</p>
+            <div class="opt"><span class="radio"><i class="r on"></i>연도</span><span class="val"><span class="sel">2026년 ▾</span> &nbsp;2026-W38 ~ 2026-W43</span></div>
+            <div class="opt"><span class="radio"><i class="r"></i>…</span><span class="val">(나머지 같음)</span></div>
+            <div class="row2"><span>업무</span><span><span class="sel">전체 ▾</span></span></div>
+          </div>
+          <div class="sec"><p class="lbl">포함</p><div class="cb"><i class="c on">✓</i>주간보고 시트 …</div></div>
+          <div class="sec"><p class="lbl">미리 계산</p><div class="stats"><b>6주</b> · 업무 <b>3개</b> · 항목 <b>58개</b></div>
+            <div class="acts"><span class="btn">취소</span><span class="btn p">저장 위치 선택…</span></div></div>
+        </div>
+        <p class="cap"><b>B안</b> — 파일 형식을 맨 위 별도 구역으로. 더 눈에 띄지만 창이 길어짐</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>2. 마크다운 고름 + 업무 여러 개 <small>A안 기준</small></h2>
+    <p class="desc">업무 단추를 누르면 칸반 보드의 업무 거르기와 같은 목록이 뜹니다(전체 · 체크로 여러 개 · 이름 옆 [이것만]). 포함 항목은 형식에 맞게 바뀝니다.</p>
+    <div class="grid">
+      <div>
+        <div class="dlg">
+          <div class="head"><h3>업무일지 내보내기</h3><span class="seg"><span>엑셀</span><span class="on">마크다운</span></span></div>
+          <div class="sec">
+            <p class="lbl">범위</p>
+            <div class="opt"><span class="radio"><i class="r"></i>이번 주</span><span class="val">2026-W43</span></div>
+            <div class="opt"><span class="radio"><i class="r on"></i>최근 4주</span><span class="val">2026-W40 ~ 2026-W43</span></div>
+            <div class="opt"><span class="radio"><i class="r"></i>기간 지정</span><span class="val"><span class="sel">2026-W40 ▾</span> ~ <span class="sel">2026-W43 ▾</span></span></div>
+            <div class="opt"><span class="radio"><i class="r"></i>연도</span><span class="val"><span class="sel">2026년 ▾</span></span></div>
+            <div class="opt"><span class="radio"><i class="r"></i>전체</span><span class="val">2026-W38 ~ 2026-W43</span></div>
+            <div class="row2"><span>업무</span><span><span class="sel" style="border-color:var(--accent);background:var(--accent-soft)">업무 2개 ▾</span></span></div>
+          </div>
+          <div class="sec">
+            <p class="lbl">포함</p>
+            <div class="cb"><i class="c on">✓</i>업무 기록</div>
+            <div class="cb"><i class="c on">✓</i>주간 요약</div>
+            <div class="cb"><i class="c"></i>주간 메모 <span class="info">(글만 · 그림 제외)</span></div>
+          </div>
+          <div class="sec">
+            <p class="lbl">미리 계산</p>
+            <div class="stats"><b>4주</b> · 업무 <b>2개</b> · 항목 <b>31개</b></div>
+            <p class="note">업무를 고르면 주간 요약은 고른 업무만으로 자동 집계합니다(수정본·AI본은 전체 업무 기준이라 쓰지 않음).</p>
+            <div class="acts"><span class="btn">취소</span><span class="btn p">저장 위치 선택…</span></div>
+          </div>
+          <div class="pop">
+            <div><i class="r"></i>전체 업무 <span class="info" style="margin-left:auto">4</span></div>
+            <hr />
+            <div class="h">체크해서 여러 개</div>
+            <div class="pick"><i class="c on">✓</i><i class="dot" style="background:var(--c1)"></i>차세대 정산 시스템 구축</div>
+            <div class="pick"><i class="c on">✓</i><i class="dot" style="background:var(--c2)"></i>협력사 보안 점검</div>
+            <div><i class="c"></i><i class="dot" style="background:var(--c3)"></i>사내 교육 운영</div>
+            <div><i class="c"></i><i class="dot" style="background:var(--c4)"></i>부서 공통</div>
+          </div>
+        </div>
+        <p class="cap">업무 목록에 종료된 업무도 보입니다(범위 안에 기록이 있으면). 고른 업무가 1개면 단추에 그 이름, 여러 개면 "업무 N개".</p>
+      </div>
+      <div>
+<pre># 업무일지 2026-W40~W43
+업무: 차세대 정산 시스템 구축, 협력사 보안 점검 · 내보낸 날 2026-10-22
+
+## 2026-W43 (10/19 ~ 10/25)
+
+### 차세대 정산 시스템 구축
+- 10/20 (화)
+  - 야간 배치 02~04시 확정
+    - 운영팀 공유 완료
+- 10/21 (수)
+  - 설계안 팀 리뷰
+  - 배치 재시도 정책 정리 ✓
+
+### 협력사 보안 점검
+- 10/22 (목) · 연차(오후)
+  - 점검 체크리스트 1차 회신 ✓
+
+### 주간 요약
+- 차세대 정산 시스템 구축: 야간 배치 확정, 설계안 리뷰
+- 협력사 보안 점검: 체크리스트 1차 회신
+
+## 2026-W42 (10/12 ~ 10/18)
+…</pre>
+        <p class="cap">마크다운 결과 예시(가상) — 오래된 주부터? 최신 주부터? → 결정 D6. 업무 → 날짜 → 항목(세부는 한 단계 들여쓰기), 처리 완료 항목은 끝에 ✓, 연차·휴일은 날짜 옆. 그림은 넣지 않음.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>3. 메모보드 텍스트 객체 아래 여백 <small>원인 재현 · 고친 뒤</small></h2>
+    <p class="desc">상자 옆면 손잡이로 <b>너비만</b> 바꿔도 그때 높이가 고정(최소 80px)되고, 이후 글을 줄여도 그대로 남아 아래 빈칸이 생깁니다(빗금). 글이 한 줄인 상자는 최대 40px 가까이 비어 보입니다.</p>
+    <div class="grid">
+      <div>
+        <div class="board">
+          <div class="box" style="left:16px;top:16px;height:80px">회의 자료 공유<div class="gap" style="height:39px"><span class="gapnum">+39px</span></div></div>
+          <div class="box y" style="left:268px;top:16px;height:150px"><div class="strip">● 차세대 정산 · 10/20 (화)</div><ul><li>야간 배치 확정</li><li>운영팀 공유</li></ul><div class="gap" style="height:48px"><span class="gapnum">+48px</span></div></div>
+          <div class="box" style="left:16px;top:120px;height:96px">다음 주 할 일<br>점검 보고서 초안<div class="gap" style="height:22px"><span class="gapnum">+22px</span></div></div>
+        </div>
+        <p class="cap">지금 — 연결 띠가 있든 없든 너비를 한 번이라도 바꾼 상자는 아래가 빔</p>
+      </div>
+      <div>
+        <div class="board">
+          <div class="box" style="left:16px;top:16px">회의 자료 공유</div>
+          <div class="box y" style="left:268px;top:16px"><div class="strip">● 차세대 정산 · 10/20 (화)</div><ul><li>야간 배치 확정</li><li>운영팀 공유</li></ul></div>
+          <div class="box" style="left:16px;top:120px">다음 주 할 일<br>점검 보고서 초안</div>
+        </div>
+        <p class="cap"><b>고친 뒤</b><span class="rec">추천 A</span> — 텍스트 상자 높이는 늘 글에 맞춤(위·아래 여백 8px 같음). 옆면 손잡이는 너비만, 위·아래·모서리 손잡이는 텍스트 상자에서 뺌. 이미 고정된 높이도 열 때 무시.</p>
+      </div>
+    </div>
+  </section>
+</div>
+</body>
+</html>
