@@ -47,6 +47,20 @@ describe("업무(카테고리)", () => {
     expect(periods[0]?.endDate).toBeNull();
   });
 
+  it("시작일 바꾸기: 이번 주에 만든 업무를 앞당기면 지난 주에도 빈 업무로 보이고, 되돌리기는 이전 시작일", async () => {
+    const { repo } = await freshRepo(); // 오늘 2026-10-23, W43
+    const c = await repo.createCategory("A", "2026-W43");
+    expect((await repo.getWeek("2026-W41")).categories).toHaveLength(0);
+    const prev = await repo.setCategoryStart(c.id, "2026-10-05");
+    expect(prev).toBe("2026-10-19");
+    expect(await repo.categoryStart(c.id)).toBe("2026-10-05");
+    expect((await repo.getWeek("2026-W41")).categories.map((v) => v.state)).toEqual(["active"]);
+    expect((await repo.getWeek("2026-W40")).categories).toHaveLength(0);
+    await expect(repo.setCategoryStart(c.id, "2026-11-01")).rejects.toThrow("START_DATE_FUTURE");
+    await repo.setCategoryStart(c.id, prev!);
+    expect((await repo.getWeek("2026-W41")).categories).toHaveLength(0);
+  });
+
   it("지난 종료 후 재활성은 새 구간 — 공백 주에는 안 보임", async () => {
     const { repo, clock } = await freshRepo();
     const c = await repo.createCategory("A", "2026-W40");

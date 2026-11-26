@@ -131,7 +131,9 @@ test("링크 끌어 놓기 → 브라우저가 준 제목(고치기) → Enter �
   ).toBeVisible();
 });
 
-test("폴더 끌어 놓기(파일은 거부) → F2 제목 고치기 → 연결 고치기 → 등록 해제·되돌리기", async ({ page }) => {
+test("폴더 끌어 놓기(파일은 거부) → F2 제목 고치기 → 연결 고치기 → 업무에서 빼기 → 삭제·되돌리기", async ({
+  page,
+}) => {
   await open(page);
   await page.getByTestId("rail-cabinet").click();
   await drop(page, "cabinet-drop", {}, ["검증표.xlsx"]);
@@ -156,15 +158,32 @@ test("폴더 끌어 놓기(파일은 거부) → F2 제목 고치기 → 연결 
   await page.getByTestId("cabinet-group-cat-sec").click();
   await expect(page.getByTestId("cabinet-row-title")).toContainText(["10월 이관 자료"]);
 
+  // ‘업무’에서 빼기(improve-v26-spec 4절): 그 업무 묶음에서만 빠지고 전체에는 그대로
   await page
     .getByTestId("cabinet-row")
     .filter({ hasText: "10월 이관 자료" })
     .getByTestId("cabinet-row-more")
     .click();
-  await page.getByTestId("cabinet-menu-remove").click();
-  await expect(page.getByText("‘10월 이관 자료’ 등록을 해제했습니다 (폴더·파일은 그대로)")).toBeVisible();
+  await expect(page.getByTestId("cabinet-menu-remove")).toHaveCount(0);
+  await page.getByTestId("cabinet-menu-exclude").click();
+  await expect(
+    page.getByText(/‘10월 이관 자료’을\(를\) ‘.+’에서 뺐습니다 — Cabi.NET에는 그대로 있습니다/),
+  ).toBeVisible();
   await expect(page.getByTestId("cabinet-row").filter({ hasText: "10월 이관 자료" })).toHaveCount(0);
-  await page.getByRole("button", { name: "되돌리기" }).click();
+  await page.getByTestId("cabinet-group-__all__").click();
+  await expect(page.getByTestId("cabinet-row").filter({ hasText: "10월 이관 자료" })).toBeVisible();
+
+  // 줄 끝 삭제 단추(등록 해제 메뉴 대신)
+  await page
+    .getByTestId("cabinet-row")
+    .filter({ hasText: "10월 이관 자료" })
+    .getByTestId("cabinet-row-delete")
+    .click();
+  await expect(
+    page.getByText("‘10월 이관 자료’을(를) Cabi.NET에서 삭제했습니다 (폴더·파일은 그대로)"),
+  ).toBeVisible();
+  await expect(page.getByTestId("cabinet-row").filter({ hasText: "10월 이관 자료" })).toHaveCount(0);
+  await page.getByRole("button", { name: "되돌리기" }).last().click();
   await expect(page.getByTestId("cabinet-row").filter({ hasText: "10월 이관 자료" })).toBeVisible();
 });
 

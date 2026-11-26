@@ -1134,6 +1134,32 @@ export async function archiveCategory(id: string) {
   });
 }
 
+/** 일지 기준 오늘(시계는 저장소와 같게) */
+export function journalToday(): string {
+  return requireRepo().today();
+}
+
+/** 업무 시작일(improve-v26-spec 1절) */
+export async function categoryStart(id: string) {
+  return requireRepo().categoryStart(id);
+}
+
+/** 업무 시작일 바꾸기 — 앞당기면 그 주들부터 빈 업무로 보인다. 되돌리기 = 이전 시작일 */
+export async function changeCategoryStart(id: string, date: string) {
+  const name = get().view?.categories.find((c) => c.category.id === id)?.category.name ?? "";
+  await flushAll();
+  const prev = await track(() => requireRepo().setCategoryStart(id, date));
+  await reload();
+  toast(STR.categoryMenu.startChanged(name, date), {
+    label: STR.toast.undo,
+    run: () =>
+      void (async () => {
+        if (prev) await requireRepo().setCategoryStart(id, prev);
+        await reload();
+      })(),
+  });
+}
+
 /** 종료된 업무 다시 시작(인사이트 타임라인 머리 — m3-s1-spec 4-1). 되돌리기 = 다시 종료 */
 export async function reactivateCategory(id: string, name: string) {
   await flushAll();

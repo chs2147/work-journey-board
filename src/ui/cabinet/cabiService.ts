@@ -13,6 +13,7 @@ import { boxText, noteAssetIds, type NoteDoc } from "../../domain/note";
 import type { Category } from "../../domain/types";
 import type { Settings } from "../../data/settings";
 import { loadPlatform } from "../../platform";
+import { CABI } from "../../shared/cabiStrings";
 import { resolveTheme } from "../../shared/theme";
 import type { CabiBridge, CabiWindowSpec } from "../../platform/cabiBridge";
 import { useAppStore } from "../common/appStore";
@@ -28,6 +29,7 @@ const METHODS = [
   "saveNote",
   "removeNote",
   "duplicateNote",
+  "moveNote",
   "setNoteDeleteLock",
   "referenceCount",
   "listBoards",
@@ -357,6 +359,11 @@ async function handle(name: string, args: unknown[], sender: string): Promise<un
         await (await getBridge()).publish({ type: "unlock" }, `cabi-note-${String(a[1])}`);
       }
     }
+    if (method === "moveNote") {
+      // 노트 창이 열려 있으면 창의 저장과 엇갈리지 않게 옮기지 않는다(창 안 업무 고르기로 옮기기)
+      const open = await (await getBridge()).opened().catch(() => [] as string[]);
+      if (open.includes(`cabi-note-${String(a[1])}`)) throw new Error(CABI.moveNoteOpen);
+    }
     const fn = r[method] as (...v: unknown[]) => Promise<unknown>;
     if (method === "removeBoard") await flushCabiWindows();
     const out = await fn.apply(r, a.slice(1));
@@ -366,7 +373,9 @@ async function handle(name: string, args: unknown[], sender: string): Promise<un
       await refreshLinkedObjects();
     }
     if (
-      ["createNote", "duplicateNote", "setNoteDeleteLock", "removeNote", "removeBoard"].includes(method) ||
+      ["createNote", "duplicateNote", "moveNote", "setNoteDeleteLock", "removeNote", "removeBoard"].includes(
+        method,
+      ) ||
       (method === "board" && a[2] === true)
     )
       await loadCabinet();

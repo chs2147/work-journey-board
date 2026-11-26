@@ -8,13 +8,25 @@ import { cabiCall, registerCabiDrag } from "./cabiService";
 import type { CabiReference } from "../../domain/cabi";
 import { CABI } from "../../shared/cabiStrings";
 import styles from "./Cabi.module.css";
-export function CabiDragGrip({ reference, boxId }: { reference?: CabiReference; boxId?: string }) {
+export function CabiDragGrip({
+  reference,
+  boxId,
+  onStart,
+  onEnd,
+}: {
+  reference?: CabiReference;
+  boxId?: string;
+  /** 같은 창 안에서 끌기 시작·끝을 알아야 할 때(Cabinet 업무 묶음에 노트 놓기 — improve-v26-spec 2절) */
+  onStart?: () => void;
+  onEnd?: () => void;
+}) {
   const [ready, setReady] = useState(false);
   const activeToken = useRef<string | null>(null);
   const start = (e: DragEvent<HTMLButtonElement>) => {
     e.stopPropagation();
     const token = crypto.randomUUID();
     activeToken.current = token;
+    onStart?.();
     e.dataTransfer.effectAllowed = "copy";
     e.dataTransfer.setData("text/plain", CABI_DRAG_PREFIX + token);
     const register = async () => {
@@ -55,6 +67,7 @@ export function CabiDragGrip({ reference, boxId }: { reference?: CabiReference; 
       onDragStart={start}
       onDragEnd={() => {
         setReady(false);
+        onEnd?.();
         void cabiCall("dragEnd", activeToken.current).catch(() => undefined);
       }}
       className={`${styles.icon} ${styles.copyGrip}`}

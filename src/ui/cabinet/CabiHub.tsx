@@ -16,6 +16,7 @@ import {
 } from "../common/icons";
 import { V20 } from "../../shared/v20Strings";
 import { DeleteNoteDialog } from "./DeleteNoteDialog";
+import { noteDrag } from "./cabinetStore";
 import { reportError } from "../board/boardStore";
 import { cabiClient, cabiContext, createCabiNote, openCabi, useCabiChange } from "./cabiService";
 import { CabiDragGrip } from "./CabiDrag";
@@ -283,7 +284,11 @@ export function CabiHub({
                   </button>
                   <span className={styles.tag}>{CABI.note}</span>
                   <span className={styles.muted}>{n.updatedAt.slice(0, 10)}</span>
-                  <CabiDragGrip reference={{ kind: "note", id: n.id }} />
+                  <CabiDragGrip
+                    reference={{ kind: "note", id: n.id }}
+                    onStart={() => noteDrag.start({ id: n.id, title: n.title, categoryId: n.categoryId })}
+                    onEnd={noteDrag.end}
+                  />
                   <button
                     className={styles.icon}
                     title={V20.duplicate}

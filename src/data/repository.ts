@@ -33,6 +33,7 @@ import {
   normalizeCategoryName,
   openPeriod,
   reactivatePlan,
+  startDateProblem,
   visibleCategories,
   type VisibleCategory,
 } from "../domain/categories";
@@ -782,6 +783,35 @@ export class JournalRepository {
       archiveEndDate(open, this.today()),
       open.id,
     ]);
+  }
+
+  /** 업무 시작일(가장 이른 구간의 시작) */
+  async categoryStart(id: string): Promise<DateStr | null> {
+    return (await this.periodsOf(id))[0]?.startDate ?? null;
+  }
+
+  /**
+   * 시작일 바꾸기(improve-v26-spec 1절) — 가장 이른 구간의 시작일만 옮긴다. 이전 시작일을 돌려준다(되돌리기).
+   * 구간이 없던 업무(예전 판에서 만든 등)는 새 열린 구간을 만든다.
+   */
+  async setCategoryStart(id: string, date: DateStr): Promise<DateStr | null> {
+    const periods = await this.periodsOf(id);
+    const problem = startDateProblem(periods, date, this.today());
+    if (problem) throw new Error(`START_DATE_${problem.toUpperCase()}`);
+    const first = periods[0];
+    if (!first) {
+      await this.db.execute(
+        "INSERT INTO category_period(id, category_id, start_date, end_date) VALUES(?, ?, ?, NULL)",
+        [uuidv7(), id, date],
+      );
+      return null;
+    }
+    if (first.startDate === date) return first.startDate;
+    await this.db.batch([
+      { sql: "UPDATE category_period SET start_date = ? WHERE id = ?", params: [date, first.id] },
+      { sql: "UPDATE category SET updated_at = ? WHERE id = ?", params: [this.ts(), id] },
+    ]);
+    return first.startDate;
   }
 
   /** 재활성. 이미 진행 중이면 아무것도 안 함. */

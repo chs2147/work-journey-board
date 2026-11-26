@@ -66,6 +66,25 @@ export function reactivatePlan(periods: CategoryPeriod[], currentWeekMonday: Dat
   return { kind: "new", startDate: currentWeekMonday };
 }
 
+export type StartDateProblem = "invalid" | "future" | "afterEnd";
+
+/**
+ * 업무 시작일 바꾸기(improve-v26-spec 1절): 가장 이른 구간의 시작일을 옮긴다.
+ * 오늘 이후·첫 구간 끝 이후는 안 됨(구간이 뒤집히지 않게). 앞당기면 그 주들부터 빈 업무로 보인다.
+ */
+export function startDateProblem(
+  periods: CategoryPeriod[],
+  date: string,
+  today: DateStr,
+): StartDateProblem | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date < "1990-01-01" || Number.isNaN(Date.parse(date)))
+    return "invalid";
+  if (date > today) return "future";
+  const first = [...periods].sort((a, b) => (a.startDate < b.startDate ? -1 : 1))[0];
+  if (first?.endDate && date > first.endDate) return "afterEnd";
+  return null;
+}
+
 /** 업무 이름 검증: 앞뒤 공백 제거 후 1~40자 */
 export function normalizeCategoryName(name: string): string | null {
   const n = name.trim().replace(/\s+/g, " ");

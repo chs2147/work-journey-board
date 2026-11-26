@@ -135,7 +135,7 @@ test.describe("처음 1회 카드", () => {
     for (let i = 0; i < 10; i++) await page.keyboard.press("Enter");
     await expect(overlay(page)).toHaveCount(0);
     await expect(page.getByTestId("coach-after")).toBeVisible();
-    expect((await config(page))!.coaching!.done.T0).toBe(1);
+    expect((await config(page))!.coaching!.done.T0).toBe(2); // T0 콘텐츠 판(개선 v26 = 2)
   });
 });
 

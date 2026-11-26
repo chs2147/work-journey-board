@@ -29,6 +29,23 @@ describe("Cabi.NET date-independent data", () => {
     expect(await db.select("SELECT * FROM note_asset")).toEqual([]);
     await db.close();
   });
+  it("moves a note to another task keeping its body; an old window save then conflicts (improve-v26)", async () => {
+    const { repo, db } = await freshRepo();
+    const a = await repo.createCategory("가상 업무 A", "2026-W43"),
+      b = await repo.createCategory("가상 업무 B", "2026-W43"),
+      n = await repo.cabi.createNote(a.id, "옮길 노트", content);
+    const moved = await repo.cabi.moveNote(n.id, b.id);
+    expect(moved.categoryId).toBe(b.id);
+    expect(moved.title).toBe("옮길 노트");
+    expect(moved.content).toEqual((await repo.cabi.note(n.id)).content);
+    expect((await repo.cabi.listNotes(a.id)).map((x) => x.id)).not.toContain(n.id);
+    expect((await repo.cabi.listNotes(b.id)).map((x) => x.id)).toContain(n.id);
+    await expect(repo.cabi.saveNote(n.id, n.revision, "옛 창", content)).rejects.toBeInstanceOf(
+      CabiConflictError,
+    );
+    await expect(repo.cabi.moveNote(n.id, "no-such-category")).rejects.toThrow();
+    await db.close();
+  });
   it("rejects stale document saves without losing either revision", async () => {
     const { repo, db } = await freshRepo();
     const c = await repo.createCategory("가상 업무", "2026-W43"),

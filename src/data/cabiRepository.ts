@@ -134,6 +134,21 @@ export class CabiRepository {
       return this.note(id);
     });
   }
+  /** 노트를 다른 업무로 옮기기(improve-v26-spec 2절) — 본문 그대로, 소유 업무만. revision을 올려 열린 창의 옛 저장을 막는다 */
+  async moveNote(id: string, categoryId: string): Promise<CabiNote> {
+    return this.serial(async () => {
+      const current = await this.note(id);
+      await this.exists(categoryId);
+      if (current.categoryId === categoryId) return current;
+      await this.db.execute(
+        "UPDATE cabi_note SET category_id=?,revision=?,updated_at=? WHERE id=? AND revision=?",
+        [categoryId, current.revision + 1, this.ts(), id, current.revision],
+      );
+      const moved = await this.note(id);
+      if (moved.categoryId !== categoryId) throw new CabiConflictError();
+      return moved;
+    });
+  }
   async removeNote(id: string, revision: number): Promise<void> {
     await this.serial(async () => {
       const n = await this.note(id);

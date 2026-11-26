@@ -1793,3 +1793,47 @@
   font-size: 10px;
   white-space: nowrap;
 }
+
+/* 업무 ⋯ › 시작일 바꾸기(improve-v26-spec 1절) */
+.startForm {
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  min-width: 220px;
+}
+.startForm label {
+  display: grid;
+  gap: var(--sp-1);
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+}
+.startForm input {
+  font: inherit;
+  color: var(--text-1);
+  background: var(--surface-card);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  padding: var(--sp-1) var(--sp-2);
+}
+.startError {
+  font-size: var(--fs-sm);
+  color: var(--danger);
+}
+.startBtns {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+}
+.startBtns > button {
+  padding: var(--sp-1) var(--sp-3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-card);
+  color: var(--text-1);
+  cursor: pointer;
+}
+.startBtns > button[type="submit"] {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent, #fff);
+}

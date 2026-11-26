@@ -58,7 +58,8 @@ const S = (target: Target, more: Omit<StepDef, "target"> = {}): StepDef => ({ ta
 export const TOURS: TourDef[] = [
   {
     id: "T0",
-    v: 1,
+    v: 2, // 개선 v26: 업무 ⋯ 시작일 바꾸기
+
     group: "start",
     steps: [
       S(null, { before: toBoard }),

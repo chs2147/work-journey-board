@@ -3,6 +3,7 @@ import {
   archiveEndDate,
   normalizeCategoryName,
   reactivatePlan,
+  startDateProblem,
   visibleCategories,
 } from "../../src/domain/categories";
 import type { Category, CategoryPeriod } from "../../src/domain/types";
@@ -95,5 +96,20 @@ describe("업무 이름", () => {
     expect(normalizeCategoryName("   ")).toBeNull();
     expect(normalizeCategoryName("가".repeat(41))).toBeNull();
     expect(normalizeCategoryName("가".repeat(40))).toHaveLength(40);
+  });
+});
+
+describe("업무 시작일 바꾸기(improve-v26-spec 1절)", () => {
+  const today = "2026-10-23";
+  it("앞당기기는 됨, 오늘 이후·종료일 이후·잘못된 날짜는 거절", () => {
+    const open = [per("a", "2026-10-19", null)];
+    expect(startDateProblem(open, "2026-09-01", today)).toBeNull();
+    expect(startDateProblem(open, "2026-10-23", today)).toBeNull();
+    expect(startDateProblem(open, "2026-10-24", today)).toBe("future");
+    expect(startDateProblem(open, "2026-13-01", today)).toBe("invalid");
+    expect(startDateProblem(open, "", today)).toBe("invalid");
+    const ended = [per("a", "2026-10-05", "2026-10-09"), per("a", "2026-10-19", null)];
+    expect(startDateProblem(ended, "2026-10-09", today)).toBeNull();
+    expect(startDateProblem(ended, "2026-10-12", today)).toBe("afterEnd");
   });
 });

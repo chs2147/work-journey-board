@@ -11,6 +11,7 @@ import {
   linkTitleFromUrl,
   shortUrl,
   isFolderPathLike,
+  itemCategories,
   UNLINKED,
   type CabinetItem,
   type CabinetLinkDraft,
@@ -29,7 +30,10 @@ import {
   copyTarget,
   currentGroup,
   editLinkDialog,
+  excludeFromCategory,
   finishRename,
+  moveNoteToCategory,
+  noteDrag,
   groupsOf,
   handleDrop,
   linkLabels,
@@ -45,6 +49,7 @@ import {
   startRename,
   useCabinet,
 } from "./cabinetStore";
+import { IconTrash } from "../common/icons";
 import styles from "./Cabinet.module.css";
 
 /** 앱 안에서만 쓰는 끌기 자료 형식(줄 순서·업무에 놓기, improve-1102-spec C3·C4) — 등록용 놓기와 섞이지 않는다 */
@@ -210,7 +215,8 @@ export function CabinetPanel({ standalone = false }: { standalone?: boolean }) {
               title={canTakeItem(g.key) && draggingId ? STR.cabinet.groupDrop : undefined}
               onClick={() => useCabinet.setState({ group: g.key })}
               onDragOver={(e) => {
-                if (!isInternal(e.dataTransfer) || !canTakeItem(g.key)) return;
+                const note = noteDrag.current();
+                if (!(isInternal(e.dataTransfer) || note) || !canTakeItem(g.key)) return;
                 e.preventDefault();
                 e.stopPropagation();
                 e.dataTransfer.dropEffect = "copy";
@@ -218,6 +224,13 @@ export function CabinetPanel({ standalone = false }: { standalone?: boolean }) {
               }}
               onDragLeave={() => setGroupOver((k) => (k === g.key ? null : k))}
               onDrop={(e) => {
+                if (noteDrag.current() && canTakeItem(g.key)) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setGroupOver(null);
+                  void moveNoteToCategory(g.key);
+                  return;
+                }
                 if (!isInternal(e.dataTransfer) || !canTakeItem(g.key)) return;
                 e.preventDefault();
                 e.stopPropagation();
@@ -470,6 +483,19 @@ function CabinetRow({ item, drag }: { item: CabinetItem; drag: RowDrag }) {
         <button
           type="button"
           className={styles.iconBtn}
+          aria-label={STR.cabinet.deleteItemTitle}
+          title={STR.cabinet.deleteItemTitle}
+          data-testid="cabinet-row-delete"
+          onClick={(e) => {
+            e.stopPropagation();
+            void removeItem(item.id);
+          }}
+        >
+          <IconTrash />
+        </button>
+        <button
+          type="button"
+          className={styles.iconBtn}
           aria-label={STR.cabinet.more}
           aria-haspopup="menu"
           title={STR.cabinet.more}
@@ -529,6 +555,13 @@ function RowMenu({
   onClose: () => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  // 지금 보는 묶음이 업무이고 이 항목이 그 업무에 연결돼 있으면 ‘업무’에서 빼기(improve-v26-spec 4절)
+  const excludeId = useCabinet((s) => {
+    const g = currentGroup(s);
+    return g === ALL_GROUP || g === UNLINKED || !itemCategories(item.id, s.links).includes(g) ? null : g;
+  });
+  const excludeName = useCabinet((s) => s.categories.find((c) => c.id === excludeId)?.name ?? null);
+  const excludeFrom = excludeId && excludeName ? { id: excludeId, name: excludeName } : null;
   useEffect(() => {
     ref.current?.querySelector("button")?.focus();
     const off = (e: MouseEvent) => {
@@ -603,15 +636,17 @@ function RowMenu({
           {STR.cabinet.check.relocate}
         </button>
       )}
-      <button
-        type="button"
-        role="menuitem"
-        className={styles.danger}
-        data-testid="cabinet-menu-remove"
-        onClick={run(() => void removeItem(item.id))}
-      >
-        {STR.cabinet.menu.remove}
-      </button>
+      {excludeFrom && (
+        <button
+          type="button"
+          role="menuitem"
+          data-testid="cabinet-menu-exclude"
+          title={STR.cabinet.menu.excludeTitle}
+          onClick={run(() => void excludeFromCategory(item.id, excludeFrom.id))}
+        >
+          {STR.cabinet.menu.exclude(excludeFrom.name)}
+        </button>
+      )}
     </div>
   );
 }

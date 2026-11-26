@@ -1,4 +1,4 @@
-import { closeCabiWindows, startCabiHost } from "./cabiService";
+import { cabiClient, closeCabiWindows, startCabiHost } from "./cabiService";
 // Cabinet 화면 상태(features-1102-spec F5). 등록·연결은 일지(JournalRepository), 열린 창·하위 위치는 이 PC 설정(config.json `cabinet`).
 // 폴더 창: 실앱 = 별도 OS 창(Platform.folderWindows), 브라우저 모드 = 앱 안 떠 있는 창(같은 FolderView).
 import { create } from "zustand";
@@ -28,6 +28,7 @@ import type { CabinetConfig, CabinetFocus, CabinetWindowBridge, FolderWindowSpec
 import type { JournalRepository } from "../../data/repository";
 import { resolveTheme } from "../../shared/theme";
 import { STR } from "../../shared/strings";
+import { CABI } from "../../shared/cabiStrings";
 import { reportError, toast, useBoard } from "../board/boardStore";
 import { isSampleJournal, useAppStore } from "../common/appStore";
 import { openLink } from "../common/openLink";
@@ -317,6 +318,57 @@ export async function addItemToCategory(itemId: string, categoryId: string) {
     await r.setCabinetLinks(itemId, [...drafts, { categoryId }]);
     await loadCabinet();
     toast(STR.cabinet.linkedToCat(it.title, cat.name));
+  } catch (e) {
+    reportError(e);
+  }
+}
+
+/** ⋯ › ‘업무’에서 빼기(improve-v26-spec 4절) — 그 업무 연결(업무·그 업무 항목)만 끊고 항목은 Cabi.NET에 남긴다 */
+export async function excludeFromCategory(itemId: string, categoryId: string) {
+  const s = useCabinet.getState();
+  const it = s.items.find((i) => i.id === itemId);
+  const cat = s.categories.find((c) => c.id === categoryId);
+  const r = repo();
+  if (!it || !cat || !r) return;
+  const before = draftsOf(itemId);
+  const keep = s.links
+    .filter((l) => l.itemId === itemId)
+    .filter((l) => (l.categoryId ?? l.entry?.categoryId ?? null) !== categoryId)
+    .map((l): CabinetLinkDraft => (l.categoryId ? { categoryId: l.categoryId } : { entryId: l.entryId! }));
+  if (keep.length === before.length) return;
+  try {
+    await r.setCabinetLinks(itemId, keep);
+    await loadCabinet();
+    toast(STR.cabinet.excluded(it.title, cat.name), {
+      label: STR.toast.undo,
+      run: () => void r.setCabinetLinks(itemId, before).then(loadCabinet).catch(reportError),
+    });
+  } catch (e) {
+    reportError(e);
+  }
+}
+
+/** 업무노트를 왼쪽 업무에 끌어 놓기 = 그 업무로 옮기기(improve-v26-spec 2절 — 노트는 업무 하나에 속한다) */
+let draggingNote: { id: string; title: string; categoryId: string } | null = null;
+export const noteDrag = {
+  start(n: { id: string; title: string; categoryId: string }) {
+    draggingNote = n;
+  },
+  end() {
+    draggingNote = null;
+  },
+  current: () => draggingNote,
+};
+export async function moveNoteToCategory(categoryId: string) {
+  const n = draggingNote;
+  draggingNote = null;
+  const cat = useCabinet.getState().categories.find((c) => c.id === categoryId);
+  if (!n || !cat) return;
+  if (n.categoryId === categoryId) return toast(CABI.noteAlreadyIn(cat.name));
+  try {
+    await cabiClient().moveNote(n.id, categoryId);
+    await loadCabinet();
+    toast(CABI.noteMoved(n.title, cat.name));
   } catch (e) {
     reportError(e);
   }

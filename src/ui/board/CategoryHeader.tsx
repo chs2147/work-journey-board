@@ -8,7 +8,10 @@ import { CATEGORY_COLOR_KEYS, CATEGORY_COLORS } from "../../shared/palette";
 import { STR } from "../../shared/strings";
 import {
   archiveCategory,
+  categoryStart,
+  changeCategoryStart,
   countItems,
+  journalToday as platformToday,
   deleteCategory,
   keepCategory,
   moveCategory,
@@ -19,6 +22,7 @@ import {
 import { TagPopover } from "./TagPopover";
 import { openInsights } from "../insights/insightsStore";
 import { isComposingKey } from "./helpers";
+import { startDateProblem } from "../../domain/categories";
 import styles from "./Board.module.css";
 
 /** 메뉴를 연 직후 이만큼은 스크롤로 닫지 않는다(포커스 때문에 생긴 스크롤) */
@@ -64,6 +68,8 @@ export function CategoryHeader({
   const [editing, setEditing] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [canDelete, setCanDelete] = useState(false);
+  /** 시작일 바꾸기 칸(improve-v26-spec 1절) — 메뉴 안에서 연다 */
+  const [startForm, setStartForm] = useState<{ value: string; error: string | null } | null>(null);
   const [dropAt, setDropAt] = useState<DropPlace | null>(null);
   /** 태그 팝오버를 붙인 업무 머리(null = 닫힘) */
   const [tagAnchor, setTagAnchor] = useState<HTMLElement | null>(null);
@@ -119,7 +125,7 @@ export function CategoryHeader({
     const top = below + h <= window.innerHeight - 8 ? below : Math.max(8, r.top - 2 - h);
     menu.style.top = `${top}px`;
     menu.style.left = `${Math.min(r.left, window.innerWidth - menu.offsetWidth - 8)}px`;
-  }, [menuOpen]);
+  }, [menuOpen, startForm !== null]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const run = (fn: () => unknown) => {
     setMenuOpen(false);
@@ -204,11 +210,64 @@ export function CategoryHeader({
             aria-label={STR.categoryMenu.open(category.name)}
             title={STR.categoryMenu.open(category.name)}
             aria-expanded={menuOpen}
-            onClick={() => setMenuOpen((o) => !o)}
+            onClick={() => {
+              setStartForm(null);
+              setMenuOpen((o) => !o);
+            }}
           >
             ⋯
           </button>
-          {menuOpen && (
+          {menuOpen && startForm && (
+            <div className={styles.menu} role="dialog" ref={menuListRef} aria-label={STR.categoryMenu.start}>
+              <form
+                className={styles.startForm}
+                noValidate
+                data-testid="category-start-form"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const v = startForm.value;
+                  const problem = startDateProblem([], v, platformToday());
+                  if (problem)
+                    return setStartForm({ value: v, error: STR.categoryMenu.startProblem[problem] });
+                  void changeCategoryStart(category.id, v)
+                    .then(() => setMenuOpen(false))
+                    .catch((err: unknown) => {
+                      const code = String(err instanceof Error ? err.message : err).match(
+                        /START_DATE_(INVALID|FUTURE|AFTEREND)/,
+                      )?.[1];
+                      const key = code === "AFTEREND" ? "afterEnd" : code === "FUTURE" ? "future" : "invalid";
+                      setStartForm({ value: v, error: STR.categoryMenu.startProblem[key] });
+                    });
+                }}
+              >
+                <label>
+                  {STR.categoryMenu.startLabel}
+                  <input
+                    type="date"
+                    autoFocus
+                    value={startForm.value}
+                    max={platformToday()}
+                    data-testid="category-start-input"
+                    onChange={(e) => setStartForm({ value: e.currentTarget.value, error: null })}
+                  />
+                </label>
+                {startForm.error && (
+                  <span className={styles.startError} role="alert">
+                    {startForm.error}
+                  </span>
+                )}
+                <span className={styles.startBtns}>
+                  <button type="button" onClick={() => setMenuOpen(false)}>
+                    {STR.categoryMenu.startCancel}
+                  </button>
+                  <button type="submit" data-testid="category-start-apply">
+                    {STR.categoryMenu.startApply}
+                  </button>
+                </span>
+              </form>
+            </div>
+          )}
+          {menuOpen && !startForm && (
             <div className={styles.menu} role="menu" ref={menuListRef}>
               <button
                 role="menuitem"
@@ -262,6 +321,18 @@ export function CategoryHeader({
                 onClick={() => run(() => moveCategory(category.id, 1))}
               >
                 {STR.categoryMenu.moveDown}
+              </button>
+              <button
+                role="menuitem"
+                type="button"
+                data-testid="category-start"
+                onClick={() =>
+                  void categoryStart(category.id).then((d) =>
+                    setStartForm({ value: d ?? platformToday(), error: null }),
+                  )
+                }
+              >
+                {STR.categoryMenu.start}
               </button>
               {!ended && (
                 <button role="menuitem" type="button" onClick={() => run(() => archiveCategory(category.id))}>
