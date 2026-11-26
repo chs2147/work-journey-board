@@ -396,6 +396,7 @@ export const STR_BASE = {
       excludeTitle: "이 업무 목록에서만 빼고 Cabi.NET에는 그대로 둡니다",
     },
     deleteItem: "삭제",
+    dragRow: "끌어서 순서 바꾸기·업무에 연결·보드에 놓기",
     deleteItemTitle: "Cabi.NET에서 삭제 (폴더·파일·사이트는 그대로)",
     excluded: (t: string, cat: string) => `‘${t}’을(를) ‘${cat}’에서 뺐습니다 — Cabi.NET에는 그대로 있습니다`,
     linkedTo: (s: string) => `연결: ${s}`,

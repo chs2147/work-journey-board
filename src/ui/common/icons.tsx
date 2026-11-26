@@ -64,6 +64,22 @@ export const IconExpand = () => (
   </Svg>
 );
 
+/** 열기(새 창·기본 앱으로) — 상자 밖으로 나가는 화살표. 최대화(⤢)와 구분(improve-v26-spec 5절) */
+export const IconOpen = () => (
+  <Svg>
+    <path d="M7 3H3v10h10V9M9 2.5h4.5V7M13.5 2.5L7.5 8.5" />
+  </Svg>
+);
+
+/** 더 보기(⋯) */
+export const IconMore = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+    {[3.5, 8, 12.5].map((x) => (
+      <circle key={x} cx={x} cy="8" r="1.3" fill="currentColor" />
+    ))}
+  </svg>
+);
+
 /** 보드와 함께 보기: 안으로 */
 export const IconShrink = () => (
   <Svg>

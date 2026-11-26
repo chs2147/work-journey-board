@@ -37,7 +37,15 @@
 - 이름 결정: "삭제·해제·제거"를 쓰지 않고, 업무 이름을 넣어 **어디에서 빠지는지**를 바로 보이게 했다(예: ‘협력사 보안 점검’에서 빼기).
 - 동작: 그 업무의 연결(업무 연결 + 그 업무 항목 연결)만 끊는다. 다른 업무 연결·항목 자체는 그대로, 다른 연결이 없으면 "연결 없음" 묶음으로 간다. 알림 "‘제목’을(를) ‘업무’에서 뺐습니다 — Cabi.NET에는 그대로 있습니다" [되돌리기] = 이전 연결 그대로.
 
-## 5. 결정 항목
+## 5. 줄 끝 단추 통일(2026-11-26 사용자 추가 요청 — 시안 `docs/mockups/v26/row-buttons.html`, **C안 선택**)
+
+- 업무노트·폴더·링크 줄이 같은 단추 모양·크기·순서를 쓴다(`src/ui/cabinet/RowActions.tsx`·`RowActions.module.css`).
+  - 30px 단추 넷을 한 테두리로 묶음: **① 끌기 ⠿ · ② 종류별(노트 = 복제, 폴더 = 탐색기에서 열기 — 경로 미지정이면 경로 지정, 찾을 수 없음이면 빈칸 / 링크 = 빈칸 빗금) · ③ 열기 · ④ ⋯**. 오른쪽에 따로 **⑤ 삭제 🗑**(잠긴 노트는 🔒). 삭제는 마우스를 올리면 빨강.
+  - 종류 꼬리표(노트·폴더·링크)와 날짜 칸을 세 종류 모두 같은 자리에(폴더·링크는 날짜 빈칸).
+- **열기 아이콘**: 최대화처럼 보이던 양쪽 화살표(⤢) 대신 **상자 밖으로 나가는 화살표**(`IconOpen`, 새 창·기본 앱으로 열기) — 사용자 요청.
+- 폴더·링크에도 ⠿가 보인다(줄 전체를 끄는 동작 그대로, 손잡이는 표시). 업무노트에도 ⋯가 생겼다: 별도 창에서 열기 · 노트 복제 · **다른 업무로 옮기기**(업무 목록, 끌어 놓기와 같은 `moveNoteTo`).
+
+## 6. 결정 항목
 
 | # | 항목 | 결정(추천안) |
 |---|---|---|
@@ -50,9 +58,10 @@
 | D7 | 업무에서 빼기 이름 | **‘업무 이름’에서 빼기** — 삭제 뜻이 없는 낱말 + 업무 이름 |
 | D8 | 업무에서 빼기 범위 | 그 업무 연결 + 그 업무 항목 연결만, 되돌리기 |
 | D9 | 코칭 | **T0 "업무 = 한 줄" 단계 문구에 시작일 추가 → T0 콘텐츠 판 v2**(끝까지 본 사용자에게 "새 단계" 표시). Cabi.NET 투어(T8)는 변경 없음 — 끌기 손잡이·⋯ 메뉴 자리가 그대로라 새 단계가 필요 없음 |
+| D11 | 줄 끝 단추 | **C안**(묶음 + 따로 삭제), 열기 아이콘 = 상자 밖 화살표, 노트 ⋯ 추가 |
 | D10 | 가이드 | 장면02(업무 시작일 팁)·장면11(노트 옮기기·업무에서 빼기·삭제 단추) 글, 장면11 그림 다시 찍기 |
 
-## 6. 구현 기록(작업 브랜치 `improve-v26`)
+## 7. 구현 기록(작업 브랜치 `improve-v26`)
 
 - `src/domain/categories.ts` `startDateProblem` · `src/data/repository.ts` `categoryStart`·`setCategoryStart` · `src/ui/board/boardStore.ts` `changeCategoryStart`(되돌리기 알림)·`journalToday` · `src/ui/board/CategoryHeader.tsx` 메뉴 안 날짜 칸(`category-start`·`category-start-input`·`category-start-apply`).
 - `src/data/cabiRepository.ts` `moveNote` · `src/ui/cabinet/cabiService.ts` 허용 목록 `moveNote`(노트 창 열림이면 거절) · `src/ui/cabinet/cabinetStore.ts` `noteDrag`·`moveNoteToCategory`·`excludeFromCategory` · `CabiDrag.tsx` 손잡이 `onStart`/`onEnd` · `CabiHub.tsx` 노트 손잡이 연결 · `CabinetPanel.tsx` 업무 묶음에 노트 놓기, 줄 끝 🗑(`cabinet-row-delete`), ⋯ ‘업무’에서 빼기(`cabinet-menu-exclude`), [등록 해제] 제거.

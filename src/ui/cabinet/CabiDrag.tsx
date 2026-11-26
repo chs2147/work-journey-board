@@ -13,12 +13,15 @@ export function CabiDragGrip({
   boxId,
   onStart,
   onEnd,
+  className,
 }: {
   reference?: CabiReference;
   boxId?: string;
   /** 같은 창 안에서 끌기 시작·끝을 알아야 할 때(Cabinet 업무 묶음에 노트 놓기 — improve-v26-spec 2절) */
   onStart?: () => void;
   onEnd?: () => void;
+  /** 단추 모양 바꾸기(Cabi.NET 줄 끝 묶음 — improve-v26-spec 5절) */
+  className?: string;
 }) {
   const [ready, setReady] = useState(false);
   const activeToken = useRef<string | null>(null);
@@ -70,7 +73,7 @@ export function CabiDragGrip({
         onEnd?.();
         void cabiCall("dragEnd", activeToken.current).catch(() => undefined);
       }}
-      className={`${styles.icon} ${styles.copyGrip}`}
+      className={className ?? `${styles.icon} ${styles.copyGrip}`}
       data-testid={reference ? "cabi-drag-grip" : "cabi-copy-grip"}
       title={reference ? CABI.dragResource : CABI.dragCopy}
       aria-label={reference ? CABI.dragResource : CABI.dragCopy}

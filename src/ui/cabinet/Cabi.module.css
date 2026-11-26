@@ -959,3 +959,39 @@
   background: var(--surface-sub);
   font-size: 13px;
 }
+/* 업무노트 ⋯ 메뉴(improve-v26-spec 5절) */
+.noteMenu {
+  position: fixed;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  min-width: 220px;
+  max-height: 60vh;
+  overflow: auto;
+  padding: var(--sp-1);
+  background: var(--surface-card);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  box-shadow: 0 6px 18px rgb(0 0 0 / 0.14);
+}
+.noteMenu > button {
+  padding: var(--sp-2) var(--sp-3);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-1);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+.noteMenu > button:hover,
+.noteMenu > button:focus-visible {
+  background: var(--surface-sub);
+}
+.noteMenuLabel {
+  margin-top: var(--sp-1);
+  padding: var(--sp-2) var(--sp-3) var(--sp-1);
+  border-top: 1px solid var(--line);
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+}

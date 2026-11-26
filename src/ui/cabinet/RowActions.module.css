@@ -1,0 +1,86 @@
+/* Cabi.NET 줄 끝 단추 C안(improve-v26-spec 5절) — 30px 단추 넷을 한 테두리로, 삭제는 따로 */
+.acts {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.group {
+  display: grid;
+  grid-template-columns: repeat(4, 30px);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--surface-card);
+}
+.btn,
+.del {
+  width: 30px;
+  height: 30px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-2);
+  font: inherit;
+  cursor: pointer;
+}
+.group > * + * {
+  border-left: 1px solid var(--line);
+}
+.btn:hover,
+.btn:focus-visible {
+  background: var(--surface-focus);
+  color: var(--text-1);
+}
+.btn svg,
+.del svg {
+  width: 16px;
+  height: 16px;
+}
+.grab {
+  cursor: grab;
+}
+.grab:active {
+  cursor: grabbing;
+}
+.empty {
+  cursor: default;
+  background: repeating-linear-gradient(135deg, transparent 0 4px, var(--surface-sub) 4px 5px);
+}
+.empty:hover {
+  background: repeating-linear-gradient(135deg, transparent 0 4px, var(--surface-sub) 4px 5px);
+}
+.del {
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-card);
+}
+.del:hover,
+.del:focus-visible {
+  color: var(--danger);
+  border-color: var(--danger);
+  background: var(--danger-soft);
+}
+.locked {
+  color: var(--accent);
+}
+.tag {
+  flex: none;
+  font-size: var(--fs-xs);
+  padding: 2px 7px;
+  background: var(--surface-sub);
+  color: var(--text-2);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  white-space: nowrap;
+}
+.date {
+  flex: none;
+  width: 78px;
+  text-align: right;
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+  white-space: nowrap;
+}

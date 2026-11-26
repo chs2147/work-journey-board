@@ -13,10 +13,13 @@ import {
   IconExpand,
   IconCopyItem,
   IconLock,
+  IconMore,
+  IconOpen,
 } from "../common/icons";
+import { ActBtn, RowActions, RowMeta, rowActStyles } from "./RowActions";
 import { V20 } from "../../shared/v20Strings";
 import { DeleteNoteDialog } from "./DeleteNoteDialog";
-import { noteDrag } from "./cabinetStore";
+import { moveNoteTo, noteDrag } from "./cabinetStore";
 import { reportError } from "../board/boardStore";
 import { cabiClient, cabiContext, createCabiNote, openCabi, useCabiChange } from "./cabiService";
 import { CabiDragGrip } from "./CabiDrag";
@@ -50,7 +53,13 @@ export function CabiHub({
     [chosen, setChosen] = useState(""),
     [error, setError] = useState(""),
     [notice, setNotice] = useState<{ id: string; title: string } | null>(null),
-    [deleting, setDeleting] = useState<{ note: CabiNoteSummary; refs: number; images: number } | null>(null);
+    [deleting, setDeleting] = useState<{ note: CabiNoteSummary; refs: number; images: number } | null>(null),
+    [noteMenu, setNoteMenu] = useState<{ note: CabiNoteSummary; x: number; y: number } | null>(null);
+  const duplicate = (id: string) =>
+    void cabiClient()
+      .duplicateNote(id)
+      .then((c) => setNotice({ id: c.id, title: c.title }))
+      .catch(reportError);
   useEffect(() => {
     if (!notice) return;
     const t = setTimeout(() => setNotice(null), 6000);
@@ -247,6 +256,16 @@ export function CabiHub({
                   </button>
                 </p>
               )}
+              {noteMenu && (
+                <NoteMenu
+                  at={noteMenu}
+                  tasks={tasks.filter((t) => t.id !== noteMenu.note.categoryId)}
+                  onClose={() => setNoteMenu(null)}
+                  onOpen={() => void openCabi("note", noteMenu.note.id).catch(reportError)}
+                  onDuplicate={() => duplicate(noteMenu.note.id)}
+                  onMove={(t) => void moveNoteTo(noteMenu.note, t)}
+                />
+              )}
               {deleting && (
                 <DeleteNoteDialog
                   title={deleting.note.title}
@@ -282,65 +301,72 @@ export function CabiHub({
                         (n.excerpt || CABI.noteOwner)}
                     </small>
                   </button>
-                  <span className={styles.tag}>{CABI.note}</span>
-                  <span className={styles.muted}>{n.updatedAt.slice(0, 10)}</span>
-                  <CabiDragGrip
-                    reference={{ kind: "note", id: n.id }}
-                    onStart={() => noteDrag.start({ id: n.id, title: n.title, categoryId: n.categoryId })}
-                    onEnd={noteDrag.end}
-                  />
-                  <button
-                    className={styles.icon}
-                    title={V20.duplicate}
-                    aria-label={V20.duplicate}
-                    data-testid="cabi-note-duplicate"
-                    onClick={() =>
-                      void cabiClient()
-                        .duplicateNote(n.id)
-                        .then((c) => setNotice({ id: c.id, title: c.title }))
-                        .catch(reportError)
+                  <RowMeta tag={CABI.note} date={n.updatedAt.slice(0, 10)} />
+                  <RowActions
+                    del={
+                      n.deleteLocked ? (
+                        <ActBtn
+                          danger
+                          className={rowActStyles.locked}
+                          aria-label={V20.lockedRow}
+                          data-testid="cabi-note-locked"
+                          onClick={() => setError(V20.lockedRow)}
+                        >
+                          <IconLock />
+                        </ActBtn>
+                      ) : (
+                        <ActBtn
+                          danger
+                          aria-label={CABI.deleteNote}
+                          data-testid="cabi-note-delete"
+                          onClick={() =>
+                            void (async () => {
+                              const r = cabiClient();
+                              const [refs, full] = await Promise.all([
+                                r.referenceCount("note", n.id),
+                                r.note(n.id),
+                              ]);
+                              setDeleting({ note: n, refs, images: cabiAssetIds(full.content).length });
+                            })().catch(reportError)
+                          }
+                        >
+                          <IconTrash />
+                        </ActBtn>
+                      )
                     }
                   >
-                    <IconCopyItem />
-                  </button>
-                  <button
-                    className={styles.icon}
-                    aria-label={CABI.open}
-                    title={CABI.open}
-                    onClick={() => void openCabi("note", n.id).catch(reportError)}
-                  >
-                    <IconExpand />
-                  </button>
-                  {n.deleteLocked ? (
-                    <button
-                      className={`${styles.icon} ${styles.lockedIcon}`}
-                      title={V20.lockedRow}
-                      aria-label={V20.lockedRow}
-                      data-testid="cabi-note-locked"
-                      onClick={() => setError(V20.lockedRow)}
+                    <CabiDragGrip
+                      reference={{ kind: "note", id: n.id }}
+                      className={`${rowActStyles.btn} ${rowActStyles.grab}`}
+                      onStart={() => noteDrag.start({ id: n.id, title: n.title, categoryId: n.categoryId })}
+                      onEnd={noteDrag.end}
+                    />
+                    <ActBtn
+                      aria-label={V20.duplicate}
+                      data-testid="cabi-note-duplicate"
+                      onClick={() => duplicate(n.id)}
                     >
-                      <IconLock />
-                    </button>
-                  ) : (
-                    <button
-                      className={styles.icon}
-                      title={CABI.deleteNote}
-                      aria-label={CABI.deleteNote}
-                      data-testid="cabi-note-delete"
-                      onClick={() =>
-                        void (async () => {
-                          const r = cabiClient();
-                          const [refs, full] = await Promise.all([
-                            r.referenceCount("note", n.id),
-                            r.note(n.id),
-                          ]);
-                          setDeleting({ note: n, refs, images: cabiAssetIds(full.content).length });
-                        })().catch(reportError)
-                      }
+                      <IconCopyItem />
+                    </ActBtn>
+                    <ActBtn
+                      aria-label={CABI.open}
+                      data-testid="cabi-note-open"
+                      onClick={() => void openCabi("note", n.id).catch(reportError)}
                     >
-                      <IconTrash />
-                    </button>
-                  )}
+                      <IconOpen />
+                    </ActBtn>
+                    <ActBtn
+                      aria-label={CABI.more}
+                      aria-haspopup="menu"
+                      data-testid="cabi-note-more"
+                      onClick={(e) => {
+                        const r = e.currentTarget.getBoundingClientRect();
+                        setNoteMenu({ note: n, x: r.right, y: r.bottom });
+                      }}
+                    >
+                      <IconMore />
+                    </ActBtn>
+                  </RowActions>
                 </article>
               ))}
               {view === "list" ? (
@@ -453,6 +479,73 @@ function BoardGallery({ tasks }: { tasks: { id: string; name: string }[] }) {
           {CABI.loadMore}
         </button>
       )}
+    </div>
+  );
+}
+
+/** 업무노트 ⋯ — 열기·복제·다른 업무로 옮기기(improve-v26-spec 5절) */
+function NoteMenu({
+  at,
+  tasks,
+  onClose,
+  onOpen,
+  onDuplicate,
+  onMove,
+}: {
+  at: { x: number; y: number };
+  tasks: { id: string; name: string }[];
+  onClose(): void;
+  onOpen(): void;
+  onDuplicate(): void;
+  onMove(categoryId: string): void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    ref.current?.querySelector("button")?.focus();
+    const down = (e: MouseEvent) => !ref.current?.contains(e.target as Node) && onClose();
+    const key = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        onClose();
+      }
+    };
+    document.addEventListener("mousedown", down);
+    document.addEventListener("keydown", key, true);
+    return () => {
+      document.removeEventListener("mousedown", down);
+      document.removeEventListener("keydown", key, true);
+    };
+  }, [onClose]);
+  const run = (fn: () => void) => () => {
+    onClose();
+    fn();
+  };
+  return (
+    <div
+      ref={ref}
+      role="menu"
+      className={styles.noteMenu}
+      style={{ top: at.y + 2, left: Math.max(8, at.x - 220) }}
+      data-testid="cabi-note-menu"
+    >
+      <button role="menuitem" type="button" onClick={run(onOpen)}>
+        {CABI.open}
+      </button>
+      <button role="menuitem" type="button" onClick={run(onDuplicate)}>
+        {V20.duplicate}
+      </button>
+      {tasks.length > 0 && <div className={styles.noteMenuLabel}>{CABI.moveNoteTo}</div>}
+      {tasks.map((t) => (
+        <button
+          key={t.id}
+          role="menuitem"
+          type="button"
+          data-testid="cabi-note-move"
+          onClick={run(() => onMove(t.id))}
+        >
+          {t.name}
+        </button>
+      ))}
     </div>
   );
 }

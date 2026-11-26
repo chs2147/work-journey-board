@@ -43,6 +43,7 @@ export const CABI = localizeTree({
   moveNoteOpen: "노트 창이 열려 있어 옮기지 않았습니다 — 창을 닫거나 창 안 업무 고르기로 옮겨 주세요",
   noteMoved: (title: string, cat: string) => `‘${title}’ 노트를 ‘${cat}’(으)로 옮겼습니다`,
   noteAlreadyIn: (cat: string) => `이미 ‘${cat}’의 노트입니다`,
+  moveNoteTo: "다른 업무로 옮기기",
   deleteConfirm: (n: number) => `노트를 삭제할까요? 보드 참조 ${n}개에는 원본 없음으로 표시됩니다.`,
   library: "자료함",
   weekly: "주간 메모",

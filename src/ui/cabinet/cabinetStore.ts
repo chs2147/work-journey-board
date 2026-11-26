@@ -362,6 +362,10 @@ export const noteDrag = {
 export async function moveNoteToCategory(categoryId: string) {
   const n = draggingNote;
   draggingNote = null;
+  if (n) await moveNoteTo(n, categoryId);
+}
+/** 노트 ⋯ › 다른 업무로 옮기기 · 업무 묶음에 끌어 놓기 공통 */
+export async function moveNoteTo(n: { id: string; title: string; categoryId: string }, categoryId: string) {
   const cat = useCabinet.getState().categories.find((c) => c.id === categoryId);
   if (!n || !cat) return;
   if (n.categoryId === categoryId) return toast(CABI.noteAlreadyIn(cat.name));

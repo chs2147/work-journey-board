@@ -49,7 +49,8 @@ import {
   startRename,
   useCabinet,
 } from "./cabinetStore";
-import { IconTrash } from "../common/icons";
+import { IconGrip, IconMore, IconOpen, IconTrash } from "../common/icons";
+import { ActBtn, ActEmpty, RowActions, RowMeta, rowActStyles } from "./RowActions";
 import styles from "./Cabinet.module.css";
 
 /** 앱 안에서만 쓰는 끌기 자료 형식(줄 순서·업무에 놓기, improve-1102-spec C3·C4) — 등록용 놓기와 섞이지 않는다 */
@@ -437,13 +438,33 @@ function CabinetRow({ item, drag }: { item: CabinetItem; drag: RowDrag }) {
         )}
         <div className={styles.rowSub}>{sub}</div>
       </div>
-      <div className={styles.rowBtns}>
-        {unbound && (
-          <button
-            type="button"
-            className={styles.iconBtn}
+      <RowMeta tag={STR.cabinet.filters[item.kind]} />
+      <RowActions
+        del={
+          <ActBtn
+            danger
+            aria-label={STR.cabinet.deleteItemTitle}
+            data-testid="cabinet-row-delete"
+            onClick={(e) => {
+              e.stopPropagation();
+              void removeItem(item.id);
+            }}
+          >
+            <IconTrash />
+          </ActBtn>
+        }
+      >
+        <span
+          className={`${rowActStyles.btn} ${rowActStyles.grab}`}
+          title={STR.cabinet.dragRow}
+          aria-hidden="true"
+          data-testid="cabinet-row-grip"
+        >
+          <IconGrip />
+        </span>
+        {unbound ? (
+          <ActBtn
             aria-label={STR.cabinet.bindPath}
-            title={STR.cabinet.bindPath}
             data-testid="cabinet-row-bind"
             onClick={(e) => {
               e.stopPropagation();
@@ -451,14 +472,10 @@ function CabinetRow({ item, drag }: { item: CabinetItem; drag: RowDrag }) {
             }}
           >
             <ExplorerIcon />
-          </button>
-        )}
-        {item.kind === "folder" && !missing && !unbound && (
-          <button
-            type="button"
-            className={styles.iconBtn}
+          </ActBtn>
+        ) : item.kind === "folder" && !missing ? (
+          <ActBtn
             aria-label={STR.cabinet.revealRow}
-            title={STR.cabinet.revealRow}
             data-testid="cabinet-row-reveal"
             onClick={(e) => {
               e.stopPropagation();
@@ -466,48 +483,32 @@ function CabinetRow({ item, drag }: { item: CabinetItem; drag: RowDrag }) {
             }}
           >
             <ExplorerIcon />
-          </button>
+          </ActBtn>
+        ) : (
+          <ActEmpty />
         )}
-        <button
-          type="button"
-          className={styles.iconBtn}
+        <ActBtn
           aria-label={STR.cabinet.open}
-          title={STR.cabinet.open}
+          data-testid="cabinet-row-open"
           onClick={(e) => {
             e.stopPropagation();
             void openItem(item.id);
           }}
         >
-          ↗
-        </button>
-        <button
-          type="button"
-          className={styles.iconBtn}
-          aria-label={STR.cabinet.deleteItemTitle}
-          title={STR.cabinet.deleteItemTitle}
-          data-testid="cabinet-row-delete"
-          onClick={(e) => {
-            e.stopPropagation();
-            void removeItem(item.id);
-          }}
-        >
-          <IconTrash />
-        </button>
-        <button
-          type="button"
-          className={styles.iconBtn}
+          <IconOpen />
+        </ActBtn>
+        <ActBtn
           aria-label={STR.cabinet.more}
           aria-haspopup="menu"
-          title={STR.cabinet.more}
           data-testid="cabinet-row-more"
           onClick={(e) => {
             e.stopPropagation();
             openMenuAt(e.currentTarget);
           }}
         >
-          ⋯
-        </button>
-      </div>
+          <IconMore />
+        </ActBtn>
+      </RowActions>
       {menu && <RowMenu item={item} at={menu} onClose={() => setMenu(null)} />}
     </li>
   );
