@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "product": "Work Journey Board",
-  "catalogVersion": "1.54.0",
+  "catalogVersion": "1.54.1",
   "asOfDate": "2026-11-26",
-  "baseRelease": "1.54.0",
-  "sourceCommit": "30242c7",
+  "baseRelease": "1.54.1",
+  "sourceCommit": "a9c63d8",
   "appSchemaVersion": 20,
   "versionDefinition": "최초 제공 = 비RC 출시 이력에서 기능 제공이 확인된 최초 버전(0.x 개발판 포함); RC는 preview로 별도 기록",
   "verificationScope": "문서·출시 이력·현행 소스 위치 대조. 기능별 실기 전수 검증을 뜻하지 않음.",
@@ -10962,6 +10962,12 @@
           "type": "changed",
           "description": "승인된 1.31.0-rc.1 변경을 1.35.0 정식 main에 반영.",
           "source": "docs/release-notes/v1.35.0.md"
+        },
+        {
+          "version": "1.54.1",
+          "type": "changed",
+          "description": "온라인 공간을 연 채로도 새 판 확인·내려받기·설치(예전엔 늘 최신으로 답함), 설치 직전 보낼 변경을 서버로 먼저 보냄.",
+          "source": "docs/release-notes/v1.54.1.md"
         }
       ],
       "sources": [
@@ -10973,7 +10979,8 @@
         "docs/release-notes/v1.24.0.md",
         "docs/improve-v22-spec.md",
         "docs/release-notes/v1.31.0-rc.1.md",
-        "docs/release-notes/v1.35.0.md"
+        "docs/release-notes/v1.35.0.md",
+        "docs/release-notes/v1.54.1.md"
       ],
       "implementation": [
         "src/platform"
