@@ -231,3 +231,34 @@ it("온라인 Cabinet은 이 기기의 등록 경로만 조회하고 등록 해�
   expect(stat.mock.calls).toHaveLength(1);
   expect(roots.mock.calls).toEqual([[["/virtual/reference"]], [[]]]);
 });
+
+// hotfix 1.54.1: 온라인 공간을 연 정식판도 새 판을 찾는다 — 예전엔 늘 null("최신 판")이었다
+it("온라인 공간 플랫폼은 받은 정식 업데이트 경로를 그대로 쓰고, 없으면 새 판 없음", async () => {
+  const SQL = await initSqlJs();
+  const base = {
+    SQL,
+    workspaceId: "synthetic",
+    windows: { cabi: {} as never },
+    openJournal: async () => {
+      throw new Error("path-only check");
+    },
+  };
+  const info = { version: "9.9.9", notes: "", size: 1, hasHash: true };
+  const updates = {
+    updateCheck: vi.fn(async () => info),
+    updateDownload: vi.fn(async () => undefined),
+    updateInstall: vi.fn(async () => undefined),
+  };
+  const local = { kind: "tauri" } as never;
+  const p = createOnlinePlatform({ ...base, updates, localPlatform: local });
+  expect(await p.updateCheck()).toEqual(info);
+  const prog = () => undefined;
+  await p.updateDownload(prog);
+  await p.updateInstall();
+  expect(updates.updateDownload).toHaveBeenCalledWith(prog);
+  expect(updates.updateInstall).toHaveBeenCalledTimes(1);
+  expect(p.localPlatform).toBe(local);
+  const plain = createOnlinePlatform(base);
+  expect(await plain.updateCheck()).toBeNull();
+  expect(plain.localPlatform).toBeUndefined();
+});

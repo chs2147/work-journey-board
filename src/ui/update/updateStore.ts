@@ -152,9 +152,11 @@ export async function installUpdate() {
     if (j.state === "ready") await preUpdateBackup(platform, j.driver, j.dataDir, platform.now());
     else await copyIncompatibleForUpdate(platform, j.dataDir, platform.now());
     // 이 PC에 등록된 다른 워크스페이스도 한 부씩(D7) — 한 곳이 실패해도(폴더 없음 등) 업데이트는 막지 않는다
+    // 온라인 공간을 연 채면 이 PC 공간 일지는 실앱 플랫폼으로 연다(온라인 플랫폼은 그 공간 폴더 밖을 열지 않음)
+    const local = platform.localPlatform ?? platform;
     for (const w of app.workspaces)
       if (!sameDir(w.dir, j.dataDir))
-        await preUpdateBackupClosed(platform, w.dir, platform.now()).catch(() => false);
+        await preUpdateBackupClosed(local, w.dir, platform.now()).catch(() => false);
     await platform.updateInstall();
     // 실앱은 여기서 닫힌다. 브라우저 모드는 설치하지 않는다
     if (platform.kind === "browser") toast(STR.update.browserOnly);

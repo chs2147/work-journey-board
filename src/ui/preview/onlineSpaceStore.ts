@@ -220,6 +220,20 @@ async function prepare(w: OnlineSpaceInfo): Promise<{ platform: Platform; opened
     workspaceId: w.workspaceId,
     theme: readStoredTheme(),
     onWrite: schedulePush,
+    // 새 판 확인·설치는 정식 경로 그대로. 설치(앱이 닫힘) 직전 보낼 변경을 먼저 서버로 보낸다
+    ...(native
+      ? {
+          localPlatform: native,
+          updates: {
+            updateCheck: () => native.updateCheck(),
+            updateDownload: (onProgress) => native.updateDownload(onProgress),
+            async updateInstall() {
+              await pushBeforeLeave(4000).catch(() => undefined);
+              await native.updateInstall();
+            },
+          },
+        }
+      : {}),
   });
   return {
     platform,

@@ -238,6 +238,8 @@ export interface Platform {
   updateDownload(onProgress: (received: number, total: number) => void): Promise<void>;
   /** 내려받은 설치 파일을 다시 확인하고 실행한 뒤 앱을 닫는다(설치가 끝나면 새 판이 열림) */
   updateInstall(): Promise<void>;
+  /** 온라인 공간 플랫폼만: 이 PC 워크스페이스(닫힌 일지)의 업데이트 전 백업에 쓸 실앱 플랫폼 */
+  readonly localPlatform?: Platform;
 }
 
 /** 새 판 정보 — 주소는 Rust가 들고 있고 웹 화면에는 넘기지 않는다 */
