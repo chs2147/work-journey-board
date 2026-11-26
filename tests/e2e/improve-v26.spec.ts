@@ -68,9 +68,10 @@ test("Cabi.NET: 업무노트를 왼쪽 다른 업무에 끌어 놓으면 그 업
   await child.getByLabel("노트 제목", { exact: true }).fill("옮길 가상 노트");
   await child.getByTestId("cabi-note-editor").click();
   await child.keyboard.type("가상 본문");
-  await child.close();
+  // 자동 저장을 기다린 뒤 닫는다(CI처럼 느린 환경에서 제목이 저장되기 전에 닫히지 않게)
   const row = page.getByTestId("cabi-note-row").filter({ hasText: "옮길 가상 노트" });
-  await expect(row).toBeVisible();
+  await expect(row).toBeVisible({ timeout: 15_000 });
+  await child.close();
 
   await row.getByRole("button", { name: "보드로 끌어 원본 연결" }).dragTo(page.getByTestId(to));
   await expect(page.getByText(/‘옮길 가상 노트’ 노트를 ‘.+’\(으\)로 옮겼습니다/)).toBeVisible();
