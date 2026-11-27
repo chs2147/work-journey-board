@@ -1,10 +1,10 @@
-# 현재 Feature List — v1.55.0
+# 현재 Feature List — v1.55.1
 
 기준일 2026-11-27 · DB 구조 v20 · 활성 288개 · 제거/대체 3개 · 미제공/계획 3개
 
 원본은 [catalog.json](catalog.json), 운영 규칙은 [README.md](README.md)입니다. 최초 제공 버전은 0.x 개발판을 포함한 비RC 출시 이력 기준이며 RC는 별도 필드입니다.
 
-[검토용 Excel](exports/work-journey-board/Work-Journey-Board-Feature-List-v1.55.0.xlsx) · [현재 스냅샷](releases/work-journey-board/v1.55.0.json)
+[검토용 Excel](exports/work-journey-board/Work-Journey-Board-Feature-List-v1.55.1.xlsx) · [현재 스냅샷](releases/work-journey-board/v1.55.1.json)
 
 ## 주간 보드·입력
 
@@ -135,7 +135,7 @@
 | WJB-NOTE-033 | 메모 Markdown 내보내기 — 주간 메모를 Markdown과 이미지 폴더로 저장하거나 복사한다. | 1.3.0 | 1.3.0 | windows / macos |
 | WJB-NOTE-034 | Markdown 파일 텍스트 드롭 — md 파일마다 텍스트 메모를 생성하고 URL 링크를 보존하며 이미지·base64는 제외한다. | 1.14.0 | 1.14.0 | windows / macos |
 | WJB-NOTE-035 | 접이식 세로 도구 팔레트 — 생성·클립보드·위젯을 명칭 없는 구분선과 1열 아이콘으로 제공하고 미니멀 손잡이로 접는다. 관계선 보기/숨김과 확대 등 보기 도구는 상단에 유지한다. | 1.22.0 | 1.24.3 | windows / macos |
-| WJB-NOTE-036 | 객체 가로·세로 프레임 크기 — 자동 측정 높이와 별도로 사용자 높이를 저장하고 네 모서리와 변에서 조절·실행 취소한다. | 1.22.0 | 1.55.0 | windows / macos |
+| WJB-NOTE-036 | 객체 가로·세로 프레임 크기 — 자동 측정 높이와 별도로 사용자 높이를 저장하고 네 모서리와 변에서 조절·실행 취소한다. | 1.22.0 | 1.55.1 | windows / macos |
 
 ## 주간 요약
 
@@ -154,7 +154,7 @@
 
 | Feature ID | 기능 | 최초 제공 | 최근 개선 | 현재 제공 범위 |
 |---|---|---|---|---|
-| WJB-EXPORT-001 | 주·기간·전체 내보내기 — 이번 주·최근 4주·지정 기간·전체 중 범위를 정한다. | 0.1.3 | 1.55.0 | windows / macos |
+| WJB-EXPORT-001 | 주·기간·전체 내보내기 — 이번 주·최근 4주·지정 기간·전체 중 범위를 정한다. | 0.1.3 | 1.55.1 | windows / macos |
 | WJB-EXPORT-002 | 주간보고 시트 — 주차별 업무·요일·메모·주간 요약을 보고용 시트로 구성한다. | 0.1.3 | 0.1.3 | windows / macos |
 | WJB-EXPORT-003 | 원장 시트 — 항목별 원장에 필터·첫 행 고정·중요 표시를 제공한다. | 0.1.3 | 1.13.0 | windows / macos |
 | WJB-EXPORT-004 | 시트 선택·인쇄 설정 — 필요한 시트를 선택하고 A4 가로 인쇄 설정을 포함한다. | 0.1.3 | 0.1.3 | windows / macos |

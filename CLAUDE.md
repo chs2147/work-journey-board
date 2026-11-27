@@ -22,6 +22,7 @@
   | `release-channel-spec.md` | **정식판·DEV 검증판 운영 정책**(2026-11-14 확정) — main 밖 빌드 = DEV(별도 앱 ID·설치·설정 폴더, 업데이트 꺼짐), DEV 일지만(표시 파일·화면/Rust 이중 가드), 설치마다 일지 선택(빈·샘플·정식 복제), DEV 배지·타이틀 띠 · CLAUDE.md 4-8 |
   | `security-audit-1126.md` | 보안 점검(2026-11-25, Cloudflare security-audit 스킬 standard, 기준 `4353022`) — 확정 2건(업무 보드 Markdown 내보내기 이미지 이름 경로 이탈·동기화 받기 행 규칙 누락, 둘 다 낮음)·실기 확인 3건(Cabinet 실행 파일 열기·UNC 자동 조회·`lastExportDir` UNC)·보강 권고, 앱 코드 변경 없음 |
   | `private-repo-plan.md` | 저장소 비공개 전환 점검(2026-11-13, 검토용) — 새 판 확인·내려받기·Pages·Actions 사용 시간 영향, 추천 A안 = 공개 배포 저장소 분리 + 다리 판, 결정 항목 P1~P8 |
+  | `release-notes/v1.55.1.md` | main 패치 — 글 상자 손잡이 8개 되살림(옆면 = 너비만, 위·아래·모서리로 정한 높이만 `heightSet`, ⋯ 높이를 글에 맞춤)·예전 고정 높이로 관계선이 뜨던 문제(`measureBox`·`boxFrameH`), 내보내기 진행 막대·잠금·취소, 구조 v20 유지, 이전 main 1.55.0은 `release/v1.55.0` 보존 |
   | `release-notes/v1.55.0.md` | v27 Open Beta — 업무일지 내보내기(엑셀·마크다운 형식·연도·업무 고르기·구역 구분선)·메모 글 상자 높이 = 글(너비 손잡이만), 코칭 T0·T2 문구, 구조 v20 유지, 이전 main 1.54.1은 `release/v1.54.1` 보존 |
   | `release-notes/v1.54.1.md` | main 패치 — 온라인 공간을 연 채로는 새 판 확인이 늘 "최신"(온라인 플랫폼 `updateCheck` = null, Preview 흔적) → 정식 경로(`update.rs`) 연결·설치 직전 변경 보내기, 구조 v20 유지, 이전 main 1.54.0은 `release/v1.54.0` 보존 |
   | `release-notes/v1.54.0.md` | v26 Open Beta — 업무 시작일 바꾸기·Cabi.NET 업무노트 옮기기·‘업무’에서 빼기·줄 끝 단추 통일(C안)·열기 아이콘, 코칭 T0 판 2, 구조 v20 유지, 이전 main 1.53.3은 `release/v1.53.3` 보존 |

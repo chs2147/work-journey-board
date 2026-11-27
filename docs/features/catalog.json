@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "product": "Work Journey Board",
-  "catalogVersion": "1.55.0",
+  "catalogVersion": "1.55.1",
   "asOfDate": "2026-11-27",
-  "baseRelease": "1.55.0",
-  "sourceCommit": "00da65e",
+  "baseRelease": "1.55.1",
+  "sourceCommit": "cbc686d",
   "appSchemaVersion": 20,
   "versionDefinition": "최초 제공 = 비RC 출시 이력에서 기능 제공이 확인된 최초 버전(0.x 개발판 포함); RC는 preview로 별도 기록",
   "verificationScope": "문서·출시 이력·현행 소스 위치 대조. 기능별 실기 전수 검증을 뜻하지 않음.",
@@ -5008,13 +5008,20 @@
           "type": "changed",
           "description": "창 이름 \"업무일지 내보내기\", 엑셀·마크다운 형식 토글, 범위·포함·미리 계산 구분선, 범위에 연도(첫 기록 주~이번 주)·업무 고르기(전체·1개·여러 개).",
           "source": "docs/release-notes/v1.55.0.md"
+        },
+        {
+          "version": "1.55.1",
+          "type": "changed",
+          "description": "저장 위치를 고른 뒤 진행 막대(단계·%), 진행 중 창 안 조작·앱 단축키 잠금, [취소]·Esc로 파일 없이 멈춤.",
+          "source": "docs/release-notes/v1.55.1.md"
         }
       ],
       "sources": [
         "docs/output-spec.md",
         "README.md",
         "docs/release-notes/v1.55.0.md",
-        "docs/improve-v27-spec.md"
+        "docs/improve-v27-spec.md",
+        "docs/release-notes/v1.55.1.md"
       ],
       "implementation": [
         "src/export",
@@ -5025,7 +5032,7 @@
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "제품 기능",
-      "lastChanged": "1.55.0",
+      "lastChanged": "1.55.1",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
@@ -12705,6 +12712,12 @@
           "type": "changed",
           "description": "글 상자는 옆면 손잡이로 너비만, 높이는 늘 글에 맞춤(예전 고정 높이는 화면·스냅샷에서 쓰지 않음 — 아래 빈칸 해소). 이미지·링크 상자는 그대로.",
           "source": "docs/release-notes/v1.55.0.md"
+        },
+        {
+          "version": "1.55.1",
+          "type": "changed",
+          "description": "글 상자 손잡이 여덟 개 되살림 — 옆면은 너비만(높이 글에 맞춤), 위·아래·모서리로 정한 높이만 유지(heightSet), ⋯ [높이를 글에 맞춤], 관계선 끝점은 글 상자 실제 높이.",
+          "source": "docs/release-notes/v1.55.1.md"
         }
       ],
       "sources": [
@@ -12712,7 +12725,8 @@
         "docs/release-notes/v1.22.0-rc.1.md",
         "docs/release-notes/v1.22.0.md",
         "docs/release-notes/v1.55.0.md",
-        "docs/improve-v27-spec.md"
+        "docs/improve-v27-spec.md",
+        "docs/release-notes/v1.55.1.md"
       ],
       "implementation": [
         "src/ui/note/boxShared.ts",
@@ -12723,7 +12737,7 @@
       "verification": "브라우저·저장소 자동 검사 대상. OS 설치 실기 확인은 별도.",
       "reviewStatus": "미검토",
       "reviewNote": "C안+접기/펼치기 사용자 선택으로 구현.",
-      "lastChanged": "1.55.0",
+      "lastChanged": "1.55.1",
       "schemaRequirement": "DB v18"
     },
     {
