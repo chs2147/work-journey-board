@@ -40,7 +40,8 @@ it("manual frame geometry persists in weekly/task boards, export and migration g
     },
     () => 10,
   );
-  expect(snap.boxes[0]?.rect.h).toBe(160);
+  // 값은 문서에 남지만 텍스트 상자 높이는 늘 글에 맞춘다(improve-v27 D9)
+  expect(snap.boxes[0]?.rect.h).toBeLessThan(160);
   await db.close();
   const old = await openSqlJsMemory();
   await migrate(old, { migrations: MIGRATIONS.filter((m) => m.version <= 17) });

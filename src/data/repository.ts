@@ -1396,19 +1396,48 @@ export class JournalRepository {
     return firstNote && firstNote < firstItem ? firstNote : firstItem;
   }
 
-  /** 내보내기 대화상자의 미리 계산: 주 수 · 기록이 있는 업무 수 · 항목 수(메모 제외) */
-  async exportStats(from: WeekId, to: WeekId): Promise<{ weeks: number; categories: number; items: number }> {
+  /** 내보내기 대화상자의 미리 계산: 주 수 · 기록이 있는 업무 수 · 항목 수(메모 제외). ids = 고른 업무(improve-v27) */
+  async exportStats(
+    from: WeekId,
+    to: WeekId,
+    ids: readonly string[] | null = null,
+  ): Promise<{ weeks: number; categories: number; items: number }> {
     const start = weekStart(from);
     const end = weekRange(to).end;
+    const only = ids ? ` AND category_id IN (${ids.map(() => "?").join(",") || "NULL"})` : "";
     const [r] = await this.db.select<{ items: number; categories: number }>(
-      "SELECT COUNT(*) AS items, COUNT(DISTINCT category_id) AS categories FROM entry_item WHERE date BETWEEN ? AND ? AND trim(text) <> ''",
-      [start, end],
+      `SELECT COUNT(*) AS items, COUNT(DISTINCT category_id) AS categories FROM entry_item WHERE date BETWEEN ? AND ? AND trim(text) <> ''${only}`,
+      [start, end, ...(ids ?? [])],
     );
     return {
       weeks: weekList(from, to).length,
       categories: Number(r?.categories ?? 0),
       items: Number(r?.items ?? 0),
     };
+  }
+
+  /**
+   * 내보내기 [업무] 목록(improve-v27 1-4): 범위와 기간이 겹치는 업무 + 범위 안 기록이 있는 업무, 보드 순서.
+   * ended = 범위 끝 기준 이미 종료된 업무(목록에서 흐리게)
+   */
+  async exportCategories(from: WeekId, to: WeekId): Promise<(Category & { ended: boolean })[]> {
+    const start = weekStart(from);
+    const end = weekRange(to).end;
+    const { categories, periods } = await this.listCategories();
+    const rows = await this.db.select<{ category_id: string }>(
+      "SELECT DISTINCT category_id FROM entry_item WHERE date BETWEEN ? AND ? AND trim(text) <> ''",
+      [start, end],
+    );
+    const withRecords = new Set(rows.map((r) => r.category_id));
+    return categories
+      .map((c) => {
+        const ps = periods.filter((p) => p.categoryId === c.id);
+        const overlaps = ps.some((p) => p.startDate <= end && (p.endDate === null || p.endDate >= start));
+        const open = ps.some((p) => p.endDate === null || p.endDate >= end);
+        return { c, show: overlaps || withRecords.has(c.id), ended: ps.length > 0 && !open };
+      })
+      .filter((x) => x.show)
+      .map((x) => ({ ...x.c, ended: x.ended }));
   }
 
   /** 내보낼 주별 자료(오래된 주부터): 자동 집계 입력 · 업무 색 · 저장된 본 */

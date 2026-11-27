@@ -499,7 +499,8 @@ export function layoutSnapshot(input: SnapshotInput, measure: Measure): Snapshot
       L.ops.push({ ...textOp(url, 13, mainBottom + 6 + 8, 11, SNAP_THEME.text3), w: measure(url, font) });
       h = mainBottom + 6 + 16 + 6 + 1;
     }
-    L.rect.h = Math.ceil(box.frameH ?? h);
+    // 텍스트 상자 높이는 늘 글에 맞춘다(improve-v27 D9) — 예전에 고정된 frameH는 쓰지 않는다
+    L.rect.h = Math.ceil(box.kind === "text" && !box.widget ? h : (box.frameH ?? h));
     boxes.push(L);
   }
 

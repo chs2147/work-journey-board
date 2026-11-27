@@ -1396,6 +1396,8 @@ export function resizeWidgetLive(id: string, height: number) {
 export function resizeFrameLive(id: string, x: number, y: number, w: number, h: number) {
   set({
     doc: mapBox(id, (b) => {
+      // 텍스트 상자(위젯 제외)는 너비만 — 높이를 고정하지 않는다(improve-v27 D9)
+      if (b.kind === "text" && !b.widget) return { ...b, x: snap(x), y: snap(y), w: clampWidth(w) };
       const height = Math.max(b.kind === "text" && b.widget ? 160 : 80, Math.min(1200, Math.round(h)));
       return {
         ...b,

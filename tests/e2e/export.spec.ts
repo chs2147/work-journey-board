@@ -62,7 +62,7 @@ test("Alt+E → 이번 주 · 기본 파일명·위치 → 저장되면 토스�
   await page.keyboard.press("Alt+KeyE");
   await expect(dialog(page)).toBeVisible();
   await expect(dialog(page).getByRole("radio", { name: "이번 주" })).toBeFocused();
-  await expect(page.getByTestId("export-stats")).toHaveText("미리 계산: 1주 · 업무 3개 · 항목 15개");
+  await expect(page.getByTestId("export-stats")).toHaveText("1주 · 업무 3개 · 항목 15개");
 
   const r = await saveAs(page, (s) => s);
   expect(r.suggested).toBe("/demo/WorkJourney/exports/업무일지_2026-W43.xlsx");

@@ -69,6 +69,8 @@ export interface Settings {
     insightTab: "timeline" | "overview";
     /** 엑셀 내보내기 [포함] "메모 보드 스냅샷" 마지막 선택(improve-1027v3-spec 1-5, 기본 꺼짐) */
     exportSnapshots: boolean;
+    /** 업무일지 내보내기 마지막 형식(improve-v27 D8) */
+    exportFormat: "xlsx" | "md";
     /** 중요 업무 패널 아래 "이 주 완료" 펼침(improve-1027v4-spec 4절) */
     weekDoneOpen: boolean;
     /** 설정 화면에서 마지막으로 본 분류(improve-1027v5-spec 1-2) */
@@ -161,6 +163,7 @@ export const DEFAULT_SETTINGS: Settings = {
     insightMapOpen: true,
     insightTab: "timeline",
     exportSnapshots: false,
+    exportFormat: "xlsx",
     weekDoneOpen: true,
     settingsCategory: "screen",
     startView: "board",
@@ -267,6 +270,7 @@ export function mergeSettings(base: Settings, patch: unknown): Settings {
   if (typeof s.ui.insightMapOpen !== "boolean") s.ui.insightMapOpen = true;
   if (s.ui.insightTab !== "timeline" && s.ui.insightTab !== "overview") s.ui.insightTab = "timeline";
   if (typeof s.ui.exportSnapshots !== "boolean") s.ui.exportSnapshots = false;
+  if (s.ui.exportFormat !== "xlsx" && s.ui.exportFormat !== "md") s.ui.exportFormat = "xlsx";
   if (typeof s.ui.weekDoneOpen !== "boolean") s.ui.weekDoneOpen = true;
   if (!(SETTINGS_CATEGORIES as readonly string[]).includes(s.ui.settingsCategory))
     s.ui.settingsCategory = "screen";

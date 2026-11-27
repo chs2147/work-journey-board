@@ -709,7 +709,8 @@ function TextBoxView({
     useNote.setState({ focusRequest: null });
   }, [editor, focusRequest, box.id]);
 
-  useBoxFrame(wrapRef, box.id, selected);
+  // 텍스트 상자는 너비 손잡이만 — 높이는 늘 글에 맞춘다(improve-v27 D9, 예전 frameH 무시)
+  useBoxFrame(wrapRef, box.id, selected, true);
 
   const onKeyDownCapture = (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.nativeEvent.isComposing) return;
@@ -837,15 +838,7 @@ function TextBoxView({
         </div>
       )}
       {!!box.refs?.length && <LinkStrip boxId={box.id} refs={box.refs} />}
-      <EditorContent
-        editor={editor}
-        className={styles.editor}
-        style={
-          box.frameH
-            ? { maxHeight: Math.max(30, box.frameH - (box.refs?.length ? 90 : 32)), overflowY: "auto" }
-            : undefined
-        }
-      />
+      <EditorContent editor={editor} className={styles.editor} />
       {/* 대기 상자의 안내 — 글자를 치면 사라진다(조합 중에도 같은 편집기를 그대로 쓰게 구조는 바꾸지 않는다) */}
       {pending && (
         <span className={styles.ghostHint} aria-hidden="true">

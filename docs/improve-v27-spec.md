@@ -1,6 +1,6 @@
 # 개선 v27 — 업무일지 내보내기(연도·업무·마크다운) · 메모보드 텍스트 객체 아래 여백
 
-> 2026-11-26 사용자 요청. 작업 브랜치 `improve-v27`(1.54.1 main에서 분기). **설계·시안 검토 단계** — 승인 뒤 구현한다.
+> 2026-11-26 사용자 요청. 작업 브랜치 `improve-v27`(1.54.1 main에서 분기). **2026-11-27 추천안(D1~D11) 그대로 승인 → 구현**(7절 기록).
 > 시안: `docs/mockups/v27/export-dialog.html`(·`.png`). 일지 구조 **v20 유지 예정**(새 마이그레이션 없음), 새 의존성·외부 통신 없음.
 
 ## 0. 요청
@@ -133,7 +133,7 @@ B안(높이 조절 유지 + 옆면 손잡이는 높이를 건드리지 않음 + 
 | D10 | 코칭 | **T0 "엑셀로" 단계 문구만 고침**("업무일지 내보내기 — 엑셀·마크다운, 연도·업무 골라") + T2 "내보내기" 단계 문구. 단계 추가 없음 → 콘텐츠 판 올림 없음(새 단계 표시 없음) |
 | D11 | 가이드 | 장면07(업무일지 내보내기 — 연도·업무·마크다운) 글·그림, 부록 `Alt+E` 이름, 장면05 메모 상자 크기 문장(너비만) |
 
-## 4. 구현 계획(승인 뒤)
+## 4. 구현 계획
 
 - `src/ui/export/ExportDialog.tsx`·`.module.css` — 구역·구분선·형식 토글·연도·업무 목록(칸반 `CategoryFilter`를 공용 컴포넌트로 빼서 함께 씀).
 - `src/ui/export/exportStore.ts` — `ExportChoice`에 `format`·`year`·`categoryIds`·마크다운 포함 3종, `resolveRange` 연도, 파일 이름.
@@ -141,3 +141,16 @@ B안(높이 조절 유지 + 옆면 손잡이는 높이를 건드리지 않음 + 
 - `src/export/journalMarkdown.ts`(새, 순수 함수·골든 시험), `src/export/filename.ts`(연도·업무 이름).
 - `src/ui/note/NoteCanvas.tsx`·`boxShared.ts`·`noteSnapshot.ts` — 텍스트 상자 widthOnly·`frameH` 무시.
 - 시험: 단위(연도 범위·파일 이름·업무 거르기·마크다운 골든·스냅샷 높이), E2E(`export.spec.ts` 연도·업무·마크다운 내려받기 내용, `improve-v27.spec.ts` 텍스트 상자 너비 바꿔도 높이 그대로·손잡이 수), 전환 무결성 영향 없음(새 화면 저장소 상태 없음 — 창 안 상태만).
+
+## 7. 구현 기록(작업 브랜치 `improve-v27`)
+
+- **내보내기 창**: `src/ui/export/ExportDialog.tsx`·`.module.css` — 타이틀 + 형식 토글(`export-format-xlsx`·`-md`, 라디오 묶음·좌우 화살표), 구역 3개(범위·포함·미리 계산)는 위 1px 구분선, 범위 안 업무 줄은 점선. 업무 목록은 칸반 업무 거르기와 같은 동작을 창 안 컴포넌트로 따로 구현했다(칸반은 칸반 저장소에 묶여 있어 공용으로 빼지 않음 — 모양·키 동작 같음). 범위가 바뀌어 목록에서 빠진 업무는 고른 것에서도 뺀다.
+- **흐름**: `src/ui/export/exportStore.ts` — `ExportChoice`에 `format`·`year`·`categoryIds`·`mdRecords/mdSummary/mdMemo`, 마크다운은 `exportPathProblem(…, "markdown")` → `Platform.writeExport`(`.md`, 새 Rust 명령 없음), 저장 뒤 `ui.exportFormat` 기억.
+- **순수 함수**: `src/export/filename.ts` `yearRange`·`yearLabel`·`exportFileName(…, { ext, year, categories })` · `src/export/filterWeeks.ts` `filterExportWeeks`(고른 업무만, 수정본·AI본 비움) · `src/export/journalMarkdown.ts` `buildJournalMarkdown`.
+- **저장소**: `exportCategories(from, to)`(범위와 기간이 겹치거나 기록이 있는 업무, `ended`), `exportStats(from, to, ids)`.
+- **설정**: `ui.exportFormat`(`"xlsx" | "md"`, 기본 xlsx) — 설정 JSON 값, 구조 v20 유지.
+- **텍스트 상자**: `NoteCanvas.tsx` 텍스트 상자 `useBoxFrame(…, widthOnly)`·편집기 최대 높이 제거, `noteStore.resizeFrameLive`는 텍스트 상자(위젯 제외)에 `frameH`·`h`를 쓰지 않음, `noteSnapshot.ts` 텍스트 상자 높이 = 글 높이. 예전 시험 `noteFrames.test.ts`의 스냅샷 높이 기대값(160 → 글 높이)을 D9에 맞춰 고침(저장·이관 검사는 그대로).
+- **코칭**: T0 "업무일지 내보내기" · T2 "업무일지 내보내기" 단계 문구만(판 올림 없음).
+- **가이드**: 장면07 글·그림, 장면05 상자 크기 문장·그림, 부록 `Alt+E`, `map.md` 대응표. `overview.md` 10-3 단축키 표 이름.
+- **시험**: 단위 `improve-v27.test.ts`(연도 범위·파일 이름·업무 거르기·마크다운 골든·업무 목록/미리 계산·스냅샷 높이) · E2E `improve-v27.spec.ts`(이름·구역, 마크다운 + 업무 1개 파일 이름·내용·형식 기억, 연도 범위, 텍스트 상자 손잡이 2개·너비 바꿔도 높이 그대로) · `export.spec.ts`·`m2-flow.spec.ts` 미리 계산 글 갱신. 전체 단위 665·E2E chromium 414 통과.
+- 전환 무결성(CLAUDE.md 4-7): 새 화면 저장소 상태 없음(창 안 상태만, 닫으면 사라짐).

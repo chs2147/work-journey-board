@@ -15,6 +15,8 @@ export interface SummaryItem {
   startTime?: string | null;
   /** 마감일 — 자동 집계에는 쓰지 않고 엑셀 원장 `마감일` 열에만(improve-1104v10-spec 3절) */
   dueDate?: string | null;
+  /** 처리 완료 시각 — 자동 집계에는 쓰지 않고 마크다운 내보내기 ✓에만(improve-v27) */
+  flagDoneAt?: string | null;
 }
 
 export interface SummaryInput {

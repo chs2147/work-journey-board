@@ -120,7 +120,11 @@ export const COACH = {
           body: "이번 주 기록이 업무별로 정리됩니다. 고쳐 쓰거나 AI 지시문과 함께 복사하세요.",
           keys: "Alt+S",
         },
-        { title: "엑셀로", body: "여러 주를 엑셀 파일로 저장합니다.", keys: "Alt+E" },
+        {
+          title: "업무일지 내보내기",
+          body: "주·연도·업무를 골라 엑셀이나 마크다운으로 저장합니다.",
+          keys: "Alt+E",
+        },
         {
           title: "언제든 다시",
           body: "칸반·인사이트·Universe 같은 다른 화면 둘러보기는 여기서 고릅니다.",
@@ -175,7 +179,11 @@ export const COACH = {
         { title: "주간 / 데일리", body: "한 주 전체 또는 하루만 크게.", keys: "Alt+V" },
         { title: "연간 보기", body: "기록이 있는 주를 달력으로.", keys: "Alt+Y" },
         { title: "주간 요약", body: "업무별 자동 정리 · 수정본 · AI 지시문 복사.", keys: "Alt+S" },
-        { title: "내보내기", body: "범위와 시트(주간 요약 시트 포함)를 골라 엑셀로.", keys: "Alt+E" },
+        {
+          title: "업무일지 내보내기",
+          body: "범위·업무와 시트(주간 요약 시트 포함)를 골라 엑셀로, 또는 마크다운으로.",
+          keys: "Alt+E",
+        },
       ],
     },
     T3: {

@@ -5,7 +5,10 @@ import { weekList } from "../../data/repository";
 import { addWeeks, type WeekId } from "../../domain/week";
 import { buildWorkbook, type ExportSnapshot } from "../../export/excel";
 import { renderNoteSnapshot } from "../../export/noteSnapshot";
-import { exportFileName } from "../../export/filename";
+import { exportFileName, yearRange } from "../../export/filename";
+import { filterExportWeeks } from "../../export/filterWeeks";
+import { buildJournalMarkdown } from "../../export/journalMarkdown";
+import { localDate } from "../../domain/localTime";
 import { baseName, dirOf, exportPathProblem } from "../../platform";
 import { STR } from "../../shared/strings";
 import { flushAll, reportError, toast, useBoard } from "../board/boardStore";
@@ -15,10 +18,21 @@ import { flushDraft } from "../summary/summaryStore";
 import { flushNote } from "../note/noteStore";
 import { memoWeeks, weekSnapshotInput } from "../note/snapshot";
 
-export type RangeKind = "thisWeek" | "last4" | "custom" | "all";
+export type RangeKind = "thisWeek" | "last4" | "custom" | "year" | "all";
+export type ExportFormat = "xlsx" | "md";
 
 export interface ExportChoice {
+  /** 파일 형식(improve-v27 1-5) */
+  format: ExportFormat;
   kind: RangeKind;
+  /** 연도 범위일 때 그 해(ISO 주의 해) */
+  year: number;
+  /** 고른 업무 id — null = 전체(improve-v27 1-4, 다음에 열 때는 늘 전체) */
+  categoryIds: string[] | null;
+  /** 마크다운 포함: 업무 기록 · 주간 요약 · 주간 메모(글) */
+  mdRecords: boolean;
+  mdSummary: boolean;
+  mdMemo: boolean;
   /** 기간 지정일 때 */
   from: WeekId;
   to: WeekId;
@@ -78,12 +92,21 @@ export function resolveRange(
       return [addWeeks(current, -3), current];
     case "custom":
       return c.from <= c.to ? [c.from, c.to] : [c.to, c.from];
+    case "year":
+      return yearRange(c.year, current, firstRecord, latest);
     case "all": {
       const end = latest > current ? latest : current;
       const first = firstRecord && firstRecord < end ? firstRecord : end;
       return [first, end];
     }
   }
+}
+
+/** 고른 업무 이름표: 전체 / 이름 하나 / 업무 N개 */
+export function categoryLabel(ids: string[] | null, names: Map<string, string>): string {
+  if (!ids) return STR.export.categoryAll;
+  if (ids.length === 1) return names.get(ids[0]!) ?? STR.export.categoryMany(1);
+  return STR.export.categoryMany(ids.length);
 }
 
 /** 내보내기 실행. 저장했으면 저장 경로, 취소했으면 null */
@@ -105,19 +128,45 @@ export async function runExport(c: ExportChoice): Promise<string | null> {
       dir = platform.join(dataDir, "exports");
       await platform.ensureDir(dir);
     }
+    const md = c.format === "md";
+    const { categories } = await repo.listCategories();
+    const names = new Map(categories.map((x) => [x.id, x.name]));
+    const ids = c.categoryIds && c.categoryIds.length ? c.categoryIds : null;
+    const label = categoryLabel(ids, names);
     const path = await platform.pickSaveFile(
-      STR.export.saveTitle,
-      platform.join(dir, exportFileName(from, to, c.kind === "all", workspaceLabel())),
+      md ? STR.export.saveTitleMd : STR.export.saveTitle,
+      platform.join(
+        dir,
+        exportFileName(from, to, c.kind === "all", workspaceLabel(), {
+          ext: md ? "md" : "xlsx",
+          ...(c.kind === "year" ? { year: c.year } : {}),
+          ...(ids ? { categories: label } : {}),
+        }),
+      ),
     );
     if (!path) return null;
-    const problem = exportPathProblem(path, dataDir);
+    const problem = exportPathProblem(path, dataDir, md ? "markdown" : "xlsx");
     if (problem) {
       toast(problem);
       return null;
     }
     if ((await platform.isOneDrivePath(path)) && !window.confirm(STR.export.oneDrive)) return null;
 
-    const weeks = await repo.exportWeeks(from, to);
+    const weeks = filterExportWeeks(await repo.exportWeeks(from, to), ids);
+    if (md) {
+      const text = buildJournalMarkdown(weeks, {
+        from,
+        to,
+        records: c.mdRecords,
+        summary: c.mdSummary,
+        memo: c.mdMemo,
+        includeMemo: settings.summary.includeMemo,
+        categoryLabel: ids ? ids.map((id) => names.get(id) ?? id).join(", ") : STR.export.categoryAll,
+        exportedOn: localDate(platform.now()),
+      });
+      await platform.writeExport(path, new TextEncoder().encode(text));
+      return finish(path, c);
+    }
     let snapshots: { images: ExportSnapshot[]; noMemo: WeekId[] } | undefined;
     if (c.snapshots) {
       // 최신 주가 위 — 메모가 있는 주만 그림, 없는 주는 맨 끝 한 줄
@@ -155,14 +204,7 @@ export async function runExport(c: ExportChoice): Promise<string | null> {
       exportedAt: platform.now(),
     });
     await platform.writeExport(path, bytes);
-    await repo.updateSettings({ ui: { lastExportDir: dirOf(path), exportSnapshots: c.snapshots } });
-
-    useExport.setState({ open: false });
-    toast(STR.export.saved(baseName(path)), [
-      { label: STR.export.openFolder, run: () => void platform.openFolder(dirOf(path)).catch(reportError) },
-      { label: STR.export.openFile, run: () => void platform.openFile(path).catch(reportError) },
-    ]);
-    return path;
+    return finish(path, c);
   } catch (e) {
     reportError(e);
     return null;
@@ -171,11 +213,31 @@ export async function runExport(c: ExportChoice): Promise<string | null> {
   }
 }
 
+/** 저장한 뒤: 마지막 폴더·형식·스냅샷 기억 → 창 닫기 → 알림 */
+async function finish(path: string, c: ExportChoice): Promise<string> {
+  const { repo, platform } = ready();
+  await repo.updateSettings({
+    ui: { lastExportDir: dirOf(path), exportSnapshots: c.snapshots, exportFormat: c.format },
+  });
+  useExport.setState({ open: false });
+  toast(STR.export.saved(baseName(path)), [
+    { label: STR.export.openFolder, run: () => void platform.openFolder(dirOf(path)).catch(reportError) },
+    { label: STR.export.openFile, run: () => void platform.openFile(path).catch(reportError) },
+  ]);
+  return path;
+}
+
 /** 대화상자 기본값: 기간 지정은 최근 4주 */
 export function defaultChoice(): ExportChoice {
   const current = useBoard.getState().weekId;
   return {
+    format: "xlsx",
     kind: "thisWeek",
+    year: Number(current.slice(0, 4)),
+    categoryIds: null,
+    mdRecords: true,
+    mdSummary: true,
+    mdMemo: false,
     from: addWeeks(current, -3),
     to: current,
     weekly: true,

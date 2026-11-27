@@ -110,7 +110,7 @@ test("연도 경계: 기간 지정으로 2026-W52 ~ 2027-W01 내보내기", asyn
   await dialog(page).getByRole("radio", { name: "기간 지정" }).check();
   await dialog(page).getByLabel("시작 주").selectOption("2026-W52");
   await dialog(page).getByLabel("끝 주").selectOption("2027-W01");
-  await expect(page.getByTestId("export-stats")).toContainText("미리 계산: 3주");
+  await expect(page.getByTestId("export-stats")).toContainText("3주 ·");
   const r = await exportNow(page);
   expect(r.path).toBe("/demo/WorkJourney/exports/업무일지_2026-W52~2027-W01.xlsx");
   expect(Object.keys(summaries(r.wb))).toEqual(["2026-W52", "2026-W53", "2027-W01"]);
