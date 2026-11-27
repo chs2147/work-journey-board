@@ -1,0 +1,16 @@
+/.github/
+/docs/
+/fixtures/
+/m0/
+/public/
+/scripts/
+/site/guide/
+/site/shots/
+/src/
+/src-tauri/
+/tests/
+/test-results/
+/playwright-report/
+/web/*.test.mjs
+.env*
+**/.env*

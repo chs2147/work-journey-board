@@ -1,0 +1,15 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "buildCommand": "",
+  "installCommand": "",
+  "outputDirectory": "web/public",
+  "regions": ["icn1"],
+  "functions": {
+    "api/index.js": {
+      "includeFiles": "{web/public/**,site/icon.svg,site/wordmark.svg}",
+      "maxDuration": 60
+    }
+  },
+  "rewrites": [{ "source": "/:path*", "destination": "/api/index" }]
+}

@@ -11,6 +11,7 @@ const termsVersion = "web-dev-2026-11-27";
 const challengeAge = 60 * 60;
 const sessionAge = 12 * 60 * 60;
 const deviceAge = 365 * 24 * 60 * 60;
+const jsonLimit = 2048;
 const cookieNames = {
   challenge: "__Host-wjb_challenge",
   session: "__Host-wjb_session",
@@ -54,16 +55,30 @@ function normalizeEmail(email) {
 async function readJson(request) {
   if (!/^application\/json(?:\s*;|$)/i.test(request.headers["content-type"] ?? ""))
     throw new WebError("INVALID_REQUEST", 415);
-  const chunks = [];
-  let size = 0;
-  for await (const chunk of request.iterator({ destroyOnReturn: false })) {
-    size += chunk.length;
-    if (size > 2048) throw new WebError("INVALID_REQUEST", 413);
-    chunks.push(chunk);
+  if (Number(request.headers["content-length"]) > jsonLimit) throw new WebError("INVALID_REQUEST", 413);
+
+  let body;
+  try {
+    body = request.body; // The Vercel Node.js helper may already have read the stream.
+  } catch {
+    throw new WebError("INVALID_REQUEST", 400);
   }
+  if (body === undefined) {
+    const chunks = [];
+    let size = 0;
+    for await (const chunk of request.iterator({ destroyOnReturn: false })) {
+      size += chunk.length;
+      if (size > jsonLimit) throw new WebError("INVALID_REQUEST", 413);
+      chunks.push(chunk);
+    }
+    body = Buffer.concat(chunks);
+  }
+
+  const raw = Buffer.isBuffer(body) || typeof body === "string" ? body : JSON.stringify(body);
+  if (Buffer.byteLength(raw) > jsonLimit) throw new WebError("INVALID_REQUEST", 413);
   let value;
   try {
-    value = JSON.parse(Buffer.concat(chunks).toString());
+    value = JSON.parse(raw);
   } catch {
     throw new WebError("INVALID_REQUEST", 400);
   }
@@ -220,7 +235,7 @@ export function createWebHandler({ origin, upstream, store, now = Date.now }) {
       "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
     );
     try {
-      const path = request.url;
+      const path = new URL(request.url, origin).pathname;
       const key = readCookie(request, "session");
       if (request.method === "GET") {
         const asset = assets.get(path);
@@ -262,8 +277,7 @@ export function createWebHandler({ origin, upstream, store, now = Date.now }) {
   };
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const env = process.env;
+export function createConfiguredWebHandler(env) {
   const upstream = createDevUpstream({
     projectRef: env.WJB_SUPABASE_DEV_PROJECT_REF,
     publicKey: env.WJB_SUPABASE_DEV_PUBLISHABLE_KEY,
@@ -275,11 +289,15 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     fetch,
   });
   const store = createSessionStore(command, Buffer.from(env.WJB_WEB_SESSION_KEY ?? "", "base64"));
+  return createWebHandler({ origin: env.WJB_WEB_ORIGIN, upstream, store });
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const server = createServer(
     { requestTimeout: 20000, headersTimeout: 10000 },
-    createWebHandler({ origin: env.WJB_WEB_ORIGIN, upstream, store }),
+    createConfiguredWebHandler(process.env),
   );
-  server.listen(Number(env.PORT ?? 8080), "0.0.0.0", () =>
+  server.listen(Number(process.env.PORT ?? 8080), "0.0.0.0", () =>
     process.stdout.write("Work Journey Board Web DEV ready\n"),
   );
 }

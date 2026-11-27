@@ -14,3 +14,5 @@ exports/
 !docs/features/exports/**/*.xlsx
 playwright-report/
 test-results/
+
+.vercel/
