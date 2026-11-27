@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "product": "Work Journey Board",
-  "catalogVersion": "1.54.1",
-  "asOfDate": "2026-11-26",
-  "baseRelease": "1.54.1",
-  "sourceCommit": "a9c63d8",
+  "catalogVersion": "1.55.0",
+  "asOfDate": "2026-11-27",
+  "baseRelease": "1.55.0",
+  "sourceCommit": "00da65e",
   "appSchemaVersion": 20,
   "versionDefinition": "최초 제공 = 비RC 출시 이력에서 기능 제공이 확인된 최초 버전(0.x 개발판 포함); RC는 preview로 별도 기록",
   "verificationScope": "문서·출시 이력·현행 소스 위치 대조. 기능별 실기 전수 검증을 뜻하지 않음.",
@@ -5002,20 +5002,30 @@
           "type": "added",
           "description": "이번 주·최근 4주·지정 기간·전체 중 범위를 정한다.",
           "source": "README.md"
+        },
+        {
+          "version": "1.55.0",
+          "type": "changed",
+          "description": "창 이름 \"업무일지 내보내기\", 엑셀·마크다운 형식 토글, 범위·포함·미리 계산 구분선, 범위에 연도(첫 기록 주~이번 주)·업무 고르기(전체·1개·여러 개).",
+          "source": "docs/release-notes/v1.55.0.md"
         }
       ],
       "sources": [
         "docs/output-spec.md",
-        "README.md"
+        "README.md",
+        "docs/release-notes/v1.55.0.md",
+        "docs/improve-v27-spec.md"
       ],
       "implementation": [
-        "src/export"
+        "src/export",
+        "src/ui/export/ExportDialog.tsx",
+        "src/ui/export/exportStore.ts"
       ],
       "verification": "출시 이력·현행 명세 확인",
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "제품 기능",
-      "lastChanged": "0.1.3",
+      "lastChanged": "1.55.0",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
@@ -5255,21 +5265,30 @@
           "type": "added",
           "description": "내보내기 파일명에 공간 이름을 넣어 구분한다.",
           "source": "docs/release-notes/v1.8.0.md"
+        },
+        {
+          "version": "1.55.0",
+          "type": "changed",
+          "description": "파일 이름에 연도(`2026년_W38~W43`)·고른 업무(1개 = 이름, 여러 개 = 업무 N개), 마크다운은 .md.",
+          "source": "docs/release-notes/v1.55.0.md"
         }
       ],
       "sources": [
         "docs/output-spec.md",
         "README.md",
-        "docs/release-notes/v1.8.0.md"
+        "docs/release-notes/v1.8.0.md",
+        "docs/release-notes/v1.55.0.md",
+        "docs/improve-v27-spec.md"
       ],
       "implementation": [
-        "src/export"
+        "src/export",
+        "src/export/filename.ts"
       ],
       "verification": "출시 이력·현행 명세 확인",
       "reviewStatus": "미검토",
       "reviewNote": "",
       "kind": "제품 기능",
-      "lastChanged": "1.8.0",
+      "lastChanged": "1.55.0",
       "schemaRequirement": "공간 일지의 현재 지원 구조 v16"
     },
     {
@@ -12680,20 +12699,31 @@
           "type": "added",
           "description": "승인된 RC 기능을 정식 main에 반영. 최종 수정 팔레트의 보기 도구는 상단에 유지하며 CI·두 플랫폼 빌드와 사용자 배포 확인 후 승인.",
           "source": "docs/release-notes/v1.22.0.md"
+        },
+        {
+          "version": "1.55.0",
+          "type": "changed",
+          "description": "글 상자는 옆면 손잡이로 너비만, 높이는 늘 글에 맞춤(예전 고정 높이는 화면·스냅샷에서 쓰지 않음 — 아래 빈칸 해소). 이미지·링크 상자는 그대로.",
+          "source": "docs/release-notes/v1.55.0.md"
         }
       ],
       "sources": [
         "docs/improve-v18-spec.md",
         "docs/release-notes/v1.22.0-rc.1.md",
-        "docs/release-notes/v1.22.0.md"
+        "docs/release-notes/v1.22.0.md",
+        "docs/release-notes/v1.55.0.md",
+        "docs/improve-v27-spec.md"
       ],
       "implementation": [
-        "src/ui/note/boxShared.ts"
+        "src/ui/note/boxShared.ts",
+        "src/ui/note/NoteCanvas.tsx",
+        "src/ui/note/noteStore.ts",
+        "src/export/noteSnapshot.ts"
       ],
       "verification": "브라우저·저장소 자동 검사 대상. OS 설치 실기 확인은 별도.",
       "reviewStatus": "미검토",
       "reviewNote": "C안+접기/펼치기 사용자 선택으로 구현.",
-      "lastChanged": "1.22.0",
+      "lastChanged": "1.55.0",
       "schemaRequirement": "DB v18"
     },
     {
@@ -13204,19 +13234,69 @@
           "type": "added",
           "description": "주간·데일리 [내보내기] 창에서 주간 요약 시트를 따로 선택(기본 꺼짐). 주차마다 수정본 → AI본 → 자동 집계 순으로 한 행, 긴 요약은 이어지는 행으로 나눔.",
           "source": "docs/release-notes/v1.51.0.md"
+        },
+        {
+          "version": "1.55.0",
+          "type": "changed",
+          "description": "업무를 고르면 주간 요약 시트는 고른 업무만으로 자동 집계(수정본·AI본 제외).",
+          "source": "docs/release-notes/v1.55.0.md"
         }
       ],
       "sources": [
         "docs/release-notes/v1.51.0.md",
-        "docs/improve-v24-spec.md"
+        "docs/improve-v24-spec.md",
+        "docs/release-notes/v1.55.0.md",
+        "docs/improve-v27-spec.md"
       ],
       "implementation": [
-        "src/export/excel.ts"
+        "src/export/excel.ts",
+        "src/export/filterWeeks.ts"
       ],
       "verification": "단위·E2E(브라우저). 정식 설치판 실기는 릴리스 노트 '설치 후 확인'·m1-check 7-56.",
       "reviewStatus": "미검토",
       "reviewNote": "개선 v24(1.51.0 Open Beta).",
-      "lastChanged": "1.51.0",
+      "lastChanged": "1.55.0",
+      "schemaRequirement": "DB v20"
+    },
+    {
+      "id": "WJB-EXPORT-009",
+      "area": "엑셀 내보내기",
+      "section": "파일",
+      "kind": "제품 기능",
+      "name": "마크다운 업무일지",
+      "description": "업무일지 내보내기 창에서 마크다운 형식을 고르면 주(오래된 주부터) → 업무 → 날짜 → 항목 순 .md 하나로 저장(완료 ✓·연차, 포함 = 업무 기록·주간 요약·주간 메모 글, 그림 없음).",
+      "entry": "업무일지 내보내기",
+      "introduced": "1.55.0",
+      "preview": null,
+      "status": "active",
+      "platforms": [
+        "windows",
+        "macos"
+      ],
+      "platformSince": {
+        "windows": "1.55.0",
+        "macos": "1.55.0"
+      },
+      "history": [
+        {
+          "version": "1.55.0",
+          "type": "added",
+          "description": "업무일지 내보내기 창에서 마크다운 형식을 고르면 주(오래된 주부터) → 업무 → 날짜 → 항목 순 .md 하나로 저장(완료 ✓·연차, 포함 = 업무 기록·주간 요약·주간 메모 글, 그림 없음).",
+          "source": "docs/release-notes/v1.55.0.md"
+        }
+      ],
+      "sources": [
+        "docs/release-notes/v1.55.0.md",
+        "docs/improve-v27-spec.md"
+      ],
+      "implementation": [
+        "src/export/journalMarkdown.ts",
+        "src/ui/export/exportStore.ts"
+      ],
+      "verification": "단위(골든)·E2E(브라우저). 정식 설치판 실기는 릴리스 노트 '설치 후 확인'.",
+      "reviewStatus": "미검토",
+      "reviewNote": "개선 v27(1.55.0 Open Beta).",
+      "lastChanged": "1.55.0",
       "schemaRequirement": "DB v20"
     },
     {
