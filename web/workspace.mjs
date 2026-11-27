@@ -157,6 +157,23 @@ export function createWorkspaceAccess(upstream, secret) {
         more: page.more,
       };
     },
+    async moveCard(session, id, payload) {
+      const { opId, to, edit } = payload;
+      if (
+        typeof opId !== "string" ||
+        !uuid.test(opId) ||
+        typeof to !== "string" ||
+        !to ||
+        [...to].length > 64
+      )
+        throw invalid();
+      const base = open(session, id, edit);
+      if (base.value?.depth !== 0) throw invalid();
+      const result = await upstream.moveCard(session, id, opId, base.key, base.rev, to);
+      if (result.applied === false) throw new WebError("ENTRY_CONFLICT", 409);
+      if (result.applied !== true) throw invalidUpstream();
+      return { saved: true };
+    },
     async saveText(session, id, payload) {
       const { opId, text, edit, editedAt } = payload;
       const normalized = typeof text === "string" ? text.trim() : "";

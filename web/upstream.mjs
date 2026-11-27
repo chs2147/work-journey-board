@@ -68,6 +68,11 @@ export function createDevUpstream({ projectRef, publicKey, fetch, now = Date.now
     });
     if (result.status === 404) throw new WebError("SPACE_NOT_FOUND", 404);
     if (result.value?.error === "ACCOUNT_SUSPENDED") throw new WebError("READ_ONLY", 403);
+    if (params.kanbanMove) {
+      if (["SYNC_LIMIT", "QUOTA_ACCOUNT_RECORDS", "QUOTA_PROJECT"].includes(result.value?.error))
+        throw new WebError("SPACE_LIMIT", 409);
+      if (result.value?.error === "SYNC_INVALID_CHANGE") throw new WebError("SPACE_CHANGED", 409);
+    }
     if (result.status === 409) throw new WebError("SPACE_CHANGED", 409);
     return gatewayValue(result);
   }
@@ -133,6 +138,8 @@ export function createDevUpstream({ projectRef, publicKey, fetch, now = Date.now
         opId,
         changes: [{ table: "entry_item", key, baseRev, value }],
       }),
+    moveCard: (session, workspaceId, opId, key, baseRev, to) =>
+      workspaceCall(session, "/sync/push", { workspaceId, opId, kanbanMove: { key, baseRev, to } }),
     async logout(access) {
       await request("/auth/v1/logout?scope=local", { access });
     },

@@ -38,6 +38,7 @@ let draft = null;
 let generation = 0;
 let complete = false;
 let dirty = false;
+let moving = false;
 if (dateInput) dateInput.value = localToday();
 
 function element(tag, text, className) {
@@ -72,6 +73,7 @@ function reset() {
   complete = false;
   loading = false;
   dirty = false;
+  moving = false;
   refresh.disabled = false;
   cursor = "0";
   draft = null;
@@ -119,7 +121,7 @@ async function sync(steps) {
 }
 
 async function load(full = false) {
-  if (loading || draft) return;
+  if (loading || draft || moving) return;
   loading = true;
   refresh.disabled = true;
   const started = ++generation;
@@ -190,7 +192,7 @@ function itemSort(a, b) {
     Number(a.value.seq) - Number(b.value.seq)
   );
 }
-function task(item, category, showDate = false) {
+function task(item, category, showDate = false, destinations) {
   const value = item.value;
   const li = element("li", "", value.depth > 0 ? "record sub-record" : "record");
   const detail = [showDate && value.date, category, value.start_time, value.flagged ? "중요" : null].filter(
@@ -221,17 +223,19 @@ function task(item, category, showDate = false) {
     edit.setAttribute("aria-label", "기록 편집 " + String(value.text ?? "").slice(0, 40));
     edit.addEventListener("click", () => openEditor(item));
     li.append(edit);
+    if (destinations?.length) li.append(moveControls(item, destinations));
   }
   return li;
 }
 
-function group(title, items, names, showDate = false) {
+function group(title, items, names, showDate = false, destinations) {
   const section = element("section", "", "journal-group");
   section.append(element("h2", title));
   if (!items.length) section.append(element("p", "표시할 기록이 없습니다."));
   else {
     const list = element("ul", "", "record-list");
-    for (const item of items) list.append(task(item, names.get(item.value.category_id), showDate));
+    for (const item of items)
+      list.append(task(item, names.get(item.value.category_id), showDate, destinations));
     section.append(list);
   }
   return section;
@@ -305,7 +309,10 @@ function render() {
         (cards.get(done ? "done" : value.kanban_section_id) ?? cards.get("todo")).push(card);
     }
     content.className = "journal-columns";
-    for (const key of order) content.append(group(titles.get(key), cards.get(key), names, true));
+    for (const key of order) {
+      const destinations = order.filter((other) => other !== key).map((other) => [other, titles.get(other)]);
+      content.append(group(titles.get(key), cards.get(key), names, true, destinations));
+    }
     return;
   }
   content.className = view === "week" ? "journal-week" : "";
@@ -339,8 +346,61 @@ function summary(items, names) {
   };
 }
 
+function moveControls(item, destinations) {
+  const actions = element("div", "", "actions card-move");
+  const select = element("select");
+  const marker = element("option", "이동할 섹션");
+  marker.value = "";
+  select.append(marker);
+  select.setAttribute("aria-label", "이동할 섹션 " + item.value.text.slice(0, 40));
+  for (const [key, title] of destinations) {
+    const option = element("option", title);
+    option.value = key;
+    select.append(option);
+  }
+  const button = element("button", "이동", "quiet");
+  button.type = "button";
+  button.disabled = true;
+  select.addEventListener("change", () => {
+    button.disabled = !select.value;
+  });
+  let attempt;
+  button.addEventListener("click", async () => {
+    if (!select.value || moving || draft || loading) return;
+    if (attempt?.to !== select.value)
+      attempt = { to: select.value, edit: item.edit, opId: crypto.randomUUID() };
+    const started = generation;
+    moving = true;
+    select.disabled = button.disabled = true;
+    status.textContent = "카드를 이동하는 중입니다.";
+    try {
+      await request("/move", attempt);
+      if (started !== generation) return;
+      moving = false;
+      await load();
+      if (!status.textContent) status.textContent = "카드를 이동했습니다.";
+    } catch (error) {
+      if (started !== generation) return;
+      if (error.status === 401 || error.status === 404) return recover(error);
+      status.textContent =
+        error.message === "SPACE_LIMIT"
+          ? "서버의 저장 한도에 도달해 카드를 이동할 수 없습니다."
+          : error.message === "ENTRY_CONFLICT" || error.message === "SPACE_CHANGED"
+            ? "카드나 섹션이 바뀌었습니다. 새로고침 후 다시 이동해 주세요."
+            : error.message === "READ_ONLY"
+              ? "지금은 카드를 읽기만 할 수 있습니다."
+              : "카드를 이동하지 못했습니다. 다시 시도해 주세요.";
+    } finally {
+      if (started === generation) moving = false;
+      select.disabled = button.disabled = false;
+    }
+  });
+  actions.append(select, button);
+  return actions;
+}
+
 function openEditor(item) {
-  if (draft) return;
+  if (draft || moving) return;
   draft = { edit: item.edit, payload: null };
   textInput.value = item.value.text;
   editorStatus.textContent = "";

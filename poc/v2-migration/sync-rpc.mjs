@@ -46,7 +46,22 @@ export function checkSyncParams(action, p) {
       p.bytes >= 1 &&
       p.bytes <= 10 * 1024 * 1024
     );
-  if (action === "push")
+  if (action === "push") {
+    if (keys(p, ["workspaceId", "opId", "kanbanMove"])) {
+      const move = p.kanbanMove;
+      return (
+        typeof p.opId === "string" &&
+        uuid.test(p.opId) &&
+        keys(move, ["key", "baseRev", "to"]) &&
+        typeof move.key === "string" &&
+        sha.test(move.key) &&
+        Number.isSafeInteger(move.baseRev) &&
+        move.baseRev >= 0 &&
+        typeof move.to === "string" &&
+        [...move.to].length >= 1 &&
+        [...move.to].length <= 64
+      );
+    }
     return (
       keys(p, ["workspaceId", "opId", "changes"]) &&
       uuid.test(p.opId) &&
@@ -63,6 +78,7 @@ export function checkSyncParams(action, p) {
           (c.value === null || (typeof c.value === "object" && !Array.isArray(c.value))),
       )
     );
+  }
   return false;
 }
 

@@ -392,3 +392,10 @@ button:disabled {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
+.card-move {
+  margin-top: 0.55rem;
+}
+.card-move select {
+  flex: 1;
+  min-width: 0;
+}

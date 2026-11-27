@@ -98,7 +98,7 @@ export function createWebHandler({
 }) {
   const validatedOrigin = new URL(origin);
   const workspaces = createWorkspaceAccess(upstream, workspaceKey);
-  const workspaceApi = new RegExp(`^/api/spaces/(${workspaceIdPattern})/(header|records|changes|text)$`);
+  const workspaceApi = new RegExp(`^/api/spaces/(${workspaceIdPattern})/(header|records|changes|text|move)$`);
   const workspacePage = new RegExp(`^/app/(${workspaceIdPattern})/(${workspaceViews})$`);
   if (
     origin !== validatedOrigin.origin ||
@@ -269,7 +269,7 @@ export function createWebHandler({
           }));
           return json(res, 200, result);
         }
-        if (space && space[2] !== "text") {
+        if (space && ["header", "records", "changes"].includes(space[2])) {
           const [, id, type] = space;
           const result = await withSession(key, (session) =>
             type === "header" ? workspaces.open(session, id) : workspaces[type](session, id, searchParams),
@@ -298,9 +298,10 @@ export function createWebHandler({
       if (request.method === "POST") {
         if (request.headers.origin !== origin || request.headers["sec-fetch-site"] === "cross-site")
           throw new WebError("ORIGIN_REQUIRED", 403);
-        if (space?.[2] === "text") {
+        if (space && ["text", "move"].includes(space[2])) {
           const payload = await readJson(request, 30000);
-          const result = await withSession(key, (session) => workspaces.saveText(session, space[1], payload));
+          const action = space[2] === "text" ? workspaces.saveText : workspaces.moveCard;
+          const result = await withSession(key, (session) => action(session, space[1], payload));
           return json(res, 200, result);
         }
         if (path === "/api/auth/code" || path === "/api/auth/verify") {

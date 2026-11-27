@@ -6,7 +6,9 @@
 
 웹은 기존 게이트웨이의 `header`, 페이지 단위 `records`, `sync/pull`을 순서대로 호출해 최초 게시본과 이후 변경을 합칩니다. 페이지 응답에는 화면에 필요한 필드만 담고 데이터는 현재 탭 메모리에서 관리합니다. 돌아오기와 새로고침에서 서버 변경을 다시 확인합니다.
 
-본문 저장은 기존 `sync/push`에 원래 레코드의 revision과 작업 ID를 보냅니다. 입력한 본문과 수정 시각만 바꾸며, 다른 기기가 먼저 저장하면 충돌을 표시합니다. 칸반은 저장된 열 순서와 선택 기간의 카드 조회를 제공하며 상태 이동은 완료 기록과 하위 항목 처리 검증 뒤 연결합니다. 주간 요약은 Markdown으로 다운로드할 수 있습니다.
+본문 저장은 기존 `sync/push`에 원래 레코드의 revision과 작업 ID를 보냅니다. 입력한 본문과 수정 시각만 바꾸며, 다른 기기가 먼저 저장하면 충돌을 표시합니다. 주간 요약은 Markdown으로 다운로드할 수 있습니다.
+
+칸반에서 카드의 **이동할 섹션**을 고르고 **이동**을 누릅니다. DONE으로 이동하면 미완료 세부 항목도 같은 시각에 완료됩니다. DONE에서 다시 열면 같은 시각에 함께 완료했던 세부 항목도 다시 열립니다. 상태와 이력은 기존 데스크탑 동기화 경로로 공유됩니다.
 
 ## 로컬 빌드
 
@@ -49,6 +51,12 @@ DB 접속 URI와 세션 키는 Vercel Preview의 **Sensitive** 환경변수로 �
 
 [모노레포 설정](https://vercel.com/docs/monorepos) · [Build Output API](https://vercel.com/docs/build-output-api) · [Preview 보호](https://vercel.com/docs/deployment-protection)
 
+### W2 칸반 이동 배포 순서
+
+1. 기존 [동기화 SQL 022](../poc/v2-migration/postgres/022-workspace-sync-retention.sql)가 반영된 Supabase DEV에 DB 소유자로 [칸반 이동 마이그레이션](supabase/migrations/20261127230850_wjb_web_kanban_move.sql)을 적용합니다.
+2. [게이트웨이 배포 스크립트](../poc/v2-gateway/edge/deploy.mjs)로 같은 DEV 프로젝트의 `wjb-gateway`를 갱신한 뒤, 상태 이동이 포함된 Vercel Preview를 배포합니다.
+3. 등록된 DEV 계정의 가상 공간에서 사용자 섹션 → DONE → TODO로 옮깁니다. 데스크탑과 웹 양쪽에서 상태, 완료 시각, 세부 항목, 상태 이력을 확인합니다. 데스크탑에서 먼저 수정한 카드를 웹에서 옮기면 충돌이 표시되어야 합니다.
+
 ## 로컬 통합 테스트
 
 로컬 폐기용 `wj_web_test` DB에 `anon`, `authenticated` 역할과 최소 `auth.users(id uuid primary key)`를 만듭니다. 테스트 계정 UUID `11111111-1111-4111-8111-111111111111`, `33333333-3333-4333-8333-333333333333`를 등록하고 마이그레이션을 적용합니다. 테스트 비밀번호를 설정한 `wj_web_app` 접속 URI를 `WJB_WEB_TEST_DATABASE_URL`로 제공한 뒤 아래 명령을 실행합니다. 인증과 게이트웨이는 가상 이메일·데이터로 시험합니다.
@@ -56,4 +64,7 @@ DB 접속 URI와 세션 키는 Vercel Preview의 **Sensitive** 환경변수로 �
 ```sh
 node --test web/w1.test.mjs
 WJB_TEST_CHROMIUM=/usr/bin/chromium node --test web/w1.test.mjs
+node --test poc/v2-migration/sync-rpc.test.mjs
 ```
+
+DB에서의 이동 처리는 새 PostgreSQL 인스턴스에 폐기용 `wj_kanban_test` DB를 만든 뒤 `psql -d wj_kanban_test -f web/supabase/tests/kanban_move.sql`로 검증합니다. 테스트는 동기화 SQL 022와 칸반 이동 마이그레이션을 적용합니다.

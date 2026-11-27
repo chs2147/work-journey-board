@@ -24,6 +24,7 @@ const make = (t) =>
     fetchTransport: t,
   });
 const change = { table: "entry_item", key: "a".repeat(64), baseRev: 0, value: { text: "가상" } };
+const kanban = { workspaceId: WS, opId: OP, kanbanMove: { key: change.key, baseRev: 0, to: "done" } };
 
 test("sync params: shapes and limits checked before any request", () => {
   assert.equal(checkSyncParams("pull", { workspaceId: WS, after: "0", limit: 1000 }), true);
@@ -31,6 +32,20 @@ test("sync params: shapes and limits checked before any request", () => {
   assert.equal(checkSyncParams("pull", { workspaceId: WS, after: "01", limit: 10 }), false);
   assert.equal(checkSyncParams("pull", { workspaceId: WS, after: "0", limit: 1001 }), false);
   assert.equal(checkSyncParams("push", { workspaceId: WS, opId: OP, changes: [change] }), true);
+  assert.equal(checkSyncParams("push", kanban), true);
+  assert.equal(checkSyncParams("push", { ...kanban, changes: [change] }), false);
+  for (const invalid of [
+    { key: "short" },
+    { baseRev: -1 },
+    { baseRev: "0" },
+    { to: "" },
+    { to: "x".repeat(65) },
+    { children: [] },
+  ])
+    assert.equal(
+      checkSyncParams("push", { ...kanban, kanbanMove: { ...kanban.kanbanMove, ...invalid } }),
+      false,
+    );
   assert.equal(
     checkSyncParams("push", {
       workspaceId: WS,
@@ -84,6 +99,8 @@ test("sync sends verified principal (never from the body) and maps server codes"
     sessionId: principal.sessionId,
     deviceId: DEV,
   });
+  await make(ok.t).call("push", kanban, principal, DEV);
+  assert.deepEqual(ok.seen[1].body.p_request, { ...ok.seen[0].body.p_request, params: kanban });
   for (const [code, status] of [
     ["SYNC_NOT_FOUND", 404],
     ["SYNC_ACCESS_DENIED", 403],

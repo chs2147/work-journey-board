@@ -183,7 +183,20 @@ async function fixture(t) {
               next: String(seq),
             });
           }
-          const { opId, changes } = body.params;
+          const { opId, changes, kanbanMove } = body.params;
+          if (kanbanMove) {
+            assert.equal(kanbanMove.key, itemKey);
+            if (operations.has(opId)) {
+              assert.deepEqual(operations.get(opId), kanbanMove);
+              return Response.json({ applied: true, replayed: true });
+            }
+            if (kanbanMove.baseRev !== seq) return Response.json({ applied: false });
+            assert.equal(kanbanMove.to, "done");
+            operations.set(opId, kanbanMove);
+            row = { ...row, flagged: 0, flag_done_at: new Date().toISOString(), kanban_section_id: null };
+            seq++;
+            return Response.json({ applied: true });
+          }
           if (operations.has(opId)) {
             assert.deepEqual(operations.get(opId), changes);
             return Response.json({ applied: true, replayed: true });
@@ -384,6 +397,17 @@ test("workspace routes page current data, preserve record fields and reject stal
   assert.equal((await request(api + "/text", { cookies: owner, payload: draft })).status, 200);
   const saved = await (await request(api + "/changes?after=1", { cookies: owner })).json();
   assert.equal(saved.records[0].value.text, "웹에서 저장");
+  const move = { to: "done", edit: saved.records[0].edit, opId: randomUUID() };
+  assert.equal((await request(api + "/move", { cookies: other, payload: move })).status, 400);
+  assert.equal(
+    (await request(api + "/move", { cookies: owner, payload: { ...move, edit: latest.edit } })).status,
+    409,
+  );
+  assert.equal((await request(api + "/move", { cookies: owner, payload: move })).status, 200);
+  assert.equal((await request(api + "/move", { cookies: owner, payload: move })).status, 200);
+  const moved = await (await request(api + "/changes?after=2", { cookies: owner })).json();
+  assert.ok(moved.records[0].value.flag_done_at);
+  assert.equal(moved.records[0].value.kanban_section_id, null);
 });
 
 test("Postgres reserves one refresh and cannot revive a deleted session", async (t) => {
@@ -457,6 +481,13 @@ test(
     await other.getByRole("textbox", { name: "기록 편집", exact: true }).fill("모바일에서 바꾼 기록");
     await other.getByRole("button", { name: "서버에 저장" }).tap();
     await other.getByText("모바일에서 바꾼 기록").waitFor();
+    await other.getByRole("combobox", { name: /이동할 섹션/ }).selectOption("done");
+    await other.getByRole("button", { name: "이동", exact: true }).tap();
+    await other
+      .locator(".journal-group")
+      .filter({ has: other.getByRole("heading", { name: "DONE", exact: true }) })
+      .getByText("모바일에서 바꾼 기록")
+      .waitFor();
     await other.getByRole("link", { name: "주간", exact: true }).tap();
     await other.getByText("모바일에서 바꾼 기록").waitFor();
     await other.getByRole("link", { name: "검색", exact: true }).tap();
