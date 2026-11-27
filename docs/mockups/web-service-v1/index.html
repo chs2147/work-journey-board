@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Work Journey Board 웹 서비스 v1 시안</title>
+    <link rel="stylesheet" href="./preview.css" />
+    <script src="./preview.js" defer></script>
+  </head>
+  <body>
+    <header class="review">
+      <div>
+        <h1>웹 서비스 v1 · UX/UI 시안</h1>
+        <p>가상 데이터 · 인증번호 예시 <b>12345678</b></p>
+      </div>
+      <div class="review-controls">
+        <label for="frame-size">화면 폭</label>
+        <select id="frame-size">
+          <option value="auto">현재 창</option>
+          <option value="390">바형 스마트폰 · 390px</option>
+          <option value="360">폴드 외부 · 360px</option>
+          <option value="768">폴드 펼침 · 768px</option>
+          <option value="1280">데스크탑 · 1280px</option>
+        </select>
+        <label for="scene">화면</label>
+        <select id="scene">
+          <option value="entry">티저 진입</option>
+          <option value="login">웹 로그인</option>
+          <option value="spaces">공간 목록</option>
+          <option value="day">오늘</option>
+          <option value="week">주간</option>
+          <option value="kanban">칸반</option>
+          <option value="summary">주간 요약</option>
+          <option value="settings">계정</option>
+        </select>
+        <label for="connection">동기화</label>
+        <select id="connection">
+          <option value="saved">서버에 저장됨</option>
+          <option value="offline">연결 끊김</option>
+          <option value="conflict">충돌</option>
+        </select>
+      </div>
+    </header>
+    <main class="frame" id="frame" aria-label="Work Journey Board 검토용 화면">
+      <div class="product" id="product"></div>
+      <dialog id="sheet" aria-labelledby="sheet-title"></dialog>
+    </main>
+  </body>
+</html>
