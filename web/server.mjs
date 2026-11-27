@@ -4,7 +4,7 @@ import { createServer } from "node:http";
 import { readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 import { createDevUpstream, WebError } from "./upstream.mjs";
-import { createRedisCommand, createSessionStore } from "./session-store.mjs";
+import { connectWebDatabase, createSessionStore } from "./session-store.mjs";
 import { pageFor } from "./pages.mjs";
 
 const termsVersion = "web-dev-2026-11-27";
@@ -86,7 +86,7 @@ async function readJson(request) {
   return value;
 }
 
-export function createWebHandler({ origin, upstream, store, now = Date.now }) {
+export function createWebHandler({ origin, upstream, store, now = Date.now, revision = "local" }) {
   const validatedOrigin = new URL(origin);
   if (
     origin !== validatedOrigin.origin ||
@@ -108,47 +108,51 @@ export function createWebHandler({ origin, upstream, store, now = Date.now }) {
   const activeSession = (session) =>
     session && session.value.expiresAt > now() && session.value.termsVersion === termsVersion;
   async function loadSession(key) {
-    const current = key && (await store.get("session", key));
+    const current = key && (await store.getSession(key));
     if (!activeSession(current)) throw new WebError("SIGN_IN_REQUIRED", 401);
     return current;
   }
   async function sessionFor(key) {
-    const { value } = await loadSession(key);
-    if (value.accessUntil > now() + 30000) return value;
+    const current = await loadSession(key);
+    if (current.value.accessUntil > now() + 30000) return current;
     const lock = nonce();
-    if (!(await store.lock(key, lock))) throw new WebError("RETRY_SESSION", 503);
-    try {
-      const current = await loadSession(key);
-      if (current.value.accessUntil > now() + 30000) return current.value;
-      const next = await upstream.refresh(current.value.refresh);
-      if (next.accountId !== current.value.accountId) {
-        await revoke(next.access);
-        throw new WebError("SIGN_IN_REQUIRED", 401);
-      }
-      const session = { ...current.value, ...next };
-      if (!(await store.replaceSession(key, current.version, session))) {
-        await revoke(next.access);
-        throw new WebError("SIGN_IN_REQUIRED", 401);
-      }
-      return session;
-    } finally {
-      await store.unlock(key, lock).catch(() => undefined);
+    if (!(await store.claimRefresh(key, current.generation, lock))) {
+      const latest = await loadSession(key);
+      if (latest.value.accessUntil > now() + 30000) return latest;
+      if (await store.expireRefresh(key, latest.generation)) throw new WebError("SIGN_IN_REQUIRED", 401);
+      throw new WebError("RETRY_SESSION", 503);
     }
-  }
-  async function listSpaces(key, res) {
+
+    let next;
     try {
-      const session = await sessionFor(key);
-      const spaces = await upstream.list(session);
-      const present = await loadSession(key);
-      if (present.value.accountId !== session.accountId) throw new WebError("SIGN_IN_REQUIRED", 401);
-      return json(res, 200, { email: session.email, spaces });
+      next = await upstream.refresh(current.value.refresh);
+      if (next.accountId !== current.value.accountId) throw new WebError("SIGN_IN_REQUIRED", 401);
+      const session = await store.finishRefresh(key, current.generation, lock, { ...current.value, ...next });
+      if (session) return session;
+    } catch {
+      // A timeout may have consumed the provider's refresh token.
+      // Remove this generation so another instance never replays the token.
+      await store.dropSession(key, current.generation).catch(() => undefined);
+    }
+    if (next) await revoke(next.access);
+    throw new WebError("SIGN_IN_REQUIRED", 401);
+  }
+
+  async function listSpaces(key, res) {
+    const session = await sessionFor(key);
+    let spaces;
+    try {
+      spaces = await upstream.list(session.value);
     } catch (error) {
       if (error.status === 401 || error.status === 403) {
-        if (key) await store.take("session", key);
-        res.setHeader("set-cookie", cookie("session"));
+        const removed = await store.dropSession(key, session.generation);
+        if (!removed && activeSession(await store.getSession(key))) throw new WebError("RETRY_SESSION", 503);
       }
       throw error;
     }
+    const present = await loadSession(key);
+    if (present.value.accountId !== session.value.accountId) throw new WebError("SIGN_IN_REQUIRED", 401);
+    return json(res, 200, { email: present.value.email, spaces });
   }
 
   async function sendCode(request, res) {
@@ -160,9 +164,9 @@ export function createWebHandler({ origin, upstream, store, now = Date.now }) {
     await limit("otp-global", "all", 3600, 20);
     if ((await store.limit("otp-email", address, 900)) <= 3) await upstream.send(address);
     const previous = readCookie(request, "challenge");
-    if (previous) await store.take("challenge", previous);
+    if (previous) await store.takeChallenge(previous);
     const id = nonce();
-    await store.put("challenge", id, { email: address, termsVersion }, challengeAge);
+    await store.putChallenge(id, { email: address, termsVersion }, challengeAge);
     res.setHeader("set-cookie", cookie("challenge", id, challengeAge));
     return json(res, 202, { sent: true });
   }
@@ -170,13 +174,13 @@ export function createWebHandler({ origin, upstream, store, now = Date.now }) {
     const { code } = await readJson(request);
     if (typeof code !== "string" || !/^\d{8}$/.test(code)) throw new WebError("CODE_REJECTED", 400);
     const id = readCookie(request, "challenge");
-    const challenge = id && (await store.get("challenge", id));
-    if (!challenge || challenge.value.termsVersion !== termsVersion) throw new WebError("CODE_REJECTED", 400);
-    await limit("otp-verify", challenge.value.email, 900, 8);
+    const challenge = id && (await store.getChallenge(id));
+    if (!challenge || challenge.termsVersion !== termsVersion) throw new WebError("CODE_REJECTED", 400);
+    await limit("otp-verify", challenge.email, 900, 8);
     await limit("otp-verify-global", "all", 900, 90);
-    const tokens = await upstream.verify(challenge.value.email, code);
+    const tokens = await upstream.verify(challenge.email, code);
     try {
-      if (!(await store.take("challenge", id)) || normalizeEmail(tokens.email) !== challenge.value.email) {
+      if (!(await store.takeChallenge(id)) || normalizeEmail(tokens.email) !== challenge.email) {
         throw new WebError("CODE_REJECTED", 400);
       }
       await upstream.check(tokens);
@@ -184,14 +188,7 @@ export function createWebHandler({ origin, upstream, store, now = Date.now }) {
       const deviceId = browserDevice(tokens.accountId, browser);
       await upstream.register(tokens.access, deviceId);
       const key = nonce();
-      await store.put(
-        "consent",
-        tokens.accountId,
-        { version: termsVersion, acceptedAt: now() },
-        365 * 24 * 3600,
-      );
-      await store.put(
-        "session",
+      await store.saveLogin(
         key,
         { ...tokens, deviceId, termsVersion, expiresAt: now() + sessionAge * 1000 },
         sessionAge,
@@ -209,14 +206,14 @@ export function createWebHandler({ origin, upstream, store, now = Date.now }) {
   }
   async function logout(request, res, key) {
     await readJson(request);
-    const session = key && (await store.take("session", key));
+    const session = key && (await store.takeSession(key));
     const challenge = readCookie(request, "challenge");
-    if (challenge) await store.take("challenge", challenge);
+    if (challenge) await store.takeChallenge(challenge);
     res.setHeader("set-cookie", [cookie("session"), cookie("challenge")]);
     if (session) {
       const { access, refresh, accessUntil } = session.value;
       if (accessUntil > now()) await revoke(access);
-      else
+      else if (!session.refreshing)
         await upstream
           .refresh(refresh)
           .then((tokens) => revoke(tokens.access))
@@ -243,12 +240,24 @@ export function createWebHandler({ origin, upstream, store, now = Date.now }) {
           res.writeHead(200, { "content-type": asset.type });
           return res.end(asset.body);
         }
-        if (path === "/healthz") return json(res, 200, { status: "ok", channel: "development" });
-        if (path === "/") return redirect(res, "/login");
+        if (path === "/healthz") {
+          return json(res, 200, {
+            status: "ok",
+            app: "work-journey-board-web",
+            channel: "development",
+            revision,
+          });
+        }
         if (path === "/api/spaces") return await listSpaces(key, res);
-        if (path === "/spaces" || path === "/login") {
-          const session = key && (await store.get("session", key));
-          const active = activeSession(session);
+        if (path.startsWith("/api/spaces/")) await loadSession(key);
+        const webPage =
+          path === "/app" ||
+          path.startsWith("/app/") ||
+          path === "/settings" ||
+          path.startsWith("/settings/");
+        if (path === "/" || path === "/spaces" || path === "/login" || webPage) {
+          const active = activeSession(key && (await store.getSession(key)));
+          if (path === "/" || webPage) return redirect(res, active ? "/spaces" : "/login");
           if (path === "/spaces" && !active) return redirect(res, "/login");
           if (path === "/login" && active) return redirect(res, "/spaces");
         }
@@ -262,7 +271,7 @@ export function createWebHandler({ origin, upstream, store, now = Date.now }) {
         if (request.headers.origin !== origin || request.headers["sec-fetch-site"] === "cross-site")
           throw new WebError("ORIGIN_REQUIRED", 403);
         if (path === "/api/auth/code" || path === "/api/auth/verify") {
-          const session = key && (await store.get("session", key));
+          const session = key && (await store.getSession(key));
           if (activeSession(session)) throw new WebError("SIGN_OUT_FIRST", 409);
           return await (path.endsWith("/code") ? sendCode(request, res) : verifyCode(request, res));
         }
@@ -283,13 +292,16 @@ export function createConfiguredWebHandler(env) {
     publicKey: env.WJB_SUPABASE_DEV_PUBLISHABLE_KEY,
     fetch,
   });
-  const command = createRedisCommand({
-    url: env.WJB_WEB_REDIS_REST_URL,
-    token: env.WJB_WEB_REDIS_REST_TOKEN,
-    fetch,
+  const sql = connectWebDatabase(env.WJB_WEB_DATABASE_URL, {
+    projectRef: env.WJB_SUPABASE_DEV_PROJECT_REF,
+    allowLocal: !env.VERCEL_ENV || env.VERCEL_ENV === "development",
+    certificate: env.WJB_WEB_DB_CA,
   });
-  const store = createSessionStore(command, Buffer.from(env.WJB_WEB_SESSION_KEY ?? "", "base64"));
-  return createWebHandler({ origin: env.WJB_WEB_ORIGIN, upstream, store });
+  const store = createSessionStore(sql, Buffer.from(env.WJB_WEB_SESSION_KEY ?? "", "base64"));
+  const revision = /^[0-9a-f]{40}$/.test(env.VERCEL_GIT_COMMIT_SHA ?? "")
+    ? env.VERCEL_GIT_COMMIT_SHA
+    : "local";
+  return createWebHandler({ origin: env.WJB_WEB_ORIGIN, upstream, store, revision });
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

@@ -1,4 +1,4 @@
-/* global document, fetch, FormData, location, setTimeout */
+/* global BroadcastChannel, addEventListener, document, fetch, FormData, location, setTimeout */
 const messages = {
   CODE_REJECTED: "인증번호를 확인해 주세요. 만료되었다면 다시 받아 주세요.",
   CONSENT_REQUIRED: "이용약관 및 개인정보 처리방침 동의가 필요합니다.",
@@ -111,7 +111,20 @@ if (list) {
   const reload = document.querySelector("#reload-spaces");
   const logout = document.querySelector("#logout");
   const empty = document.querySelector("#empty-spaces");
+  const sessionEvents =
+    typeof BroadcastChannel === "function" ? new BroadcastChannel("wj-web-session") : null;
   let requestNumber = 0;
+  const account = document.querySelector("#account-email");
+  function clearSpaces() {
+    list.replaceChildren();
+    account.textContent = "";
+    empty.hidden = true;
+  }
+  function returnToLogin() {
+    requestNumber++;
+    clearSpaces();
+    location.replace("/login");
+  }
   async function loadSpaces() {
     const current = ++requestNumber;
     reload.hidden = true;
@@ -120,7 +133,7 @@ if (list) {
     try {
       const { email, spaces } = await api("/api/spaces");
       if (current !== requestNumber) return;
-      document.querySelector("#account-email").textContent = email;
+      account.textContent = email;
       const items = spaces.map(({ name, color }) => {
         const item = document.createElement("li");
         const title = document.createElement("span");
@@ -131,10 +144,11 @@ if (list) {
       });
       list.replaceChildren(...items);
       empty.hidden = spaces.length > 0;
-      status.textContent = spaces.length ? "DEV에서 온라인 공간 목록을 확인할 수 있습니다." : "";
+      status.textContent = "";
     } catch (error) {
       if (current !== requestNumber) return;
-      if (error.status === 401 || error.status === 403) return location.replace("/login");
+      if (error.status === 401 || error.status === 403) return returnToLogin();
+      clearSpaces();
       status.textContent = error.status ? error.message : fallback;
       reload.hidden = false;
     } finally {
@@ -147,13 +161,24 @@ if (list) {
     requestNumber++;
     try {
       await api("/api/auth/logout", {});
-      location.replace("/login");
+      sessionEvents?.postMessage("logout");
+      returnToLogin();
     } catch (error) {
       status.textContent = error.status ? error.message : fallback;
       reload.hidden = false;
     } finally {
       logout.disabled = false;
     }
+  });
+  sessionEvents?.addEventListener("message", (event) => {
+    if (event.data === "logout") returnToLogin();
+  });
+  addEventListener("pagehide", () => {
+    requestNumber++;
+    clearSpaces();
+  });
+  addEventListener("pageshow", (event) => {
+    if (event.persisted && !logout.disabled) loadSpaces();
   });
   loadSpaces();
   document.addEventListener("visibilitychange", () => {

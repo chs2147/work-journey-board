@@ -148,7 +148,7 @@ flowchart LR
 
 ### Supabase 웹 세션 저장소
 
-기존 Supabase 프로젝트에 웹 전용 스키마 `wj_web`을 추가합니다. Vercel Functions는 해당 스키마에만 필요한 권한을 가진 전용 로그인 역할로 Supavisor **Transaction** 풀러에 TLS로 연결합니다. 요청 사이에 유지되는 DB 세션 상태와 서버 측 준비 문을 사용하지 않습니다. Preview에는 DEV 앱 역할의 접속 정보만 등록합니다. 브라우저는 동일 출처 웹 API를 호출하고, Vercel 함수가 기존 게이트웨이에서 온라인 공간을 확인합니다. [Supabase 서버리스 DB 연결](https://supabase.com/docs/guides/database/connecting-to-postgres/serverless-drivers) · [Supavisor 풀러](https://supabase.com/kb/troubleshooting/supavisor-faq-YyP5tI)
+기존 Supabase 프로젝트에 웹 전용 스키마 `wj_web`을 추가합니다. Vercel Functions는 해당 스키마에만 필요한 권한을 가진 전용 로그인 역할로 Supavisor **Transaction** 풀러에 연결하고 DEV Supabase의 CA 인증서로 TLS 연결을 확인합니다. 요청 사이에 유지되는 DB 세션 상태와 서버 측 준비 문을 사용하지 않습니다. Preview에는 DEV 앱 역할의 접속 정보만 등록합니다. 브라우저는 동일 출처 웹 API를 호출하고, Vercel 함수가 기존 게이트웨이에서 온라인 공간을 확인합니다. [Supabase 서버리스 DB 연결](https://supabase.com/docs/guides/database/connecting-to-postgres/serverless-drivers) · [Supavisor 풀러](https://supabase.com/kb/troubleshooting/supavisor-faq-YyP5tI)
 
 | 테이블 | 저장할 값과 생명주기 |
 | --- | --- |
@@ -178,9 +178,9 @@ flowchart LR
 ### 웹 전용 배포 진입점과 기존 배포 점검
 
 - GitHub의 원격 `main`(`0f46476`)과 `web-service-v1`(`da20dfc`)에는 Vercel 전용 설정이 없는 상태를 확인했습니다. 저장소 루트의 기본 Vite 빌드는 데스크탑의 브라우저 미리보기를 생성합니다. Vercel에서 이 기본 진입점을 빌드하면 로그인 없이 데스크탑 화면이 표시될 수 있습니다. 기존 Vercel 배포의 실제 Source 커밋과 빌드 설정은 배포 상세 화면에서 확인합니다.
-- W1에서 Vercel 전용 프로젝트의 Root Directory를 `web/`로 지정하고, 앱·함수·빌드 설정을 그 진입점 아래로 모읍니다. 로고와 이후 공용 도메인 모듈은 해당 빌드에 필요한 경로만 포함합니다. 데스크탑 루트 Vite 빌드, 브라우저 가상 인증·가상 공간, 시안과 테스트 픽스처가 배포 산출물에 포함되면 빌드를 실패 처리합니다. [Vercel 모노레포 설정](https://vercel.com/docs/monorepos)
+- W1에서 Vercel 전용 프로젝트의 Root Directory를 `web/`로 지정하고, 앱·함수·빌드 설정을 그 진입점 아래로 모읍니다. 저장소 루트를 선택한 Vercel 빌드는 오류로 중단됩니다. 로고와 이후 공용 도메인 모듈은 해당 빌드에 필요한 경로만 포함합니다. 데스크탑 루트 Vite 빌드, 브라우저 가상 인증·가상 공간, 시안과 테스트 픽스처가 배포 산출물에 포함되면 빌드를 실패 처리합니다. [Vercel 모노레포 설정](https://vercel.com/docs/monorepos)
 - 기존 주소가 검증 참가자 외에도 열리면 Vercel의 Deployment Protection을 먼저 확인합니다. 보호된 새 Preview에서는 배포 상세의 Source 커밋·Root Directory·빌드 설정을 확인하고 `/healthz`에서 웹 채널과 배포 커밋을 대조합니다. 브라우저의 비로그인 진입과 API 접근 시험을 통과한 산출물만 공개 도메인 및 티저 링크에 연결합니다. [Vercel Git 배포](https://vercel.com/docs/git) · [Deployment Protection](https://vercel.com/docs/deployment-protection)
-- 환경변수는 `WJB_SUPABASE_DEV_PROJECT_REF`, `WJB_SUPABASE_DEV_PUBLISHABLE_KEY`, `WJB_WEB_ORIGIN`, 전용 역할의 `WJB_WEB_DATABASE_URL`, `WJB_WEB_SESSION_KEY`를 사용합니다. W1 Preview 변수에서 Redis 설정을 제거하고, 전용 DB 역할을 Preview에만 연결합니다. Vercel과 Supabase 리전, 접근 권한, 배포 대상 커밋을 검증 기록에 남깁니다.
+- 환경변수는 `WJB_SUPABASE_DEV_PROJECT_REF`, `WJB_SUPABASE_DEV_PUBLISHABLE_KEY`, `WJB_WEB_ORIGIN`, 전용 역할의 `WJB_WEB_DATABASE_URL`, `WJB_WEB_DB_CA`, `WJB_WEB_SESSION_KEY`를 사용합니다. W1 Preview 변수에서 Redis 설정을 제거하고, 전용 DB 역할을 Preview에만 연결합니다. Vercel과 Supabase 리전, 접근 권한, 배포 대상 커밋을 검증 기록에 남깁니다.
 
 ## 7. 구현 순서와 출시 검증 기준
 

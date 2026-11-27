@@ -1,90 +1,183 @@
-/* global AbortSignal, Buffer, URL */
-import { createCipheriv, createDecipheriv, createHmac, randomBytes } from "node:crypto";
+/* global Buffer, URL */
+import {
+  createCipheriv,
+  createDecipheriv,
+  createHmac,
+  hkdfSync,
+  randomBytes,
+  X509Certificate,
+} from "node:crypto";
+import { getCACertificates } from "node:tls";
+import postgres from "postgres";
 
-export function createRedisCommand({ url, token, fetch }) {
-  const endpoint = new URL(url);
-  if (
-    endpoint.protocol !== "https:" ||
-    endpoint.username ||
-    endpoint.password ||
-    endpoint.pathname !== "/" ||
-    endpoint.search ||
-    endpoint.hash ||
-    !token
-  ) {
-    throw Error("DEV_SESSION_STORE_REQUIRED");
+export function connectWebDatabase(connectionString, { projectRef, allowLocal = false, certificate }) {
+  let url;
+  try {
+    url = new URL(connectionString);
+  } catch {
+    throw Error("DEV_WEB_DATABASE_REQUIRED");
   }
-  return async (args) => {
-    const response = await fetch(endpoint, {
-      method: "POST",
-      redirect: "error",
-      signal: AbortSignal.timeout(3500),
-      headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
-      body: JSON.stringify(args),
-    });
-    if (!response.ok) throw Error("SESSION_STORE_UNAVAILABLE");
-    const result = await response.json();
-    if (result.error || !Object.hasOwn(result, "result")) throw Error("SESSION_STORE_UNAVAILABLE");
-    return result.result;
-  };
+  const local = allowLocal && ["127.0.0.1", "localhost"].includes(url.hostname);
+  const validRole = local
+    ? url.username === "wj_web_app"
+    : url.username === "wj_web_app." + projectRef &&
+      url.hostname.endsWith(".pooler.supabase.com") &&
+      url.port === "6543" &&
+      url.pathname === "/postgres";
+  if (
+    !["postgres:", "postgresql:"].includes(url.protocol) ||
+    !validRole ||
+    !url.password ||
+    url.search ||
+    url.hash
+  ) {
+    throw Error("DEV_WEB_DATABASE_REQUIRED");
+  }
+  let ssl = false;
+  if (!local) {
+    try {
+      if (!new X509Certificate(certificate).ca) throw Error();
+    } catch {
+      throw Error("DEV_WEB_DATABASE_CA_REQUIRED");
+    }
+    ssl = { ca: [...getCACertificates("default"), certificate], rejectUnauthorized: true };
+  }
+  return postgres(url.href, {
+    ssl,
+    prepare: false,
+    max: 2,
+    connect_timeout: 5,
+    idle_timeout: 15,
+  });
 }
 
-const rate =
-  "local n=redis.call('INCR',KEYS[1]); if n==1 then redis.call('EXPIRE',KEYS[1],ARGV[1]); end; return n";
-const replace =
-  "if redis.call('GET',KEYS[1])~=ARGV[1] then return 0 end; redis.call('SET',KEYS[1],ARGV[2],'KEEPTTL'); return 1";
-const unlock = "if redis.call('GET',KEYS[1])==ARGV[1] then return redis.call('DEL',KEYS[1]); end; return 0";
-
-export function createSessionStore(command, key) {
+export function createSessionStore(sql, key) {
   if (!Buffer.isBuffer(key) || key.length !== 32) throw Error("DEV_SESSION_ENCRYPTION_KEY_REQUIRED");
-  const id = (prefix, raw) =>
-    "wjb:web:dev:" +
-    prefix +
-    ":" +
-    createHmac("sha256", key)
-      .update(prefix + ":" + raw)
+  const indexKey = Buffer.from(hkdfSync("sha256", key, "", "wj-web-index-v1", 32));
+  const tokenKey = Buffer.from(hkdfSync("sha256", key, "", "wj-web-payload-v1", 32));
+  const index = (scope, raw) =>
+    createHmac("sha256", indexKey)
+      .update(scope + ":" + raw)
       .digest("hex");
-  function encrypt(keyName, value) {
+
+  function encrypt(id, value) {
     const iv = randomBytes(12);
-    const cipher = createCipheriv("aes-256-gcm", key, iv);
-    cipher.setAAD(Buffer.from(keyName));
+    const cipher = createCipheriv("aes-256-gcm", tokenKey, iv);
+    cipher.setAAD(Buffer.from(id));
     const data = Buffer.concat([cipher.update(JSON.stringify(value)), cipher.final()]);
     return Buffer.concat([iv, cipher.getAuthTag(), data]).toString("base64url");
   }
-  function decode(keyName, version) {
-    if (version === null) return null;
-    const bytes = Buffer.from(version, "base64url");
-    const cipher = createDecipheriv("aes-256-gcm", key, bytes.subarray(0, 12));
-    cipher.setAAD(Buffer.from(keyName));
+
+  function decode(id, row) {
+    if (!row) return null;
+    const bytes = Buffer.from(row.payload, "base64url");
+    const cipher = createDecipheriv("aes-256-gcm", tokenKey, bytes.subarray(0, 12));
+    cipher.setAAD(Buffer.from(id));
     cipher.setAuthTag(bytes.subarray(12, 28));
     const value = JSON.parse(Buffer.concat([cipher.update(bytes.subarray(28)), cipher.final()]).toString());
-    return { value, version };
+    return { value, generation: row.generation, refreshing: Boolean(row.lock_owner) };
   }
+
   return {
-    async put(prefix, raw, value, seconds) {
-      const k = id(prefix, raw);
-      return command(["SET", k, encrypt(k, value), "EX", seconds]);
+    async putChallenge(raw, value, seconds) {
+      const id = index("challenge", raw);
+      await sql`
+        insert into wj_web.otp_challenge (id, payload, expires_at)
+        values (${id}, ${encrypt(id, value)}, now() + ${seconds} * interval '1 second')
+      `;
     },
-    async get(prefix, raw) {
-      const k = id(prefix, raw);
-      return decode(k, await command(["GET", k]));
+    async getChallenge(raw) {
+      const id = index("challenge", raw);
+      const [row] = await sql`
+        select payload from wj_web.otp_challenge where id = ${id} and expires_at > now()
+      `;
+      return decode(id, row)?.value ?? null;
     },
-    async take(prefix, raw) {
-      const k = id(prefix, raw);
-      return decode(k, await command(["GETDEL", k]));
+    async takeChallenge(raw) {
+      const id = index("challenge", raw);
+      const [row] = await sql`
+        delete from wj_web.otp_challenge where id = ${id} and expires_at > now() returning payload
+      `;
+      return decode(id, row)?.value ?? null;
     },
-    async limit(prefix, raw, seconds) {
-      return command(["EVAL", rate, 1, id(prefix, raw), seconds]);
+    async limit(scope, raw, seconds) {
+      const id = index(scope, raw);
+      const [row] = await sql`
+        insert into wj_web.auth_rate_limit as prior (id, hits, expires_at)
+        values (${id}, 1, now() + ${seconds} * interval '1 second')
+        on conflict (id) do update set
+          hits = case when prior.expires_at <= clock_timestamp() then 1 else prior.hits + 1 end,
+          expires_at = case when prior.expires_at <= clock_timestamp()
+            then clock_timestamp() + ${seconds} * interval '1 second' else prior.expires_at end
+        returning hits
+      `;
+      return row.hits;
     },
-    async replaceSession(raw, previous, next) {
-      const k = id("session", raw);
-      return (await command(["EVAL", replace, 1, k, previous, encrypt(k, next)])) === 1;
+    async saveLogin(raw, value, seconds) {
+      const id = index("session", raw);
+      const payload = encrypt(id, value);
+      await sql.begin(async (tx) => {
+        await tx`
+          insert into wj_web.consent (account_id, terms_version)
+          values (${value.accountId}, ${value.termsVersion})
+          on conflict (account_id, terms_version) do nothing
+        `;
+        await tx`
+          insert into wj_web.session (id, account_id, payload, expires_at)
+          values (${id}, ${value.accountId}, ${payload}, now() + ${seconds} * interval '1 second')
+        `;
+      });
     },
-    async lock(raw, token) {
-      return (await command(["SET", id("lock", raw), token, "NX", "EX", 30])) === "OK";
+    async getSession(raw) {
+      const id = index("session", raw);
+      const [row] = await sql`
+        select payload, generation, lock_owner
+        from wj_web.session where id = ${id} and expires_at > now()
+      `;
+      return decode(id, row);
     },
-    async unlock(raw, token) {
-      await command(["EVAL", unlock, 1, id("lock", raw), token]);
+    async takeSession(raw) {
+      const id = index("session", raw);
+      const [row] = await sql`
+        delete from wj_web.session where id = ${id} returning payload, generation, lock_owner
+      `;
+      return decode(id, row);
+    },
+    async claimRefresh(raw, generation, lock) {
+      const [row] = await sql`
+        update wj_web.session set lock_owner = ${lock}, lock_until = now() + interval '75 seconds'
+        where id = ${index("session", raw)} and generation = ${generation}
+          and expires_at > now() and lock_owner is null
+        returning id
+      `;
+      return Boolean(row);
+    },
+    async expireRefresh(raw, generation) {
+      const [row] = await sql`
+        delete from wj_web.session
+        where id = ${index("session", raw)} and generation = ${generation}
+          and lock_until <= now()
+        returning id
+      `;
+      return Boolean(row);
+    },
+    async finishRefresh(raw, generation, lock, value) {
+      const id = index("session", raw);
+      const [row] = await sql`
+        update wj_web.session
+        set payload = ${encrypt(id, value)}, generation = generation + 1, lock_owner = null, lock_until = null
+        where id = ${id} and generation = ${generation} and lock_owner = ${lock}
+          and lock_until > now() and expires_at > now()
+        returning generation
+      `;
+      return row ? { value, generation: row.generation, refreshing: false } : null;
+    },
+    async dropSession(raw, generation) {
+      const [row] = await sql`
+        delete from wj_web.session where id = ${index("session", raw)} and generation = ${generation}
+        returning id
+      `;
+      return Boolean(row);
     },
   };
 }

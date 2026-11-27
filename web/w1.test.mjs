@@ -1,11 +1,12 @@
-/* global Buffer, Response, fetch, process */
+/* global Response, URL, fetch, process */
 import assert from "node:assert/strict";
+import { randomBytes, randomUUID } from "node:crypto";
 import { once } from "node:events";
 import { createServer } from "node:http";
 import { test } from "node:test";
 import { chromium } from "@playwright/test";
 import { CLOUD_TARGETS } from "../poc/v2-cloud/cloud-environment.mjs";
-import { createSessionStore } from "./session-store.mjs";
+import { connectWebDatabase, createSessionStore } from "./session-store.mjs";
 import { createDevUpstream } from "./upstream.mjs";
 import { createWebHandler } from "./server.mjs";
 
@@ -21,9 +22,12 @@ const accounts = new Map([
 const spaceId = "22222222-2222-4222-8222-222222222222";
 const code = "01234567";
 const version = "web-dev-2026-11-27";
+const databaseUrl = new URL(process.env.WJB_WEB_TEST_DATABASE_URL);
+if (!["127.0.0.1", "localhost"].includes(databaseUrl.hostname) || databaseUrl.pathname !== "/wj_web_test") {
+  throw new Error("Use the disposable local wj_web_test database");
+}
 
 async function fixture(t) {
-  const values = new Map();
   const sent = [];
   const devices = [];
   const revoked = [];
@@ -49,38 +53,10 @@ async function fixture(t) {
   const device = await createTestServer(t, (req, res) => handler(req, res));
   const { origin } = device;
 
-  async function command([action, key, ...args]) {
-    const value = values.get(key);
-    switch (action) {
-      case "GET":
-        return value ?? null;
-      case "GETDEL":
-        values.delete(key);
-        return value ?? null;
-      case "SET":
-        if (args[1] === "NX" && value !== undefined) return null;
-        values.set(key, args[0]);
-        return "OK";
-      case "EVAL": {
-        const [, redisKey, previous, next] = args;
-        const existing = values.get(redisKey);
-        if (key.includes("'INCR'")) {
-          const count = (existing ?? 0) + 1;
-          values.set(redisKey, count);
-          return count;
-        }
-        if (existing !== previous) return 0;
-        if (next !== undefined) values.set(redisKey, next);
-        else values.delete(redisKey);
-        return 1;
-      }
-      default:
-        throw new Error("Unexpected command");
-    }
-  }
-
-  const store = createSessionStore(command, Buffer.alloc(32, 7));
   const projectRef = CLOUD_TARGETS.development.projectRef;
+  const sql = connectWebDatabase(databaseUrl, { projectRef, allowLocal: true });
+  t.after(() => sql.end({ timeout: 1 }));
+  const store = createSessionStore(sql, randomBytes(32));
   const upstream = createDevUpstream({
     projectRef,
     publicKey: "sb_publishable_test",
@@ -134,7 +110,7 @@ async function fixture(t) {
   handler = createWebHandler({ origin, upstream, store, now: () => clock });
   return {
     origin,
-    values,
+    sql,
     sent,
     devices,
     revoked,
@@ -176,7 +152,18 @@ function cookies(response) {
 
 test("DEV requests stay invite-only and public failures have the same outcome", async (t) => {
   const { request, sent } = await fixture(t);
-  assert.equal((await request("/spaces")).headers.get("location"), "/login");
+  for (const path of [
+    "/",
+    "/spaces",
+    "/app/example/day",
+    "/settings/account",
+    "/?profile=local-dev&sample=year",
+  ]) {
+    assert.equal((await request(path)).headers.get("location"), "/login");
+  }
+  const health = await (await request("/healthz")).json();
+  assert.equal(health.app, "work-journey-board-web");
+  assert.equal((await request("/api/spaces/example")).status, 401);
   assert.equal((await request("/api/spaces")).status, 401);
   assert.equal((await request("/terms")).status, 200);
   assert.equal((await request("/privacy")).status, 200);
@@ -198,7 +185,7 @@ test("DEV requests stay invite-only and public failures have the same outcome", 
 });
 
 test("login scopes the space list, encrypts tokens, refreshes, reuses the device and revokes locally", async (t) => {
-  const { request, values, devices, revoked, store, expireAccess, deny } = await fixture(t);
+  const { request, sql, devices, revoked, expireAccess, deny } = await fixture(t);
   async function signIn(deviceCookie = "", address = email) {
     const payload = { email: address, agreed: true, version };
     const issued = await request("/api/auth/code", { payload });
@@ -218,9 +205,14 @@ test("login scopes the space list, encrypts tokens, refreshes, reuses the device
   const first = await signIn();
   const deviceCookie = first.split("; ").find((part) => part.startsWith("__Host-wjb_device="));
   assert.ok(deviceCookie);
-  assert.equal((await store.get("consent", accountId)).value.version, version);
-  assert.doesNotMatch(JSON.stringify([...values]), /access-|refresh-|invited@/);
+  const [consent] = await sql`select terms_version from wj_web.consent where account_id = ${accountId}`;
+  assert.equal(consent.terms_version, version);
+  const stored = await sql`select payload from wj_web.session where account_id = ${accountId}`;
+  assert.ok(stored.length);
+  assert.doesNotMatch(JSON.stringify(stored), /access-|refresh-|invited@/);
   assert.equal((await request("/login", { cookies: first })).headers.get("location"), "/spaces");
+  assert.equal((await request("/", { cookies: first })).headers.get("location"), "/spaces");
+  assert.equal((await request("/api/spaces/example", { cookies: first })).status, 404);
   let response = await request("/api/spaces", { cookies: first });
   assert.equal(response.headers.get("cache-control"), "no-store");
   assert.deepEqual(await response.json(), {
@@ -247,6 +239,35 @@ test("login scopes the space list, encrypts tokens, refreshes, reuses the device
   deny();
   assert.equal((await request("/api/spaces", { cookies: second })).status, 401);
   assert.equal((await request("/spaces", { cookies: second })).headers.get("location"), "/login");
+});
+
+test("Postgres reserves one refresh and cannot revive a deleted session", async (t) => {
+  const { sql, store } = await fixture(t);
+  const id = randomUUID();
+  const value = { accountId, termsVersion: version, refresh: "private-fixture" };
+  await store.saveLogin(id, value, 60);
+  const current = await store.getSession(id);
+  const locks = [randomUUID(), randomUUID()];
+  const winners = await Promise.all(locks.map((lock) => store.claimRefresh(id, current.generation, lock)));
+  assert.equal(winners.filter(Boolean).length, 1);
+  const lock = locks[winners.indexOf(true)];
+  assert.equal((await store.takeSession(id)).refreshing, true);
+  assert.equal(await store.finishRefresh(id, current.generation, lock, value), null);
+  assert.equal(await store.getSession(id), null);
+
+  const challengeId = randomUUID();
+  await store.putChallenge(challengeId, { email }, 60);
+  const consumed = await Promise.all([store.takeChallenge(challengeId), store.takeChallenge(challengeId)]);
+  assert.equal(consumed.filter(Boolean).length, 1);
+  const rate = await Promise.all([store.limit("fixture", id, 60), store.limit("fixture", id, 60)]);
+  assert.deepEqual(rate.sort(), [1, 2]);
+
+  await store.saveLogin(id, value, 60);
+  assert.equal(await store.claimRefresh(id, current.generation, lock), true);
+  await sql`update wj_web.session set lock_until = now() - interval '1 second' where lock_owner = ${lock}`;
+  assert.equal(await store.claimRefresh(id, current.generation, randomUUID()), false);
+  assert.equal(await store.expireRefresh(id, current.generation), true);
+  assert.equal(await store.getSession(id), null);
 });
 
 test(
@@ -284,7 +305,8 @@ test(
     await other.getByText("검증 일지").waitFor();
     await page.getByRole("button", { name: "로그아웃", exact: true }).tap();
     await page.waitForURL("**/login");
-    await other.reload();
     await other.waitForURL("**/login");
+    await other.goBack();
+    assert.notEqual(new URL(other.url()).pathname, "/spaces");
   },
 );

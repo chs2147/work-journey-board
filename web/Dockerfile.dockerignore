@@ -1,6 +1,8 @@
 **
 !web/
 !web/Dockerfile
+!web/package.json
+!web/package-lock.json
 !web/pages.mjs
 !web/server.mjs
 !web/session-store.mjs

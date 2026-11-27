@@ -93,7 +93,7 @@ export function pageFor(path, version) {
       <ul id="space-list" class="space-list"></ul>
       <div id="empty-spaces" hidden>
         <h2>온라인 공간이 없습니다</h2>
-        <p>데스크탑 앱에서 기존 일지를 온라인 공간으로 전환하거나 새 온라인 공간을 만들 수 있습니다.</p>
+        <p>같은 DEV 계정으로 데스크탑 앱에서 온라인 공간을 만든 뒤 이곳에서 확인할 수 있습니다.</p>
         <a href="${repository}/releases/latest">데스크탑 앱 받기</a>
       </div>
       <button id="reload-spaces" class="quiet" type="button" hidden>다시 불러오기</button>

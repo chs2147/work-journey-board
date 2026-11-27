@@ -12,5 +12,6 @@
 /test-results/
 /playwright-report/
 /web/*.test.mjs
+/web/.vercel/
 .env*
 **/.env*

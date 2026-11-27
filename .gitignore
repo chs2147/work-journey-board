@@ -16,3 +16,4 @@ playwright-report/
 test-results/
 
 .vercel/
+/web/supabase/.temp/
