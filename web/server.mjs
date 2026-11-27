@@ -6,6 +6,7 @@ import { pathToFileURL } from "node:url";
 import { createDevUpstream, WebError } from "./upstream.mjs";
 import { connectWebDatabase, createSessionStore } from "./session-store.mjs";
 import { pageFor } from "./pages.mjs";
+import { createWorkspaceAccess, workspaceIdPattern, workspaceViews } from "./workspace.mjs";
 
 const termsVersion = "web-dev-2026-11-27";
 const challengeAge = 60 * 60;
@@ -22,6 +23,7 @@ const assets = new Map(
   [
     ["/assets/style.css", ["text/css; charset=utf-8", "./public/style.css"]],
     ["/assets/app.js", ["text/javascript; charset=utf-8", "./public/app.js"]],
+    ["/assets/workspace.js", ["text/javascript; charset=utf-8", "./public/workspace.js"]],
     ["/assets/icon.svg", ["image/svg+xml", "../site/icon.svg"]],
     ["/assets/wordmark.svg", ["image/svg+xml", "../site/wordmark.svg"]],
   ].map(([route, [type, path]]) => [route, { type, body: readFileSync(new URL(path, import.meta.url)) }]),
@@ -52,10 +54,10 @@ function normalizeEmail(email) {
   }
   return email.trim().toLowerCase();
 }
-async function readJson(request) {
+async function readJson(request, limit = jsonLimit) {
   if (!/^application\/json(?:\s*;|$)/i.test(request.headers["content-type"] ?? ""))
     throw new WebError("INVALID_REQUEST", 415);
-  if (Number(request.headers["content-length"]) > jsonLimit) throw new WebError("INVALID_REQUEST", 413);
+  if (Number(request.headers["content-length"]) > limit) throw new WebError("INVALID_REQUEST", 413);
 
   let body;
   try {
@@ -68,14 +70,14 @@ async function readJson(request) {
     let size = 0;
     for await (const chunk of request.iterator({ destroyOnReturn: false })) {
       size += chunk.length;
-      if (size > jsonLimit) throw new WebError("INVALID_REQUEST", 413);
+      if (size > limit) throw new WebError("INVALID_REQUEST", 413);
       chunks.push(chunk);
     }
     body = Buffer.concat(chunks);
   }
 
   const raw = Buffer.isBuffer(body) || typeof body === "string" ? body : JSON.stringify(body);
-  if (Buffer.byteLength(raw) > jsonLimit) throw new WebError("INVALID_REQUEST", 413);
+  if (Buffer.byteLength(raw) > limit) throw new WebError("INVALID_REQUEST", 413);
   let value;
   try {
     value = JSON.parse(raw);
@@ -86,8 +88,18 @@ async function readJson(request) {
   return value;
 }
 
-export function createWebHandler({ origin, upstream, store, now = Date.now, revision = "local" }) {
+export function createWebHandler({
+  origin,
+  upstream,
+  store,
+  now = Date.now,
+  revision = "local",
+  workspaceKey = randomBytes(32),
+}) {
   const validatedOrigin = new URL(origin);
+  const workspaces = createWorkspaceAccess(upstream, workspaceKey);
+  const workspaceApi = new RegExp(`^/api/spaces/(${workspaceIdPattern})/(header|records|changes|text)$`);
+  const workspacePage = new RegExp(`^/app/(${workspaceIdPattern})/(${workspaceViews})$`);
   if (
     origin !== validatedOrigin.origin ||
     !["https:", "http:"].includes(validatedOrigin.protocol) ||
@@ -138,13 +150,13 @@ export function createWebHandler({ origin, upstream, store, now = Date.now, revi
     throw new WebError("SIGN_IN_REQUIRED", 401);
   }
 
-  async function listSpaces(key, res) {
+  async function withSession(key, run) {
     const session = await sessionFor(key);
-    let spaces;
+    let result;
     try {
-      spaces = await upstream.list(session.value);
+      result = await run(session.value);
     } catch (error) {
-      if (error.status === 401 || error.status === 403) {
+      if (error.status === 401) {
         const removed = await store.dropSession(key, session.generation);
         if (!removed && activeSession(await store.getSession(key))) throw new WebError("RETRY_SESSION", 503);
       }
@@ -152,7 +164,7 @@ export function createWebHandler({ origin, upstream, store, now = Date.now, revi
     }
     const present = await loadSession(key);
     if (present.value.accountId !== session.value.accountId) throw new WebError("SIGN_IN_REQUIRED", 401);
-    return json(res, 200, { email: present.value.email, spaces });
+    return result;
   }
 
   async function sendCode(request, res) {
@@ -232,8 +244,10 @@ export function createWebHandler({ origin, upstream, store, now = Date.now, revi
       "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
     );
     try {
-      const path = new URL(request.url, origin).pathname;
+      const { pathname: path, searchParams } = new URL(request.url, origin);
       const key = readCookie(request, "session");
+      const space = path.match(workspaceApi);
+      const view = path.match(workspacePage);
       if (request.method === "GET") {
         const asset = assets.get(path);
         if (asset) {
@@ -248,7 +262,20 @@ export function createWebHandler({ origin, upstream, store, now = Date.now, revi
             revision,
           });
         }
-        if (path === "/api/spaces") return await listSpaces(key, res);
+        if (path === "/api/spaces") {
+          const result = await withSession(key, async (session) => ({
+            email: session.email,
+            spaces: await upstream.list(session),
+          }));
+          return json(res, 200, result);
+        }
+        if (space && space[2] !== "text") {
+          const [, id, type] = space;
+          const result = await withSession(key, (session) =>
+            type === "header" ? workspaces.open(session, id) : workspaces[type](session, id, searchParams),
+          );
+          return json(res, 200, result);
+        }
         if (path.startsWith("/api/spaces/")) await loadSession(key);
         const webPage =
           path === "/app" ||
@@ -257,11 +284,12 @@ export function createWebHandler({ origin, upstream, store, now = Date.now, revi
           path.startsWith("/settings/");
         if (path === "/" || path === "/spaces" || path === "/login" || webPage) {
           const active = activeSession(key && (await store.getSession(key)));
-          if (path === "/" || webPage) return redirect(res, active ? "/spaces" : "/login");
+          if (path === "/" || (webPage && !view)) return redirect(res, active ? "/spaces" : "/login");
+          if (view && !active) return redirect(res, "/login");
           if (path === "/spaces" && !active) return redirect(res, "/login");
           if (path === "/login" && active) return redirect(res, "/spaces");
         }
-        const page = pageFor(path, termsVersion);
+        const page = pageFor(path, termsVersion, view);
         if (page) {
           res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
           return res.end(page);
@@ -270,6 +298,11 @@ export function createWebHandler({ origin, upstream, store, now = Date.now, revi
       if (request.method === "POST") {
         if (request.headers.origin !== origin || request.headers["sec-fetch-site"] === "cross-site")
           throw new WebError("ORIGIN_REQUIRED", 403);
+        if (space?.[2] === "text") {
+          const payload = await readJson(request, 30000);
+          const result = await withSession(key, (session) => workspaces.saveText(session, space[1], payload));
+          return json(res, 200, result);
+        }
         if (path === "/api/auth/code" || path === "/api/auth/verify") {
           const session = key && (await store.getSession(key));
           if (activeSession(session)) throw new WebError("SIGN_OUT_FIRST", 409);
@@ -297,11 +330,12 @@ export function createConfiguredWebHandler(env) {
     allowLocal: !env.VERCEL_ENV || env.VERCEL_ENV === "development",
     certificate: env.WJB_WEB_DB_CA,
   });
-  const store = createSessionStore(sql, Buffer.from(env.WJB_WEB_SESSION_KEY ?? "", "base64"));
+  const workspaceKey = Buffer.from(env.WJB_WEB_SESSION_KEY ?? "", "base64");
+  const store = createSessionStore(sql, workspaceKey);
   const revision = /^[0-9a-f]{40}$/.test(env.VERCEL_GIT_COMMIT_SHA ?? "")
     ? env.VERCEL_GIT_COMMIT_SHA
     : "local";
-  return createWebHandler({ origin: env.WJB_WEB_ORIGIN, upstream, store, revision });
+  return createWebHandler({ origin: env.WJB_WEB_ORIGIN, upstream, store, revision, workspaceKey });
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

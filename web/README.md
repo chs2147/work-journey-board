@@ -1,6 +1,12 @@
-# Work Journey Board 웹 · W1 DEV
+# Work Journey Board 웹 · DEV
 
-웹은 로그인한 DEV 계정의 온라인 워크스페이스 목록을 표시합니다. Vercel은 웹 화면과 API를 실행하고, 기존 Supabase DEV는 초대 전용 이메일 인증, 온라인 공간과 웹 세션을 제공합니다. 공간의 일지 열기·편집은 W2 범위입니다. [상세 설계](../docs/web-service-v1-spec.md)
+웹은 로그인한 DEV 계정의 온라인 워크스페이스 목록을 표시합니다. Vercel은 웹 화면과 API를 실행하고, 기존 Supabase DEV는 초대 전용 이메일 인증, 온라인 공간과 웹 세션을 제공합니다. W2에서 공간을 선택하면 오늘·주간·칸반·검색·요약을 열고 기록 본문을 편집할 수 있습니다. [상세 설계](../docs/web-service-v1-spec.md)
+
+## W2 온라인 일지
+
+웹은 기존 게이트웨이의 `header`, 페이지 단위 `records`, `sync/pull`을 순서대로 호출해 최초 게시본과 이후 변경을 합칩니다. 페이지 응답에는 화면에 필요한 필드만 담고 데이터는 현재 탭 메모리에서 관리합니다. 돌아오기와 새로고침에서 서버 변경을 다시 확인합니다.
+
+본문 저장은 기존 `sync/push`에 원래 레코드의 revision과 작업 ID를 보냅니다. 입력한 본문과 수정 시각만 바꾸며, 다른 기기가 먼저 저장하면 충돌을 표시합니다. 칸반은 저장된 열 순서와 선택 기간의 카드 조회를 제공하며 상태 이동은 완료 기록과 하위 항목 처리 검증 뒤 연결합니다. 주간 요약은 Markdown으로 다운로드할 수 있습니다.
 
 ## 로컬 빌드
 
@@ -39,7 +45,7 @@ DB 접속 URI와 세션 키는 Vercel Preview의 **Sensitive** 환경변수로 �
 2. W1 프로젝트의 Git 빌드 범위를 `web-service-v1` Preview로 제한합니다. **Deployment Protection**에서 Preview에 Vercel Authentication을 적용하고, **System Environment Variables**를 활성화합니다. 위 환경변수는 `web-service-v1` Preview에 연결합니다. 브라우저는 `WJB_WEB_ORIGIN`에 등록한 주소로 접속합니다.
 3. `web-service-v1`의 Preview를 배포합니다. Deployments의 Source 커밋과 `/healthz`의 `revision`을 대조하고, `app`이 `work-journey-board-web`인지 확인합니다.
 4. Vercel 접근 인증을 통과한 뒤 제품 로그아웃 상태에서 `/`, `/spaces`, `/app/…`가 `/login`으로 이동하는지 확인합니다. `/api/spaces`는 `401`을 반환해야 합니다. 약관과 개인정보 처리방침은 제품 로그인 전에도 열립니다.
-5. 등록된 DEV 테스트 계정 두 개로 실제 메일을 받아 서로 다른 브라우저 프로필에서 로그인합니다. 자기 온라인 공간만 표시되는지, 공간 0개일 때 빈 목록이 나오는지, 웹의 두 탭에서 로그아웃이 반영되고 데스크탑 DEV의 세션이 유지되는지 확인합니다. 미등록 이메일 요청은 일반 안내를 표시하고 Supabase 계정이 생성되지 않아야 합니다.
+5. 등록된 DEV 테스트 계정 두 개로 실제 메일을 받아 서로 다른 브라우저 프로필에서 로그인합니다. 자기 온라인 공간만 표시되는지, 공간 0개일 때 빈 목록이 나오는지, 웹의 두 탭에서 로그아웃이 반영되고 데스크탑 DEV의 세션이 유지되는지 확인합니다. 미등록 이메일 요청은 일반 안내를 표시하고 Supabase 계정이 생성되지 않아야 합니다. W2 확인에서는 DEV 가상 공간을 선택한 뒤 웹에서 바꾼 본문을 데스크탑에서 다시 읽고, 먼저 바뀐 레코드를 웹에서 저장할 때 충돌이 표시되는지 확인합니다.
 
 [모노레포 설정](https://vercel.com/docs/monorepos) · [Build Output API](https://vercel.com/docs/build-output-api) · [Preview 보호](https://vercel.com/docs/deployment-protection)
 

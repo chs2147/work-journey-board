@@ -134,9 +134,10 @@ if (list) {
       const { email, spaces } = await api("/api/spaces");
       if (current !== requestNumber) return;
       account.textContent = email;
-      const items = spaces.map(({ name, color }) => {
+      const items = spaces.map(({ id, name, color }) => {
         const item = document.createElement("li");
-        const title = document.createElement("span");
+        const title = document.createElement("a");
+        title.href = `/app/${id}/day`;
         title.textContent = name;
         item.dataset.color = color;
         item.append(title);

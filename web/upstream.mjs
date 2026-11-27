@@ -61,6 +61,16 @@ export function createDevUpstream({ projectRef, publicKey, fetch, now = Date.now
     if (status !== 200 || !value || typeof value !== "object") throw new WebError("UNAVAILABLE", 503);
     return value;
   }
+  async function workspaceCall(session, action, params) {
+    const result = await request(gateway + action, {
+      access: session.access,
+      body: { deviceId: session.deviceId, params },
+    });
+    if (result.status === 404) throw new WebError("SPACE_NOT_FOUND", 404);
+    if (result.value?.error === "ACCOUNT_SUSPENDED") throw new WebError("READ_ONLY", 403);
+    if (result.status === 409) throw new WebError("SPACE_CHANGED", 409);
+    return gatewayValue(result);
+  }
   return {
     async send(email) {
       // The provider can return different delivery statuses for registered addresses.
@@ -112,6 +122,17 @@ export function createDevUpstream({ projectRef, publicKey, fetch, now = Date.now
           color: /^c[1-8]$/.test(space.workspace?.color) ? space.workspace.color : "c1",
         }));
     },
+    header: (session, workspaceId) => workspaceCall(session, "/read/header", { workspaceId }),
+    records: (session, workspaceId, manifestHash, after) =>
+      workspaceCall(session, "/read/records", { workspaceId, manifestHash, after, limit: 500 }),
+    pull: (session, workspaceId, after) =>
+      workspaceCall(session, "/sync/pull", { workspaceId, after, limit: 500 }),
+    pushText: (session, workspaceId, opId, key, baseRev, value) =>
+      workspaceCall(session, "/sync/push", {
+        workspaceId,
+        opId,
+        changes: [{ table: "entry_item", key, baseRev, value }],
+      }),
     async logout(access) {
       await request("/auth/v1/logout?scope=local", { access });
     },

@@ -14,6 +14,8 @@ const runtimeFiles = [
   "upstream.mjs",
   "public/app.js",
   "public/style.css",
+  "workspace.mjs",
+  "public/workspace.js",
 ];
 
 function copy(source, destination) {

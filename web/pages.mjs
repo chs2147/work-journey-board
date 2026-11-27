@@ -38,7 +38,49 @@ function layout(title, content, script = false) {
 </html>`;
 }
 
-export function pageFor(path, version) {
+const views = { day: "오늘", week: "주간", kanban: "칸반", search: "검색", summary: "요약" };
+
+export function pageFor(path, version, workspace) {
+  if (workspace) {
+    const [, id, view] = workspace;
+    return layout(
+      views[view],
+      `
+      <main class="journal card" id="journal" data-id="${id}" data-view="${view}">
+        <div class="journal-heading">
+          <div><a href="/spaces">온라인 공간</a><h1 id="journal-name">워크스페이스</h1></div>
+          <button type="button" class="quiet" id="journal-refresh">새로고침</button>
+        </div>
+        <nav class="journal-nav" aria-label="워크스페이스 화면">${Object.entries(views)
+          .map(
+            ([key, name]) =>
+              `<a href="/app/${id}/${key}"${key === view ? ' aria-current="page"' : ""}>${name}</a>`,
+          )
+          .join("")}</nav>
+        <div class="journal-tools" id="journal-tools" hidden>
+          ${
+            view === "search"
+              ? '<label for="journal-search">기록 검색</label><input type="search" id="journal-search" maxlength="100" autocomplete="off">'
+              : '<button type="button" class="quiet" id="period-prev" aria-label="이전 기간">‹</button><label for="journal-date">기준일</label><input type="date" id="journal-date"><button type="button" class="quiet" id="period-next" aria-label="다음 기간">›</button>'
+          }
+          ${view === "kanban" ? '<label for="board-period">표시 기간</label><select id="board-period"><option value="week">선택한 주</option><option value="all">전체 기간</option></select>' : ""}
+          ${view === "summary" ? '<button type="button" class="quiet" id="journal-download">Markdown 다운로드</button>' : ""}
+        </div>
+        <p class="status" id="journal-status" role="status">온라인 기록을 불러오는 중입니다.</p>
+        <div id="journal-content"></div>
+        <form id="record-editor" class="record-editor" hidden>
+          <label for="record-text">기록 편집</label>
+          <textarea id="record-text" rows="5" required></textarea>
+          <p id="record-status" role="status"></p>
+          <div class="actions">
+            <button class="primary" type="submit">서버에 저장</button>
+            <button class="quiet" type="button" id="record-cancel">닫기</button>
+          </div>
+        </form>
+        <noscript>기록을 보려면 자바스크립트를 켜 주세요.</noscript>
+      </main><script src="/assets/workspace.js" defer></script>`,
+    );
+  }
   if (path === "/login")
     return layout(
       "웹 로그인",
