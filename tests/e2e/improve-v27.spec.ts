@@ -77,24 +77,115 @@ test("연도 범위: 첫 기록 주 ~ 이번 주, 파일 이름 `2026년_W42~W43
   expect(r.suggested).toBe("/demo/WorkJourney/exports/업무일지_2026년_W42~W43.xlsx");
 });
 
-test("메모보드 텍스트 상자: 옆면 손잡이로 너비를 바꿔도 높이는 글에 맞춤(아래 빈칸 없음), 손잡이는 옆면 둘만", async ({
+/** W44 빈 판에 글 상자 둘: A(위) · B(아래) */
+async function twoBoxes(page: Page) {
+  await page.keyboard.press("Alt+ArrowRight");
+  await expect(page.getByTestId("note-empty")).toBeVisible();
+  const c = (await page.getByTestId("note-canvas").boundingBox())!;
+  for (const [x, y, text] of [
+    [40, 30, "가상 위 상자"],
+    [40, 260, "가상 아래 상자"],
+  ] as const) {
+    await page.mouse.click(c.x + x, c.y + y);
+    await expect(page.locator(":focus")).toHaveClass(/note-prose/);
+    await page.keyboard.type(text);
+    await page.keyboard.press("Escape");
+  }
+  return [
+    page.getByTestId("note-box").filter({ hasText: "가상 위 상자" }),
+    page.getByTestId("note-box").filter({ hasText: "가상 아래 상자" }),
+  ] as const;
+}
+
+async function drag(page: Page, from: { x: number; y: number }, dx: number, dy: number) {
+  await page.mouse.move(from.x, from.y);
+  await page.mouse.down();
+  await page.mouse.move(from.x + dx, from.y + dy, { steps: 6 });
+  await page.mouse.up();
+}
+const mid = (b: { x: number; y: number; width: number; height: number }) => ({
+  x: b.x + b.width / 2,
+  y: b.y + b.height / 2,
+});
+
+/** 관계선 시작점(위 상자 아래쪽)과 상자 아래 끝의 거리(판 좌표, px) */
+async function edgeGap(page: Page, box: ReturnType<Page["getByTestId"]>) {
+  const bottom = await box.evaluate((b) => (b as HTMLElement).offsetTop + (b as HTMLElement).offsetHeight);
+  const d = (await page.getByTestId("note-edge").first().getAttribute("data-d"))!;
+  const ys = [...d.matchAll(/-?\d+(?:\.\d+)?/g)].map((m) => Number(m[0]));
+  return Math.abs(ys[1]! - bottom);
+}
+
+test("메모보드 글 상자: 손잡이 여덟 개, 옆면은 너비만(높이 글에 맞춤), 아래 손잡이로 높이 고정 → [높이를 글에 맞춤], 관계선은 늘 상자 끝에", async ({
   page,
 }) => {
-  const box = page.getByTestId("note-box").first();
-  const before = (await box.boundingBox())!.height;
-  await box.click({ position: { x: 5, y: 5 } });
-  await expect(box.locator("[data-frame-grip]")).toHaveCount(2);
-  const grip = (await box.locator('[data-frame-grip="e"]').boundingBox())!;
-  await page.mouse.move(grip.x + grip.width / 2, grip.y + grip.height / 2);
-  await page.mouse.down();
-  await page.mouse.move(grip.x + 80, grip.y + grip.height / 2, { steps: 5 });
-  await page.mouse.up();
-  const after = (await box.boundingBox())!;
-  expect(Math.abs(after.height - before)).toBeLessThan(2);
-  const gap = await box.evaluate((b) => {
+  const [a, b] = await twoBoxes(page);
+  const h0 = (await a.boundingBox())!.height;
+  await a.click({ position: { x: 5, y: 5 } });
+  await expect(a.locator("[data-frame-grip]")).toHaveCount(8);
+
+  // 옆면: 너비만 — 높이·글 아래 여백 그대로
+  await drag(page, mid((await a.locator('[data-frame-grip="e"]').boundingBox())!), 80, 0);
+  expect(Math.abs((await a.boundingBox())!.height - h0)).toBeLessThan(2);
+  const gap = await a.evaluate((el) => {
     const r = document.createRange();
-    r.selectNodeContents(b.querySelector(".note-prose")!);
-    return b.getBoundingClientRect().bottom - Math.max(...[...r.getClientRects()].map((x) => x.bottom));
+    r.selectNodeContents(el.querySelector(".note-prose")!);
+    return el.getBoundingClientRect().bottom - Math.max(...[...r.getClientRects()].map((x) => x.bottom));
   });
   expect(gap).toBeLessThan(14);
+
+  // 관계선 A → B
+  await a.hover();
+  const k = (await a.locator('[data-testid="edge-knob"][data-side="bottom"]').boundingBox())!;
+  await drag(page, mid(k), 0, (await b.boundingBox())!.y + 10 - mid(k).y);
+  await expect(page.getByTestId("note-edge")).toHaveCount(1);
+  await page.keyboard.press("Escape");
+  expect(await edgeGap(page, a)).toBeLessThan(12);
+
+  // 아래 손잡이: 사용자가 정한 높이(80px 더) → 관계선도 새 끝에서
+  await a.click({ position: { x: 5, y: 5 } });
+  await drag(page, mid((await a.locator('[data-frame-grip="s"]').boundingBox())!), 0, 80);
+  expect((await a.boundingBox())!.height).toBeGreaterThan(h0 + 60);
+  await expect.poll(() => edgeGap(page, a)).toBeLessThan(12);
+
+  // ⋯ [높이를 글에 맞춤] → 다시 글 높이, 관계선도 따라옴
+  await a.hover();
+  await a.getByRole("button", { name: "상자 메뉴" }).click();
+  await page.getByTestId("note-fit-height").click();
+  await expect.poll(async () => Math.abs((await a.boundingBox())!.height - h0)).toBeLessThan(2);
+  await expect.poll(() => edgeGap(page, a)).toBeLessThan(12);
+  await a.hover();
+  await a.getByRole("button", { name: "상자 메뉴" }).click();
+  await expect(page.getByTestId("note-fit-height")).toHaveCount(0);
+});
+
+test("내보내기 진행: 진행 막대·단계 글, 그동안 앱 단축키 막힘, [취소] → 파일 없이 멈추고 창은 그대로", async ({
+  page,
+}) => {
+  test.setTimeout(120_000);
+  await page.goto("/?today=2026-10-22&sample=year");
+  await expect(page.getByTestId("week-title")).toContainText("2026-W43", { timeout: 60_000 });
+  await page.keyboard.press("Alt+KeyE");
+  await dialog(page).getByRole("radio", { name: "연도" }).check();
+  await page.getByTestId("export-snapshots").check();
+  let downloaded = false;
+  page.on("download", () => (downloaded = true));
+  page.once("dialog", (d) => void d.accept(d.defaultValue()));
+  await dialog(page).getByRole("button", { name: "저장 위치 선택…" }).click();
+  await expect(page.getByTestId("export-progress")).toBeVisible();
+  await expect(page.getByTestId("export-progress-label")).toContainText("메모 그림 만드는 중", {
+    timeout: 60_000,
+  });
+  const bar = page.getByRole("progressbar", { name: "내보내기 진행" });
+  expect(Number(await bar.getAttribute("aria-valuenow"))).toBeGreaterThan(0);
+  // 진행 중에는 앱 단축키가 듣지 않는다(주 이동 없음), 창 안 다른 조작도 막힘
+  await page.keyboard.press("Alt+ArrowRight");
+  await expect(page.getByTestId("week-title")).toContainText("2026-W43");
+  await expect(dialog(page).locator("[inert]")).toHaveCount(3); // 타이틀·범위·포함 막힘
+  await page.getByTestId("export-stop").click();
+  await expect(page.getByText("내보내기를 취소했습니다")).toBeVisible();
+  await expect(page.getByTestId("export-progress")).toHaveCount(0);
+  await expect(dialog(page)).toBeVisible();
+  await expect(dialog(page).getByRole("button", { name: "저장 위치 선택…" })).toBeEnabled();
+  expect(downloaded).toBe(false);
 });

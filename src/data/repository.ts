@@ -1441,9 +1441,16 @@ export class JournalRepository {
   }
 
   /** 내보낼 주별 자료(오래된 주부터): 자동 집계 입력 · 업무 색 · 저장된 본 */
-  async exportWeeks(from: WeekId, to: WeekId): Promise<ExportWeek[]> {
+  async exportWeeks(
+    from: WeekId,
+    to: WeekId,
+    /** 주마다(진행 막대·취소 확인 — 던지면 멈춤) */
+    onWeek?: (done: number, total: number) => void,
+  ): Promise<ExportWeek[]> {
     const out: ExportWeek[] = [];
-    for (const weekId of weekList(from, to)) {
+    const ids = weekList(from, to);
+    for (const weekId of ids) {
+      onWeek?.(out.length, ids.length);
       const view = await this.getWeek(weekId);
       const saved = await this.getWeeklySummary(weekId);
       out.push({

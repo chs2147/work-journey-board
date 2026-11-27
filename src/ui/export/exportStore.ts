@@ -45,12 +45,40 @@ export interface ExportChoice {
 
 interface ExportState {
   open: boolean;
+  /** 내보내는 중 — 창 안 다른 조작·앱 단축키를 막고 진행 막대·[취소]만(1.55.1) */
   busy: boolean;
-  /** 메모 그림 만드는 중 i/n */
+  /** 지금 단계 글(예: 메모 그림 만드는 중 3/12) */
   progress: string | null;
+  /** 전체 진행 0~1(저장 위치를 고르는 동안 null) */
+  ratio: number | null;
 }
 
-export const useExport = create<ExportState>(() => ({ open: false, busy: false, progress: null }));
+export const useExport = create<ExportState>(() => ({
+  open: false,
+  busy: false,
+  progress: null,
+  ratio: null,
+}));
+
+/** [취소]·Esc로 멈춤 — 단계 사이·주마다·그림마다 확인하고, 파일을 쓰기 시작한 뒤에는 멈추지 않는다 */
+class ExportCancelled extends Error {}
+let cancelRequested = false;
+
+export function cancelExport() {
+  if (useExport.getState().busy) cancelRequested = true;
+}
+
+function checkCancel() {
+  if (cancelRequested) throw new ExportCancelled();
+}
+
+/** 단계 글과 진행(0~1)을 보이고 화면이 그릴 틈을 준다 */
+async function step(progress: string, ratio: number) {
+  checkCancel();
+  useExport.setState({ progress, ratio: Math.max(0, Math.min(1, ratio)) });
+  await new Promise((r) => setTimeout(r, 0));
+  checkCancel();
+}
 
 /** 엑셀용 메모 그림 해상도 배율(파일 크기와 선명도 절충) */
 const EXCEL_SNAPSHOT_SCALE = 1.5;
@@ -112,7 +140,8 @@ export function categoryLabel(ids: string[] | null, names: Map<string, string>):
 /** 내보내기 실행. 저장했으면 저장 경로, 취소했으면 null */
 export async function runExport(c: ExportChoice): Promise<string | null> {
   if (useExport.getState().busy) return null;
-  useExport.setState({ busy: true });
+  cancelRequested = false;
+  useExport.setState({ busy: true, progress: STR.export.progressPick, ratio: null });
   try {
     const { repo, dataDir, platform } = ready();
     // 입력 중인 칸·수정본까지 저장한 뒤에 읽는다
@@ -152,7 +181,14 @@ export async function runExport(c: ExportChoice): Promise<string | null> {
     }
     if ((await platform.isOneDrivePath(path)) && !window.confirm(STR.export.oneDrive)) return null;
 
-    const weeks = filterExportWeeks(await repo.exportWeeks(from, to), ids);
+    // 진행 비율: 기록 읽기 → (메모 그림) → 파일 만들기 → 쓰기
+    const readEnd = md ? 0.85 : c.snapshots ? 0.35 : 0.75;
+    await step(STR.export.progressRead(0, 1), 0);
+    const raw = await repo.exportWeeks(from, to, (i, n) => {
+      checkCancel();
+      useExport.setState({ progress: STR.export.progressRead(i + 1, n), ratio: (readEnd * i) / n });
+    });
+    const weeks = filterExportWeeks(raw, ids);
     if (md) {
       const text = buildJournalMarkdown(weeks, {
         from,
@@ -164,6 +200,7 @@ export async function runExport(c: ExportChoice): Promise<string | null> {
         categoryLabel: ids ? ids.map((id) => names.get(id) ?? id).join(", ") : STR.export.categoryAll,
         exportedOn: localDate(platform.now()),
       });
+      await step(STR.export.progressWrite, 0.95);
       await platform.writeExport(path, new TextEncoder().encode(text));
       return finish(path, c);
     }
@@ -179,9 +216,10 @@ export async function runExport(c: ExportChoice): Promise<string | null> {
           noMemo.push(w);
           continue;
         }
-        useExport.setState({
-          progress: STR.export.snapshotsProgress(images.length + 1, withMemo.length),
-        });
+        await step(
+          STR.export.snapshotsProgress(images.length + 1, withMemo.length),
+          readEnd + ((0.85 - readEnd) * images.length) / Math.max(1, withMemo.length),
+        );
         const input = await weekSnapshotInput(repo, w, platform.now());
         if (!input) {
           noMemo.push(w);
@@ -192,6 +230,7 @@ export async function runExport(c: ExportChoice): Promise<string | null> {
       }
       snapshots = { images, noMemo: noMemo.reverse() };
     }
+    await step(STR.export.progressBuild, 0.87);
     const ExcelJS = (await import("exceljs")).default;
     const bytes = await buildWorkbook(ExcelJS, weeks, {
       from,
@@ -203,13 +242,16 @@ export async function runExport(c: ExportChoice): Promise<string | null> {
       appVersion: __APP_VERSION__,
       exportedAt: platform.now(),
     });
+    await step(STR.export.progressWrite, 0.95);
     await platform.writeExport(path, bytes);
     return finish(path, c);
   } catch (e) {
-    reportError(e);
+    if (e instanceof ExportCancelled) toast(STR.export.stopped);
+    else reportError(e);
     return null;
   } finally {
-    useExport.setState({ busy: false, progress: null });
+    cancelRequested = false;
+    useExport.setState({ busy: false, progress: null, ratio: null });
   }
 }
 

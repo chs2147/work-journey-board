@@ -43,6 +43,11 @@ export interface TextBox {
   h?: number;
   /** User frame height, independent of auto measured content. */
   frameH?: number;
+  /**
+   * 글 상자: 사용자가 위·아래·모서리 손잡이로 높이를 정했는가(1.55.1~). 없으면 frameH는 예전 판에서
+   * 너비만 바꿀 때 함께 고정된 값이라 쓰지 않고 높이를 글에 맞춘다(improve-v27 9절).
+   */
+  heightSet?: boolean;
   bg: NoteBg | null;
   content: PMNode;
   /** 연결된 업무 항목(없으면 필드 없음) */
@@ -483,6 +488,7 @@ export function parseNoteDoc(json: string | null | undefined): NoteDoc {
       ...(typeof b.frameH === "number" && Number.isFinite(b.frameH)
         ? { frameH: Math.max(80, Math.min(1200, Math.round(b.frameH))) }
         : {}),
+      ...(b.heightSet === true && typeof b.frameH === "number" ? { heightSet: true } : {}),
       bg: NOTE_BG.includes(b.bg as NoteBg) ? (b.bg as NoteBg) : null,
       content,
       ...(parseWidget(b.widget) ? { widget: parseWidget(b.widget) } : {}),
@@ -731,3 +737,12 @@ export const linkedBoxes = (doc: NoteDoc, itemId: string) =>
   readingOrder(doc.boxes.filter((b) => isLinkedTo(b, itemId)));
 
 export const topZ = (doc: NoteDoc) => doc.boxes.reduce((m, b) => Math.max(m, b.z), 0);
+
+/**
+ * 화면·스냅샷·관계선에 쓰는 사용자 높이(improve-v27 9절). 글 상자(위젯 제외)는 사용자가 세로로 정했을 때만,
+ * 나머지 상자는 frameH 그대로. 없으면 내용에 맞춘다.
+ */
+export function boxFrameH(b: NoteBox): number | undefined {
+  if (b.kind === "text" && !b.widget) return b.heightSet ? b.frameH : undefined;
+  return b.frameH;
+}

@@ -364,3 +364,62 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* 내보내기 진행(1.55.1) — 막대 + [취소]만, 나머지 구역은 inert로 흐리게 */
+.dialog [inert] {
+  opacity: 0.55;
+}
+
+.progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.progressText {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  color: var(--text-1);
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.bar {
+  position: relative;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: var(--surface-sub, var(--line));
+}
+
+.barFill {
+  height: 100%;
+  border-radius: 4px;
+  background: var(--accent);
+  transition: width 0.2s ease-out;
+}
+
+/* 저장 위치를 고르는 동안(비율 없음) — 가볍게 오가는 막대 */
+.barWait {
+  width: 30%;
+  animation: exportWait 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes exportWait {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(233%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .barFill {
+    transition: none;
+  }
+  .barWait {
+    animation: none;
+  }
+}

@@ -10,6 +10,7 @@ import {
   clampImageWidth,
   clampLinkWidth,
   clampWidth,
+  boxFrameH,
   cleanLinkText,
   makeLinkBox,
   emptyContent,
@@ -1012,7 +1013,8 @@ export function nudgeBox(id: string, dx: number, dy: number) {
 /** 화면에서 잰 높이 — 8px 넘게 달라졌을 때만 문서에 반영(저장은 하되 기록에는 넣지 않음) */
 export function measureBox(id: string, h: number) {
   const b = boxOf(id);
-  if (!b || b.frameH || Math.abs((b.h ?? 0) - h) < 8) return;
+  // 사용자 높이가 없는(글 상자의 예전 고정값 포함) 상자만 — 관계선이 상자 끝에 붙게 2px 넘게 달라지면 반영
+  if (!b || boxFrameH(b) || Math.abs((b.h ?? 0) - h) < 2) return;
   set({ doc: mapBox(id, (x) => ({ ...x, h: Math.round(h) })) });
 }
 
@@ -1393,11 +1395,12 @@ export function resizeWidgetLive(id: string, height: number) {
   });
 }
 
-export function resizeFrameLive(id: string, x: number, y: number, w: number, h: number) {
+export function resizeFrameLive(id: string, x: number, y: number, w: number, h: number, vertical = true) {
   set({
     doc: mapBox(id, (b) => {
-      // 텍스트 상자(위젯 제외)는 너비만 — 높이를 고정하지 않는다(improve-v27 D9)
-      if (b.kind === "text" && !b.widget) return { ...b, x: snap(x), y: snap(y), w: clampWidth(w) };
+      // 글 상자(위젯 제외): 옆면 손잡이는 너비만(높이 고정 안 함), 위·아래·모서리로 정한 높이만 쓴다 — improve-v27 9절
+      if (b.kind === "text" && !b.widget && !vertical)
+        return { ...b, x: snap(x), y: snap(y), w: clampWidth(w) };
       const height = Math.max(b.kind === "text" && b.widget ? 160 : 80, Math.min(1200, Math.round(h)));
       return {
         ...b,
@@ -1406,7 +1409,23 @@ export function resizeFrameLive(id: string, x: number, y: number, w: number, h: 
         w: b.kind === "image" ? clampImageWidth(w) : b.kind === "link" ? clampLinkWidth(w) : clampWidth(w),
         frameH: height,
         h: height,
+        ...(b.kind === "text" && !b.widget ? { heightSet: true } : {}),
       };
     }),
   });
+}
+
+/** 글 상자 ⋯ [높이를 글에 맞춤] — 사용자 높이를 지운다(되돌리기 기록에 들어감) */
+export function fitBoxHeight(id: string) {
+  const b = boxOf(id);
+  if (!b || b.kind !== "text" || b.widget || !b.heightSet) return;
+  commit(
+    mapBox(id, (x) => {
+      const rest = { ...x } as typeof x & { heightSet?: boolean };
+      delete rest.frameH;
+      delete rest.heightSet;
+      return rest;
+    }),
+    true,
+  );
 }

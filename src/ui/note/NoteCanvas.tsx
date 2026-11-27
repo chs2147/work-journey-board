@@ -24,6 +24,7 @@ import {
   isLinkedTo,
   FONT_SIZES,
   NOTE_BG,
+  boxFrameH,
   type ImageBox,
   type NoteDoc,
   type PMNode,
@@ -69,6 +70,7 @@ import {
   selectBox,
   sendToBack,
   setBoxBg,
+  fitBoxHeight,
   setEditing,
   updateContent,
   useNote,
@@ -709,8 +711,9 @@ function TextBoxView({
     useNote.setState({ focusRequest: null });
   }, [editor, focusRequest, box.id]);
 
-  // 텍스트 상자는 너비 손잡이만 — 높이는 늘 글에 맞춘다(improve-v27 D9, 예전 frameH 무시)
-  useBoxFrame(wrapRef, box.id, selected, true);
+  // 손잡이 여덟 개 그대로 — 옆면은 너비만, 위·아래·모서리로 정한 높이만 쓴다(예전 고정값은 무시, improve-v27 9절)
+  useBoxFrame(wrapRef, box.id, selected);
+  const userH = boxFrameH(box);
 
   const onKeyDownCapture = (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.nativeEvent.isComposing) return;
@@ -825,6 +828,16 @@ function TextBoxView({
           <button type="button" role="menuitem" onClick={() => void copyText()}>
             {STR.note.copyText}
           </button>
+          {userH !== undefined && (
+            <button
+              type="button"
+              role="menuitem"
+              data-testid="note-fit-height"
+              onClick={() => (setMenuOpen(false), fitBoxHeight(box.id))}
+            >
+              {STR.note.fitHeight}
+            </button>
+          )}
           <LinkMenuItems box={box} close={() => setMenuOpen(false)} />
           <EdgeMenuItems boxId={box.id} close={() => setMenuOpen(false)} />
           <button
@@ -838,7 +851,15 @@ function TextBoxView({
         </div>
       )}
       {!!box.refs?.length && <LinkStrip boxId={box.id} refs={box.refs} />}
-      <EditorContent editor={editor} className={styles.editor} />
+      <EditorContent
+        editor={editor}
+        className={styles.editor}
+        style={
+          userH
+            ? { maxHeight: Math.max(30, userH - (box.refs?.length ? 90 : 32)), overflowY: "auto" }
+            : undefined
+        }
+      />
       {/* 대기 상자의 안내 — 글자를 치면 사라진다(조합 중에도 같은 편집기를 그대로 쓰게 구조는 바꾸지 않는다) */}
       {pending && (
         <span className={styles.ghostHint} aria-hidden="true">

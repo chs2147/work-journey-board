@@ -7,6 +7,7 @@ import {
   clampWidth,
   clampImageWidth,
   clampLinkWidth,
+  boxFrameH,
   type NoteBox,
 } from "../../domain/note";
 import { STR } from "../../shared/strings";
@@ -288,7 +289,11 @@ export function useBoxFrame(
     if (selected) ref.current?.focus();
   }, [selected, ref]);
 
-  const frameH = useNote((s) => s.doc.boxes.find((b) => b.id === id)?.frameH);
+  // 글 상자는 사용자가 세로로 정한 높이만(예전에 너비만 바꿀 때 고정된 값은 무시 — improve-v27 9절)
+  const frameH = useNote((s) => {
+    const b = s.doc.boxes.find((x) => x.id === id);
+    return b ? boxFrameH(b) : undefined;
+  });
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -330,7 +335,7 @@ export function useBoxFrame(
           zoom = useNote.getState().zoom,
           ox = e.clientX,
           oy = e.clientY,
-          h = box.frameH ?? el.offsetHeight;
+          h = boxFrameH(box) ?? el.offsetHeight;
         grip.setPointerCapture(e.pointerId);
         const move = (ev: globalThis.PointerEvent) => {
           if (!active || !current()) return;
@@ -348,6 +353,8 @@ export function useBoxFrame(
             side.includes("n") ? box.y + h - nh : box.y,
             w,
             nh,
+            // 옆면(◀▶)은 너비만 — 글 상자 높이를 고정하지 않는다
+            side.includes("n") || side.includes("s"),
           );
         };
         const done = () => {
@@ -389,13 +396,14 @@ export function useBoxFrame(
         if (!b) return;
         const step = ev.shiftKey ? 32 : 8,
           before = beginGesture(),
-          h = b.frameH ?? el.offsetHeight;
+          h = boxFrameH(b) ?? el.offsetHeight;
         resizeFrameLive(
           id,
           b.x,
           b.y,
           b.w + (ev.key === "ArrowRight" ? step : ev.key === "ArrowLeft" ? -step : 0),
           h + (ev.key === "ArrowDown" ? step : ev.key === "ArrowUp" ? -step : 0),
+          ev.key === "ArrowDown" || ev.key === "ArrowUp",
         );
         endGesture(before);
       };

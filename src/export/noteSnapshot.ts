@@ -2,7 +2,7 @@
 // 화면을 캡처하지 않고 문서로 직접 그린다 — 화면에 없는 주(엑셀)도 그릴 수 있고, CSP(외부·data 글꼴)와 부딪히지 않는다.
 // 배치(layoutSnapshot)는 글자 폭 재기 함수만 받는 순수 계산, 그리기(drawSnapshot)만 캔버스를 쓴다. 외부 통신 없음.
 import { allImportantDone } from "../domain/important";
-import { readingOrder, type NoteBox, type NoteDoc, type PMNode } from "../domain/note";
+import { boxFrameH, readingOrder, type NoteBox, type NoteDoc, type PMNode } from "../domain/note";
 import { midPoint, routeEdge, type Point, type Rect } from "../domain/noteEdge";
 
 /** 항상 라이트 테마(인쇄·문서용) — tokens.css 라이트 값과 같게 */
@@ -499,8 +499,8 @@ export function layoutSnapshot(input: SnapshotInput, measure: Measure): Snapshot
       L.ops.push({ ...textOp(url, 13, mainBottom + 6 + 8, 11, SNAP_THEME.text3), w: measure(url, font) });
       h = mainBottom + 6 + 16 + 6 + 1;
     }
-    // 텍스트 상자 높이는 늘 글에 맞춘다(improve-v27 D9) — 예전에 고정된 frameH는 쓰지 않는다
-    L.rect.h = Math.ceil(box.kind === "text" && !box.widget ? h : (box.frameH ?? h));
+    // 글 상자는 사용자가 세로로 정한 높이만(예전에 너비만 바꿀 때 고정된 값은 무시 — improve-v27 9절)
+    L.rect.h = Math.ceil(boxFrameH(box) ?? h);
     boxes.push(L);
   }
 

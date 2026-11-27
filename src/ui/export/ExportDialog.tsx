@@ -8,6 +8,7 @@ import { STR } from "../../shared/strings";
 import { focusStartCell, useBoard } from "../board/boardStore";
 import { useAppStore } from "../common/appStore";
 import {
+  cancelExport,
   categoryLabel,
   defaultChoice,
   resolveRange,
@@ -39,6 +40,7 @@ export function ExportDialog() {
   const journal = useAppStore((s) => s.journal);
   const busy = useExport((s) => s.busy);
   const progress = useExport((s) => s.progress);
+  const ratio = useExport((s) => s.ratio);
   const [memoWeeks, setMemoWeeks] = useState<number | null>(null);
   const [choice, setChoice] = useState<ExportChoice>(defaultChoice);
   const [first, setFirst] = useState<WeekId | null>(null);
@@ -56,6 +58,21 @@ export function ExportDialog() {
       ?.getSettings()
       .then((s) => setChoice((c) => ({ ...c, snapshots: s.ui.exportSnapshots, format: s.ui.exportFormat })));
   }, [repo]);
+
+  // 내보내는 동안: 앱 단축키·다른 조작을 막는다(Esc = 취소). 창 안 조작은 inert로 막고 [취소]만 둔다
+  useEffect(() => {
+    if (!busy) return;
+    const block = (e: globalThis.KeyboardEvent) => {
+      const inStop = (e.target as Element | null)?.closest?.("[data-export-progress]");
+      if (e.key === "Escape") cancelExport();
+      if (inStop && (e.key === "Enter" || e.key === " " || e.key === "Tab")) return;
+      e.preventDefault();
+      e.stopPropagation();
+    };
+    window.addEventListener("keydown", block, true);
+    dialogRef.current?.querySelector<HTMLButtonElement>("[data-export-stop]")?.focus();
+    return () => window.removeEventListener("keydown", block, true);
+  }, [busy]);
 
   const latest = repo?.currentWeek() ?? current;
   const range = resolveRange(choice, current, first, latest);
@@ -128,7 +145,7 @@ export function ExportDialog() {
           }
         }}
       >
-        <div className={styles.head}>
+        <div className={styles.head} {...lock(busy)}>
           <h2 id="export-title" className={styles.title}>
             {E.title}
           </h2>
@@ -151,7 +168,7 @@ export function ExportDialog() {
           </div>
         </div>
 
-        <div className={styles.section} role="group" aria-labelledby="export-range-head">
+        <div className={styles.section} role="group" aria-labelledby="export-range-head" {...lock(busy)}>
           <p id="export-range-head" className={styles.sectionHead}>
             {E.range}
           </p>
@@ -223,7 +240,7 @@ export function ExportDialog() {
           </div>
         </div>
 
-        <div className={styles.section} role="group" aria-labelledby="export-include-head">
+        <div className={styles.section} role="group" aria-labelledby="export-include-head" {...lock(busy)}>
           <p id="export-include-head" className={styles.sectionHead}>
             {E.include}
           </p>
@@ -282,25 +299,62 @@ export function ExportDialog() {
           ) : (
             !md && choice.weekly && <p className={styles.note}>{E.summaryNote}</p>
           )}
-          <div className={styles.actions}>
-            <button type="button" className={styles.button} onClick={close} disabled={busy}>
-              {E.cancel}
-            </button>
-            <button
-              type="button"
-              className={styles.primary}
-              onClick={() => void save()}
-              disabled={nothing || busy}
-              title={nothing ? (md ? E.noPart : E.noSheet) : undefined}
-            >
-              {busy ? (progress ?? E.saving) : E.save}
-            </button>
-          </div>
+          {busy ? (
+            <div className={styles.progress} data-export-progress="" data-testid="export-progress">
+              <div className={styles.progressText}>
+                <span data-testid="export-progress-label">{progress ?? E.saving}</span>
+                {ratio !== null && <span>{Math.round(ratio * 100)}%</span>}
+              </div>
+              <div
+                className={styles.bar}
+                role="progressbar"
+                aria-label={E.progressAria}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={ratio === null ? undefined : Math.round(ratio * 100)}
+              >
+                <div
+                  className={`${styles.barFill} ${ratio === null ? styles.barWait : ""}`}
+                  style={ratio === null ? undefined : { width: `${ratio * 100}%` }}
+                />
+              </div>
+              <div className={styles.actions}>
+                <button
+                  type="button"
+                  className={styles.button}
+                  data-export-stop=""
+                  data-testid="export-stop"
+                  title={E.stopTitle}
+                  onClick={cancelExport}
+                >
+                  {E.stop}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className={styles.actions}>
+              <button type="button" className={styles.button} onClick={close}>
+                {E.cancel}
+              </button>
+              <button
+                type="button"
+                className={styles.primary}
+                onClick={() => void save()}
+                disabled={nothing}
+                title={nothing ? (md ? E.noPart : E.noSheet) : undefined}
+              >
+                {E.save}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 }
+
+/** 내보내는 동안 그 구역을 막는다(포커스·클릭 모두) */
+const lock = (on: boolean) => (on ? { inert: "" as unknown as boolean, "aria-busy": true } : {});
 
 function Check({
   label,

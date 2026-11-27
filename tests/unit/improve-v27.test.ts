@@ -8,6 +8,7 @@ import { exportFileName, yearLabel, yearRange } from "../../src/export/filename"
 import { filterExportWeeks } from "../../src/export/filterWeeks";
 import { buildJournalMarkdown } from "../../src/export/journalMarkdown";
 import { layoutSnapshot } from "../../src/export/noteSnapshot";
+import { boxFrameH, parseNoteDoc } from "../../src/domain/note";
 import { freshRepo } from "./helpers";
 
 describe("연도 범위·파일 이름", () => {
@@ -170,5 +171,34 @@ describe("텍스트 상자 스냅샷 높이(improve-v27 D9)", () => {
     const h0 = layoutSnapshot(input(), measure).boxes[0]!.rect.h;
     const h1 = layoutSnapshot(input(300), measure).boxes[0]!.rect.h;
     expect(h1).toBe(h0);
+  });
+
+  it("사용자가 세로로 정한 높이(heightSet)만 쓰고, 문서를 다시 읽어도 남는다(예전 고정값은 무시)", () => {
+    const content = {
+      type: "doc",
+      content: [{ type: "paragraph", content: [{ type: "text", text: "한 줄" }] }],
+    };
+    const raw = (extra: object) =>
+      JSON.stringify({
+        v: 1,
+        boxes: [{ id: "t", kind: "text", x: 0, y: 0, w: 240, z: 1, content, frameH: 200, ...extra }],
+      });
+    const legacy = parseNoteDoc(raw({})).boxes[0]!;
+    const set = parseNoteDoc(raw({ heightSet: true })).boxes[0]!;
+    expect(boxFrameH(legacy)).toBeUndefined();
+    expect(boxFrameH(set)).toBe(200);
+    expect(parseNoteDoc(raw({ heightSet: "yes" })).boxes[0]).not.toHaveProperty("heightSet");
+    const input = (b: typeof set) =>
+      ({
+        doc: { boxes: [b], edges: [] },
+        images: {},
+        lines: {},
+        title: "가상",
+        subtitle: "",
+        goneText: "원본 없음",
+        moreText: (n: number) => String(n),
+      }) as unknown as Parameters<typeof layoutSnapshot>[0];
+    expect(layoutSnapshot(input(set), (t: string) => t.length * 7).boxes[0]!.rect.h).toBe(200);
+    expect(layoutSnapshot(input(legacy), (t: string) => t.length * 7).boxes[0]!.rect.h).toBeLessThan(200);
   });
 });
