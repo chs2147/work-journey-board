@@ -35,6 +35,7 @@ npm run build --prefix web
 | `WJB_SUPABASE_DEV_PROJECT_REF` | 기존 데스크탑 DEV와 동일한 Supabase 프로젝트 참조 |
 | `WJB_SUPABASE_DEV_PUBLISHABLE_KEY` | 같은 DEV 프로젝트의 `sb_publishable_` 키 |
 | `WJB_WEB_ORIGIN` | 끝 슬래시를 뺀 정확한 웹 출처. 로컬 예시는 `http://127.0.0.1:8080` |
+| `WJB_WEB_PUBLIC_ORIGIN` | 공개 도메인을 같은 웹 브랜치에 연결할 때 추가하는 정확한 HTTPS 출처 |
 | `WJB_WEB_DATABASE_URL` | 전용 역할의 Transaction pooler URI. 비밀번호는 URL 인코딩하며 URI 쿼리 문자열 없이 저장 |
 | `WJB_WEB_DB_CA` | DEV Supabase에서 내려받은 CA 인증서의 PEM 전체 텍스트. 로컬 평문 테스트에서만 생략 |
 | `WJB_WEB_SESSION_KEY` | Base64 32바이트 세션 키. `openssl rand -base64 32`로 생성하고 배포 간에 유지 |
@@ -50,6 +51,8 @@ DB 접속 URI와 세션 키는 Vercel Preview의 **Sensitive** 환경변수로 �
 5. 등록된 DEV 테스트 계정 두 개로 실제 메일을 받아 서로 다른 브라우저 프로필에서 로그인합니다. 자기 온라인 공간만 표시되는지, 공간 0개일 때 빈 목록이 나오는지, 웹의 두 탭에서 로그아웃이 반영되고 데스크탑 DEV의 세션이 유지되는지 확인합니다. 미등록 이메일 요청은 일반 안내를 표시하고 Supabase 계정이 생성되지 않아야 합니다. W2 확인에서는 DEV 가상 공간을 선택한 뒤 웹에서 바꾼 본문을 데스크탑에서 다시 읽고, 먼저 바뀐 레코드를 웹에서 저장할 때 충돌이 표시되는지 확인합니다.
 
 [모노레포 설정](https://vercel.com/docs/monorepos) · [Build Output API](https://vercel.com/docs/build-output-api) · [Preview 보호](https://vercel.com/docs/deployment-protection)
+
+공개 도메인 `work-journey-board.vercel.app`은 웹 서비스 브랜치 `web-service-v1`을 연결하고 이 도메인을 `WJB_WEB_PUBLIC_ORIGIN`에 등록합니다. 브라우저는 공개 주소에서 제품 로그인 화면으로 이동하며 기존 초대 전용 Supabase DEV 계정을 사용합니다. Preview 주소는 기존 Vercel 접근 인증을 사용합니다.
 
 ### W2 칸반 이동 배포 순서
 

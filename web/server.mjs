@@ -90,22 +90,27 @@ async function readJson(request, limit = jsonLimit) {
 
 export function createWebHandler({
   origin,
+  publicOrigin,
   upstream,
   store,
   now = Date.now,
   revision = "local",
   workspaceKey = randomBytes(32),
 }) {
-  const validatedOrigin = new URL(origin);
   const workspaces = createWorkspaceAccess(upstream, workspaceKey);
   const workspaceApi = new RegExp(`^/api/spaces/(${workspaceIdPattern})/(header|records|changes|text|move)$`);
   const workspacePage = new RegExp(`^/app/(${workspaceIdPattern})/(${workspaceViews})$`);
-  if (
-    origin !== validatedOrigin.origin ||
-    !["https:", "http:"].includes(validatedOrigin.protocol) ||
-    (validatedOrigin.protocol === "http:" && !["localhost", "127.0.0.1"].includes(validatedOrigin.hostname))
-  ) {
-    throw Error("DEV_WEB_ORIGIN_REQUIRED");
+  const originsByHost = new Map();
+  for (const value of publicOrigin === undefined ? [origin] : [origin, publicOrigin]) {
+    const parsed = new URL(value);
+    if (
+      value !== parsed.origin ||
+      !["https:", "http:"].includes(parsed.protocol) ||
+      (parsed.protocol === "http:" && !["localhost", "127.0.0.1"].includes(parsed.hostname))
+    ) {
+      throw Error("DEV_WEB_ORIGIN_REQUIRED");
+    }
+    originsByHost.set(parsed.host, value);
   }
 
   const json = (res, status, body) => {
@@ -296,7 +301,12 @@ export function createWebHandler({
         }
       }
       if (request.method === "POST") {
-        if (request.headers.origin !== origin || request.headers["sec-fetch-site"] === "cross-site")
+        const allowedOrigin = originsByHost.get(request.headers.host);
+        if (
+          !allowedOrigin ||
+          request.headers.origin !== allowedOrigin ||
+          request.headers["sec-fetch-site"] === "cross-site"
+        )
           throw new WebError("ORIGIN_REQUIRED", 403);
         if (space && ["text", "move"].includes(space[2])) {
           const payload = await readJson(request, 30000);
@@ -336,7 +346,14 @@ export function createConfiguredWebHandler(env) {
   const revision = /^[0-9a-f]{40}$/.test(env.VERCEL_GIT_COMMIT_SHA ?? "")
     ? env.VERCEL_GIT_COMMIT_SHA
     : "local";
-  return createWebHandler({ origin: env.WJB_WEB_ORIGIN, upstream, store, revision, workspaceKey });
+  return createWebHandler({
+    origin: env.WJB_WEB_ORIGIN,
+    publicOrigin: env.WJB_WEB_PUBLIC_ORIGIN,
+    upstream,
+    store,
+    revision,
+    workspaceKey,
+  });
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

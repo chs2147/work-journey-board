@@ -51,7 +51,7 @@ if (!["127.0.0.1", "localhost"].includes(databaseUrl.hostname) || databaseUrl.pa
   throw new Error("Use the disposable local wj_web_test database");
 }
 
-async function fixture(t) {
+async function fixture(t, { publicEntry = false } = {}) {
   const sent = [];
   let row = { ...entryFixture, text: "데스크탑 최신 기록" };
   let seq = 1;
@@ -79,6 +79,9 @@ async function fixture(t) {
   let handler;
   const device = await createTestServer(t, (req, res) => handler(req, res));
   const { origin } = device;
+  const publicOrigin = publicEntry
+    ? (await createTestServer(t, (req, res) => handler(req, res))).origin
+    : undefined;
 
   const projectRef = CLOUD_TARGETS.development.projectRef;
   const sql = connectWebDatabase(databaseUrl, { projectRef, allowLocal: true });
@@ -218,9 +221,10 @@ async function fixture(t) {
       }
     },
   });
-  handler = createWebHandler({ origin, upstream, store, now: () => clock });
+  handler = createWebHandler({ origin, publicOrigin, upstream, store, now: () => clock });
   return {
     origin,
+    publicOrigin,
     sql,
     sent,
     devices,
@@ -293,6 +297,23 @@ test("DEV requests stay invite-only and public failures have the same outcome", 
   const invalid = await request("/api/auth/verify", { payload: { code }, cookies: cookies(unlisted) });
   assert.deepEqual(await invalid.json(), { error: "CODE_REJECTED" });
   assert.equal(invalid.status, 401);
+});
+
+test("the public entry accepts same-origin login while rejecting the preview origin on public requests", async (t) => {
+  const { origin, publicOrigin, sent } = await fixture(t, { publicEntry: true });
+  const root = await fetch(publicOrigin, { redirect: "manual" });
+  assert.equal(root.status, 303);
+  assert.equal(root.headers.get("location"), "/login");
+  assert.equal((await fetch(publicOrigin + "/api/spaces")).status, 401);
+  const issue = (from) =>
+    fetch(publicOrigin + "/api/auth/code", {
+      method: "POST",
+      headers: { origin: from, "content-type": "application/json" },
+      body: JSON.stringify({ email, agreed: true, version }),
+    });
+  assert.equal((await issue(origin)).status, 403);
+  assert.equal((await issue(publicOrigin)).status, 202);
+  assert.deepEqual(sent, [email]);
 });
 
 test("login scopes the space list, encrypts tokens, refreshes, reuses the device and revokes locally", async (t) => {
