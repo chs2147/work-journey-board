@@ -1,0 +1,16 @@
+**
+!web/
+!web/Dockerfile
+!web/pages.mjs
+!web/server.mjs
+!web/session-store.mjs
+!web/upstream.mjs
+!web/public/
+!web/public/app.js
+!web/public/style.css
+!site/
+!site/icon.svg
+!site/wordmark.svg
+!poc/
+!poc/v2-cloud/
+!poc/v2-cloud/cloud-environment.mjs
