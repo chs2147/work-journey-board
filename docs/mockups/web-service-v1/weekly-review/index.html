@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>Work Journey Board · 웹 주간 보드 시안</title>
+    <link rel="stylesheet" href="review.css" />
+    <script src="review.js" defer></script>
+  </head>
+  <body>
+    <header class="review">
+      <div>
+        <h1>웹 주간 보드 시안</h1>
+        <span class="subtle">가상 데이터</span
+        ><a href="../../../../site/guide/shots/03-carry.png">데스크탑 기준 화면</a>
+      </div>
+      <div class="sizes" role="group" aria-label="시안 화면 폭">
+        <button data-size="wide" aria-pressed="true">데스크탑</button>
+        <button data-size="fold" aria-pressed="false">폴드 펼침</button>
+        <button data-size="phone" aria-pressed="false">스마트폰</button>
+      </div>
+    </header>
+    <main
+      id="frame"
+      class="frame"
+      data-size="wide"
+      aria-label="가상 온라인 워크스페이스 시안"
+    >
+      <div class="app">
+        <header class="appbar">
+          <div class="brand">
+            <img src="../../../../site/icon.svg" alt="" /><img
+              class="wordmark"
+              src="../../../../site/wordmark.svg"
+              alt="Work Journey Board"
+            />
+          </div>
+          <button id="workspace" class="workspace" type="button">
+            <span class="online"></span>제품팀 <span aria-hidden="true">▾</span>
+          </button>
+          <div class="bar-spacer"></div>
+          <output id="sync" class="saved"
+            ><span aria-hidden="true">✓</span> 서버에 저장됨</output
+          >
+        </header>
+        <div class="body">
+          <nav class="rail" aria-label="화면 이동"></nav>
+          <section class="content" aria-labelledby="screen-title">
+            <div class="toolbar">
+              <div class="title">
+                <h2 id="screen-title">주간 보드</h2>
+                <button id="summary" class="tool" type="button">
+                  주간 요약
+                </button>
+              </div>
+              <div class="period">
+                <button
+                  id="previous"
+                  class="step"
+                  aria-label="이전 주"
+                  type="button"
+                >
+                  ‹
+                </button>
+                <strong id="range"></strong>
+                <button
+                  id="next"
+                  class="step"
+                  aria-label="다음 주"
+                  type="button"
+                >
+                  ›
+                </button>
+                <button id="today" class="tool" type="button">오늘</button>
+              </div>
+            </div>
+            <div id="screen"></div>
+          </section>
+        </div>
+        <nav class="bottom" aria-label="모바일 화면 이동"></nav>
+        <dialog id="sheet" aria-labelledby="sheet-title"></dialog>
+      </div>
+    </main>
+  </body>
+</html>
