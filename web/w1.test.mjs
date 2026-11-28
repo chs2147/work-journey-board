@@ -2,6 +2,7 @@
 import assert from "node:assert/strict";
 import { randomBytes, randomUUID } from "node:crypto";
 import { once } from "node:events";
+import { readFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import { test } from "node:test";
 import { chromium } from "@playwright/test";
@@ -180,12 +181,19 @@ async function fixture(t, { publicEntry = false, weeklyLayout = false } = {}) {
                             date: otherFixtureDate,
                             category_id: "category-b",
                             text: "운영 점검 기록",
+                            due_date: fixtureDate,
                           },
                         },
                         {
                           table: "day_memo",
                           key: "2".repeat(64),
                           value: { date: otherFixtureDate, text: "운영 점검 메모" },
+                        },
+                        { table: "tag", key: "3".repeat(64), value: { id: "tag-b", name: "분기[점검]" } },
+                        {
+                          table: "category_tag",
+                          key: "4".repeat(64),
+                          value: { category_id: "category-b", tag_id: "tag-b" },
                         },
                       ]
                     : []),
@@ -497,7 +505,7 @@ test("Postgres reserves one refresh and cannot revive a deleted session", async 
 });
 
 test(
-  "Chromium verifies the responsive weekly board, record sync, Kanban and sign-out",
+  "Chromium verifies the responsive journal, record sync, Kanban, search, export and sign-out",
   {
     skip: !process.env.WJB_TEST_CHROMIUM,
   },
@@ -532,6 +540,21 @@ test(
     await other.getByRole("link", { name: "검증 일지" }).tap();
     await other.getByText("데스크탑 최신 기록").waitFor();
     assert.equal(await other.locator("html").evaluate((el) => el.scrollWidth), 390);
+    const daily = other.locator(".journal-day");
+    await daily.getByRole("heading", { name: "프로젝트", exact: true }).waitFor();
+    await daily.getByRole("button", { name: "데스크탑 최신 기록", exact: true }).tap();
+    await other.getByRole("textbox", { name: "기록 편집", exact: true }).waitFor();
+    await other.getByRole("button", { name: "닫기", exact: true }).tap();
+    await other.locator(`[data-week-date="${otherFixtureDate}"]`).tap();
+    await daily.getByRole("heading", { name: "운영", exact: true }).waitFor();
+    await daily.getByText("운영 점검 메모", { exact: true }).waitFor();
+    assert.deepEqual(
+      await daily.locator(".work-stripe").evaluate((node) => {
+        const css = getComputedStyle(node);
+        return [css.borderLeftWidth, css.borderTopLeftRadius, css.borderLeftColor];
+      }),
+      ["4px", "0px", "rgb(235, 104, 52)"],
+    );
     await other.getByRole("link", { name: "주간", exact: true }).tap();
     await other.getByRole("group", { name: "요일 선택" }).waitFor();
     await other.locator(`[data-week-date="${otherFixtureDate}"]`).tap();
@@ -602,29 +625,61 @@ test(
     );
     await other.setViewportSize({ width: 390, height: 844 });
     await other.getByRole("link", { name: "칸반" }).tap();
+    const lanes = other.locator(".kanban-lane");
+    const laneSelector = other.getByRole("group", { name: "표시할 칸반 섹션" });
+    await laneSelector.getByRole("button", { name: /^파킹랏 / }).tap();
     await other.getByRole("heading", { name: "파킹랏" }).waitFor();
+    assert.equal(await other.locator(".kanban-lane:visible").count(), 1);
+    await lanes
+      .filter({ has: other.getByRole("heading", { name: "파킹랏" }) })
+      .getByText(/오늘 마감/)
+      .waitFor();
     await other.getByRole("button", { name: "기록 편집 데스크탑에서 다시 바꾼 기록", exact: true }).tap();
     await other.getByRole("textbox", { name: "기록 편집", exact: true }).fill("모바일에서 바꾼 기록");
     await other.getByRole("button", { name: "서버에 저장" }).tap();
     await other.getByText("모바일에서 바꾼 기록").waitFor();
-    const card = other.locator(".record").filter({ hasText: "모바일에서 바꾼 기록" });
+    const card = other.locator(".kanban-card").filter({ hasText: "모바일에서 바꾼 기록" });
     await card.getByRole("combobox", { name: /이동할 섹션/ }).selectOption("done");
     await card.getByRole("button", { name: "이동", exact: true }).tap();
     await other
-      .locator(".journal-group")
+      .locator(".kanban-lane")
       .filter({ has: other.getByRole("heading", { name: "DONE", exact: true }) })
       .getByText("모바일에서 바꾼 기록")
       .waitFor();
+    assert.equal(
+      await laneSelector.getByRole("button", { name: /^DONE / }).getAttribute("aria-pressed"),
+      "true",
+    );
+    await other.setViewportSize({ width: 768, height: 844 });
+    await other.getByRole("heading", { name: "TODO", exact: true }).waitFor();
+    assert.equal(await other.locator(".kanban-lane:visible").count(), 3);
+    assert.equal(await other.locator("html").evaluate((el) => el.scrollWidth), 768);
+    await other.setViewportSize({ width: 390, height: 844 });
     await other.getByRole("link", { name: "주간", exact: true }).tap();
     await other.getByText("모바일에서 바꾼 기록").waitFor();
     await other.getByRole("link", { name: "검색", exact: true }).tap();
-    await other.getByRole("searchbox", { name: "기록 검색" }).fill("모바일");
+    const search = other.getByRole("searchbox", { name: "기록 검색" });
+    await search.fill("모바일");
     await other.getByText("모바일에서 바꾼 기록").waitFor();
+    await other.locator(".search-result mark").getByText("모바일", { exact: true }).waitFor();
+    await search.fill("분기[점검]");
+    await other.locator(".search-result").getByText("운영 점검 기록").waitFor();
+    await other.setViewportSize({ width: 768, height: 844 });
+    await other.getByRole("region", { name: "선택한 기록" }).getByText("운영 점검 기록").waitFor();
+    assert.equal(await other.locator("html").evaluate((el) => el.scrollWidth), 768);
     await other.getByRole("link", { name: "요약", exact: true }).tap();
     await other.getByRole("heading", { level: 1, name: "주간 요약", exact: true }).waitFor();
+    const summary = other.getByRole("article", { name: "주간 요약 본문" });
+    await summary.getByText("모바일에서 바꾼 기록", { exact: true }).waitFor();
+    await summary.getByRole("heading", { name: "프로젝트", exact: true }).waitFor();
     const downloaded = other.waitForEvent("download");
     await other.getByRole("button", { name: "Markdown 다운로드" }).tap();
-    assert.match((await downloaded).suggestedFilename(), /^\d{4}-W\d{2}-summary\.md$/);
+    const exportFile = await downloaded;
+    assert.match(exportFile.suggestedFilename(), /^\d{4}-W\d{2}-summary\.md$/);
+    assert.match(await readFile(await exportFile.path(), "utf8"), /프로젝트 · 모바일에서 바꾼 기록/);
+    await other.goto(`${origin}/app/${spaceId}/summary?date=2025-12-29`);
+    await summary.getByText("수정본", { exact: true }).waitFor();
+    await summary.getByText("보관된 요약", { exact: true }).waitFor();
     await page.getByRole("button", { name: "로그아웃", exact: true }).tap();
     await page.waitForURL("**/login");
     await other.waitForURL("**/login");

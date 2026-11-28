@@ -96,7 +96,7 @@ export function pageFor(path, version, workspace) {
           <div class="journal-tools" id="journal-tools" hidden>
           ${
             view === "search"
-              ? '<label for="journal-search">기록 검색</label><input type="search" id="journal-search" maxlength="100" autocomplete="off">'
+              ? '<label class="visually-hidden" for="journal-search">기록 검색</label><input type="search" id="journal-search" maxlength="100" autocomplete="off" placeholder="본문, 업무 또는 태그">'
               : '<div class="journal-period"><button type="button" class="quiet period-step" id="period-prev" aria-label="이전 기간">‹</button><div class="period-picker"><span id="period-range" aria-hidden="true"></span><input type="date" id="journal-date" aria-label="기준일"></div><button type="button" class="quiet period-step" id="period-next" aria-label="다음 기간">›</button><button type="button" class="quiet" id="journal-today">오늘</button></div>'
           }
           ${view === "kanban" ? '<label for="board-period">표시 기간</label><select id="board-period"><option value="week">선택한 주</option><option value="all">전체 기간</option></select>' : ""}

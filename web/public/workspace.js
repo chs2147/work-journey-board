@@ -17,7 +17,7 @@ const textInput = pick("record-text");
 const refresh = pick("journal-refresh");
 const syncIndicator = pick("journal-sync");
 const wideWeek = matchMedia("(min-width: 1024px)");
-const splitWeek = matchMedia("(min-width: 600px)");
+const splitView = matchMedia("(min-width: 600px)");
 const dayFormat = new Intl.DateTimeFormat("ko-KR", {
   weekday: "short",
   month: "numeric",
@@ -46,7 +46,8 @@ let generation = 0;
 let complete = false;
 let dirty = false;
 let moving = false;
-let weekSelection = null;
+let selectedRecordKey = null;
+let selectedKanbanSection = "todo";
 if (dateInput) {
   const date = new URLSearchParams(location.search).get("date");
   dateInput.value = /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : "";
@@ -89,7 +90,8 @@ function reset() {
   refresh.disabled = false;
   cursor = "0";
   closeEditor();
-  weekSelection = null;
+  selectedRecordKey = null;
+  selectedKanbanSection = "todo";
   if (queryInput) queryInput.value = "";
   content.replaceChildren();
   tools.hidden = true;
@@ -216,51 +218,42 @@ function itemSort(a, b) {
 function deadline(value) {
   if (!value.due_date) return null;
   const today = localToday();
-  let label = "";
+  let state = "";
   if (value.flagged || !value.flag_done_at) {
-    if (value.due_date < today) label = "기한 초과";
-    else if (value.due_date === today) label = "오늘 마감";
-    else if (value.due_date <= shift(today, 2)) label = "마감 임박";
+    if (value.due_date < today) state = "late";
+    else if (value.due_date === today) state = "today";
+    else if (value.due_date <= shift(today, 2)) state = "soon";
   }
-  return element("small", [label, value.due_date].filter(Boolean).join(" · "), label ? "deadline-alert" : "");
+  const labels = { late: "기한 초과", today: "오늘 마감", soon: "마감 임박" };
+  const badge = element("small", [labels[state], value.due_date].filter(Boolean).join(" · "));
+  if (state) badge.dataset.due = state;
+  return badge;
 }
-function task(item, category, showDate = false, destinations) {
-  const value = item.value;
-  const li = element("li", "", value.depth > 0 ? "record sub-record" : "record");
-  if (destinations) li.dataset.workColor = category?.color ?? "";
-  const detail = [
-    showDate && value.date,
-    category?.name,
-    value.start_time,
-    value.flagged ? "중요" : null,
-  ].filter(Boolean);
-  if (value.flag_done_at && !value.flagged) detail.push("완료");
-  if (detail.length) li.append(element("small", detail.join(" · ")));
-  li.append(element("p", String(value.text ?? "")));
-  const due = deadline(value);
-  if (due) li.append(due);
-  if (active?.schema === 20 && item.edit) {
+function kanbanCard(item, category, destinations) {
+  const li = element("li", "", "kanban-card work-stripe");
+  li.dataset.workColor = category.color;
+  const date = `${category.name} · ${item.value.date}`;
+  li.append(element("p", date, "record-meta"), formatRecord(item));
+  if (editable(item)) {
+    const actions = element("div", "", "kanban-card-actions");
     const edit = element("button", "편집", "quiet record-edit");
     edit.type = "button";
-    edit.setAttribute("aria-label", "기록 편집 " + String(value.text ?? "").slice(0, 40));
-    edit.addEventListener("click", () => openEditor(item));
-    li.append(edit);
-    if (destinations?.length) li.append(moveControls(item, destinations));
+    edit.dataset.recordKey = item.key;
+    edit.setAttribute("aria-label", "기록 편집 " + String(item.value.text ?? "").slice(0, 40));
+    edit.addEventListener("click", () => openEditor(item, category.name));
+    actions.append(edit, moveControls(item, destinations));
+    li.append(actions);
   }
   return li;
 }
 
-function group(title, items, categories, showDate = false, destinations) {
-  const section = element("section", "", "journal-group");
-  section.append(element("h2", title));
-  if (!items.length) section.append(element("p", "표시할 기록이 없습니다."));
-  else {
-    const list = element("ul", "", "record-list");
-    for (const item of items)
-      list.append(task(item, categories.get(item.value.category_id), showDate, destinations));
-    section.append(list);
-  }
-  return section;
+function workCategory(categories, id) {
+  const category = categories.get(id);
+  return {
+    name: category?.name || "업무 미지정",
+    color: category?.color ?? "",
+    order: category?.sort_order ?? Infinity,
+  };
 }
 
 function weekDayButton(date, index) {
@@ -284,16 +277,31 @@ function weekDayButton(date, index) {
   return button;
 }
 
-function formatWeekRecord(item, className = "week-entry") {
+function highlightedText(value, query) {
+  const text = element("span", "", "week-entry-text");
+  if (!query) {
+    text.textContent = value;
+    return text;
+  }
+  let end = 0;
+  for (const match of value.matchAll(query)) {
+    text.append(value.slice(end, match.index), element("mark", match[0]));
+    end = match.index + match[0].length;
+  }
+  text.append(value.slice(end));
+  return text;
+}
+
+function formatRecord(item, query) {
   const value = item.value;
-  const line = element("span", "", className);
+  const line = element("span", "", "week-entry");
   const marker = value.flagged ? "★" : value.flag_done_at ? "✓" : Number(value.depth) > 0 ? "◦" : "•";
   const icon = element("span", marker, "week-entry-marker");
   icon.dataset.state = value.flagged ? "important" : value.flag_done_at ? "done" : "";
   icon.setAttribute("aria-hidden", "true");
   const text = element("span");
   if (value.start_time) text.append(element("small", value.start_time, "week-entry-time"));
-  text.append(element("span", value.text ?? "", "week-entry-text"));
+  text.append(highlightedText(String(value.text ?? ""), query));
   const state = value.flagged ? "중요" : value.flag_done_at ? "완료" : "";
   if (state) text.append(element("span", state, "visually-hidden"));
   const due = deadline(value);
@@ -304,7 +312,7 @@ function formatWeekRecord(item, className = "week-entry") {
 
 const editable = (item) => active?.schema === 20 && Boolean(item.edit);
 
-function weekRecord(item, category, selected, selecting) {
+function recordControl(item, category, { selected = false, selecting = false, query } = {}) {
   const enabled = selecting || editable(item);
   const entry = element(
     enabled ? "button" : "div",
@@ -313,17 +321,21 @@ function weekRecord(item, category, selected, selecting) {
   );
   if (enabled) {
     entry.type = "button";
-    entry.dataset.weekRecord = item.key;
+    entry.dataset.recordKey = item.key;
     if (selecting) entry.setAttribute("aria-pressed", String(selected));
     entry.addEventListener("click", () => {
       if (!selecting) return openEditor(item, category.name);
-      weekSelection = item.key;
+      selectedRecordKey = item.key;
       render();
-      content.querySelector(`[data-week-record="${item.key}"]`)?.focus();
+      focusRecord(item.key);
     });
   }
-  entry.append(formatWeekRecord(item));
+  entry.append(formatRecord(item, query));
   return entry;
+}
+
+function focusRecord(key) {
+  (content.querySelector(`[data-record-key="${key}"]`) ?? queryInput)?.focus();
 }
 
 function renderWeekGrid(week, groups, memos) {
@@ -351,7 +363,7 @@ function renderWeekGrid(week, groups, memos) {
     for (const [index, date] of week.entries()) {
       const cell = row.insertCell();
       cell.className = weekDayClass(date, index);
-      for (const item of dates.get(date) ?? []) cell.append(weekRecord(item, category, false, false));
+      for (const item of dates.get(date) ?? []) cell.append(recordControl(item, category));
     }
   }
   if (week.some((date) => memos.get(date))) {
@@ -375,7 +387,28 @@ function weekDayClass(date, index) {
   return index >= 5 ? "week-is-weekend" : "";
 }
 
-function renderCompactWeek(week, groups, memos) {
+function selectRecord(entries) {
+  const selected = entries.find(({ item }) => item.key === selectedRecordKey) ?? entries[0];
+  selectedRecordKey = selected?.item.key ?? null;
+  return selected;
+}
+
+function recordDetail({ item, category }, { showDate = false, query } = {}) {
+  const detail = element("section", "", "week-detail");
+  detail.setAttribute("aria-label", "선택한 기록");
+  detail.append(element("h2", category.name));
+  if (showDate) detail.append(element("p", item.value.date, "record-meta"));
+  detail.append(formatRecord(item, query));
+  if (editable(item)) {
+    const edit = element("button", "기록 편집", "quiet");
+    edit.type = "button";
+    edit.addEventListener("click", () => openEditor(item, category.name));
+    detail.append(edit);
+  }
+  return detail;
+}
+
+function renderDayList(week, groups, memoText) {
   const date = selectedDate();
   const row = element("div", "", "week-days");
   row.setAttribute("role", "group");
@@ -383,12 +416,11 @@ function renderCompactWeek(week, groups, memos) {
   for (const [index, day] of week.entries()) row.append(weekDayButton(day, index));
   content.append(row);
   const list = element("div", "", "week-work-list");
-  const split = splitWeek.matches;
+  const split = splitView.matches;
   const entries = groups.flatMap(({ category, dates }) =>
     (dates.get(date) ?? []).map((item) => ({ item, category })),
   );
-  const selected = entries.find(({ item }) => item.key === weekSelection) ?? entries[0];
-  weekSelection = selected?.item.key ?? null;
+  const selected = selectRecord(entries);
   for (const { category, dates } of groups) {
     const items = dates.get(date);
     if (!items) continue;
@@ -396,176 +428,233 @@ function renderCompactWeek(week, groups, memos) {
     section.dataset.workColor = category.color;
     section.append(element("h2", category.name));
     for (const item of items)
-      section.append(weekRecord(item, category, split && item.key === weekSelection, split));
+      section.append(
+        recordControl(item, category, { selected: item.key === selectedRecordKey, selecting: split }),
+      );
     list.append(section);
   }
   if (!entries.length) list.append(element("p", "이 날의 기록이 없습니다.", "week-empty"));
-  if (memos.get(date)) {
+  if (memoText) {
     const memo = element("section", "", "week-memo");
-    memo.append(element("h2", "데일리 메모"), element("p", memos.get(date), "summary-text"));
+    memo.append(element("h2", "데일리 메모"), element("p", memoText, "summary-text"));
     list.append(memo);
   }
   const layout = element("div", "", "week-compact-layout");
   layout.append(list);
-  if (split && selected) {
-    const { item, category } = selected;
-    const detail = element("section", "", "week-detail");
-    detail.setAttribute("aria-label", "선택한 기록");
-    detail.append(element("h2", category.name), formatWeekRecord(item, "week-entry"));
-    if (editable(item)) {
-      const edit = element("button", "기록 편집", "quiet");
-      edit.type = "button";
-      edit.addEventListener("click", () => openEditor(item, category.name));
-      detail.append(edit);
-    }
-    layout.append(detail);
-  }
+  if (split && selected) layout.append(recordDetail(selected));
   content.append(layout);
 }
 
-function renderWeek(week, items, categories, memos) {
+function groupByWork(items, categories) {
   const grouped = new Map();
   for (const item of items) {
     const { category_id: id, date } = item.value;
     if (!grouped.has(id)) {
-      const category = categories.get(id);
-      grouped.set(id, {
-        category: {
-          name: category?.name || "업무 미지정",
-          color: category?.color ?? "",
-          order: category?.sort_order ?? Infinity,
-        },
-        dates: new Map(),
-      });
+      grouped.set(id, { category: workCategory(categories, id), dates: new Map() });
     }
     const { dates } = grouped.get(id);
     if (!dates.has(date)) dates.set(date, []);
     dates.get(date).push(item);
   }
-  const groups = [...grouped.values()].sort(
+  return [...grouped.values()].sort(
     (a, b) => a.category.order - b.category.order || a.category.name.localeCompare(b.category.name, "ko"),
   );
-  content.className = "journal-week";
-  if (wideWeek.matches) renderWeekGrid(week, groups, memos);
-  else renderCompactWeek(week, groups, memos);
+}
+
+function renderSearch(items, categories) {
+  const query = queryInput.value.trim().toLocaleLowerCase();
+  if (!query) return;
+  const tags = new Map(records("tag").map(({ value }) => [value.id, value.name]));
+  const byCategory = new Map();
+  for (const { value } of records("category_tag")) {
+    if (!byCategory.has(value.category_id)) byCategory.set(value.category_id, []);
+    byCategory.get(value.category_id).push(tags.get(value.tag_id));
+  }
+  const matches = items.filter(({ value }) =>
+    [value.text, categories.get(value.category_id)?.name, ...(byCategory.get(value.category_id) ?? [])].some(
+      (term) => typeof term === "string" && term.toLocaleLowerCase().includes(query),
+    ),
+  );
+  const count = element("p", `검색 결과 ${matches.length}건`, "record-meta");
+  count.setAttribute("role", "status");
+  content.append(count);
+  if (!matches.length) return;
+  const pattern = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "giu");
+  const results = matches
+    .slice(0, 100)
+    .map((item) => ({ item, category: workCategory(categories, item.value.category_id) }));
+  const selected = selectRecord(results);
+  const split = splitView.matches;
+  const layout = element("div", "", "result-layout");
+  const list = element("ul", "", "record-list search-results");
+  for (const { item, category } of results) {
+    const result = element("li", "", "search-result work-stripe");
+    result.dataset.workColor = category.color;
+    result.append(
+      element("p", `${category.name} · ${item.value.date}`, "record-meta"),
+      recordControl(item, category, { selected: item === selected.item, selecting: split, query: pattern }),
+    );
+    list.append(result);
+  }
+  layout.append(list);
+  if (split) layout.append(recordDetail(selected, { showDate: true, query: pattern }));
+  content.append(layout);
+  if (matches.length > 100) content.append(element("p", "검색어를 좁혀 추가 기록을 확인해 주세요."));
+}
+
+function renderKanban(items, categories, inWeek) {
+  const sections = records("kanban_section")
+    .map(({ value }) => value)
+    .sort((a, b) => a.sort_order - b.sort_order);
+  const titles = new Map([["todo", "TODO"], ...sections.map(({ id, name }) => [id, name]), ["done", "DONE"]]);
+  const saved = records("app_meta")[0]?.value.order ?? [];
+  const order = [...new Set(saved.filter((key) => titles.has(key)))];
+  if (!order.includes("todo")) order.unshift("todo");
+  if (!order.includes("done")) order.push("done");
+  order.splice(
+    order.indexOf("done"),
+    0,
+    ...sections.map(({ id }) => id).filter((key) => !order.includes(key)),
+  );
+  const all = pick("board-period").value === "all";
+  const cards = new Map(order.map((key) => [key, []]));
+  for (const card of items) {
+    const value = card.value;
+    if (Number(value.depth) !== 0) continue;
+    const done = Boolean(value.flag_done_at && !value.flagged);
+    const completed = done ? new Date(value.flag_done_at) : null;
+    const date =
+      completed && Number.isFinite(completed.getTime())
+        ? dateKey(new Date(Date.UTC(completed.getFullYear(), completed.getMonth(), completed.getDate())))
+        : value.date;
+    if (all || inWeek(date))
+      (cards.get(done ? "done" : value.kanban_section_id) ?? cards.get("todo")).push(card);
+  }
+  if (!cards.has(selectedKanbanSection)) selectedKanbanSection = order[0];
+  const tabs = element("div", "", "kanban-tabs");
+  tabs.setAttribute("role", "group");
+  tabs.setAttribute("aria-label", "표시할 칸반 섹션");
+  const board = element("div", "", "kanban-board");
+  const lanes = new Map();
+  const buttons = new Map();
+  for (const key of order) {
+    const items = cards.get(key);
+    const title = titles.get(key);
+    const tab = element("button", `${title} ${items.length}`, "quiet kanban-tab");
+    tab.type = "button";
+    const lane = element("section", "", "kanban-lane");
+    lane.dataset.state = key === "done" ? "done" : "open";
+    const head = element("header", "", "kanban-lane-head");
+    head.append(element("h2", title), element("span", `${items.length}장`, "record-meta"));
+    lane.append(head);
+    if (items.length) {
+      const list = element("ul", "", "record-list");
+      const destinations = order.filter((other) => other !== key).map((other) => [other, titles.get(other)]);
+      for (const item of items)
+        list.append(kanbanCard(item, workCategory(categories, item.value.category_id), destinations));
+      lane.append(list);
+    } else lane.append(element("p", "카드가 없습니다.", "week-empty"));
+    lanes.set(key, lane);
+    buttons.set(key, tab);
+    tab.addEventListener("click", () => {
+      selectedKanbanSection = key;
+      updateKanbanSelection(lanes, buttons);
+    });
+    tabs.append(tab);
+    board.append(lane);
+  }
+  updateKanbanSelection(lanes, buttons);
+  content.append(tabs, board);
+}
+
+function updateKanbanSelection(lanes, buttons) {
+  for (const [key, lane] of lanes) {
+    const selected = key === selectedKanbanSection;
+    lane.dataset.selected = String(selected);
+    buttons.get(key).setAttribute("aria-pressed", String(selected));
+  }
 }
 
 function render() {
   if (!complete || !active) return;
   const categories = new Map(records("category").map(({ value }) => [value.id, value]));
-  const names = new Map([...categories].map(([key, value]) => [key, value.name]));
   const items = records("entry_item")
     .filter(({ value }) => typeof value.date === "string")
     .sort(itemSort);
+  content.replaceChildren();
+  content.className = `journal-${view}`;
+  if (view === "search") return renderSearch(items, categories);
+
   const week = days();
   const start = week[0];
   const end = week[6];
-  const inWeek = (date) => date >= start && date <= end;
-  if (dateInput) {
-    const period =
-      view === "day"
-        ? dayFormat.format(new Date(selectedDate() + "T00:00:00Z"))
-        : `${start.slice(0, 4)}. ${shortDate(start)} – ${shortDate(end)}`;
-    pick("period-range").textContent = period;
-  }
-  if (view === "week") pick("journal-summary").href = `/app/${id}/summary?date=${selectedDate()}`;
-  content.replaceChildren();
-  content.className = "";
-  if (view === "search") {
-    const query = queryInput.value.trim().toLocaleLowerCase();
-    if (!query) return;
-    const tags = new Map(records("tag").map(({ value }) => [value.id, value.name]));
-    const byCategory = new Map();
-    for (const { value } of records("category_tag")) {
-      const list = byCategory.get(value.category_id) ?? [];
-      list.push(tags.get(value.tag_id));
-      byCategory.set(value.category_id, list);
-    }
-    const matches = items.filter(({ value }) =>
-      [value.text, names.get(value.category_id), ...(byCategory.get(value.category_id) ?? [])].some(
-        (term) => typeof term === "string" && term.toLocaleLowerCase().includes(query),
-      ),
-    );
-    content.append(group("검색 결과 " + matches.length + "건", matches.slice(0, 100), categories, true));
-    if (matches.length > 100) content.append(element("p", "검색어를 좁혀 추가 기록을 확인해 주세요."));
-    return;
-  }
-  if (view === "summary") {
-    const data = summary(items, names);
-    content.append(element("h2", data.label), element("p", data.notes, "summary-text"));
-    return;
-  }
-  if (view === "kanban") {
-    const sections = records("kanban_section")
-      .map(({ value }) => value)
-      .sort((a, b) => a.sort_order - b.sort_order);
-    const titles = new Map([
-      ["todo", "TODO"],
-      ...sections.map(({ id, name }) => [id, name]),
-      ["done", "DONE"],
-    ]);
-    const saved = records("app_meta")[0]?.value.order ?? [];
-    const order = [...new Set(saved.filter((key) => titles.has(key)))];
-    if (!order.includes("todo")) order.unshift("todo");
-    if (!order.includes("done")) order.push("done");
-    order.splice(
-      order.indexOf("done"),
-      0,
-      ...sections.map(({ id }) => id).filter((key) => !order.includes(key)),
-    );
-    const all = pick("board-period").value === "all";
-    const cards = new Map(order.map((key) => [key, []]));
-    for (const card of items.filter(({ value }) => Number(value.depth) === 0)) {
-      const value = card.value;
-      const done = Boolean(value.flag_done_at && !value.flagged);
-      const completed = done ? new Date(value.flag_done_at) : null;
-      const day =
-        completed && Number.isFinite(completed.getTime())
-          ? dateKey(new Date(Date.UTC(completed.getFullYear(), completed.getMonth(), completed.getDate())))
-          : value.date;
-      if (all || inWeek(day))
-        (cards.get(done ? "done" : value.kanban_section_id) ?? cards.get("todo")).push(card);
-    }
-    content.className = "journal-columns";
-    for (const key of order) {
-      const destinations = order.filter((other) => other !== key).map((other) => [other, titles.get(other)]);
-      content.append(group(titles.get(key), cards.get(key), categories, true, destinations));
-    }
-    return;
-  }
-  const memos = new Map(records("day_memo").map(({ value }) => [value.date, value.text]));
-  if (view === "week")
-    return renderWeek(
-      week,
-      items.filter(({ value }) => inWeek(value.date)),
-      categories,
-      memos,
-    );
   const date = selectedDate();
-  const section = group(
-    dayFormat.format(new Date(date + "T00:00:00Z")),
-    items.filter(({ value }) => value.date === date),
-    categories,
-  );
-  if (memos.get(date)) section.append(element("p", memos.get(date), "summary-text"));
-  content.append(section);
+  const inWeek = (day) => day >= start && day <= end;
+  pick("period-range").textContent =
+    view === "day"
+      ? dayFormat.format(new Date(date + "T00:00:00Z"))
+      : `${start.slice(0, 4)}. ${shortDate(start)} – ${shortDate(end)}`;
+  if (view === "kanban") return renderKanban(items, categories, inWeek);
+
+  const weekly = items.filter(({ value }) => inWeek(value.date));
+  if (view === "summary") return renderSummary(weekly, categories);
+  const memos = new Map(records("day_memo").map(({ value }) => [value.date, value.text]));
+  if (view === "day") return renderDayList(week, groupByWork(weekly, categories), memos.get(date));
+
+  pick("journal-summary").href = `/app/${id}/summary?date=${date}`;
+  const groups = groupByWork(weekly, categories);
+  if (wideWeek.matches) renderWeekGrid(week, groups, memos);
+  else renderDayList(week, groups, memos.get(date));
 }
 
-function summary(items, names) {
-  const week = days();
-  const label = weekId() + " 주간 요약";
-  const saved = records("weekly_summary").find(({ value }) => value.week_id === weekId())?.value;
-  const selected = items.filter(({ value }) => value.date >= week[0] && value.date <= week[6]);
-  const source = selected
+function summary(items, categories) {
+  const id = weekId();
+  const saved = records("weekly_summary").find(({ value }) => value.week_id === id)?.value;
+  const original = saved?.edited_text || saved?.ai_text;
+  const source = items
     .map(
       ({ value }) =>
-        "- " + [value.date, names.get(value.category_id), value.text].filter(Boolean).join(" · "),
+        "- " + [value.date, categories.get(value.category_id)?.name, value.text].filter(Boolean).join(" · "),
     )
     .join("\n");
   return {
-    label,
-    notes: saved?.edited_text || saved?.ai_text || source || "이번 주에 표시할 기록이 없습니다.",
+    label: id + " 주간 요약",
+    original,
+    kind: saved?.edited_text ? "수정본" : saved?.ai_text ? "AI 요약" : "기록에서 모은 요약",
+    notes: original || source || "이번 주에 표시할 기록이 없습니다.",
   };
+}
+
+function renderSummary(items, categories) {
+  const data = summary(items, categories);
+  const sheet = element("article", "", "summary-sheet");
+  sheet.setAttribute("aria-label", "주간 요약 본문");
+  const heading = element("header", "", "summary-heading");
+  heading.append(element("h2", data.label));
+  if (data.original || items.length) heading.append(element("p", data.kind, "record-meta"));
+  sheet.append(heading);
+  if (data.original || !items.length) sheet.append(element("p", data.notes, "summary-text"));
+  else {
+    for (const { category, dates } of groupByWork(items, categories)) {
+      const group = element("section", "", "summary-work work-stripe");
+      group.dataset.workColor = category.color;
+      group.append(element("h3", category.name));
+      const list = element("ul", "", "record-list");
+      for (const [date, records] of dates) {
+        for (const item of records) {
+          const entry = element("li", "", "summary-entry");
+          if (item.value.depth > 0) entry.classList.add("sub-record");
+          const time = element("time", shortDate(date), "record-meta");
+          time.dateTime = date;
+          entry.append(time, element("span", item.value.text ?? "", "summary-text"));
+          list.append(entry);
+        }
+      }
+      group.append(list);
+      sheet.append(group);
+    }
+  }
+  content.append(sheet);
 }
 
 function moveControls(item, destinations) {
@@ -598,8 +687,10 @@ function moveControls(item, destinations) {
     try {
       await request("/move", attempt);
       if (started !== generation) return;
+      selectedKanbanSection = attempt.to;
       moving = false;
       await load();
+      focusRecord(item.key);
       if (!status.textContent) status.textContent = "카드를 이동했습니다.";
     } catch (error) {
       if (started !== generation) return;
@@ -663,7 +754,7 @@ editor.addEventListener("submit", async (event) => {
     if (draft !== current) return;
     closeEditor();
     await load();
-    if (view === "week") content.querySelector(`[data-week-record="${current.key}"]`)?.focus();
+    focusRecord(current.key);
     if (!status.textContent) status.textContent = "서버에 저장됐습니다.";
   } catch (error) {
     if (draft !== current) return;
@@ -700,19 +791,18 @@ pick("journal-today")?.addEventListener("click", () => {
   dateInput.value = localToday();
   render();
 });
-if (view === "week") {
-  wideWeek.addEventListener("change", render);
-  splitWeek.addEventListener("change", render);
-}
+if (view === "week") wideWeek.addEventListener("change", render);
+if (["week", "day", "search"].includes(view)) splitView.addEventListener("change", render);
 queryInput?.addEventListener("input", render);
 pick("board-period")?.addEventListener("change", render);
 pick("journal-download")?.addEventListener("click", () => {
-  const names = new Map(records("category").map(({ value }) => [value.id, value.name]));
+  const categories = new Map(records("category").map(({ value }) => [value.id, value]));
+  const week = days();
   const data = summary(
     records("entry_item")
-      .filter(({ value }) => typeof value.date === "string")
+      .filter(({ value }) => typeof value.date === "string" && value.date >= week[0] && value.date <= week[6])
       .sort(itemSort),
-    names,
+    categories,
   );
   const url = URL.createObjectURL(
     new Blob(["# " + data.label + "\n\n" + data.notes + "\n"], { type: "text/markdown;charset=utf-8" }),
