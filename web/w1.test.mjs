@@ -1,4 +1,4 @@
-/* global Response, URL, fetch, process */
+/* global Response, URL, fetch, process, document, getComputedStyle */
 import assert from "node:assert/strict";
 import { randomBytes, randomUUID } from "node:crypto";
 import { once } from "node:events";
@@ -32,6 +32,9 @@ const fixtureDate = new Date(
 )
   .toISOString()
   .slice(0, 10);
+const otherFixtureDate = new Date(Date.parse(fixtureDate) + (currentDate.getDay() === 0 ? -1 : 1) * 86400000)
+  .toISOString()
+  .slice(0, 10);
 const entryFixture = {
   id: "entry-a",
   date: fixtureDate,
@@ -51,7 +54,7 @@ if (!["127.0.0.1", "localhost"].includes(databaseUrl.hostname) || databaseUrl.pa
   throw new Error("Use the disposable local wj_web_test database");
 }
 
-async function fixture(t, { publicEntry = false } = {}) {
+async function fixture(t, { publicEntry = false, weeklyLayout = false } = {}) {
   const sent = [];
   let row = { ...entryFixture, text: "데스크탑 최신 기록" };
   let seq = 1;
@@ -161,6 +164,31 @@ async function fixture(t, { publicEntry = false } = {}) {
                     key: summaryKey,
                     value: { week_id: "2026-W01", edited_text: "보관된 요약" },
                   },
+                  ...(weeklyLayout
+                    ? [
+                        {
+                          table: "category",
+                          key: "f".repeat(64),
+                          value: { id: "category-b", name: "운영", color: "c2", sort_order: 1 },
+                        },
+                        {
+                          table: "entry_item",
+                          key: "1".repeat(64),
+                          value: {
+                            ...entryFixture,
+                            id: "entry-b",
+                            date: otherFixtureDate,
+                            category_id: "category-b",
+                            text: "운영 점검 기록",
+                          },
+                        },
+                        {
+                          table: "day_memo",
+                          key: "2".repeat(64),
+                          value: { date: otherFixtureDate, text: "운영 점검 메모" },
+                        },
+                      ]
+                    : []),
                 ],
                 more: false,
                 next: null,
@@ -168,7 +196,11 @@ async function fixture(t, { publicEntry = false } = {}) {
             }
             return Response.json({
               records: [
-                { table: "category", key: categoryKey, value: { id: "category-a", name: "프로젝트" } },
+                {
+                  table: "category",
+                  key: categoryKey,
+                  value: { id: "category-a", name: "프로젝트", color: "c1", sort_order: 0 },
+                },
                 { table: "entry_item", key: itemKey, value: entryFixture },
               ],
               more: true,
@@ -235,6 +267,10 @@ async function fixture(t, { publicEntry = false } = {}) {
     },
     deny: () => {
       allowed = false;
+    },
+    changeFromDesktop: (text) => {
+      row = { ...row, text };
+      seq++;
     },
     request: (path, { payload, cookies, requestOrigin = origin } = {}) => {
       const headers = cookies ? { cookie: cookies } : {};
@@ -461,12 +497,12 @@ test("Postgres reserves one refresh and cannot revive a deleted session", async 
 });
 
 test(
-  "Chromium completes the touch-width login, checks a second tab and signs out",
+  "Chromium verifies the responsive weekly board, record sync, Kanban and sign-out",
   {
     skip: !process.env.WJB_TEST_CHROMIUM,
   },
   async (t) => {
-    const { origin } = await fixture(t);
+    const { origin, changeFromDesktop } = await fixture(t, { weeklyLayout: true });
     const browser = await chromium.launch({ executablePath: process.env.WJB_TEST_CHROMIUM });
     t.after(() => browser.close());
     const context = await browser.newContext({
@@ -496,14 +532,84 @@ test(
     await other.getByRole("link", { name: "검증 일지" }).tap();
     await other.getByText("데스크탑 최신 기록").waitFor();
     assert.equal(await other.locator("html").evaluate((el) => el.scrollWidth), 390);
+    await other.getByRole("link", { name: "주간", exact: true }).tap();
+    await other.getByRole("group", { name: "요일 선택" }).waitFor();
+    await other.locator(`[data-week-date="${otherFixtureDate}"]`).tap();
+    await other.getByText("운영 점검 기록", { exact: true }).waitFor();
+    await other.getByText("운영 점검 메모", { exact: true }).waitFor();
+    assert.equal(
+      await other.getByRole("link", { name: "주간 요약", exact: true }).getAttribute("href"),
+      `/app/${spaceId}/summary?date=${otherFixtureDate}`,
+    );
+    await other.getByRole("button", { name: "오늘", exact: true }).tap();
+    await other.getByRole("button", { name: "데스크탑 최신 기록", exact: true }).tap();
+    await other.getByRole("textbox", { name: "기록 편집", exact: true }).fill("주간에서 바꾼 기록");
+    await other.getByRole("button", { name: "서버에 저장" }).tap();
+    await other.getByRole("button", { name: "주간에서 바꾼 기록", exact: true }).waitFor();
+    changeFromDesktop("데스크탑에서 다시 바꾼 기록");
+    await other.getByRole("button", { name: "새로고침" }).tap();
+    await other.getByRole("button", { name: "데스크탑에서 다시 바꾼 기록", exact: true }).waitFor();
+
+    for (const width of [320, 390, 599, 600, 768, 1023, 1024, 1280]) {
+      await other.setViewportSize({ width, height: 844 });
+      const stripe = other
+        .locator(width >= 1024 ? ".week-grid .work-stripe" : ".week-work-group.work-stripe")
+        .first();
+      await stripe.waitFor();
+      assert.equal(await other.locator("html").evaluate((el) => el.scrollWidth), width);
+      assert.deepEqual(
+        await stripe.evaluate((node) => {
+          const css = getComputedStyle(node);
+          return [
+            css.borderLeftWidth,
+            css.borderTopLeftRadius,
+            css.borderBottomLeftRadius,
+            css.borderLeftColor,
+          ];
+        }),
+        ["4px", "0px", "0px", "rgb(42, 120, 214)"],
+      );
+      if (width >= 600) {
+        const current = other.getByRole("link", { name: "주간", exact: true });
+        assert.deepEqual(
+          await current.evaluate((node) => {
+            const stripe = getComputedStyle(node, "::before");
+            return [stripe.width, stripe.borderRadius, stripe.position];
+          }),
+          ["3px", "0px", "absolute"],
+        );
+      }
+      if (width >= 600 && width < 1024) {
+        await other
+          .getByRole("region", { name: "선택한 기록" })
+          .getByText("데스크탑에서 다시 바꾼 기록", { exact: true })
+          .waitFor();
+      }
+    }
+    const grid = other.getByRole("table", { name: "업무와 요일별 주간 기록" });
+    assert.equal(await grid.getByRole("columnheader").count(), 8);
+    assert.deepEqual(await grid.getByRole("rowheader").allTextContents(), [
+      "프로젝트",
+      "운영",
+      "데일리 메모",
+    ]);
+    assert.equal(
+      await other.evaluate(async () => {
+        await document.fonts.ready;
+        return [...document.fonts].some((face) => face.family === "Gowun Dodum" && face.status === "loaded");
+      }),
+      true,
+    );
+    await other.setViewportSize({ width: 390, height: 844 });
     await other.getByRole("link", { name: "칸반" }).tap();
     await other.getByRole("heading", { name: "파킹랏" }).waitFor();
-    await other.getByRole("button", { name: /기록 편집/ }).tap();
+    await other.getByRole("button", { name: "기록 편집 데스크탑에서 다시 바꾼 기록", exact: true }).tap();
     await other.getByRole("textbox", { name: "기록 편집", exact: true }).fill("모바일에서 바꾼 기록");
     await other.getByRole("button", { name: "서버에 저장" }).tap();
     await other.getByText("모바일에서 바꾼 기록").waitFor();
-    await other.getByRole("combobox", { name: /이동할 섹션/ }).selectOption("done");
-    await other.getByRole("button", { name: "이동", exact: true }).tap();
+    const card = other.locator(".record").filter({ hasText: "모바일에서 바꾼 기록" });
+    await card.getByRole("combobox", { name: /이동할 섹션/ }).selectOption("done");
+    await card.getByRole("button", { name: "이동", exact: true }).tap();
     await other
       .locator(".journal-group")
       .filter({ has: other.getByRole("heading", { name: "DONE", exact: true }) })
@@ -512,10 +618,10 @@ test(
     await other.getByRole("link", { name: "주간", exact: true }).tap();
     await other.getByText("모바일에서 바꾼 기록").waitFor();
     await other.getByRole("link", { name: "검색", exact: true }).tap();
-    await other.getByLabel("기록 검색").fill("모바일");
+    await other.getByRole("searchbox", { name: "기록 검색" }).fill("모바일");
     await other.getByText("모바일에서 바꾼 기록").waitFor();
     await other.getByRole("link", { name: "요약", exact: true }).tap();
-    await other.getByText(/주간 요약/).waitFor();
+    await other.getByRole("heading", { level: 1, name: "주간 요약", exact: true }).waitFor();
     const downloaded = other.waitForEvent("download");
     await other.getByRole("button", { name: "Markdown 다운로드" }).tap();
     assert.match((await downloaded).suggestedFilename(), /^\d{4}-W\d{2}-summary\.md$/);

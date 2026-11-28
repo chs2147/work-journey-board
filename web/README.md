@@ -8,6 +8,8 @@
 
 본문 저장은 기존 `sync/push`에 원래 레코드의 revision과 작업 ID를 보냅니다. 입력한 본문과 수정 시각만 바꾸며, 다른 기기가 먼저 저장하면 충돌을 표시합니다. 주간 요약은 Markdown으로 다운로드할 수 있습니다.
 
+주간 보드는 넓은 화면에서 업무×요일 격자를 보여 줍니다. 펼친 폴드와 태블릿에서는 요일을 고르면 업무별 기록과 선택한 기록의 상세가 나란히 표시됩니다. 휴대폰에서는 기록을 누르면 편집 화면이 열립니다. 업무 색상과 4px 직선 띠는 데스크탑 주간 보드와 같은 기준을 사용합니다. [화면 설계](../docs/web-service-v1-spec.md#4-화면-폭과-터치-설계)
+
 칸반에서 카드의 **이동할 섹션**을 고르고 **이동**을 누릅니다. DONE으로 이동하면 미완료 세부 항목도 같은 시각에 완료됩니다. DONE에서 다시 열면 같은 시각에 함께 완료했던 세부 항목도 다시 열립니다. 상태와 이력은 기존 데스크탑 동기화 경로로 공유됩니다.
 
 ## 로컬 빌드
@@ -52,7 +54,7 @@ DB 접속 URI와 세션 키는 Vercel Preview의 **Sensitive** 환경변수로 �
 
 [모노레포 설정](https://vercel.com/docs/monorepos) · [Build Output API](https://vercel.com/docs/build-output-api) · [Preview 보호](https://vercel.com/docs/deployment-protection)
 
-공개 도메인 `work-journey-board.vercel.app`은 웹 서비스 브랜치 `web-service-v1`을 연결하고 이 도메인을 `WJB_WEB_PUBLIC_ORIGIN`에 등록합니다. 브라우저는 공개 주소에서 제품 로그인 화면으로 이동하며 기존 초대 전용 Supabase DEV 계정을 사용합니다. Preview 주소는 기존 Vercel 접근 인증을 사용합니다.
+공개 도메인 `work-journey-board.vercel.app`은 `web-service-v1-production` 브랜치의 검증된 Production 배포에 연결됩니다. 공개 사이트와 보호된 `web-service-v1` Preview는 기존 초대 전용 Supabase DEV 계정을 사용합니다. [Production 배포와 승격](production.md)
 
 ### W2 칸반 이동 배포 순서
 

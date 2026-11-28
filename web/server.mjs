@@ -3,6 +3,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { createServer } from "node:http";
 import { readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
+import { CATEGORY_COLORS } from "../src/shared/palette.ts";
 import { createDevUpstream, WebError } from "./upstream.mjs";
 import { connectWebDatabase, createSessionStore } from "./session-store.mjs";
 import { pageFor } from "./pages.mjs";
@@ -24,10 +25,19 @@ const assets = new Map(
     ["/assets/style.css", ["text/css; charset=utf-8", "./public/style.css"]],
     ["/assets/app.js", ["text/javascript; charset=utf-8", "./public/app.js"]],
     ["/assets/workspace.js", ["text/javascript; charset=utf-8", "./public/workspace.js"]],
+    ["/assets/workspace.css", ["text/css; charset=utf-8", "./public/workspace.css"]],
+    ["/assets/workspace-theme.css", ["text/css; charset=utf-8", "../src/shared/tokens.css"]],
+    ["/assets/gowun-dodum.woff2", ["font/woff2", "../src/shared/fonts/GowunDodum-Regular.woff2"]],
     ["/assets/icon.svg", ["image/svg+xml", "../site/icon.svg"]],
     ["/assets/wordmark.svg", ["image/svg+xml", "../site/wordmark.svg"]],
   ].map(([route, [type, path]]) => [route, { type, body: readFileSync(new URL(path, import.meta.url)) }]),
 );
+assets.set("/assets/workspace-palette.css", {
+  type: "text/css; charset=utf-8",
+  body: Object.entries(CATEGORY_COLORS)
+    .map(([key, { light }]) => `[data-work-color="${key}"]{--work-color:${light}}`)
+    .join("\n"),
+});
 
 function cookie(prefix, value = "", age = 0) {
   return `${cookieNames[prefix]}=${value}; Max-Age=${age}; Path=/; Secure; HttpOnly; SameSite=Lax`;
@@ -246,7 +256,7 @@ export function createWebHandler({
     res.setHeader("x-robots-tag", "noindex, nofollow");
     res.setHeader(
       "content-security-policy",
-      "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+      "default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
     );
     try {
       const { pathname: path, searchParams } = new URL(request.url, origin);
