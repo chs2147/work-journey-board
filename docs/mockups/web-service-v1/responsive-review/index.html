@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ko" data-theme="signature">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Work Journey Board · 반응형 웹 시안</title>
+    <link rel="stylesheet" href="../../../../src/shared/tokens.css" />
+    <link rel="stylesheet" href="review.css" />
+    <script src="review.js" defer></script>
+  </head>
+  <body>
+    <header class="review-bar">
+      <div class="review-heading">
+        <h1>반응형 웹 시안</h1>
+        <span>가상 데이터</span>
+      </div>
+      <div class="preview-sizes" role="group" aria-label="시안 화면 폭">
+        <button type="button" data-size="phone" aria-pressed="false">스마트폰</button>
+        <button type="button" data-size="fold" aria-pressed="false">펼친 폴드</button>
+        <button type="button" data-size="wide" aria-pressed="true">넓은 화면</button>
+      </div>
+    </header>
+    <main
+      id="frame"
+      class="frame"
+      data-size="wide"
+      data-nav="bottom"
+      data-layout="single"
+      aria-label="가상 온라인 워크스페이스"
+    >
+      <header class="app-bar">
+        <div class="brand">
+          <img src="../../../../site/icon.svg" width="30" height="30" alt="" />
+          <img
+            class="wordmark"
+            src="../../../../site/wordmark.svg"
+            width="145"
+            height="29"
+            alt="Work Journey Board"
+          />
+        </div>
+        <button
+          type="button"
+          id="space-picker"
+          class="space-picker"
+          data-action="spaces"
+          aria-haspopup="dialog"
+        ></button>
+        <span class="sync-state"><span aria-hidden="true">✓</span> <span id="sync-text">동기화됨</span></span>
+      </header>
+      <nav id="nav" class="navigation" aria-label="워크스페이스 화면"></nav>
+      <section id="workarea" class="workarea" aria-labelledby="view-title">
+        <div id="toolbar" class="toolbar"></div>
+        <div id="panels" class="panels">
+          <div id="content" class="content"></div>
+          <section id="detail" class="detail" aria-label="기록 상세" hidden></section>
+        </div>
+      </section>
+      <p id="feedback" class="feedback" role="status" hidden></p>
+    </main>
+    <dialog id="sheet" aria-labelledby="sheet-title"></dialog>
+  </body>
+</html>
