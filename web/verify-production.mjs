@@ -1,8 +1,8 @@
-/* global AbortSignal, URL, fetch, process */
+/* global AbortSignal, Response, URL, process */
 import assert from "node:assert/strict";
 import { randomBytes } from "node:crypto";
 import { once } from "node:events";
-import { createServer } from "node:http";
+import { createServer, request as send } from "node:http";
 
 if (process.env.VERCEL_ENV === "production") {
   const { default: handler } = await import("./api/index.js");
@@ -15,11 +15,27 @@ if (process.env.VERCEL_ENV === "production") {
   try {
     const app = `http://127.0.0.1:${server.address().port}`;
     const request = (path, options = {}) =>
-      fetch(app + path, {
-        redirect: "manual",
-        signal: AbortSignal.timeout(15000),
-        ...options,
-        headers: { host: origin.host, ...options.headers },
+      new Promise((resolve, reject) => {
+        const request = send(
+          app + path,
+          {
+            method: options.method,
+            signal: AbortSignal.timeout(15000),
+            headers: { host: origin.host, ...options.headers },
+          },
+          async (res) => {
+            try {
+              let body = "";
+              res.setEncoding("utf8");
+              for await (const chunk of res) body += chunk;
+              resolve(new Response(body, { status: res.statusCode, headers: res.headers }));
+            } catch (error) {
+              reject(error);
+            }
+          },
+        );
+        request.on("error", reject);
+        request.end(options.body);
       });
 
     const root = await request("/");

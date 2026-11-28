@@ -1,6 +1,6 @@
 # Vercel Production · DEV 온라인 데이터
 
-`work-journey-board.vercel.app`은 Vercel Production으로 배포합니다. 웹 로그인과 온라인 공간은 기존 Supabase DEV 프로젝트를 사용합니다. 따라서 DEV 데스크탑과 같은 계정·공간에서 동기화합니다.
+`work-journey-board.vercel.app`의 Vercel Production은 `web-service-v1-production` 브랜치를 사용합니다. `web-service-v1`은 Preview에서 검토합니다. 웹 로그인과 온라인 공간은 기존 Supabase DEV 프로젝트를 사용하므로 DEV 데스크탑과 같은 계정·공간에서 동기화합니다.
 
 - Supabase DEV에 `wj_web_live` 역할 마이그레이션을 적용합니다. 역할에는 기존 웹 세션 권한만 상속됩니다. 비밀번호는 관리자 연결에서 설정하고 저장소에 남기지 않습니다.
 - Vercel **Production**에 기존 DEV 프로젝트 참조·공개 키·CA 인증서를 등록합니다. `WJB_WEB_ORIGIN`은 `https://work-journey-board.vercel.app`로 설정합니다.
