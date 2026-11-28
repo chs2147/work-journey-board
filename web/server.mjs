@@ -3,7 +3,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { createServer } from "node:http";
 import { readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
-import { CATEGORY_COLORS } from "../src/shared/palette.ts";
+import categoryColors from "../src/shared/category-colors.json" with { type: "json" };
 import { createDevUpstream, WebError } from "./upstream.mjs";
 import { connectWebDatabase, createSessionStore } from "./session-store.mjs";
 import { pageFor } from "./pages.mjs";
@@ -38,7 +38,7 @@ const assets = new Map(
 );
 assets.set("/assets/workspace-palette.css", {
   type: "text/css; charset=utf-8",
-  body: Object.entries(CATEGORY_COLORS)
+  body: Object.entries(categoryColors)
     .map(([key, { light }]) => `[data-work-color="${key}"]{--work-color:${light}}`)
     .join("\n"),
 });

@@ -13,7 +13,7 @@
 !/src/shared/
 /src/shared/*
 !/src/shared/tokens.css
-!/src/shared/palette.ts
+!/src/shared/category-colors.json
 !/src/shared/fonts/
 /src/shared/fonts/*
 !/src/shared/fonts/GowunDodum-Regular.woff2

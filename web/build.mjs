@@ -28,7 +28,7 @@ function copy(source, destination) {
 rmSync(output, { recursive: true, force: true });
 for (const file of runtimeFiles) copy(file, "web/" + file);
 for (const file of ["icon.svg", "wordmark.svg"]) copy("../site/" + file, "site/" + file);
-for (const file of ["tokens.css", "palette.ts", "fonts/GowunDodum-Regular.woff2"])
+for (const file of ["tokens.css", "category-colors.json", "fonts/GowunDodum-Regular.woff2"])
   copy("../src/shared/" + file, "src/shared/" + file);
 copy("../public/licenses/GowunDodum-OFL-1.1.txt", "public/licenses/GowunDodum-OFL-1.1.txt");
 copy("../poc/v2-cloud/cloud-environment.mjs", "poc/v2-cloud/cloud-environment.mjs");
