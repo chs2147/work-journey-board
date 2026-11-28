@@ -6,7 +6,7 @@
     "node": "24.x"
   },
   "scripts": {
-    "build": "node build.mjs",
+    "build": "node verify-production.mjs && node build.mjs",
     "start": "node server.mjs"
   },
   "dependencies": {

@@ -10,7 +10,10 @@ import {
 import { getCACertificates } from "node:tls";
 import postgres from "postgres";
 
-export function connectWebDatabase(connectionString, { projectRef, allowLocal = false, certificate }) {
+export function connectWebDatabase(
+  connectionString,
+  { projectRef, allowLocal = false, certificate, production = false },
+) {
   let url;
   try {
     url = new URL(connectionString);
@@ -18,9 +21,10 @@ export function connectWebDatabase(connectionString, { projectRef, allowLocal = 
     throw Error("DEV_WEB_DATABASE_REQUIRED");
   }
   const local = allowLocal && ["127.0.0.1", "localhost"].includes(url.hostname);
+  const role = production ? "wj_web_live" : "wj_web_app";
   const validRole = local
-    ? url.username === "wj_web_app"
-    : url.username === "wj_web_app." + projectRef &&
+    ? url.username === role
+    : url.username === role + "." + projectRef &&
       url.hostname.endsWith(".pooler.supabase.com") &&
       url.port === "6543" &&
       url.pathname === "/postgres";

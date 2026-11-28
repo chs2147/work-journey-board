@@ -340,6 +340,7 @@ export function createConfiguredWebHandler(env) {
     projectRef: env.WJB_SUPABASE_DEV_PROJECT_REF,
     allowLocal: !env.VERCEL_ENV || env.VERCEL_ENV === "development",
     certificate: env.WJB_WEB_DB_CA,
+    production: env.VERCEL_ENV === "production",
   });
   const workspaceKey = Buffer.from(env.WJB_WEB_SESSION_KEY ?? "", "base64");
   const store = createSessionStore(sql, workspaceKey);

@@ -1,7 +1,7 @@
 /* global process */
 import { createConfiguredWebHandler } from "../server.mjs";
 
-let handlePreview;
+let handleWeb;
 
 function reply(response, status, error) {
   response.writeHead(status, {
@@ -13,13 +13,13 @@ function reply(response, status, error) {
 }
 
 export default function handler(request, response) {
-  if (!["preview", "development"].includes(process.env.VERCEL_ENV)) {
+  if (!["preview", "development", "production"].includes(process.env.VERCEL_ENV)) {
     return reply(response, 404, "NOT_FOUND");
   }
   try {
-    handlePreview ??= createConfiguredWebHandler(process.env);
+    handleWeb ??= createConfiguredWebHandler(process.env);
   } catch {
     return reply(response, 503, "UNAVAILABLE");
   }
-  return handlePreview(request, response);
+  return handleWeb(request, response);
 }
