@@ -47,13 +47,15 @@ function layout(title, content, { script = false, workspace = false } = {}) {
 </html>`;
 }
 
-const views = { day: "오늘", week: "주간", kanban: "칸반", search: "검색", summary: "요약" };
+const views = { day: "오늘", week: "주간", kanban: "칸반", search: "검색", summary: "요약", cabinet: "자료" };
 const viewTitles = {
   day: "데일리 보드",
   week: "주간 보드",
   kanban: "칸반 보드",
   search: "기록 검색",
   summary: "주간 요약",
+  notes: "주간 메모",
+  cabinet: "Cabi.NET",
 };
 const viewIcons = {
   day: '<rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v5m8-5v5m-8 8h8"/>',
@@ -62,6 +64,8 @@ const viewIcons = {
     '<rect x="3" y="4" width="4" height="11"/><rect x="10" y="4" width="4" height="16"/><rect x="17" y="4" width="4" height="8"/>',
   search: '<circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 4.5 4.5"/>',
   summary: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 8h8M8 12h8m-8 4h5"/>',
+  cabinet:
+    '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M3 10h18"/>',
 };
 
 export function pageFor(path, version, workspace) {
@@ -85,19 +89,23 @@ export function pageFor(path, version, workspace) {
         <nav class="journal-nav" aria-label="워크스페이스 화면">${Object.entries(views)
           .map(
             ([key, name]) =>
-              `<a href="/app/${id}/${key}"${key === view ? ' aria-current="page"' : ""}><svg viewBox="0 0 24 24" aria-hidden="true">${viewIcons[key]}</svg><span>${name}</span></a>`,
+              `<a href="/app/${id}/${key}"${key === view || (key === "cabinet" && view === "notes") ? ' aria-current="page"' : ""}><svg viewBox="0 0 24 24" aria-hidden="true">${viewIcons[key]}</svg><span>${name}</span></a>`,
           )
           .join("")}</nav>
         <section class="journal-body" aria-labelledby="journal-title">
         <div class="journal-toolbar">
           <div class="journal-title"><h1 id="journal-title">${viewTitles[view]}</h1>
             ${view === "week" ? `<a class="journal-tool-link" id="journal-summary" href="/app/${id}/summary">주간 요약</a>` : ""}
+            ${view === "week" || view === "cabinet" ? `<a class="journal-tool-link" id="journal-notes" href="/app/${id}/notes">주간 메모</a>` : ""}
+            ${view === "notes" ? `<a class="journal-tool-link" href="/app/${id}/cabinet">Cabi.NET</a>` : ""}
           </div>
           <div class="journal-tools" id="journal-tools" hidden>
           ${
-            view === "search"
-              ? '<label class="visually-hidden" for="journal-search">기록 검색</label><input type="search" id="journal-search" maxlength="100" autocomplete="off" placeholder="본문, 업무 또는 태그">'
-              : '<div class="journal-period"><button type="button" class="quiet period-step" id="period-prev" aria-label="이전 기간">‹</button><div class="period-picker"><span id="period-range" aria-hidden="true"></span><input type="date" id="journal-date" aria-label="기준일"></div><button type="button" class="quiet period-step" id="period-next" aria-label="다음 기간">›</button><button type="button" class="quiet" id="journal-today">오늘</button></div>'
+            view === "cabinet"
+              ? ""
+              : view === "search"
+                ? '<label class="visually-hidden" for="journal-search">기록 검색</label><input type="search" id="journal-search" maxlength="100" autocomplete="off" placeholder="본문, 업무 또는 태그">'
+                : '<div class="journal-period"><button type="button" class="quiet period-step" id="period-prev" aria-label="이전 기간">‹</button><div class="period-picker"><span id="period-range" aria-hidden="true"></span><input type="date" id="journal-date" aria-label="기준일"></div><button type="button" class="quiet period-step" id="period-next" aria-label="다음 기간">›</button><button type="button" class="quiet" id="journal-today">오늘</button></div>'
           }
           ${view === "kanban" ? '<label for="board-period">표시 기간</label><select id="board-period"><option value="week">선택한 주</option><option value="all">전체 기간</option></select>' : ""}
           ${view === "summary" ? '<button type="button" class="quiet" id="journal-download">Markdown 다운로드</button>' : ""}
@@ -119,7 +127,7 @@ export function pageFor(path, version, workspace) {
           </div>
         </form>
         </dialog>
-      </main><script src="/assets/workspace.js" defer></script>`,
+      </main><script src="/assets/workspace.js" type="module"></script>`,
       { workspace: true },
     );
   }

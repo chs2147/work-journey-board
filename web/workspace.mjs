@@ -1,6 +1,7 @@
 /* global Buffer */
 import { createCipheriv, createDecipheriv, hkdfSync, randomBytes } from "node:crypto";
 import { WebError } from "./upstream.mjs";
+import { isLibraryView, libraryHas, projectLibraryRecord } from "./materials.mjs";
 
 const recordKey = /^[a-f0-9]{64}$/;
 const sequence = /^(0|[1-9][0-9]{0,17})$/;
@@ -32,7 +33,7 @@ const allowed = new Map([
 ]);
 
 export const workspaceIdPattern = "[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}";
-export const workspaceViews = "day|week|kanban|search|summary";
+export const workspaceViews = "day|week|kanban|search|summary|notes|cabinet";
 const invalid = () => new WebError("INVALID_REQUEST", 400);
 const invalidUpstream = () => new WebError("WORKSPACE_UNAVAILABLE", 503);
 
@@ -64,15 +65,19 @@ export function createWorkspaceAccess(upstream, secret) {
     }
   }
 
-  function project(record, session, id, rev) {
+  function project(record, session, id, rev, view) {
     if (!record || !recordKey.test(record.key)) throw invalidUpstream();
     const fields = allowed.get(record.table);
     const settings = record.table === "app_meta";
-    if (!fields && !settings) return null;
+    if (view ? !libraryHas(view, record.table) : !fields && !settings) return null;
     const result = { key: record.key, table: record.table, value: null };
     if (record.value === null) return result;
     if (!record.value || typeof record.value !== "object" || Array.isArray(record.value))
       throw invalidUpstream();
+    if (view && !fields) {
+      result.value = projectLibraryRecord(record.table, record.value);
+      return result;
+    }
     if (settings) {
       if (record.value.key !== "settings") return null;
       let order;
@@ -114,11 +119,13 @@ export function createWorkspaceAccess(upstream, secret) {
       return { ...info, name: space.name };
     },
     async records(session, id, query) {
+      const view = query.get("view");
       const manifest = query.get("manifest");
       const table = query.get("table");
       const cursor = query.get("key");
       if (
         !recordKey.test(manifest) ||
+        (view !== null && !isLibraryView(view)) ||
         ((table !== null || cursor !== null) &&
           (table === null || !tableName.test(table) || !recordKey.test(cursor)))
       )
@@ -135,13 +142,14 @@ export function createWorkspaceAccess(upstream, secret) {
       )
         throw invalidUpstream();
       return {
-        records: page.records.map((row) => project(row, session, id, 0)).filter(Boolean),
+        records: page.records.map((row) => project(row, session, id, 0, view)).filter(Boolean),
         next: page.more ? page.next : null,
       };
     },
     async changes(session, id, query) {
+      const view = query.get("view");
       const after = query.get("after");
-      if (!sequence.test(after)) throw invalid();
+      if (!sequence.test(after) || (view !== null && !isLibraryView(view))) throw invalid();
       const page = await upstream.pull(session, id, after);
       if (
         !Array.isArray(page.changes) ||
@@ -152,7 +160,7 @@ export function createWorkspaceAccess(upstream, secret) {
       )
         throw invalidUpstream();
       return {
-        records: page.changes.map((row) => project(row, session, id, row.rev)).filter(Boolean),
+        records: page.changes.map((row) => project(row, session, id, row.rev, view)).filter(Boolean),
         next: page.next,
         more: page.more,
       };

@@ -27,6 +27,65 @@ const itemKey = "b".repeat(64);
 const categoryKey = "c".repeat(64);
 const sectionKey = "d".repeat(64);
 const summaryKey = "e".repeat(64);
+const noteKey = "5".repeat(64);
+const folderKey = "6".repeat(64);
+const documentKey = "7".repeat(64);
+const linkKey = "8".repeat(64);
+const pmDoc = (text) => ({
+  type: "doc",
+  content: [{ type: "paragraph", content: [{ type: "text", text }] }],
+});
+const libraryRows = [
+  {
+    table: "week_note",
+    key: noteKey,
+    value: {
+      week_id: "2026-W01",
+      doc: JSON.stringify({
+        v: 1,
+        boxes: [
+          { kind: "image", x: 0, y: 70, caption: "검토 화면 캡처", asset: "private-asset-reference" },
+          { kind: "text", x: 0, y: 20, bg: "yellow", content: pmDoc("주간 검토 메모") },
+          { kind: "link", x: 0, y: 140, title: "검토 문서", url: "https://example.invalid/notes" },
+        ],
+      }),
+    },
+  },
+  {
+    table: "cabinet_item",
+    key: folderKey,
+    value: {
+      id: "cab-folder",
+      title: "검토 자료 폴더",
+      kind: "folder",
+      target: "C:\\fixture-private\\notes",
+      sort_order: 0,
+    },
+  },
+  {
+    table: "cabinet_item",
+    key: linkKey,
+    value: { id: "cab-link", title: "검토 링크", kind: "link", target: "javascript:alert(1)", sort_order: 1 },
+  },
+  {
+    table: "cabi_note",
+    key: documentKey,
+    value: {
+      id: "cabi-doc",
+      category_id: "category-a",
+      title: "운영 업무노트",
+      content: JSON.stringify(pmDoc("업무노트 본문")),
+      plain_text: "",
+      updated_at: "2026-11-28T00:00:00.000Z",
+      delete_locked: 1,
+    },
+  },
+  {
+    table: "cabinet_link",
+    key: "9".repeat(64),
+    value: { item_id: "cab-folder", category_id: "category-b", entry_id: null },
+  },
+];
 const currentDate = new Date();
 const fixtureDate = new Date(
   Date.UTC(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate()),
@@ -167,6 +226,7 @@ async function fixture(t, { publicEntry = false, weeklyLayout = false } = {}) {
                   },
                   ...(weeklyLayout
                     ? [
+                        ...libraryRows,
                         {
                           table: "category",
                           key: "f".repeat(64),
@@ -475,6 +535,41 @@ test("workspace routes page current data, preserve record fields and reject stal
   assert.equal(moved.records[0].value.kanban_section_id, null);
 });
 
+test("library views project authorized text and links without folder paths or document internals", async (t) => {
+  const { request } = await fixture(t, { weeklyLayout: true });
+  const login = async (address) => {
+    const issued = await request("/api/auth/code", { payload: { email: address, agreed: true, version } });
+    return cookies(await request("/api/auth/verify", { payload: { code }, cookies: cookies(issued) }));
+  };
+  const owner = await login(email);
+  const other = await login(secondEmail);
+  const path = `/api/spaces/${spaceId}/records?manifest=${manifest}&table=entry_item&key=${itemKey}`;
+  assert.equal((await request(path + "&view=notes")).status, 401);
+  assert.equal((await request(path + "&view=cabinet", { cookies: other })).status, 404);
+  assert.equal((await request(path + "&view=constructor", { cookies: owner })).status, 400);
+  const journal = await (await request(path, { cookies: owner })).json();
+  assert.equal(
+    journal.records.some(({ key }) => key === noteKey || key === folderKey),
+    false,
+  );
+  const notes = await (await request(path + "&view=notes", { cookies: owner })).json();
+  assert.deepEqual(notes.records.find(({ key }) => key === noteKey).value.boxes, [
+    { kind: "text", body: "주간 검토 메모", background: "yellow" },
+    { kind: "image", caption: "검토 화면 캡처" },
+    { kind: "link", title: "검토 문서", body: "", url: "https://example.invalid/notes" },
+  ]);
+  assert.doesNotMatch(JSON.stringify(notes), /private-asset-reference/);
+  const cabinet = await (await request(path + "&view=cabinet", { cookies: owner })).json();
+  assert.equal(cabinet.records.find(({ key }) => key === folderKey).value.url, null);
+  assert.equal(cabinet.records.find(({ key }) => key === linkKey).value.url, null);
+  assert.equal(cabinet.records.find(({ key }) => key === documentKey).value.text, "업무노트 본문");
+  assert.doesNotMatch(JSON.stringify(cabinet), /fixture-private|delete_locked|javascript:|plain_text/);
+  assert.equal(
+    cabinet.records.some(({ edit }) => edit),
+    false,
+  );
+});
+
 test("Postgres reserves one refresh and cannot revive a deleted session", async (t) => {
   const { sql, store } = await fixture(t);
   const id = randomUUID();
@@ -563,6 +658,10 @@ test(
     assert.equal(
       await other.getByRole("link", { name: "주간 요약", exact: true }).getAttribute("href"),
       `/app/${spaceId}/summary?date=${otherFixtureDate}`,
+    );
+    assert.equal(
+      await other.getByRole("link", { name: "주간 메모", exact: true }).getAttribute("href"),
+      `/app/${spaceId}/notes?date=${otherFixtureDate}`,
     );
     await other.getByRole("button", { name: "오늘", exact: true }).tap();
     await other.getByRole("button", { name: "데스크탑 최신 기록", exact: true }).tap();
@@ -680,6 +779,40 @@ test(
     await other.goto(`${origin}/app/${spaceId}/summary?date=2025-12-29`);
     await summary.getByText("수정본", { exact: true }).waitFor();
     await summary.getByText("보관된 요약", { exact: true }).waitFor();
+    await other.goto(`${origin}/app/${spaceId}/notes?date=2025-12-29`);
+    const weeklyNotes = other.getByRole("region", { name: "2026-W01 주간 메모" });
+    await weeklyNotes.getByText("주간 검토 메모", { exact: true }).waitFor();
+    await other.getByText("검토 화면 캡처", { exact: true }).waitFor();
+    assert.equal(
+      await other.getByRole("link", { name: "링크 열기" }).getAttribute("href"),
+      "https://example.invalid/notes",
+    );
+    await other.setViewportSize({ width: 390, height: 844 });
+    await other.getByRole("link", { name: "Cabi.NET", exact: true }).tap();
+    await other.getByRole("button", { name: /운영 업무노트/ }).tap();
+    const material = other.getByRole("region", { name: "선택한 자료" });
+    await material.getByText("업무노트 본문", { exact: true }).waitFor();
+    assert.equal(await other.locator(".material-list").isVisible(), false);
+    await material.getByRole("button", { name: "자료 목록", exact: true }).tap();
+    const folder = other.getByRole("button", { name: /검토 자료 폴더/ });
+    assert.deepEqual(
+      await folder.evaluate((node) => {
+        const css = getComputedStyle(node);
+        return [
+          css.borderLeftWidth,
+          css.borderTopLeftRadius,
+          css.borderBottomLeftRadius,
+          css.borderLeftColor,
+        ];
+      }),
+      ["4px", "0px", "0px", "rgb(235, 104, 52)"],
+    );
+    await folder.tap();
+    await material.getByText(/해당 데스크탑 앱에서 열 수 있습니다/).waitFor();
+    assert.equal(await material.getByRole("link").count(), 0);
+    await other.setViewportSize({ width: 768, height: 844 });
+    assert.equal(await other.locator(".material-list").isVisible(), true);
+    assert.equal(await other.locator("html").evaluate((el) => el.scrollWidth), 768);
     await page.getByRole("button", { name: "로그아웃", exact: true }).tap();
     await page.waitForURL("**/login");
     await other.waitForURL("**/login");

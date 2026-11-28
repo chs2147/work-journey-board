@@ -16,7 +16,9 @@ const runtimeFiles = [
   "public/style.css",
   "public/workspace.css",
   "workspace.mjs",
+  "materials.mjs",
   "public/workspace.js",
+  "public/materials.js",
 ];
 
 function copy(source, destination) {

@@ -25,6 +25,7 @@ const assets = new Map(
     ["/assets/style.css", ["text/css; charset=utf-8", "./public/style.css"]],
     ["/assets/app.js", ["text/javascript; charset=utf-8", "./public/app.js"]],
     ["/assets/workspace.js", ["text/javascript; charset=utf-8", "./public/workspace.js"]],
+    ["/assets/materials.js", ["text/javascript; charset=utf-8", "./public/materials.js"]],
     ["/assets/workspace.css", ["text/css; charset=utf-8", "./public/workspace.css"]],
     ["/assets/workspace-theme.css", ["text/css; charset=utf-8", "../src/shared/tokens.css"]],
     ["/assets/gowun-dodum.woff2", ["font/woff2", "../src/shared/fonts/GowunDodum-Regular.woff2"]],

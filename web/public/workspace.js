@@ -1,7 +1,9 @@
 /* global document, location, fetch, URL, URLSearchParams, Blob, crypto, addEventListener, BroadcastChannel, setInterval, matchMedia */
+import { renderCabinet, renderNotes } from "/assets/materials.js";
 const journal = document.querySelector("#journal");
 const id = journal.dataset.id;
 const view = journal.dataset.view;
+const library = ["notes", "cabinet"].includes(view);
 const base = "/api/spaces/" + id;
 const pick = (name) => document.getElementById(name);
 const status = pick("journal-status");
@@ -48,6 +50,7 @@ let dirty = false;
 let moving = false;
 let selectedRecordKey = null;
 let selectedKanbanSection = "todo";
+let selectedMaterial = null;
 if (dateInput) {
   const date = new URLSearchParams(location.search).get("date");
   dateInput.value = /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : "";
@@ -92,6 +95,7 @@ function reset() {
   closeEditor();
   selectedRecordKey = null;
   selectedKanbanSection = "todo";
+  selectedMaterial = null;
   if (queryInput) queryInput.value = "";
   content.replaceChildren();
   tools.hidden = true;
@@ -131,7 +135,9 @@ function apply(rows) {
 async function sync(steps) {
   let more;
   do {
-    const page = await request("/changes?after=" + cursor);
+    const params = new URLSearchParams({ after: cursor });
+    if (library) params.set("view", view);
+    const page = await request("/changes?" + params);
     if (steps !== generation) return;
     apply(page.records);
     dirty ||= page.records.length > 0;
@@ -162,6 +168,7 @@ async function load(full = false) {
       let next;
       do {
         const params = new URLSearchParams({ manifest: active.manifest });
+        if (library) params.set("view", view);
         if (next) {
           params.set("table", next[0]);
           params.set("key", next[1]);
@@ -583,6 +590,33 @@ function render() {
     .sort(itemSort);
   content.replaceChildren();
   content.className = `journal-${view}`;
+  if (view === "cabinet") {
+    const notes = records("cabi_note").sort((a, b) =>
+      String(b.value.updated_at).localeCompare(String(a.value.updated_at)),
+    );
+    const materials = records("cabinet_item").sort((a, b) => a.value.sort_order - b.value.sort_order);
+    content.append(
+      renderCabinet({
+        notes,
+        materials,
+        bindings: records("cabinet_link"),
+        categories,
+        key: selectedMaterial,
+        split: splitView.matches,
+        select(key, previous) {
+          selectedMaterial = key;
+          render();
+          const selector = previous
+            ? `[data-material-key="${previous}"]`
+            : splitView.matches
+              ? `[data-material-key="${key}"]`
+              : ".material-detail";
+          content.querySelector(selector)?.focus();
+        },
+      }),
+    );
+    return;
+  }
   if (view === "search") return renderSearch(items, categories);
 
   const week = days();
@@ -594,6 +628,16 @@ function render() {
     view === "day"
       ? dayFormat.format(new Date(date + "T00:00:00Z"))
       : `${start.slice(0, 4)}. ${shortDate(start)} – ${shortDate(end)}`;
+  if (view === "notes") {
+    const id = weekId();
+    const note = records("week_note").find(({ value }) => value.week_id === id)?.value;
+    const oldMemos = records("day_memo")
+      .map(({ value }) => value)
+      .filter(({ date, text }) => inWeek(date) && text)
+      .sort((a, b) => a.date.localeCompare(b.date));
+    content.append(renderNotes(id, note, oldMemos));
+    return;
+  }
   if (view === "kanban") return renderKanban(items, categories, inWeek);
 
   const weekly = items.filter(({ value }) => inWeek(value.date));
@@ -602,6 +646,7 @@ function render() {
   if (view === "day") return renderDayList(week, groupByWork(weekly, categories), memos.get(date));
 
   pick("journal-summary").href = `/app/${id}/summary?date=${date}`;
+  pick("journal-notes").href = `/app/${id}/notes?date=${date}`;
   const groups = groupByWork(weekly, categories);
   if (wideWeek.matches) renderWeekGrid(week, groups, memos);
   else renderDayList(week, groups, memos.get(date));
@@ -792,7 +837,7 @@ pick("journal-today")?.addEventListener("click", () => {
   render();
 });
 if (view === "week") wideWeek.addEventListener("change", render);
-if (["week", "day", "search"].includes(view)) splitView.addEventListener("change", render);
+if (["week", "day", "search", "cabinet"].includes(view)) splitView.addEventListener("change", render);
 queryInput?.addEventListener("input", render);
 pick("board-period")?.addEventListener("change", render);
 pick("journal-download")?.addEventListener("click", () => {
