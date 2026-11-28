@@ -1,10 +1,11 @@
 /* global URL */
 const libraryTables = {
-  notes: new Set(["week_note", "day_memo"]),
+  notes: new Set(["week_note", "day_memo", "note_asset"]),
   cabinet: new Set(["category", "cabi_note", "cabinet_item", "cabinet_link"]),
 };
 const backgrounds = new Set(["yellow", "blue", "green", "pink"]);
 const blockNodes = new Set(["paragraph", "heading", "listItem", "taskItem", "tableRow"]);
+const imageTypes = new Set(["image/webp", "image/png", "image/jpeg", "image/gif"]);
 
 export const isLibraryView = (value) => Object.hasOwn(libraryTables, value);
 export const libraryHas = (view, table) => libraryTables[view]?.has(table) ?? false;
@@ -30,6 +31,25 @@ function json(value) {
 
 const text = (value) => (typeof value === "string" ? value : "");
 
+export function noteImage(value) {
+  const ref = value.dataRef;
+  if (
+    typeof value.id !== "string" ||
+    !value.id ||
+    typeof value.week_id !== "string" ||
+    !imageTypes.has(value.mime) ||
+    !ref ||
+    typeof ref.objectId !== "string" ||
+    !/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(ref.objectId) ||
+    !Number.isInteger(ref.bytes) ||
+    ref.bytes < 1 ||
+    ref.bytes > 10 * 1024 * 1024 ||
+    ref.bytes !== value.bytes
+  )
+    return null;
+  return { id: value.id, weekId: value.week_id, objectId: ref.objectId, bytes: ref.bytes, mime: value.mime };
+}
+
 function noteText(node, depth = 0) {
   if (!node || depth > 32) return "";
   if (node.type === "text") return text(node.text);
@@ -48,7 +68,8 @@ function weekBoxes(source) {
       Math.abs((a.y ?? 0) - (b.y ?? 0)) <= 16 ? (a.x ?? 0) - (b.x ?? 0) : (a.y ?? 0) - (b.y ?? 0),
     )
     .flatMap((box) => {
-      if (box.kind === "image") return [{ kind: "image", caption: text(box.caption) }];
+      if (box.kind === "image")
+        return [{ kind: "image", caption: text(box.caption), imageId: text(box.asset) }];
       if (box.kind === "link") {
         return [{ kind: "link", title: text(box.title), body: text(box.note), url: webUrl(box.url) }];
       }

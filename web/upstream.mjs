@@ -132,6 +132,33 @@ export function createDevUpstream({ projectRef, publicKey, fetch, now = Date.now
       workspaceCall(session, "/read/records", { workspaceId, manifestHash, after, limit: 500 }),
     pull: (session, workspaceId, after) =>
       workspaceCall(session, "/sync/pull", { workspaceId, after, limit: 500 }),
+    async readAsset(session, workspaceId, objectId, signal) {
+      const response = await fetch(
+        new URL(`${gateway}/workspaces/${workspaceId}/assets/${objectId}/content`, origin),
+        {
+          redirect: "error",
+          cache: "no-store",
+          signal: AbortSignal.any([signal, AbortSignal.timeout(45000)]),
+          headers: {
+            apikey: publicKey,
+            authorization: `Bearer ${session.access}`,
+            "x-wjb-device-id": session.deviceId,
+            "x-wjb-generation": "1",
+          },
+        },
+      );
+      if (
+        response.status === 200 &&
+        response.body &&
+        response.headers.get("content-type") === "application/octet-stream"
+      ) {
+        return response;
+      }
+      await response.body?.cancel();
+      if (response.status === 401) throw new WebError("SIGN_IN_REQUIRED", 401);
+      if ([403, 404, 409].includes(response.status)) throw new WebError("ASSET_NOT_FOUND", 404);
+      throw new WebError("WORKSPACE_UNAVAILABLE", 503);
+    },
     pushText: (session, workspaceId, opId, key, baseRev, value) =>
       workspaceCall(session, "/sync/push", {
         workspaceId,

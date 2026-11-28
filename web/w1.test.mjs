@@ -1,4 +1,4 @@
-/* global Response, URL, fetch, process, document, getComputedStyle */
+/* global Buffer, Response, URL, fetch, process, document, getComputedStyle, navigator */
 import assert from "node:assert/strict";
 import { randomBytes, randomUUID } from "node:crypto";
 import { once } from "node:events";
@@ -21,6 +21,7 @@ const accounts = new Map([
   [secondEmail, secondId],
 ]);
 const spaceId = "22222222-2222-4222-8222-222222222222";
+const emptySpaceId = "44444444-4444-4444-8444-444444444444";
 const code = "01234567";
 const manifest = "a".repeat(64);
 const itemKey = "b".repeat(64);
@@ -31,6 +32,19 @@ const noteKey = "5".repeat(64);
 const folderKey = "6".repeat(64);
 const documentKey = "7".repeat(64);
 const linkKey = "8".repeat(64);
+const imageObject = "ca6ee111-caa0-4ec5-bca8-4165bac6ebf0";
+const maxImageObject = "ca6ee111-caa0-4ec5-bca8-4165bac6ebf1";
+const imageId = "adb71211-caa0-4ec5-bca8-4165bac6ebf0";
+const imageBytes = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a6fQAAAAASUVORK5CYII=",
+  "base64",
+);
+const maxImageBytes = 10 * 1024 * 1024;
+const imageRecord = (key, id, objectId, bytes, mime = "image/png") => ({
+  table: "note_asset",
+  key: key.repeat(64),
+  value: { id, week_id: "2026-W01", bytes, mime, dataRef: { objectId, bytes, sha256: "c".repeat(64) } },
+});
 const pmDoc = (text) => ({
   type: "doc",
   content: [{ type: "paragraph", content: [{ type: "text", text }] }],
@@ -44,13 +58,18 @@ const libraryRows = [
       doc: JSON.stringify({
         v: 1,
         boxes: [
-          { kind: "image", x: 0, y: 70, caption: "검토 화면 캡처", asset: "private-asset-reference" },
+          { kind: "image", x: 0, y: 70, caption: "검토 화면 캡처", asset: imageId },
           { kind: "text", x: 0, y: 20, bg: "yellow", content: pmDoc("주간 검토 메모") },
           { kind: "link", x: 0, y: 140, title: "검토 문서", url: "https://example.invalid/notes" },
         ],
       }),
     },
   },
+  imageRecord("a", imageId, imageObject, imageBytes.length),
+  imageRecord("b", "boundary", maxImageObject, maxImageBytes),
+  imageRecord("c", "empty", maxImageObject, 0),
+  imageRecord("d", "oversize", maxImageObject, maxImageBytes + 1),
+  imageRecord("e", "vector", imageObject, imageBytes.length, "image/svg+xml"),
   {
     table: "cabinet_item",
     key: folderKey,
@@ -192,13 +211,39 @@ async function fixture(t, { publicEntry = false, weeklyLayout = false } = {}) {
           return Response.json({
             workspaces:
               user.email === email
-                ? [{ workspaceId: spaceId, workspace: { name: "검증 일지", color: "c4", path: "/private" } }]
+                ? [
+                    { workspaceId: spaceId, workspace: { name: "검증 일지", color: "c4", path: "/private" } },
+                    ...(weeklyLayout
+                      ? [{ workspaceId: emptySpaceId, workspace: { name: "빈 검증 공간", color: "c7" } }]
+                      : []),
+                  ]
                 : [],
           });
+        case `/functions/v1/wjb-gateway/v2/workspaces/${spaceId}/assets/${imageObject}/content`:
+        case `/functions/v1/wjb-gateway/v2/workspaces/${spaceId}/assets/${maxImageObject}/content`:
+          assert.equal(options.headers["x-wjb-device-id"], deviceByAccount.get(user.id));
+          assert.equal(options.headers["x-wjb-generation"], "1");
+          if (!allowed || user.email !== email) return Response.json({}, { status: 403 });
+          return new Response(
+            url.pathname.includes(maxImageObject) ? Buffer.alloc(maxImageBytes) : imageBytes,
+            { headers: { "content-type": "application/octet-stream" } },
+          );
         case "/functions/v1/wjb-gateway/v2/read/header":
         case "/functions/v1/wjb-gateway/v2/read/records":
         case "/functions/v1/wjb-gateway/v2/sync/pull":
         case "/functions/v1/wjb-gateway/v2/sync/push": {
+          if (weeklyLayout && body.params.workspaceId === emptySpaceId && user.email === email) {
+            assert.equal(body.deviceId, deviceByAccount.get(user.id));
+            if (url.pathname.endsWith("/header"))
+              return Response.json({
+                workspaceId: emptySpaceId,
+                manifestHash: manifest,
+                header: { sourceSchema: 20 },
+              });
+            if (url.pathname.endsWith("/records"))
+              return Response.json({ records: [], more: false, next: null });
+            if (url.pathname.endsWith("/pull")) return Response.json({ changes: [], more: false, next: "0" });
+          }
           if (body.params.workspaceId !== spaceId || user.email !== email)
             return Response.json({ error: "READ_NOT_FOUND" }, { status: 404 });
           assert.equal(body.deviceId, deviceByAccount.get(user.id));
@@ -536,7 +581,7 @@ test("workspace routes page current data, preserve record fields and reject stal
 });
 
 test("library views project authorized text and links without folder paths or document internals", async (t) => {
-  const { request } = await fixture(t, { weeklyLayout: true });
+  const { request, deny } = await fixture(t, { weeklyLayout: true });
   const login = async (address) => {
     const issued = await request("/api/auth/code", { payload: { email: address, agreed: true, version } });
     return cookies(await request("/api/auth/verify", { payload: { code }, cookies: cookies(issued) }));
@@ -555,10 +600,29 @@ test("library views project authorized text and links without folder paths or do
   const notes = await (await request(path + "&view=notes", { cookies: owner })).json();
   assert.deepEqual(notes.records.find(({ key }) => key === noteKey).value.boxes, [
     { kind: "text", body: "주간 검토 메모", background: "yellow" },
-    { kind: "image", caption: "검토 화면 캡처" },
+    { kind: "image", caption: "검토 화면 캡처", imageId },
     { kind: "link", title: "검토 문서", body: "", url: "https://example.invalid/notes" },
   ]);
-  assert.doesNotMatch(JSON.stringify(notes), /private-asset-reference/);
+  assert.doesNotMatch(JSON.stringify(notes), new RegExp(`${imageObject}|${maxImageObject}|dataRef|sha256`));
+  const images = notes.records.filter(({ table }) => table === "note_asset");
+  assert.deepEqual(
+    images.filter(({ value }) => value !== null).map(({ value }) => value.id),
+    [imageId, "boundary"],
+  );
+  const imagePath = `/api/spaces/${spaceId}/note-image/${images[0].value.token}`;
+  assert.equal((await request(imagePath)).status, 401);
+  assert.equal((await request(imagePath, { cookies: other })).status, 404);
+  assert.equal((await request(imagePath + "A", { cookies: owner })).status, 404);
+  const image = await request(imagePath, { cookies: owner });
+  assert.equal(image.status, 200);
+  assert.equal(image.headers.get("cache-control"), "no-store");
+  assert.equal(image.headers.get("content-type"), "image/png");
+  assert.equal(image.headers.get("cross-origin-resource-policy"), "same-origin");
+  assert.deepEqual(Buffer.from(await image.arrayBuffer()), imageBytes);
+  const boundary = await request(`/api/spaces/${spaceId}/note-image/${images[1].value.token}`, {
+    cookies: owner,
+  });
+  assert.equal((await boundary.arrayBuffer()).byteLength, maxImageBytes);
   const cabinet = await (await request(path + "&view=cabinet", { cookies: owner })).json();
   assert.equal(cabinet.records.find(({ key }) => key === folderKey).value.url, null);
   assert.equal(cabinet.records.find(({ key }) => key === linkKey).value.url, null);
@@ -568,6 +632,8 @@ test("library views project authorized text and links without folder paths or do
     cabinet.records.some(({ edit }) => edit),
     false,
   );
+  deny();
+  assert.equal((await request(imagePath, { cookies: owner })).status, 404);
 });
 
 test("Postgres reserves one refresh and cannot revive a deleted session", async (t) => {
@@ -600,7 +666,7 @@ test("Postgres reserves one refresh and cannot revive a deleted session", async 
 });
 
 test(
-  "Chromium verifies the responsive journal, record sync, Kanban, search, export and sign-out",
+  "Chromium verifies responsive records, search, reports, materials and sign-out",
   {
     skip: !process.env.WJB_TEST_CHROMIUM,
   },
@@ -635,11 +701,24 @@ test(
     await other.getByRole("link", { name: "검증 일지" }).tap();
     await other.getByText("데스크탑 최신 기록").waitFor();
     assert.equal(await other.locator("html").evaluate((el) => el.scrollWidth), 390);
+    assert.deepEqual(await other.locator(".journal-nav a:visible").allTextContents(), [
+      "오늘",
+      "주간",
+      "칸반",
+      "더 보기",
+    ]);
+    await other.locator("#journal-spaces").tap();
+    const spacesPicker = other.getByRole("dialog", { name: "온라인 워크스페이스" });
+    await spacesPicker.getByRole("button", { name: "검증 일지 · 현재 공간" }).tap();
+    await spacesPicker.waitFor({ state: "hidden" });
+    const recordPanel = other.getByRole("dialog");
     const daily = other.locator(".journal-day");
     await daily.getByRole("heading", { name: "프로젝트", exact: true }).waitFor();
     await daily.getByRole("button", { name: "데스크탑 최신 기록", exact: true }).tap();
+    await recordPanel.getByRole("button", { name: "기록 편집", exact: true }).tap();
     await other.getByRole("textbox", { name: "기록 편집", exact: true }).waitFor();
     await other.getByRole("button", { name: "닫기", exact: true }).tap();
+    await recordPanel.waitFor({ state: "hidden" });
     await other.locator(`[data-week-date="${otherFixtureDate}"]`).tap();
     await daily.getByRole("heading", { name: "운영", exact: true }).waitFor();
     await daily.getByText("운영 점검 메모", { exact: true }).waitFor();
@@ -665,8 +744,16 @@ test(
     );
     await other.getByRole("button", { name: "오늘", exact: true }).tap();
     await other.getByRole("button", { name: "데스크탑 최신 기록", exact: true }).tap();
+    await recordPanel.getByRole("button", { name: "기록 편집", exact: true }).tap();
     await other.getByRole("textbox", { name: "기록 편집", exact: true }).fill("주간에서 바꾼 기록");
+    await other.setViewportSize({ width: 768, height: 844 });
+    await other.locator('.journal[data-layout="split"]').waitFor();
+    assert.equal(await recordPanel.evaluate((panel) => panel.matches(":modal")), false);
+    assert.equal(await recordPanel.getByRole("textbox").inputValue(), "주간에서 바꾼 기록");
     await other.getByRole("button", { name: "서버에 저장" }).tap();
+    await recordPanel.getByText("주간에서 바꾼 기록", { exact: true }).waitFor();
+    await recordPanel.getByRole("button", { name: "닫기", exact: true }).tap();
+    await recordPanel.waitFor({ state: "hidden" });
     await other.getByRole("button", { name: "주간에서 바꾼 기록", exact: true }).waitFor();
     changeFromDesktop("데스크탑에서 다시 바꾼 기록");
     await other.getByRole("button", { name: "새로고침" }).tap();
@@ -701,11 +788,21 @@ test(
           ["3px", "0px", "absolute"],
         );
       }
-      if (width >= 600 && width < 1024) {
-        await other
-          .getByRole("region", { name: "선택한 기록" })
-          .getByText("데스크탑에서 다시 바꾼 기록", { exact: true })
-          .waitFor();
+      if (width === 768) {
+        await other.getByRole("button", { name: "데스크탑에서 다시 바꾼 기록", exact: true }).tap();
+        const [list, panel] = await Promise.all([
+          other.locator("#journal-content").boundingBox(),
+          recordPanel.boundingBox(),
+        ]);
+        assert.ok(list.x + list.width <= panel.x);
+        await other.goBack();
+        await recordPanel.waitFor({ state: "hidden" });
+        assert.equal(
+          await other
+            .getByRole("button", { name: "데스크탑에서 다시 바꾼 기록", exact: true })
+            .evaluate((node) => node === document.activeElement),
+          true,
+        );
       }
     }
     const grid = other.getByRole("table", { name: "업무와 요일별 주간 기록" });
@@ -733,13 +830,13 @@ test(
       .filter({ has: other.getByRole("heading", { name: "파킹랏" }) })
       .getByText(/오늘 마감/)
       .waitFor();
-    await other.getByRole("button", { name: "기록 편집 데스크탑에서 다시 바꾼 기록", exact: true }).tap();
+    await other.getByRole("button", { name: "데스크탑에서 다시 바꾼 기록", exact: true }).tap();
+    await recordPanel.getByRole("button", { name: "기록 편집", exact: true }).tap();
     await other.getByRole("textbox", { name: "기록 편집", exact: true }).fill("모바일에서 바꾼 기록");
     await other.getByRole("button", { name: "서버에 저장" }).tap();
-    await other.getByText("모바일에서 바꾼 기록").waitFor();
-    const card = other.locator(".kanban-card").filter({ hasText: "모바일에서 바꾼 기록" });
-    await card.getByRole("combobox", { name: /이동할 섹션/ }).selectOption("done");
-    await card.getByRole("button", { name: "이동", exact: true }).tap();
+    await recordPanel.getByText("모바일에서 바꾼 기록", { exact: true }).waitFor();
+    await recordPanel.getByRole("combobox", { name: /이동할 섹션/ }).selectOption("done");
+    await recordPanel.getByRole("button", { name: "이동", exact: true }).tap();
     await other
       .locator(".kanban-lane")
       .filter({ has: other.getByRole("heading", { name: "DONE", exact: true }) })
@@ -750,27 +847,77 @@ test(
       "true",
     );
     await other.setViewportSize({ width: 768, height: 844 });
+    assert.equal(await other.locator(".kanban-lane:visible").count(), 1);
+    await other.setViewportSize({ width: 1280, height: 844 });
     await other.getByRole("heading", { name: "TODO", exact: true }).waitFor();
     assert.equal(await other.locator(".kanban-lane:visible").count(), 3);
-    assert.equal(await other.locator("html").evaluate((el) => el.scrollWidth), 768);
+    assert.equal(await other.locator("html").evaluate((el) => el.scrollWidth), 1280);
     await other.setViewportSize({ width: 390, height: 844 });
     await other.getByRole("link", { name: "주간", exact: true }).tap();
     await other.getByText("모바일에서 바꾼 기록").waitFor();
+    await other.getByRole("link", { name: "더 보기", exact: true }).tap();
     await other.getByRole("link", { name: "검색", exact: true }).tap();
     const search = other.getByRole("searchbox", { name: "기록 검색" });
     await search.fill("모바일");
     await other.getByText("모바일에서 바꾼 기록").waitFor();
     await other.locator(".search-result mark").getByText("모바일", { exact: true }).waitFor();
+    const result = other.locator(".search-result button");
+    await result.tap();
+    await recordPanel.getByRole("heading", { name: "기록 상세" }).waitFor();
+    assert.equal(await recordPanel.evaluate((panel) => panel.matches(":modal")), true);
+    const sourceUrl = new URL(
+      await recordPanel.getByRole("link", { name: "원래 날짜에서 열기" }).getAttribute("href"),
+      origin,
+    );
+    assert.equal(sourceUrl.pathname, `/app/${spaceId}/day`);
+    assert.equal(sourceUrl.searchParams.get("date"), fixtureDate);
+    assert.equal(sourceUrl.searchParams.get("record"), itemKey);
+    const original = await context.newPage();
+    await original.goto(sourceUrl.href);
+    await original
+      .getByRole("dialog", { name: "기록 상세" })
+      .getByText("모바일에서 바꾼 기록", { exact: true })
+      .waitFor();
+    await original.close();
+    assert.doesNotMatch(decodeURIComponent(other.url()), /모바일/);
+    await other.goBack();
+    await recordPanel.waitFor({ state: "hidden" });
+    assert.equal(await search.inputValue(), "모바일");
+    assert.equal(await result.evaluate((node) => node === document.activeElement), true);
     await search.fill("분기[점검]");
     await other.locator(".search-result").getByText("운영 점검 기록").waitFor();
+    await other.locator(".search-result mark").getByText("분기[점검]", { exact: true }).waitFor();
+    await other.getByRole("combobox", { name: "업무", exact: true }).selectOption("category-a");
+    await other.getByText("검색 결과 0건", { exact: true }).waitFor();
+    await other.getByRole("combobox", { name: "업무", exact: true }).selectOption("category-b");
+    await result.tap();
     await other.setViewportSize({ width: 768, height: 844 });
-    await other.getByRole("region", { name: "선택한 기록" }).getByText("운영 점검 기록").waitFor();
+    await other.locator('.journal[data-layout="split"]').waitFor();
+    await recordPanel.getByText("운영 점검 기록").waitFor();
+    assert.equal(await recordPanel.evaluate((panel) => panel.matches(":modal")), false);
+    assert.equal(await result.isVisible(), true);
+    assert.equal(
+      await other.getByRole("link", { name: "더 보기", exact: true }).getAttribute("aria-current"),
+      "location",
+    );
     assert.equal(await other.locator("html").evaluate((el) => el.scrollWidth), 768);
-    await other.getByRole("link", { name: "요약", exact: true }).tap();
+    await other.setViewportSize({ width: 320, height: 844 });
+    await other.locator('.journal[data-layout="single"]').waitFor();
+    assert.equal(await other.locator("html").evaluate((el) => el.scrollWidth), 320);
+    assert.equal(await recordPanel.evaluate((panel) => panel.matches(":modal")), true);
+    await recordPanel.getByRole("button", { name: "닫기", exact: true }).tap();
+    await recordPanel.waitFor({ state: "hidden" });
+    await other.getByRole("link", { name: "더 보기", exact: true }).tap();
+    await other.getByRole("link", { name: "주간 요약", exact: true }).tap();
     await other.getByRole("heading", { level: 1, name: "주간 요약", exact: true }).waitFor();
     const summary = other.getByRole("article", { name: "주간 요약 본문" });
     await summary.getByText("모바일에서 바꾼 기록", { exact: true }).waitFor();
     await summary.getByRole("heading", { name: "프로젝트", exact: true }).waitFor();
+    assert.equal(await other.locator("html").evaluate((el) => el.scrollWidth), 320);
+    await context.grantPermissions(["clipboard-read", "clipboard-write"], { origin });
+    await other.getByRole("button", { name: "요약 복사", exact: true }).tap();
+    await other.getByText("요약을 복사했습니다.", { exact: true }).waitFor();
+    assert.match(await other.evaluate(() => navigator.clipboard.readText()), /모바일에서 바꾼 기록/);
     const downloaded = other.waitForEvent("download");
     await other.getByRole("button", { name: "Markdown 다운로드" }).tap();
     const exportFile = await downloaded;
@@ -779,21 +926,43 @@ test(
     await other.goto(`${origin}/app/${spaceId}/summary?date=2025-12-29`);
     await summary.getByText("수정본", { exact: true }).waitFor();
     await summary.getByText("보관된 요약", { exact: true }).waitFor();
-    await other.goto(`${origin}/app/${spaceId}/notes?date=2025-12-29`);
+    let interrupted = false;
+    const imageRoute = "**/note-image/**";
+    await other.route(imageRoute, async (route) => {
+      if (interrupted) return route.continue();
+      interrupted = true;
+      return route.abort("connectionreset");
+    });
+    await other.getByRole("link", { name: "주간 메모", exact: true }).tap();
+    assert.equal(new URL(other.url()).searchParams.get("date"), "2025-12-29");
     const weeklyNotes = other.getByRole("region", { name: "2026-W01 주간 메모" });
     await weeklyNotes.getByText("주간 검토 메모", { exact: true }).waitFor();
     await other.getByText("검토 화면 캡처", { exact: true }).waitFor();
+    await weeklyNotes.getByText("이미지를 불러올 수 없습니다.", { exact: true }).waitFor();
+    await weeklyNotes.getByRole("button", { name: "이미지 다시 불러오기", exact: true }).tap();
+    const image = weeklyNotes.getByRole("img", { name: "검토 화면 캡처" });
+    await image.scrollIntoViewIfNeeded();
+    await other.waitForFunction(() => document.querySelector(".note-image")?.naturalWidth === 1);
+    await other.unroute(imageRoute);
     assert.equal(
       await other.getByRole("link", { name: "링크 열기" }).getAttribute("href"),
       "https://example.invalid/notes",
     );
     await other.setViewportSize({ width: 390, height: 844 });
     await other.getByRole("link", { name: "Cabi.NET", exact: true }).tap();
+    assert.equal(new URL(other.url()).searchParams.get("date"), "2025-12-29");
+    const materialSearch = other.getByRole("searchbox", { name: "자료 검색" });
+    await materialSearch.fill("업무노트 본문");
     await other.getByRole("button", { name: /운영 업무노트/ }).tap();
-    const material = other.getByRole("region", { name: "선택한 자료" });
+    const material = other.getByRole("dialog", { name: "자료 상세" });
     await material.getByText("업무노트 본문", { exact: true }).waitFor();
-    assert.equal(await other.locator(".material-list").isVisible(), false);
-    await material.getByRole("button", { name: "자료 목록", exact: true }).tap();
+    assert.equal(await material.evaluate((panel) => panel.matches(":modal")), true);
+    await material.getByRole("button", { name: "닫기", exact: true }).tap();
+    await material.waitFor({ state: "hidden" });
+    assert.equal(await materialSearch.inputValue(), "업무노트 본문");
+    await materialSearch.fill("");
+    await other.getByRole("combobox", { name: "자료 유형" }).selectOption("folder");
+    assert.equal(await other.getByRole("button", { name: /운영 업무노트/ }).count(), 0);
     const folder = other.getByRole("button", { name: /검토 자료 폴더/ });
     assert.deepEqual(
       await folder.evaluate((node) => {
@@ -811,8 +980,18 @@ test(
     await material.getByText(/해당 데스크탑 앱에서 열 수 있습니다/).waitFor();
     assert.equal(await material.getByRole("link").count(), 0);
     await other.setViewportSize({ width: 768, height: 844 });
+    await other.locator('.journal[data-layout="split"]').waitFor();
+    assert.equal(await material.evaluate((panel) => panel.matches(":modal")), false);
     assert.equal(await other.locator(".material-list").isVisible(), true);
     assert.equal(await other.locator("html").evaluate((el) => el.scrollWidth), 768);
+    await other.goBack();
+    await material.waitFor({ state: "hidden" });
+    assert.equal(await folder.evaluate((node) => node === document.activeElement), true);
+    await other.locator("#journal-spaces").tap();
+    await spacesPicker.getByRole("link", { name: "빈 검증 공간" }).tap();
+    await other.waitForURL(`**/app/${emptySpaceId}/day`);
+    await other.getByText("이 날의 기록이 없습니다.", { exact: true }).waitFor();
+    assert.equal(await other.getByText("모바일에서 바꾼 기록", { exact: true }).count(), 0);
     await page.getByRole("button", { name: "로그아웃", exact: true }).tap();
     await page.waitForURL("**/login");
     await other.waitForURL("**/login");

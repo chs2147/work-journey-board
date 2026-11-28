@@ -1,8 +1,10 @@
-/* global Buffer, URL, fetch, process */
+/* global AbortController, Buffer, URL, fetch, process */
 import { createHash, randomBytes } from "node:crypto";
 import { createServer } from "node:http";
 import { readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
+import { Readable, Transform } from "node:stream";
+import { pipeline } from "node:stream/promises";
 import categoryColors from "../src/shared/category-colors.json" with { type: "json" };
 import { createDevUpstream, WebError } from "./upstream.mjs";
 import { connectWebDatabase, createSessionStore } from "./session-store.mjs";
@@ -69,6 +71,20 @@ function normalizeEmail(email) {
   }
   return email.trim().toLowerCase();
 }
+
+function exactLength(expected) {
+  let bytes = 0;
+  return new Transform({
+    transform(chunk, _, next) {
+      bytes += chunk.length;
+      if (bytes > expected) return next(new Error("ASSET_LENGTH_MISMATCH"));
+      next(null, chunk);
+    },
+    flush(next) {
+      next(bytes === expected ? null : new Error("ASSET_LENGTH_MISMATCH"));
+    },
+  });
+}
 async function readJson(request, limit = jsonLimit) {
   if (!/^application\/json(?:\s*;|$)/i.test(request.headers["content-type"] ?? ""))
     throw new WebError("INVALID_REQUEST", 415);
@@ -114,6 +130,7 @@ export function createWebHandler({
 }) {
   const workspaces = createWorkspaceAccess(upstream, workspaceKey);
   const workspaceApi = new RegExp(`^/api/spaces/(${workspaceIdPattern})/(header|records|changes|text|move)$`);
+  const noteImageApi = new RegExp(`^/api/spaces/(${workspaceIdPattern})/note-image/([a-zA-Z0-9_-]{50,512})$`);
   const workspacePage = new RegExp(`^/app/(${workspaceIdPattern})/(${workspaceViews})$`);
   const originsByHost = new Map();
   for (const value of publicOrigin === undefined ? [origin] : [origin, publicOrigin]) {
@@ -185,6 +202,21 @@ export function createWebHandler({
     const present = await loadSession(key);
     if (present.value.accountId !== session.value.accountId) throw new WebError("SIGN_IN_REQUIRED", 401);
     return result;
+  }
+
+  async function sendNoteImage(res, key, id, token) {
+    const abort = new AbortController();
+    res.once("close", () => abort.abort());
+    try {
+      const { response, bytes, mime } = await withSession(key, (session) =>
+        workspaces.noteImage(session, id, token, abort.signal),
+      );
+      const source = Readable.fromWeb(response.body);
+      res.writeHead(200, { "content-type": mime, "cross-origin-resource-policy": "same-origin" });
+      await pipeline(source, exactLength(bytes), res);
+    } finally {
+      abort.abort();
+    }
   }
 
   async function sendCode(request, res) {
@@ -289,6 +321,8 @@ export function createWebHandler({
           }));
           return json(res, 200, result);
         }
+        const image = path.match(noteImageApi);
+        if (image) return await sendNoteImage(res, key, image[1], image[2]);
         if (space && ["header", "records", "changes"].includes(space[2])) {
           const [, id, type] = space;
           const result = await withSession(key, (session) =>
@@ -338,6 +372,7 @@ export function createWebHandler({
       }
       return json(res, 404, { error: "NOT_FOUND" });
     } catch (error) {
+      if (res.headersSent || res.destroyed) return res.destroy();
       return json(res, error instanceof WebError ? error.status : 503, {
         error: error instanceof WebError ? error.message : "UNAVAILABLE",
       });

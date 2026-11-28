@@ -1,19 +1,19 @@
 const teaser = "https://chs2147.github.io/work-journey-board/";
 const repository = "https://github.com/chs2147/work-journey-board";
 
-function layout(title, content, { script = false, workspace = false } = {}) {
+function layout(title, content, { script = false, workspace = false, entry = false } = {}) {
   return `<!doctype html>
-<html lang="ko"${workspace ? ' data-theme="signature"' : ""}>
+<html lang="ko"${workspace || entry ? ' data-theme="signature"' : ""}>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>${title} · Work Journey Board</title>
   <link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/assets/style.css">
-  ${workspace ? '<link rel="stylesheet" href="/assets/workspace-theme.css"><link rel="stylesheet" href="/assets/workspace-palette.css"><link rel="stylesheet" href="/assets/workspace.css">' : ""}
+  ${workspace || entry ? '<link rel="stylesheet" href="/assets/workspace-theme.css"><link rel="stylesheet" href="/assets/workspace-palette.css"><link rel="stylesheet" href="/assets/workspace.css">' : ""}
   ${script ? '<script src="/assets/app.js" defer></script>' : ""}
 </head>
-<body>
+<body${entry ? ' class="web-entry"' : ""}>
   ${
     workspace
       ? ""
@@ -47,7 +47,16 @@ function layout(title, content, { script = false, workspace = false } = {}) {
 </html>`;
 }
 
-const views = { day: "오늘", week: "주간", kanban: "칸반", search: "검색", summary: "요약", cabinet: "자료" };
+const views = {
+  day: "오늘",
+  week: "주간",
+  kanban: "칸반",
+  search: "검색",
+  summary: "요약",
+  cabinet: "자료",
+  more: "더 보기",
+};
+const secondary = ["search", "summary", "cabinet", "notes"];
 const viewTitles = {
   day: "데일리 보드",
   week: "주간 보드",
@@ -56,6 +65,7 @@ const viewTitles = {
   summary: "주간 요약",
   notes: "주간 메모",
   cabinet: "Cabi.NET",
+  more: "더 보기",
 };
 const viewIcons = {
   day: '<rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v5m8-5v5m-8 8h8"/>',
@@ -66,6 +76,7 @@ const viewIcons = {
   summary: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 8h8M8 12h8m-8 4h5"/>',
   cabinet:
     '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M3 10h18"/>',
+  more: '<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>',
 };
 
 export function pageFor(path, version, workspace) {
@@ -80,7 +91,7 @@ export function pageFor(path, version, workspace) {
             <img src="/assets/icon.svg" alt="" width="29" height="29">
             <img class="journal-wordmark" src="/assets/wordmark.svg" alt="" width="148" height="30">
           </a>
-          <a class="journal-space" href="/spaces" title="워크스페이스 목록"><span id="journal-name">워크스페이스</span><span aria-hidden="true">▾</span></a>
+          <a class="journal-space" id="journal-spaces" href="/spaces" aria-haspopup="dialog"><span id="journal-name">워크스페이스</span><span aria-hidden="true">▾</span></a>
           <output class="journal-sync" id="journal-sync" aria-live="off">연결 중</output>
           <button type="button" class="quiet journal-refresh" id="journal-refresh" aria-label="새로고침" title="새로고침">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5m5 0a8 8 0 1 0-1.6 5"/></svg>
@@ -89,43 +100,60 @@ export function pageFor(path, version, workspace) {
         <nav class="journal-nav" aria-label="워크스페이스 화면">${Object.entries(views)
           .map(
             ([key, name]) =>
-              `<a href="/app/${id}/${key}"${key === view || (key === "cabinet" && view === "notes") ? ' aria-current="page"' : ""}><svg viewBox="0 0 24 24" aria-hidden="true">${viewIcons[key]}</svg><span>${name}</span></a>`,
+              `<a href="/app/${id}/${key}" data-view-link="${key}"${secondary.includes(key) ? ' class="nav-secondary"' : ""}${key === view || (key === "cabinet" && view === "notes") ? ' aria-current="page"' : ""}><svg viewBox="0 0 24 24" aria-hidden="true">${viewIcons[key]}</svg><span>${name}</span></a>`,
           )
           .join("")}</nav>
         <section class="journal-body" aria-labelledby="journal-title">
         <div class="journal-toolbar">
-          <div class="journal-title"><h1 id="journal-title">${viewTitles[view]}</h1>
-            ${view === "week" ? `<a class="journal-tool-link" id="journal-summary" href="/app/${id}/summary">주간 요약</a>` : ""}
-            ${view === "week" || view === "cabinet" ? `<a class="journal-tool-link" id="journal-notes" href="/app/${id}/notes">주간 메모</a>` : ""}
-            ${view === "notes" ? `<a class="journal-tool-link" href="/app/${id}/cabinet">Cabi.NET</a>` : ""}
+          <div class="journal-title"><h1 id="journal-title" tabindex="-1">${viewTitles[view]}</h1>
+            ${["week", "notes"].includes(view) ? `<a class="journal-tool-link" href="/app/${id}/summary" data-view-link="summary">주간 요약</a>` : ""}
+            ${["week", "summary", "cabinet"].includes(view) ? `<a class="journal-tool-link" href="/app/${id}/notes" data-view-link="notes">주간 메모</a>` : ""}
+            ${["notes", "summary"].includes(view) ? `<a class="journal-tool-link" href="/app/${id}/week" data-view-link="week">주간 보드</a>` : ""}
+            ${view === "notes" ? `<a class="journal-tool-link" href="/app/${id}/cabinet" data-view-link="cabinet">Cabi.NET</a>` : ""}
           </div>
           <div class="journal-tools" id="journal-tools" hidden>
           ${
-            view === "cabinet"
+            view === "more"
               ? ""
               : view === "search"
-                ? '<label class="visually-hidden" for="journal-search">기록 검색</label><input type="search" id="journal-search" maxlength="100" autocomplete="off" placeholder="본문, 업무 또는 태그">'
-                : '<div class="journal-period"><button type="button" class="quiet period-step" id="period-prev" aria-label="이전 기간">‹</button><div class="period-picker"><span id="period-range" aria-hidden="true"></span><input type="date" id="journal-date" aria-label="기준일"></div><button type="button" class="quiet period-step" id="period-next" aria-label="다음 기간">›</button><button type="button" class="quiet" id="journal-today">오늘</button></div>'
+                ? '<div class="secondary-filters"><label class="visually-hidden" for="journal-search">기록 검색</label><input type="search" id="journal-search" maxlength="100" autocomplete="off" placeholder="본문, 업무 또는 태그"><select id="secondary-work" aria-label="업무"><option value="">전체 업무</option></select><select id="search-period" aria-label="검색 기간"><option value="all">전체 기간</option><option value="week">선택한 주</option></select></div>'
+                : view === "cabinet"
+                  ? '<div class="secondary-filters"><label class="visually-hidden" for="cabinet-search">자료 검색</label><input type="search" id="cabinet-search" maxlength="100" autocomplete="off" placeholder="자료 제목 또는 본문"><select id="secondary-work" aria-label="업무"><option value="">전체 업무</option></select><select id="cabinet-kind" aria-label="자료 유형"><option value="">전체 유형</option><option value="note">업무노트</option><option value="folder">폴더</option><option value="link">링크</option></select></div>'
+                  : '<div class="journal-period"><button type="button" class="quiet period-step" id="period-prev" aria-label="이전 기간">‹</button><div class="period-picker"><span id="period-range" aria-hidden="true"></span><input type="date" id="journal-date" aria-label="기준일"></div><button type="button" class="quiet period-step" id="period-next" aria-label="다음 기간">›</button><button type="button" class="quiet" id="journal-today">오늘</button></div>'
           }
           ${view === "kanban" ? '<label for="board-period">표시 기간</label><select id="board-period"><option value="week">선택한 주</option><option value="all">전체 기간</option></select>' : ""}
-          ${view === "summary" ? '<button type="button" class="quiet" id="journal-download">Markdown 다운로드</button>' : ""}
+          ${view === "summary" ? '<div class="actions summary-actions"><button type="button" class="quiet" id="journal-copy">요약 복사</button><button type="button" class="quiet" id="journal-download">Markdown 다운로드</button></div>' : ""}
           </div>
         </div>
-        <p class="status" id="journal-status" role="status">온라인 기록을 불러오는 중입니다.</p>
-        <div id="journal-content"></div>
-        <noscript>기록을 보려면 자바스크립트를 켜 주세요.</noscript>
-        </section>
-        <dialog id="record-dialog" class="record-dialog" aria-labelledby="record-label">
-        <form id="record-editor" class="record-editor">
+        <p class="status" id="journal-status" role="status">서버와 동기화 중</p>
+        <div class="journal-columns">
+        <div id="journal-content" aria-busy="true"></div>
+        <dialog id="record-dialog" class="record-dialog" aria-labelledby="record-heading">
+        <div class="record-panel">
+        <header class="record-panel-header"><h2 id="record-heading" tabindex="-1">기록 상세</h2><button type="button" class="quiet" id="record-close">닫기</button></header>
+        <div id="record-preview" class="record-preview" hidden></div>
+        <form id="record-editor" class="record-editor" hidden>
           <label for="record-text" id="record-label">기록 편집</label>
           <p id="record-context" class="record-context" hidden></p>
           <textarea id="record-text" rows="5" required></textarea>
           <p id="record-status" role="status"></p>
           <div class="actions">
             <button class="primary" type="submit">서버에 저장</button>
-            <button class="quiet" type="button" id="record-cancel">닫기</button>
+            <button class="quiet" type="button" id="record-cancel">편집 취소</button>
           </div>
         </form>
+        </div>
+        </dialog>
+        </div>
+        <noscript>기록을 보려면 자바스크립트를 켜 주세요.</noscript>
+        </section>
+        <dialog id="space-picker" class="record-dialog space-picker" aria-labelledby="space-picker-title">
+          <header class="record-panel-header"><h2 id="space-picker-title">온라인 워크스페이스</h2><button type="button" class="quiet" id="space-picker-close">닫기</button></header>
+          <div class="space-picker-body">
+            <p id="space-picker-status" role="status" class="status"></p>
+            <ul id="space-picker-list" class="space-list"></ul>
+            <a class="journal-tool-link" href="/spaces">공간 목록과 계정</a>
+          </div>
         </dialog>
       </main><script src="/assets/workspace.js" type="module"></script>`,
       { workspace: true },
@@ -166,7 +194,7 @@ export function pageFor(path, version, workspace) {
       <p id="login-status" class="status" role="status"></p>
       <noscript>로그인하려면 자바스크립트를 켜 주세요.</noscript>
     </main>`,
-      { script: true },
+      { script: true, entry: true },
     );
 
   if (path === "/spaces")
@@ -191,7 +219,7 @@ export function pageFor(path, version, workspace) {
       <button id="reload-spaces" class="quiet" type="button" hidden>다시 불러오기</button>
       <noscript>공간을 확인하려면 자바스크립트를 켜 주세요.</noscript>
     </main>`,
-      { script: true },
+      { script: true, entry: true },
     );
 
   if (path === "/terms")

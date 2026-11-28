@@ -14,7 +14,55 @@ function externalLink(url) {
   return link;
 }
 
-export function renderNotes(weekId, note, memos) {
+function noteImage(card, src, caption) {
+  const fallback = element("div", "", "note-image-state");
+  const message = element("p", "첨부 정보를 찾을 수 없습니다.", "record-meta");
+  message.setAttribute("role", "status");
+  fallback.append(message);
+  card.append(fallback);
+  if (!src) return;
+
+  const retry = element("button", "이미지 다시 불러오기", "quiet");
+  retry.type = "button";
+  fallback.append(retry);
+  fallback.hidden = true;
+
+  function load(retrying) {
+    const img = element("img", "", "note-image");
+    img.alt = caption || "주간 메모 첨부 이미지";
+    if (!retrying) img.loading = "lazy";
+    if (retrying) {
+      retry.disabled = true;
+      message.textContent = "이미지를 다시 불러오는 중입니다.";
+    }
+    img.addEventListener(
+      "load",
+      () => {
+        fallback.hidden = true;
+        if (retrying) card.querySelector("h2")?.focus();
+      },
+      { once: true },
+    );
+    img.addEventListener(
+      "error",
+      () => {
+        img.remove();
+        message.textContent = "이미지를 불러올 수 없습니다.";
+        retry.disabled = false;
+        fallback.hidden = false;
+        if (retrying) retry.focus();
+      },
+      { once: true },
+    );
+    img.src = src;
+    card.insertBefore(img, fallback);
+  }
+
+  retry.addEventListener("click", () => load(true));
+  load(false);
+}
+
+export function renderNotes(weekId, note, memos, images) {
   const host = element("section", "", "note-cards");
   host.setAttribute("aria-label", weekId + " 주간 메모");
   if (note && note.boxes === null) {
@@ -35,9 +83,11 @@ export function renderNotes(weekId, note, memos) {
       if (box.url) card.append(externalLink(box.url));
       else card.append(element("p", "웹에서 열 수 있는 주소가 없습니다.", "record-meta"));
     } else if (box.kind === "image") {
-      card.append(element("h2", "이미지"));
+      const title = element("h2", "이미지");
+      title.tabIndex = -1;
+      card.append(title);
+      noteImage(card, images.get(box.imageId), box.caption);
       if (box.caption) card.append(element("p", box.caption, "summary-text"));
-      card.append(element("p", "이미지는 데스크탑 앱에서 볼 수 있습니다.", "record-meta"));
     } else {
       if (box.body) card.append(element("p", box.body, "summary-text"));
       card.append(element("p", "이 메모 객체는 데스크탑 앱에서 볼 수 있습니다.", "record-meta"));
@@ -49,7 +99,7 @@ export function renderNotes(weekId, note, memos) {
 
 const kinds = { note: "업무노트", folder: "폴더", link: "링크" };
 
-export function renderCabinet({ notes, materials, bindings, categories, key, split, select }) {
+export function cabinetEntries({ notes, materials, bindings, categories }) {
   const noteItems = notes.map((row) => ({
     ...row,
     kind: "note",
@@ -65,25 +115,25 @@ export function renderCabinet({ notes, materials, bindings, categories, key, spl
   const resources = materials
     .filter(({ value }) => value.kind === "folder" || value.kind === "link")
     .map((row) => ({ ...row, kind: row.value.kind, categories: [...(linked.get(row.value.id) ?? [])] }));
-  const all = [...noteItems, ...resources];
-  const chosen = all.find((item) => item.key === key) ?? (split ? all[0] : undefined);
-  const layout = element("div", "", "materials-layout");
-  layout.dataset.detail = String(Boolean(chosen));
+  return [...noteItems, ...resources];
+}
+
+export function renderCabinet(entries, key, select) {
   const list = element("div", "", "material-list");
-  for (const [name, entries] of [
-    ["업무노트", noteItems],
-    ["폴더·링크", resources],
+  for (const [name, groupEntries] of [
+    ["업무노트", entries.filter((item) => item.kind === "note")],
+    ["폴더·링크", entries.filter((item) => item.kind !== "note")],
   ]) {
+    if (!groupEntries.length) continue;
     const group = element("section", "", "material-group");
     group.append(element("h2", name));
-    if (!entries.length) group.append(element("p", "등록된 자료가 없습니다.", "record-meta"));
-    for (const item of entries) {
+    for (const item of groupEntries) {
       const category = item.categories[0];
       const button = element("button", "", "material-row work-stripe");
       button.type = "button";
-      button.dataset.materialKey = item.key;
+      button.dataset.recordKey = item.key;
       if (category?.color) button.dataset.workColor = category.color;
-      button.setAttribute("aria-pressed", String(item === chosen));
+      button.setAttribute("aria-pressed", String(item.key === key));
       button.append(element("span", item.value.title || kinds[item.kind]));
       const names = item.categories.map((category) => category.name).filter(Boolean);
       const label = [kinds[item.kind], ...names].join(" · ");
@@ -93,24 +143,20 @@ export function renderCabinet({ notes, materials, bindings, categories, key, spl
     }
     list.append(group);
   }
-  layout.append(list);
-  if (chosen) {
-    const detail = element("section", "", "material-detail");
-    detail.setAttribute("aria-label", "선택한 자료");
-    detail.tabIndex = -1;
-    const back = element("button", "자료 목록", "quiet material-back");
-    back.type = "button";
-    back.addEventListener("click", () => select(null, chosen.key));
-    detail.append(back, element("h2", chosen.value.title || kinds[chosen.kind]));
-    if (chosen.kind === "note") {
-      const date = chosen.value.updated_at?.slice(0, 10);
-      if (date) detail.append(element("p", "최근 수정 · " + date, "record-meta"));
-      detail.append(element("p", chosen.value.text || "표시할 본문이 없습니다.", "summary-text"));
-    } else if (chosen.kind === "folder") {
-      detail.append(element("p", "연결된 폴더는 해당 데스크탑 앱에서 열 수 있습니다."));
-    } else if (chosen.value.url) detail.append(externalLink(chosen.value.url));
-    else detail.append(element("p", "웹에서 열 수 있는 주소가 없습니다."));
-    layout.append(detail);
-  }
-  return layout;
+  return list;
+}
+
+export function renderMaterial({ kind, value, categories }) {
+  const detail = element("div", "", "material-detail");
+  const context = [kinds[kind], ...categories.map(({ name }) => name)].filter(Boolean).join(" · ");
+  detail.append(element("p", context, "record-meta"), element("h3", value.title || kinds[kind]));
+  if (kind === "note") {
+    const date = value.updated_at?.slice(0, 10);
+    if (date) detail.append(element("p", "최근 수정 · " + date, "record-meta"));
+    detail.append(element("p", value.text || "표시할 본문이 없습니다.", "summary-text"));
+  } else if (kind === "folder") {
+    detail.append(element("p", "연결된 폴더는 해당 데스크탑 앱에서 열 수 있습니다."));
+  } else if (value.url) detail.append(externalLink(value.url));
+  else detail.append(element("p", "웹에서 열 수 있는 주소가 없습니다."));
+  return detail;
 }

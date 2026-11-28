@@ -1,7 +1,7 @@
 /* global Buffer */
 import { createCipheriv, createDecipheriv, hkdfSync, randomBytes } from "node:crypto";
 import { WebError } from "./upstream.mjs";
-import { isLibraryView, libraryHas, projectLibraryRecord } from "./materials.mjs";
+import { isLibraryView, libraryHas, noteImage, projectLibraryRecord } from "./materials.mjs";
 
 const recordKey = /^[a-f0-9]{64}$/;
 const sequence = /^(0|[1-9][0-9]{0,17})$/;
@@ -33,30 +33,30 @@ const allowed = new Map([
 ]);
 
 export const workspaceIdPattern = "[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}";
-export const workspaceViews = "day|week|kanban|search|summary|notes|cabinet";
+export const workspaceViews = "day|week|kanban|search|summary|notes|cabinet|more";
 const invalid = () => new WebError("INVALID_REQUEST", 400);
 const invalidUpstream = () => new WebError("WORKSPACE_UNAVAILABLE", 503);
 
 export function createWorkspaceAccess(upstream, secret) {
   const key = Buffer.from(hkdfSync("sha256", secret, "", "wj-web-entry-edit-v1", 32));
-  const context = (session, id) => Buffer.from(session.accountId + "/" + id);
+  const context = (session, id, purpose) => Buffer.from(session.accountId + "/" + id + purpose);
 
-  function issue(session, id, record, rev) {
+  function seal(session, id, value, purpose = "") {
     const iv = randomBytes(12);
     const cipher = createCipheriv("aes-256-gcm", key, iv);
-    cipher.setAAD(context(session, id));
-    const bytes = Buffer.from(JSON.stringify({ key: record.key, value: record.value, rev }));
+    cipher.setAAD(context(session, id, purpose));
+    const bytes = Buffer.from(JSON.stringify(value));
     return Buffer.concat([iv, cipher.update(bytes), cipher.final(), cipher.getAuthTag()]).toString(
       "base64url",
     );
   }
 
-  function open(session, id, token) {
+  function open(session, id, token, purpose = "") {
     if (typeof token !== "string" || !/^[A-Za-z0-9_-]{50,20000}$/.test(token)) throw invalid();
     try {
       const bytes = Buffer.from(token, "base64url");
       const decipher = createDecipheriv("aes-256-gcm", key, bytes.subarray(0, 12));
-      decipher.setAAD(context(session, id));
+      decipher.setAAD(context(session, id, purpose));
       decipher.setAuthTag(bytes.subarray(-16));
       const opened = Buffer.concat([decipher.update(bytes.subarray(12, -16)), decipher.final()]);
       return JSON.parse(opened);
@@ -74,6 +74,13 @@ export function createWorkspaceAccess(upstream, secret) {
     if (record.value === null) return result;
     if (!record.value || typeof record.value !== "object" || Array.isArray(record.value))
       throw invalidUpstream();
+    if (record.table === "note_asset") {
+      const image = noteImage(record.value);
+      if (!image) return result;
+      const { id: imageId, weekId, ...content } = image;
+      result.value = { id: imageId, weekId, token: seal(session, id, content, "/note-image") };
+      return result;
+    }
     if (view && !fields) {
       result.value = projectLibraryRecord(record.table, record.value);
       return result;
@@ -97,7 +104,7 @@ export function createWorkspaceAccess(upstream, secret) {
         .map((field) => [field, record.value[field]]),
     );
     if (record.table === "entry_item" && Number.isSafeInteger(rev) && rev >= 0) {
-      result.edit = issue(session, id, record, rev);
+      result.edit = seal(session, id, { key: record.key, value: record.value, rev });
     }
     return result;
   }
@@ -111,6 +118,16 @@ export function createWorkspaceAccess(upstream, secret) {
   }
 
   return {
+    async noteImage(session, id, token, signal) {
+      let asset;
+      try {
+        asset = open(session, id, token, "/note-image");
+      } catch {
+        throw new WebError("ASSET_NOT_FOUND", 404);
+      }
+      const response = await upstream.readAsset(session, id, asset.objectId, signal);
+      return { ...asset, response };
+    },
     async open(session, id) {
       const info = await header(session, id);
       const spaces = await upstream.list(session);

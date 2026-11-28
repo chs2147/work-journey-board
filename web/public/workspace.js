@@ -1,8 +1,11 @@
-/* global document, location, fetch, URL, URLSearchParams, Blob, crypto, addEventListener, BroadcastChannel, setInterval, matchMedia */
-import { renderCabinet, renderNotes } from "/assets/materials.js";
+/* global document, location, fetch, URL, URLSearchParams, Blob, crypto, addEventListener, removeEventListener, BroadcastChannel, setInterval, matchMedia, history, confirm, ResizeObserver, navigator */
+import { cabinetEntries, renderCabinet, renderMaterial, renderNotes } from "/assets/materials.js";
 const journal = document.querySelector("#journal");
 const id = journal.dataset.id;
 const view = journal.dataset.view;
+const core = ["day", "week", "kanban"].includes(view);
+const hasRecordPanel = core || view === "search" || view === "cabinet";
+const selectionParam = view === "cabinet" ? "material" : "record";
 const library = ["notes", "cabinet"].includes(view);
 const base = "/api/spaces/" + id;
 const pick = (name) => document.getElementById(name);
@@ -11,15 +14,23 @@ const content = pick("journal-content");
 const tools = pick("journal-tools");
 const dateInput = pick("journal-date");
 const queryInput = pick("journal-search");
+const cabinetQuery = pick("cabinet-search");
+const workFilter = pick("secondary-work");
+const searchPeriod = pick("search-period");
+const cabinetKind = pick("cabinet-kind");
 const editor = pick("record-editor");
 const dialog = pick("record-dialog");
+const preview = pick("record-preview");
+const heading = pick("record-heading");
+const spacePicker = pick("space-picker");
+const spacePickerList = pick("space-picker-list");
+const spaceStatus = pick("space-picker-status");
 const editorContext = pick("record-context");
 const editorStatus = pick("record-status");
 const textInput = pick("record-text");
 const refresh = pick("journal-refresh");
 const syncIndicator = pick("journal-sync");
-const wideWeek = matchMedia("(min-width: 1024px)");
-const splitView = matchMedia("(min-width: 600px)");
+const destinationsByRecord = new Map();
 const dayFormat = new Intl.DateTimeFormat("ko-KR", {
   weekday: "short",
   month: "numeric",
@@ -39,7 +50,7 @@ const shift = (date, amount) => {
   return dateKey(parsed);
 };
 const sessionEvents = typeof BroadcastChannel === "function" ? new BroadcastChannel("wj-web-session") : null;
-const keys = new Map();
+let keys = new Map();
 let active = null;
 let cursor = "0";
 let loading = false;
@@ -48,13 +59,47 @@ let generation = 0;
 let complete = false;
 let dirty = false;
 let moving = false;
-let selectedRecordKey = null;
+let selectedRecordKey = hasRecordPanel ? recordFromAddress() : null;
 let selectedKanbanSection = "todo";
-let selectedMaterial = null;
-if (dateInput) {
-  const date = new URLSearchParams(location.search).get("date");
-  dateInput.value = /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : "";
-  if (!dateInput.value) dateInput.value = localToday();
+let spaceRequest = 0;
+if (dateInput) dateInput.value = dateFromAddress();
+
+function dateFromAddress() {
+  const date = new URLSearchParams(location.search).get("date") ?? "";
+  const parsed = Date.parse(date);
+  return /^\d{4}-\d{2}-\d{2}$/.test(date) && Number.isFinite(parsed) && dateKey(new Date(parsed)) === date
+    ? date
+    : localToday();
+}
+
+function recordFromAddress() {
+  const key = new URLSearchParams(location.search).get(selectionParam) ?? "";
+  return /^[a-f0-9]{64}$/.test(key) ? key : null;
+}
+
+function updateAddress(push = false) {
+  const url = new URL(location.href);
+  if (dateInput) url.searchParams.set("date", selectedDate());
+  if (hasRecordPanel) {
+    if (selectedRecordKey) url.searchParams.set(selectionParam, selectedRecordKey);
+    else url.searchParams.delete(selectionParam);
+  }
+  if (push) history.pushState({ recordOpened: true }, "", url);
+  else history.replaceState(history.state, "", url);
+}
+
+function updateLayout() {
+  const width = content.closest(".journal-body").clientWidth;
+  const next =
+    core && width >= 912 && matchMedia("(min-width: 1024px)").matches
+      ? "wide"
+      : width >= 648
+        ? "split"
+        : "single";
+  if (journal.dataset.layout === next) return;
+  journal.dataset.layout = next;
+  if (core) render();
+  else if (dialog.open) showPanel();
 }
 
 function element(tag, text, className) {
@@ -64,9 +109,9 @@ function element(tag, text, className) {
   return node;
 }
 
-async function request(path, payload) {
+async function fetchJson(path, payload) {
   const response = await fetch(
-    base + path,
+    path,
     payload
       ? {
           method: "POST",
@@ -82,6 +127,40 @@ async function request(path, payload) {
   throw error;
 }
 
+const request = (path, payload) => fetchJson(base + path, payload);
+
+async function showSpaces() {
+  if (spacePicker.open) return;
+  const started = ++spaceRequest;
+  spacePickerList.replaceChildren();
+  spaceStatus.textContent = "공간을 불러오는 중입니다.";
+  spacePicker.showModal();
+  try {
+    const { spaces } = await fetchJson("/api/spaces");
+    if (started !== spaceRequest || !spacePicker.open) return;
+    for (const space of spaces) {
+      const row = element("li", "", "work-stripe");
+      row.dataset.workColor = space.color;
+      if (space.id === id) {
+        const current = element("button", space.name + " · 현재 공간", "quiet");
+        current.type = "button";
+        current.addEventListener("click", () => spacePicker.close());
+        row.append(current);
+      } else {
+        const link = element("a", space.name);
+        link.href = `/app/${space.id}/day`;
+        row.append(link);
+      }
+      spacePickerList.append(row);
+    }
+    spaceStatus.textContent = spaces.length ? "" : "온라인 공간이 없습니다.";
+  } catch (error) {
+    if (started !== spaceRequest || !spacePicker.open) return;
+    if (error.status === 401) recover(error);
+    else spaceStatus.textContent = "공간을 불러오지 못했습니다. 공간 목록에서 다시 시도해 주세요.";
+  }
+}
+
 function reset() {
   generation++;
   keys.clear();
@@ -93,11 +172,19 @@ function reset() {
   refresh.disabled = false;
   cursor = "0";
   closeEditor();
+  closePanel();
+  spaceRequest++;
+  spacePickerList.replaceChildren();
+  if (spacePicker.open) spacePicker.close();
   selectedRecordKey = null;
   selectedKanbanSection = "todo";
-  selectedMaterial = null;
   if (queryInput) queryInput.value = "";
+  if (cabinetQuery) cabinetQuery.value = "";
+  if (workFilter) workFilter.value = "";
+  if (searchPeriod) searchPeriod.value = "all";
+  if (cabinetKind) cabinetKind.value = "";
   content.replaceChildren();
+  content.setAttribute("aria-busy", "true");
   tools.hidden = true;
   pick("journal-name").textContent = "워크스페이스";
   setSyncState("연결 중");
@@ -124,24 +211,25 @@ function recover(error) {
   }
 }
 
-function apply(rows) {
+function apply(snapshot, rows) {
+  if (!rows.length) return;
+  if (snapshot.records === keys) snapshot.records = new Map(keys);
   for (const row of rows) {
     const key = row.table + ":" + row.key;
-    if (row.value === null) keys.delete(key);
-    else keys.set(key, row);
+    if (row.value === null) snapshot.records.delete(key);
+    else snapshot.records.set(key, row);
   }
 }
 
-async function sync(steps) {
+async function sync(steps, snapshot) {
   let more;
   do {
-    const params = new URLSearchParams({ after: cursor });
+    const params = new URLSearchParams({ after: snapshot.cursor });
     if (library) params.set("view", view);
     const page = await request("/changes?" + params);
     if (steps !== generation) return;
-    apply(page.records);
-    dirty ||= page.records.length > 0;
-    cursor = page.next;
+    apply(snapshot, page.records);
+    snapshot.cursor = page.next;
     more = page.more;
   } while (more);
 }
@@ -152,22 +240,19 @@ async function load(full = false) {
   refresh.disabled = true;
   const started = ++generation;
   const fromBeginning = full || !complete;
+  const snapshot = { records: fromBeginning ? new Map() : keys, cursor: fromBeginning ? "0" : cursor };
+  let nextHeader = active;
   if (fromBeginning) {
-    status.textContent = "온라인 기록을 불러오는 중입니다.";
+    status.textContent = "서버와 동기화 중";
     setSyncState("동기화 중");
   } else status.textContent = "";
   try {
     if (fromBeginning) {
-      complete = false;
-      const info = await request("/header");
+      nextHeader = await request("/header");
       if (started !== generation) return;
-      active = info;
-      pick("journal-name").textContent = active.name;
-      keys.clear();
-      cursor = "0";
       let next;
-      do {
-        const params = new URLSearchParams({ manifest: active.manifest });
+      while (view !== "more") {
+        const params = new URLSearchParams({ manifest: nextHeader.manifest });
         if (library) params.set("view", view);
         if (next) {
           params.set("table", next[0]);
@@ -175,20 +260,30 @@ async function load(full = false) {
         }
         const page = await request("/records?" + params);
         if (started !== generation) return;
-        apply(page.records);
+        apply(snapshot, page.records);
         next = page.next;
-      } while (next);
+        if (!next) break;
+      }
     }
-    await sync(started);
+    if (view !== "more") await sync(started, snapshot);
     if (started !== generation) return;
+    const recordsChanged = keys !== snapshot.records;
+    keys = snapshot.records;
+    cursor = snapshot.cursor;
+    active = nextHeader;
+    pick("journal-name").textContent = active.name;
     complete = true;
+    content.setAttribute("aria-busy", "false");
     tools.hidden = false;
-    if (fromBeginning || dirty) render();
+    if (recordsChanged || dirty) render();
     dirty = false;
     status.textContent = "";
     setSyncState("동기화됨", "ready");
   } catch (error) {
-    if (started === generation) recover(error);
+    if (started === generation) {
+      content.setAttribute("aria-busy", "false");
+      recover(error);
+    }
   } finally {
     if (started === generation) {
       loading = false;
@@ -201,7 +296,7 @@ function records(table) {
   return [...keys.values()].filter((row) => row.table === table);
 }
 function selectedDate() {
-  return dateInput?.value || localToday();
+  return dateInput?.value || dateFromAddress();
 }
 function days() {
   const date = selectedDate();
@@ -231,7 +326,8 @@ function deadline(value) {
     else if (value.due_date === today) state = "today";
     else if (value.due_date <= shift(today, 2)) state = "soon";
   }
-  const labels = { late: "기한 초과", today: "오늘 마감", soon: "마감 임박" };
+  const difference = Math.round((Date.parse(value.due_date) - Date.parse(today)) / 86400000);
+  const labels = { late: `마감 초과 ${-difference}일`, today: "오늘 마감", soon: `마감 D-${difference}` };
   const badge = element("small", [labels[state], value.due_date].filter(Boolean).join(" · "));
   if (state) badge.dataset.due = state;
   return badge;
@@ -240,17 +336,8 @@ function kanbanCard(item, category, destinations) {
   const li = element("li", "", "kanban-card work-stripe");
   li.dataset.workColor = category.color;
   const date = `${category.name} · ${item.value.date}`;
-  li.append(element("p", date, "record-meta"), formatRecord(item));
-  if (editable(item)) {
-    const actions = element("div", "", "kanban-card-actions");
-    const edit = element("button", "편집", "quiet record-edit");
-    edit.type = "button";
-    edit.dataset.recordKey = item.key;
-    edit.setAttribute("aria-label", "기록 편집 " + String(item.value.text ?? "").slice(0, 40));
-    edit.addEventListener("click", () => openEditor(item, category.name));
-    actions.append(edit, moveControls(item, destinations));
-    li.append(actions);
-  }
+  destinationsByRecord.set(item.key, destinations);
+  li.append(element("p", date, "record-meta"), recordControl(item));
   return li;
 }
 
@@ -277,9 +364,7 @@ function weekDayButton(date, index) {
   button.append(element("span", weekdayLabels[index]), time);
   if (date === localToday()) button.append(element("small", "오늘", "week-today"));
   button.addEventListener("click", () => {
-    dateInput.value = date;
-    render();
-    content.querySelector(`[data-week-date="${date}"]`)?.focus();
+    if (changeDate(date)) content.querySelector(`[data-week-date="${date}"]`)?.focus();
   });
   return button;
 }
@@ -319,30 +404,23 @@ function formatRecord(item, query) {
 
 const editable = (item) => active?.schema === 20 && Boolean(item.edit);
 
-function recordControl(item, category, { selected = false, selecting = false, query } = {}) {
-  const enabled = selecting || editable(item);
-  const entry = element(
-    enabled ? "button" : "div",
-    "",
-    `week-entry-control${item.value.depth > 0 ? " sub-record" : ""}`,
-  );
-  if (enabled) {
-    entry.type = "button";
-    entry.dataset.recordKey = item.key;
-    if (selecting) entry.setAttribute("aria-pressed", String(selected));
-    entry.addEventListener("click", () => {
-      if (!selecting) return openEditor(item, category.name);
-      selectedRecordKey = item.key;
-      render();
-      focusRecord(item.key);
-    });
-  }
+function recordControl(item, query) {
+  const entry = element("button", "", `week-entry-control${item.value.depth > 0 ? " sub-record" : ""}`);
+  entry.type = "button";
+  entry.dataset.recordKey = item.key;
+  entry.setAttribute("aria-pressed", String(item.key === selectedRecordKey));
+  entry.addEventListener("click", () => viewRecord(item.key));
   entry.append(formatRecord(item, query));
   return entry;
 }
 
 function focusRecord(key) {
-  (content.querySelector(`[data-record-key="${key}"]`) ?? queryInput)?.focus();
+  (
+    content.querySelector(`[data-record-key="${key}"]`) ??
+    queryInput ??
+    cabinetQuery ??
+    pick("journal-title")
+  )?.focus();
 }
 
 function renderWeekGrid(week, groups, memos) {
@@ -370,7 +448,7 @@ function renderWeekGrid(week, groups, memos) {
     for (const [index, date] of week.entries()) {
       const cell = row.insertCell();
       cell.className = weekDayClass(date, index);
-      for (const item of dates.get(date) ?? []) cell.append(recordControl(item, category));
+      for (const item of dates.get(date) ?? []) cell.append(recordControl(item));
     }
   }
   if (week.some((date) => memos.get(date))) {
@@ -394,27 +472,6 @@ function weekDayClass(date, index) {
   return index >= 5 ? "week-is-weekend" : "";
 }
 
-function selectRecord(entries) {
-  const selected = entries.find(({ item }) => item.key === selectedRecordKey) ?? entries[0];
-  selectedRecordKey = selected?.item.key ?? null;
-  return selected;
-}
-
-function recordDetail({ item, category }, { showDate = false, query } = {}) {
-  const detail = element("section", "", "week-detail");
-  detail.setAttribute("aria-label", "선택한 기록");
-  detail.append(element("h2", category.name));
-  if (showDate) detail.append(element("p", item.value.date, "record-meta"));
-  detail.append(formatRecord(item, query));
-  if (editable(item)) {
-    const edit = element("button", "기록 편집", "quiet");
-    edit.type = "button";
-    edit.addEventListener("click", () => openEditor(item, category.name));
-    detail.append(edit);
-  }
-  return detail;
-}
-
 function renderDayList(week, groups, memoText) {
   const date = selectedDate();
   const row = element("div", "", "week-days");
@@ -423,21 +480,16 @@ function renderDayList(week, groups, memoText) {
   for (const [index, day] of week.entries()) row.append(weekDayButton(day, index));
   content.append(row);
   const list = element("div", "", "week-work-list");
-  const split = splitView.matches;
   const entries = groups.flatMap(({ category, dates }) =>
     (dates.get(date) ?? []).map((item) => ({ item, category })),
   );
-  const selected = selectRecord(entries);
   for (const { category, dates } of groups) {
     const items = dates.get(date);
     if (!items) continue;
     const section = element("section", "", "week-work-group work-stripe");
     section.dataset.workColor = category.color;
     section.append(element("h2", category.name));
-    for (const item of items)
-      section.append(
-        recordControl(item, category, { selected: item.key === selectedRecordKey, selecting: split }),
-      );
+    for (const item of items) section.append(recordControl(item));
     list.append(section);
   }
   if (!entries.length) list.append(element("p", "이 날의 기록이 없습니다.", "week-empty"));
@@ -448,7 +500,6 @@ function renderDayList(week, groups, memoText) {
   }
   const layout = element("div", "", "week-compact-layout");
   layout.append(list);
-  if (split && selected) layout.append(recordDetail(selected));
   content.append(layout);
 }
 
@@ -469,44 +520,106 @@ function groupByWork(items, categories) {
 }
 
 function renderSearch(items, categories) {
+  const week = days();
+  searchPeriod.options[1].textContent = `선택한 주 (${shortDate(week[0])}–${shortDate(week[6])})`;
   const query = queryInput.value.trim().toLocaleLowerCase();
-  if (!query) return;
+  if (!query) {
+    content.append(element("p", "검색어를 입력해 주세요.", "week-empty"));
+    renderRecordPanel(categories);
+    return;
+  }
   const tags = new Map(records("tag").map(({ value }) => [value.id, value.name]));
   const byCategory = new Map();
   for (const { value } of records("category_tag")) {
     if (!byCategory.has(value.category_id)) byCategory.set(value.category_id, []);
     byCategory.get(value.category_id).push(tags.get(value.tag_id));
   }
-  const matches = items.filter(({ value }) =>
-    [value.text, categories.get(value.category_id)?.name, ...(byCategory.get(value.category_id) ?? [])].some(
-      (term) => typeof term === "string" && term.toLocaleLowerCase().includes(query),
-    ),
+  const matches = items.filter(
+    ({ value }) =>
+      (!workFilter.value || workFilter.value === value.category_id) &&
+      (searchPeriod.value !== "week" || week.includes(value.date)) &&
+      [
+        value.text,
+        categories.get(value.category_id)?.name,
+        ...(byCategory.get(value.category_id) ?? []),
+      ].some((term) => typeof term === "string" && term.toLocaleLowerCase().includes(query)),
   );
   const count = element("p", `검색 결과 ${matches.length}건`, "record-meta");
   count.setAttribute("role", "status");
   content.append(count);
-  if (!matches.length) return;
+  if (!matches.length) content.append(element("p", "검색어 또는 필터를 바꿔 보세요.", "week-empty"));
   const pattern = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "giu");
-  const results = matches
-    .slice(0, 100)
-    .map((item) => ({ item, category: workCategory(categories, item.value.category_id) }));
-  const selected = selectRecord(results);
-  const split = splitView.matches;
-  const layout = element("div", "", "result-layout");
   const list = element("ul", "", "record-list search-results");
-  for (const { item, category } of results) {
+  for (const item of matches.slice(0, 100)) {
+    const category = workCategory(categories, item.value.category_id);
     const result = element("li", "", "search-result work-stripe");
     result.dataset.workColor = category.color;
-    result.append(
-      element("p", `${category.name} · ${item.value.date}`, "record-meta"),
-      recordControl(item, category, { selected: item === selected.item, selecting: split, query: pattern }),
-    );
+    const meta = element("p", `${category.name} · ${item.value.date}`, "record-meta");
+    const matchedTag = byCategory
+      .get(item.value.category_id)
+      ?.find((tag) => tag?.toLocaleLowerCase().includes(query));
+    if (matchedTag) meta.append(" · 태그 ", highlightedText(matchedTag, pattern));
+    result.append(meta, recordControl(item, pattern));
     list.append(result);
   }
-  layout.append(list);
-  if (split) layout.append(recordDetail(selected, { showDate: true, query: pattern }));
-  content.append(layout);
+  if (matches.length) content.append(list);
   if (matches.length > 100) content.append(element("p", "검색어를 좁혀 추가 기록을 확인해 주세요."));
+  renderRecordPanel(categories, pattern);
+}
+
+function updateWorkFilter(categories) {
+  if (!workFilter) return;
+  const selected = workFilter.value;
+  const options = [...categories.values()].sort(
+    (a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name, "ko"),
+  );
+  const all = element("option", "전체 업무");
+  all.value = "";
+  workFilter.replaceChildren(
+    all,
+    ...options.map(({ id, name }) => {
+      const option = element("option", name);
+      option.value = id;
+      return option;
+    }),
+  );
+  workFilter.value = categories.has(selected) ? selected : "";
+}
+
+function showCabinet(categories) {
+  const entries = cabinetEntries({
+    notes: records("cabi_note").sort((a, b) =>
+      String(b.value.updated_at).localeCompare(String(a.value.updated_at)),
+    ),
+    materials: records("cabinet_item").sort((a, b) => a.value.sort_order - b.value.sort_order),
+    bindings: records("cabinet_link"),
+    categories,
+  });
+  const needle = cabinetQuery.value.trim().toLocaleLowerCase();
+  const matches = entries.filter(
+    ({ kind, value, categories }) =>
+      (!cabinetKind.value || kind === cabinetKind.value) &&
+      (!workFilter.value || categories.some(({ id }) => id === workFilter.value)) &&
+      (!needle || [value.title, value.text].some((text) => text?.toLocaleLowerCase().includes(needle))),
+  );
+  if (matches.length) content.append(renderCabinet(matches, selectedRecordKey, viewRecord));
+  else
+    content.append(
+      element(
+        "p",
+        entries.length ? "검색 조건에 맞는 자료가 없습니다." : "등록된 자료가 없습니다.",
+        "week-empty",
+      ),
+    );
+
+  const selected = entries.find(({ key }) => key === selectedRecordKey);
+  if (!selected) return closePanel();
+  const restoreFocus = preview.contains(document.activeElement);
+  heading.textContent = "자료 상세";
+  preview.replaceChildren(renderMaterial(selected));
+  preview.hidden = false;
+  showPanel();
+  if (restoreFocus) heading.focus();
 }
 
 function renderKanban(items, categories, inWeek) {
@@ -564,6 +677,8 @@ function renderKanban(items, categories, inWeek) {
     lanes.set(key, lane);
     buttons.set(key, tab);
     tab.addEventListener("click", () => {
+      if (!canLeaveRecord()) return;
+      discardPanelSelection();
       selectedKanbanSection = key;
       updateKanbanSelection(lanes, buttons);
     });
@@ -590,33 +705,14 @@ function render() {
     .sort(itemSort);
   content.replaceChildren();
   content.className = `journal-${view}`;
-  if (view === "cabinet") {
-    const notes = records("cabi_note").sort((a, b) =>
-      String(b.value.updated_at).localeCompare(String(a.value.updated_at)),
-    );
-    const materials = records("cabinet_item").sort((a, b) => a.value.sort_order - b.value.sort_order);
-    content.append(
-      renderCabinet({
-        notes,
-        materials,
-        bindings: records("cabinet_link"),
-        categories,
-        key: selectedMaterial,
-        split: splitView.matches,
-        select(key, previous) {
-          selectedMaterial = key;
-          render();
-          const selector = previous
-            ? `[data-material-key="${previous}"]`
-            : splitView.matches
-              ? `[data-material-key="${key}"]`
-              : ".material-detail";
-          content.querySelector(selector)?.focus();
-        },
-      }),
-    );
-    return;
+  for (const link of journal.querySelectorAll("[data-view-link]")) {
+    const target = new URL(link.href);
+    target.searchParams.set("date", selectedDate());
+    link.href = target.pathname + target.search;
   }
+  if (view === "more") return renderMore();
+  updateWorkFilter(categories);
+  if (view === "cabinet") return showCabinet(categories);
   if (view === "search") return renderSearch(items, categories);
 
   const week = days();
@@ -629,27 +725,54 @@ function render() {
       ? dayFormat.format(new Date(date + "T00:00:00Z"))
       : `${start.slice(0, 4)}. ${shortDate(start)} – ${shortDate(end)}`;
   if (view === "notes") {
-    const id = weekId();
-    const note = records("week_note").find(({ value }) => value.week_id === id)?.value;
+    const week = weekId();
+    const note = records("week_note").find(({ value }) => value.week_id === week)?.value;
     const oldMemos = records("day_memo")
       .map(({ value }) => value)
       .filter(({ date, text }) => inWeek(date) && text)
       .sort((a, b) => a.date.localeCompare(b.date));
-    content.append(renderNotes(id, note, oldMemos));
+    const images = new Map(
+      records("note_asset")
+        .filter(({ value }) => value.weekId === week)
+        .map(({ value }) => [value.id, `${base}/note-image/${value.token}`]),
+    );
+    content.append(renderNotes(week, note, oldMemos, images));
     return;
   }
-  if (view === "kanban") return renderKanban(items, categories, inWeek);
+  if (view === "kanban") {
+    destinationsByRecord.clear();
+    renderKanban(items, categories, inWeek);
+    renderRecordPanel(categories);
+    return;
+  }
 
   const weekly = items.filter(({ value }) => inWeek(value.date));
   if (view === "summary") return renderSummary(weekly, categories);
   const memos = new Map(records("day_memo").map(({ value }) => [value.date, value.text]));
-  if (view === "day") return renderDayList(week, groupByWork(weekly, categories), memos.get(date));
-
-  pick("journal-summary").href = `/app/${id}/summary?date=${date}`;
-  pick("journal-notes").href = `/app/${id}/notes?date=${date}`;
   const groups = groupByWork(weekly, categories);
-  if (wideWeek.matches) renderWeekGrid(week, groups, memos);
+  if (view === "week" && journal.dataset.layout === "wide") renderWeekGrid(week, groups, memos);
   else renderDayList(week, groups, memos.get(date));
+  renderRecordPanel(categories);
+}
+
+function renderMore() {
+  const list = element("ul", "", "journal-more-list");
+  for (const [target, title] of [
+    ["search", "검색"],
+    ["summary", "주간 요약"],
+    ["notes", "주간 메모"],
+    ["cabinet", "Cabi.NET"],
+    ["/spaces", "온라인 워크스페이스"],
+    ["/terms", "이용약관"],
+    ["/privacy", "개인정보 처리방침"],
+  ]) {
+    const item = element("li");
+    const link = element("a", title);
+    link.href = target.startsWith("/") ? target : `/app/${id}/${target}?date=${selectedDate()}`;
+    item.append(link);
+    list.append(item);
+  }
+  content.append(list);
 }
 
 function summary(items, categories) {
@@ -733,6 +856,7 @@ function moveControls(item, destinations) {
       await request("/move", attempt);
       if (started !== generation) return;
       selectedKanbanSection = attempt.to;
+      discardPanelSelection();
       moving = false;
       await load();
       focusRecord(item.key);
@@ -748,6 +872,7 @@ function moveControls(item, destinations) {
             : error.message === "READ_ONLY"
               ? "지금은 카드를 읽기만 할 수 있습니다."
               : "카드를 이동하지 못했습니다. 다시 시도해 주세요.";
+      pick("record-panel-status").textContent = status.textContent;
     } finally {
       if (started === generation) moving = false;
       select.disabled = button.disabled = false;
@@ -757,25 +882,156 @@ function moveControls(item, destinations) {
   return actions;
 }
 
+function showPanel() {
+  const modal = journal.dataset.layout === "single";
+  if (dialog.open && dialog.matches(":modal") !== modal) {
+    const focused = dialog.contains(document.activeElement) ? document.activeElement : null;
+    dialog.close();
+    if (modal) dialog.showModal();
+    else dialog.show();
+    focused?.focus();
+  } else if (!dialog.open) {
+    if (modal) dialog.showModal();
+    else dialog.show();
+  }
+  dialog.closest(".journal-columns").classList.add("has-detail");
+}
+
+function closePanel() {
+  if (dialog.open) dialog.close();
+  dialog.closest(".journal-columns").classList.remove("has-detail");
+  preview.replaceChildren();
+  preview.hidden = true;
+}
+
+function renderRecordPanel(categories, query) {
+  if (draft || moving) {
+    showPanel();
+    return;
+  }
+  const item = keys.get("entry_item:" + selectedRecordKey);
+  if (!item) {
+    closePanel();
+    return;
+  }
+  const category = workCategory(categories, item.value.category_id);
+  heading.textContent = "기록 상세";
+  const meta = element("p", `${category.name} · ${item.value.date}`, "record-meta");
+  const actions = element("div", "", "actions record-panel-actions");
+  if (view === "search") {
+    const source = element("a", "원래 날짜에서 열기", "journal-tool-link");
+    const params = new URLSearchParams({ date: item.value.date, record: item.key });
+    source.href = `/app/${id}/day?${params}`;
+    actions.append(source);
+  }
+  if (editable(item)) {
+    const edit = element("button", "기록 편집", "primary");
+    edit.type = "button";
+    edit.addEventListener("click", () => openEditor(item, category.name));
+    actions.append(edit);
+    const destinations = destinationsByRecord.get(item.key);
+    if (destinations?.length) actions.append(moveControls(item, destinations));
+  }
+  const message = element("p", "", "status");
+  message.id = "record-panel-status";
+  message.setAttribute("role", "status");
+  const restoreFocus = preview.contains(document.activeElement);
+  preview.replaceChildren(meta, formatRecord(item, query), actions, message);
+  preview.hidden = false;
+  showPanel();
+  if (restoreFocus) heading.focus();
+}
+
+function viewRecord(key) {
+  if (selectedRecordKey === key && dialog.open) return heading.focus();
+  if (!canLeaveRecord()) return;
+  closeEditor();
+  const first = !selectedRecordKey;
+  selectedRecordKey = key;
+  updateAddress(first);
+  render();
+  heading.focus();
+}
+
+function warnBeforeLeaving(event) {
+  event.preventDefault();
+  event.returnValue = "";
+}
+
+const changed = () => draft && textInput.value !== draft.original;
+
+function canLeaveRecord() {
+  return !moving && !textInput.disabled && (!changed() || confirm("저장하지 않은 편집을 버릴까요?"));
+}
+
+function discardPanelSelection() {
+  const previous = selectedRecordKey;
+  closeEditor();
+  closePanel();
+  selectedRecordKey = null;
+  if (previous)
+    content.querySelector(`[data-record-key="${previous}"]`)?.setAttribute("aria-pressed", "false");
+  updateAddress();
+}
+
+function dismissRecord() {
+  if (!canLeaveRecord()) return;
+  const previous = draft?.key ?? selectedRecordKey;
+  closeEditor();
+  if (hasRecordPanel && selectedRecordKey && history.state?.recordOpened) {
+    history.back();
+    return;
+  }
+  discardPanelSelection();
+  if (previous) focusRecord(previous);
+}
+
+function changeDate(date) {
+  if (!date || !canLeaveRecord()) return false;
+  dateInput.value = date;
+  if (core) discardPanelSelection();
+  else updateAddress();
+  render();
+  return true;
+}
+
 function openEditor(item, category) {
   if (draft || moving) return;
-  draft = { edit: item.edit, key: item.key, payload: null };
+  draft = { edit: item.edit, key: item.key, original: item.value.text, payload: null };
   editorContext.textContent = category ? `${category} · ${item.value.date}` : "";
   editorContext.hidden = !category;
   textInput.value = item.value.text;
   editorStatus.textContent = "";
-  dialog.showModal();
+  heading.textContent = "기록 편집";
+  preview.hidden = true;
+  editor.hidden = false;
+  if (view === "search") tools.inert = true;
+  showPanel();
   textInput.focus();
 }
 function closeEditor() {
   draft = null;
+  composing = false;
   textInput.value = "";
-  if (dialog.open) dialog.close();
+  editor.hidden = true;
+  if (view === "search") tools.inert = false;
+  removeEventListener("beforeunload", warnBeforeLeaving);
   editorStatus.textContent = "";
 }
+let composing = false;
+textInput.addEventListener("compositionstart", () => {
+  composing = true;
+});
+textInput.addEventListener("compositionend", () => {
+  composing = false;
+});
+textInput.addEventListener("input", () => {
+  if (changed()) addEventListener("beforeunload", warnBeforeLeaving);
+  else removeEventListener("beforeunload", warnBeforeLeaving);
+});
 editor.addEventListener("submit", async (event) => {
   event.preventDefault();
-  if (!draft) return;
+  if (!draft || composing || textInput.disabled) return;
   const current = draft;
   const text = textInput.value.trim();
   if (!text || [...text].length > 2000) {
@@ -798,8 +1054,10 @@ editor.addEventListener("submit", async (event) => {
     await request("/text", current.payload);
     if (draft !== current) return;
     closeEditor();
+    dirty = true;
     await load();
-    focusRecord(current.key);
+    if (dialog.open) heading.focus();
+    else focusRecord(current.key);
     if (!status.textContent) status.textContent = "서버에 저장됐습니다.";
   } catch (error) {
     if (draft !== current) return;
@@ -816,10 +1074,35 @@ editor.addEventListener("submit", async (event) => {
     });
   }
 });
-pick("record-cancel").addEventListener("click", closeEditor);
+pick("record-close").addEventListener("click", dismissRecord);
+pick("journal-spaces").addEventListener("click", (event) => {
+  if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+  event.preventDefault();
+  showSpaces();
+});
+pick("space-picker-close").addEventListener("click", () => spacePicker.close());
+spacePicker.addEventListener("close", () => {
+  if (!spacePicker.open) spacePickerList.replaceChildren();
+});
+pick("record-cancel").addEventListener("click", () => {
+  if (!canLeaveRecord()) return;
+  closeEditor();
+  render();
+  heading.focus();
+});
 dialog.addEventListener("cancel", (event) => {
   event.preventDefault();
-  if (!textInput.disabled) closeEditor();
+  dismissRecord();
+});
+addEventListener("popstate", () => {
+  if (!canLeaveRecord()) return updateAddress(true);
+  const previous = selectedRecordKey;
+  closeEditor();
+  if (dateInput) dateInput.value = dateFromAddress();
+  if (hasRecordPanel) selectedRecordKey = recordFromAddress();
+  render();
+  if (dialog.open) heading.focus();
+  else if (previous) focusRecord(previous);
 });
 refresh.addEventListener("click", () => load(!draft));
 for (const direction of [
@@ -827,28 +1110,67 @@ for (const direction of [
   ["period-next", 1],
 ]) {
   pick(direction[0])?.addEventListener("click", () => {
-    dateInput.value = shift(selectedDate(), direction[1] * (view === "day" ? 1 : 7));
-    render();
+    changeDate(shift(selectedDate(), direction[1] * (view === "day" ? 1 : 7)));
   });
 }
-dateInput?.addEventListener("change", render);
+dateInput?.addEventListener("change", () => {
+  if (!changeDate(dateInput.value)) dateInput.value = dateFromAddress();
+});
 pick("journal-today")?.addEventListener("click", () => {
-  dateInput.value = localToday();
+  changeDate(localToday());
+});
+if (hasRecordPanel) {
+  updateLayout();
+  new ResizeObserver(updateLayout).observe(content.closest(".journal-body"));
+}
+if (["search", "summary", "notes", "cabinet"].includes(view)) {
+  const compactNav = matchMedia("(max-width: 1159px)");
+  const more = journal.querySelector('.journal-nav [data-view-link="more"]');
+  const updateCurrent = () => {
+    if (compactNav.matches) more.setAttribute("aria-current", "location");
+    else more.removeAttribute("aria-current");
+  };
+  compactNav.addEventListener("change", updateCurrent);
+  updateCurrent();
+}
+function updateResults() {
+  if (selectedRecordKey) discardPanelSelection();
+  render();
+}
+queryInput?.addEventListener("input", updateResults);
+cabinetQuery?.addEventListener("input", updateResults);
+for (const filter of [workFilter, searchPeriod, cabinetKind])
+  filter?.addEventListener("change", updateResults);
+pick("board-period")?.addEventListener("change", (event) => {
+  const input = event.target;
+  if (!canLeaveRecord()) {
+    input.value = input.dataset.current || "week";
+    return;
+  }
+  input.dataset.current = input.value;
+  discardPanelSelection();
   render();
 });
-if (view === "week") wideWeek.addEventListener("change", render);
-if (["week", "day", "search", "cabinet"].includes(view)) splitView.addEventListener("change", render);
-queryInput?.addEventListener("input", render);
-pick("board-period")?.addEventListener("change", render);
-pick("journal-download")?.addEventListener("click", () => {
+function currentSummary() {
   const categories = new Map(records("category").map(({ value }) => [value.id, value]));
   const week = days();
-  const data = summary(
+  return summary(
     records("entry_item")
       .filter(({ value }) => typeof value.date === "string" && value.date >= week[0] && value.date <= week[6])
       .sort(itemSort),
     categories,
   );
+}
+pick("journal-copy")?.addEventListener("click", async () => {
+  try {
+    await navigator.clipboard.writeText(currentSummary().notes);
+    status.textContent = "요약을 복사했습니다.";
+  } catch {
+    status.textContent = "요약을 복사하지 못했습니다. 본문을 선택해 복사할 수 있습니다.";
+  }
+});
+pick("journal-download")?.addEventListener("click", () => {
+  const data = currentSummary();
   const url = URL.createObjectURL(
     new Blob(["# " + data.label + "\n\n" + data.notes + "\n"], { type: "text/markdown;charset=utf-8" }),
   );
@@ -866,7 +1188,10 @@ sessionEvents?.addEventListener("message", (event) => {
 });
 addEventListener("pagehide", reset);
 addEventListener("pageshow", (event) => {
-  if (event.persisted) load(true);
+  if (!event.persisted) return;
+  if (hasRecordPanel) selectedRecordKey = recordFromAddress();
+  if (dateInput) dateInput.value = dateFromAddress();
+  load(true);
 });
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden) load();
