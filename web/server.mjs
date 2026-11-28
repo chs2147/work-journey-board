@@ -28,6 +28,10 @@ const assets = new Map(
     ["/assets/workspace.css", ["text/css; charset=utf-8", "./public/workspace.css"]],
     ["/assets/workspace-theme.css", ["text/css; charset=utf-8", "../src/shared/tokens.css"]],
     ["/assets/gowun-dodum.woff2", ["font/woff2", "../src/shared/fonts/GowunDodum-Regular.woff2"]],
+    [
+      "/assets/gowun-dodum-license.txt",
+      ["text/plain; charset=utf-8", "../public/licenses/GowunDodum-OFL-1.1.txt"],
+    ],
     ["/assets/icon.svg", ["image/svg+xml", "../site/icon.svg"]],
     ["/assets/wordmark.svg", ["image/svg+xml", "../site/wordmark.svg"]],
   ].map(([route, [type, path]]) => [route, { type, body: readFileSync(new URL(path, import.meta.url)) }]),

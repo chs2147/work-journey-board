@@ -30,6 +30,7 @@ for (const file of runtimeFiles) copy(file, "web/" + file);
 for (const file of ["icon.svg", "wordmark.svg"]) copy("../site/" + file, "site/" + file);
 for (const file of ["tokens.css", "palette.ts", "fonts/GowunDodum-Regular.woff2"])
   copy("../src/shared/" + file, "src/shared/" + file);
+copy("../public/licenses/GowunDodum-OFL-1.1.txt", "public/licenses/GowunDodum-OFL-1.1.txt");
 copy("../poc/v2-cloud/cloud-environment.mjs", "poc/v2-cloud/cloud-environment.mjs");
 cpSync(new URL("./node_modules/postgres/", import.meta.url), new URL("web/node_modules/postgres/", bundle), {
   recursive: true,
